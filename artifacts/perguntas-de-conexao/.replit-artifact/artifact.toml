@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Perguntas de Conexão"
+description = "Um aplicativo de perguntas profundas para casais, famílias e grupos. Compradores recebem acesso e convites conforme o pacote adquirido, enquanto convidados participam sem ganhar permissão para convidar outras pessoas."
+version = "1.0.0"
+id = "artifacts/perguntas-de-conexao"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20280
+
+[services.development]
+run = "pnpm --filter @workspace/perguntas-de-conexao run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/perguntas-de-conexao", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/perguntas-de-conexao/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20280"
+BASE_PATH = "/"

@@ -1,0 +1,1 @@
+- [External checkout access](external-checkout-access.md) — keep payment-provider wiring deferred while preserving package-based buyer and guest permissions.

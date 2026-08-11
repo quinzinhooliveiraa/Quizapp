@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface Invite {
+  token: string;
+  guestName: string;
+  sessionId: string;
+  inviteUrl: string;
+  isUsed: boolean;
 }

@@ -3,13 +3,19 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Perguntas de Conexão API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: questions
+    description: Relationship question content
+  - name: access
+    description: Buyer and guest access
+  - name: checkout
+    description: External checkout webhook
 paths:
   /healthz:
     get:
@@ -24,6 +30,160 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /questions/themes:
+    get:
+      operationId: listQuestionThemes
+      tags: [questions]
+      summary: List question themes
+      responses:
+        "200":
+          description: Available question themes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionTheme"
+  /questions:
+    get:
+      operationId: listQuestions
+      tags: [questions]
+      summary: List questions for a theme
+      parameters:
+        - name: theme
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [relationship, family, friends]
+      responses:
+        "200":
+          description: Questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+  /access/preview:
+    get:
+      operationId: getAccessPreview
+      tags: [access]
+      summary: Return the current demo access state
+      responses:
+        "200":
+          description: Access preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessState"
+  /access/sessions:
+    post:
+      operationId: createQuestionSession
+      tags: [access]
+      summary: Create a buyer question session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInput"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionSession"
+  /access/sessions/{sessionId}:
+    get:
+      operationId: getQuestionSession
+      tags: [access]
+      summary: Get a question session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Question session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionSession"
+        "404":
+          description: Session not found
+  /access/sessions/{sessionId}/invites:
+    post:
+      operationId: createInvite
+      tags: [access]
+      summary: Create a guest invite
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteInput"
+      responses:
+        "201":
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+        "409":
+          description: Invite limit reached
+  /access/invites/{token}:
+    get:
+      operationId: getInvite
+      tags: [access]
+      summary: Resolve a guest invite
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guest invite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestAccess"
+        "404":
+          description: Invite not found
+  /checkout/webhook:
+    post:
+      operationId: receiveCheckoutWebhook
+      tags: [checkout]
+      summary: Receive a one-time checkout confirmation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutWebhook"
+      responses:
+        "200":
+          description: Webhook accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResult"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +193,139 @@ components:
           type: string
       required:
         - status
+    QuestionTheme:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        count:
+          type: number
+      required: [id, title, description, count]
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+        themeId:
+          type: string
+        text:
+          type: string
+        intensity:
+          type: string
+          enum: [gentle, honest, deep]
+      required: [id, themeId, text, intensity]
+    AccessState:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [buyer, guest, visitor]
+        hasAccess:
+          type: boolean
+        canInvite:
+          type: boolean
+        packageName:
+          type: ["string", "null"]
+        invitesUsed:
+          type: number
+        invitesLimit:
+          type: number
+      required: [role, hasAccess, canInvite, packageName, invitesUsed, invitesLimit]
+    SessionInput:
+      type: object
+      properties:
+        buyerName:
+          type: string
+          minLength: 1
+        packageId:
+          type: string
+          enum: [couple, family]
+      required: [buyerName, packageId]
+    QuestionSession:
+      type: object
+      properties:
+        id:
+          type: string
+        buyerName:
+          type: string
+        packageId:
+          type: string
+        packageName:
+          type: string
+        inviteLimit:
+          type: number
+        invitesUsed:
+          type: number
+        accessGranted:
+          type: boolean
+      required: [id, buyerName, packageId, packageName, inviteLimit, invitesUsed, accessGranted]
+    InviteInput:
+      type: object
+      properties:
+        guestName:
+          type: string
+          minLength: 1
+      required: [guestName]
+    Invite:
+      type: object
+      properties:
+        token:
+          type: string
+        guestName:
+          type: string
+        sessionId:
+          type: string
+        inviteUrl:
+          type: string
+        isUsed:
+          type: boolean
+      required: [token, guestName, sessionId, inviteUrl, isUsed]
+    GuestAccess:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [guest]
+        hasAccess:
+          type: boolean
+        canInvite:
+          type: boolean
+        guestName:
+          type: string
+        packageName:
+          type: string
+      required: [role, hasAccess, canInvite, guestName, packageName]
+    CheckoutWebhook:
+      type: object
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [payment.completed]
+        buyerEmail:
+          type: string
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+        buyerName:
+          type: string
+        packageId:
+          type: string
+          enum: [couple, family]
+        paymentReference:
+          type: string
+      required: [eventId, eventType, buyerEmail, buyerName, packageId, paymentReference]
+    WebhookResult:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+        accessId:
+          type: string
+        message:
+          type: string
+      required: [accepted, accessId, message]
 
