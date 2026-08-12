@@ -237,6 +237,7 @@ function AppExperienceReference() {
   const [isThemeDragging, setIsThemeDragging] = useState(false);
   const themeDragStartX = useRef<number | null>(null);
   const themeDragDelta = useRef(0);
+  const themePointerCaptured = useRef(false);
   const suppressThemeClick = useRef(false);
   const [activeNav, setActiveNav] = useState('todos');
   const [saved, setSaved] = useState<string[]>([]);
@@ -294,13 +295,17 @@ function AppExperienceReference() {
     themeDragStartX.current = event.clientX;
     themeDragDelta.current = 0;
     suppressThemeClick.current = false;
+    themePointerCaptured.current = false;
     setThemeDragOffset(0);
     setIsThemeDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
   const handleThemePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (themeDragStartX.current === null) return;
     themeDragDelta.current = event.clientX - themeDragStartX.current;
+    if (Math.abs(themeDragDelta.current) >= 8 && !themePointerCaptured.current) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      themePointerCaptured.current = true;
+    }
     setThemeDragOffset(themeDragDelta.current);
   };
   const finishThemePointer = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -316,9 +321,10 @@ function AppExperienceReference() {
     themeDragDelta.current = 0;
     setThemeDragOffset(0);
     setIsThemeDragging(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (themePointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    themePointerCaptured.current = false;
   };
   const handleThemePointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (themeDragStartX.current === null) return;
@@ -326,9 +332,10 @@ function AppExperienceReference() {
     themeDragDelta.current = 0;
     setThemeDragOffset(0);
     setIsThemeDragging(false);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (themePointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    themePointerCaptured.current = false;
   };
   const nextQuestion = () => setQuestionIndex(i => {
     if (!randomMode || questions.length < 2) return (i + 1) % Math.max(questions.length, 1);
