@@ -3563,4 +3563,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .question-view-stage {
     align-items: center;
   }
+
+  .invite-prompt-card {
+    margin-top: .78rem;
+    position: relative;
+    top: .12rem;
+  }
 }
