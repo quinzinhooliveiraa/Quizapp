@@ -331,18 +331,20 @@ function AppExperienceReference() {
           <button className="decks-back-pill" onClick={() => setThemeId(null)} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
-        <div className="question-mode-bar" aria-label="Modo da carta">
-          <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={randomQuestion} aria-label="Mostrar uma pergunta aleatória" data-testid="button-random-question"><Shuffle size={13} /> Aleatória</button>
-          <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> Escrevendo</button>
-        </div>
         <section className="question-view-stage">
-          {questionsQuery.isLoading ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : questionsQuery.isError ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => questionsQuery.refetch()} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article key={currentQuestion.id} className={`question-card question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''}`} data-testid={`card-question-${currentQuestion.id}`}>
-            <div className="question-card-grain" />
-            <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong></div>
-             <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
-             {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
-             <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
-          </article>}
+          <div className="question-card-stack">
+            <div className="question-mode-bar" aria-label="Modo da carta">
+              <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={randomQuestion} aria-label="Mostrar uma pergunta aleatória" data-testid="button-random-question"><Shuffle size={13} /> Aleatória</button>
+              <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> Escrever</button>
+            </div>
+            {questionsQuery.isLoading ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : questionsQuery.isError ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => questionsQuery.refetch()} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article key={currentQuestion.id} className={`question-card question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''}`} data-testid={`card-question-${currentQuestion.id}`}>
+              <div className="question-card-grain" />
+              <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong></div>
+              <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
+              {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
+              <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
+            </article>}
+          </div>
           {currentQuestion && <div className="question-side-nav"><button onClick={previousQuestion} aria-label="Pergunta anterior" data-testid="button-previous-question"><ChevronLeft size={19} /></button><button onClick={nextQuestion} aria-label="Próxima pergunta" data-testid="button-next-question"><ChevronRight size={19} /></button></div>}
         </section>
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>

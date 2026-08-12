@@ -3057,10 +3057,20 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   flex: 1 1 auto;
   align-items: center;
   margin-top: .2rem;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.question-card-stack {
+  width: var(--question-card-width, min(88vw, 24rem));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .12rem;
 }
 
 .question-card {
-  width: var(--question-card-width, min(88vw, 24rem));
+  width: 100%;
   height: var(--question-card-height, min(117vw, 32rem));
   min-height: 0;
   aspect-ratio: auto;
@@ -3196,11 +3206,11 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 /* Keep the question controls light and separate from the card. */
 .question-mode-bar {
-  width: var(--question-card-width, min(88vw, 24rem));
+  width: 100%;
   min-height: 1.65rem;
   justify-content: flex-start;
   gap: .72rem;
-  margin-top: .42rem;
+  margin-top: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -3367,9 +3377,5 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
   .question-view-stage {
     align-items: center;
-  }
-
-  .question-mode-bar {
-    margin-top: clamp(1.35rem, 7vh, 3rem);
   }
 }
