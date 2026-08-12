@@ -1,0 +1,32 @@
+# Instrução para o agente do Replit — simplificar o modo de escrever no celular (em vez de continuar brigando com o teclado)
+
+Depois de três tentativas de ajustar o layout pra conviver com o teclado do iPhone, a decisão é: simplificar. Em vez de tentar manter cabeçalho, barra de modos, setas de navegação e menu inferior todos visíveis e funcionando junto com o teclado aberto, o modo de escrever no celular passa a mostrar **só o essencial**: a pergunta e o campo de texto. Tudo o mais some enquanto a pessoa está escrevendo.
+
+## O que fazer
+
+Quando `writingOpen` for verdadeiro **e a tela for de celular** (usar o mesmo ponto de corte já usado no resto do CSS, `max-width: 699px`), a tela da pergunta deve trocar pra uma versão reduzida, escondendo:
+
+- o cabeçalho `question-header` (botão "Decks" e contador de posição, `App.tsx` linha ~544-547);
+- a barra de modos `question-mode-bar` (botões "Aleatória/Sequencial" e "Escrever", linhas ~551-554) — nesse momento não faz sentido trocar de modo aleatório nem sair do modo escrever por ali;
+- as setas de navegação `question-side-nav` (linha ~579);
+- o card de convite `invite-prompt-card`, se estiver visível (linha ~570-577);
+- o menu inferior `app-bottom-nav` (isso já está escondido, manter).
+
+E mantendo visível, numa tela simples e sozinha:
+
+- o texto da pergunta atual (pode ficar um pouco menor que o tamanho normal, já que agora tem menos espaço disponível);
+- o campo de texto (`textarea`, dentro de `question-response`), ocupando a maior parte do espaço restante;
+- um botão claro de "Concluído" ou "Fechar" que tira a pessoa do modo de escrever (chama a mesma função que hoje fecha o modo escrever, `setWritingOpen(false)` ou equivalente a `onClick` do botão "Escrever" na barra de modos) — sem esse botão, a pessoa não teria como sair da tela de escrever no celular, já que a barra de modos estará escondida.
+
+Pode manter o botão de favoritar a pergunta (`question-favorite-button`) nessa tela reduzida, se quiser, não é obrigatório.
+
+## Por que isso resolve
+
+Com bem menos elementos brigando por espaço na tela, não tem mais cabeçalho, menu ou setas pra escapar da área visível ou ficar atrás da barra de status. A altura dessa tela reduzida deve usar a mesma variável que já funciona certo (`var(--device-height, 100dvh)`, que já acompanha o teclado corretamente via `App.tsx` linhas 119-149) — só que agora, como sobra bem menos conteúdo pra caber, não deve mais precisar de nenhuma rolagem nem gerar espaço vazio.
+
+## Verificação
+
+- No celular, tocar em "Escrever": a tela deve trocar pra essa versão simplificada, mostrando só a pergunta, o campo de texto e o botão de concluir.
+- Abrir o teclado: nada deve quebrar, sobrar espaço vazio ou ficar atrás da barra de status — a essa altura, com tão pouca coisa na tela, deve simplesmente funcionar.
+- Tocar em "Concluído"/"Fechar": deve voltar pra tela normal da pergunta, com cabeçalho, barra de modos, setas e menu inferior de volta.
+- Testar também no desktop/tablet (largura maior que 699px): a experiência atual (tudo visível junto) pode continuar como está, já que não existe teclado virtual atrapalhando nesses tamanhos.

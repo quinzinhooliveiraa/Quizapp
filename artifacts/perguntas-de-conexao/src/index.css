@@ -3563,30 +3563,100 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   }
 }
 
+.writing-done-button {
+  display: none;
+}
+
 @media (max-width: 699px) {
+  .connection-app.is-writing-mode {
+    overflow: hidden;
+  }
+
+  .connection-app.is-writing-mode .question-header,
+  .connection-app.is-writing-mode .question-mode-bar,
+  .connection-app.is-writing-mode .question-side-nav,
+  .connection-app.is-writing-mode .invite-prompt-card,
+  .connection-app.is-writing-mode .app-bottom-nav,
+  .connection-app.is-writing-mode .question-hint {
+    display: none;
+  }
+
   .connection-app.is-writing-mode .question-view-stage {
+    width: 100%;
     flex: 1 1 auto;
     min-height: 0;
+    margin: 0;
+    padding: max(.8rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    align-items: stretch;
+    justify-content: flex-start;
+    overflow: hidden;
   }
 
   .connection-app.is-writing-mode .question-card-stack {
+    width: 100%;
     flex: 1 1 auto;
     min-height: 0;
+    gap: 0;
   }
 
   .question-card.is-writing {
-    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
     min-height: 0;
+    aspect-ratio: auto;
+    flex: 1 1 auto;
     overflow-y: auto;
   }
 
-  .question-card.is-writing .question-card-copy,
-  .question-card.is-writing .question-response {
-    flex-shrink: 1;
+  .question-card.is-writing .question-card-top,
+  .question-card.is-writing .question-card-foot,
+  .question-card.is-writing .question-favorite-button {
+    display: none;
+  }
+
+  .question-card.is-writing .question-card-copy {
+    flex: 0 1 auto;
+    min-height: 0;
+    margin: 0;
+    padding-top: 0;
+    justify-content: flex-start;
+  }
+
+  .question-card.is-writing .question-card-copy p {
+    font-size: clamp(1.45rem, 7.2vw, 2rem);
   }
 
   .question-card.is-writing .question-response {
-    flex-basis: auto;
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 1.15rem;
+  }
+
+  .question-card.is-writing .question-response textarea {
+    flex: 1 1 auto;
+    min-height: 8rem;
+    max-height: none;
+  }
+
+  .writing-done-button {
+    width: 100%;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 3rem;
+    margin-top: .75rem;
+    padding: 0 1rem;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(135deg, #a478ff, #6945d5);
+    box-shadow: 0 .55rem 1.5rem rgba(91,65,175,.28);
+    font: .68rem var(--app-font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
   }
 }
 

@@ -579,6 +579,7 @@ function AppExperienceReference() {
              <button className="invite-prompt-action" onClick={() => setInviteOpen(true)} data-testid="button-open-invite-prompt">Convidar <Send size={14} /></button>
            </aside>}
           {currentQuestion && <div className="question-side-nav"><button onClick={previousQuestion} aria-label="Pergunta anterior" data-testid="button-previous-question"><ChevronLeft size={19} /></button><button onClick={nextQuestion} aria-label="Próxima pergunta" data-testid="button-next-question"><ChevronRight size={19} /></button></div>}
+           {writingOpen && <button className="writing-done-button" onClick={() => setWritingOpen(false)} data-testid="button-writing-done"><Check size={16} /> Concluído</button>}
         </section>
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>
       </>}
