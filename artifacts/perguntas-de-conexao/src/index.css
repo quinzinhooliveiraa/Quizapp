@@ -3525,8 +3525,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .invite-prompt-card {
     min-height: 3.75rem;
     gap: .45rem;
-    margin-top: .78rem;
+    margin-top: 1rem;
     padding: .5rem .55rem;
+    position: relative;
+    top: .15rem;
   }
 
   .invite-prompt-icon {
