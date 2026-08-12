@@ -1,0 +1,39 @@
+# Instrução para o agente do Replit — corrigir o swipe e o menu flutuando com o teclado (segunda rodada)
+
+Testei de novo no celular. Dois dos três problemas anteriores ainda precisam de ajuste — seguem as causas exatas, já olhando o código atual.
+
+## 1. Swipe não muda a pergunta, e mexe no menu de cima junto
+
+Hoje, em `artifacts/perguntas-de-conexao/src/App.tsx` (por volta da linha 549-556), os eventos de arrastar (`onPointerDown`, `onPointerMove`, `onPointerUp`, `onPointerCancel`) e o `transform` de arrasto (`index.css`, `.question-card-stack`, linhas 3069-3077) estão aplicados no elemento `.question-card-stack` — que é o contêiner que engloba **tanto** a barra de modos (botões "Aleatória"/"Sequencial" e "Escrever", linhas 557-560) **quanto** o card da pergunta em si (linhas 561-568).
+
+Isso causa os dois problemas de uma vez:
+- O menu de cima se move junto com o card durante o arrasto, porque o `transform` está no contêiner que os engloba os dois.
+- O gesto às vezes não completa a troca de pergunta porque existe uma proteção no código (`handleQuestionPointerDown`, linha 436-444) que cancela o início do arrasto se o toque começar em cima de qualquer `button` — e como os botões do menu de modos estão dentro dessa mesma área "arrastável", um toque que começa perto deles (bem comum, já que ficam bem no topo do card) cancela o gesto antes de valer.
+
+**Correção:** mover os event handlers (`onPointerDown`, `onPointerMove`, `onPointerUp`, `onPointerCancel`) e o `style` com `--question-drag-offset` para o elemento `<article className="question-card ...">` (linha 561), não mais para o `.question-card-stack`. A barra de modos (`.question-mode-bar`) deve ficar **fora** dessa área de arrasto, como um irmão do card, não mais dentro do mesmo contêiner que recebe o gesto. Ajustar o CSS: o `transform: translate3d(...)` que hoje está em `.question-card-stack` (index.css linha 3077) passa a ser aplicado só em `.question-card` durante o arrasto.
+
+O botão de favoritar (`question-favorite-button`, linha 567) continua dentro do card — isso é intencional, tocar nele não deve iniciar um arrasto, o guard `target.closest('button, textarea, input, a')` já trata isso corretamente.
+
+## 2. Menu de baixo "flutua" sobre um fundo bege quando o teclado abre
+
+O `.app-bottom-nav` (index.css, linha 1652 e a versão mobile na linha 3263) usa `position: fixed`. O resto do app (`.connection-app`, `.app-viewport`) já está configurado certinho pra encolher junto com o teclado, através da variável `--device-height` que é atualizada via JS ouvindo `visualViewport` (`App.tsx`, linhas 119-149) — isso está funcionando bem.
+
+O problema é especificamente o `position: fixed` do menu de baixo: o Safari do iPhone tem uma falha antiga e conhecida onde elementos com `position: fixed` não acompanham direito a área visível da tela quando o teclado abre — eles ficam "grudados" na posição da tela cheia, enquanto o resto do app (que usa a técnica certa com `--device-height`) encolhe corretamente. Isso faz o menu "descolar" do app e boiar sobre o fundo da página — que é bege (`body { background: var(--cream); }`, index.css linha 1126), por isso aparece aquela faixa clara estranha.
+
+**Correção recomendada (mais simples e robusta que tentar consertar o `position: fixed`):** esconder o menu de baixo enquanto o teclado estiver aberto/o campo de escrever estiver em foco — é exatamente o que apps nativos fazem (a barra de baixo some quando o teclado sobe). Já existe uma classe pronta pra isso: `App.tsx` linha 511 já coloca `is-writing-mode` no `.connection-app` quando `writingOpen` é verdadeiro. Só falta adicionar a regra CSS:
+
+```css
+.connection-app.is-writing-mode .app-bottom-nav {
+  display: none;
+}
+```
+
+(ou usar `opacity: 0; pointer-events: none;` com uma transição suave, se quiser um fade em vez de sumir seco)
+
+**Reforço de segurança:** trocar a cor de fundo do `body` (index.css linha 1126, hoje `var(--cream)`) para a mesma cor escura de fundo usada no app, pelo menos nas rotas do aplicativo — assim, mesmo que apareça algum espaço inesperado no futuro, nunca mais aparece uma faixa clara/bege, e sim a cor certa por trás de tudo.
+
+## Verificação
+
+- Testar o arrasto na tela da pergunta: confirmar que só o card se move (a barra de modos "Aleatória/Escrever" fica parada), e que arrastar pra qualquer lado sempre troca a pergunta, independente de onde no card o dedo tocou primeiro (desde que não seja em cima do botão de favoritar).
+- Tocar em "Escrever" e abrir o teclado: confirmar que o menu de baixo desaparece enquanto o teclado está aberto, e que não aparece nenhuma faixa de cor clara em lugar nenhum da tela.
+- Fechar o teclado: confirmar que o menu de baixo volta a aparecer normalmente.

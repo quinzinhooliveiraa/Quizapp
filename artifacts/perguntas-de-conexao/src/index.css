@@ -1123,7 +1123,7 @@
 /* Perguntas de Conexão — a warm editorial card-deck */
 :root { --ink: #432631; --wine: #712f45; --salmon: #e58a6b; --cream: #f4efe5; --paper: #fbf8f1; --sage: #aebba0; }
 html { scroll-behavior: smooth; }
-body { background: var(--cream); color: var(--ink); }
+body { background: #090a14; color: var(--ink); }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { font: inherit; }
 a { color: inherit; text-decoration: none; }
@@ -3072,18 +3072,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   flex-direction: column;
   align-items: stretch;
   gap: .38rem;
-  --question-stack-y: 0px;
-  touch-action: pan-y;
-  transform: translate3d(var(--question-drag-offset, 0px), var(--question-stack-y), 0);
-  transition: transform .24s cubic-bezier(.22, .85, .35, 1);
-}
-
-.question-card-stack.is-dragging {
-  transition: none;
 }
 
 .question-view-stage.has-invite-prompt .question-card-stack {
-  --question-stack-y: -.42rem;
+  transform: translateY(-.42rem);
 }
 
 .invite-prompt-card {
@@ -3174,6 +3166,13 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   min-height: 0;
   aspect-ratio: auto;
   padding: clamp(.95rem, 4vw, 1.25rem);
+  touch-action: pan-y;
+  transform: translate3d(var(--question-drag-offset, 0px), 0, 0);
+  transition: transform .24s cubic-bezier(.22, .85, .35, 1);
+}
+
+.question-card.is-dragging {
+  transition: none;
 }
 
 .question-card-copy {
@@ -3273,6 +3272,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   padding: 0 .12rem;
   font-size: clamp(.57rem, 2.7vw, .73rem);
   white-space: nowrap;
+}
+
+.connection-app.is-writing-mode .app-bottom-nav {
+  display: none;
 }
 
 @media (min-width: 700px) {
@@ -3528,7 +3531,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   }
 
   .question-view-stage.has-invite-prompt .question-card-stack {
-    --question-stack-y: -.25rem;
+    transform: translateY(-.25rem);
   }
 
   .invite-prompt-card {
