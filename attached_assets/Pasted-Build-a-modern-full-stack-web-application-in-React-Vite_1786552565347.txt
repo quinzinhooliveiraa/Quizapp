@@ -1,0 +1,40 @@
+Build a modern, full-stack web application in React (Vite/Next.js) with Tailwind CSS, Framer Motion, and Lucide React icons, replicating the exact UI and behavior of a relationship/conversation card deck app (like "Get Our Time").
+
+### 1. Theme & Global Layout
+- **Background**: Dark ambient theme with deep purple/dark grey background (`#0A090F` to `#12101A`).
+- **Header**: Centered header with subtle title "Discover something new" and brand logo at top-left.
+- **Mobile-first & Responsive**: Centered mobile viewport layout on desktop, full-width on mobile devices.
+
+### 2. Core Component: Interactive Card Deck Carousel (Coverflow Snap Effect)
+- **Component Style**: Horizontal smooth snap carousel displaying a series of romantic/conversation theme cards.
+- **Focus Dynamics (Framer Motion / Embla / Swiper)**:
+  - **Center Card**: `scale(1.05)`, `opacity: 1`, elevated `z-index`, deep drop shadow (`shadow-2xl`).
+  - **Side/Inactive Cards**: `scale(0.85)`, `opacity: 0.5`, slightly shifted under/over adjacent cards.
+  - **Transition**: Smooth spring animation on swipe/drag/scroll (`type: "spring", stiffness: 300, damping: 30`).
+
+### 3. Card Item Anatomy & Styling
+- **Card Container**: Rounded corners (`border-radius: 20px` / `rounded-2xl`), fixed aspect ratio (~3:4).
+- **Media Background**: Full-bleed cover image with a dark linear gradient overlay at the bottom (`bg-gradient-to-t from-black/90 via-black/40 to-transparent`).
+- **Top Actions**: Interactive Heart icon at top-right with toggle state (favorite/like).
+- **Bottom Typography**:
+  - **Title**: Bold white text (`text-xl font-bold`, e.g., "Safe Place", "Ride or Die", "Open Book", "Good Trouble").
+  - **Subtitle/Tagline**: Muted gray/white text (`text-sm text-gray-300`, e.g., "The kind of conversation that feels like home.").
+
+### 4. Custom Deck Cards (e.g. "Joe's cards")
+- Support a non-photo card visual style with a subtle mesh/gradient background, card title, subtitle showing card count badge (e.g., "36 cards"), and a top-right context menu icon (three dots).
+
+### 5. Sample Data Array
+Include realistic demo card data:
+1. "Safe Place" - "The kind of conversation that feels like home."
+2. "Ride or Die" - "Celebrate what makes you a team."
+3. "Open Book" - "Ask freely. Answer honestly."
+4. "Into You" - "A little flirting never hurts."
+5. "Good Trouble" - "Where it gets real, if you're both ready."
+6. "Glad It's You" - "The things you love but rarely say."
+7. "Feel Closer" - "Warm up the space between you."
+8. "Didn't See That Coming" - "Surprises you didn't know were in there."
+9. "Destination: Unknown" - "Your next chapter, talked through."
+10. "Day Dreams" - "Out loud, the life you both want."
+11. "Joe's cards" - "36 cards" (Custom gradient style card)
+
+Ensure smooth touch drag, key navigation, and high visual polish matching modern iOS app designs.
