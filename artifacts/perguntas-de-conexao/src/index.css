@@ -3570,3 +3570,116 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     top: .12rem;
   }
 }
+
+.access-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #f7f1ed;
+}
+
+.access-gate {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  color: #332a32;
+  font: 500 .72rem var(--app-font-mono, monospace);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.access-gate-mark {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #f7f1ed;
+  background: #ff3c00;
+  animation: access-gate-pulse 1.6s ease-in-out infinite;
+}
+
+.access-gate p {
+  margin: 0;
+}
+
+@keyframes access-gate-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(.9); }
+}
+
+.app-install-prompt {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: .7rem .65rem;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: .85rem .9rem;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 1.1rem;
+  color: #f9f3f5;
+  background: rgba(31, 23, 35, .96);
+  box-shadow: 0 1rem 3rem rgba(8, 4, 12, .3);
+  backdrop-filter: blur(18px);
+}
+
+.app-install-icon {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: .75rem;
+  color: #1f1723;
+  background: #f8af92;
+}
+
+.app-install-copy {
+  display: grid;
+  gap: .22rem;
+  min-width: 0;
+}
+
+.app-install-copy strong {
+  color: #fff6f2;
+  font: 600 .82rem var(--app-font-sans, sans-serif);
+}
+
+.app-install-copy small {
+  color: #cdbfc7;
+  font: .66rem/1.35 var(--app-font-sans, sans-serif);
+}
+
+.app-install-action,
+.app-install-dismiss {
+  min-height: 2rem;
+  border: 0;
+  border-radius: .6rem;
+  padding: 0 .72rem;
+  cursor: pointer;
+  font: 600 .62rem var(--app-font-mono, monospace);
+}
+
+.app-install-action {
+  color: #271c28;
+  background: #f8af92;
+}
+
+.app-install-dismiss {
+  justify-self: end;
+  color: #bcaeb8;
+  background: transparent;
+}
+
+@media (max-width: 520px) {
+  .app-install-prompt {
+    right: .75rem;
+    bottom: .75rem;
+    width: calc(100vw - 1.5rem);
+  }
+}

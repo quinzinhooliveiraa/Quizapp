@@ -1,0 +1,34 @@
+# Instrução para o agente do Replit — pular a página de vendas para quem já tem acesso + instalar só o app
+
+Hoje o projeto é um site só, com rotas internas: `/` (página de vendas, componente `Home`), `/onboarding`, `/app` (o aplicativo, `AppExperienceReference`), `/invite/:token` (`InvitePage`) — tudo definido em `artifacts/perguntas-de-conexao/src/App.tsx`, função `Router` (linha ~373-374). Não existe ainda nenhum `manifest.json` nem service worker no projeto.
+
+O pedido tem duas partes:
+
+## 1. Quem já tem acesso não deve ver a página de vendas de novo
+
+Hoje o comprador/convidado já tem uma sessão salva no navegador (`localStorage`, chaves usadas em `App.tsx` como `conexao-name`/`conexao-session`). Usar essa mesma sessão para pular a venda:
+
+- Na rota `/` (componente `Home`), antes de renderizar a página de vendas, checar se já existe uma sessão local válida (comprador ou convidado).
+- Se existir, redirecionar automaticamente para `/app` (usar o `useLocation`/navegação do wouter, sem precisar de nada no servidor).
+- Se não existir sessão, mostrar a página de vendas normalmente.
+- Isso vale tanto pra quem chega direto no domínio quanto pra quem eventualmente clica num link antigo da página de vendas já tendo comprado.
+
+## 2. Um atalho na tela inicial do celular que abre direto no app, sem passar pela venda
+
+Isso é o padrão "instalar como PWA" (Progressive Web App) — adicionar um ícone na tela inicial que abre direto num endereço específico, sem depender de domínio separado.
+
+- Criar um `manifest.json` (na pasta pública do `perguntas-de-conexao`) com: nome do app, ícones (pelo menos 192x192 e 512x512, usando a identidade visual já definida no onboarding), `display: "standalone"`, e principalmente **`start_url` apontando para `/app`** (não para `/`).
+- Registrar um service worker mínimo (necessário pro Android/Chrome oferecer a instalação; no iPhone o "Adicionar à Tela de Início" funciona só com o manifest + as meta tags certas no `<head>`, mas não custa ter os dois).
+- Depois que a pessoa compra (ou entra como convidado) e chega no `/app`, mostrar um convite discreto na interface — algo como "Adicionar à tela de início" — explicando que assim ela abre o app direto na próxima vez, sem precisar guardar link nem passar pela página de vendas de novo.
+- Confirmar que abrir esse ícone instalado, mesmo depois de fechar o navegador e reabrir o celular, leva direto pro `/app` (usando o `start_url` do manifest) — e, combinado com o item 1, se a sessão local ainda for válida, a pessoa cai direto na experiência do app.
+
+## O que não fazer agora
+
+- Não é necessário separar em dois domínios/subdomínios ainda — isso fica pra quando entrarmos na fase de framework/infraestrutura, se decidirem que vale a pena.
+- Não depende de conta de verdade nem banco de dados — só da sessão que já existe no navegador.
+
+## Verificação
+
+- Simular um comprador com sessão salva acessando `/`: deve cair direto em `/app`, sem ver a página de vendas.
+- Simular alguém sem sessão acessando `/`: deve ver a página de vendas normalmente.
+- No celular (ou no modo de emulação do navegador), conferir que aparece a opção de instalar/adicionar à tela de início a partir do `/app`, e que o ícone instalado abre direto no app.

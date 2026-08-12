@@ -1,1 +1,2 @@
 - [External checkout access](external-checkout-access.md) — keep payment-provider wiring deferred while preserving package-based buyer and guest permissions.
+- [Perguntas preview workflow](pwa-preview-workflow.md) — the root preview uses the existing named workflow; the duplicate artifact web workflow conflicts on the same port.

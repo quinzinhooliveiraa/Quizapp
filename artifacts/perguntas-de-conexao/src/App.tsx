@@ -17,7 +17,7 @@ import {
   getGetInviteQueryKey,
   useReceiveCheckoutWebhook,
 } from '@workspace/api-client-react';
-import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Feather, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Users, X } from 'lucide-react';
+import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Users, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
@@ -59,6 +59,85 @@ function Shell({ children, dark = false }: { children: ReactNode; dark?: boolean
   </div>;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
+function isStandaloneApp() {
+  return window.matchMedia?.('(display-mode: standalone)').matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+}
+
+function InstallAppPrompt() {
+  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+
+  useEffect(() => {
+    if (isStandaloneApp() || localStorage.getItem('conexao-install-dismissed') === 'true') return;
+
+    const iosDevice = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    setIsIos(iosDevice);
+    if (iosDevice) setVisible(true);
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallEvent(event as BeforeInstallPromptEvent);
+      setVisible(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const dismiss = () => {
+    localStorage.setItem('conexao-install-dismissed', 'true');
+    setVisible(false);
+  };
+
+  const install = async () => {
+    if (isIos || !installEvent) return;
+    await installEvent.prompt();
+    const choice = await installEvent.userChoice;
+    if (choice.outcome === 'accepted') setVisible(false);
+    setInstallEvent(null);
+  };
+
+  if (!visible) return null;
+
+  return <aside className="app-install-prompt" data-testid="card-install-app">
+    <div className="app-install-icon"><Download size={17} /></div>
+    <div className="app-install-copy">
+      <strong>Abra direto no app</strong>
+      {isIos ? <small>Toque em Compartilhar e depois em “Adicionar à Tela de Início”.</small> : <small>Adicione à tela de início para voltar sem passar pela página de vendas.</small>}
+    </div>
+    {!isIos && <button onClick={install} className="app-install-action" data-testid="button-install-app">Adicionar</button>}
+    <button onClick={dismiss} className="app-install-dismiss" aria-label="Fechar convite de instalação" data-testid="button-dismiss-install">Agora não</button>
+  </aside>;
+}
+
+function StoredAccessGate() {
+  const [, navigate] = useLocation();
+  const storedSessionId = localStorage.getItem('conexao-session')?.trim() || '';
+  const storedGuestToken = localStorage.getItem('conexao-guest-token')?.trim() || '';
+  const sessionQuery = useGetQuestionSession(storedSessionId, { query: { enabled: !!storedSessionId, queryKey: getGetQuestionSessionQueryKey(storedSessionId) } });
+  const guestQuery = useGetInvite(storedGuestToken, { query: { enabled: !!storedGuestToken, queryKey: getGetInviteQueryKey(storedGuestToken) } });
+  const hasStoredAccess = !!storedSessionId || !!storedGuestToken;
+  const isChecking = (storedSessionId && sessionQuery.isPending) || (storedGuestToken && guestQuery.isPending);
+
+  useEffect(() => {
+    if ((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)) {
+      navigate('/app', { replace: true });
+    }
+  }, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
+
+  if (!hasStoredAccess || (!isChecking && !((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)))) {
+    return null;
+  }
+
+  return <div className="access-gate-overlay" role="status" aria-live="polite"><div className="access-gate"><span className="access-gate-mark"><Feather size={18} /></span><p>Abrindo seu espaço de conexão…</p></div></div>;
+}
+
 function Home() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<'couple' | 'family'>('couple');
@@ -68,6 +147,7 @@ function Home() {
     receiveWebhook.mutate({ data: { eventId: `demo-${Date.now()}`, eventType: 'payment.completed', buyerEmail: 'demo@conexao.local', buyerName: 'Visitante', packageId: selectedPackage, paymentReference: 'demo-access' } }, { onSuccess: () => setCheckoutState('sent'), onError: () => setCheckoutState('sent') });
   };
   return <Shell>
+    <StoredAccessGate />
     <main>
       <section className="hero">
         <div className="hero-copy">
@@ -446,6 +526,7 @@ function AppExperienceReference() {
         {navItems.map(item => <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => setActiveNav(item.id)} data-testid={`button-nav-${item.id}`}><span className={`nav-dot nav-dot-${item.id}`} />{item.label}</button>)}
       </nav>
     </main>
+    <InstallAppPrompt />
     {welcomeOpen && <div className="app-modal-backdrop"><div className="app-modal welcome-app-modal"><button className="app-modal-close" onClick={() => setWelcomeOpen(false)} aria-label="Fechar apresentação" data-testid="button-close-welcome"><X size={18} /></button><div className="welcome-app-mark"><Feather size={19} /></div><p className="modal-eyebrow">antes da primeira carta</p><h2>Como podemos<br /><em>te chamar?</em></h2><p>É só para deixar este espaço um pouco mais seu. Você pode entrar sem preencher nada.</p><input value={buyerName} onChange={e => setBuyerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && startSession()} placeholder="Seu nome" className="app-text-input" data-testid="input-buyer-name" /><button onClick={startSession} className="app-primary-button" data-testid="button-enter-experience">{createSession.isPending ? 'Abrindo seu espaço…' : 'Entrar na experiência'} <ArrowRight size={16} /></button></div></div>}
     {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{buyerName || 'Visitante'}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button></div></div>}
     {inviteOpen && <div className="app-modal-backdrop"><div className="app-modal invite-app-modal"><button className="app-modal-close" onClick={() => setInviteOpen(false)} aria-label="Fechar convite" data-testid="button-close-invite"><X size={18} /></button>{inviteResult ? <><div className="invite-success-mark"><Check size={21} /></div><p className="modal-eyebrow">convite pronto</p><h2>Leve essa pergunta<br /><em>para mais perto.</em></h2><p>Compartilhe este endereço com <strong>{inviteResult.guestName}</strong>.</p><div className="invite-copy-row"><input readOnly value={inviteResult.inviteUrl} className="app-text-input" data-testid="input-invite-url" /><button onClick={copyInvite} aria-label="Copiar convite" data-testid="button-copy-invite"><Copy size={17} /></button></div><button onClick={() => { setInviteResult(null); setGuestName(''); }} className="app-text-button" data-testid="button-new-invite">Criar outro convite <ArrowRight size={15} /></button></> : <><p className="modal-eyebrow">um convite especial</p><h2>Quem você quer<br /><em>trazer para a conversa?</em></h2><input value={guestName} onChange={e => setGuestName(e.target.value)} className="app-text-input" placeholder="Nome de quem vai receber" data-testid="input-guest-name" /><button onClick={makeInvite} className="app-primary-button" disabled={!guestName.trim() || createInvite.isPending || (!!sessionId && !canInvite)} data-testid="button-create-invite">{createInvite.isPending ? 'Criando convite…' : canInvite || !sessionId ? 'Gerar convite' : 'Sem convites disponíveis'} <LinkIcon size={16} /></button>{createInvite.isError && <p className="app-form-error" data-testid="status-invite-error">Não foi possível gerar agora. Tente novamente.</p>}</>}</div></div>}
@@ -456,7 +537,14 @@ function AppExperienceReference() {
   const { token = '' } = useParams<{ token: string }>();
   const inviteQuery = useGetInvite(token, { query: { enabled: !!token, queryKey: getGetInviteQueryKey(token) } });
   const invite = inviteQuery.data;
-  return <Shell dark><main className="invite-entry"><div className="invite-entry-orbit" /><div className="invite-entry-card">{inviteQuery.isLoading ? <><div className="skeleton-line short" /><div className="skeleton-line wide" /><div className="skeleton-line" /></> : invite ? <><div className="invite-symbol"><Feather size={23} /></div><p className="section-kicker light-kicker">um convite para você</p><h1><em>{invite.guestName}</em>, tem uma<br />conversa te esperando.</h1><p className="invite-entry-copy">Você foi convidado para participar de <strong>{invite.packageName}</strong>. Aqui, convidados podem responder e descobrir — só não podem criar novos convites.</p><Link href="/app" className="button button-salmon" data-testid="link-accept-invite">Aceitar convite <ArrowRight size={16} /></Link><span className="guest-note"><Users size={14} /> Você entra como convidado</span></> : <><div className="invite-symbol"><X size={23} /></div><p className="section-kicker light-kicker">convite não encontrado</p><h1>Este endereço<br /><em>já mudou de lugar.</em></h1><p className="invite-entry-copy">Peça a quem te convidou para enviar um novo acesso.</p><Link href="/app" className="button button-salmon" data-testid="link-open-demo">Conhecer a experiência <ArrowRight size={16} /></Link></>}</div></main></Shell>;
+  const acceptInvite = () => {
+    if (invite && token) {
+      localStorage.setItem('conexao-guest-token', token);
+      localStorage.setItem('conexao-guest-name', invite.guestName);
+      localStorage.setItem('conexao-name', invite.guestName);
+    }
+  };
+  return <Shell dark><main className="invite-entry"><div className="invite-entry-orbit" /><div className="invite-entry-card">{inviteQuery.isLoading ? <><div className="skeleton-line short" /><div className="skeleton-line wide" /><div className="skeleton-line" /></> : invite ? <><div className="invite-symbol"><Feather size={23} /></div><p className="section-kicker light-kicker">um convite para você</p><h1><em>{invite.guestName}</em>, tem uma<br />conversa te esperando.</h1><p className="invite-entry-copy">Você foi convidado para participar de <strong>{invite.packageName}</strong>. Aqui, convidados podem responder e descobrir — só não podem criar novos convites.</p><Link href="/app" onClick={acceptInvite} className="button button-salmon" data-testid="link-accept-invite">Aceitar convite <ArrowRight size={16} /></Link><span className="guest-note"><Users size={14} /> Você entra como convidado</span></> : <><div className="invite-symbol"><X size={23} /></div><p className="section-kicker light-kicker">convite não encontrado</p><h1>Este endereço<br /><em>já mudou de lugar.</em></h1><p className="invite-entry-copy">Peça a quem te convidou para enviar um novo acesso.</p><Link href="/app" className="button button-salmon" data-testid="link-open-demo">Conhecer a experiência <ArrowRight size={16} /></Link></>}</div></main></Shell>;
 }
 
  function Router() {
