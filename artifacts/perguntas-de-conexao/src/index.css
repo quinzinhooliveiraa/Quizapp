@@ -3056,7 +3056,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   height: auto;
   flex: 1 1 auto;
   align-items: center;
-  margin-top: .55rem;
+  margin-top: .2rem;
 }
 
 .question-card {
@@ -3286,16 +3286,9 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 .deck-home-subtitle {
   max-width: 18rem;
-  margin: .5rem auto 0;
+  margin: .4rem auto 0;
   font-size: clamp(.64rem, 2.35vw, .75rem);
   line-height: 1.32;
-}
-
-.deck-home .deck-eyebrow {
-  margin-bottom: .55rem;
-  color: rgba(230,221,237,.48);
-  font-size: .55rem;
-  letter-spacing: .12em;
 }
 
 .deck-note {
@@ -3342,5 +3335,19 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
   .question-card-copy p {
     font-size: clamp(1.37rem, 7.2vw, 1.85rem);
+  }
+}
+
+@media (min-width: 381px) and (max-width: 699px) {
+  .theme-carousel-wrap {
+    margin-top: .2rem;
+  }
+
+  .theme-carousel {
+    transform: translateY(-1rem);
+  }
+
+  .question-view-stage {
+    align-items: flex-start;
   }
 }

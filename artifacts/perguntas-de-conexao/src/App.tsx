@@ -37,22 +37,6 @@ const fallbackQuestions = [
   { id: 'q-5', themeId: 'memorias', text: 'Que conversa do passado ainda merece uma segunda chance?', intensity: 'honest' as const },
   { id: 'q-6', themeId: 'amanha', text: 'Que vida parece possível quando você imagina que estamos do mesmo lado?', intensity: 'deep' as const },
 ];
-const deckThemeCopy = [
-  { title: 'Começar de verdade', description: 'Para chegar inteiro à conversa e perceber o que existe entre vocês.' },
-  { title: 'Descobrir algo novo', description: 'Para olhar de novo para histórias, gestos e partes que ainda surpreendem.' },
-  { title: 'Imaginar o que vem', description: 'Para falar do futuro que vocês desejam construir, com calma e curiosidade.' },
-];
-
-function getDeckThemeCopy(theme: { id?: string; title?: string; description?: string } | undefined, index: number) {
-  if (!theme) return deckThemeCopy[0];
-  const copyById: Record<string, typeof deckThemeCopy[number]> = {
-    presenca: deckThemeCopy[0],
-    memorias: deckThemeCopy[1],
-    amanha: deckThemeCopy[2],
-  };
-  return copyById[theme.id || ''] || deckThemeCopy[index % deckThemeCopy.length] || { title: theme.title || 'Uma conversa por vez', description: theme.description || 'Escolha uma pergunta para abrir espaço entre vocês.' };
-}
-
 function Logo({ inverse = false }: { inverse?: boolean }) {
   return <Link href="/" data-testid="link-logo" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`}><span className="brand-symbol"><Feather size={18} strokeWidth={1.6} /></span><span>Perguntas<br /><i>de Conexão</i></span></Link>;
 }
@@ -274,8 +258,6 @@ function AppExperienceReference() {
   const inviteLimit = sessionQuery.data?.inviteLimit ?? accessQuery.data?.invitesLimit ?? 0;
   const invitesUsed = sessionQuery.data?.invitesUsed ?? accessQuery.data?.invitesUsed ?? 0;
   const selectedTheme = themes.find(theme => theme.id === themeId);
-  const selectedDeckTheme = themes[themeIndex] || themes[0];
-  const selectedDeckCopy = getDeckThemeCopy(selectedDeckTheme, themeIndex);
   const dailyTotal = selectedTheme?.count || questions.length || 1;
   const dailyPosition = questions.length ? (questionIndex % questions.length) + 1 : 1;
 
@@ -327,7 +309,7 @@ function AppExperienceReference() {
           <button className="app-icon-button" onClick={() => setSettingsOpen(true)} aria-label="Abrir ajustes" data-testid="button-open-settings"><Settings2 size={21} /></button>
         </header>
         <section className="deck-home" aria-labelledby="deck-home-title">
-           <div className="deck-home-heading"><p className="deck-eyebrow">Escolha um objetivo pra começar</p><h1 id="deck-home-title" data-testid="text-deck-title">{selectedDeckCopy.title}</h1><p className="deck-home-subtitle">{selectedDeckCopy.description}</p></div>
+           <div className="deck-home-heading"><h1 id="deck-home-title" data-testid="text-deck-title">Escolha um objetivo pra começar</h1><p className="deck-home-subtitle">Por exemplo, descobrir algo novo, imaginar o que vem</p></div>
           <div className="theme-carousel-wrap">
             <div className="theme-carousel" aria-label="Objetivos de conexão">
               {themesLoading && <div className="theme-skeleton" data-testid="loading-themes" />}
