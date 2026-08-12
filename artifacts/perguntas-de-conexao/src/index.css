@@ -3242,16 +3242,21 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 }
 
 .question-card-top {
-  order: 3;
+  order: 0;
   width: 100%;
-  margin-top: auto;
-  padding-top: .75rem;
+  margin-top: 0;
+  padding: 0 0 .75rem;
+  border-bottom: 1px solid rgba(255,255,255,.2);
 }
 
 .question-card-copy {
   order: 1;
+  min-height: 0;
   margin: 0;
-  padding-top: .4rem;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .question-response {
@@ -3261,6 +3266,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 .question-card-foot {
   order: 4;
+  border-top: 0;
+  padding-top: 0;
 }
 
 .question-card-copy p {
@@ -3275,6 +3282,17 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .theme-cover {
   width: var(--theme-card-width, min(74vw, 20.7rem));
   height: var(--theme-card-height, min(99vw, 27.6rem));
+}
+
+.question-card-top > span {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: rgba(255,255,255,.72);
+  background: transparent;
+  font: .56rem var(--app-font-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .deck-home h1 {
@@ -3348,6 +3366,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   }
 
   .question-view-stage {
-    align-items: flex-start;
+    align-items: center;
+  }
+
+  .question-mode-bar {
+    margin-top: clamp(1.35rem, 7vh, 3rem);
   }
 }
