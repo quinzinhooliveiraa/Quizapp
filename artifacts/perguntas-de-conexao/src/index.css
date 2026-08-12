@@ -3074,6 +3074,92 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   gap: .38rem;
 }
 
+.question-view-stage.has-invite-prompt .question-card-stack {
+  transform: translateY(-.42rem);
+}
+
+.invite-prompt-card {
+  width: var(--question-card-width, min(88vw, 24rem));
+  min-height: 4.45rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .62rem;
+  margin-top: .08rem;
+  padding: .62rem .68rem;
+  border: 1px solid rgba(183,156,255,.22);
+  border-radius: .85rem;
+  background: linear-gradient(135deg, rgba(47,38,78,.72), rgba(24,21,40,.82));
+  box-shadow: 0 .7rem 1.6rem rgba(0,0,0,.18);
+  animation: card-rise .3s ease both;
+}
+
+.invite-prompt-icon {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #19152b;
+  background: #ae8bff;
+}
+
+.invite-prompt-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .14rem;
+}
+
+.invite-prompt-copy span {
+  color: #b99aff;
+  font: .5rem var(--app-font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.invite-prompt-copy strong {
+  overflow: hidden;
+  color: rgba(255,255,255,.92);
+  font-size: .78rem;
+  font-weight: 500;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invite-prompt-copy small {
+  overflow: hidden;
+  color: rgba(255,255,255,.46);
+  font-size: .58rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invite-prompt-action {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+  min-height: 1.9rem;
+  padding: 0 .62rem;
+  border: 1px solid rgba(185,154,255,.24);
+  border-radius: 999px;
+  color: #f7f2ff;
+  background: rgba(137,101,221,.55);
+  font: .55rem var(--app-font-mono);
+  letter-spacing: .04em;
+  white-space: nowrap;
+  transition: transform .2s ease, background .2s ease;
+}
+
+.invite-prompt-action:hover,
+.invite-prompt-action:focus-visible {
+  background: rgba(154,119,240,.72);
+  outline: none;
+  transform: translateY(-1px);
+}
+
 .question-card {
   width: 100%;
   height: var(--question-card-height, min(117vw, 32rem));

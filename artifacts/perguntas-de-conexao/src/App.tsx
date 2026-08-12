@@ -264,6 +264,7 @@ function AppExperienceReference() {
   const canInvite = sessionQuery.data ? sessionQuery.data.invitesUsed < sessionQuery.data.inviteLimit : !!accessQuery.data?.canInvite;
   const inviteLimit = sessionQuery.data?.inviteLimit ?? accessQuery.data?.invitesLimit ?? 0;
   const invitesUsed = sessionQuery.data?.invitesUsed ?? accessQuery.data?.invitesUsed ?? 0;
+  const showInvitePrompt = !!themeId && !!sessionId && invitesUsed === 0 && canInvite && !inviteResult;
   const selectedTheme = themes.find(theme => theme.id === themeId);
   const dailyTotal = selectedTheme?.count || questions.length || 1;
   const dailyPosition = questions.length ? (questionIndex % questions.length) + 1 : 1;
@@ -413,7 +414,7 @@ function AppExperienceReference() {
           <button className="decks-back-pill" onClick={() => setThemeId(null)} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
-        <section className="question-view-stage">
+        <section className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>
           <div className="question-card-stack">
             <div className="question-mode-bar" aria-label="Modo da carta">
               <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
@@ -428,6 +429,15 @@ function AppExperienceReference() {
                <button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => setSaved(s => s.includes(currentQuestion.id) ? s.filter(id => id !== currentQuestion.id) : [...s, currentQuestion.id])} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button>
             </article>}
           </div>
+           {showInvitePrompt && <aside className="invite-prompt-card" aria-labelledby="invite-prompt-title" data-testid="card-invite-prompt">
+             <div className="invite-prompt-icon"><Users size={16} /></div>
+             <div className="invite-prompt-copy">
+               <span>traga alguém</span>
+               <strong id="invite-prompt-title">Uma pergunta fica melhor com outra pessoa.</strong>
+               <small>Convide alguém para jogar com você.</small>
+             </div>
+             <button className="invite-prompt-action" onClick={() => setInviteOpen(true)} data-testid="button-open-invite-prompt">Convidar <Send size={14} /></button>
+           </aside>}
           {currentQuestion && <div className="question-side-nav"><button onClick={previousQuestion} aria-label="Pergunta anterior" data-testid="button-previous-question"><ChevronLeft size={19} /></button><button onClick={nextQuestion} aria-label="Próxima pergunta" data-testid="button-next-question"><ChevronRight size={19} /></button></div>}
         </section>
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>
