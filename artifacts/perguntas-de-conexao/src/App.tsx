@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -17,7 +17,7 @@ import {
   getGetInviteQueryKey,
   useReceiveCheckoutWebhook,
 } from '@workspace/api-client-react';
-import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Feather, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Sparkles, Users, X } from 'lucide-react';
+import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Feather, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Users, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
@@ -117,6 +117,34 @@ function AccessPill({ access }: { access: any }) {
   return <div className="access-pill" data-testid="status-access"><span className="access-dot" />{access?.hasAccess ? `${access.packageName || 'Acesso ativo'}` : 'Modo demonstração'}</div>;
 }
 
+function useDeviceViewport() {
+  useEffect(() => {
+    const updateViewport = () => {
+      const width = Math.max(document.documentElement.clientWidth, 1);
+      const height = Math.max(window.visualViewport?.height || window.innerHeight, 1);
+      const availableCardHeight = Math.max(260, height - 202);
+      const cardWidth = Math.min(width * 0.88, 384, availableCardHeight * 0.75);
+
+      document.documentElement.style.setProperty('--device-width', `${width}px`);
+      document.documentElement.style.setProperty('--device-height', `${height}px`);
+      document.documentElement.style.setProperty('--device-vh', `${height * 0.01}px`);
+      document.documentElement.style.setProperty('--question-card-width', `${cardWidth}px`);
+      document.documentElement.style.setProperty('--question-card-height', `${cardWidth * 4 / 3}px`);
+    };
+
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    window.addEventListener('orientationchange', updateViewport);
+    window.visualViewport?.addEventListener('resize', updateViewport);
+
+    return () => {
+      window.removeEventListener('resize', updateViewport);
+      window.removeEventListener('orientationchange', updateViewport);
+      window.visualViewport?.removeEventListener('resize', updateViewport);
+    };
+  }, []);
+}
+
 function AppExperience() {
   const queryClientRef = useQueryClient();
   const { data: themesData, isLoading: themesLoading, isError: themesError } = useListQuestionThemes({ query: { queryKey: getListQuestionThemesQueryKey() } });
@@ -195,6 +223,7 @@ function AppExperience() {
 }
 
 function AppExperienceReference() {
+  useDeviceViewport();
   const queryClientRef = useQueryClient();
   const { data: themesData, isLoading: themesLoading, isError: themesError } = useListQuestionThemes({ query: { queryKey: getListQuestionThemesQueryKey() } });
   const themes = themesData?.length ? themesData : fallbackThemes;
@@ -203,6 +232,8 @@ function AppExperienceReference() {
   const [activeNav, setActiveNav] = useState('todos');
   const [saved, setSaved] = useState<string[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [writingOpen, setWritingOpen] = useState(false);
+  const [responses, setResponses] = useState<Record<string, string>>({});
   const [sessionId, setSessionId] = useState(() => localStorage.getItem('conexao-session') || '');
   const [welcomeOpen, setWelcomeOpen] = useState(!localStorage.getItem('conexao-name'));
   const [buyerName, setBuyerName] = useState(() => localStorage.getItem('conexao-name') || '');
@@ -233,7 +264,16 @@ function AppExperienceReference() {
   };
   const nextQuestion = () => setQuestionIndex(i => (i + 1) % Math.max(questions.length, 1));
   const previousQuestion = () => setQuestionIndex(i => (i - 1 + questions.length) % Math.max(questions.length, 1));
-  const toggleSaved = () => currentQuestion && setSaved(s => s.includes(currentQuestion.id) ? s.filter(id => id !== currentQuestion.id) : [...s, currentQuestion.id]);
+  const randomQuestion = () => {
+    if (questions.length < 2) return;
+    const currentIndex = questionIndex % questions.length;
+    const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
+    setQuestionIndex((currentIndex + randomOffset) % questions.length);
+  };
+  const currentResponse = currentQuestion ? responses[currentQuestion.id] || '' : '';
+  useEffect(() => {
+    setWritingOpen(false);
+  }, [currentQuestion?.id]);
   const startSession = () => {
     if (!buyerName.trim()) { setWelcomeOpen(false); return; }
     localStorage.setItem('conexao-name', buyerName.trim());
@@ -287,16 +327,17 @@ function AppExperienceReference() {
           <button className="decks-back-pill" onClick={() => setThemeId(null)} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
+        <div className="question-mode-bar" aria-label="Modo da carta">
+          <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={randomQuestion} aria-label="Mostrar uma pergunta aleatória" data-testid="button-random-question"><Shuffle size={13} /> Aleatória</button>
+          <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> Escrevendo</button>
+        </div>
         <section className="question-view-stage">
-          {questionsQuery.isLoading ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : questionsQuery.isError ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => questionsQuery.refetch()} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article key={currentQuestion.id} className={`question-card question-gradient-${questionIndex % 4}`} data-testid={`card-question-${currentQuestion.id}`}>
+          {questionsQuery.isLoading ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : questionsQuery.isError ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => questionsQuery.refetch()} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article key={currentQuestion.id} className={`question-card question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''}`} data-testid={`card-question-${currentQuestion.id}`}>
             <div className="question-card-grain" />
             <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong></div>
-            <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'A PARTE BOA'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
-            <div className="question-card-actions">
-              <button onClick={nextQuestion} aria-label="Passar pergunta" data-testid="button-pass-question"><X size={23} /></button>
-              <button onClick={toggleSaved} className={saved.includes(currentQuestion.id) ? 'is-saved' : ''} aria-label={saved.includes(currentQuestion.id) ? 'Remover pergunta salva' : 'Salvar pergunta para depois'} data-testid="button-save-question">{saved.includes(currentQuestion.id) ? <BookmarkCheck size={22} /> : <Bookmark size={22} />}</button>
-              <button onClick={() => setInviteOpen(true)} aria-label="Trazer alguém" data-testid="button-bring-someone"><Send size={22} /></button>
-            </div>
+             <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'A PARTE BOA'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
+             {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
+             <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
           </article>}
           {currentQuestion && <div className="question-side-nav"><button onClick={previousQuestion} aria-label="Pergunta anterior" data-testid="button-previous-question"><ChevronLeft size={19} /></button><button onClick={nextQuestion} aria-label="Próxima pergunta" data-testid="button-next-question"><ChevronRight size={19} /></button></div>}
         </section>
