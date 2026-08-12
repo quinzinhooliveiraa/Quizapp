@@ -17,7 +17,7 @@ import {
   getGetInviteQueryKey,
   useReceiveCheckoutWebhook,
 } from '@workspace/api-client-react';
-import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Feather, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Users, X } from 'lucide-react';
+import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Feather, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Users, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
@@ -236,6 +236,7 @@ function AppExperienceReference() {
   const [activeNav, setActiveNav] = useState('todos');
   const [saved, setSaved] = useState<string[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [randomMode, setRandomMode] = useState(true);
   const [writingOpen, setWritingOpen] = useState(false);
   const [responses, setResponses] = useState<Record<string, string>>({});
   const [sessionId, setSessionId] = useState(() => localStorage.getItem('conexao-session') || '');
@@ -266,14 +267,17 @@ function AppExperienceReference() {
     if (index === themeIndex) changeTheme(themes[index]?.id);
     else setThemeIndex(index);
   };
-  const nextQuestion = () => setQuestionIndex(i => (i + 1) % Math.max(questions.length, 1));
-  const previousQuestion = () => setQuestionIndex(i => (i - 1 + questions.length) % Math.max(questions.length, 1));
-  const randomQuestion = () => {
-    if (questions.length < 2) return;
-    const currentIndex = questionIndex % questions.length;
+  const nextQuestion = () => setQuestionIndex(i => {
+    if (!randomMode || questions.length < 2) return (i + 1) % Math.max(questions.length, 1);
     const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
-    setQuestionIndex((currentIndex + randomOffset) % questions.length);
-  };
+    return (i + randomOffset) % questions.length;
+  });
+  const previousQuestion = () => setQuestionIndex(i => {
+    if (!randomMode || questions.length < 2) return (i - 1 + questions.length) % Math.max(questions.length, 1);
+    const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
+    return (i + randomOffset) % questions.length;
+  });
+  const toggleQuestionMode = () => setRandomMode(mode => !mode);
   const currentResponse = currentQuestion ? responses[currentQuestion.id] || '' : '';
   useEffect(() => {
     setWritingOpen(false);
@@ -296,8 +300,8 @@ function AppExperienceReference() {
   const copyInvite = () => { if (inviteResult?.inviteUrl) navigator.clipboard?.writeText(inviteResult.inviteUrl); };
   const navItems = [
     { id: 'todos', label: 'Todos' },
-    { id: 'vibes', label: 'Vibes' },
-    { id: 'faíscas', label: 'Faíscas' },
+    { id: 'favoritos', label: 'Favoritos' },
+    { id: 'temas', label: 'Temas' },
     { id: 'eu', label: 'Eu' },
   ];
 
@@ -334,12 +338,12 @@ function AppExperienceReference() {
         <section className="question-view-stage">
           <div className="question-card-stack">
             <div className="question-mode-bar" aria-label="Modo da carta">
-              <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={randomQuestion} aria-label="Mostrar uma pergunta aleatória" data-testid="button-random-question"><Shuffle size={13} /> Aleatória</button>
-              <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> Escrever</button>
+              <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
+              <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> {writingOpen ? 'Escrevendo' : 'Escrever'}</button>
             </div>
             {questionsQuery.isLoading ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : questionsQuery.isError ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => questionsQuery.refetch()} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article key={currentQuestion.id} className={`question-card question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''}`} data-testid={`card-question-${currentQuestion.id}`}>
               <div className="question-card-grain" />
-              <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong></div>
+              <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><div className="question-card-brand-side"><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong><button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => setSaved(s => s.includes(currentQuestion.id) ? s.filter(id => id !== currentQuestion.id) : [...s, currentQuestion.id])} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button></div></div>
               <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
               {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
               <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>

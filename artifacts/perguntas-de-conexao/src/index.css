@@ -1653,6 +1653,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .nav-dot { width: .38rem; height: .38rem; border-radius: 50%; background: currentColor; opacity: .7; }
 .nav-dot-vibes { border-radius: .14rem; transform: rotate(45deg); }
 .nav-dot-faíscas { clip-path: polygon(50% 0, 63% 35%, 100% 50%, 63% 65%, 50% 100%, 37% 65%, 0 50%, 37% 35%); }
+.nav-dot-favoritos { width: .65rem; height: .65rem; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 94%, 50% 72%, 21% 94%, 32% 57%, 2% 35%, 39% 35%); }
+.nav-dot-temas { border-radius: .12rem; transform: rotate(45deg); }
 .nav-dot-eu { border: 1px solid currentColor; background: transparent; }
 
 .app-modal-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 1.2rem; background: rgba(5,5,11,.72); backdrop-filter: blur(15px); }
@@ -3066,7 +3068,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: .12rem;
+  gap: .38rem;
 }
 
 .question-card {
@@ -3216,6 +3218,9 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   border-radius: 0;
   background: transparent;
   backdrop-filter: none;
+  position: relative;
+  top: -.22rem;
+  margin-bottom: -.22rem;
 }
 
 .question-mode-button {
@@ -3257,6 +3262,40 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   margin-top: 0;
   padding: 0 0 .75rem;
   border-bottom: 1px solid rgba(255,255,255,.2);
+}
+
+.question-card-brand-side {
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+}
+
+.question-favorite-button {
+  width: 1.65rem;
+  height: 1.65rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 50%;
+  color: rgba(255,255,255,.62);
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease, transform .2s ease;
+}
+
+.question-favorite-button:hover,
+.question-favorite-button:focus-visible {
+  color: #fff;
+  background: rgba(255,255,255,.15);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.question-favorite-button.is-saved {
+  color: #ffd06f;
+  border-color: rgba(255,208,111,.5);
+  background: rgba(255,208,111,.14);
 }
 
 .question-card-copy {
@@ -3303,6 +3342,11 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   font: .56rem var(--app-font-mono);
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.question-card.is-writing {
+  filter: none;
+  opacity: 1;
 }
 
 .deck-home h1 {
