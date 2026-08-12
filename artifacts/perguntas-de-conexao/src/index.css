@@ -1687,3 +1687,925 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     display: none;
   }
 }
+
+/* Intentional choice ritual — plum night, lilac light, coral warmth. */
+:root {
+  --ritual-night: #151321;
+  --ritual-night-soft: #21182d;
+  --ritual-plum: #3b2444;
+  --ritual-violet: #9178df;
+  --ritual-lilac: #d2c5ff;
+  --ritual-coral: #ef9a7f;
+  --ritual-cream: #f7f0eb;
+  --ritual-muted: #a699ae;
+}
+
+.shell-dark:has(.ritual-app) {
+  background:
+    radial-gradient(circle at 52% 14%, rgba(107, 74, 144, .32), transparent 31rem),
+    radial-gradient(circle at 9% 70%, rgba(119, 64, 85, .18), transparent 26rem),
+    var(--ritual-night);
+  color: var(--ritual-cream);
+}
+
+.shell-dark:has(.ritual-app) .site-header {
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.shell-dark:has(.ritual-app) .site-footer {
+  background: transparent;
+  border-top-color: rgba(255, 255, 255, .08);
+}
+
+.ritual-app {
+  width: min(100%, 1280px);
+  min-height: calc(100dvh - 198px);
+  padding: 42px 34px 76px;
+  color: var(--ritual-cream);
+}
+
+.ritual-top {
+  margin-bottom: 42px;
+}
+
+.ritual-top h1 {
+  margin-top: 14px;
+  color: var(--ritual-cream);
+  font-size: clamp(46px, 5.2vw, 72px);
+}
+
+.ritual-top h1 em {
+  color: var(--ritual-lilac);
+}
+
+.ritual-label {
+  display: block;
+  color: #bfaee0;
+  font: 9px var(--app-font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.intention-gate {
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: minmax(240px, .75fr) minmax(500px, 1.25fr);
+  align-items: center;
+  gap: 44px;
+  padding: 24px 0 42px;
+  position: relative;
+}
+
+.intention-intro {
+  max-width: 355px;
+  padding-left: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.intention-intro:before {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 160px;
+  left: 0;
+  top: 4px;
+  background: linear-gradient(var(--ritual-coral), transparent);
+  opacity: .75;
+}
+
+.intention-intro h2 {
+  margin: 23px 0 24px;
+  font: 400 clamp(42px, 4.7vw, 67px)/.91 var(--app-font-serif);
+  letter-spacing: -.045em;
+}
+
+.intention-intro h2 em {
+  color: var(--ritual-coral);
+}
+
+.intention-intro > p:last-child {
+  max-width: 300px;
+  color: #b6a9bc;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.intention-wheel {
+  min-height: 560px;
+  position: relative;
+  isolation: isolate;
+}
+
+.intention-wheel:before {
+  content: "";
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(145, 120, 223, .18), rgba(88, 59, 104, .08) 52%, transparent 72%);
+  filter: blur(8px);
+  z-index: -2;
+}
+
+.wheel-ring {
+  position: absolute;
+  width: 355px;
+  height: 355px;
+  top: 50%;
+  left: 50%;
+  border: 1px solid rgba(210, 197, 255, .2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 22px rgba(210, 197, 255, .025), 0 0 0 46px rgba(210, 197, 255, .018);
+}
+
+.wheel-ring:before,
+.wheel-ring:after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: var(--ritual-coral);
+  box-shadow: 0 0 0 5px rgba(239, 154, 127, .1);
+}
+
+.wheel-ring:before {
+  width: 5px;
+  height: 5px;
+  top: 13px;
+  left: 50%;
+}
+
+.wheel-ring:after {
+  width: 4px;
+  height: 4px;
+  right: 28px;
+  bottom: 65px;
+  opacity: .7;
+}
+
+.wheel-core {
+  position: absolute;
+  width: 145px;
+  height: 145px;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(38, 27, 50, .92);
+  color: var(--ritual-cream);
+  font: 12px/1.1 var(--app-font-serif);
+  text-align: center;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .25);
+}
+
+.wheel-core em {
+  color: var(--ritual-lilac);
+  font-style: normal;
+}
+
+.wheel-core-mark {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  color: var(--ritual-coral);
+  border: 1px solid rgba(239, 154, 127, .55);
+  border-radius: 50%;
+}
+
+.intention-card {
+  position: absolute;
+  width: 184px;
+  min-height: 139px;
+  padding: 17px 18px 15px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 18px;
+  color: var(--ritual-cream);
+  background: linear-gradient(145deg, rgba(70, 46, 77, .94), rgba(29, 23, 39, .94));
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 20px 32px rgba(0, 0, 0, .2);
+  transition: transform .28s ease, opacity .28s ease;
+}
+
+.intention-card:hover,
+.intention-card:focus-visible {
+  border-color: rgba(210, 197, 255, .72);
+  transform: translateY(-7px) rotate(0deg) !important;
+  outline: none;
+}
+
+.intention-card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(210, 197, 255, .2), 0 20px 32px rgba(0, 0, 0, .2);
+}
+
+.intention-card strong {
+  display: block;
+  margin: 14px 0 6px;
+  font: 400 23px/.95 var(--app-font-serif);
+  letter-spacing: -.03em;
+}
+
+.intention-card small {
+  display: block;
+  min-height: 29px;
+  color: #b8aabd;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.intention-index,
+.intention-topics {
+  color: var(--ritual-coral);
+  font: 8px var(--app-font-mono);
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.intention-topics {
+  display: block;
+  margin-top: 12px;
+  color: var(--ritual-lilac);
+  opacity: .8;
+}
+
+.intention-card-0 { top: 8%; left: 49%; transform: translateX(-50%) rotate(3deg); }
+.intention-card-1 { left: 8%; bottom: 15%; transform: rotate(-8deg); }
+.intention-card-2 { right: 5%; bottom: 12%; transform: rotate(8deg); }
+.intention-card-3 { left: 5%; top: 19%; transform: rotate(-10deg); }
+.intention-card-4 { right: 5%; top: 18%; transform: rotate(9deg); }
+
+.wheel-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.wheel-loading span {
+  position: absolute;
+  width: 172px;
+  height: 129px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .08);
+  animation: ritual-pulse 1.35s ease-in-out infinite alternate;
+}
+
+.wheel-loading span:nth-child(1) { transform: translateY(-180px); }
+.wheel-loading span:nth-child(2) { transform: translate(-175px, 110px) rotate(-8deg); animation-delay: .16s; }
+.wheel-loading span:nth-child(3) { transform: translate(175px, 110px) rotate(8deg); animation-delay: .32s; }
+
+@keyframes ritual-pulse {
+  from { opacity: .42; }
+  to { opacity: .9; }
+}
+
+.intention-hint {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: -6px 0 0;
+  color: #958ba1;
+  font: 8px var(--app-font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.intention-hint svg { color: var(--ritual-coral); }
+
+.intention-error {
+  position: absolute;
+  left: 14px;
+  bottom: 22px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #c7aab2;
+  font-size: 10px;
+}
+
+.intention-error button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  color: var(--ritual-lilac);
+  background: none;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.ritual-deck-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: clamp(32px, 8vw, 120px);
+  align-items: start;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding-top: 10px;
+}
+
+.ritual-sidebar {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.change-intention {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  color: #9d91aa;
+  background: transparent;
+  cursor: pointer;
+  font: 8px var(--app-font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.change-intention:hover,
+.change-intention:focus-visible {
+  color: var(--ritual-lilac);
+  outline: none;
+}
+
+.selected-intention {
+  margin-top: 76px;
+}
+
+.selected-intention h2 {
+  margin: 15px 0 8px;
+  font: 400 36px/.92 var(--app-font-serif);
+  letter-spacing: -.04em;
+}
+
+.selected-intention p {
+  margin: 0;
+  color: #a99dad;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.daily-curation {
+  margin-top: 66px;
+  padding-top: 17px;
+  border-top: 1px solid rgba(255, 255, 255, .13);
+}
+
+.curation-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: #a99dad;
+  font: 8px var(--app-font-mono);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.curation-heading strong {
+  color: var(--ritual-lilac);
+  font-size: 14px;
+  letter-spacing: -.03em;
+}
+
+.curation-heading i {
+  color: #887d93;
+  font-style: normal;
+  font-size: 9px;
+}
+
+.curation-bar {
+  height: 3px;
+  margin: 13px 0 13px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .1);
+}
+
+.curation-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--ritual-violet), var(--ritual-coral));
+  transition: width .35s ease;
+}
+
+.daily-curation p {
+  margin: 0;
+  color: #887d93;
+  font: 10px/1.55 var(--app-font-serif);
+}
+
+.saved-summary {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 52px;
+  color: #9d91aa;
+  font: 9px/1.4 var(--app-font-mono);
+}
+
+.saved-summary svg { color: var(--ritual-coral); }
+
+.ritual-question-area {
+  min-width: 0;
+  width: min(100%, 590px);
+  margin: 0 auto;
+}
+
+.deck-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin: 0 0 14px;
+  color: #a99dad;
+}
+
+.deck-heading strong {
+  display: block;
+  margin-top: 9px;
+  color: var(--ritual-cream);
+  font: 400 23px var(--app-font-serif);
+}
+
+.deck-heading strong i {
+  color: #8c8194;
+  font: 10px var(--app-font-mono);
+  font-style: normal;
+}
+
+.deck-theme-dot {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  color: var(--ritual-lilac);
+  font: 9px var(--app-font-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.deck-theme-dot > span {
+  width: 6px;
+  height: 6px;
+  display: block;
+  border-radius: 50%;
+  background: var(--ritual-coral);
+  box-shadow: 0 0 0 4px rgba(239, 154, 127, .1);
+}
+
+.ritual-question-stage {
+  min-height: 510px;
+  display: flex;
+  justify-content: center;
+}
+
+.ritual-question-card {
+  width: 100%;
+  min-height: 510px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 27px 29px 28px;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 28px;
+  color: var(--ritual-cream);
+  background: linear-gradient(145deg, #633f68, #2c1e3d 66%, #1e1830);
+  box-shadow: 0 30px 58px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .1);
+  animation: ritual-card-in .46s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.ritual-question-card.intensity-gentle {
+  background: linear-gradient(145deg, #5b7a79, #314d58 70%, #203743);
+}
+
+.ritual-question-card.intensity-deep {
+  background: linear-gradient(145deg, #493363, #241b3b 64%, #19162a);
+}
+
+@keyframes ritual-card-in {
+  from { opacity: 0; transform: translateY(12px) rotate(.7deg); }
+  to { opacity: 1; transform: translateY(0) rotate(0); }
+}
+
+.ritual-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #cfbfe4;
+  font: 8px var(--app-font-mono);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.ritual-card-top button {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 50%;
+  color: var(--ritual-coral);
+  background: rgba(255, 255, 255, .06);
+  cursor: pointer;
+  transition: transform .2s ease, opacity .2s ease;
+}
+
+.ritual-card-top button:hover,
+.ritual-card-top button:focus-visible {
+  transform: scale(1.08);
+  outline: none;
+}
+
+.ritual-card-top button.is-saved {
+  color: var(--ritual-night);
+  background: var(--ritual-coral);
+  border-color: var(--ritual-coral);
+}
+
+.ritual-question-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 17px;
+  max-width: 530px;
+  margin: auto 0;
+}
+
+.ritual-question-copy > svg {
+  flex: 0 0 auto;
+  margin-top: 5px;
+  color: var(--ritual-coral);
+}
+
+.ritual-question-copy p {
+  margin: 0;
+  font: 400 clamp(36px, 4.7vw, 58px)/.93 var(--app-font-serif);
+  letter-spacing: -.047em;
+}
+
+.ritual-question-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 17px;
+}
+
+.ritual-nav-button {
+  border-color: rgba(255, 255, 255, .2);
+  color: var(--ritual-cream);
+  background: rgba(255, 255, 255, .06);
+}
+
+.ritual-nav-button:hover,
+.ritual-nav-button:focus-visible {
+  border-color: var(--ritual-lilac);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.ritual-next-button {
+  flex: 1;
+  min-height: 42px;
+  color: var(--ritual-night);
+  background: var(--ritual-coral);
+}
+
+.ritual-next-button:hover,
+.ritual-next-button:focus-visible {
+  background: #f6ad96;
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.ritual-save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  color: #b4a6b9;
+  background: none;
+  cursor: pointer;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.ritual-save-button:hover,
+.ritual-save-button:focus-visible,
+.ritual-save-button.is-saved {
+  color: var(--ritual-lilac);
+  outline: none;
+}
+
+.ritual-loading-card {
+  justify-content: center;
+  gap: 20px;
+  background: rgba(255, 255, 255, .08);
+}
+
+.ritual-loading-card .skeleton-line {
+  background: rgba(210, 197, 255, .22);
+}
+
+.ritual-empty-card {
+  width: 100%;
+  min-height: 510px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  border: 1px dashed rgba(210, 197, 255, .3);
+  border-radius: 28px;
+  color: #b7a9bb;
+  font-size: 12px;
+}
+
+.ritual-empty-card p { margin: 0; }
+
+.ritual-invite-panel {
+  width: min(100%, 1060px);
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  margin: 53px auto 0;
+  padding: 15px 19px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 19px;
+  background: rgba(255, 255, 255, .055);
+}
+
+.ritual-invite-panel .invite-icon {
+  width: 39px;
+  height: 39px;
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--ritual-night);
+  background: var(--ritual-coral);
+}
+
+.ritual-invite-panel .section-kicker {
+  margin: 0 0 5px;
+  color: #a99dad;
+}
+
+.ritual-invite-panel h3 {
+  margin: 0;
+  color: var(--ritual-cream);
+  font: 400 23px/.9 var(--app-font-serif);
+}
+
+.ritual-invite-panel .invite-copy {
+  margin: 0 auto 0 0;
+  color: #a99dad;
+  font-size: 10px;
+}
+
+.ritual-invite-panel .invite-limit {
+  margin: 0;
+  color: #9f93a8;
+  white-space: nowrap;
+}
+
+.ritual-invite-button {
+  flex: 0 0 auto;
+  color: var(--ritual-night);
+  background: var(--ritual-coral);
+}
+
+.ritual-invite-button:hover,
+.ritual-invite-button:focus-visible {
+  background: #f6ad96;
+  outline: none;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 900px) {
+  .intention-gate {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .intention-intro {
+    max-width: 500px;
+  }
+
+  .intention-wheel {
+    min-height: 530px;
+  }
+
+  .ritual-deck-layout {
+    gap: 30px;
+  }
+
+  .ritual-sidebar {
+    width: 180px;
+  }
+
+  .selected-intention {
+    margin-top: 48px;
+  }
+}
+
+@media (max-width: 700px) {
+  .ritual-app {
+    padding: 30px 17px 58px;
+  }
+
+  .ritual-top {
+    margin-bottom: 26px;
+  }
+
+  .ritual-top h1 {
+    font-size: 46px;
+  }
+
+  .intention-gate {
+    display: block;
+    min-height: 0;
+    padding: 8px 0 0;
+  }
+
+  .intention-intro {
+    padding-left: 12px;
+  }
+
+  .intention-intro h2 {
+    margin: 18px 0 16px;
+    font-size: 48px;
+  }
+
+  .intention-intro > p:last-child {
+    max-width: 330px;
+  }
+
+  .intention-wheel {
+    min-height: 480px;
+    margin: 22px -8px 0;
+    transform: scale(.96);
+    transform-origin: top center;
+  }
+
+  .wheel-ring {
+    width: 270px;
+    height: 270px;
+    box-shadow: 0 0 0 16px rgba(210, 197, 255, .025), 0 0 0 32px rgba(210, 197, 255, .018);
+  }
+
+  .wheel-core {
+    width: 110px;
+    height: 110px;
+    font-size: 10px;
+  }
+
+  .wheel-core-mark {
+    width: 25px;
+    height: 25px;
+  }
+
+  .intention-card {
+    width: 148px;
+    min-height: 121px;
+    padding: 13px 13px 12px;
+    border-radius: 15px;
+  }
+
+  .intention-card strong {
+    margin: 10px 0 5px;
+    font-size: 19px;
+  }
+
+  .intention-card small {
+    min-height: 25px;
+    font-size: 8px;
+  }
+
+  .intention-topics {
+    margin-top: 8px;
+    font-size: 7px;
+  }
+
+  .intention-card-0 { top: 7%; left: 50%; }
+  .intention-card-1 { left: 1%; bottom: 13%; }
+  .intention-card-2 { right: 1%; bottom: 10%; }
+  .intention-card-3 { left: 0; top: 23%; }
+  .intention-card-4 { right: 0; top: 22%; }
+
+  .intention-hint {
+    margin-top: -25px;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  .intention-error {
+    position: static;
+    margin-top: 10px;
+  }
+
+  .ritual-deck-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding-top: 0;
+  }
+
+  .ritual-sidebar {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 17px 18px;
+  }
+
+  .selected-intention {
+    grid-column: 1 / -1;
+    margin-top: 18px;
+  }
+
+  .selected-intention h2 {
+    margin-top: 10px;
+    font-size: 33px;
+  }
+
+  .selected-intention p {
+    max-width: 310px;
+  }
+
+  .daily-curation {
+    grid-column: 1 / -1;
+    margin-top: 3px;
+  }
+
+  .saved-summary {
+    display: none;
+  }
+
+  .ritual-question-area {
+    width: 100%;
+  }
+
+  .deck-heading {
+    margin-bottom: 11px;
+  }
+
+  .ritual-question-stage,
+  .ritual-question-card,
+  .ritual-empty-card {
+    min-height: 455px;
+  }
+
+  .ritual-question-card {
+    padding: 20px 20px 22px;
+    border-radius: 24px;
+  }
+
+  .ritual-question-copy {
+    gap: 12px;
+  }
+
+  .ritual-question-copy p {
+    font-size: clamp(34px, 10.2vw, 47px);
+  }
+
+  .ritual-question-actions {
+    gap: 9px;
+  }
+
+  .ritual-nav-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .ritual-save-button {
+    font-size: 9px;
+  }
+
+  .ritual-invite-panel {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 11px 13px;
+    margin-top: 31px;
+    padding: 15px;
+  }
+
+  .ritual-invite-panel .invite-copy,
+  .ritual-invite-panel .invite-limit {
+    display: none;
+  }
+
+  .ritual-invite-panel .ritual-invite-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
