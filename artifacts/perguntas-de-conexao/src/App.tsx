@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -233,6 +233,11 @@ function AppExperienceReference() {
   const themes = themesData?.length ? themesData : fallbackThemes;
   const [themeId, setThemeId] = useState<string | null>(null);
   const [themeIndex, setThemeIndex] = useState(0);
+  const [themeDragOffset, setThemeDragOffset] = useState(0);
+  const [isThemeDragging, setIsThemeDragging] = useState(false);
+  const themeDragStartX = useRef<number | null>(null);
+  const themeDragDelta = useRef(0);
+  const suppressThemeClick = useRef(false);
   const [activeNav, setActiveNav] = useState('todos');
   const [saved, setSaved] = useState<string[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -263,9 +268,67 @@ function AppExperienceReference() {
   const dailyPosition = questions.length ? (questionIndex % questions.length) + 1 : 1;
 
   const changeTheme = (id: string) => { setThemeId(id); setQuestionIndex(0); };
+  const vibrateOnThemeChange = () => {
+    // The Vibration API works in Android browsers, but Safari on iPhone does
+    // not support web vibration. Check before calling so unsupported browsers
+    // continue normally without throwing.
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(15);
+    }
+  };
+  const moveThemeIndex = (nextIndex: number) => {
+    if (nextIndex === themeIndex) return;
+    setThemeIndex(nextIndex);
+    vibrateOnThemeChange();
+  };
   const selectThemeCard = (index: number) => {
+    if (suppressThemeClick.current) {
+      suppressThemeClick.current = false;
+      return;
+    }
     if (index === themeIndex) changeTheme(themes[index]?.id);
-    else setThemeIndex(index);
+    else moveThemeIndex(index);
+  };
+  const handleThemePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    themeDragStartX.current = event.clientX;
+    themeDragDelta.current = 0;
+    suppressThemeClick.current = false;
+    setThemeDragOffset(0);
+    setIsThemeDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const handleThemePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (themeDragStartX.current === null) return;
+    themeDragDelta.current = event.clientX - themeDragStartX.current;
+    setThemeDragOffset(themeDragDelta.current);
+  };
+  const finishThemePointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (themeDragStartX.current === null) return;
+    const delta = themeDragDelta.current;
+    if (Math.abs(delta) >= 44 && themes.length > 1) {
+      const direction = delta < 0 ? 1 : -1;
+      const nextIndex = (themeIndex + direction + themes.length) % themes.length;
+      suppressThemeClick.current = true;
+      moveThemeIndex(nextIndex);
+    }
+    themeDragStartX.current = null;
+    themeDragDelta.current = 0;
+    setThemeDragOffset(0);
+    setIsThemeDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+  const handleThemePointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (themeDragStartX.current === null) return;
+    themeDragStartX.current = null;
+    themeDragDelta.current = 0;
+    setThemeDragOffset(0);
+    setIsThemeDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
   const nextQuestion = () => setQuestionIndex(i => {
     if (!randomMode || questions.length < 2) return (i + 1) % Math.max(questions.length, 1);
@@ -315,7 +378,15 @@ function AppExperienceReference() {
         <section className="deck-home" aria-labelledby="deck-home-title">
            <div className="deck-home-heading"><h1 id="deck-home-title" data-testid="text-deck-title">Escolha um objetivo pra começar</h1><p className="deck-home-subtitle">Por exemplo, descobrir algo novo, imaginar o que vem</p></div>
           <div className="theme-carousel-wrap">
-            <div className="theme-carousel" aria-label="Objetivos de conexão">
+              <div
+                className={`theme-carousel ${isThemeDragging ? 'is-dragging' : ''}`}
+                aria-label="Objetivos de conexão"
+                onPointerDown={handleThemePointerDown}
+                onPointerMove={handleThemePointerMove}
+                onPointerUp={finishThemePointer}
+                onPointerCancel={handleThemePointerCancel}
+                style={{ '--theme-drag-offset': `${themeDragOffset}px` } as CSSProperties}
+              >
               {themesLoading && <div className="theme-skeleton" data-testid="loading-themes" />}
               {themes.map((theme, index) => {
                 const offset = Math.max(-2, Math.min(2, index - themeIndex));
@@ -325,7 +396,7 @@ function AppExperienceReference() {
                 </button>;
               })}
             </div>
-            <div className="carousel-dots" aria-label="Posição do objetivo">{themes.map((theme, index) => <button key={theme.id} className={index === themeIndex ? 'is-active' : ''} onClick={() => setThemeIndex(index)} aria-label={`Selecionar ${theme.title}`} data-testid={`button-theme-dot-${theme.id}`} />)}</div>
+            <div className="carousel-dots" aria-label="Posição do objetivo">{themes.map((theme, index) => <button key={theme.id} className={index === themeIndex ? 'is-active' : ''} onClick={() => moveThemeIndex(index)} aria-label={`Selecionar ${theme.title}`} data-testid={`button-theme-dot-${theme.id}`} />)}</div>
           </div>
           {themesError && <div className="app-inline-error" data-testid="status-themes-error"><span>Não conseguimos atualizar os objetivos.</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar novamente <RotateCw size={13} /></button></div>}
           <p className="deck-note"><Sparkles size={14} /> Uma pergunta por vez. O resto acontece entre vocês.</p>

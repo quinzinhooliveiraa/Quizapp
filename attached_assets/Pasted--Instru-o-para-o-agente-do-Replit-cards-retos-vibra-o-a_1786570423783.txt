@@ -1,0 +1,21 @@
+# Instrução para o agente do Replit — cards retos + vibração ao selecionar (ajuste fino do carrossel)
+
+Isto complementa `fix-carrossel-arrastar-replit.md`, que já cobre o gesto de arrastar. Aqui são só dois ajustes finos que o dono do produto pediu depois de ver o resultado.
+
+## 1. Cards sempre retos, sem inclinação
+
+Hoje, em `artifacts/perguntas-de-conexao/src/index.css` (por volta das linhas 1492-1496), os cards vizinhos (`theme-offset--1`, `theme-offset-1`, `theme-offset--2`, `theme-offset-2`) têm uma leve rotação (`rotate(3deg)`, `rotate(7deg)` etc.) além da escala e opacidade.
+
+**Remover completamente a rotação.** Os cards vizinhos continuam menores e mais apagados conforme se afastam do centro (isso já está certo, não mexer), mas todos devem ficar sempre na vertical, sem girar/inclinar em nenhum grau. Aplicar isso tanto no estado parado quanto durante o arrasto (o valor de rotação deve ser removido da interpolação em tempo real também, não só do CSS estático).
+
+## 2. Vibração ao trocar o card selecionado
+
+Quando o card que está no centro muda — seja por arrastar e soltar, seja por tocar direto num card vizinho — disparar uma vibração curta no celular (usar a Vibration API do navegador: `navigator.vibrate(15)` ou um padrão curto parecido, ajuste a duração pelo que parecer mais natural, geralmente entre 10-20ms já é suficiente).
+
+Importante avisar no código (comentário) e ter em mente: essa API funciona no Android dentro do navegador, mas o Safari do iPhone não suporta vibração via web de jeito nenhum — isso é uma limitação da Apple, não um bug. O código deve simplesmente checar se `navigator.vibrate` existe antes de chamar, pra não dar erro em quem não suporta; no iPhone o app funciona normal, só sem o efeito de vibração por enquanto.
+
+## Verificação
+
+- Conferir visualmente que nenhum card fica inclinado em nenhum momento do arrasto ou da seleção — só cards retos, variando tamanho/opacidade.
+- Testar em um Android (ou emulador/dispositivo com suporte) que a vibração dispara ao trocar de card.
+- Confirmar que em navegador sem suporte a vibração (ex: Safari) nada quebra, só não vibra.
