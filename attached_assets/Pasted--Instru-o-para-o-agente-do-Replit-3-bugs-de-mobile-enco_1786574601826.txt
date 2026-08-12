@@ -1,0 +1,48 @@
+# Instrução para o agente do Replit — 3 bugs de mobile encontrados depois de testar no celular
+
+Testei no celular de verdade e apareceram 3 problemas. Encontrei a causa exata de cada um no código — segue o diagnóstico e o que fazer.
+
+## 1. Não respeita as dimensões do celular (menu embaixo demais, branco no topo)
+
+**Causa raiz A:** em `artifacts/perguntas-de-conexao/index.html`, linha 5, a tag de viewport está assim:
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+```
+Falta o atributo `viewport-fit=cover`. Sem ele, todas as chamadas `env(safe-area-inset-top)` e `env(safe-area-inset-bottom)` que já existem espalhadas pelo `index.css` (ex: linhas 398, 1381, 1580, 1652, 2992, 3014, 3258, 3282, 3425) retornam sempre zero — ou seja, o código que respeita a área segura já foi escrito, só está "desligado" por causa dessa tag. **Adicionar `viewport-fit=cover`** resolve isso.
+
+**Causa raiz B:** não existe nenhuma tag de cor de tema nem configuração de PWA no `index.html` — falta:
+```html
+<meta name="theme-color" content="[cor de fundo escura da marca]" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+```
+Sem isso, a área da barra de status do celular fica com a cor padrão (branca) em vez de casar com o fundo escuro do app — é isso que está aparecendo como "muito branco" no topo. Isso é parte do mesmo trabalho do manifest.json que pedi na instrução anterior (`pular-vendas-pwa-app-replit.md`) — se ainda não foi feito, fazer os dois juntos agora.
+
+## 2. Baralho de perguntas não tem swipe, só setas
+
+Confirmar: a tela da pergunta (`App.tsx`, por volta da linha 417-441) não tem nenhum gesto de arrastar — só os botões de seta (`previousQuestion`/`nextQuestion`, linha 441). O texto de dica já promete "desliza ou usa as setas" (linha 443), mas o deslizar nunca foi implementado.
+
+O carrossel de temas (mais acima no mesmo arquivo, por volta da linha 390-396) **já tem** esse comportamento de arrastar (`handleThemePointerCancel`, `themeDragOffset`) — foi implementado numa instrução anterior. **Aplicar exatamente o mesmo padrão de arrastar na tela da pergunta**: arrastar pra esquerda avança pra próxima pergunta, arrastar pra direita volta pra anterior, com a mesma sensação de mola ao soltar. Manter os botões de seta como alternativa, não precisa remover.
+
+## 3. Abrir o teclado quebra a tela da pergunta
+
+Causa raiz: em `index.css`, linha 3512-3515:
+```css
+.question-card {
+  padding: .85rem;
+  height: min(var(--question-card-height, 440px), calc(var(--device-height, 100dvh) - 19rem));
+}
+```
+Note que é `height` (altura fixa), não `min-height`. A variável `--device-height` é atualizada via JS (`App.tsx`, linhas 119-149) ouvindo `visualViewport.resize` — o que é o jeito certo de detectar o teclado abrindo, e de fato ela encolhe bastante quando isso acontece (o teclado ocupa uma boa parte da tela). O problema é que essa fórmula de altura fixa não faz distinção entre "tela normal" e "teclado aberto": quando `--device-height` encolhe, `calc(--device-height - 19rem)` pode virar um valor bem pequeno, e como é `height` fixo (não mínimo), todo o conteúdo do card — pergunta, barra de modos, campo de escrever, rodapé, botão de favoritar — fica espremido numa caixa pequena demais, sobrepondo elementos.
+
+**Como corrigir:** quando o modo de escrever estiver aberto (classe `.question-card.is-writing`, já existe em `index.css` linha 3444) e o teclado estiver visível, o card não deve ficar preso a essa altura fixa calculada pela tela cheia. Duas abordagens possíveis (usar a que ficar mais robusta):
+- Trocar `height` por `min-height` no card quando `.is-writing` estiver ativo, permitindo que ele cresça e a página role normalmente em vez de espremer o conteúdo; ou
+- Quando `.is-writing` estiver ativo, ignorar a redução de `--device-height` causada pelo teclado nesse cálculo específico (usar a altura da tela sem o teclado como base, e deixar só a área do campo de texto rolar/ajustar).
+
+O importante é: abrir o teclado para escrever uma resposta não pode fazer a pergunta, os botões e o campo de texto se sobreporem ou ficarem cortados.
+
+## Verificação
+
+- Testar num iPhone de verdade (ou simulador com notch): conferir que o menu inferior não fica colado/cortado pela barra de gestos, e que não aparece nenhuma faixa branca no topo, tanto no navegador quanto no app instalado na tela de início.
+- Na tela da pergunta, testar arrastar com o dedo pra esquerda e pra direita e confirmar que troca de pergunta suavemente, igual ao carrossel de temas.
+- Tocar em "Escrever" e abrir o teclado: confirmar que o card da pergunta continua legível, sem sobreposição, e que dá pra ver o campo de texto e digitar normalmente.

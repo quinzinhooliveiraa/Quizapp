@@ -319,6 +319,11 @@ function AppExperienceReference() {
   const themeDragDelta = useRef(0);
   const themePointerCaptured = useRef(false);
   const suppressThemeClick = useRef(false);
+  const [questionDragOffset, setQuestionDragOffset] = useState(0);
+  const [isQuestionDragging, setIsQuestionDragging] = useState(false);
+  const questionDragStartX = useRef<number | null>(null);
+  const questionDragDelta = useRef(0);
+  const questionPointerCaptured = useRef(false);
   const [activeNav, setActiveNav] = useState('todos');
   const [saved, setSaved] = useState<string[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -428,6 +433,52 @@ function AppExperienceReference() {
     const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
     return (i + randomOffset) % questions.length;
   });
+  const handleQuestionPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('button, textarea, input, a')) return;
+    questionDragStartX.current = event.clientX;
+    questionDragDelta.current = 0;
+    questionPointerCaptured.current = false;
+    setQuestionDragOffset(0);
+    setIsQuestionDragging(true);
+  };
+  const handleQuestionPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (questionDragStartX.current === null) return;
+    questionDragDelta.current = event.clientX - questionDragStartX.current;
+    if (Math.abs(questionDragDelta.current) >= 8 && !questionPointerCaptured.current) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      questionPointerCaptured.current = true;
+    }
+    setQuestionDragOffset(questionDragDelta.current);
+  };
+  const finishQuestionPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (questionDragStartX.current === null) return;
+    const delta = questionDragDelta.current;
+    if (Math.abs(delta) >= 44 && questions.length > 1) {
+      if (delta < 0) nextQuestion();
+      else previousQuestion();
+    }
+    questionDragStartX.current = null;
+    questionDragDelta.current = 0;
+    setQuestionDragOffset(0);
+    setIsQuestionDragging(false);
+    if (questionPointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    questionPointerCaptured.current = false;
+  };
+  const handleQuestionPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (questionDragStartX.current === null) return;
+    questionDragStartX.current = null;
+    questionDragDelta.current = 0;
+    setQuestionDragOffset(0);
+    setIsQuestionDragging(false);
+    if (questionPointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    questionPointerCaptured.current = false;
+  };
   const toggleQuestionMode = () => setRandomMode(mode => !mode);
   const currentResponse = currentQuestion ? responses[currentQuestion.id] || '' : '';
   useEffect(() => {
@@ -457,7 +508,7 @@ function AppExperienceReference() {
   ];
 
   return <div className="app-viewport">
-    <main className={`connection-app ${themeId ? 'is-question-view' : 'is-deck-view'}`}>
+     <main className={`connection-app ${themeId ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''}`}>
       {!themeId ? <>
         <header className="app-header" data-testid="header-decks">
           <div className="app-wordmark" data-testid="text-app-brand"><span className="app-logo-orb"><span /></span><span>Perguntas<br /><b>de Conexão</b></span></div>
@@ -495,7 +546,14 @@ function AppExperienceReference() {
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
         <section className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>
-          <div className="question-card-stack">
+           <div
+             className={`question-card-stack ${isQuestionDragging ? 'is-dragging' : ''}`}
+             onPointerDown={handleQuestionPointerDown}
+             onPointerMove={handleQuestionPointerMove}
+             onPointerUp={finishQuestionPointer}
+             onPointerCancel={handleQuestionPointerCancel}
+             style={{ '--question-drag-offset': `${questionDragOffset}px` } as CSSProperties}
+           >
             <div className="question-mode-bar" aria-label="Modo da carta">
               <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
               <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> {writingOpen ? 'Escrevendo' : 'Escrever'}</button>
