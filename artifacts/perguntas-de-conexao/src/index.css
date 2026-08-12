@@ -1348,3 +1348,342 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .checkout-modal h2, .welcome-modal h2, .invite-modal h2 { font-size: 39px; }
   .invite-entry { min-height: calc(100dvh - 198px); }
 }
+
+/* Story deck view — the question deck is the hero on this screen. */
+.shell-dark:has(.experience-page-stories) {
+  background:
+    radial-gradient(circle at 50% 35%, #281b36 0%, #110d1c 48%, #0b0a13 100%);
+  color: #f7f1ee;
+}
+.shell-dark:has(.experience-page-stories) .site-header {
+  max-width: 1280px;
+}
+.shell-dark:has(.experience-page-stories) .site-footer {
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+}
+.experience-page-stories {
+  max-width: 1280px;
+  min-height: calc(100dvh - 198px);
+  padding: 40px 34px 70px;
+  color: #f7f1ee;
+}
+.stories-top {
+  align-items: center;
+  margin-bottom: 28px;
+}
+.stories-kicker {
+  margin: 0;
+  color: #c7a9c8;
+  font: 9px var(--app-font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.stories-top h1 {
+  color: #f7f1ee;
+  font-size: clamp(45px, 5vw, 70px);
+  margin-top: 14px;
+}
+.stories-top h1 em {
+  color: #b5a2ff;
+}
+.experience-page-stories .access-pill {
+  color: #d4c8e5;
+  border-color: rgba(213, 197, 242, .3);
+}
+.experience-page-stories .access-dot {
+  background: #a89aff;
+  box-shadow: 0 0 12px #a89aff;
+}
+.experience-page-stories .experience-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+.experience-page-stories .theme-rail {
+  order: 0;
+  width: 100%;
+}
+.experience-page-stories .rail-label {
+  padding-bottom: 10px;
+  border-bottom-color: rgba(255, 255, 255, .12);
+  color: #9389a0;
+}
+.experience-page-stories .theme-choice {
+  width: auto;
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 8px 0 0;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 999px;
+  color: #a69caf;
+  background: rgba(255, 255, 255, .04);
+  transition: border-color .25s, color .25s, background .25s, transform .25s;
+}
+.experience-page-stories .theme-choice:hover,
+.experience-page-stories .theme-choice.theme-selected {
+  color: #fff;
+  border-color: #a89aff;
+  background: rgba(123, 96, 221, .32);
+  box-shadow: 0 0 22px rgba(125, 96, 224, .2);
+  transform: translateY(-2px);
+}
+.experience-page-stories .theme-choice strong {
+  margin: 0;
+  font: 13px var(--app-font-sans);
+}
+.experience-page-stories .theme-choice small,
+.experience-page-stories .rail-footer,
+.experience-page-stories .theme-count {
+  display: none;
+}
+.experience-page-stories .theme-number {
+  padding: 0;
+  color: #b5a2ff;
+}
+.experience-page-stories .question-area {
+  position: relative;
+  width: min(100%, 980px);
+  margin: 0 auto;
+}
+.experience-page-stories .question-toolbar {
+  position: relative;
+  z-index: 4;
+  margin: 0 auto 13px;
+  width: min(100%, 440px);
+  color: #9a8fa7;
+}
+.experience-page-stories .current-theme {
+  color: #beb1ca;
+}
+.experience-page-stories .current-theme span {
+  color: #a89aff;
+}
+.experience-page-stories .tool-button {
+  color: #a69caf;
+}
+.experience-page-stories .tool-active {
+  color: #c2b6ff;
+}
+.experience-page-stories .question-stage {
+  position: relative;
+  z-index: 2;
+  min-height: 480px;
+  display: flex;
+  justify-content: center;
+}
+.experience-page-stories .question-card {
+  width: min(100%, 430px);
+  min-height: 480px;
+  border-radius: 27px;
+  padding: 25px 25px 21px;
+  box-shadow: 0 32px 55px rgba(0, 0, 0, .4), 0 0 0 1px rgba(255, 255, 255, .1);
+}
+.experience-page-stories .intensity-gentle {
+  background: linear-gradient(145deg, #7b8b72, #53624e);
+  color: #f7f1ee;
+}
+.experience-page-stories .intensity-honest {
+  background: linear-gradient(145deg, #63405e, #311e3c);
+}
+.experience-page-stories .intensity-deep {
+  background: linear-gradient(145deg, #342c58, #151329);
+}
+.story-peek {
+  position: absolute;
+  top: 57px;
+  z-index: 1;
+  width: 230px;
+  height: 370px;
+  overflow: hidden;
+  padding: 25px 20px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 24px;
+  color: rgba(245, 237, 240, .44);
+  background: linear-gradient(145deg, #35263b, #181321);
+  box-shadow: 0 22px 42px rgba(0, 0, 0, .3);
+  cursor: pointer;
+  text-align: left;
+  transition: transform .3s, color .3s, border-color .3s;
+}
+.story-peek:hover {
+  color: rgba(245, 237, 240, .75);
+  border-color: rgba(181, 162, 255, .5);
+}
+.story-peek-left {
+  left: 0;
+  transform: rotate(-8deg) translateX(-22px);
+}
+.story-peek-right {
+  right: 0;
+  transform: rotate(8deg) translateX(22px);
+}
+.story-peek:hover.story-peek-left {
+  transform: rotate(-6deg) translateX(-12px);
+}
+.story-peek:hover.story-peek-right {
+  transform: rotate(6deg) translateX(12px);
+}
+.story-peek span {
+  display: block;
+  margin-top: 235px;
+  font: 20px var(--app-font-serif);
+  line-height: .98;
+}
+.story-peek svg {
+  position: absolute;
+  top: 21px;
+  right: 19px;
+  color: #b5a2ff;
+}
+.experience-page-stories .card-corner,
+.experience-page-stories .question-meta {
+  display: none;
+}
+.experience-page-stories .question-text {
+  max-width: 100%;
+  margin-top: 13px;
+}
+.experience-page-stories .question-text p {
+  font-size: clamp(34px, 4vw, 47px);
+}
+.experience-page-stories .question-text > svg {
+  color: #b5a2ff;
+}
+.experience-page-stories .card-bottom {
+  border-top-color: rgba(255, 255, 255, .2);
+  color: rgba(255, 255, 255, .56);
+}
+.experience-page-stories .question-controls {
+  width: min(100%, 430px);
+  margin: 17px auto 0;
+  justify-content: space-between;
+}
+.experience-page-stories .round-button {
+  border-color: rgba(255, 255, 255, .25);
+  color: #ddd3e8;
+  background: rgba(255, 255, 255, .06);
+}
+.experience-page-stories .next-button {
+  margin: 0;
+  background: #7965d8;
+  color: #fff;
+}
+.experience-page-stories .save-button {
+  color: #b7a8c2;
+}
+.experience-page-stories .save-active {
+  color: #c4b5ff;
+}
+.experience-page-stories .experience-note {
+  color: #887d95;
+}
+.experience-page-stories .invite-panel {
+  order: 3;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 19px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .06);
+  border-radius: 17px;
+}
+.experience-page-stories .invite-icon {
+  flex: 0 0 auto;
+  margin: 0;
+  background: #7965d8;
+  color: #fff;
+}
+.experience-page-stories .invite-panel .section-kicker,
+.experience-page-stories .invite-panel h3,
+.experience-page-stories .invite-copy,
+.experience-page-stories .invite-limit {
+  margin: 0;
+}
+.experience-page-stories .invite-panel h3 {
+  color: #f3eaf2;
+  font-size: 19px;
+}
+.experience-page-stories .invite-copy,
+.experience-page-stories .invite-limit {
+  display: none;
+}
+.experience-page-stories .invite-panel .button {
+  width: auto;
+  margin-left: auto;
+  flex: 0 0 auto;
+  background: #f0a88c;
+}
+.experience-page-stories .saved-count {
+  color: #9a8fa7;
+  border: 0;
+  padding: 0;
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .experience-page-stories {
+    padding: 28px 17px 55px;
+  }
+  .stories-top {
+    margin-bottom: 24px;
+  }
+  .stories-top h1 {
+    font-size: 47px;
+  }
+  .experience-page-stories .experience-layout {
+    gap: 19px;
+  }
+  .experience-page-stories .theme-choice {
+    min-width: 0;
+    margin-right: 4px;
+    padding: 9px 12px;
+  }
+  .experience-page-stories .theme-choice strong {
+    font-size: 11px;
+  }
+  .experience-page-stories .question-stage {
+    min-height: 470px;
+  }
+  .experience-page-stories .question-card {
+    min-height: 470px;
+    border-radius: 24px;
+    padding: 22px 21px 18px;
+  }
+  .story-peek {
+    width: 150px;
+    height: 345px;
+    top: 67px;
+    padding: 18px 14px;
+  }
+  .story-peek-left {
+    left: -9px;
+    transform: rotate(-8deg) translateX(-55px);
+  }
+  .story-peek-right {
+    right: -9px;
+    transform: rotate(8deg) translateX(55px);
+  }
+  .story-peek span {
+    margin-top: 230px;
+    font-size: 16px;
+  }
+  .experience-page-stories .invite-panel {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+  }
+  .experience-page-stories .invite-panel .button {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 2px 0 0;
+  }
+  .experience-page-stories .saved-count {
+    display: none;
+  }
+}
