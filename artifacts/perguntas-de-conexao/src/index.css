@@ -3564,13 +3564,29 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 }
 
 @media (max-width: 699px) {
-  .connection-app.is-writing-mode {
-    overflow-y: auto;
+  .connection-app.is-writing-mode .question-view-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .connection-app.is-writing-mode .question-card-stack {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .question-card.is-writing {
-    height: auto;
+    flex: 1 1 auto;
     min-height: 0;
+    overflow-y: auto;
+  }
+
+  .question-card.is-writing .question-card-copy,
+  .question-card.is-writing .question-response {
+    flex-shrink: 1;
+  }
+
+  .question-card.is-writing .question-response {
+    flex-basis: auto;
   }
 }
 

@@ -1,0 +1,26 @@
+# Instrução para o agente do Replit — corrigir o teclado de vez (terceira rodada, mudança estrutural)
+
+As duas rodadas anteriores melhoraram parte do problema (o menu de baixo já não aparece mais flutuando, e o fundo bege sumiu), mas a correção do card com `height: auto` + o contêiner com `overflow-y: auto` criou um novo problema: sobra um espaço morto vazio embaixo do card, e o Safari rola a página sozinho pra tentar mostrar o campo de texto, empurrando o cabeçalho pra trás da barra de status do iPhone.
+
+**A causa:** quando se deixa o `.connection-app` inteiro rolável (`overflow-y: auto`, hoje em `index.css` por volta da linha 3567) e o card encolhe pro tamanho do conteúdo (`.question-card.is-writing { height: auto; min-height: 0; }`, linha 3571-3574), o Safari passa a tratar o app inteiro como uma área rolável e decide sozinho rolar tudo (inclusive o cabeçalho) pra tentar deixar o campo de texto visível acima do teclado — e essa rolagem automática do navegador não sabe respeitar a área segura (`safe-area-inset-top`).
+
+**A correção certa:** em vez de deixar o app inteiro rolar, fazer só a área de dentro do card (o texto da pergunta + o campo de escrever) rolar sozinha quando não couber no espaço disponível — o cabeçalho, o "Decks", a barra de modos, tudo isso fica sempre parado no lugar, nunca se move.
+
+Mudanças específicas:
+
+1. **Remover** o `overflow-y: auto` do `.connection-app.is-writing-mode` (linha 3567 do `index.css`) — o app não deve mais ficar rolável como um todo.
+
+2. Fazer o `.question-view-stage` (a seção que contém o card, `App.tsx` por volta da linha 548) crescer para ocupar o espaço vertical restante dentro do `.connection-app`, com `flex: 1 1 auto; min-height: 0;` no CSS — do mesmo jeito que já existe pra `.deck-home` (que já tem essa regra, procurar no `index.css` pra usar como referência).
+
+3. No `.question-card` (article), quando tiver a classe `.is-writing`: em vez de `height: auto; min-height: 0` como está hoje (linha 3571-3574), usar `flex: 1 1 auto; min-height: 0; overflow-y: auto;` — isso faz o card sempre ocupar exatamente o espaço disponível (sem sobrar vazio embaixo), e se o conteúdo (pergunta + campo de escrever) for maior que esse espaço, só a rolagem **de dentro do card** acontece, sem mexer no resto da tela.
+
+4. Conferir que `.question-card-copy` e `.question-response` dentro do card não têm `flex-shrink: 0` bloqueando o encolhimento — eles precisam poder ficar menores ou rolar junto quando o espaço for pequeno.
+
+O objetivo final: abrir o teclado nunca move o cabeçalho, nunca deixa espaço morto vazio, e na pior das hipóteses (pergunta muito longa + teclado grande) só aparece uma barra de rolagem bem contida dentro do próprio card.
+
+## Verificação
+
+- Testar num iPhone de verdade: tocar em "Escrever", abrir o teclado, e conferir que o cabeçalho ("Decks", contador de posição) nunca sai do lugar nem fica atrás da barra de status.
+- Conferir que não sobra nenhum espaço preto vazio entre o card e o teclado.
+- Testar com uma pergunta de texto longo (a maior que tiver no banco de perguntas) pra garantir que, se precisar rolar, é só dentro do card, sem mover o resto da tela.
+- Fechar o teclado e confirmar que tudo volta ao normal (card com o tamanho de antes, menu de baixo reaparece).
