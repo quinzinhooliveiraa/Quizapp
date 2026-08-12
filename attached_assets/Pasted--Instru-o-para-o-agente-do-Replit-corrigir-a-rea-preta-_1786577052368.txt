@@ -1,0 +1,25 @@
+# Instrução para o agente do Replit — corrigir a área preta gigante no modo de escrever (mudar de estratégia)
+
+A simplificação da tela de escrever (rodada anterior) funcionou na estrutura, mas criou um novo problema: aparece uma área preta enorme e rolável em vez de só a pergunta + campo de texto + botão concluir cabendo direitinho na tela.
+
+## Causa
+
+Em `index.css`, linha 3639, o campo de texto tem `max-height: none` — ou seply, sem limite máximo de altura. Isso, combinado com uma cadeia de flexbox (`.question-view-stage` → `.question-card-stack` → `.question-card.is-writing` → `.question-response` → `textarea`, todos com `flex: 1 1 auto` e `min-height: 0`), depende do `<textarea>` encolher automaticamente pra caber no espaço disponível — só que o Safari do iPhone tem uma falha antiga e conhecida: elementos `<textarea>` não encolhem direito dentro de flexbox, mesmo quando toda a cadeia ao redor está configurada corretamente. O resultado é o campo de texto (e tudo que vem depois dele) ficando maior do que deveria, e como o card tem `overflow-y: auto`, isso vira uma área gigante e rolável.
+
+## Correção: parar de confiar no encolhimento automático do flexbox pro campo de texto, calcular a altura por JavaScript
+
+O projeto já tem um hook que mede o tamanho real da tela e reage ao teclado abrindo (`useDeviceViewport`, `App.tsx`, linhas 119-149) — ele já define `--device-height` corretamente. Usar essa mesma lógica pra calcular também a altura exata do campo de texto, em vez de deixar o CSS "adivinhar":
+
+1. No `useDeviceViewport` (ou numa lógica parecida, específica da tela de escrever), quando o modo de escrever estiver ativo, medir a altura ocupada pelo texto da pergunta + o botão "Concluído" (usando `ref` nesses elementos e `getBoundingClientRect()` ou `offsetHeight`), e calcular: altura do campo de texto = altura disponível (`--device-height` menos as margens de segurança do topo/base) menos a altura desses outros elementos.
+2. Definir esse valor calculado como uma nova variável CSS, por exemplo `--writing-textarea-height`, do mesmo jeito que as outras variáveis já são definidas (`document.documentElement.style.setProperty(...)`).
+3. No CSS, trocar o `textarea` de `flex: 1 1 auto; min-height: 8rem; max-height: none;` (linhas 3636-3640) para usar essa altura calculada diretamente: `height: var(--writing-textarea-height, 12rem); flex: none;` — ou seja, uma altura exata em pixels vinda do JavaScript, não mais uma altura "elástica" que depende do navegador encolher corretamente.
+4. Recalcular esse valor toda vez que: o teclado abre/fecha (já existe o listener de `visualViewport.resize`), a pergunta muda (o texto pode ter tamanhos diferentes), e a tela gira.
+
+Isso torna o tamanho do campo de texto determinístico (um valor exato calculado em pixels), em vez de depender do Safari encolher o `<textarea>` certinho dentro do flexbox — que é justamente onde ele falha.
+
+## Verificação
+
+- No iPhone, tocar em "Escrever" e abrir o teclado: a tela deve mostrar exatamente a pergunta, o campo de texto do tamanho certo (nem cortado, nem sobrando espaço vazio) e o botão "Concluído", tudo cabendo sem precisar rolar nada.
+- Trocar de pergunta (pergunta mais curta e mais longa) ainda no modo de escrever, e conferir que o campo de texto se ajusta certinho nos dois casos.
+- Girar o celular (se fizer sentido testar) e conferir que o cálculo se atualiza.
+- Se depois dessa mudança ainda sobrar algum espaço errado, me manda print de novo que eu olho o valor calculado direto no código pra ver onde a conta está errada.

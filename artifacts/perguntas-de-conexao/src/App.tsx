@@ -196,8 +196,20 @@ function AccessPill({ access }: { access: any }) {
   return <div className="access-pill" data-testid="status-access"><span className="access-dot" />{access?.hasAccess ? `${access.packageName || 'Acesso ativo'}` : 'Modo demonstração'}</div>;
 }
 
-function useDeviceViewport() {
+type ElementRef = { readonly current: HTMLElement | null };
+
+function useDeviceViewport(
+  writingOpen = false,
+  writingQuestionKey = '',
+  questionStageRef?: ElementRef,
+  questionCardRef?: ElementRef,
+  questionCopyRef?: ElementRef,
+  questionResponseRef?: ElementRef,
+  writingDoneButtonRef?: ElementRef,
+) {
   useEffect(() => {
+    let animationFrame = 0;
+
     const updateViewport = () => {
       const width = Math.max(document.documentElement.clientWidth, 1);
       const height = Math.max(window.visualViewport?.height || window.innerHeight, 1);
@@ -214,19 +226,52 @@ function useDeviceViewport() {
       document.documentElement.style.setProperty('--question-card-height', `${cardWidth * 4 / 3}px`);
       document.documentElement.style.setProperty('--theme-card-width', `${themeWidth}px`);
       document.documentElement.style.setProperty('--theme-card-height', `${themeWidth * 4 / 3}px`);
+
+      if (writingOpen && width <= 699) {
+        const rootStyle = document.documentElement.style;
+        const stage = questionStageRef?.current;
+        const card = questionCardRef?.current;
+        const copy = questionCopyRef?.current;
+        const response = questionResponseRef?.current;
+        const doneButton = writingDoneButtonRef?.current;
+
+        if (stage && card && copy && response && doneButton) {
+          const stageStyle = getComputedStyle(stage);
+          const cardStyle = getComputedStyle(card);
+          const responseStyle = getComputedStyle(response);
+          const doneButtonStyle = getComputedStyle(doneButton);
+          const stagePadding = parseFloat(stageStyle.paddingTop) + parseFloat(stageStyle.paddingBottom);
+          const cardPadding = parseFloat(cardStyle.paddingTop) + parseFloat(cardStyle.paddingBottom);
+          const responseMargin = parseFloat(responseStyle.marginTop);
+          const doneButtonSpace = doneButton.offsetHeight + parseFloat(doneButtonStyle.marginTop);
+          const cardHeight = Math.max(0, stage.getBoundingClientRect().height - stagePadding - doneButtonSpace);
+          const textareaHeight = Math.max(120, Math.floor(cardHeight - cardPadding - copy.getBoundingClientRect().height - responseMargin));
+          rootStyle.setProperty('--writing-textarea-height', `${textareaHeight}px`);
+        } else {
+          rootStyle.setProperty('--writing-textarea-height', '12rem');
+        }
+      } else {
+        document.documentElement.style.removeProperty('--writing-textarea-height');
+      }
     };
 
-    updateViewport();
-    window.addEventListener('resize', updateViewport);
-    window.addEventListener('orientationchange', updateViewport);
-    window.visualViewport?.addEventListener('resize', updateViewport);
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updateViewport);
+    };
+
+    scheduleUpdate();
+    window.addEventListener('resize', scheduleUpdate);
+    window.addEventListener('orientationchange', scheduleUpdate);
+    window.visualViewport?.addEventListener('resize', scheduleUpdate);
 
     return () => {
-      window.removeEventListener('resize', updateViewport);
-      window.removeEventListener('orientationchange', updateViewport);
-      window.visualViewport?.removeEventListener('resize', updateViewport);
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener('resize', scheduleUpdate);
+      window.removeEventListener('orientationchange', scheduleUpdate);
+      window.visualViewport?.removeEventListener('resize', scheduleUpdate);
     };
-  }, []);
+  }, [writingOpen, writingQuestionKey, questionStageRef, questionCardRef, questionCopyRef, questionResponseRef, writingDoneButtonRef]);
 }
 
 function AppExperience() {
@@ -307,7 +352,6 @@ function AppExperience() {
 }
 
 function AppExperienceReference() {
-  useDeviceViewport();
   const queryClientRef = useQueryClient();
   const { data: themesData, isLoading: themesLoading, isError: themesError } = useListQuestionThemes({ query: { queryKey: getListQuestionThemesQueryKey() } });
   const themes = themesData?.length ? themesData : fallbackThemes;
@@ -330,6 +374,11 @@ function AppExperienceReference() {
   const [randomMode, setRandomMode] = useState(true);
   const [writingOpen, setWritingOpen] = useState(false);
   const [responses, setResponses] = useState<Record<string, string>>({});
+  const questionStageRef = useRef<HTMLElement | null>(null);
+  const questionCardRef = useRef<HTMLElement | null>(null);
+  const questionCopyRef = useRef<HTMLDivElement | null>(null);
+  const questionResponseRef = useRef<HTMLDivElement | null>(null);
+  const writingDoneButtonRef = useRef<HTMLButtonElement | null>(null);
   const [sessionId, setSessionId] = useState(() => localStorage.getItem('conexao-session') || '');
   const [welcomeOpen, setWelcomeOpen] = useState(!localStorage.getItem('conexao-name'));
   const [buyerName, setBuyerName] = useState(() => localStorage.getItem('conexao-name') || '');
@@ -353,6 +402,7 @@ function AppExperienceReference() {
   const selectedTheme = themes.find(theme => theme.id === themeId);
   const dailyTotal = selectedTheme?.count || questions.length || 1;
   const dailyPosition = questions.length ? (questionIndex % questions.length) + 1 : 1;
+  useDeviceViewport(writingOpen, currentQuestion?.id || '', questionStageRef, questionCardRef, questionCopyRef, questionResponseRef, writingDoneButtonRef);
 
   const changeTheme = (id: string) => { setThemeId(id); setQuestionIndex(0); };
   const vibrateOnThemeChange = () => {
@@ -545,7 +595,7 @@ function AppExperienceReference() {
           <button className="decks-back-pill" onClick={() => setThemeId(null)} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
-        <section className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>
+         <section ref={questionStageRef} className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>
            <div className="question-card-stack">
             <div className="question-mode-bar" aria-label="Modo da carta">
               <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
@@ -559,12 +609,13 @@ function AppExperienceReference() {
                onPointerUp={finishQuestionPointer}
                onPointerCancel={handleQuestionPointerCancel}
                style={{ '--question-drag-offset': `${questionDragOffset}px` } as CSSProperties}
-               data-testid={`card-question-${currentQuestion.id}`}
+                ref={questionCardRef}
+                data-testid={`card-question-${currentQuestion.id}`}
              >
               <div className="question-card-grain" />
                <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><div className="question-card-brand-side"><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong></div></div>
-              <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
-              {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
+               <div ref={questionCopyRef} className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
+               {writingOpen && <div ref={questionResponseRef} className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
               <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
                <button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => setSaved(s => s.includes(currentQuestion.id) ? s.filter(id => id !== currentQuestion.id) : [...s, currentQuestion.id])} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button>
             </article>}
@@ -579,7 +630,7 @@ function AppExperienceReference() {
              <button className="invite-prompt-action" onClick={() => setInviteOpen(true)} data-testid="button-open-invite-prompt">Convidar <Send size={14} /></button>
            </aside>}
           {currentQuestion && <div className="question-side-nav"><button onClick={previousQuestion} aria-label="Pergunta anterior" data-testid="button-previous-question"><ChevronLeft size={19} /></button><button onClick={nextQuestion} aria-label="Próxima pergunta" data-testid="button-next-question"><ChevronRight size={19} /></button></div>}
-           {writingOpen && <button className="writing-done-button" onClick={() => setWritingOpen(false)} data-testid="button-writing-done"><Check size={16} /> Concluído</button>}
+            {writingOpen && <button ref={writingDoneButtonRef} className="writing-done-button" onClick={() => setWritingOpen(false)} data-testid="button-writing-done"><Check size={16} /> Concluído</button>}
         </section>
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>
       </>}
