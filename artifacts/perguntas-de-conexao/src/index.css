@@ -3192,3 +3192,131 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     padding-top: 1.2rem;
   }
 }
+
+/* Keep the question controls light and separate from the card. */
+.question-mode-bar {
+  width: var(--question-card-width, min(88vw, 24rem));
+  min-height: 1.65rem;
+  justify-content: flex-start;
+  gap: .72rem;
+  margin-top: .42rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.question-mode-button {
+  flex: 0 0 auto;
+  min-height: 1.5rem;
+  padding: .05rem .08rem;
+  border-radius: .3rem;
+  color: rgba(255,255,255,.45);
+  font-size: .56rem;
+  letter-spacing: .055em;
+}
+
+.question-mode-button.is-active {
+  color: #fff;
+  background: transparent;
+}
+
+.question-mode-button.is-active::after {
+  content: "";
+  position: absolute;
+  height: 1px;
+  right: 0;
+  bottom: -.08rem;
+  left: 0;
+  background: #b99aff;
+}
+
+.question-mode-button {
+  position: relative;
+}
+
+.question-card {
+  align-items: stretch;
+}
+
+.question-card-top {
+  order: 3;
+  width: 100%;
+  margin-top: auto;
+  padding-top: .75rem;
+}
+
+.question-card-copy {
+  order: 1;
+  margin: 0;
+  padding-top: .4rem;
+}
+
+.question-response {
+  order: 2;
+  margin-top: 1rem;
+}
+
+.question-card-foot {
+  order: 4;
+}
+
+.question-card-copy p {
+  max-height: none;
+}
+
+.question-hint {
+  flex: 0 0 auto;
+  margin: .45rem auto calc(4.9rem + env(safe-area-inset-bottom));
+}
+
+.theme-cover {
+  width: var(--theme-card-width, min(74vw, 20.7rem));
+  height: var(--theme-card-height, min(99vw, 27.6rem));
+}
+
+.deck-home h1 {
+  font-size: clamp(1.35rem, 6.5vw, 2.05rem);
+}
+
+.deck-home-subtitle {
+  margin-top: .45rem;
+  font-size: clamp(.68rem, 2.5vw, .8rem);
+}
+
+@media (min-width: 700px) {
+  .question-hint {
+    margin-bottom: 4.65rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .deck-home-heading {
+    padding-inline: 1rem;
+  }
+
+  .deck-home h1 {
+    font-size: 1.28rem;
+  }
+
+  .deck-home-subtitle {
+    font-size: .66rem;
+  }
+
+  .question-mode-bar {
+    gap: .55rem;
+  }
+
+  .question-mode-button {
+    font-size: .53rem;
+  }
+
+  .question-card {
+    padding: .85rem;
+  }
+
+  .question-card-copy p {
+    font-size: clamp(1.37rem, 7.2vw, 1.85rem);
+  }
+}

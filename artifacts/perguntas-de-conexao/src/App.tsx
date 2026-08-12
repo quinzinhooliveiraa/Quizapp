@@ -122,14 +122,18 @@ function useDeviceViewport() {
     const updateViewport = () => {
       const width = Math.max(document.documentElement.clientWidth, 1);
       const height = Math.max(window.visualViewport?.height || window.innerHeight, 1);
-      const availableCardHeight = Math.max(260, height - 202);
+      const availableCardHeight = Math.max(250, height - 250);
       const cardWidth = Math.min(width * 0.88, 384, availableCardHeight * 0.75);
+      const availableThemeHeight = Math.max(220, height - 270);
+      const themeWidth = Math.min(width * 0.72, 320, availableThemeHeight * 0.75);
 
       document.documentElement.style.setProperty('--device-width', `${width}px`);
       document.documentElement.style.setProperty('--device-height', `${height}px`);
       document.documentElement.style.setProperty('--device-vh', `${height * 0.01}px`);
       document.documentElement.style.setProperty('--question-card-width', `${cardWidth}px`);
       document.documentElement.style.setProperty('--question-card-height', `${cardWidth * 4 / 3}px`);
+      document.documentElement.style.setProperty('--theme-card-width', `${themeWidth}px`);
+      document.documentElement.style.setProperty('--theme-card-height', `${themeWidth * 4 / 3}px`);
     };
 
     updateViewport();
@@ -335,7 +339,7 @@ function AppExperienceReference() {
           {questionsQuery.isLoading ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : questionsQuery.isError ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => questionsQuery.refetch()} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article key={currentQuestion.id} className={`question-card question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''}`} data-testid={`card-question-${currentQuestion.id}`}>
             <div className="question-card-grain" />
             <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong></div>
-             <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'A PARTE BOA'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
+             <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
              {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
              <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
           </article>}
