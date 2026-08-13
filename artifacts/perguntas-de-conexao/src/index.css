@@ -383,7 +383,7 @@
 /* Eu — uma área pessoal, editorial e feita para voltar */
 .eu-home {
   box-sizing: border-box;
-  width: min(100%, 470px);
+  width: min(calc(100% - 3rem - env(safe-area-inset-left) - env(safe-area-inset-right)), 470px);
   max-width: 470px;
   margin-inline: auto;
   overflow-y: auto;
@@ -391,7 +391,7 @@
   overscroll-behavior-x: none;
   scrollbar-width: thin;
   scrollbar-color: rgba(166, 137, 255, .4) transparent;
-  padding: 1.45rem clamp(1.2rem, 5.5vw, 1.5rem) calc(6rem + env(safe-area-inset-bottom));
+  padding: 1.45rem 0 calc(6rem + env(safe-area-inset-bottom));
 }
 
 .eu-heading {
@@ -476,7 +476,7 @@
 .eu-section-heading { display: flex; align-items: end; justify-content: space-between; gap: .75rem; margin-bottom: .8rem; }
 .eu-section-heading h2 { font-size: 1rem; }
 .eu-section-heading > span { flex: 0 0 auto; color: rgba(237,231,255,.35); font: .5rem var(--app-font-mono); letter-spacing: .05em; text-transform: uppercase; }
-.eu-progress-row { display: flex; gap: .65rem; overflow-x: auto; margin-inline: -.15rem; padding: .15rem .15rem .55rem; scrollbar-width: none; }
+.eu-progress-row { display: flex; gap: .65rem; overflow-x: auto; margin-inline: 0; padding: .15rem 0 .55rem; scrollbar-width: none; }
 .eu-progress-row::-webkit-scrollbar { display: none; }
 .eu-progress-card { flex: 0 0 14.2rem; display: flex; align-items: center; gap: .7rem; min-height: 5.4rem; padding: .65rem; border: 1px solid rgba(255,255,255,.1); border-radius: 1rem; color: #fff; background: rgba(255,255,255,.045); text-align: left; transition: transform .2s ease, background .2s ease; }
 .eu-progress-card:hover { transform: translateY(-2px); background: rgba(143,111,229,.14); }
@@ -508,7 +508,7 @@
 .theme-cover-heart:hover, .theme-cover-heart.is-favorite { color: #f0c9ff; background: rgba(255,255,255,.13); }
 
 @media (max-width: 520px) {
-  .eu-home { padding-inline: clamp(1.15rem, 5vw, 1.35rem); }
+  .eu-home { width: calc(100% - 3rem - env(safe-area-inset-left) - env(safe-area-inset-right)); }
   .eu-heading { align-items: start; flex-direction: column; gap: .55rem; }
   .eu-date { max-width: none; text-align: left; }
   .eu-daily-card { grid-template-columns: minmax(0, 1fr) 6.2rem; padding: 1.15rem .9rem; }
@@ -3400,7 +3400,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 }
 
 .app-bottom-nav {
-  width: min(calc(100% - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right)), 24rem);
+  width: min(calc(100% - 3rem - env(safe-area-inset-left) - env(safe-area-inset-right)), 24rem);
   min-height: 3.65rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   bottom: max(1rem, env(safe-area-inset-bottom));
@@ -3931,4 +3931,11 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     bottom: .75rem;
     width: calc(100vw - 1.5rem);
   }
+}
+
+/* Final mobile gutters for the personal space.
+   This intentionally comes after the generic deck-home sizing rules. */
+.connection-app .deck-home.eu-home {
+  width: min(calc(100% - 3rem - env(safe-area-inset-left) - env(safe-area-inset-right)), 470px);
+  padding-inline: 0;
 }
