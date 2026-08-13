@@ -3274,7 +3274,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   white-space: nowrap;
 }
 
-.connection-app.is-writing-mode .app-bottom-nav {
+.connection-app.is-question-view .app-bottom-nav {
   display: none;
 }
 
