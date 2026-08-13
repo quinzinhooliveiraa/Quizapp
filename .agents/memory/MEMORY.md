@@ -1,2 +1,3 @@
 - [External checkout access](external-checkout-access.md) — keep payment-provider wiring deferred while preserving package-based buyer and guest permissions.
 - [Perguntas preview workflow](pwa-preview-workflow.md) — use the artifact-managed web workflow; a duplicate legacy workflow can conflict on the assigned port.
+- [PWA stable viewport](pwa-stable-viewport.md) — avoid visualViewport resize-driven jumps in the installed full-height card deck.

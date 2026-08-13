@@ -272,9 +272,14 @@ function AccessPill({ access }: { access: any }) {
 
 function useDeviceViewport() {
   useEffect(() => {
+    const standalone = isStandaloneApp();
+
     const updateViewport = () => {
       const width = Math.max(document.documentElement.clientWidth, 1);
-      const height = Math.max(window.visualViewport?.height || window.innerHeight, 1);
+      // In an installed PWA, keep the app on the stable layout viewport.
+      // visualViewport changes as browser chrome/keyboard animates and makes
+      // the deck jump even when the user is only scrolling.
+      const height = Math.max(standalone ? window.innerHeight : (window.visualViewport?.height || window.innerHeight), 1);
       const availableCardHeight = Math.max(250, height - 250);
       const cardWidth = Math.min(width * 0.88, 384, availableCardHeight * 0.75);
       const availableThemeHeight = Math.max(220, height - 270);
@@ -291,14 +296,18 @@ function useDeviceViewport() {
     };
 
     updateViewport();
-    window.addEventListener('resize', updateViewport);
     window.addEventListener('orientationchange', updateViewport);
-    window.visualViewport?.addEventListener('resize', updateViewport);
+    if (!standalone) {
+      window.addEventListener('resize', updateViewport);
+      window.visualViewport?.addEventListener('resize', updateViewport);
+    }
 
     return () => {
-      window.removeEventListener('resize', updateViewport);
       window.removeEventListener('orientationchange', updateViewport);
-      window.visualViewport?.removeEventListener('resize', updateViewport);
+      if (!standalone) {
+        window.removeEventListener('resize', updateViewport);
+        window.visualViewport?.removeEventListener('resize', updateViewport);
+      }
     };
   }, []);
 }
