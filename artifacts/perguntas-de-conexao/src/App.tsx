@@ -1,4 +1,4 @@
-import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -16,6 +16,8 @@ import {
   useGetInvite,
   getGetInviteQueryKey,
   useReceiveCheckoutWebhook,
+  type Question,
+  type QuestionTheme,
 } from '@workspace/api-client-react';
 import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Users, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
@@ -36,7 +38,79 @@ const fallbackQuestions = [
   { id: 'q-4', themeId: 'memorias', text: 'Qual lembrança pequena nossa você gostaria de guardar para sempre?', intensity: 'gentle' as const },
   { id: 'q-5', themeId: 'memorias', text: 'Que conversa do passado ainda merece uma segunda chance?', intensity: 'honest' as const },
   { id: 'q-6', themeId: 'amanha', text: 'Que vida parece possível quando você imagina que estamos do mesmo lado?', intensity: 'deep' as const },
+  { id: 'q-7', themeId: 'amanha', text: 'Qual pequeno plano faria esta semana parecer mais nossa?', intensity: 'gentle' as const },
+  { id: 'q-8', themeId: 'memorias', text: 'Que detalhe de quando nos conhecemos ainda te faz sorrir?', intensity: 'honest' as const },
 ];
+
+const DAILY_DECK_STORAGE_KEY = 'conexao-daily-deck';
+const SEEN_BY_THEME_STORAGE_KEY = 'conexao-seen-by-theme';
+const SAVED_QUESTIONS_STORAGE_KEY = 'conexao-saved-question-ids';
+const FAVORITE_THEMES_STORAGE_KEY = 'conexao-favorite-theme-ids';
+
+function readStoredArray(key: string): string[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function readStoredRecord(key: string): Record<string, string[]> {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '{}');
+    if (!value || typeof value !== 'object') return {};
+    return Object.fromEntries(Object.entries(value).map(([id, ids]) => [id, Array.isArray(ids) ? ids.filter((item): item is string => typeof item === 'string') : []]));
+  } catch {
+    return {};
+  }
+}
+
+function localDateKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function seededValue(seed: string) {
+  let value = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) value = Math.imul(value ^ seed.charCodeAt(index), 16777619);
+  return () => {
+    value += value << 13;
+    value ^= value >>> 7;
+    value += value << 3;
+    value ^= value >>> 17;
+    value += value << 5;
+    return (value >>> 0) / 4294967296;
+  };
+}
+
+function deterministicShuffle<T>(items: T[], seed: string) {
+  const result = [...items];
+  const random = seededValue(seed);
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+  return result;
+}
+
+function selectDailyQuestions(allQuestions: Question[], date: string) {
+  const available = allQuestions.length ? allQuestions : fallbackQuestions;
+  const byTheme = new Map<string, Question[]>();
+  available.forEach(question => byTheme.set(question.themeId, [...(byTheme.get(question.themeId) || []), question]));
+  const themeIds = deterministicShuffle([...byTheme.keys()], date);
+  const mixed: Question[] = [];
+  let round = 0;
+  while (mixed.length < Math.min(10, available.length) && themeIds.length) {
+    themeIds.forEach(themeId => {
+      const options = deterministicShuffle(byTheme.get(themeId) || [], `${date}-${themeId}-${round}`);
+      if (options[0] && !mixed.some(question => question.id === options[0].id)) mixed.push(options[0]);
+    });
+    round += 1;
+    if (round > available.length) break;
+  }
+  return deterministicShuffle(mixed.length >= 8 ? mixed : available, date).slice(0, Math.min(10, available.length)).map(question => question.id);
+}
 function Logo({ inverse = false }: { inverse?: boolean }) {
   return <Link href="/" data-testid="link-logo" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`}><span className="brand-symbol"><Feather size={18} strokeWidth={1.6} /></span><span>Perguntas<br /><i>de Conexão</i></span></Link>;
 }
@@ -310,8 +384,10 @@ function AppExperienceReference() {
   useDeviceViewport();
   const queryClientRef = useQueryClient();
   const { data: themesData, isLoading: themesLoading, isError: themesError } = useListQuestionThemes({ query: { queryKey: getListQuestionThemesQueryKey() } });
-  const themes = themesData?.length ? themesData : fallbackThemes;
+  const themes: QuestionTheme[] = themesData?.length ? themesData : fallbackThemes;
   const [themeId, setThemeId] = useState<string | null>(null);
+  const [dailyMode, setDailyMode] = useState(false);
+  const [dailyDeck, setDailyDeck] = useState<string[]>([]);
   const [themeIndex, setThemeIndex] = useState(0);
   const [themeDragOffset, setThemeDragOffset] = useState(0);
   const [isThemeDragging, setIsThemeDragging] = useState(false);
@@ -325,7 +401,9 @@ function AppExperienceReference() {
   const questionDragDelta = useRef(0);
   const questionPointerCaptured = useRef(false);
   const [activeNav, setActiveNav] = useState('todos');
-  const [saved, setSaved] = useState<string[]>([]);
+  const [saved, setSaved] = useState<string[]>(() => readStoredArray(SAVED_QUESTIONS_STORAGE_KEY));
+  const [favoriteThemeIds, setFavoriteThemeIds] = useState<string[]>(() => readStoredArray(FAVORITE_THEMES_STORAGE_KEY));
+  const [seenByTheme, setSeenByTheme] = useState<Record<string, string[]>>(() => readStoredRecord(SEEN_BY_THEME_STORAGE_KEY));
   const [questionIndex, setQuestionIndex] = useState(0);
   const [randomMode, setRandomMode] = useState(true);
   const [writingOpen, setWritingOpen] = useState(false);
@@ -339,22 +417,50 @@ function AppExperienceReference() {
   const [inviteResult, setInviteResult] = useState<any>(null);
   const accessQuery = useGetAccessPreview({ query: { queryKey: ['access-preview'] } });
   const sessionQuery = useGetQuestionSession(sessionId, { query: { enabled: !!sessionId, queryKey: getGetQuestionSessionQueryKey(sessionId) } });
-  const questionParams = { theme: themeId || undefined };
+  const questionParams = { theme: themeId && !dailyMode ? themeId : undefined };
   const questionsQuery = useListQuestions(questionParams, { query: { enabled: !!themeId, queryKey: getListQuestionsQueryKey(questionParams) } });
+  const allQuestionsQuery = useListQuestions({}, { query: { enabled: activeNav === 'eu' || dailyMode, queryKey: getListQuestionsQueryKey({}) } });
   const createSession = useCreateQuestionSession();
   const createInvite = useCreateInvite();
-  const questions = themeId ? (questionsQuery.data?.length ? questionsQuery.data : (fallbackQuestions.filter(q => q.themeId === themeId).length ? fallbackQuestions.filter(q => q.themeId === themeId) : fallbackQuestions)) : [];
+  const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
+  useEffect(() => {
+    if (activeNav !== 'eu' && !dailyMode) return;
+    const date = localDateKey();
+    try {
+      const stored = JSON.parse(localStorage.getItem(DAILY_DECK_STORAGE_KEY) || 'null') as { date?: string; ids?: string[] } | null;
+      const availableIds = new Set(availableQuestions.map(question => question.id));
+      const validStored = stored?.date === date && stored.ids?.length && stored.ids.every(id => availableIds.has(id));
+      const ids = validStored ? stored.ids || [] : selectDailyQuestions(availableQuestions, date);
+      setDailyDeck(ids);
+      localStorage.setItem(DAILY_DECK_STORAGE_KEY, JSON.stringify({ date, ids }));
+    } catch {
+      setDailyDeck(selectDailyQuestions(availableQuestions, date));
+    }
+  }, [activeNav, allQuestionsQuery.data, availableQuestions, dailyMode]);
+  const dailyQuestions = dailyDeck.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question));
+  const questions = dailyMode ? dailyQuestions : themeId ? (questionsQuery.data?.length ? questionsQuery.data : (fallbackQuestions.filter(q => q.themeId === themeId).length ? fallbackQuestions.filter(q => q.themeId === themeId) : fallbackQuestions)) : [];
   const currentQuestion = questions.length ? questions[questionIndex % questions.length] : null;
   const activeAccess = sessionQuery.data || accessQuery.data;
   const canInvite = sessionQuery.data ? sessionQuery.data.invitesUsed < sessionQuery.data.inviteLimit : !!accessQuery.data?.canInvite;
   const inviteLimit = sessionQuery.data?.inviteLimit ?? accessQuery.data?.invitesLimit ?? 0;
   const invitesUsed = sessionQuery.data?.invitesUsed ?? accessQuery.data?.invitesUsed ?? 0;
   const showInvitePrompt = !!themeId && !!sessionId && invitesUsed === 0 && canInvite && !inviteResult;
-  const selectedTheme = themes.find(theme => theme.id === themeId);
+  const selectedTheme = themes.find(theme => theme.id === (dailyMode ? currentQuestion?.themeId : themeId));
   const dailyTotal = selectedTheme?.count || questions.length || 1;
   const dailyPosition = questions.length ? (questionIndex % questions.length) + 1 : 1;
+  const isQuestionView = Boolean(themeId || dailyMode);
+  const markQuestionSeen = (question: Question | null) => {
+    if (!question) return;
+    setSeenByTheme(current => {
+      const previous = current[question.themeId] || [];
+      const next = { ...current, [question.themeId]: [...previous.filter(id => id !== question.id), question.id] };
+      localStorage.setItem(SEEN_BY_THEME_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
 
-  const changeTheme = (id: string) => { setThemeId(id); setQuestionIndex(0); };
+  const changeTheme = (id: string) => { setDailyMode(false); setThemeId(id); setQuestionIndex(0); };
+  const openDailyDeck = () => { setActiveNav('eu'); setDailyMode(true); setThemeId(null); setQuestionIndex(0); };
   const vibrateOnThemeChange = () => {
     // The Vibration API works in Android browsers, but Safari on iPhone does
     // not support web vibration. Check before calling so unsupported browsers
@@ -424,15 +530,20 @@ function AppExperienceReference() {
     themePointerCaptured.current = false;
   };
   const nextQuestion = () => setQuestionIndex(i => {
-    if (!randomMode || questions.length < 2) return (i + 1) % Math.max(questions.length, 1);
+    if (dailyMode || !randomMode || questions.length < 2) return (i + 1) % Math.max(questions.length, 1);
     const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
     return (i + randomOffset) % questions.length;
   });
   const previousQuestion = () => setQuestionIndex(i => {
-    if (!randomMode || questions.length < 2) return (i - 1 + questions.length) % Math.max(questions.length, 1);
+    if (dailyMode || !randomMode || questions.length < 2) return (i - 1 + questions.length) % Math.max(questions.length, 1);
     const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
     return (i + randomOffset) % questions.length;
   });
+  useEffect(() => markQuestionSeen(currentQuestion), [currentQuestion?.id]);
+  useEffect(() => { localStorage.setItem(SAVED_QUESTIONS_STORAGE_KEY, JSON.stringify(saved)); }, [saved]);
+  useEffect(() => { localStorage.setItem(FAVORITE_THEMES_STORAGE_KEY, JSON.stringify(favoriteThemeIds)); }, [favoriteThemeIds]);
+  const toggleThemeFavorite = (id: string) => setFavoriteThemeIds(current => current.includes(id) ? current.filter(themeIdValue => themeIdValue !== id) : [...current, id]);
+  const toggleSaved = (id: string) => setSaved(current => current.includes(id) ? current.filter(questionId => questionId !== id) : [...current, id]);
   const handleQuestionPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     const target = event.target as HTMLElement;
@@ -508,13 +619,18 @@ function AppExperienceReference() {
   ];
 
   return <div className="app-viewport">
-     <main className={`connection-app ${themeId ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''}`}>
-      {!themeId ? <>
+     <main className={`connection-app ${isQuestionView ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''}`}>
+       {!isQuestionView ? <>
         <header className="app-header" data-testid="header-decks">
           <div className="app-wordmark" data-testid="text-app-brand"><span className="app-logo-orb"><span /></span><span>Perguntas<br /><b>de Conexão</b></span></div>
           <button className="app-icon-button" onClick={() => setSettingsOpen(true)} aria-label="Abrir ajustes" data-testid="button-open-settings"><Settings2 size={21} /></button>
         </header>
-        <section className="deck-home" aria-labelledby="deck-home-title">
+         {activeNav === 'eu' ? <section className="deck-home eu-home" aria-labelledby="eu-home-title">
+           <div className="eu-heading"><div><p className="eu-kicker">seu espaço</p><h1 id="eu-home-title">Olá, {buyerName || 'por aqui'}.</h1><p>Uma conversa por vez, no ritmo que fizer sentido hoje.</p></div><span className="eu-date">{new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</span></div>
+           <section className="eu-daily-card" onClick={openDailyDeck} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && openDailyDeck()} data-testid="card-daily-deck"><div className="eu-daily-glow" /><div className="eu-daily-copy"><p className="eu-kicker">para você · seleção de hoje</p><h2>Um pequeno espaço<br /><em>para se encontrar.</em></h2><p>{dailyQuestions.length || 8} perguntas misturadas de vários temas, escolhidas para este dia.</p><span className="eu-open-link">Abrir baralho <ArrowRight size={16} /></span></div><div className="eu-daily-art"><span className="daily-orbit daily-orbit-one" /><span className="daily-orbit daily-orbit-two" /><div className="daily-mini-card daily-mini-back" /><div className="daily-mini-card daily-mini-front"><span>hoje</span><Quote size={24} /><strong>uma pergunta<br />de cada vez</strong></div></div></section>
+           <section className="eu-section" aria-labelledby="continue-title"><div className="eu-section-heading"><div><p className="eu-kicker">continue jogando</p><h2 id="continue-title">Histórias que ainda estão abertas</h2></div><span>{themes.filter(theme => { const count = seenByTheme[theme.id]?.length || 0; return count > 0 && count < theme.count; }).length} em andamento</span></div><div className="eu-progress-row">{themes.filter(theme => { const count = seenByTheme[theme.id]?.length || 0; return count > 0 && count < theme.count; }).map(theme => { const seenCount = seenByTheme[theme.id]?.length || 0; const lastQuestionId = seenByTheme[theme.id]?.at(-1); const themeQuestions = availableQuestions.filter(question => question.themeId === theme.id); const resumeIndex = Math.max(0, themeQuestions.findIndex(question => question.id === lastQuestionId)); return <button key={theme.id} className="eu-progress-card" onClick={() => { changeTheme(theme.id); setQuestionIndex(resumeIndex); }} data-testid={`button-continue-theme-${theme.id}`}><div className={`eu-progress-cover theme-cover-${themes.indexOf(theme) % 5}`}><span>{String(seenCount).padStart(2, '0')}</span><Heart size={17} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></div><div className="eu-progress-copy"><strong>{theme.title}</strong><small>{seenCount} de {theme.count} perguntas</small><span className="eu-progress-bar"><i style={{ width: `${Math.min(100, (seenCount / Math.max(theme.count, 1)) * 100)}%` }} /></span><em>Retomar <ArrowRight size={13} /></em></div></button>; })}</div>{themes.filter(theme => { const count = seenByTheme[theme.id]?.length || 0; return count > 0 && count < theme.count; }).length === 0 && <div className="eu-empty-state"><span><Sparkles size={16} /></span><p>Quando uma pergunta ficar pelo caminho, ela aparece aqui para você continuar.</p></div>}</section>
+           <section className="eu-section eu-favorites-section" aria-labelledby="favorites-title"><div className="eu-section-heading"><div><p className="eu-kicker">favoritos</p><h2 id="favorites-title">O que você quis guardar</h2></div><span>{saved.length + favoriteThemeIds.length} salvos</span></div><div className="eu-favorite-grid"><div className="eu-favorite-column"><h3>Perguntas favoritas</h3>{saved.length ? saved.map(id => { const question = availableQuestions.find(item => item.id === id); return question ? <button key={id} className="eu-question-favorite" onClick={() => { setDailyMode(false); setThemeId(question.themeId); setQuestionIndex(Math.max(0, availableQuestions.filter(item => item.themeId === question.themeId).findIndex(item => item.id === id))); }} data-testid={`button-favorite-question-${id}`}><Star size={14} fill="currentColor" /><span>{question.text}</span><ArrowRight size={14} /></button> : null; }) : <p className="eu-muted">Suas perguntas salvas aparecem aqui.</p>}</div><div className="eu-favorite-column"><h3>Temas favoritos</h3>{favoriteThemeIds.length ? <div className="eu-theme-favorite-list">{favoriteThemeIds.map(id => { const theme = themes.find(item => item.id === id); return theme ? <button key={id} onClick={() => changeTheme(id)} data-testid={`button-favorite-theme-${id}`}><span className={`eu-theme-dot theme-cover-${themes.indexOf(theme) % 5}`} /><span>{theme.title}</span><ArrowRight size={14} /></button> : null; })}</div> : <p className="eu-muted">Toque no coração de um tema para guardá-lo aqui.</p>}</div></div></section>
+         </section> : <section className="deck-home" aria-labelledby="deck-home-title">
            <div className="deck-home-heading"><h1 id="deck-home-title" data-testid="text-deck-title">Escolha um objetivo pra começar</h1><p className="deck-home-subtitle">Por exemplo, descobrir algo novo, imaginar o que vem</p></div>
           <div className="theme-carousel-wrap">
               <div
@@ -529,20 +645,20 @@ function AppExperienceReference() {
               {themesLoading && <div className="theme-skeleton" data-testid="loading-themes" />}
               {themes.map((theme, index) => {
                 const offset = Math.max(-2, Math.min(2, index - themeIndex));
-                return <button key={theme.id} className={`theme-cover theme-cover-${index % 5} theme-offset-${offset} ${index === themeIndex ? 'is-active' : ''}`} onClick={() => selectThemeCard(index)} data-testid={`button-theme-card-${theme.id}`}>
-                  <span className="theme-cover-shade" /><span className="theme-cover-top"><span>{theme.count} perguntas</span><Heart size={20} strokeWidth={1.8} /></span>
+                 return <div key={theme.id} className={`theme-cover theme-cover-${index % 5} theme-offset-${offset} ${index === themeIndex ? 'is-active' : ''}`} onClick={() => selectThemeCard(index)} onKeyDown={event => event.key === 'Enter' && selectThemeCard(index)} role="button" tabIndex={0} data-testid={`button-theme-card-${theme.id}`}>
+                   <span className="theme-cover-shade" /><span className="theme-cover-top"><span>{theme.count} perguntas</span><button className={`theme-cover-heart ${favoriteThemeIds.includes(theme.id) ? 'is-favorite' : ''}`} onClick={event => { event.stopPropagation(); toggleThemeFavorite(theme.id); }} aria-label={favoriteThemeIds.includes(theme.id) ? `Remover ${theme.title} dos favoritos` : `Favoritar ${theme.title}`} data-testid={`button-favorite-theme-card-${theme.id}`}><Heart size={20} strokeWidth={1.8} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></button></span>
                   <span className="theme-cover-copy"><b>{theme.title}</b><small>{theme.description}</small><i>{index === themeIndex ? 'Toque novamente para abrir' : 'ver objetivo'}</i></span>
-                </button>;
+                 </div>;
               })}
             </div>
             <div className="carousel-dots" aria-label="Posição do objetivo">{themes.map((theme, index) => <button key={theme.id} className={index === themeIndex ? 'is-active' : ''} onClick={() => moveThemeIndex(index)} aria-label={`Selecionar ${theme.title}`} data-testid={`button-theme-dot-${theme.id}`} />)}</div>
           </div>
           {themesError && <div className="app-inline-error" data-testid="status-themes-error"><span>Não conseguimos atualizar os objetivos.</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar novamente <RotateCw size={13} /></button></div>}
           <p className="deck-note"><Sparkles size={14} /> Uma pergunta por vez. O resto acontece entre vocês.</p>
-        </section>
+         </section>}
       </> : <>
         <header className="question-header" data-testid="header-question">
-          <button className="decks-back-pill" onClick={() => setThemeId(null)} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
+           <button className="decks-back-pill" onClick={() => { setDailyMode(false); setThemeId(null); }} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
         <section className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>
@@ -551,7 +667,7 @@ function AppExperienceReference() {
               <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
               <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> {writingOpen ? 'Escrevendo' : 'Escrever'}</button>
             </div>
-             {questionsQuery.isLoading ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : questionsQuery.isError ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => questionsQuery.refetch()} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article
+              {(dailyMode ? allQuestionsQuery.isLoading : questionsQuery.isLoading) ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : (dailyMode ? allQuestionsQuery.isError : questionsQuery.isError) ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => (dailyMode ? allQuestionsQuery.refetch() : questionsQuery.refetch())} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article
                key={currentQuestion.id}
                className={`question-card question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''} ${isQuestionDragging ? 'is-dragging' : ''}`}
                onPointerDown={handleQuestionPointerDown}
@@ -566,7 +682,7 @@ function AppExperienceReference() {
               <div className="question-card-copy"><span className="question-kicker">{currentQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : currentQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
               {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
               <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
-               <button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => setSaved(s => s.includes(currentQuestion.id) ? s.filter(id => id !== currentQuestion.id) : [...s, currentQuestion.id])} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button>
+                <button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => toggleSaved(currentQuestion.id)} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button>
             </article>}
           </div>
            {showInvitePrompt && <aside className="invite-prompt-card" aria-labelledby="invite-prompt-title" data-testid="card-invite-prompt">

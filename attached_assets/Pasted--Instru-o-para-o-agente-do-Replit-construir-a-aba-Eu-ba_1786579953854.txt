@@ -1,0 +1,44 @@
+# Instrução para o agente do Replit — construir a aba "Eu" (baralho do dia, continuar jogando, favoritos)
+
+Baseado na referência que o dono do produto gostou (a aba "Me" do app de referência): três seções — baralho personalizado do dia, jogos em andamento com progresso, e favoritos (perguntas e temas).
+
+## Pré-requisito: o menu de baixo ainda não troca de conteúdo
+
+Hoje o menu inferior (`App.tsx`, linhas 503-508, `navItems` = Todos/Favoritos/Temas/Eu) só muda a aparência do botão ativo (`activeNav`, linha 327) — nenhum conteúdo diferente aparece dependendo da aba selecionada; a tela sempre mostra o carrossel de temas (`deck-home`, linha 517), não importa qual aba esteja marcada. Antes de construir o conteúdo da aba "Eu", fazer o conteúdo principal (a `section` que hoje é sempre `deck-home`) trocar de acordo com `activeNav`. Pode deixar "Todos" mostrando o que já existe hoje (o carrossel de temas), e as abas "Favoritos" e "Temas" podem continuar mostrando o mesmo conteúdo de "Todos" por enquanto (não é pra construir essas duas agora, só a "Eu") — o importante é que trocar de aba realmente troque o que aparece na tela.
+
+## Conteúdo da aba "Eu"
+
+### 1. "Para você" — baralho personalizado do dia
+
+Um card grande, no mesmo estilo visual dos cards de tema (fundo gradiente, como o "Meu Baralho" que já existe na tela "Descobrir", com o menu "⋯" no canto), só que representando uma seleção de perguntas puxadas de vários temas diferentes, trocada uma vez por dia.
+
+- Gerar essa seleção (por exemplo, 8 a 10 perguntas, misturando temas) usando a data do dia como semente, pra ficar estável durante o dia inteiro e mudar no dia seguinte.
+- Guardar a data da última geração no `localStorage` (mesmo padrão já usado no projeto, ex: `conexao-name`, `conexao-session`) pra não recalcular toda hora.
+- Ao tocar nesse card, abre a experiência normal de pergunta (reaproveitar o componente que já existe pra mostrar pergunta por pergunta, arrastar, favoritar etc.), só que navegando por essa lista especial em vez das perguntas de um único tema.
+
+### 2. "Continuar jogando"
+
+Fileira horizontal (role pro lado) com os temas que a pessoa já começou mas não terminou, cada card mostrando uma barrinha de progresso embaixo (ex: "3 de 8 perguntas vistas").
+
+- Isso precisa de um jeito de saber quais perguntas já foram vistas em cada tema. Criar um novo estado que guarda, por tema, quais IDs de pergunta já apareceram pra essa pessoa (atualizando toda vez que `nextQuestion`/`previousQuestion`/o arrasto mostra uma pergunta nova) — salvar isso no `localStorage` também, pra continuar de onde parou mesmo fechando o app.
+- Um tema só aparece aqui se tiver progresso maior que zero e menor que o total (nem começado, nem terminado, não entra).
+- Tocar no card continua de onde a pessoa parou naquele tema (não do início).
+
+### 3. "Favoritos" — perguntas e temas
+
+Duas coisas juntas ou em sub-seções separadas:
+- **Perguntas favoritas**: já existe o estado `saved` (`App.tsx`, linha 328, e os botões de favoritar espalhados pelo app, ex: linha 569) — usar essa mesma lista aqui, mostrando as perguntas salvas (pode ser como uma lista ou grade de cards pequenos).
+- **Temas favoritos**: hoje o coração no canto de cada card de tema (`App.tsx`, linha 533) é só decorativo, não tem `onClick` nem estado associado. Precisa virar funcional: criar um novo estado (ex: `favoriteThemeIds`), o coração alterna esse tema dentro/fora da lista ao tocar, e essa seção mostra os temas favoritados.
+
+## O que não fazer agora
+
+- Nada disso precisa ir pro banco de dados ainda — seguir o padrão já usado no projeto (estado local + `localStorage`), consistente com o resto do app nessa fase.
+- Não precisa conectar com as respostas do onboarding ainda (isso poderia alimentar o baralho do dia no futuro, mas não existe essa ligação hoje e não é o foco agora).
+- Não precisa construir o conteúdo das abas "Favoritos" e "Temas" do menu de baixo agora, só a "Eu".
+
+## Verificação
+
+- Trocar de aba no menu de baixo e confirmar que o conteúdo da tela realmente muda pra "Eu" (as outras abas podem continuar mostrando o mesmo de "Todos" por enquanto).
+- Conferir que o baralho do dia aparece com uma seleção de perguntas de temas variados, e continua igual se fechar e abrir o app de novo no mesmo dia.
+- Ver algumas perguntas de um tema (sem terminar) e confirmar que ele aparece em "Continuar jogando" com o progresso certo.
+- Favoritar uma pergunta e um tema (tocando no coração do card de tema) e confirmar que os dois aparecem na seção de favoritos da aba "Eu".
