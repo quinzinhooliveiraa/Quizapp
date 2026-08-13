@@ -1,0 +1,29 @@
+# Instrução para o agente do Replit — visual definitivo do card de pergunta (o que fica, o que sai, o que vem da referência)
+
+Esta instrução define a versão final do visual do card de pergunta. Ela substitui qualquer dúvida das instruções anteriores sobre esse card especificamente.
+
+## O que FICA como está hoje (não mexer)
+
+- A barra de modos "Aleatória / Escrever" (`question-mode-bar`, os botões que trocam entre sequencial/aleatório e abrem o modo de escrever) — manter exatamente como está.
+- O contador de posição no formato "01 / 05" (`question-header-count`, no cabeçalho) — manter exatamente como está.
+
+## O que SAI
+
+- As setas de navegação laterais (`question-side-nav`, os botões de seta anterior/próxima ao lado do card) — remover completamente. Já que o arrasto (swipe) funciona, essas setas não são mais necessárias.
+
+## O que vem da referência (GetOurTime)
+
+1. **Wallpaper/foto de fundo nas cartas**: hoje cada card de pergunta usa um gradiente de cor (`question-gradient-${questionIndex % 4}`, ciclando entre 4 variações). Trocar por fotos de fundo reais, no estilo da referência — uma foto emocional/candid cobrindo o card inteiro, com um gradiente escuro por cima pra manter o texto legível. Pode ser uma foto por tema (todas as perguntas de "vulnerabilidade" usam a mesma foto ou uma pequena variação de fotos daquele tema) ou uma foto por faixa de intensidade (`currentQuestion.intensity`: leve/honesta/profunda) — decidir o que for mais simples de implementar mantendo a variedade visual.
+   - **Importante**: não usar nenhuma imagem do material de referência que recebi (aquele vídeo e prints do GetOurTime) — são de outro produto. Gerar ou buscar fotos novas, de banco de imagens royalty-free ou geradas, com o mesmo clima emocional (fotografia candid, luz natural, tom quente ou íntimo dependendo do tema) — mesma orientação que já dei antes pros cards de tema na tela "Descobrir".
+
+2. **O efeito de "escrita"**: o texto da pergunta aparecendo progressivamente, tipo máquina de escrever — isso já está descrito em detalhe na instrução anterior (`efeito-maquina-escrever-replit.md`), que continua valendo.
+
+3. **Visual de cartas atrás**: o efeito de profundidade com outras cartas parcialmente visíveis atrás do card principal (como já existe na tela de abertura do onboarding, com 2-3 cartas levemente inclinadas atrás da carta da frente) — aplicar esse mesmo visual na tela da pergunta também, não só no onboarding. As cartas de trás podem ser só decorativas (sem interação, sem texto, ou levemente desfocadas), só pra dar a sensação de baralho/profundidade atrás da pergunta atual.
+
+## Verificação
+
+- Conferir que a barra de modos e o contador "01/05" continuam exatamente iguais a hoje.
+- Conferir que as setas de navegação sumiram e que arrastar continua funcionando normalmente pra trocar de pergunta.
+- Conferir que cada card de pergunta tem uma foto de fundo (não mais gradiente de cor simples), com o texto ainda legível por cima.
+- Conferir que aparecem cartas parcialmente visíveis atrás do card principal, dando sensação de profundidade/baralho.
+- Conferir que o efeito de digitação do texto (da instrução anterior) continua funcionando junto com esse novo visual.
