@@ -474,6 +474,17 @@
 .daily-mini-front svg { color: #dccbff; margin-top: auto; }
 .daily-mini-front strong { font-size: .69rem; line-height: 1.05; letter-spacing: -.04em; }
 
+.eu-deck-history { margin: -.45rem 0 1.4rem; }
+.eu-deck-history-row { display: flex; gap: .65rem; overflow-x: auto; margin-inline: 0 -1.25rem; padding: .1rem 1.25rem .55rem 0; scrollbar-width: none; }
+.eu-deck-history-row::-webkit-scrollbar { display: none; }
+.eu-history-card { min-width: 13.2rem; display: flex; align-items: center; gap: .65rem; padding: .7rem .75rem; border: 1px solid rgba(255,255,255,.12); border-radius: 1rem; color: #fff; background: rgba(255,255,255,.045); text-align: left; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+.eu-history-card:hover { transform: translateY(-2px); border-color: rgba(204,184,255,.42); background: rgba(255,255,255,.075); }
+.eu-history-art { width: 2.2rem; height: 2.2rem; display: grid; place-items: center; flex: 0 0 auto; border-radius: .7rem; color: #d8c9ff; background: linear-gradient(145deg, #775ed1, #302054); }
+.eu-history-copy { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: .22rem; }
+.eu-history-copy strong { overflow: hidden; font-size: .68rem; font-weight: 600; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+.eu-history-copy small { color: rgba(237,231,255,.42); font: .5rem var(--app-font-mono); letter-spacing: .04em; text-transform: uppercase; }
+.eu-history-card > svg { flex: 0 0 auto; color: rgba(255,255,255,.45); }
+
 .eu-section { margin-top: 1.2rem; }
 .eu-section-heading { display: flex; align-items: end; justify-content: space-between; gap: .75rem; margin-bottom: .8rem; }
 .eu-section-heading h2 { font-size: 1rem; }
@@ -1824,6 +1835,14 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .app-modal h2 { margin: 0; color: #fff; font-size: 2rem; line-height: 1.02; letter-spacing: -.065em; }
 .app-modal h2 em { color: #bea7ff; font-style: normal; }
 .app-modal > p:not(.modal-eyebrow) { margin: 1rem 0 1.25rem; color: rgba(238,229,242,.57); font-size: .9rem; line-height: 1.45; }
+.daily-form-modal { max-height: calc(100svh - 2rem); overflow-y: auto; }
+.daily-form-group { margin: 1.35rem 0 0; padding: 0; border: 0; }
+.daily-form-group legend { margin-bottom: .65rem; color: rgba(255,255,255,.84); font-size: .72rem; font-weight: 600; }
+.daily-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.daily-option { min-height: 2.8rem; padding: .65rem .7rem; border: 1px solid rgba(255,255,255,.12); border-radius: .75rem; color: rgba(238,229,242,.64); background: rgba(255,255,255,.045); font: .65rem/1.2 var(--app-font-sans); text-align: left; transition: border-color .2s ease, color .2s ease, background .2s ease, transform .2s ease; }
+.daily-option:hover { transform: translateY(-1px); border-color: rgba(190,167,255,.42); color: #fff; }
+.daily-option.is-selected { border-color: rgba(190,167,255,.75); color: #fff; background: rgba(139,106,229,.28); box-shadow: inset 0 0 0 1px rgba(190,167,255,.12); }
+.daily-form-submit { margin-top: 1.35rem; }
 .adult-theme-mark { width: 3rem; height: 3rem; display: grid; place-items: center; margin-bottom: 1.3rem; border: 1px solid rgba(242,215,166,.45); border-radius: 50%; color: #f2d7a6; background: rgba(242,215,166,.1); font: .7rem var(--app-font-mono); letter-spacing: .08em; }
 .adult-theme-modal .app-secondary-button { margin-top: .6rem; }
 .app-text-input { width: 100%; height: 3.35rem; padding: 0 1rem; border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; outline: none; color: #fff; background: rgba(255,255,255,.06); font: inherit; }

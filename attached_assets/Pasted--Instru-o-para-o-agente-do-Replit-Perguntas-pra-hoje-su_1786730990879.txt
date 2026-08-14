@@ -1,0 +1,45 @@
+# Instrução para o agente do Replit — "Perguntas pra hoje" substitui o baralho automático do dia
+
+Isso atualiza/substitui a seção "Para você" descrita antes em `tab-eu-perfil-replit.md`. Em vez de gerar o baralho do dia sozinho (só com a data como semente, sem perguntar nada), agora a pessoa responde um mini-formulário rápido sobre o clima do dia, e o baralho é montado a partir disso — e cada baralho gerado fica salvo no espaço "Eu" pra reabrir depois.
+
+## O que existe hoje
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`:
+
+- O card "Perguntas de hoje" já existe na aba "Eu" (linha 669), e ao tocar chama `openDailyDeck()` (linha 483), que abre direto um baralho gerado por `selectDailyQuestions(availableQuestions, date)` (função definida na linha 97), que usa **só a data do dia como semente** — sempre o mesmo resultado pro mesmo dia, sem perguntar nada pra pessoa.
+- Esse baralho é guardado em `localStorage` só com a data (`DAILY_DECK_STORAGE_KEY`, linha 45/444-449) — um baralho por dia, sobrescrito no dia seguinte, sem histórico dos anteriores.
+
+## O que muda
+
+### 1. Ao tocar no card "Perguntas de hoje", abrir um mini-formulário antes (não ir direto pro baralho)
+
+Duas perguntas rápidas, de múltipla escolha, em vez de abrir o baralho na hora:
+
+- **"Como vocês estão hoje?"** — opções curtas, por exemplo: *Tranquilos*, *Com saudade um do outro*, *Animados*, *Precisando de colo*.
+- **"O que combina mais com agora?"** — opções, por exemplo: *Conversar fundo*, *Relembrar coisas boas*, *Sonhar um pouco*, *Só rir e ser leve*, *Esquentar as coisas* (essa última só aparece puxando perguntas da categoria 18+, se ela existir — ver `redesenho-menu-categorias-replit.md`).
+
+Cada opção mapeia pra uma combinação de `intensity` (`gentle`/`honest`/`deep`) e/ou `themeId` preferido — por exemplo, "Precisando de colo" + "Conversar fundo" prioriza perguntas `intensity: 'deep'` de temas tipo `porto-seguro`/`livro-aberto`; "Animados" + "Só rir e ser leve" prioriza `intensity: 'gentle'` do tema `modo-leve`. Não precisa ser uma lógica sofisticada — um mapeamento simples de "respostas → filtro de tema/intensidade preferido, com o resto do baralho preenchido aleatoriamente do restante" já resolve.
+
+### 2. Gerar o baralho a partir das respostas, e salvar como um novo item no histórico (não sobrescrever)
+
+- Trocar a lógica de `selectDailyQuestions(availableQuestions, date)` por uma versão que recebe também as respostas do formulário, e usa isso (mais uma semente aleatória do momento) pra escolher as perguntas.
+- Em vez de guardar só `{ date, ids }` como hoje, guardar uma **lista** de baralhos gerados, cada um com: `id` (gerado na hora), `createdAt`, um rótulo curto derivado das respostas (ex: "Leve · 12 ago"), e a lista de `ids` de pergunta. Trocar `DAILY_DECK_STORAGE_KEY` de um objeto único pra um array desses baralhos (guardar isso com uma nova chave, ex: `conexao-personalized-decks`, migrando/​ignorando o formato antigo).
+- Depois de gerar, abrir esse baralho normalmente (reaproveitar o fluxo que já existe pra `dailyMode`/perguntas, só que apontando pras perguntas desse baralho específico).
+
+### 3. Na aba "Eu", a seção vira um histórico, não só um card único
+
+- O card principal continua chamando o formulário (pra gerar um baralho novo, do jeito que a pessoa está se sentindo agora).
+- Abaixo dele, mostrar uma lista/fileira horizontal dos baralhos personalizados já gerados antes (rótulo + data), pra pessoa poder reabrir um de um dia anterior sem precisar responder o formulário de novo.
+- Não precisa limitar quantos ficam salvos por enquanto (isso é só `localStorage`, é seguro deixar crescer por um bom tempo antes de precisar limpar).
+
+## O que não fazer agora
+
+- Não precisa conectar isso com nenhuma resposta do onboarding ainda.
+- Não precisa dar opção de editar/apagar baralhos salvos por enquanto — só gerar novos e reabrir os existentes já resolve.
+
+## Verificação
+
+- Tocar em "Perguntas de hoje" e confirmar que abre o formulário, não o baralho direto.
+- Responder o formulário e confirmar que abre um baralho coerente com as respostas (por exemplo, escolher "Precisando de colo" + "Conversar fundo" deveria puxar perguntas mais profundas).
+- Gerar um segundo baralho no mesmo dia (com respostas diferentes) e confirmar que os dois ficam salvos separados, aparecendo os dois na lista da aba "Eu".
+- Fechar e abrir o app de novo e confirmar que os baralhos gerados antes continuam lá.

@@ -67,16 +67,56 @@ const fallbackQuestions: Question[] = [
   { id: 'fdr2', themeId: 'fora-da-rotina', text: 'Que convite inesperado você aceitaria receber de mim?', intensity: 'honest' },
 ];
 
-const DAILY_DECK_STORAGE_KEY = 'conexao-daily-deck';
+const PERSONALIZED_DECKS_STORAGE_KEY = 'conexao-personalized-decks';
 const SEEN_BY_THEME_STORAGE_KEY = 'conexao-seen-by-theme';
 const SAVED_QUESTIONS_STORAGE_KEY = 'conexao-saved-question-ids';
 const FAVORITE_THEMES_STORAGE_KEY = 'conexao-favorite-theme-ids';
 const ADULT_THEME_CONFIRMATION_STORAGE_KEY = 'conexao-18plus-confirmed';
 
+type PersonalizedDeck = {
+  id: string;
+  createdAt: string;
+  label: string;
+  ids: string[];
+};
+
+const dailyMoodOptions = [
+  { value: 'tranquilos', label: 'Tranquilos', themes: ['porto-seguro'], intensity: 'gentle' as const },
+  { value: 'saudade', label: 'Com saudade um do outro', themes: ['mesmo-longe', 'perto-de-novo'], intensity: 'honest' as const },
+  { value: 'animados', label: 'Animados', themes: ['modo-leve', 'fora-da-rotina'], intensity: 'gentle' as const },
+  { value: 'colo', label: 'Precisando de colo', themes: ['porto-seguro', 'livro-aberto'], intensity: 'deep' as const },
+];
+
+const dailyVibeOptions = [
+  { value: 'fundo', label: 'Conversar fundo', themes: ['porto-seguro', 'livro-aberto'], intensity: 'deep' as const },
+  { value: 'relembrar', label: 'Relembrar coisas boas', themes: ['la-atras'], intensity: 'honest' as const },
+  { value: 'sonhar', label: 'Sonhar um pouco', themes: ['em-voz-alta', 'proximo-passo'], intensity: 'honest' as const },
+  { value: 'rir', label: 'Só rir e ser leve', themes: ['modo-leve'], intensity: 'gentle' as const },
+  { value: 'esquentar', label: 'Esquentar as coisas', themes: ['luzes-baixas'], intensity: 'honest' as const },
+];
+
 function readStoredArray(key: string): string[] {
   try {
     const value = JSON.parse(localStorage.getItem(key) || '[]');
     return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function readStoredDecks(): PersonalizedDeck[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(PERSONALIZED_DECKS_STORAGE_KEY) || '[]');
+    if (!Array.isArray(value)) return [];
+    return value.filter((deck): deck is PersonalizedDeck => Boolean(
+      deck
+      && typeof deck === 'object'
+      && typeof deck.id === 'string'
+      && typeof deck.createdAt === 'string'
+      && typeof deck.label === 'string'
+      && Array.isArray(deck.ids)
+      && deck.ids.every((id: unknown) => typeof id === 'string'),
+    ));
   } catch {
     return [];
   }
@@ -120,22 +160,21 @@ function deterministicShuffle<T>(items: T[], seed: string) {
   return result;
 }
 
-function selectDailyQuestions(allQuestions: Question[], date: string) {
+function selectPersonalizedQuestionIds(allQuestions: Question[], moodValue: string, vibeValue: string, seed: string) {
   const available = allQuestions.length ? allQuestions : fallbackQuestions;
-  const byTheme = new Map<string, Question[]>();
-  available.forEach(question => byTheme.set(question.themeId, [...(byTheme.get(question.themeId) || []), question]));
-  const themeIds = deterministicShuffle([...byTheme.keys()], date);
-  const mixed: Question[] = [];
-  let round = 0;
-  while (mixed.length < Math.min(10, available.length) && themeIds.length) {
-    themeIds.forEach(themeId => {
-      const options = deterministicShuffle(byTheme.get(themeId) || [], `${date}-${themeId}-${round}`);
-      if (options[0] && !mixed.some(question => question.id === options[0].id)) mixed.push(options[0]);
-    });
-    round += 1;
-    if (round > available.length) break;
-  }
-  return deterministicShuffle(mixed.length >= 8 ? mixed : available, date).slice(0, Math.min(10, available.length)).map(question => question.id);
+  const mood = dailyMoodOptions.find(option => option.value === moodValue) || dailyMoodOptions[0];
+  const vibe = dailyVibeOptions.find(option => option.value === vibeValue) || dailyVibeOptions[0];
+  const preferredThemes = new Set([...mood.themes, ...vibe.themes]);
+  const shuffled = deterministicShuffle(available, seed);
+  const score = (question: Question) => (
+    (preferredThemes.has(question.themeId) ? 4 : 0)
+    + (question.intensity === vibe.intensity ? 2 : 0)
+    + (question.intensity === mood.intensity ? 1 : 0)
+  );
+  return shuffled
+    .sort((first, second) => score(second) - score(first))
+    .slice(0, Math.min(10, available.length))
+    .map(question => question.id);
 }
 function Logo({ inverse = false }: { inverse?: boolean }) {
   return <Link href="/" data-testid="link-logo" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`}><span className="brand-symbol"><Feather size={18} strokeWidth={1.6} /></span><span>Perguntas<br /><i>de Conexão</i></span></Link>;
@@ -426,6 +465,10 @@ function AppExperienceReference() {
   const [dailyMode, setDailyMode] = useState(false);
   const [favoriteMode, setFavoriteMode] = useState(false);
   const [dailyDeck, setDailyDeck] = useState<string[]>([]);
+  const [personalizedDecks, setPersonalizedDecks] = useState<PersonalizedDeck[]>(() => readStoredDecks());
+  const [dailyFormOpen, setDailyFormOpen] = useState(false);
+  const [dailyMood, setDailyMood] = useState('');
+  const [dailyVibe, setDailyVibe] = useState('');
   const [themeIndex, setThemeIndex] = useState(0);
   const [themeDragOffset, setThemeDragOffset] = useState(0);
   const [isThemeDragging, setIsThemeDragging] = useState(false);
@@ -465,20 +508,6 @@ function AppExperienceReference() {
   const createSession = useCreateQuestionSession();
   const createInvite = useCreateInvite();
   const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
-  useEffect(() => {
-    if (activeNav !== 'eu' && !dailyMode) return;
-    const date = localDateKey();
-    try {
-      const stored = JSON.parse(localStorage.getItem(DAILY_DECK_STORAGE_KEY) || 'null') as { date?: string; ids?: string[] } | null;
-      const availableIds = new Set(availableQuestions.map(question => question.id));
-      const validStored = stored?.date === date && stored.ids?.length && stored.ids.every(id => availableIds.has(id));
-      const ids = validStored ? stored.ids || [] : selectDailyQuestions(availableQuestions, date);
-      setDailyDeck(ids);
-      localStorage.setItem(DAILY_DECK_STORAGE_KEY, JSON.stringify({ date, ids }));
-    } catch {
-      setDailyDeck(selectDailyQuestions(availableQuestions, date));
-    }
-  }, [activeNav, allQuestionsQuery.data, availableQuestions, dailyMode]);
   const dailyQuestions = dailyDeck.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question));
   const favoriteQuestions = useMemo(() => saved.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, saved]);
   const inProgressThemes = useMemo(() => themes.filter(theme => {
@@ -523,7 +552,42 @@ function AppExperienceReference() {
     applyTheme(adultThemePrompt.id);
     setAdultThemePrompt(null);
   };
-  const openDailyDeck = () => { setActiveNav('eu'); setFavoriteMode(false); setDailyMode(true); setThemeId(null); setQuestionIndex(0); };
+  const openDailyForm = () => {
+    setDailyMood('');
+    setDailyVibe('');
+    setDailyFormOpen(true);
+  };
+  const generateDailyDeck = () => {
+    if (!dailyMood || !dailyVibe) return;
+    const mood = dailyMoodOptions.find(option => option.value === dailyMood);
+    const vibe = dailyVibeOptions.find(option => option.value === dailyVibe);
+    const createdAt = new Date().toISOString();
+    const dateLabel = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short' }).format(new Date(createdAt));
+    const deck: PersonalizedDeck = {
+      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `deck-${Date.now()}`,
+      createdAt,
+      label: `${vibe?.label || mood?.label || 'Perguntas pra hoje'} · ${dateLabel}`,
+      ids: selectPersonalizedQuestionIds(availableQuestions, dailyMood, dailyVibe, `${createdAt}-${dailyMood}-${dailyVibe}`),
+    };
+    const nextDecks = [deck, ...personalizedDecks];
+    setPersonalizedDecks(nextDecks);
+    localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+    setDailyDeck(deck.ids);
+    setActiveNav('eu');
+    setFavoriteMode(false);
+    setDailyMode(true);
+    setThemeId(null);
+    setQuestionIndex(0);
+    setDailyFormOpen(false);
+  };
+  const openSavedDailyDeck = (deck: PersonalizedDeck) => {
+    setDailyDeck(deck.ids);
+    setActiveNav('eu');
+    setFavoriteMode(false);
+    setDailyMode(true);
+    setThemeId(null);
+    setQuestionIndex(0);
+  };
   const openFavoritesDeck = () => { setActiveNav('eu'); setFavoriteMode(true); setDailyMode(false); setThemeId(null); setQuestionIndex(0); };
   const vibrateOnThemeChange = () => {
     // The Vibration API works in Android browsers, but Safari on iPhone does
@@ -709,7 +773,8 @@ function AppExperienceReference() {
         </header>
          {activeNav === 'eu' ? <section className="deck-home eu-home" aria-labelledby="eu-home-title">
             <div className="eu-heading"><div><p className="eu-kicker">seu espaço</p><h1 id="eu-home-title">Olá, {buyerName || 'por aqui'}.</h1></div><time className="eu-date" dateTime={localDateKey()}>{new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</time></div>
-           <section className="eu-daily-card" onClick={openDailyDeck} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && openDailyDeck()} data-testid="card-daily-deck"><div className="eu-daily-glow" /><div className="eu-daily-copy"><p className="eu-kicker">seus decks</p><h2>Perguntas de hoje<br /><em>para vocês.</em></h2><p>{dailyQuestions.length || 8} perguntas novas para abrir quando fizer sentido.</p><span className="eu-open-link">Abrir deck <ArrowRight size={16} /></span></div><div className="eu-daily-art"><span className="daily-orbit daily-orbit-one" /><span className="daily-orbit daily-orbit-two" /><div className="daily-mini-card daily-mini-back" /><div className="daily-mini-card daily-mini-front"><span>seu deck</span><Quote size={24} /><strong>uma pergunta<br />de cada vez</strong></div></div></section>
+           <section className="eu-daily-card" onClick={openDailyForm} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && openDailyForm()} data-testid="card-daily-deck"><div className="eu-daily-glow" /><div className="eu-daily-copy"><p className="eu-kicker">seus decks</p><h2>Perguntas de hoje<br /><em>para vocês.</em></h2><p>Conte como vocês estão e receba um baralho feito para agora.</p><span className="eu-open-link">Criar meu deck <ArrowRight size={16} /></span></div><div className="eu-daily-art"><span className="daily-orbit daily-orbit-one" /><span className="daily-orbit daily-orbit-two" /><div className="daily-mini-card daily-mini-back" /><div className="daily-mini-card daily-mini-front"><span>seu deck</span><Quote size={24} /><strong>uma pergunta<br />de cada vez</strong></div></div></section>
+           {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <button key={deck.id} className="eu-history-card" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className="eu-history-art"><Quote size={18} /></span><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span><ArrowRight size={15} /></button>)}</div></section>}
              <section className="eu-section eu-continue-section" aria-labelledby="continue-title"><div className="eu-section-heading"><div><p className="eu-kicker">continue jogando</p><h2 id="continue-title" className="sr-only">Continue jogando</h2></div><span>{inProgressThemes.length ? `${inProgressThemes.length} em andamento` : 'comece por aqui'}</span></div><div className="eu-progress-row">{continueThemes.map(theme => { const seenCount = seenByTheme[theme.id]?.length || 0; const lastQuestionId = seenByTheme[theme.id]?.at(-1); const themeQuestions = availableQuestions.filter(question => question.themeId === theme.id); const resumeIndex = Math.max(0, themeQuestions.findIndex(question => question.id === lastQuestionId)); return <button key={theme.id} className="eu-progress-card" onClick={() => { changeTheme(theme.id); setQuestionIndex(resumeIndex); }} data-testid={`button-continue-theme-${theme.id}`}><div className={`eu-progress-cover theme-cover-${themes.indexOf(theme) % 5}`}><span className="eu-progress-number">{String(seenCount).padStart(2, '0')}</span><Heart className="eu-progress-heart" size={20} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></div><div className="eu-progress-copy"><strong>{theme.title}</strong><small>{seenCount ? `${seenCount} de ${theme.count} perguntas` : 'comece agora'}</small><span className="eu-progress-bar"><i style={{ width: `${Math.min(100, (seenCount / Math.max(theme.count, 1)) * 100)}%` }} /></span><em>Retomar <ArrowRight size={13} /></em></div></button>; })}</div>{continueThemes.length === 0 && <div className="eu-empty-state"><span><Sparkles size={16} /></span><p>Quando uma pergunta ficar pelo caminho, ela aparece aqui para você continuar.</p></div>}</section>
            <section className="eu-section eu-favorites-section" aria-labelledby="favorites-title"><div className="eu-section-heading"><div><p className="eu-kicker">salvos</p><h2 id="favorites-title">Salvos</h2></div><span>{saved.length + favoriteThemeIds.length} salvos</span></div><div className="eu-saved-row"><button className={`eu-collection-card eu-collection-cards ${saved.length ? 'has-content' : ''}`} onClick={openFavoritesDeck} disabled={!saved.length} data-testid="button-favorite-cards"><span className="eu-collection-shade" /><span className="eu-collection-title">Cartas favoritas <b>{saved.length}</b></span>{!saved.length && <small>suas perguntas salvas aparecem aqui</small>}</button><div className="eu-favorite-topics"><p className="eu-favorite-label">Temas favoritos</p><div className="eu-topic-row">{favoriteThemeIds.length ? favoriteThemeIds.map(id => { const theme = themes.find(item => item.id === id); return theme ? <button key={id} className={`eu-topic-card theme-cover-${themes.indexOf(theme) % 5}`} onClick={() => changeTheme(id)} data-testid={`button-favorite-theme-${id}`}><span className="eu-topic-shade" /><strong>{theme.title}</strong><ArrowRight size={15} /></button> : null; }) : <div className="eu-topic-empty">Favorite um tema para encontrá-lo aqui.</div>}</div></div></div></section>
          </section> : <section className="deck-home" aria-labelledby="deck-home-title">
@@ -805,6 +870,7 @@ function AppExperienceReference() {
       </nav>
     </main>
     <InstallAppPrompt />
+     {dailyFormOpen && <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="daily-form-title"><div className="app-modal daily-form-modal"><button className="app-modal-close" onClick={() => setDailyFormOpen(false)} aria-label="Fechar perguntas pra hoje" data-testid="button-close-daily-form"><X size={18} /></button><p className="modal-eyebrow">perguntas pra hoje</p><h2 id="daily-form-title">Como vocês estão <em>agora?</em></h2><p>Duas respostas rápidas para montar um baralho que combine com o momento de vocês.</p><fieldset className="daily-form-group"><legend>Como vocês estão hoje?</legend><div className="daily-option-grid">{dailyMoodOptions.map(option => <button key={option.value} type="button" className={`daily-option ${dailyMood === option.value ? 'is-selected' : ''}`} onClick={() => setDailyMood(option.value)} aria-pressed={dailyMood === option.value} data-testid={`button-daily-mood-${option.value}`}>{option.label}</button>)}</div></fieldset><fieldset className="daily-form-group"><legend>O que combina mais com agora?</legend><div className="daily-option-grid">{dailyVibeOptions.filter(option => option.value !== 'esquentar' || themes.some(theme => theme.audience === '18+')).map(option => <button key={option.value} type="button" className={`daily-option ${dailyVibe === option.value ? 'is-selected' : ''}`} onClick={() => setDailyVibe(option.value)} aria-pressed={dailyVibe === option.value} data-testid={`button-daily-vibe-${option.value}`}>{option.label}</button>)}</div></fieldset><button onClick={generateDailyDeck} disabled={!dailyMood || !dailyVibe} className="app-primary-button daily-form-submit" data-testid="button-generate-daily-deck">Montar meu baralho <ArrowRight size={16} /></button></div></div>}
      {adultThemePrompt && <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="adult-theme-title"><div className="app-modal adult-theme-modal"><button className="app-modal-close" onClick={() => setAdultThemePrompt(null)} aria-label="Fechar aviso" data-testid="button-cancel-adult-theme"><X size={18} /></button><div className="adult-theme-mark">18+</div><p className="modal-eyebrow">um espaço para dois</p><h2 id="adult-theme-title">Luzes <em>Baixas.</em></h2><p>Este espaço tem perguntas mais ousadas, pensadas para casais. Quer continuar?</p><button onClick={confirmAdultTheme} className="app-primary-button" data-testid="button-confirm-adult-theme">Quero continuar <ArrowRight size={16} /></button><button onClick={() => setAdultThemePrompt(null)} className="app-secondary-button" data-testid="button-cancel-adult-theme-secondary">Voltar</button></div></div>}
     {welcomeOpen && <div className="app-modal-backdrop"><div className="app-modal welcome-app-modal"><button className="app-modal-close" onClick={() => setWelcomeOpen(false)} aria-label="Fechar apresentação" data-testid="button-close-welcome"><X size={18} /></button><div className="welcome-app-mark"><Feather size={19} /></div><p className="modal-eyebrow">antes da primeira carta</p><h2>Como podemos<br /><em>te chamar?</em></h2><p>É só para deixar este espaço um pouco mais seu. Você pode entrar sem preencher nada.</p><input value={buyerName} onChange={e => setBuyerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && startSession()} placeholder="Seu nome" className="app-text-input" data-testid="input-buyer-name" /><button onClick={startSession} className="app-primary-button" data-testid="button-enter-experience">{createSession.isPending ? 'Abrindo seu espaço…' : 'Entrar na experiência'} <ArrowRight size={16} /></button></div></div>}
     {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{buyerName || 'Visitante'}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button></div></div>}
