@@ -1,0 +1,29 @@
+# Fase 1D — Link de visitante entra direto na experiência (sem cara de página de vendas)
+
+Ajuste curto. Quando alguém abre um link de convite (`/invite/:token`), já cai direto na tela de aceitar convite — mas hoje essa tela está embrulhada no visual da página de vendas, o que passa a impressão errada de que o visitante está no site de marketing. Vamos deixar a entrada do visitante limpa, com cara de app, indo direto pra experiência.
+
+## O que acontece hoje
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`, a `InvitePage` (linha ~1062-1074) retorna `<Shell dark>...</Shell>`. O `Shell` (linha ~219-235) é o mesmo componente da página de vendas: ele adiciona o **cabeçalho de marketing** (logo + links "Experiência / Como funciona / Pacotes" + botão "Abrir meu baralho") e o **rodapé** ("Para conversas que ficam", copyright). Ou seja, o convidado vê a moldura do site de vendas ao redor do convite.
+
+## O que fazer
+
+1. **Tirar o `Shell` da `InvitePage`.** Trocar o wrapper `<Shell dark>...</Shell>` por um contêiner próprio, simples e escuro (ex: uma `<div className="invite-page-shell">` só com o conteúdo do convite que já existe — o `invite-entry`), sem o header de marketing nem o footer. Assim o visitante vê só o convite e o botão de aceitar, com cara de app, não de site de vendas.
+
+2. **Manter o resto do fluxo igual:** o `acceptInvite` (linha 1066) continua salvando `conexao-guest-token`/`conexao-guest-name`/`conexao-name`, e o botão "Aceitar convite" continua levando pra `/app`. Nada disso muda — é só a moldura visual que sai.
+
+3. **Marcar o papel de visitante** (alinhando com a Fase 1C): no `acceptInvite`, gravar também `localStorage.setItem('conexao-role', 'guest')`, pra Fase 3 saber que essa pessoa é convidada.
+
+4. **Garantir que o visitante nunca é jogado pra página de vendas.** Como a Fase 1B faz o onboarding redirecionar pra `/app` quando já existe `conexao-guest-token`, o convidado que já aceitou não volta mais pro onboarding nem pra `/`. Conferir que, ao entrar por um link de convite, em nenhum momento ele passa pela rota `/` (página de vendas) — o caminho é link → `/invite/:token` → `/app`, direto.
+
+## O que NÃO muda
+
+- A página de vendas (`/`) continua existindo igual pra quem chega por ela (comprador novo).
+- A `InvitePage` continua validando o token e mostrando erro se o convite não existir (o `else` que já existe, linha 1073) — só que agora nesse mesmo visual limpo, sem o Shell de vendas.
+
+## Verificação
+
+- Abrir um link de convite válido e confirmar que a tela mostra só o convite (sem o menu "Experiência / Como funciona / Pacotes" nem o rodapé de vendas).
+- Aceitar o convite e confirmar que vai direto pro `/app` como convidado.
+- Abrir um link de convite inválido e confirmar que mostra o aviso de "convite não encontrado" no mesmo visual limpo.
+- Confirmar que em nenhum momento o visitante vê a página de vendas (`/`).

@@ -1610,6 +1610,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .copy-row .text-input { font-size: 10px; }
 .form-error { color: #a74444 !important; font-size: 10px !important; margin-top: -12px !important; }
 .invite-entry { min-height: calc(100dvh - 198px); display: grid; place-items: center; padding: 50px 20px 90px; position: relative; }
+.invite-page-shell { min-height: 100dvh; overflow: hidden; background: var(--wine); color: var(--cream); }
+.invite-page-shell .invite-entry { min-height: 100dvh; }
 .invite-entry-card { max-width: 640px; text-align: center; position: relative; z-index: 1; }
 .invite-entry-orbit { position: absolute; width: min(75vw, 610px); height: 350px; border: 1px solid #a14f60; border-radius: 50%; transform: rotate(-26deg); opacity: .55; }
 .invite-symbol { margin: 0 auto 29px; color: var(--salmon); background: #8b3c53; }
