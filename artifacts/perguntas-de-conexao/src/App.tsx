@@ -453,8 +453,10 @@ function useDeviceViewport() {
       // visualViewport changes as browser chrome/keyboard animates and makes
       // the deck jump even when the user is only scrolling.
       const height = Math.max(standalone ? window.innerHeight : (window.visualViewport?.height || window.innerHeight), 1);
-      const availableCardHeight = Math.max(250, height - 250);
-      const cardWidth = Math.min(width * 0.88, 384, availableCardHeight * 0.75);
+      const availableCardHeight = Math.max(250, height - 210);
+      const maxCardWidth = Math.min(width * 0.88, 384);
+      const cardHeight = Math.min(availableCardHeight, maxCardWidth * 4 / 3);
+      const cardWidth = cardHeight * 0.75;
       const availableThemeHeight = Math.max(220, height - 270);
       const compactScreen = width <= 380;
       const themeWidth = Math.min(width * (compactScreen ? 0.64 : 0.72), 320, availableThemeHeight * (compactScreen ? 0.68 : 0.75));
@@ -606,6 +608,7 @@ function AppExperienceReference() {
   const [favoriteThemeIds, setFavoriteThemeIds] = useState<string[]>(() => readStoredArray(FAVORITE_THEMES_STORAGE_KEY));
   const [seenByTheme, setSeenByTheme] = useState<Record<string, string[]>>(() => readStoredRecord(SEEN_BY_THEME_STORAGE_KEY));
   const [questionIndex, setQuestionIndex] = useState(0);
+  const questionHistory = useRef<number[]>([]);
   const [randomMode, setRandomMode] = useState(true);
   const [writingOpen, setWritingOpen] = useState(false);
   const [responses, setResponses] = useState<Record<string, string>>({});
@@ -681,7 +684,17 @@ function AppExperienceReference() {
     }
   };
 
-  const applyTheme = (id: string) => { setActiveDeckId(null); setFavoriteMode(false); setDailyMode(false); setThemeId(id); setQuestionIndex(0); };
+  const resetQuestionHistory = () => {
+    questionHistory.current = [];
+  };
+  const applyTheme = (id: string) => {
+    resetQuestionHistory();
+    setActiveDeckId(null);
+    setFavoriteMode(false);
+    setDailyMode(false);
+    setThemeId(id);
+    setQuestionIndex(0);
+  };
   const changeTheme = (id: string) => {
     const theme = themes.find(item => item.id === id);
     if (theme?.audience === '18+' && !adultThemeConfirmed) {
@@ -734,6 +747,7 @@ function AppExperienceReference() {
         setDailyMode(true);
         setThemeId(null);
         setQuestionIndex(0);
+         resetQuestionHistory();
       } finally {
         setIsPreparingDeck(false);
       }
@@ -796,6 +810,7 @@ function AppExperienceReference() {
     setDailyMode(true);
     setThemeId(null);
     setQuestionIndex(0);
+    resetQuestionHistory();
   };
   useEffect(() => {
     if (!openWelcomeDeck || !welcomeDeckDone) return;
@@ -849,7 +864,15 @@ function AppExperienceReference() {
     if (activeDeckId === id) setActiveDeckId(null);
     closeDeckMenu();
   };
-  const openFavoritesDeck = () => { setActiveDeckId(null); setActiveNav('eu'); setFavoriteMode(true); setDailyMode(false); setThemeId(null); setQuestionIndex(0); };
+  const openFavoritesDeck = () => {
+    resetQuestionHistory();
+    setActiveDeckId(null);
+    setActiveNav('eu');
+    setFavoriteMode(true);
+    setDailyMode(false);
+    setThemeId(null);
+    setQuestionIndex(0);
+  };
   const openDeckTab = (tabId: string) => {
     setActiveNav(tabId);
     setActiveDeckId(null);
@@ -858,6 +881,7 @@ function AppExperienceReference() {
     setThemeId(null);
     setQuestionIndex(0);
     setThemeIndex(0);
+    resetQuestionHistory();
   };
   const vibrateOnThemeChange = () => {
     // The Vibration API works in Android browsers, but Safari on iPhone does
@@ -933,8 +957,16 @@ function AppExperienceReference() {
     const randomOffset = Math.floor(seededValue(`${questionId}-${direction}`)() * (questions.length - 1)) + 1;
     return (index + (randomOffset * direction) + questions.length * 2) % questions.length;
   };
-  const nextQuestion = () => setQuestionIndex(i => getAdjacentQuestionIndex(i, 1));
-  const previousQuestion = () => setQuestionIndex(i => getAdjacentQuestionIndex(i, -1));
+  const nextQuestion = () => {
+    if (questions.length < 2) return;
+    questionHistory.current.push(questionIndex);
+    setQuestionIndex(getAdjacentQuestionIndex(questionIndex, 1));
+  };
+  const previousQuestion = () => {
+    const previousIndex = questionHistory.current.pop();
+    if (previousIndex === undefined) return;
+    setQuestionIndex(previousIndex);
+  };
   const nextQuestionIndex = questions.length > 1 ? getAdjacentQuestionIndex(questionIndex, 1) : null;
   const nextStackQuestion = nextQuestionIndex === null ? null : questions[nextQuestionIndex];
   const nextStackTheme = nextStackQuestion ? themes.find(theme => theme.id === nextStackQuestion.themeId) : null;
@@ -1006,7 +1038,10 @@ function AppExperienceReference() {
     }
     questionPointerCaptured.current = false;
   };
-  const toggleQuestionMode = () => setRandomMode(mode => !mode);
+  const toggleQuestionMode = () => {
+    resetQuestionHistory();
+    setRandomMode(mode => !mode);
+  };
   const currentResponse = currentQuestion ? responses[currentQuestion.id] || '' : '';
   useEffect(() => {
     setWritingOpen(false);
@@ -1076,7 +1111,7 @@ function AppExperienceReference() {
          </section>}
       </> : <>
         <header className="question-header" data-testid="header-question">
-           <button className="decks-back-pill" onClick={() => { setActiveDeckId(null); setFavoriteMode(false); setDailyMode(false); setThemeId(null); }} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
+           <button className="decks-back-pill" onClick={() => { resetQuestionHistory(); setActiveDeckId(null); setFavoriteMode(false); setDailyMode(false); setThemeId(null); }} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
         <section className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>

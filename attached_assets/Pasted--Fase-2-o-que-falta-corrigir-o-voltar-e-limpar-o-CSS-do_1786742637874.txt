@@ -1,0 +1,33 @@
+# Fase 2 (o que falta) — corrigir o "voltar" e limpar o CSS do card
+
+O menu de 4 abas (Todos/Temas/Vibes/Eu) e os temas novos já foram aplicados. Faltam só dois ajustes desta fase.
+
+## 1. Corrigir o "não dá pra voltar" no modo Aleatória
+
+Confirmado no código atual: `getAdjacentQuestionIndex` (`artifacts/perguntas-de-conexao/src/App.tsx`, linha 930) sorteia uma pergunta nova tanto pra frente quanto pra trás quando o modo é Aleatória (`randomMode === true`, que é o padrão). Não existe histórico — então arrastar pra direita ("voltar") leva pra uma pergunta aleatória qualquer, não pra que a pessoa acabou de ver. Por isso parece que só dá pra avançar.
+
+**Correção — histórico de navegação de verdade:**
+
+1. Criar um estado/ref novo, ex: `questionHistory` (`useRef<number[]>([])`), que guarda os índices realmente visitados, na ordem.
+2. Em `nextQuestion` (linha 936): antes de mudar, empilhar o `questionIndex` atual no histórico, depois avançar (mantendo a lógica aleatória que já existe pra escolher a próxima).
+3. Reescrever `previousQuestion` (linha 937): se o histórico tiver algo, **desempilhar e voltar pro índice guardado** (vale pra Aleatória e Sequencial — fica consistente). Se estiver vazio (ainda não avançou), não faz nada (ou um pequeno "bounce" no card indicando que chegou no início).
+4. Resetar o histórico ao trocar de baralho/tema (`changeTheme`, `openSavedDailyDeck`, `openFavoritesDeck`) e ao alternar entre Aleatória/Sequencial.
+
+Obs: existe uma função `nextQuestion` mais antiga e não usada na linha 516 (de um componente anterior) — não é essa; a que vale é a da linha 936. Se der pra remover a órfã da 516 sem quebrar nada, ajuda a limpar, mas não é obrigatório.
+
+**Verificar:** no modo Aleatória, avançar 4-5 perguntas, depois voltar arrastando pra direita e confirmar que volta exatamente na ordem inversa das que apareceram; tentar voltar na primeira (histórico vazio) sem quebrar; trocar de tema começa histórico novo.
+
+## 2. Limpar o CSS duplicado da barra de modos + espaçamento em tela pequena
+
+A regra `.question-mode-bar` está definida **5 vezes** no `index.css` (linhas 3375, 3719, 3729, 3743 e 3943), se sobrescrevendo — é isso que causa o comportamento imprevisível de espaçamento em telas pequenas.
+
+**Correção:**
+
+1. Consolidar essas 5 definições em **uma só** (mais as que estiverem dentro de media query, mantendo só as diferenças reais de tamanho por breakpoint). Decidir um visual só pra barra (pílula com fundo, ou texto simples) e deixar uma fonte de verdade.
+2. Ajustar o espaçamento em celular pequeno: hoje a altura do card vem de uma conta que prioriza a **largura** (`App.tsx`, linhas 456-457: `cardWidth = Math.min(width * 0.88, 384, availableCardHeight * 0.75)`), o que em telas baixas trava no limite de largura e sobra espaço vazio embaixo, com a barra de modos grudada no topo. Reequilibrar pra levar a **altura disponível** mais em conta (derivar a partir de `availableCardHeight` mantendo a proporção 3:4), pra o card preencher melhor e o respiro ficar proporcional entre barra de modos, card e rodapé.
+
+**Verificar:** testar numa viewport baixa (~667px de altura, tipo iPhone SE) e confirmar que não sobra vão grande embaixo nem a barra fica colada no topo; confirmar que só existe uma definição base de `.question-mode-bar`; testar também numa tela alta pra não regredir.
+
+## Depois disto
+
+Com isso a Fase 2 fecha. As próximas coisas (formulário por fases, perfil visitante/convidado com o modelo de cadeira que a gente alinhou, fotos nas capas) são Fase 3.

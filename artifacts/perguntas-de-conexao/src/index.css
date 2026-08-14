@@ -3486,9 +3486,9 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 .question-card-layers {
   width: 100%;
-  height: min(calc(var(--question-card-height, min(117vw, 32rem)) + 5.1rem), calc(var(--device-height, 100dvh) - 12rem));
+  height: min(calc(var(--question-card-height, min(117vw, 32rem)) + 1.1rem), calc(var(--device-height, 100dvh) - 12rem));
   position: relative;
-  margin-top: 1rem;
+  margin-top: clamp(.55rem, 1.5vh, 1rem);
 }
 
 .question-card-layers .question-card {
@@ -3791,54 +3791,6 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   }
 }
 
-/* Keep the question controls light and separate from the card. */
-.question-mode-bar {
-  width: 100%;
-  min-height: 1.65rem;
-  justify-content: flex-start;
-  gap: .72rem;
-  margin-top: .68rem;
-  padding: 0 0 0 1rem;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  backdrop-filter: none;
-  position: relative;
-  top: 0;
-  margin-bottom: 0;
-  margin-left: 0;
-  width: 100%;
-}
-
-.question-mode-button {
-  flex: 0 0 auto;
-  min-height: 1.5rem;
-  padding: .05rem .08rem;
-  border-radius: .3rem;
-  color: rgba(255,255,255,.45);
-  font-size: .56rem;
-  letter-spacing: .055em;
-}
-
-.question-mode-button.is-active {
-  color: #fff;
-  background: transparent;
-}
-
-.question-mode-button.is-active::after {
-  content: "";
-  position: absolute;
-  height: 1px;
-  right: 0;
-  bottom: -.08rem;
-  left: 0;
-  background: #b99aff;
-}
-
-.question-mode-button {
-  position: relative;
-}
-
 .question-card {
   align-items: stretch;
 }
@@ -3993,11 +3945,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   }
 
   .question-mode-bar {
-    gap: .42rem;
-    top: 0;
-    margin-top: .55rem;
-    margin-bottom: 0;
-    margin-left: 0;
+    gap: .28rem;
+    margin-top: .45rem;
     width: 100%;
   }
 
@@ -4015,10 +3964,6 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .question-card {
     padding: .85rem;
     height: min(var(--question-card-height, 440px), calc(var(--device-height, 100dvh) - 19rem));
-  }
-
-  .question-card-layers {
-    height: min(calc(var(--question-card-height, 440px) + 3rem), calc(var(--device-height, 100dvh) - 14rem));
   }
 
   .question-card-copy p {
