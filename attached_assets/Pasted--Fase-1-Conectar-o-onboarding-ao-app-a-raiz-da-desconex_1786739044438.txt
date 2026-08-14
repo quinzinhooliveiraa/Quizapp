@@ -1,0 +1,62 @@
+# Fase 1 — Conectar o onboarding ao app (a raiz da desconexão)
+
+Esta é a mudança mais importante e, ao mesmo tempo, de baixo risco: fazer o app **aproveitar** o que o onboarding já pergunta, em vez de ignorar. Mantém tudo que já existe — são poucos pontos de código, sem reescrever nada.
+
+## O problema, em uma frase
+
+O onboarding já coleta e **salva** nome, tipo de relacionamento, curiosidade e sentimento (em `conexao-onboarding-*`). Mas o app (`App.tsx`) **nunca lê essas chaves** — ele usa uma chave de nome separada (`conexao-name`) e monta as perguntas sem olhar pro onboarding. Resultado: a pessoa responde tudo e o app age como se ela fosse uma desconhecida (inclusive perguntando o nome de novo).
+
+Confirmação no código:
+- Onboarding salva em `conexao-onboarding-name/-relationship/-date/-curiosity` (`Onboarding.tsx`, linhas 172-178). Esses dados **persistem** (o `reset()` da linha 182 só roda no botão "Refazer o quiz").
+- App lê `conexao-name` pra decidir se abre o modal "Como podemos te chamar?" (`App.tsx`, linha 1056, estado `welcomeOpen` na linha ~, `buyerName` lê `conexao-name`).
+- Não existe **nenhuma** referência a `conexao-onboarding-*` dentro de `App.tsx`.
+
+## Passo 1 — No fim do onboarding, entregar os dados nas chaves que o app já usa
+
+Em `Onboarding.tsx` existe um `useEffect` que dispara quando chega no passo `'preparing'` (linha 381). Aproveitar esse mesmo ponto (ou o passo `'deck'`, o final) para **copiar** os dados do onboarding pras chaves que o app entende:
+
+- `localStorage.setItem('conexao-name', name)` — a MESMA chave que o app lê. Isso sozinho já elimina o "podemos te chamar" repetido.
+- `localStorage.setItem('conexao-relationship', relationship)` — nova chave, pro app saber o tipo de relação.
+- `localStorage.setItem('conexao-curiosity', JSON.stringify(curiosity))` — nova chave.
+- `localStorage.setItem('conexao-feeling', feeling)` — nova chave (obs: hoje `feeling` e `surprise` nem estão sendo persistidos no `useEffect` das linhas 171-178; incluir `feeling` na persistência também).
+- `localStorage.setItem('conexao-onboarding-complete', 'true')` — marca que a pessoa passou pelo onboarding.
+
+Importante: **não apagar** os `conexao-onboarding-*` originais nem mexer no `reset()` — só copiar pras chaves novas. Assim nada do que já funciona quebra.
+
+## Passo 2 — O app para de perguntar o nome de novo
+
+Em `App.tsx`, o estado `welcomeOpen` começa como `!localStorage.getItem('conexao-name')`. Como o Passo 1 passou a gravar `conexao-name` no fim do onboarding, o modal simplesmente não abre mais pra quem veio do onboarding — sem precisar de mais nada. 
+
+Só garantir que `buyerName` (linha ~426, lê `conexao-name`) já pega esse nome, o que ele já faz. O cabeçalho da aba "Eu" ("Olá, {buyerName}") passa a mostrar o nome certo automaticamente.
+
+(Quem abre o `/app` direto, sem passar pelo onboarding, continua vendo o modal como hoje — nenhuma regressão.)
+
+## Passo 3 — O primeiro baralho nasce do que a pessoa contou
+
+Aqui está a parte que faz o app "parecer feito pra ela", reaproveitando o motor que **já existe** (`selectPersonalizedQuestionIds`, `App.tsx` linha 199, que já mistura perguntas por tema/intensidade a partir de um "mood" e uma "vibe").
+
+A ideia: traduzir as respostas do onboarding para os mesmos valores de `dailyMoodOptions`/`dailyVibeOptions` que o formulário "Perguntas pra hoje" usa, e gerar **um baralho de boas-vindas** automaticamente na primeira vez que a pessoa entra vindo do onboarding.
+
+- Criar um mapa simples de `feeling` (onboarding) → `vibe` (do app). Os textos do onboarding são (`Onboarding.tsx` linha 48-53):
+  - "Mais perto do que de costume" → vibe `fundo` (Conversar fundo)
+  - "Leve e divertido" → vibe `rir` (Só rir e ser leve)
+  - "Honesto, mesmo que seja difícil" → vibe `fundo`
+  - "Um pouco perigoso" → vibe `esquentar` (se o tema 18+ existir; senão cai em `fundo`)
+- E um mapa de `relationship` → `mood`:
+  - "Meu namorado ou namorada" → mood `tranquilos`
+  - "Alguém com quem estou saindo" → mood `animados`
+- Na primeira entrada vinda do onboarding (checar `conexao-onboarding-complete === 'true'` e uma flag tipo `conexao-welcome-deck-done` ainda não setada), gerar um `PersonalizedDeck` com `selectPersonalizedQuestionIds(availableQuestions, moodMapeado, vibeMapeado, 8, seed)`, salvá-lo no histórico (mesmo fluxo do `generateDailyDeck`, linha 615) com um rótulo tipo "Seu primeiro baralho", marcar a flag pra não repetir, e abrir esse baralho (ou deixá-lo em destaque na aba "Eu" com um aviso "montado a partir do que você contou").
+
+Isso não cria nenhum sistema novo — só alimenta o gerador que já está lá com as respostas que já foram coletadas. Se `feeling`/`relationship` estiverem vazios (pessoa que entrou direto no `/app`), pular esse passo e seguir o comportamento atual.
+
+## O que NÃO fazer nesta fase
+
+- Não mexer no visual, nem no menu, nem no formulário — isso é fase depois.
+- Não apagar nem reescrever o onboarding — só adicionar a "ponte" no fim dele.
+- Não precisa de banco de dados — tudo continua em `localStorage`, no mesmo padrão do resto.
+
+## Verificação
+
+- Fazer o onboarding inteiro (escolher relacionamento, nome, sentimento) → abrir o baralho → confirmar que o app **não** pergunta o nome de novo e mostra "Olá, [nome do onboarding]".
+- Confirmar que aparece um baralho de boas-vindas coerente com o sentimento escolhido (ex: escolher "Leve e divertido" traz perguntas mais leves).
+- Entrar no `/app` direto (sem onboarding, limpando o `localStorage`) e confirmar que o comportamento antigo continua igual (pergunta o nome, mostra os temas normalmente) — sem regressão.

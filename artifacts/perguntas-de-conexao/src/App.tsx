@@ -19,7 +19,7 @@ import {
   type Question,
   type QuestionTheme,
 } from '@workspace/api-client-react';
-import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Link as LinkIcon, Menu, MoreHorizontal, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Users, X } from 'lucide-react';
+import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Link as LinkIcon, Menu, MoreHorizontal, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Upload, Users, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
@@ -27,18 +27,20 @@ import Onboarding from '@/pages/Onboarding';
 const queryClient = new QueryClient();
 
 const fallbackThemes: QuestionTheme[] = [
-  { id: 'porto-seguro', title: 'Porto Seguro', description: 'As conversas que parecem casa.', count: 5, audience: 'todos' },
-  { id: 'livro-aberto', title: 'Livro Aberto', description: 'Sem filtro, cara a cara.', count: 5, audience: 'todos' },
-  { id: 'faisca', title: 'Faísca', description: 'O lado mais provocante de vocês dois.', count: 2, audience: 'casais' },
-  { id: 'voce-nao-sabia', title: 'Você Não Sabia', description: 'Descobertas que ainda cabem entre vocês.', count: 2, audience: 'todos' },
-  { id: 'em-voz-alta', title: 'Em Voz Alta', description: 'A vida que os dois querem construir.', count: 4, audience: 'todos' },
-  { id: 'la-atras', title: 'Lá Atrás', description: 'O que formou quem você é hoje.', count: 4, audience: 'todos' },
-  { id: 'luzes-baixas', title: 'Luzes Baixas', description: 'Para quando a noite pede mais coragem.', count: 2, audience: '18+' },
-  { id: 'modo-leve', title: 'Modo Leve', description: 'Pra rir e não levar tão a sério.', count: 2, audience: 'todos' },
-  { id: 'mesmo-longe', title: 'Mesmo Longe', description: 'Pra quando a rotina ou a distância afastam.', count: 2, audience: 'casais' },
-  { id: 'perto-de-novo', title: 'Perto de Novo', description: 'Esquentar o espaço entre vocês.', count: 2, audience: 'casais' },
-  { id: 'proximo-passo', title: 'Próximo Passo', description: 'Pra onde essa história está indo.', count: 2, audience: 'casais' },
-  { id: 'fora-da-rotina', title: 'Fora da Rotina', description: 'Sacudir o de sempre, tentar algo novo.', count: 2, audience: 'todos' },
+  { id: 'porto-seguro', title: 'Porto Seguro', description: 'As conversas que parecem casa.', count: 5, audience: 'todos', kind: 'tema' },
+  { id: 'livro-aberto', title: 'Livro Aberto', description: 'Sem filtro, cara a cara.', count: 5, audience: 'todos', kind: 'tema' },
+  { id: 'faisca', title: 'Faísca', description: 'O lado mais provocante de vocês dois.', count: 2, audience: 'casais', kind: 'vibe' },
+  { id: 'voce-nao-sabia', title: 'Você Não Sabia', description: 'Descobertas que ainda cabem entre vocês.', count: 2, audience: 'todos', kind: 'tema' },
+  { id: 'em-voz-alta', title: 'Em Voz Alta', description: 'A vida que os dois querem construir.', count: 4, audience: 'todos', kind: 'tema' },
+  { id: 'la-atras', title: 'Lá Atrás', description: 'O que formou quem você é hoje.', count: 4, audience: 'todos', kind: 'tema' },
+  { id: 'luzes-baixas', title: 'Luzes Baixas', description: 'Para quando a noite pede mais coragem.', count: 2, audience: '18+', kind: 'vibe' },
+  { id: 'modo-leve', title: 'Modo Leve', description: 'Pra rir e não levar tão a sério.', count: 2, audience: 'todos', kind: 'tema' },
+  { id: 'mesmo-longe', title: 'Mesmo Longe', description: 'Pra quando a rotina ou a distância afastam.', count: 2, audience: 'casais', kind: 'vibe' },
+  { id: 'perto-de-novo', title: 'Perto de Novo', description: 'Esquentar o espaço entre vocês.', count: 2, audience: 'casais', kind: 'vibe' },
+  { id: 'proximo-passo', title: 'Próximo Passo', description: 'Pra onde essa história está indo.', count: 2, audience: 'casais', kind: 'vibe' },
+  { id: 'fora-da-rotina', title: 'Fora da Rotina', description: 'Sacudir o de sempre, tentar algo novo.', count: 2, audience: 'todos', kind: 'vibe' },
+  { id: 'viagens', title: 'Viagens', description: 'Lugares que já foram nossos, e os que ainda vão ser.', count: 2, audience: 'todos', kind: 'tema' },
+  { id: 'carreira-dinheiro', title: 'Carreira & Dinheiro', description: 'Como vocês pensam o lado prático da vida a dois.', count: 2, audience: 'casais', kind: 'tema' },
 ];
 const fallbackQuestions: Question[] = [
   { id: 'ps1', themeId: 'porto-seguro', text: 'O que faz você se sentir realmente à vontade perto de alguém?', intensity: 'gentle' },
@@ -65,6 +67,10 @@ const fallbackQuestions: Question[] = [
   { id: 'pp2', themeId: 'proximo-passo', text: 'O que você gostaria que a gente estivesse celebrando daqui a um ano?', intensity: 'deep' },
   { id: 'fdr1', themeId: 'fora-da-rotina', text: 'Se amanhã não houvesse agenda, o que você gostaria de fazer comigo?', intensity: 'gentle' },
   { id: 'fdr2', themeId: 'fora-da-rotina', text: 'Que convite inesperado você aceitaria receber de mim?', intensity: 'honest' },
+  { id: 'via1', themeId: 'viagens', text: 'Qual lugar você gostaria de conhecer comigo sem precisar esperar a ocasião perfeita?', intensity: 'gentle' },
+  { id: 'via2', themeId: 'viagens', text: 'Que viagem nossa você repetiria, e o que faria diferente desta vez?', intensity: 'honest' },
+  { id: 'cd1', themeId: 'carreira-dinheiro', text: 'Que sonho profissional você gostaria que a gente construísse lado a lado?', intensity: 'honest' },
+  { id: 'cd2', themeId: 'carreira-dinheiro', text: 'Como vocês gostariam de conversar sobre dinheiro quando a vida apertar?', intensity: 'deep' },
 ];
 
 const PERSONALIZED_DECKS_STORAGE_KEY = 'conexao-personalized-decks';
@@ -112,9 +118,70 @@ const deckCoverByVibe: Record<string, string> = {
   rir: 'meadow',
   esquentar: 'ember',
 };
+const ONBOARDING_WELCOME_DECK_DONE_KEY = 'conexao-welcome-deck-done';
+
+const onboardingFeelingToVibe: Record<string, string> = {
+  'Mais perto do que de costume': 'fundo',
+  'Leve e divertido': 'rir',
+  'Honesto, mesmo que seja difícil': 'fundo',
+  'Um pouco perigoso': 'esquentar',
+};
+
+const onboardingRelationshipToMood: Record<string, string> = {
+  'Meu namorado ou namorada': 'tranquilos',
+  'Alguém com quem estou saindo': 'animados',
+};
 
 function isDeckCoverId(value: unknown): value is string {
   return typeof value === 'string' && deckCoverOptions.some(option => option.id === value);
+}
+
+function isDeckCoverValue(value: unknown): value is string {
+  return isDeckCoverId(value) || (typeof value === 'string' && value.startsWith('data:image/'));
+}
+
+function deckCoverStyle(cover: string): CSSProperties | undefined {
+  if (isDeckCoverId(cover)) return undefined;
+  return {
+    backgroundImage: `linear-gradient(180deg, rgba(255,255,255,.08), rgba(8,5,20,.48)), url("${cover}")`,
+    backgroundPosition: 'center',
+    backgroundSize: 'cover',
+  };
+}
+
+function resizeCoverImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Escolha uma imagem.'));
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      reject(new Error('A imagem precisa ter até 12 MB.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Não foi possível ler essa imagem.'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('Não foi possível abrir essa imagem.'));
+      image.onload = () => {
+        const maxDimension = 1200;
+        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        if (!context) {
+          reject(new Error('Não foi possível preparar essa imagem.'));
+          return;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/webp', .82));
+      };
+      image.src = typeof reader.result === 'string' ? reader.result : '';
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function readStoredArray(key: string): string[] {
@@ -150,7 +217,7 @@ function readStoredDecks(): PersonalizedDeck[] {
       createdAt: deck.createdAt,
       label: deck.label,
       ids: deck.ids,
-      cover: isDeckCoverId(deck.cover) ? deck.cover : deckCoverOptions[index % deckCoverOptions.length].id,
+      cover: isDeckCoverValue(deck.cover) ? deck.cover : deckCoverOptions[index % deckCoverOptions.length].id,
       seenIds: Array.isArray(deck.seenIds) ? deck.seenIds.filter((id): id is string => typeof id === 'string' && deck.ids.includes(id)) : [],
     }));
   } catch {
@@ -506,6 +573,9 @@ function AppExperienceReference() {
   const [deckMenuId, setDeckMenuId] = useState<string | null>(null);
   const [deckMenuView, setDeckMenuView] = useState<'menu' | 'rename' | 'cover' | 'delete'>('menu');
   const [deckRenameValue, setDeckRenameValue] = useState('');
+  const [isUploadingDeckCover, setIsUploadingDeckCover] = useState(false);
+  const [deckCoverUploadError, setDeckCoverUploadError] = useState('');
+  const deckCoverInputRef = useRef<HTMLInputElement | null>(null);
   const [dailyFormOpen, setDailyFormOpen] = useState(false);
   const [isPreparingDeck, setIsPreparingDeck] = useState(false);
   const [dailyMood, setDailyMood] = useState('');
@@ -541,12 +611,26 @@ function AppExperienceReference() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
+  const visibleThemes = useMemo(() => activeNav === 'temas'
+    ? themes.filter(theme => theme.kind === 'tema')
+    : activeNav === 'vibes'
+      ? themes.filter(theme => theme.kind === 'vibe')
+      : themes, [activeNav, themes]);
   const accessQuery = useGetAccessPreview({ query: { queryKey: ['access-preview'] } });
   const sessionQuery = useGetQuestionSession(sessionId, { query: { enabled: !!sessionId, queryKey: getGetQuestionSessionQueryKey(sessionId) } });
   const allQuestionsMode = dailyMode || favoriteMode;
   const questionParams = { theme: themeId && !allQuestionsMode ? themeId : undefined };
   const questionsQuery = useListQuestions(questionParams, { query: { enabled: !!themeId, queryKey: getListQuestionsQueryKey(questionParams) } });
-  const allQuestionsQuery = useListQuestions({}, { query: { enabled: activeNav === 'eu' || allQuestionsMode, queryKey: getListQuestionsQueryKey({}) } });
+  const onboardingComplete = localStorage.getItem('conexao-onboarding-complete') === 'true';
+  const welcomeDeckDone = localStorage.getItem(ONBOARDING_WELCOME_DECK_DONE_KEY) === 'true';
+  const onboardingRelationship = localStorage.getItem('conexao-relationship') || '';
+  const onboardingFeeling = localStorage.getItem('conexao-feeling') || '';
+  const allQuestionsQuery = useListQuestions({}, {
+    query: {
+      enabled: activeNav === 'eu' || allQuestionsMode || (onboardingComplete && !welcomeDeckDone),
+      queryKey: getListQuestionsQueryKey({}),
+    },
+  });
   const createSession = useCreateQuestionSession();
   const createInvite = useCreateInvite();
   const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
@@ -648,6 +732,53 @@ function AppExperienceReference() {
       }
     }, 1100);
   };
+  useEffect(() => {
+    if (!onboardingComplete || welcomeDeckDone || !onboardingRelationship || !onboardingFeeling) return;
+    if (allQuestionsQuery.isLoading) return;
+
+    const mood = onboardingRelationshipToMood[onboardingRelationship];
+    const requestedVibe = onboardingFeelingToVibe[onboardingFeeling];
+    if (!mood || !requestedVibe) return;
+
+    const hasAdultTheme = themes.some(theme => theme.audience === '18+' || theme.id === 'luzes-baixas');
+    const vibe = requestedVibe === 'esquentar' && !hasAdultTheme ? 'fundo' : requestedVibe;
+    const createdAt = new Date().toISOString();
+    const deck: PersonalizedDeck = {
+      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `deck-${Date.now()}`,
+      createdAt,
+      label: 'Seu primeiro baralho',
+      ids: selectPersonalizedQuestionIds(
+        availableQuestions,
+        mood,
+        vibe,
+        8,
+        `${createdAt}-${onboardingRelationship}-${onboardingFeeling}`,
+      ),
+      cover: deckCoverByVibe[vibe] || deckCoverOptions[0].id,
+      seenIds: [],
+    };
+    const nextDecks = [deck, ...personalizedDecks];
+
+    localStorage.setItem(ONBOARDING_WELCOME_DECK_DONE_KEY, 'true');
+    localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+    setPersonalizedDecks(nextDecks);
+    setDailyDeck(deck.ids);
+    setActiveDeckId(deck.id);
+    setActiveNav('eu');
+    setFavoriteMode(false);
+    setDailyMode(true);
+    setThemeId(null);
+    setQuestionIndex(0);
+  }, [
+    allQuestionsQuery.isLoading,
+    availableQuestions,
+    onboardingComplete,
+    onboardingFeeling,
+    onboardingRelationship,
+    personalizedDecks,
+    themes,
+    welcomeDeckDone,
+  ]);
   const openSavedDailyDeck = (deck: PersonalizedDeck) => {
     setDailyDeck(deck.ids);
     setActiveDeckId(deck.id);
@@ -677,9 +808,23 @@ function AppExperienceReference() {
     closeDeckMenu();
   };
   const updatePersonalizedDeckCover = (id: string, coverId: string) => {
-    if (!isDeckCoverId(coverId)) return;
+    if (!isDeckCoverValue(coverId)) return;
     persistPersonalizedDecks(personalizedDecks.map(deck => deck.id === id ? { ...deck, cover: coverId } : deck));
     closeDeckMenu();
+  };
+  const handleDeckCoverUpload = async (file: File | undefined) => {
+    if (!file || !deckMenu) return;
+    setIsUploadingDeckCover(true);
+    setDeckCoverUploadError('');
+    try {
+      const cover = await resizeCoverImage(file);
+      updatePersonalizedDeckCover(deckMenu.id, cover);
+    } catch (error) {
+      setDeckCoverUploadError(error instanceof Error ? error.message : 'Não foi possível usar essa imagem.');
+    } finally {
+      setIsUploadingDeckCover(false);
+      if (deckCoverInputRef.current) deckCoverInputRef.current.value = '';
+    }
   };
   const deletePersonalizedDeck = (id: string) => {
     persistPersonalizedDecks(personalizedDecks.filter(deck => deck.id !== id));
@@ -687,6 +832,15 @@ function AppExperienceReference() {
     closeDeckMenu();
   };
   const openFavoritesDeck = () => { setActiveDeckId(null); setActiveNav('eu'); setFavoriteMode(true); setDailyMode(false); setThemeId(null); setQuestionIndex(0); };
+  const openDeckTab = (tabId: string) => {
+    setActiveNav(tabId);
+    setActiveDeckId(null);
+    setFavoriteMode(false);
+    setDailyMode(false);
+    setThemeId(null);
+    setQuestionIndex(0);
+    setThemeIndex(0);
+  };
   const vibrateOnThemeChange = () => {
     // The Vibration API works in Android browsers, but Safari on iPhone does
     // not support web vibration. Check before calling so unsupported browsers
@@ -705,7 +859,7 @@ function AppExperienceReference() {
       suppressThemeClick.current = false;
       return;
     }
-    if (index === themeIndex) changeTheme(themes[index]?.id);
+    if (index === themeIndex) changeTheme(visibleThemes[index]?.id);
     else moveThemeIndex(index);
   };
   const handleThemePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -729,9 +883,9 @@ function AppExperienceReference() {
   const finishThemePointer = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (themeDragStartX.current === null) return;
     const delta = themeDragDelta.current;
-    if (Math.abs(delta) >= 44 && themes.length > 1) {
+    if (Math.abs(delta) >= 44 && visibleThemes.length > 1) {
       const direction = delta < 0 ? 1 : -1;
-      const nextIndex = (themeIndex + direction + themes.length) % themes.length;
+      const nextIndex = (themeIndex + direction + visibleThemes.length) % visibleThemes.length;
       suppressThemeClick.current = true;
       moveThemeIndex(nextIndex);
     }
@@ -858,6 +1012,7 @@ function AppExperienceReference() {
   const navItems = [
     { id: 'todos', label: 'Todos' },
     { id: 'temas', label: 'Temas' },
+    { id: 'vibes', label: 'Vibes' },
     { id: 'eu', label: 'Eu' },
   ];
   const deckMenu = personalizedDecks.find(deck => deck.id === deckMenuId) || null;
@@ -872,15 +1027,15 @@ function AppExperienceReference() {
          {activeNav === 'eu' ? <section className="deck-home eu-home" aria-labelledby="eu-home-title">
             <div className="eu-heading"><div><p className="eu-kicker">seu espaço</p><h1 id="eu-home-title">Olá, {buyerName || 'por aqui'}.</h1></div><time className="eu-date" dateTime={localDateKey()}>{new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</time></div>
            <section className="eu-daily-card" onClick={openDailyForm} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && openDailyForm()} data-testid="card-daily-deck"><div className="eu-daily-glow" /><div className="eu-daily-copy"><p className="eu-kicker">seus decks</p><h2>Perguntas de hoje<br /><em>para vocês.</em></h2><p>Conte como vocês estão e receba um baralho feito para agora.</p><span className="eu-open-link">Criar meu deck <ArrowRight size={16} /></span></div><div className="eu-daily-art"><span className="daily-orbit daily-orbit-one" /><span className="daily-orbit daily-orbit-two" /><div className="daily-mini-card daily-mini-back" /><div className="daily-mini-card daily-mini-front"><span>seu deck</span><Quote size={24} /><strong>uma pergunta<br />de cada vez</strong></div></div></section>
-            {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <article key={deck.id} className="eu-history-card"><button className="eu-history-card-open" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className={`eu-history-art deck-cover-${deck.cover}`} aria-hidden="true"><span className="deck-cover-orbit" /><span className="deck-cover-spark" /></span><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span><ArrowRight className="eu-history-arrow" size={15} /></button><button className="eu-history-menu-button" onClick={() => openDeckMenu(deck)} aria-label={`Ações para ${deck.label}`} data-testid={`button-menu-daily-deck-${deck.id}`}><MoreHorizontal size={18} /></button></article>)}</div></section>}
+            {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <article key={deck.id} className="eu-history-card"><button className="eu-history-card-open" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className={`eu-history-art deck-cover-${isDeckCoverId(deck.cover) ? deck.cover : 'custom'}`} style={deckCoverStyle(deck.cover)} aria-hidden="true"><span className="deck-cover-orbit" /><span className="deck-cover-spark" /></span><span className="eu-history-card-shade" /><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span></button><button className="eu-history-menu-button" onClick={() => openDeckMenu(deck)} aria-label={`Ações para ${deck.label}`} data-testid={`button-menu-daily-deck-${deck.id}`}><MoreHorizontal size={18} /></button></article>)}</div></section>}
              <section className="eu-section eu-continue-section" aria-labelledby="continue-title"><div className="eu-section-heading"><div><p className="eu-kicker">continue jogando</p><h2 id="continue-title" className="sr-only">Continue jogando</h2></div><span>{inProgressThemes.length ? `${inProgressThemes.length} em andamento` : 'comece por aqui'}</span></div><div className="eu-progress-row">{continueThemes.map(theme => { const seenCount = seenByTheme[theme.id]?.length || 0; const lastQuestionId = seenByTheme[theme.id]?.at(-1); const themeQuestions = availableQuestions.filter(question => question.themeId === theme.id); const resumeIndex = Math.max(0, themeQuestions.findIndex(question => question.id === lastQuestionId)); return <button key={theme.id} className="eu-progress-card" onClick={() => { changeTheme(theme.id); setQuestionIndex(resumeIndex); }} data-testid={`button-continue-theme-${theme.id}`}><div className={`eu-progress-cover theme-cover-${themes.indexOf(theme) % 5}`}><span className="eu-progress-number">{String(seenCount).padStart(2, '0')}</span><Heart className="eu-progress-heart" size={20} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></div><div className="eu-progress-copy"><strong>{theme.title}</strong><small>{seenCount ? `${seenCount} de ${theme.count} perguntas` : 'comece agora'}</small><span className="eu-progress-bar"><i style={{ width: `${Math.min(100, (seenCount / Math.max(theme.count, 1)) * 100)}%` }} /></span><em>Retomar <ArrowRight size={13} /></em></div></button>; })}</div>{continueThemes.length === 0 && <div className="eu-empty-state"><span><Sparkles size={16} /></span><p>Quando uma pergunta ficar pelo caminho, ela aparece aqui para você continuar.</p></div>}</section>
            <section className="eu-section eu-favorites-section" aria-labelledby="favorites-title"><div className="eu-section-heading"><div><p className="eu-kicker">salvos</p><h2 id="favorites-title">Salvos</h2></div><span>{saved.length + favoriteThemeIds.length} salvos</span></div><div className="eu-saved-row"><button className={`eu-collection-card eu-collection-cards ${saved.length ? 'has-content' : ''}`} onClick={openFavoritesDeck} disabled={!saved.length} data-testid="button-favorite-cards"><span className="eu-collection-shade" /><span className="eu-collection-title">Cartas favoritas <b>{saved.length}</b></span>{!saved.length && <small>suas perguntas salvas aparecem aqui</small>}</button><div className="eu-favorite-topics"><p className="eu-favorite-label">Temas favoritos</p><div className="eu-topic-row">{favoriteThemeIds.length ? favoriteThemeIds.map(id => { const theme = themes.find(item => item.id === id); return theme ? <button key={id} className={`eu-topic-card theme-cover-${themes.indexOf(theme) % 5}`} onClick={() => changeTheme(id)} data-testid={`button-favorite-theme-${id}`}><span className="eu-topic-shade" /><strong>{theme.title}</strong><ArrowRight size={15} /></button> : null; }) : <div className="eu-topic-empty">Favorite um tema para encontrá-lo aqui.</div>}</div></div></div></section>
-         </section> : <section className="deck-home" aria-labelledby="deck-home-title">
-           <div className="deck-home-heading"><h1 id="deck-home-title" data-testid="text-deck-title">Escolha um objetivo pra começar</h1><p className="deck-home-subtitle">Por exemplo, descobrir algo novo, imaginar o que vem</p></div>
+          </section> : <section className="deck-home" aria-labelledby="deck-home-title">
+            <div className="deck-home-heading"><h1 id="deck-home-title" data-testid="text-deck-title">{activeNav === 'temas' ? 'Escolha um assunto pra começar' : activeNav === 'vibes' ? 'Escolha uma vibe pra agora' : 'Escolha um objetivo pra começar'}</h1><p className="deck-home-subtitle">{activeNav === 'temas' ? 'Conversas sobre as histórias e planos que fazem parte de vocês' : activeNav === 'vibes' ? 'Encontrem o clima que combina com este momento' : 'Por exemplo, descobrir algo novo, imaginar o que vem'}</p></div>
           <div className="theme-carousel-wrap">
               <div
                 className={`theme-carousel ${isThemeDragging ? 'is-dragging' : ''}`}
-                aria-label="Objetivos de conexão"
+                aria-label={activeNav === 'temas' ? 'Assuntos de conexão' : activeNav === 'vibes' ? 'Vibes de conexão' : 'Objetivos de conexão'}
                 onPointerDown={handleThemePointerDown}
                 onPointerMove={handleThemePointerMove}
                 onPointerUp={finishThemePointer}
@@ -888,7 +1043,7 @@ function AppExperienceReference() {
                 style={{ '--theme-drag-offset': `${themeDragOffset}px` } as CSSProperties}
               >
               {themesLoading && <div className="theme-skeleton" data-testid="loading-themes" />}
-              {themes.map((theme, index) => {
+              {visibleThemes.map((theme, index) => {
                 const offset = Math.max(-2, Math.min(2, index - themeIndex));
                  return <div key={theme.id} className={`theme-cover theme-cover-${index % 5} theme-offset-${offset} ${index === themeIndex ? 'is-active' : ''}`} onClick={() => selectThemeCard(index)} onKeyDown={event => event.key === 'Enter' && selectThemeCard(index)} role="button" tabIndex={0} data-testid={`button-theme-card-${theme.id}`}>
                     <span className="theme-cover-shade" /><span className="theme-cover-top"><span className="theme-cover-meta"><span>{theme.count} perguntas</span>{theme.audience === '18+' && <span className="theme-cover-audience" role="img" aria-label="Conteúdo para maiores de 18 anos" title="Maiores de 18 anos"><Flame size={13} strokeWidth={2.2} aria-hidden="true" /></span>}{theme.audience === 'casais' && <span className="theme-cover-audience">casais</span>}</span><button className={`theme-cover-heart ${favoriteThemeIds.includes(theme.id) ? 'is-favorite' : ''}`} onClick={event => { event.stopPropagation(); toggleThemeFavorite(theme.id); }} aria-label={favoriteThemeIds.includes(theme.id) ? `Remover ${theme.title} dos favoritos` : `Favoritar ${theme.title}`} data-testid={`button-favorite-theme-card-${theme.id}`}><Heart size={20} strokeWidth={1.8} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></button></span>
@@ -896,7 +1051,7 @@ function AppExperienceReference() {
                  </div>;
               })}
             </div>
-            <div className="carousel-dots" aria-label="Posição do objetivo">{themes.map((theme, index) => <button key={theme.id} className={index === themeIndex ? 'is-active' : ''} onClick={() => moveThemeIndex(index)} aria-label={`Selecionar ${theme.title}`} data-testid={`button-theme-dot-${theme.id}`} />)}</div>
+            <div className="carousel-dots" aria-label="Posição do objetivo">{visibleThemes.map((theme, index) => <button key={theme.id} className={index === themeIndex ? 'is-active' : ''} onClick={() => moveThemeIndex(index)} aria-label={`Selecionar ${theme.title}`} data-testid={`button-theme-dot-${theme.id}`} />)}</div>
           </div>
           {themesError && <div className="app-inline-error" data-testid="status-themes-error"><span>Não conseguimos atualizar os objetivos.</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar novamente <RotateCw size={13} /></button></div>}
           <p className="deck-note"><Sparkles size={14} /> Uma pergunta por vez. O resto acontece entre vocês.</p>
@@ -964,7 +1119,7 @@ function AppExperienceReference() {
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>
       </>}
       <nav className="app-bottom-nav" aria-label="Navegação principal" data-testid="nav-bottom">
-        {navItems.map(item => <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => setActiveNav(item.id)} data-testid={`button-nav-${item.id}`}><span className={`nav-dot nav-dot-${item.id}`} />{item.label}</button>)}
+         {navItems.map(item => <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => openDeckTab(item.id)} data-testid={`button-nav-${item.id}`}><span className={`nav-dot nav-dot-${item.id}`} />{item.label}</button>)}
       </nav>
     </main>
     <InstallAppPrompt />
@@ -1007,7 +1162,7 @@ function AppExperienceReference() {
               <p>Personalize este baralho ou retire-o do seu histórico.</p>
               <div className="deck-menu-actions">
                 <button className="deck-menu-action" onClick={() => { setDeckRenameValue(deckMenu.label); setDeckMenuView('rename'); }} data-testid="button-rename-daily-deck"><span className="deck-menu-action-icon"><Feather size={16} /></span><span><strong>Mudar o nome</strong><small>Escolha como ele aparece para você</small></span><ArrowRight size={15} /></button>
-                <button className="deck-menu-action" onClick={() => setDeckMenuView('cover')} data-testid="button-change-daily-deck-cover"><span className={`deck-menu-action-icon deck-cover-${deckMenu.cover}`}><span className="deck-cover-swatch" /></span><span><strong>Mudar a imagem</strong><small>Escolha uma nova capa</small></span><ArrowRight size={15} /></button>
+                <button className="deck-menu-action" onClick={() => { setDeckCoverUploadError(''); setDeckMenuView('cover'); }} data-testid="button-change-daily-deck-cover"><span className={`deck-menu-action-icon deck-cover-${isDeckCoverId(deckMenu.cover) ? deckMenu.cover : 'custom'}`} style={deckCoverStyle(deckMenu.cover)}><span className="deck-cover-swatch" /></span><span><strong>Mudar a imagem</strong><small>Escolha uma nova capa ou foto</small></span><ArrowRight size={15} /></button>
                 <button className="deck-menu-action deck-menu-action-danger" onClick={() => setDeckMenuView('delete')} data-testid="button-delete-daily-deck"><span className="deck-menu-action-icon"><X size={16} /></span><span><strong>Apagar</strong><small>Remover do seu histórico</small></span><ArrowRight size={15} /></button>
               </div>
             </>}
@@ -1025,6 +1180,9 @@ function AppExperienceReference() {
               <div className="deck-cover-picker" role="radiogroup" aria-label="Capas disponíveis">
                 {deckCoverOptions.map(option => <button key={option.id} className={`deck-cover-option deck-cover-${option.id} ${deckMenu.cover === option.id ? 'is-selected' : ''}`} onClick={() => updatePersonalizedDeckCover(deckMenu.id, option.id)} role="radio" aria-checked={deckMenu.cover === option.id} aria-label={option.label} data-testid={`button-select-deck-cover-${option.id}`}><span className="deck-cover-orbit" /><span className="deck-cover-spark" /><small>{option.label}</small>{deckMenu.cover === option.id && <Check size={15} />}</button>)}
               </div>
+              <input ref={deckCoverInputRef} className="sr-only" type="file" accept="image/*" onChange={event => handleDeckCoverUpload(event.target.files?.[0])} data-testid="input-upload-deck-cover" />
+              <button className="deck-upload-cover-button" onClick={() => deckCoverInputRef.current?.click()} disabled={isUploadingDeckCover} data-testid="button-upload-deck-cover"><Upload size={16} /> {isUploadingDeckCover ? 'Preparando imagem…' : 'Usar uma foto do celular'}</button>
+              {deckCoverUploadError && <p className="deck-cover-upload-error" role="alert">{deckCoverUploadError}</p>}
               <button className="app-secondary-button deck-cover-back-button" onClick={() => setDeckMenuView('menu')} data-testid="button-cancel-cover-change">Voltar</button>
             </>}
             {deckMenuView === 'delete' && <>

@@ -22,6 +22,7 @@ type Theme = {
   description: string;
   count: number;
   audience: "todos" | "casais" | "18+";
+  kind: "tema" | "vibe";
 };
 
 type Question = {
@@ -56,6 +57,7 @@ const themes: Theme[] = [
     description: "As conversas que parecem casa.",
     count: 5,
     audience: "todos",
+    kind: "tema",
   },
   {
     id: "livro-aberto",
@@ -63,6 +65,7 @@ const themes: Theme[] = [
     description: "Sem filtro, cara a cara.",
     count: 5,
     audience: "todos",
+    kind: "tema",
   },
   {
     id: "faisca",
@@ -70,6 +73,7 @@ const themes: Theme[] = [
     description: "O lado mais provocante de vocês dois.",
     count: 2,
     audience: "casais",
+    kind: "vibe",
   },
   {
     id: "voce-nao-sabia",
@@ -77,6 +81,7 @@ const themes: Theme[] = [
     description: "Descobertas que ainda cabem entre vocês.",
     count: 2,
     audience: "todos",
+    kind: "tema",
   },
   {
     id: "em-voz-alta",
@@ -84,6 +89,7 @@ const themes: Theme[] = [
     description: "A vida que os dois querem construir.",
     count: 4,
     audience: "todos",
+    kind: "tema",
   },
   {
     id: "la-atras",
@@ -91,6 +97,7 @@ const themes: Theme[] = [
     description: "O que formou quem você é hoje.",
     count: 4,
     audience: "todos",
+    kind: "tema",
   },
   {
     id: "luzes-baixas",
@@ -98,6 +105,7 @@ const themes: Theme[] = [
     description: "Para quando a noite pede mais coragem.",
     count: 2,
     audience: "18+",
+    kind: "vibe",
   },
   {
     id: "modo-leve",
@@ -105,6 +113,7 @@ const themes: Theme[] = [
     description: "Pra rir e não levar tão a sério.",
     count: 2,
     audience: "todos",
+    kind: "tema",
   },
   {
     id: "mesmo-longe",
@@ -112,6 +121,7 @@ const themes: Theme[] = [
     description: "Pra quando a rotina ou a distância afastam.",
     count: 2,
     audience: "casais",
+    kind: "vibe",
   },
   {
     id: "perto-de-novo",
@@ -119,6 +129,7 @@ const themes: Theme[] = [
     description: "Esquentar o espaço entre vocês.",
     count: 2,
     audience: "casais",
+    kind: "vibe",
   },
   {
     id: "proximo-passo",
@@ -126,6 +137,7 @@ const themes: Theme[] = [
     description: "Pra onde essa história está indo.",
     count: 2,
     audience: "casais",
+    kind: "vibe",
   },
   {
     id: "fora-da-rotina",
@@ -133,6 +145,23 @@ const themes: Theme[] = [
     description: "Sacudir o de sempre, tentar algo novo.",
     count: 2,
     audience: "todos",
+    kind: "vibe",
+  },
+  {
+    id: "viagens",
+    title: "Viagens",
+    description: "Lugares que já foram nossos, e os que ainda vão ser.",
+    count: 2,
+    audience: "todos",
+    kind: "tema",
+  },
+  {
+    id: "carreira-dinheiro",
+    title: "Carreira & Dinheiro",
+    description: "Como vocês pensam o lado prático da vida a dois.",
+    count: 2,
+    audience: "casais",
+    kind: "tema",
   },
 ];
 
@@ -171,6 +200,10 @@ const questions: Question[] = [
   { id: "pp2", themeId: "proximo-passo", intensity: "deep", text: "O que você gostaria que a gente estivesse celebrando daqui a um ano?" },
   { id: "fdr1", themeId: "fora-da-rotina", intensity: "gentle", text: "Se amanhã não houvesse agenda, o que você gostaria de fazer comigo?" },
   { id: "fdr2", themeId: "fora-da-rotina", intensity: "honest", text: "Que convite inesperado você aceitaria receber de mim?" },
+  { id: "via1", themeId: "viagens", intensity: "gentle", text: "Qual lugar você gostaria de conhecer comigo sem precisar esperar a ocasião perfeita?" },
+  { id: "via2", themeId: "viagens", intensity: "honest", text: "Que viagem nossa você repetiria, e o que faria diferente desta vez?" },
+  { id: "cd1", themeId: "carreira-dinheiro", intensity: "honest", text: "Que sonho profissional você gostaria que a gente construísse lado a lado?" },
+  { id: "cd2", themeId: "carreira-dinheiro", intensity: "deep", text: "Como vocês gostariam de conversar sobre dinheiro quando a vida apertar?" },
 ];
 
 const sessions = new Map<string, Session>();

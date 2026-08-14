@@ -18,12 +18,21 @@ export const QuestionThemeAudience = {
   '18+': '18+',
 } as const;
 
+export type QuestionThemeKind = typeof QuestionThemeKind[keyof typeof QuestionThemeKind];
+
+
+export const QuestionThemeKind = {
+  tema: 'tema',
+  vibe: 'vibe',
+} as const;
+
 export interface QuestionTheme {
   id: string;
   title: string;
   description: string;
   count: number;
   audience: QuestionThemeAudience;
+  kind: QuestionThemeKind;
 }
 
 export type QuestionIntensity = typeof QuestionIntensity[keyof typeof QuestionIntensity];

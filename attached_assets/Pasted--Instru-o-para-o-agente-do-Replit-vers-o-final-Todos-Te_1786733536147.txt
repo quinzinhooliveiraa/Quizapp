@@ -1,0 +1,62 @@
+# Instrução para o agente do Replit — versão final: Todos / Temas / Vibes / Eu (substitui as duas instruções anteriores sobre isso)
+
+Esta instrução substitui `menu-inferior-3-abas-replit.md` e `separar-temas-de-vibes-replit.md` — ainda não tinham sido implementadas, então é só seguir esta versão, que é a definitiva.
+
+## O menu de baixo fica com 4 abas
+
+```js
+const navItems = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'temas', label: 'Temas' },
+  { id: 'vibes', label: 'Vibes' },
+  { id: 'eu', label: 'Eu' },
+];
+```
+
+(Reverter o CSS de `.app-bottom-nav`, linha 1816 de `index.css`, de volta pra `grid-template-columns: repeat(4, 1fr);` se algo já tiver sido mudado pra 3.)
+
+- **Todos**: mostra o carrossel com todos os baralhos disponíveis juntos (temas + vibes), igual já é hoje.
+- **Temas**: mesmo carrossel, só que filtrado pra mostrar só os baralhos por **assunto** (viagem, futuro, infância etc. — a lista abaixo).
+- **Vibes**: mesmo carrossel, filtrado pra mostrar só os baralhos por **objetivo do momento** (se aproximar, flertar, esquentar a noite etc.) — navegável direto, sem precisar passar pelo formulário "Perguntas pra hoje".
+- **Eu**: continua igual (favoritos, baralho personalizado, histórico).
+
+Cada card, em qualquer uma dessas abas, abre o baralho normalmente ao tocar — igual já funciona hoje (`changeTheme`), incluindo a confirmação de 18+ pra "Luzes Baixas".
+
+## Marcar cada tema com `kind: 'tema' | 'vibe'`
+
+Em `artifacts/api-server/src/routes/connection.ts`, no tipo `Theme` (linha 19-24), adicionar `kind: "tema" | "vibe"`. No array `themes` (linha 52-137):
+
+**`kind: "tema"`** (assunto — pra falar sobre isso, não muda com o humor do dia):
+- `porto-seguro`, `livro-aberto`, `voce-nao-sabia`, `em-voz-alta`, `la-atras`, `modo-leve` (os que já existem)
+- Adicionar dois novos:
+  - `viagens` — "Viagens" — "Lugares que já foram nossos, e os que ainda vão ser."
+  - `carreira-dinheiro` — "Carreira & Dinheiro" — "Como vocês pensam o lado prático da vida a dois."
+
+**`kind: "vibe"`** (objetivo do momento — o que vocês querem agora):
+- `faisca`, `luzes-baixas`, `mesmo-longe`, `perto-de-novo`, `proximo-passo`, `fora-da-rotina` (os 6 que já existem — mantidos como estão, só ganham a marcação `kind: "vibe"`)
+
+Espelhar a mesma coisa em `fallbackThemes`, `artifacts/perguntas-de-conexao/src/App.tsx` (linha ~29 em diante).
+
+## Onde filtrar na tela
+
+Nos dois lugares que renderizam `themes.map(...)` (linha 433 e linha 793 de `App.tsx`), aplicar um filtro condicional dependendo da aba ativa:
+
+```js
+const visibleThemes = activeNav === 'temas' ? themes.filter(t => t.kind === 'tema')
+  : activeNav === 'vibes' ? themes.filter(t => t.kind === 'vibe')
+  : themes; // 'todos' e qualquer outro caso mostram tudo
+```
+
+## O formulário "Perguntas pra hoje" não muda
+
+Ele já mistura perguntas de qualquer tema/vibe (`selectPersonalizedQuestionIds`, linha 163) — é assim mesmo que deve continuar: uma pessoa pode responder o formulário e receber um baralho misturando, por exemplo, perguntas de "Viagens" com perguntas de "Luzes Baixas", exatamente como descrito. Isso já funciona hoje e não precisa mudar.
+
+**Sugestão de melhoria, se for fácil de encaixar**: hoje a pontuação (`score`) só favorece os temas/vibes ligados às respostas do formulário, mas não garante variedade — em teoria os 10 (ou N) primeiros da lista ordenada por pontuação podem vir todos do mesmo tema/vibe. Vale considerar limitar quantas perguntas seguidas do mesmo `themeId` entram no resultado final (por exemplo, no máximo 40-50% do baralho de uma única origem), pra garantir que o baralho realmente pareça misturado, e não só uma vibe repetida várias vezes.
+
+## Verificação
+
+- Menu de baixo com 4 abas: Todos, Temas, Vibes, Eu.
+- "Temas" mostra só os 8 assuntos (incluindo Viagens e Carreira & Dinheiro).
+- "Vibes" mostra só os 6 objetivos, e dá pra abrir qualquer um direto (incluindo o aviso de 18+ pra Luzes Baixas).
+- "Todos" continua mostrando tudo junto.
+- Gerar um baralho pelo formulário "Perguntas pra hoje" e confirmar que ele pode misturar perguntas de um tema com perguntas de uma vibe no mesmo baralho.

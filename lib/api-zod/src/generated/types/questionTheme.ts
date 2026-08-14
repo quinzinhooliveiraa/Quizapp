@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { QuestionThemeAudience } from './questionThemeAudience';
+import type { QuestionThemeKind } from './questionThemeKind';
 
 export interface QuestionTheme {
   id: string;
@@ -13,4 +14,5 @@ export interface QuestionTheme {
   description: string;
   count: number;
   audience: QuestionThemeAudience;
+  kind: QuestionThemeKind;
 }

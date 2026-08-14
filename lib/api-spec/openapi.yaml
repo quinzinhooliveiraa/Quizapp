@@ -207,7 +207,10 @@ components:
         audience:
           type: string
           enum: [todos, casais, "18+"]
-      required: [id, title, description, count, audience]
+        kind:
+          type: string
+          enum: [tema, vibe]
+      required: [id, title, description, count, audience, kind]
     Question:
       type: object
       properties:

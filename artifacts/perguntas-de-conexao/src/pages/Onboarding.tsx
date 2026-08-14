@@ -162,7 +162,7 @@ export default function Onboarding() {
     }
   });
   const [surprise, setSurprise] = useState('');
-  const [feeling, setFeeling] = useState('');
+  const [feeling, setFeeling] = useState(() => localStorage.getItem('conexao-onboarding-feeling') || '');
 
   const step = steps[stepIndex];
   const parts = useMemo(() => dateParts(date), [date]);
@@ -175,7 +175,16 @@ export default function Onboarding() {
     localStorage.setItem('conexao-onboarding-relationship', relationship);
     localStorage.setItem('conexao-onboarding-date', date);
     localStorage.setItem('conexao-onboarding-curiosity', JSON.stringify(curiosity));
-  }, [stepIndex, name, relationship, date, curiosity]);
+    localStorage.setItem('conexao-onboarding-feeling', feeling);
+
+    if (step.id === 'preparing') {
+      localStorage.setItem('conexao-name', name.trim());
+      localStorage.setItem('conexao-relationship', relationship);
+      localStorage.setItem('conexao-curiosity', JSON.stringify(curiosity));
+      localStorage.setItem('conexao-feeling', feeling);
+      localStorage.setItem('conexao-onboarding-complete', 'true');
+    }
+  }, [step.id, stepIndex, name, relationship, date, curiosity, feeling]);
 
   const goNext = () => setStepIndex((current) => Math.min(current + 1, steps.length - 1));
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
