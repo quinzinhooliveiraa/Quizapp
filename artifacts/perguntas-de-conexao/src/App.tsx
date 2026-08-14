@@ -26,26 +26,52 @@ import Onboarding from '@/pages/Onboarding';
 
 const queryClient = new QueryClient();
 
-const fallbackThemes = [
-  { id: 'presenca', title: 'Presença', description: 'O que acontece quando vocês chegam inteiros à conversa.', count: 12 },
-  { id: 'memorias', title: 'Memórias vivas', description: 'Histórias que ainda moram entre vocês.', count: 10 },
-  { id: 'amanha', title: 'Amanhã', description: 'Desejos, planos e o que vale construir lado a lado.', count: 11 },
+const fallbackThemes: QuestionTheme[] = [
+  { id: 'porto-seguro', title: 'Porto Seguro', description: 'As conversas que parecem casa.', count: 5, audience: 'todos' },
+  { id: 'livro-aberto', title: 'Livro Aberto', description: 'Sem filtro, cara a cara.', count: 5, audience: 'todos' },
+  { id: 'faisca', title: 'Faísca', description: 'O lado mais provocante de vocês dois.', count: 2, audience: 'casais' },
+  { id: 'voce-nao-sabia', title: 'Você Não Sabia', description: 'Descobertas que ainda cabem entre vocês.', count: 2, audience: 'todos' },
+  { id: 'em-voz-alta', title: 'Em Voz Alta', description: 'A vida que os dois querem construir.', count: 4, audience: 'todos' },
+  { id: 'la-atras', title: 'Lá Atrás', description: 'O que formou quem você é hoje.', count: 4, audience: 'todos' },
+  { id: 'luzes-baixas', title: 'Luzes Baixas', description: 'Para quando a noite pede mais coragem.', count: 2, audience: '18+' },
+  { id: 'modo-leve', title: 'Modo Leve', description: 'Pra rir e não levar tão a sério.', count: 2, audience: 'todos' },
+  { id: 'mesmo-longe', title: 'Mesmo Longe', description: 'Pra quando a rotina ou a distância afastam.', count: 2, audience: 'casais' },
+  { id: 'perto-de-novo', title: 'Perto de Novo', description: 'Esquentar o espaço entre vocês.', count: 2, audience: 'casais' },
+  { id: 'proximo-passo', title: 'Próximo Passo', description: 'Pra onde essa história está indo.', count: 2, audience: 'casais' },
+  { id: 'fora-da-rotina', title: 'Fora da Rotina', description: 'Sacudir o de sempre, tentar algo novo.', count: 2, audience: 'todos' },
 ];
-const fallbackQuestions = [
-  { id: 'q-1', themeId: 'presenca', text: 'O que você gostaria que eu percebesse mais nos seus dias?', intensity: 'gentle' as const },
-  { id: 'q-2', themeId: 'presenca', text: 'Em que momento recente você se sentiu verdadeiramente acompanhado por mim?', intensity: 'honest' as const },
-  { id: 'q-3', themeId: 'presenca', text: 'Que parte sua você tem escondido por medo de mudar o jeito como sou visto?', intensity: 'deep' as const },
-  { id: 'q-4', themeId: 'memorias', text: 'Qual lembrança pequena nossa você gostaria de guardar para sempre?', intensity: 'gentle' as const },
-  { id: 'q-5', themeId: 'memorias', text: 'Que conversa do passado ainda merece uma segunda chance?', intensity: 'honest' as const },
-  { id: 'q-6', themeId: 'amanha', text: 'Que vida parece possível quando você imagina que estamos do mesmo lado?', intensity: 'deep' as const },
-  { id: 'q-7', themeId: 'amanha', text: 'Qual pequeno plano faria esta semana parecer mais nossa?', intensity: 'gentle' as const },
-  { id: 'q-8', themeId: 'memorias', text: 'Que detalhe de quando nos conhecemos ainda te faz sorrir?', intensity: 'honest' as const },
+const fallbackQuestions: Question[] = [
+  { id: 'ps1', themeId: 'porto-seguro', text: 'O que faz você se sentir realmente à vontade perto de alguém?', intensity: 'gentle' },
+  { id: 'ps2', themeId: 'porto-seguro', text: 'Qual detalhe pequeno do nosso primeiro encontro você ainda lembra?', intensity: 'gentle' },
+  { id: 'la1', themeId: 'livro-aberto', text: 'O que costuma passar pela sua cabeça quando você se sente distante de mim?', intensity: 'honest' },
+  { id: 'la2', themeId: 'livro-aberto', text: 'Qual medo seu você acha que poucas pessoas conhecem?', intensity: 'deep' },
+  { id: 'faisca1', themeId: 'faisca', text: 'Que gesto meu ainda faz seu dia mudar de temperatura?', intensity: 'honest' },
+  { id: 'faisca2', themeId: 'faisca', text: 'O que você gostaria que a gente reservasse mais vezes só para nós dois?', intensity: 'deep' },
+  { id: 'vns1', themeId: 'voce-nao-sabia', text: 'Que gosto, mania ou talento seu eu provavelmente ainda não descobri?', intensity: 'gentle' },
+  { id: 'vns2', themeId: 'voce-nao-sabia', text: 'Que pergunta você gostaria que eu fizesse sobre você hoje?', intensity: 'honest' },
+  { id: 'ev1', themeId: 'em-voz-alta', text: 'Como seria um dia comum perfeito para nós daqui a alguns anos?', intensity: 'gentle' },
+  { id: 'ev2', themeId: 'em-voz-alta', text: 'Que sonho seu você quer proteger, mesmo quando a vida fica corrida?', intensity: 'honest' },
+  { id: 'laa1', themeId: 'la-atras', text: 'Qual momento nosso você gostaria de guardar em uma fotografia?', intensity: 'gentle' },
+  { id: 'laa2', themeId: 'la-atras', text: 'Qual foi uma vez em que você se sentiu escolhido por mim?', intensity: 'honest' },
+  { id: 'lb1', themeId: 'luzes-baixas', text: 'Que clima entre nós faz você esquecer por alguns minutos o resto do mundo?', intensity: 'honest' },
+  { id: 'lb2', themeId: 'luzes-baixas', text: 'O que você teria curiosidade de experimentar comigo, sem pressa e sem cobrança?', intensity: 'deep' },
+  { id: 'ml1', themeId: 'modo-leve', text: 'Qual seria o nome de um reality show sobre a nossa rotina?', intensity: 'gentle' },
+  { id: 'ml2', themeId: 'modo-leve', text: 'Que coisa boba sempre consegue fazer você rir?', intensity: 'gentle' },
+  { id: 'mlg1', themeId: 'mesmo-longe', text: 'Que ritual simples ajudaria a gente a se sentir perto nos dias corridos?', intensity: 'honest' },
+  { id: 'mlg2', themeId: 'mesmo-longe', text: 'O que você mais sente falta quando a distância entra na conversa?', intensity: 'deep' },
+  { id: 'pdn1', themeId: 'perto-de-novo', text: 'O que poderia trazer de volta uma sensação boa entre nós esta semana?', intensity: 'gentle' },
+  { id: 'pdn2', themeId: 'perto-de-novo', text: 'Que parte da nossa história você gostaria de visitar com novos olhos?', intensity: 'honest' },
+  { id: 'pp1', themeId: 'proximo-passo', text: 'Qual próximo passo faria sentido para nós sem parecer uma obrigação?', intensity: 'gentle' },
+  { id: 'pp2', themeId: 'proximo-passo', text: 'O que você gostaria que a gente estivesse celebrando daqui a um ano?', intensity: 'deep' },
+  { id: 'fdr1', themeId: 'fora-da-rotina', text: 'Se amanhã não houvesse agenda, o que você gostaria de fazer comigo?', intensity: 'gentle' },
+  { id: 'fdr2', themeId: 'fora-da-rotina', text: 'Que convite inesperado você aceitaria receber de mim?', intensity: 'honest' },
 ];
 
 const DAILY_DECK_STORAGE_KEY = 'conexao-daily-deck';
 const SEEN_BY_THEME_STORAGE_KEY = 'conexao-seen-by-theme';
 const SAVED_QUESTIONS_STORAGE_KEY = 'conexao-saved-question-ids';
 const FAVORITE_THEMES_STORAGE_KEY = 'conexao-favorite-theme-ids';
+const ADULT_THEME_CONFIRMATION_STORAGE_KEY = 'conexao-18plus-confirmed';
 
 function readStoredArray(key: string): string[] {
   try {
@@ -395,6 +421,8 @@ function AppExperienceReference() {
   const { data: themesData, isLoading: themesLoading, isError: themesError } = useListQuestionThemes({ query: { queryKey: getListQuestionThemesQueryKey() } });
   const themes: QuestionTheme[] = themesData?.length ? themesData : fallbackThemes;
   const [themeId, setThemeId] = useState<string | null>(null);
+  const [adultThemePrompt, setAdultThemePrompt] = useState<QuestionTheme | null>(null);
+  const [adultThemeConfirmed, setAdultThemeConfirmed] = useState(() => localStorage.getItem(ADULT_THEME_CONFIRMATION_STORAGE_KEY) === 'true');
   const [dailyMode, setDailyMode] = useState(false);
   const [favoriteMode, setFavoriteMode] = useState(false);
   const [dailyDeck, setDailyDeck] = useState<string[]>([]);
@@ -479,7 +507,22 @@ function AppExperienceReference() {
     });
   };
 
-  const changeTheme = (id: string) => { setFavoriteMode(false); setDailyMode(false); setThemeId(id); setQuestionIndex(0); };
+  const applyTheme = (id: string) => { setFavoriteMode(false); setDailyMode(false); setThemeId(id); setQuestionIndex(0); };
+  const changeTheme = (id: string) => {
+    const theme = themes.find(item => item.id === id);
+    if (theme?.audience === '18+' && !adultThemeConfirmed) {
+      setAdultThemePrompt(theme);
+      return;
+    }
+    applyTheme(id);
+  };
+  const confirmAdultTheme = () => {
+    if (!adultThemePrompt) return;
+    localStorage.setItem(ADULT_THEME_CONFIRMATION_STORAGE_KEY, 'true');
+    setAdultThemeConfirmed(true);
+    applyTheme(adultThemePrompt.id);
+    setAdultThemePrompt(null);
+  };
   const openDailyDeck = () => { setActiveNav('eu'); setFavoriteMode(false); setDailyMode(true); setThemeId(null); setQuestionIndex(0); };
   const openFavoritesDeck = () => { setActiveNav('eu'); setFavoriteMode(true); setDailyMode(false); setThemeId(null); setQuestionIndex(0); };
   const vibrateOnThemeChange = () => {
@@ -685,7 +728,7 @@ function AppExperienceReference() {
               {themes.map((theme, index) => {
                 const offset = Math.max(-2, Math.min(2, index - themeIndex));
                  return <div key={theme.id} className={`theme-cover theme-cover-${index % 5} theme-offset-${offset} ${index === themeIndex ? 'is-active' : ''}`} onClick={() => selectThemeCard(index)} onKeyDown={event => event.key === 'Enter' && selectThemeCard(index)} role="button" tabIndex={0} data-testid={`button-theme-card-${theme.id}`}>
-                   <span className="theme-cover-shade" /><span className="theme-cover-top"><span>{theme.count} perguntas</span><button className={`theme-cover-heart ${favoriteThemeIds.includes(theme.id) ? 'is-favorite' : ''}`} onClick={event => { event.stopPropagation(); toggleThemeFavorite(theme.id); }} aria-label={favoriteThemeIds.includes(theme.id) ? `Remover ${theme.title} dos favoritos` : `Favoritar ${theme.title}`} data-testid={`button-favorite-theme-card-${theme.id}`}><Heart size={20} strokeWidth={1.8} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></button></span>
+                    <span className="theme-cover-shade" /><span className="theme-cover-top"><span className="theme-cover-meta"><span>{theme.count} perguntas</span>{theme.audience === '18+' && <span className="theme-cover-audience">18+</span>}{theme.audience === 'casais' && <span className="theme-cover-audience">casais</span>}</span><button className={`theme-cover-heart ${favoriteThemeIds.includes(theme.id) ? 'is-favorite' : ''}`} onClick={event => { event.stopPropagation(); toggleThemeFavorite(theme.id); }} aria-label={favoriteThemeIds.includes(theme.id) ? `Remover ${theme.title} dos favoritos` : `Favoritar ${theme.title}`} data-testid={`button-favorite-theme-card-${theme.id}`}><Heart size={20} strokeWidth={1.8} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></button></span>
                   <span className="theme-cover-copy"><b>{theme.title}</b><small>{theme.description}</small><i>{index === themeIndex ? 'Toque novamente para abrir' : 'ver objetivo'}</i></span>
                  </div>;
               })}
@@ -762,6 +805,7 @@ function AppExperienceReference() {
       </nav>
     </main>
     <InstallAppPrompt />
+     {adultThemePrompt && <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="adult-theme-title"><div className="app-modal adult-theme-modal"><button className="app-modal-close" onClick={() => setAdultThemePrompt(null)} aria-label="Fechar aviso" data-testid="button-cancel-adult-theme"><X size={18} /></button><div className="adult-theme-mark">18+</div><p className="modal-eyebrow">um espaço para dois</p><h2 id="adult-theme-title">Luzes <em>Baixas.</em></h2><p>Este espaço tem perguntas mais ousadas, pensadas para casais. Quer continuar?</p><button onClick={confirmAdultTheme} className="app-primary-button" data-testid="button-confirm-adult-theme">Quero continuar <ArrowRight size={16} /></button><button onClick={() => setAdultThemePrompt(null)} className="app-secondary-button" data-testid="button-cancel-adult-theme-secondary">Voltar</button></div></div>}
     {welcomeOpen && <div className="app-modal-backdrop"><div className="app-modal welcome-app-modal"><button className="app-modal-close" onClick={() => setWelcomeOpen(false)} aria-label="Fechar apresentação" data-testid="button-close-welcome"><X size={18} /></button><div className="welcome-app-mark"><Feather size={19} /></div><p className="modal-eyebrow">antes da primeira carta</p><h2>Como podemos<br /><em>te chamar?</em></h2><p>É só para deixar este espaço um pouco mais seu. Você pode entrar sem preencher nada.</p><input value={buyerName} onChange={e => setBuyerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && startSession()} placeholder="Seu nome" className="app-text-input" data-testid="input-buyer-name" /><button onClick={startSession} className="app-primary-button" data-testid="button-enter-experience">{createSession.isPending ? 'Abrindo seu espaço…' : 'Entrar na experiência'} <ArrowRight size={16} /></button></div></div>}
     {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{buyerName || 'Visitante'}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button></div></div>}
     {inviteOpen && <div className="app-modal-backdrop"><div className="app-modal invite-app-modal"><button className="app-modal-close" onClick={() => setInviteOpen(false)} aria-label="Fechar convite" data-testid="button-close-invite"><X size={18} /></button>{inviteResult ? <><div className="invite-success-mark"><Check size={21} /></div><p className="modal-eyebrow">convite pronto</p><h2>Leve essa pergunta<br /><em>para mais perto.</em></h2><p>Compartilhe este endereço com <strong>{inviteResult.guestName}</strong>.</p><div className="invite-copy-row"><input readOnly value={inviteResult.inviteUrl} className="app-text-input" data-testid="input-invite-url" /><button onClick={copyInvite} aria-label="Copiar convite" data-testid="button-copy-invite"><Copy size={17} /></button></div><button onClick={() => { setInviteResult(null); setGuestName(''); }} className="app-text-button" data-testid="button-new-invite">Criar outro convite <ArrowRight size={15} /></button></> : <><p className="modal-eyebrow">um convite especial</p><h2>Quem você quer<br /><em>trazer para a conversa?</em></h2><input value={guestName} onChange={e => setGuestName(e.target.value)} className="app-text-input" placeholder="Nome de quem vai receber" data-testid="input-guest-name" /><button onClick={makeInvite} className="app-primary-button" disabled={!guestName.trim() || createInvite.isPending || (!!sessionId && !canInvite)} data-testid="button-create-invite">{createInvite.isPending ? 'Criando convite…' : canInvite || !sessionId ? 'Gerar convite' : 'Sem convites disponíveis'} <LinkIcon size={16} /></button>{createInvite.isError && <p className="app-form-error" data-testid="status-invite-error">Não foi possível gerar agora. Tente novamente.</p>}</>}</div></div>}

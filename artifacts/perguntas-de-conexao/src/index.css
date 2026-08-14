@@ -1689,6 +1689,9 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   background: rgba(255,255,255,.1);
   font-size: .63rem;
 }
+.theme-cover-meta { display: flex; align-items: center; gap: .4rem; }
+.theme-cover-meta .theme-cover-audience { color: #24152b; background: #f2d7a6; border-color: transparent; font-weight: 700; letter-spacing: .04em; }
+.theme-cover-meta .theme-cover-audience:not(:first-child) { padding-inline: .55rem; }
 .theme-cover-top svg { color: rgba(255,255,255,.9); }
 .theme-cover-copy {
   position: absolute;
@@ -1821,6 +1824,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .app-modal h2 { margin: 0; color: #fff; font-size: 2rem; line-height: 1.02; letter-spacing: -.065em; }
 .app-modal h2 em { color: #bea7ff; font-style: normal; }
 .app-modal > p:not(.modal-eyebrow) { margin: 1rem 0 1.25rem; color: rgba(238,229,242,.57); font-size: .9rem; line-height: 1.45; }
+.adult-theme-mark { width: 3rem; height: 3rem; display: grid; place-items: center; margin-bottom: 1.3rem; border: 1px solid rgba(242,215,166,.45); border-radius: 50%; color: #f2d7a6; background: rgba(242,215,166,.1); font: .7rem var(--app-font-mono); letter-spacing: .08em; }
+.adult-theme-modal .app-secondary-button { margin-top: .6rem; }
 .app-text-input { width: 100%; height: 3.35rem; padding: 0 1rem; border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; outline: none; color: #fff; background: rgba(255,255,255,.06); font: inherit; }
 .app-text-input:focus { border-color: #a98dff; box-shadow: 0 0 0 3px rgba(145,111,239,.14); }
 .app-text-input::placeholder { color: rgba(255,255,255,.35); }

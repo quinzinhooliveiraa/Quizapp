@@ -1,0 +1,56 @@
+# Instrução para o agente do Replit — redesenho do menu de categorias (etapa 1: só o menu, conteúdo depois)
+
+Esta instrução troca as 4 categorias atuais por um menu maior e mais variado, inspirado na estrutura da referência (sem copiar nomes, textos ou imagens dela — tudo aqui é escrito do zero). **Por enquanto é só a estrutura do menu**: cada categoria nova recebe só 2-3 perguntas de exemplo, escritas originalmente, pra tela não ficar vazia. Adicionar o volume completo de perguntas por categoria fica pra uma etapa seguinte.
+
+Também reforça o posicionamento: o produto foca em **casais** agora (namoro, relacionamento, casamento); o pacote Família & Amigos continua existindo, mas fica em segundo plano por enquanto — por isso a maioria das categorias novas é "para todos", e algumas são marcadas como focadas em casal.
+
+## Onde mexer
+
+O conteúdo real (o que a Home carrega via API) fica em `artifacts/api-server/src/routes/connection.ts`:
+
+- Tipo `Theme` (linha 19-24) — adicionar um campo novo, por exemplo `audience: "todos" | "casais" | "18+"`.
+- Array `themes` (linha 51-76) — trocar pelas categorias novas listadas abaixo.
+- Array `questions` (linha 78-97) — hoje tem só 18 perguntas reais no total, espalhadas em 4 temas (e o campo `count` de cada tema atual já está errado: por exemplo o tema "beginning" diz `count: 12` mas só existem 5 perguntas com esse `themeId` — aproveitar essa troca pra corrigir `count` de cada tema pra bater com a quantidade real de perguntas cadastradas).
+
+Depois, replicar a mesma estrutura (ids, títulos) no fallback do front-end, em `artifacts/perguntas-de-conexao/src/App.tsx`, `fallbackThemes` (linha 29-33) e `fallbackQuestions` (linha 34-42+) — esse fallback só precisa dos mesmos ids e títulos batendo, não precisa duplicar todas as perguntas de exemplo.
+
+## Categorias novas propostas
+
+Cada uma com id, título, frase de efeito curta (a "description" que já existe hoje) e público:
+
+1. `porto-seguro` — **Porto Seguro** — "As conversas que parecem casa." — todos
+2. `livro-aberto` — **Livro Aberto** — "Sem filtro, cara a cara." — todos
+3. `faisca` — **Faísca** — "O lado mais provocante de vocês dois." — casais
+4. `voce-nao-sabia` — **Você Não Sabia** — "Descobertas que ainda cabem entre vocês." — todos
+5. `em-voz-alta` — **Em Voz Alta** — "A vida que os dois querem construir." — todos
+6. `la-atras` — **Lá Atrás** — "O que formou quem você é hoje." — todos
+7. `luzes-baixas` — **Luzes Baixas** — "Para quando a noite pede mais coragem." — casais, marcado como `18+`
+8. `modo-leve` — **Modo Leve** — "Pra rir e não levar tão a sério." — todos
+9. `mesmo-longe` — **Mesmo Longe** — "Pra quando a rotina ou a distância afastam." — casais
+10. `perto-de-novo` — **Perto de Novo** — "Esquentar o espaço entre vocês." — casais
+11. `proximo-passo` — **Próximo Passo** — "Pra onde essa história está indo." — casais
+12. `fora-da-rotina` — **Fora da Rotina** — "Sacudir o de sempre, tentar algo novo." — todos
+
+As 4 categorias atuais (`beginning`, `vulnerability`, `future`, `memories`) podem ser reaproveitadas: as perguntas que já existem nelas encaixam bem em `porto-seguro` (era "beginning"), `livro-aberto` (era "vulnerability"), `em-voz-alta` (era "future") e `la-atras` (era "memories") — dá pra só renomear essas 4 e mover as perguntas existentes junto, e criar as 8 categorias novas do zero com 2-3 perguntas de exemplo cada.
+
+## Sobre a categoria "Luzes Baixas" (18+)
+
+Essa é a única pensada como mais "picante"/adulta, voltada pra casais (inclusive casados) que já têm intimidade — as outras continuam leves e abertas pra qualquer relação, inclusive dando espaço pro público família/amigos que fica pra depois.
+
+- Marcar essa categoria com `audience: "18+"` no tipo `Theme`.
+- Na tela "Descobrir", o card dessa categoria pode ter um selo "18+" visível.
+- Ao abrir essa categoria pela primeira vez, mostrar uma confirmação simples ("Este espaço tem perguntas mais ousadas, pensadas para casais. Quer continuar?") antes de entrar — sem precisar de verificação de idade complexa, só um aviso claro.
+- As perguntas de exemplo dessa categoria (e o volume completo, na próxima etapa) devem ser mais sugestivas/provocantes, mas continuar no tom de pergunta de conexão genuína — não explícitas.
+
+## O que não fazer agora
+
+- Não escrever o volume completo de perguntas por categoria ainda (isso é a próxima etapa, depois que o menu estiver certo).
+- Não mexer no pacote Família & Amigos nem nas regras de convite — isso continua igual.
+- Não precisa reorganizar o carrossel visualmente além de acomodar mais cards (a lógica de carrossel que já existe deve funcionar com mais itens sem mudanças estruturais).
+
+## Verificação
+
+- Abrir a tela "Descobrir" e ver as 12 categorias no carrossel, cada uma com título e frase de efeito.
+- Confirmar que o card de "Luzes Baixas" mostra o selo 18+ e pede confirmação antes de entrar.
+- Abrir 2-3 categorias diferentes e confirmar que cada uma mostra as perguntas de exemplo certas (sem misturar com as de outra categoria).
+- Confirmar que o número mostrado no card de cada tema bate com a quantidade real de perguntas cadastradas nele.

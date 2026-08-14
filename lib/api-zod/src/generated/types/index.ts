@@ -22,6 +22,7 @@ export * from './question';
 export * from './questionIntensity';
 export * from './questionSession';
 export * from './questionTheme';
+export * from './questionThemeAudience';
 export * from './sessionInput';
 export * from './sessionInputPackageId';
 export * from './webhookResult';

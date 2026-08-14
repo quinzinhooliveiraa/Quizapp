@@ -24,7 +24,8 @@ export const ListQuestionThemesResponseItem = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "description": zod.string(),
-  "count": zod.number()
+  "count": zod.number(),
+  "audience": zod.enum(['todos', 'casais', '18+'])
 })
 export const ListQuestionThemesResponse = zod.array(ListQuestionThemesResponseItem)
 

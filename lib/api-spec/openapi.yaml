@@ -204,7 +204,10 @@ components:
           type: string
         count:
           type: number
-      required: [id, title, description, count]
+        audience:
+          type: string
+          enum: [todos, casais, "18+"]
+      required: [id, title, description, count, audience]
     Question:
       type: object
       properties:

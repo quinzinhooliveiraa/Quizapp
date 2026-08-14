@@ -5,10 +5,12 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuestionThemeAudience } from './questionThemeAudience';
 
 export interface QuestionTheme {
   id: string;
   title: string;
   description: string;
   count: number;
+  audience: QuestionThemeAudience;
 }

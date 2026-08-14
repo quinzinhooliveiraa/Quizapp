@@ -9,11 +9,21 @@ export interface HealthStatus {
   status: string;
 }
 
+export type QuestionThemeAudience = typeof QuestionThemeAudience[keyof typeof QuestionThemeAudience];
+
+
+export const QuestionThemeAudience = {
+  todos: 'todos',
+  casais: 'casais',
+  '18+': '18+',
+} as const;
+
 export interface QuestionTheme {
   id: string;
   title: string;
   description: string;
   count: number;
+  audience: QuestionThemeAudience;
 }
 
 export type QuestionIntensity = typeof QuestionIntensity[keyof typeof QuestionIntensity];
