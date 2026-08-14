@@ -408,13 +408,11 @@ function AppExperienceReference() {
   const [questionDragOffset, setQuestionDragOffset] = useState(0);
   const [isQuestionDragging, setIsQuestionDragging] = useState(false);
   const [questionSwipeExit, setQuestionSwipeExit] = useState<'left' | 'right' | null>(null);
-  const [questionSwipeEnter, setQuestionSwipeEnter] = useState<'left' | 'right' | null>(null);
   const questionDragStartX = useRef<number | null>(null);
   const questionDragDelta = useRef(0);
   const questionPointerCaptured = useRef(false);
   const questionSwipeLocked = useRef(false);
   const questionSwipeTimer = useRef<number | null>(null);
-  const questionSwipeUnlockTimer = useRef<number | null>(null);
   const [activeNav, setActiveNav] = useState('todos');
   const [saved, setSaved] = useState<string[]>(() => readStoredArray(SAVED_QUESTIONS_STORAGE_KEY));
   const [favoriteThemeIds, setFavoriteThemeIds] = useState<string[]>(() => readStoredArray(FAVORITE_THEMES_STORAGE_KEY));
@@ -571,7 +569,6 @@ function AppExperienceReference() {
   useEffect(() => { localStorage.setItem(FAVORITE_THEMES_STORAGE_KEY, JSON.stringify(favoriteThemeIds)); }, [favoriteThemeIds]);
   useEffect(() => () => {
     if (questionSwipeTimer.current !== null) window.clearTimeout(questionSwipeTimer.current);
-    if (questionSwipeUnlockTimer.current !== null) window.clearTimeout(questionSwipeUnlockTimer.current);
   }, []);
   const toggleThemeFavorite = (id: string) => setFavoriteThemeIds(current => current.includes(id) ? current.filter(themeIdValue => themeIdValue !== id) : [...current, id]);
   const toggleSaved = (id: string) => setSaved(current => current.includes(id) ? current.filter(questionId => questionId !== id) : [...current, id]);
@@ -605,14 +602,9 @@ function AppExperienceReference() {
         if (delta < 0) nextQuestion();
         else previousQuestion();
         setQuestionSwipeExit(null);
-        setQuestionSwipeEnter(delta < 0 ? 'right' : 'left');
         setQuestionDragOffset(0);
+        questionSwipeLocked.current = false;
         questionSwipeTimer.current = null;
-        questionSwipeUnlockTimer.current = window.setTimeout(() => {
-          setQuestionSwipeEnter(null);
-          questionSwipeLocked.current = false;
-          questionSwipeUnlockTimer.current = null;
-        }, 390);
       }, 320);
     } else {
       setQuestionDragOffset(0);
@@ -735,7 +727,7 @@ function AppExperienceReference() {
                 </article>}
                 <article
                key={currentQuestion.id}
-                 className={`question-card question-card-front question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''} ${isQuestionDragging ? 'is-dragging' : ''} ${questionSwipeExit ? `is-swiping-out-${questionSwipeExit}` : ''} ${questionSwipeEnter ? `is-entering-from-${questionSwipeEnter}` : ''}`}
+                 className={`question-card question-card-front question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''} ${isQuestionDragging ? 'is-dragging' : ''} ${questionSwipeExit ? `is-swiping-out-${questionSwipeExit}` : ''}`}
                onPointerDown={handleQuestionPointerDown}
                onPointerMove={handleQuestionPointerMove}
                onPointerUp={finishQuestionPointer}

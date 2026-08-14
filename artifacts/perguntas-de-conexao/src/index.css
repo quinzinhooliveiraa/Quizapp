@@ -3293,44 +3293,6 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   transform: translate3d(110%, 0, 0);
 }
 
-@keyframes question-card-enter-from-left {
-  from {
-    opacity: .78;
-    transform: translate3d(-110%, 0, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes question-card-enter-from-right {
-  from {
-    opacity: .78;
-    transform: translate3d(110%, 0, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.question-card-front.is-entering-from-left,
-.question-card-front.is-entering-from-right {
-  animation-duration: .32s;
-  animation-timing-function: cubic-bezier(.22, .85, .35, 1);
-  animation-fill-mode: both;
-  will-change: transform, opacity;
-}
-
-.question-card-front.is-entering-from-left {
-  animation-name: question-card-enter-from-left;
-}
-
-.question-card-front.is-entering-from-right {
-  animation-name: question-card-enter-from-right;
-}
-
 .question-view-stage.has-invite-prompt .question-card-stack {
   transform: translateY(-.42rem);
 }
