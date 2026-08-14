@@ -19,7 +19,7 @@ import {
   type Question,
   type QuestionTheme,
 } from '@workspace/api-client-react';
-import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Link as LinkIcon, Menu, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Users, X } from 'lucide-react';
+import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Link as LinkIcon, Menu, MoreHorizontal, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Users, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
@@ -78,6 +78,8 @@ type PersonalizedDeck = {
   createdAt: string;
   label: string;
   ids: string[];
+  cover: string;
+  seenIds: string[];
 };
 
 const dailyMoodOptions = [
@@ -95,6 +97,25 @@ const dailyVibeOptions = [
   { value: 'esquentar', label: 'Esquentar as coisas', themes: ['luzes-baixas'], intensity: 'honest' as const },
 ];
 const dailyCountOptions = [5, 10, 15, 20];
+const deckCoverOptions = [
+  { id: 'amethyst', label: 'Ametista' },
+  { id: 'sunset', label: 'Pôr do sol' },
+  { id: 'meadow', label: 'Campo aberto' },
+  { id: 'ember', label: 'Brasa' },
+  { id: 'ocean', label: 'Maré' },
+  { id: 'lilac', label: 'Lilás' },
+] as const;
+const deckCoverByVibe: Record<string, string> = {
+  fundo: 'amethyst',
+  relembrar: 'sunset',
+  sonhar: 'ocean',
+  rir: 'meadow',
+  esquentar: 'ember',
+};
+
+function isDeckCoverId(value: unknown): value is string {
+  return typeof value === 'string' && deckCoverOptions.some(option => option.id === value);
+}
 
 function readStoredArray(key: string): string[] {
   try {
@@ -109,7 +130,14 @@ function readStoredDecks(): PersonalizedDeck[] {
   try {
     const value = JSON.parse(localStorage.getItem(PERSONALIZED_DECKS_STORAGE_KEY) || '[]');
     if (!Array.isArray(value)) return [];
-    return value.filter((deck): deck is PersonalizedDeck => Boolean(
+    return value.filter((deck): deck is {
+      id: string;
+      createdAt: string;
+      label: string;
+      ids: string[];
+      cover?: unknown;
+      seenIds?: unknown;
+    } => Boolean(
       deck
       && typeof deck === 'object'
       && typeof deck.id === 'string'
@@ -117,7 +145,14 @@ function readStoredDecks(): PersonalizedDeck[] {
       && typeof deck.label === 'string'
       && Array.isArray(deck.ids)
       && deck.ids.every((id: unknown) => typeof id === 'string'),
-    ));
+    )).map((deck, index) => ({
+      id: deck.id,
+      createdAt: deck.createdAt,
+      label: deck.label,
+      ids: deck.ids,
+      cover: isDeckCoverId(deck.cover) ? deck.cover : deckCoverOptions[index % deckCoverOptions.length].id,
+      seenIds: Array.isArray(deck.seenIds) ? deck.seenIds.filter((id): id is string => typeof id === 'string' && deck.ids.includes(id)) : [],
+    }));
   } catch {
     return [];
   }
@@ -467,6 +502,10 @@ function AppExperienceReference() {
   const [favoriteMode, setFavoriteMode] = useState(false);
   const [dailyDeck, setDailyDeck] = useState<string[]>([]);
   const [personalizedDecks, setPersonalizedDecks] = useState<PersonalizedDeck[]>(() => readStoredDecks());
+  const [activeDeckId, setActiveDeckId] = useState<string | null>(null);
+  const [deckMenuId, setDeckMenuId] = useState<string | null>(null);
+  const [deckMenuView, setDeckMenuView] = useState<'menu' | 'rename' | 'cover' | 'delete'>('menu');
+  const [deckRenameValue, setDeckRenameValue] = useState('');
   const [dailyFormOpen, setDailyFormOpen] = useState(false);
   const [isPreparingDeck, setIsPreparingDeck] = useState(false);
   const [dailyMood, setDailyMood] = useState('');
@@ -537,9 +576,21 @@ function AppExperienceReference() {
       localStorage.setItem(SEEN_BY_THEME_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
+    if (activeDeckId) {
+      setPersonalizedDecks(current => {
+        const deck = current.find(item => item.id === activeDeckId);
+        if (!deck || !deck.ids.includes(question.id)) return current;
+        const seenIds = [...deck.seenIds.filter(id => id !== question.id), question.id];
+        const nextDecks = seenIds.length >= deck.ids.length && deck.ids.length > 0
+          ? current.filter(item => item.id !== activeDeckId)
+          : current.map(item => item.id === activeDeckId ? { ...item, seenIds } : item);
+        localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+        return nextDecks;
+      });
+    }
   };
 
-  const applyTheme = (id: string) => { setFavoriteMode(false); setDailyMode(false); setThemeId(id); setQuestionIndex(0); };
+  const applyTheme = (id: string) => { setActiveDeckId(null); setFavoriteMode(false); setDailyMode(false); setThemeId(id); setQuestionIndex(0); };
   const changeTheme = (id: string) => {
     const theme = themes.find(item => item.id === id);
     if (theme?.audience === '18+' && !adultThemeConfirmed) {
@@ -579,11 +630,14 @@ function AppExperienceReference() {
           createdAt,
           label: `${vibe?.label || mood?.label || 'Perguntas pra hoje'} · ${dateLabel}`,
           ids: selectPersonalizedQuestionIds(availableQuestions, selectedMood, selectedVibe, selectedCount, `${createdAt}-${selectedMood}-${selectedVibe}-${selectedCount}`),
+          cover: deckCoverByVibe[selectedVibe] || deckCoverOptions[Math.floor(Math.random() * deckCoverOptions.length)].id,
+          seenIds: [],
         };
         const nextDecks = [deck, ...personalizedDecks];
         setPersonalizedDecks(nextDecks);
         localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
         setDailyDeck(deck.ids);
+        setActiveDeckId(deck.id);
         setActiveNav('eu');
         setFavoriteMode(false);
         setDailyMode(true);
@@ -596,13 +650,43 @@ function AppExperienceReference() {
   };
   const openSavedDailyDeck = (deck: PersonalizedDeck) => {
     setDailyDeck(deck.ids);
+    setActiveDeckId(deck.id);
     setActiveNav('eu');
     setFavoriteMode(false);
     setDailyMode(true);
     setThemeId(null);
     setQuestionIndex(0);
   };
-  const openFavoritesDeck = () => { setActiveNav('eu'); setFavoriteMode(true); setDailyMode(false); setThemeId(null); setQuestionIndex(0); };
+  const persistPersonalizedDecks = (nextDecks: PersonalizedDeck[]) => {
+    setPersonalizedDecks(nextDecks);
+    localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+  };
+  const openDeckMenu = (deck: PersonalizedDeck) => {
+    setDeckMenuId(deck.id);
+    setDeckMenuView('menu');
+    setDeckRenameValue(deck.label);
+  };
+  const closeDeckMenu = () => {
+    setDeckMenuId(null);
+    setDeckMenuView('menu');
+  };
+  const renamePersonalizedDeck = (id: string, newLabel: string) => {
+    const label = newLabel.trim();
+    if (!label) return;
+    persistPersonalizedDecks(personalizedDecks.map(deck => deck.id === id ? { ...deck, label } : deck));
+    closeDeckMenu();
+  };
+  const updatePersonalizedDeckCover = (id: string, coverId: string) => {
+    if (!isDeckCoverId(coverId)) return;
+    persistPersonalizedDecks(personalizedDecks.map(deck => deck.id === id ? { ...deck, cover: coverId } : deck));
+    closeDeckMenu();
+  };
+  const deletePersonalizedDeck = (id: string) => {
+    persistPersonalizedDecks(personalizedDecks.filter(deck => deck.id !== id));
+    if (activeDeckId === id) setActiveDeckId(null);
+    closeDeckMenu();
+  };
+  const openFavoritesDeck = () => { setActiveDeckId(null); setActiveNav('eu'); setFavoriteMode(true); setDailyMode(false); setThemeId(null); setQuestionIndex(0); };
   const vibrateOnThemeChange = () => {
     // The Vibration API works in Android browsers, but Safari on iPhone does
     // not support web vibration. Check before calling so unsupported browsers
@@ -685,7 +769,7 @@ function AppExperienceReference() {
   const secondStackQuestionIndex = nextQuestionIndex === null ? null : getAdjacentQuestionIndex(nextQuestionIndex, 1);
   const secondStackQuestion = secondStackQuestionIndex === null ? null : questions[secondStackQuestionIndex];
   const secondStackTheme = secondStackQuestion ? themes.find(theme => theme.id === secondStackQuestion.themeId) : null;
-  useEffect(() => markQuestionSeen(currentQuestion), [currentQuestion?.id]);
+  useEffect(() => markQuestionSeen(currentQuestion), [currentQuestion?.id, activeDeckId]);
   useEffect(() => { localStorage.setItem(SAVED_QUESTIONS_STORAGE_KEY, JSON.stringify(saved)); }, [saved]);
   useEffect(() => { localStorage.setItem(FAVORITE_THEMES_STORAGE_KEY, JSON.stringify(favoriteThemeIds)); }, [favoriteThemeIds]);
   useEffect(() => () => {
@@ -776,6 +860,7 @@ function AppExperienceReference() {
     { id: 'temas', label: 'Temas' },
     { id: 'eu', label: 'Eu' },
   ];
+  const deckMenu = personalizedDecks.find(deck => deck.id === deckMenuId) || null;
 
   return <div className="app-viewport">
      <main className={`connection-app ${isQuestionView ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''}`}>
@@ -787,7 +872,7 @@ function AppExperienceReference() {
          {activeNav === 'eu' ? <section className="deck-home eu-home" aria-labelledby="eu-home-title">
             <div className="eu-heading"><div><p className="eu-kicker">seu espaço</p><h1 id="eu-home-title">Olá, {buyerName || 'por aqui'}.</h1></div><time className="eu-date" dateTime={localDateKey()}>{new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</time></div>
            <section className="eu-daily-card" onClick={openDailyForm} role="button" tabIndex={0} onKeyDown={event => event.key === 'Enter' && openDailyForm()} data-testid="card-daily-deck"><div className="eu-daily-glow" /><div className="eu-daily-copy"><p className="eu-kicker">seus decks</p><h2>Perguntas de hoje<br /><em>para vocês.</em></h2><p>Conte como vocês estão e receba um baralho feito para agora.</p><span className="eu-open-link">Criar meu deck <ArrowRight size={16} /></span></div><div className="eu-daily-art"><span className="daily-orbit daily-orbit-one" /><span className="daily-orbit daily-orbit-two" /><div className="daily-mini-card daily-mini-back" /><div className="daily-mini-card daily-mini-front"><span>seu deck</span><Quote size={24} /><strong>uma pergunta<br />de cada vez</strong></div></div></section>
-           {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <button key={deck.id} className="eu-history-card" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className="eu-history-art"><Quote size={18} /></span><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span><ArrowRight size={15} /></button>)}</div></section>}
+            {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <article key={deck.id} className="eu-history-card"><button className="eu-history-card-open" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className={`eu-history-art deck-cover-${deck.cover}`} aria-hidden="true"><span className="deck-cover-orbit" /><span className="deck-cover-spark" /></span><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span><ArrowRight className="eu-history-arrow" size={15} /></button><button className="eu-history-menu-button" onClick={() => openDeckMenu(deck)} aria-label={`Ações para ${deck.label}`} data-testid={`button-menu-daily-deck-${deck.id}`}><MoreHorizontal size={18} /></button></article>)}</div></section>}
              <section className="eu-section eu-continue-section" aria-labelledby="continue-title"><div className="eu-section-heading"><div><p className="eu-kicker">continue jogando</p><h2 id="continue-title" className="sr-only">Continue jogando</h2></div><span>{inProgressThemes.length ? `${inProgressThemes.length} em andamento` : 'comece por aqui'}</span></div><div className="eu-progress-row">{continueThemes.map(theme => { const seenCount = seenByTheme[theme.id]?.length || 0; const lastQuestionId = seenByTheme[theme.id]?.at(-1); const themeQuestions = availableQuestions.filter(question => question.themeId === theme.id); const resumeIndex = Math.max(0, themeQuestions.findIndex(question => question.id === lastQuestionId)); return <button key={theme.id} className="eu-progress-card" onClick={() => { changeTheme(theme.id); setQuestionIndex(resumeIndex); }} data-testid={`button-continue-theme-${theme.id}`}><div className={`eu-progress-cover theme-cover-${themes.indexOf(theme) % 5}`}><span className="eu-progress-number">{String(seenCount).padStart(2, '0')}</span><Heart className="eu-progress-heart" size={20} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></div><div className="eu-progress-copy"><strong>{theme.title}</strong><small>{seenCount ? `${seenCount} de ${theme.count} perguntas` : 'comece agora'}</small><span className="eu-progress-bar"><i style={{ width: `${Math.min(100, (seenCount / Math.max(theme.count, 1)) * 100)}%` }} /></span><em>Retomar <ArrowRight size={13} /></em></div></button>; })}</div>{continueThemes.length === 0 && <div className="eu-empty-state"><span><Sparkles size={16} /></span><p>Quando uma pergunta ficar pelo caminho, ela aparece aqui para você continuar.</p></div>}</section>
            <section className="eu-section eu-favorites-section" aria-labelledby="favorites-title"><div className="eu-section-heading"><div><p className="eu-kicker">salvos</p><h2 id="favorites-title">Salvos</h2></div><span>{saved.length + favoriteThemeIds.length} salvos</span></div><div className="eu-saved-row"><button className={`eu-collection-card eu-collection-cards ${saved.length ? 'has-content' : ''}`} onClick={openFavoritesDeck} disabled={!saved.length} data-testid="button-favorite-cards"><span className="eu-collection-shade" /><span className="eu-collection-title">Cartas favoritas <b>{saved.length}</b></span>{!saved.length && <small>suas perguntas salvas aparecem aqui</small>}</button><div className="eu-favorite-topics"><p className="eu-favorite-label">Temas favoritos</p><div className="eu-topic-row">{favoriteThemeIds.length ? favoriteThemeIds.map(id => { const theme = themes.find(item => item.id === id); return theme ? <button key={id} className={`eu-topic-card theme-cover-${themes.indexOf(theme) % 5}`} onClick={() => changeTheme(id)} data-testid={`button-favorite-theme-${id}`}><span className="eu-topic-shade" /><strong>{theme.title}</strong><ArrowRight size={15} /></button> : null; }) : <div className="eu-topic-empty">Favorite um tema para encontrá-lo aqui.</div>}</div></div></div></section>
          </section> : <section className="deck-home" aria-labelledby="deck-home-title">
@@ -818,7 +903,7 @@ function AppExperienceReference() {
          </section>}
       </> : <>
         <header className="question-header" data-testid="header-question">
-           <button className="decks-back-pill" onClick={() => { setFavoriteMode(false); setDailyMode(false); setThemeId(null); }} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
+           <button className="decks-back-pill" onClick={() => { setActiveDeckId(null); setFavoriteMode(false); setDailyMode(false); setThemeId(null); }} data-testid="button-back-decks"><ChevronLeft size={17} /> Decks</button>
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
         <section className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>
@@ -909,6 +994,46 @@ function AppExperienceReference() {
               </div>
             </fieldset>
             <button onClick={generateDailyDeck} disabled={!dailyMood || !dailyVibe} className="app-primary-button daily-form-submit" data-testid="button-generate-daily-deck">Montar meu baralho <ArrowRight size={16} /></button>
+          </div>
+        </div>
+      )}
+      {deckMenu && (
+        <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="deck-menu-title" onMouseDown={event => event.target === event.currentTarget && closeDeckMenu()}>
+          <div className="app-modal deck-menu-modal">
+            <button className="app-modal-close" onClick={closeDeckMenu} aria-label="Fechar ações do baralho" data-testid="button-close-deck-menu"><X size={18} /></button>
+            {deckMenuView === 'menu' && <>
+              <p className="modal-eyebrow">seu baralho</p>
+              <h2 id="deck-menu-title">O que você quer <em>mudar?</em></h2>
+              <p>Personalize este baralho ou retire-o do seu histórico.</p>
+              <div className="deck-menu-actions">
+                <button className="deck-menu-action" onClick={() => { setDeckRenameValue(deckMenu.label); setDeckMenuView('rename'); }} data-testid="button-rename-daily-deck"><span className="deck-menu-action-icon"><Feather size={16} /></span><span><strong>Mudar o nome</strong><small>Escolha como ele aparece para você</small></span><ArrowRight size={15} /></button>
+                <button className="deck-menu-action" onClick={() => setDeckMenuView('cover')} data-testid="button-change-daily-deck-cover"><span className={`deck-menu-action-icon deck-cover-${deckMenu.cover}`}><span className="deck-cover-swatch" /></span><span><strong>Mudar a imagem</strong><small>Escolha uma nova capa</small></span><ArrowRight size={15} /></button>
+                <button className="deck-menu-action deck-menu-action-danger" onClick={() => setDeckMenuView('delete')} data-testid="button-delete-daily-deck"><span className="deck-menu-action-icon"><X size={16} /></span><span><strong>Apagar</strong><small>Remover do seu histórico</small></span><ArrowRight size={15} /></button>
+              </div>
+            </>}
+            {deckMenuView === 'rename' && <>
+              <p className="modal-eyebrow">mudar o nome</p>
+              <h2 id="deck-menu-title">Dê um nome <em>para este momento.</em></h2>
+              <p>Esse nome fica salvo junto com o seu baralho.</p>
+              <input autoFocus value={deckRenameValue} onChange={event => setDeckRenameValue(event.target.value)} onKeyDown={event => event.key === 'Enter' && renamePersonalizedDeck(deckMenu.id, deckRenameValue)} className="app-text-input" aria-label="Nome do baralho" data-testid="input-rename-daily-deck" />
+              <div className="deck-menu-footer"><button className="app-secondary-button" onClick={() => setDeckMenuView('menu')} data-testid="button-cancel-rename-daily-deck">Voltar</button><button className="app-primary-button" onClick={() => renamePersonalizedDeck(deckMenu.id, deckRenameValue)} disabled={!deckRenameValue.trim()} data-testid="button-save-rename-daily-deck">Salvar <Check size={16} /></button></div>
+            </>}
+            {deckMenuView === 'cover' && <>
+              <p className="modal-eyebrow">mudar a imagem</p>
+              <h2 id="deck-menu-title">Escolha outra <em>capa.</em></h2>
+              <p>A imagem ajuda a reconhecer o clima de cada baralho.</p>
+              <div className="deck-cover-picker" role="radiogroup" aria-label="Capas disponíveis">
+                {deckCoverOptions.map(option => <button key={option.id} className={`deck-cover-option deck-cover-${option.id} ${deckMenu.cover === option.id ? 'is-selected' : ''}`} onClick={() => updatePersonalizedDeckCover(deckMenu.id, option.id)} role="radio" aria-checked={deckMenu.cover === option.id} aria-label={option.label} data-testid={`button-select-deck-cover-${option.id}`}><span className="deck-cover-orbit" /><span className="deck-cover-spark" /><small>{option.label}</small>{deckMenu.cover === option.id && <Check size={15} />}</button>)}
+              </div>
+              <button className="app-secondary-button deck-cover-back-button" onClick={() => setDeckMenuView('menu')} data-testid="button-cancel-cover-change">Voltar</button>
+            </>}
+            {deckMenuView === 'delete' && <>
+              <div className="deck-delete-mark"><X size={20} /></div>
+              <p className="modal-eyebrow">apagar baralho</p>
+              <h2 id="deck-menu-title">Apagar este <em>baralho?</em></h2>
+              <p>“{deckMenu.label}” será removido do seu histórico. Essa ação não pode ser desfeita.</p>
+              <div className="deck-menu-footer"><button className="app-secondary-button" onClick={() => setDeckMenuView('menu')} data-testid="button-cancel-delete-daily-deck">Voltar</button><button className="app-primary-button deck-delete-confirm" onClick={() => deletePersonalizedDeck(deckMenu.id)} data-testid="button-confirm-delete-daily-deck">Apagar <X size={16} /></button></div>
+            </>}
           </div>
         </div>
       )}
