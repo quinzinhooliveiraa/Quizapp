@@ -1,0 +1,48 @@
+# Fase 1C — Perguntar "comprei" ou "fui convidado" no início do onboarding
+
+Adendo curto à Fase 1B. Adiciona, logo no começo do onboarding, a pergunta se a pessoa é dona do baralho (comprou) ou visitante (foi convidada) — e manda cada uma pro caminho certo. Reaproveita o sistema de convite por link que **já existe** (`/invite/:token`), sem criar código curto novo.
+
+## Por que
+
+Hoje o onboarding assume que todo mundo é o comprador e vai personalizar o próprio baralho. Mas o visitante (convidado) não precisa personalizar nada — ele só precisa entrar no baralho de quem o convidou. Fazer essa pergunta no início evita que o convidado passe por um monte de tela que não é pra ele.
+
+## O que fazer em `Onboarding.tsx`
+
+### 1. Novo passo logo depois do `intro`
+
+Adicionar um passo novo no array `steps` (linha ~20-34), por exemplo `'welcome-role'`, entre `intro` e `relationship`. Nele, duas opções grandes (mesmo estilo visual do `Choice` que já existe):
+
+- **"Tenho meu próprio baralho"** (comprei / sou o dono) → segue o onboarding normal (vai pro passo `relationship` e o resto do fluxo já existente).
+- **"Fui convidado por alguém"** (sou visitante) → vai pro novo passo de convite (abaixo), pulando toda a personalização.
+
+Texto sugerido da tela: kicker "pra começar", título "Você está começando o **seu baralho** ou **foi convidado?**", subtítulo "As duas coisas levam ao mesmo lugar — só o caminho muda."
+
+### 2. Passo de visitante (colar o convite)
+
+Se a pessoa escolher "fui convidado", mostrar um passo simples, ex: `'guest-entry'`:
+
+- Um campo de texto: "Cole aqui o link que você recebeu".
+- Ao confirmar, extrair o token do link colado (o link tem o formato `.../invite/<token>` — pegar a última parte do caminho depois de `/invite/`). Se a pessoa colar só o token/código puro, aceitar também.
+- Navegar pra `/invite/<token>` (a página `InvitePage` que já existe em `App.tsx` linha 1062, que valida o convite e deixa aceitar). Assim toda a lógica de aceitar convite/entrar como convidado é reaproveitada, sem duplicar nada.
+- Um texto de apoio embaixo: "Não tem o link? Peça pra quem te convidou reenviar." — e, se a pessoa já tiver aberto o app pelo próprio link do convite, ela nem cai aqui (o link leva direto pra `InvitePage`).
+- Tratar erro básico: se o campo estiver vazio ou o link não tiver um token reconhecível, mostrar uma mensagem curta ("Esse link não parece certo — confere e cola de novo") em vez de navegar.
+
+### 3. O caminho do comprador não muda
+
+Quem escolhe "tenho meu próprio baralho" segue exatamente o fluxo da Fase 1B (relacionamento → nome → data → dias → curiosidade → sentimento → preparando → baralho pronto). Nada muda pra ele além de ter passado por essa tela de escolha antes.
+
+### 4. Marcar o papel (pro app saber depois)
+
+Quando a pessoa escolhe, guardar `localStorage.setItem('conexao-role', 'owner')` ou `'guest'`. Isso vai ser útil na fase de "perfil visitante vs dono" (Fase 3), pra decidir, por exemplo, se mostra o botão de convidar. Por agora é só registrar.
+
+## Interação com o "pular onboarding se já tem conta" (Fase 1B, item 1)
+
+A regra da Fase 1B continua valendo e vem **antes** desta tela: se a pessoa já tem `conexao-session`, `conexao-guest-token` ou `conexao-onboarding-complete`, ela nem vê o onboarding (vai direto pro `/app`). A pergunta "comprei ou fui convidado?" só aparece pra quem está entrando pela primeira vez, sem acesso ainda.
+
+## Verificação
+
+- Começar o onboarding do zero → depois do intro, aparece a escolha "meu próprio baralho" vs "fui convidado".
+- Escolher "meu próprio baralho" → segue o onboarding normal (relacionamento, nome, etc.).
+- Escolher "fui convidado", colar um link de convite válido → cai na tela de aceitar convite (`/invite/...`) e entra como convidado.
+- Colar um link inválido/vazio → mensagem de erro, sem quebrar.
+- Já ter acesso e tentar abrir `/onboarding` → continua pulando direto pro `/app` (regra da 1B), sem passar por essa escolha.

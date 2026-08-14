@@ -4,6 +4,8 @@ import { Link, useLocation } from 'wouter';
 
 type StepId =
   | 'intro'
+  | 'welcome-role'
+  | 'guest-entry'
   | 'relationship'
   | 'note'
   | 'name'
@@ -20,18 +22,22 @@ type Step = { id: StepId; progress: number };
 
 const steps: Step[] = [
   { id: 'intro', progress: 0.05 },
-  { id: 'relationship', progress: 0.1 },
-  { id: 'note', progress: 0.17 },
-  { id: 'name', progress: 0.24 },
-  { id: 'date', progress: 0.32 },
-  { id: 'days', progress: 0.42 },
-  { id: 'curiosity', progress: 0.53 },
-  { id: 'surprise', progress: 0.63 },
-  { id: 'feeling', progress: 0.73 },
-  { id: 'insight', progress: 0.82 },
-  { id: 'preparing', progress: 0.92 },
+  { id: 'welcome-role', progress: 0.1 },
+  { id: 'guest-entry', progress: 0.15 },
+  { id: 'relationship', progress: 0.18 },
+  { id: 'note', progress: 0.24 },
+  { id: 'name', progress: 0.3 },
+  { id: 'date', progress: 0.38 },
+  { id: 'days', progress: 0.47 },
+  { id: 'curiosity', progress: 0.58 },
+  { id: 'surprise', progress: 0.68 },
+  { id: 'feeling', progress: 0.77 },
+  { id: 'insight', progress: 0.85 },
+  { id: 'preparing', progress: 0.93 },
   { id: 'deck', progress: 1 },
 ];
+
+type OnboardingRole = '' | 'owner' | 'guest';
 
 const curiosityOptions = [
   'Como ela realmente é',
@@ -95,6 +101,50 @@ function dateParts(dateString: string) {
   return { day: Number(day), month: Number(month), year: Number(year) };
 }
 
+function readOnboardingRole(): OnboardingRole {
+  const role = localStorage.getItem('conexao-role');
+  return role === 'owner' || role === 'guest' ? role : '';
+}
+
+function getInitialOnboardingStep() {
+  const saved = Number(localStorage.getItem('conexao-onboarding-step'));
+  if (!Number.isInteger(saved) || saved < 0 || saved >= steps.length) return 0;
+
+  // Fase 1B stored the old linear step index. Keep an unfinished owner flow
+  // in the same place after the two new entry screens were inserted.
+  if (!readOnboardingRole() && saved > 0) {
+    localStorage.setItem('conexao-role', 'owner');
+    return Math.min(saved + 2, steps.length - 1);
+  }
+  return saved;
+}
+
+function extractInviteToken(value: string) {
+  const input = value.trim();
+  if (!input) return null;
+
+  try {
+    const url = new URL(input, window.location.origin);
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const inviteIndex = pathParts.findLastIndex(part => part.toLowerCase() === 'invite');
+    const linkedToken = inviteIndex >= 0 ? pathParts[inviteIndex + 1] : '';
+    if (linkedToken) return decodeURIComponent(linkedToken);
+  } catch {
+    // Fall through to the lightweight path and token checks below.
+  }
+
+  const pathMatch = input.match(/(?:^|\/)invite\/([^/?#\s]+)/i);
+  if (pathMatch?.[1]) {
+    try {
+      return decodeURIComponent(pathMatch[1]);
+    } catch {
+      return pathMatch[1];
+    }
+  }
+
+  return /^[^/\\s?#]+$/.test(input) ? input : null;
+}
+
 function StepHeader({
   step,
   onBack,
@@ -151,11 +201,13 @@ function Choice({
   selected,
   multi = false,
   onClick,
+  description,
 }: {
   label: string;
   selected: boolean;
   multi?: boolean;
   onClick: () => void;
+  description?: string;
 }) {
   return (
     <button
@@ -163,7 +215,10 @@ function Choice({
       onClick={onClick}
       data-testid={`choice-${label.toLowerCase().replaceAll(' ', '-')}`}
     >
-      <span>{label}</span>
+      <span className="onboarding-choice-copy">
+        <span>{label}</span>
+        {description && <small>{description}</small>}
+      </span>
       {multi ? (
         <span className="onboarding-checkbox">{selected ? <Check size={15} strokeWidth={2.5} /> : null}</span>
       ) : (
@@ -176,10 +231,8 @@ function Choice({
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [stepIndex, setStepIndex] = useState(() => {
-    const saved = Number(localStorage.getItem('conexao-onboarding-step'));
-    return Number.isInteger(saved) && saved >= 0 && saved < steps.length ? saved : 0;
-  });
+  const [stepIndex, setStepIndex] = useState(getInitialOnboardingStep);
+  const [role, setRole] = useState<OnboardingRole>(readOnboardingRole);
   const [name, setName] = useState(() => localStorage.getItem('conexao-onboarding-name') || '');
   const [pronoun, setPronoun] = useState(() => localStorage.getItem('conexao-onboarding-pronoun') || '');
   const [relationship, setRelationship] = useState(() => localStorage.getItem('conexao-onboarding-relationship') || '');
@@ -193,6 +246,8 @@ export default function Onboarding() {
   });
   const [surprise, setSurprise] = useState('');
   const [feeling, setFeeling] = useState(() => localStorage.getItem('conexao-onboarding-feeling') || '');
+  const [guestInviteLink, setGuestInviteLink] = useState('');
+  const [guestInviteError, setGuestInviteError] = useState('');
   const [animatedDays, setAnimatedDays] = useState(0);
   const [dateDragOffset, setDateDragOffset] = useState<Record<DatePartKind, number>>({ day: 0, month: 0, year: 0 });
   const dateDragKind = useRef<DatePartKind | null>(null);
@@ -253,6 +308,7 @@ export default function Onboarding() {
     localStorage.setItem('conexao-onboarding-date', date);
     localStorage.setItem('conexao-onboarding-curiosity', JSON.stringify(curiosity));
     localStorage.setItem('conexao-onboarding-feeling', feeling);
+    if (role) localStorage.setItem('conexao-role', role);
 
     if (step.id === 'preparing') {
       localStorage.setItem('conexao-name', name.trim());
@@ -262,7 +318,7 @@ export default function Onboarding() {
       localStorage.setItem('conexao-partner-pronoun', pronoun);
       localStorage.setItem('conexao-onboarding-complete', 'true');
     }
-  }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling]);
+  }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling, role]);
 
   const goNext = () => setStepIndex((current) => Math.min(current + 1, steps.length - 1));
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
@@ -275,6 +331,7 @@ export default function Onboarding() {
     localStorage.removeItem('conexao-onboarding-curiosity');
     localStorage.removeItem('conexao-onboarding-feeling');
     localStorage.removeItem('conexao-onboarding-complete');
+    localStorage.removeItem('conexao-role');
     localStorage.removeItem('conexao-name');
     localStorage.removeItem('conexao-relationship');
     localStorage.removeItem('conexao-curiosity');
@@ -289,6 +346,9 @@ export default function Onboarding() {
     setCuriosity([]);
     setSurprise('');
     setFeeling('');
+    setRole('');
+    setGuestInviteLink('');
+    setGuestInviteError('');
   };
 
   const selectDatePart = (kind: DatePartKind, value: number) => {
@@ -378,6 +438,64 @@ export default function Onboarding() {
             </div>
             <ContinueButton onClick={goNext}>Começar</ContinueButton>
             <p className="onboarding-login-note">Já tem um baralho? <Link href="/app">Abrir meu acesso</Link></p>
+          </div>
+        );
+      case 'welcome-role':
+        return (
+          <div className="onboarding-content onboarding-choice-screen onboarding-role-screen">
+            <div>
+              <p className="onboarding-kicker">pra começar</p>
+              <h1>Você está começando<br /><em>o seu baralho</em> ou foi convidado?</h1>
+              <p className="onboarding-subtitle">As duas coisas levam ao mesmo lugar — só o caminho muda.</p>
+            </div>
+            <div className="onboarding-choice-list">
+              <Choice
+                label="Tenho meu próprio baralho"
+                description="Comprei e quero personalizar minha experiência."
+                selected={role === 'owner'}
+                onClick={() => {
+                  setRole('owner');
+                  localStorage.setItem('conexao-role', 'owner');
+                }}
+              />
+              <Choice
+                label="Fui convidado por alguém"
+                description="Recebi um link e quero entrar no baralho."
+                selected={role === 'guest'}
+                onClick={() => {
+                  setRole('guest');
+                  localStorage.setItem('conexao-role', 'guest');
+                }}
+              />
+            </div>
+          </div>
+        );
+      case 'guest-entry':
+        return (
+          <div className="onboarding-content onboarding-choice-screen onboarding-guest-screen">
+            <div>
+              <p className="onboarding-kicker">seu convite</p>
+              <h1>Cole o link que<br /><em>você recebeu.</em></h1>
+              <p className="onboarding-subtitle">Ele leva você direto para o baralho de quem te convidou.</p>
+            </div>
+            <div className="onboarding-guest-form">
+              <input
+                value={guestInviteLink}
+                onChange={(event) => {
+                  setGuestInviteLink(event.target.value);
+                  if (guestInviteError) setGuestInviteError('');
+                }}
+                autoFocus
+                placeholder="https://.../invite/..."
+                inputMode="url"
+                autoCapitalize="none"
+                spellCheck={false}
+                aria-label="Link do convite"
+                data-testid="input-guest-invite-link"
+              />
+              {guestInviteError && <p className="onboarding-form-error" role="alert" data-testid="status-guest-invite-error">{guestInviteError}</p>}
+              <p className="onboarding-bottom-note">Não tem o link? Peça pra quem te convidou reenviar.</p>
+            </div>
           </div>
         );
       case 'relationship':
@@ -563,7 +681,45 @@ export default function Onboarding() {
     return undefined;
   }, [step.id]);
 
-  const canContinue = step.id === 'name' ? name.trim().length > 0 : step.id === 'relationship' ? !!relationship : step.id === 'curiosity' ? curiosity.length > 0 : step.id === 'surprise' ? !!surprise : step.id === 'feeling' ? !!feeling : true;
+  const continueOnboarding = () => {
+    if (step.id === 'welcome-role') {
+      if (role === 'owner') {
+        setStepIndex(steps.findIndex(item => item.id === 'relationship'));
+      } else if (role === 'guest') {
+        setStepIndex(steps.findIndex(item => item.id === 'guest-entry'));
+      }
+      return;
+    }
+
+    if (step.id === 'guest-entry') {
+      const token = extractInviteToken(guestInviteLink);
+      if (!token) {
+        setGuestInviteError('Esse link não parece certo — confere e cola de novo');
+        return;
+      }
+      localStorage.setItem('conexao-role', 'guest');
+      navigate(`/invite/${encodeURIComponent(token)}`);
+      return;
+    }
+
+    goNext();
+  };
+
+  const canContinue = step.id === 'welcome-role'
+    ? !!role
+    : step.id === 'guest-entry'
+      ? true
+      : step.id === 'name'
+        ? name.trim().length > 0
+        : step.id === 'relationship'
+          ? !!relationship
+          : step.id === 'curiosity'
+            ? curiosity.length > 0
+            : step.id === 'surprise'
+              ? !!surprise
+              : step.id === 'feeling'
+                ? !!feeling
+                : true;
   const noButton = ['intro', 'note', 'days', 'insight', 'preparing', 'deck'].includes(step.id);
 
   return (
@@ -571,7 +727,7 @@ export default function Onboarding() {
       <div className="onboarding-frame">
         <StepHeader step={step} onBack={goBack} showBack={stepIndex > 0 && step.id !== 'preparing'} />
         {renderStep()}
-        {!noButton && <ContinueButton onClick={goNext} disabled={!canContinue} />}
+        {!noButton && <ContinueButton onClick={continueOnboarding} disabled={!canContinue} />}
         {['note', 'days', 'insight'].includes(step.id) && <ContinueButton onClick={goNext} />}
       </div>
     </main>

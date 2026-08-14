@@ -864,6 +864,19 @@
   transition: 180ms ease;
 }
 
+.onboarding-choice-copy {
+  display: grid;
+  gap: 0.3rem;
+  padding-right: 1rem;
+}
+
+.onboarding-choice-copy small {
+  color: rgba(255, 255, 255, 0.43);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 400;
+}
+
 .onboarding-choice:hover {
   border-color: rgba(173, 155, 255, 0.6);
   background: rgba(126, 102, 244, 0.1);
@@ -908,6 +921,43 @@
   color: rgba(255, 255, 255, 0.32);
   font-size: 0.8rem;
   text-align: center;
+}
+
+.onboarding-guest-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 2.4rem;
+}
+
+.onboarding-guest-form input {
+  width: 100%;
+  min-height: 3.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1rem;
+  padding: 0 1.2rem;
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font: 0.98rem var(--font-sans);
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.onboarding-guest-form input::placeholder {
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.onboarding-guest-form input:focus {
+  border-color: rgba(173, 151, 255, 0.72);
+  background: rgba(126, 102, 244, 0.1);
+  box-shadow: 0 0 0 3px rgba(143, 115, 255, 0.12);
+}
+
+.onboarding-form-error {
+  margin: 0;
+  color: #ffb2a0;
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .onboarding-note-screen {
