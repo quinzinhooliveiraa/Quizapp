@@ -592,6 +592,9 @@ function AppExperienceReference() {
   const [dailyMood, setDailyMood] = useState('');
   const [dailyVibe, setDailyVibe] = useState('');
   const [dailyCount, setDailyCount] = useState(10);
+  const [dailyStep, setDailyStep] = useState(0);
+  const [dailyCountCustom, setDailyCountCustom] = useState(false);
+  const [dailyCustomCount, setDailyCustomCount] = useState('10');
   const [themeIndex, setThemeIndex] = useState(0);
   const [themeDragOffset, setThemeDragOffset] = useState(0);
   const [isThemeDragging, setIsThemeDragging] = useState(false);
@@ -722,11 +725,39 @@ function AppExperienceReference() {
     setDailyMood('');
     setDailyVibe('');
     setDailyCount(10);
+    setDailyStep(0);
+    setDailyCountCustom(false);
+    setDailyCustomCount('10');
     setDailyFormOpen(true);
+  };
+  const closeDailyForm = () => {
+    setDailyFormOpen(false);
+    setDailyStep(0);
+  };
+  const continueDailyForm = () => {
+    if (dailyStep === 0 && !dailyMood) return;
+    if (dailyStep === 1 && !dailyVibe) return;
+    setDailyStep(step => Math.min(2, step + 1));
+  };
+  const chooseCustomDailyCount = () => {
+    setDailyCountCustom(true);
+    setDailyCustomCount(String(Math.min(30, Math.max(3, dailyCount))));
+  };
+  const updateDailyCustomCount = (value: string) => {
+    if (!value) {
+      setDailyCustomCount('');
+      setDailyCount(0);
+      return;
+    }
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return;
+    const nextCount = Math.min(30, Math.max(3, Math.trunc(numericValue)));
+    setDailyCustomCount(String(nextCount));
+    setDailyCount(nextCount);
   };
   const generateDailyDeck = () => {
     if (!dailyMood || !dailyVibe || isPreparingDeck) return;
-    setDailyFormOpen(false);
+    closeDailyForm();
     setIsPreparingDeck(true);
     const selectedMood = dailyMood;
     const selectedVibe = dailyVibe;
@@ -1197,29 +1228,43 @@ function AppExperienceReference() {
       {dailyFormOpen && (
         <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="daily-form-title">
           <div className="app-modal daily-form-modal">
-            <button className="app-modal-close" onClick={() => setDailyFormOpen(false)} aria-label="Fechar perguntas pra hoje" data-testid="button-close-daily-form"><X size={18} /></button>
+            <button className="app-modal-close" onClick={closeDailyForm} aria-label="Fechar perguntas pra hoje" data-testid="button-close-daily-form"><X size={18} /></button>
             <p className="modal-eyebrow">perguntas pra hoje</p>
-            <h2 id="daily-form-title">Como vocês estão <em>agora?</em></h2>
-            <p>Duas respostas rápidas para montar um baralho que combine com o momento de vocês.</p>
-            <fieldset className="daily-form-group">
+            <div className="daily-form-progress" aria-label={`Passo ${dailyStep + 1} de 3`}>
+              <div className="onboarding-progress"><span style={{ width: `${((dailyStep + 1) / 3) * 100}%` }} /></div>
+              <span className="onboarding-progress-value">Passo {dailyStep + 1} de 3</span>
+            </div>
+            <h2 id="daily-form-title">{dailyStep === 0 ? <>Como vocês estão <em>agora?</em></> : dailyStep === 1 ? <>O que combina <em>com agora?</em></> : <>Quantas perguntas <em>vocês querem?</em></>}</h2>
+            <p>{dailyStep === 0 ? 'Escolha o que melhor descreve o momento de vocês.' : dailyStep === 1 ? 'Escolha o clima que combina com esta conversa.' : 'Definam o tamanho do baralho para hoje.'}</p>
+            {dailyStep === 0 && <fieldset className="daily-form-group">
               <legend>Como vocês estão hoje?</legend>
               <div className="daily-option-grid">
                 {dailyMoodOptions.map(option => <button key={option.value} type="button" className={`daily-option ${dailyMood === option.value ? 'is-selected' : ''}`} onClick={() => setDailyMood(option.value)} aria-pressed={dailyMood === option.value} data-testid={`button-daily-mood-${option.value}`}>{option.label}</button>)}
               </div>
-            </fieldset>
-            <fieldset className="daily-form-group">
+              <button onClick={continueDailyForm} disabled={!dailyMood} className="app-primary-button daily-form-submit" data-testid="button-daily-continue-mood">Continuar <ArrowRight size={16} /></button>
+            </fieldset>}
+            {dailyStep === 1 && <fieldset className="daily-form-group">
               <legend>O que combina mais com agora?</legend>
               <div className="daily-option-grid">
                 {dailyVibeOptions.filter(option => option.value !== 'esquentar' || themes.some(theme => theme.audience === '18+')).map(option => <button key={option.value} type="button" className={`daily-option ${dailyVibe === option.value ? 'is-selected' : ''}`} onClick={() => setDailyVibe(option.value)} aria-pressed={dailyVibe === option.value} data-testid={`button-daily-vibe-${option.value}`}>{option.label}</button>)}
               </div>
-            </fieldset>
-            <fieldset className="daily-form-group">
+              <div className="daily-step-actions">
+                <button onClick={() => setDailyStep(step => Math.max(0, step - 1))} className="app-secondary-button" data-testid="button-daily-back-vibe"><ChevronLeft size={16} /> Voltar</button>
+                <button onClick={continueDailyForm} disabled={!dailyVibe} className="app-primary-button" data-testid="button-daily-continue-vibe">Continuar <ArrowRight size={16} /></button>
+              </div>
+            </fieldset>}
+            {dailyStep === 2 && <fieldset className="daily-form-group">
               <legend>Quantas perguntas vocês querem?</legend>
               <div className="daily-option-grid daily-count-grid">
-                {dailyCountOptions.map(option => <button key={option} type="button" className={`daily-option ${dailyCount === option ? 'is-selected' : ''}`} onClick={() => setDailyCount(option)} aria-pressed={dailyCount === option} data-testid={`button-daily-count-${option}`}>{option} perguntas</button>)}
+                {dailyCountOptions.map(option => <button key={option} type="button" className={`daily-option ${!dailyCountCustom && dailyCount === option ? 'is-selected' : ''}`} onClick={() => { setDailyCountCustom(false); setDailyCount(option); }} aria-pressed={!dailyCountCustom && dailyCount === option} data-testid={`button-daily-count-${option}`}>{option} perguntas</button>)}
+                <button type="button" className={`daily-option ${dailyCountCustom ? 'is-selected' : ''}`} onClick={chooseCustomDailyCount} aria-pressed={dailyCountCustom} data-testid="button-daily-count-custom">Outro número</button>
               </div>
-            </fieldset>
-            <button onClick={generateDailyDeck} disabled={!dailyMood || !dailyVibe} className="app-primary-button daily-form-submit" data-testid="button-generate-daily-deck">Montar meu baralho <ArrowRight size={16} /></button>
+              {dailyCountCustom && <label className="daily-custom-count">Quantidade personalizada<input type="number" min={3} max={30} step={1} value={dailyCustomCount} onChange={event => updateDailyCustomCount(event.target.value)} aria-label="Quantidade personalizada de perguntas" data-testid="input-daily-custom-count" /><small>Escolha entre 3 e 30 perguntas.</small></label>}
+              <div className="daily-step-actions">
+                <button onClick={() => setDailyStep(step => Math.max(0, step - 1))} className="app-secondary-button" data-testid="button-daily-back-count"><ChevronLeft size={16} /> Voltar</button>
+                <button onClick={generateDailyDeck} disabled={!dailyMood || !dailyVibe || dailyCount < 3} className="app-primary-button" data-testid="button-generate-daily-deck">Montar meu baralho <ArrowRight size={16} /></button>
+              </div>
+            </fieldset>}
           </div>
         </div>
       )}

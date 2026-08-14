@@ -1,0 +1,45 @@
+# Fase 3B — Formulário "Perguntas pra hoje" por fases + quantidade personalizada
+
+Transformar o modal de "Perguntas pra hoje" (`artifacts/perguntas-de-conexao/src/App.tsx`, linha 1197-1225) de uma tela com tudo junto em um fluxo de **uma pergunta por vez**, com "voltar", e permitir uma **quantidade personalizada** além das opções fixas. É só front-end; a lógica de geração (`generateDailyDeck`, linha 727; `selectPersonalizedQuestionIds`) não muda.
+
+## Estado atual
+
+Hoje o modal mostra os 3 `fieldset` empilhados (humor, clima, quantidade) e um botão "Montar meu baralho" no fim. Os estados já existem: `dailyMood` (592), `dailyVibe` (593), `dailyCount` (594, começa em 10), e `dailyCountOptions` (a lista 5/10/15/20).
+
+## 1. Uma pergunta por tela (fases)
+
+Adicionar um estado de passo, ex: `const [dailyStep, setDailyStep] = useState(0)`, e dividir o conteúdo do modal em 3 passos:
+
+- **Passo 0 — "Como vocês estão hoje?"** (o `fieldset` de `dailyMood`, linha 1204-1209). Ao escolher uma opção, pode avançar automaticamente pro passo seguinte (ou habilitar um botão "Continuar"). 
+- **Passo 1 — "O que combina mais com agora?"** (o `fieldset` de `dailyVibe`, 1210-1215).
+- **Passo 2 — "Quantas perguntas vocês querem?"** (o `fieldset` de `dailyCount`, 1216-1221) + o botão final "Montar meu baralho".
+
+Regras:
+- Mostrar só o `fieldset` do passo atual (esconder os outros).
+- Um botão "Voltar" (seta) em todos os passos menos o primeiro, que faz `setDailyStep(s => s - 1)`.
+- Avançar só quando o passo atual tiver resposta (humor no 0, clima no 1; a quantidade no 2 já tem padrão).
+- Uma barrinha/indicador de progresso no topo (passo 1 de 3, 2 de 3, 3 de 3) ajuda a dar a sensação de fluxo — pode reaproveitar o estilo do indicador de progresso do onboarding.
+- Ao abrir o modal (`openDailyForm`), resetar `dailyStep` pra 0 (além de já resetar mood/vibe como hoje).
+- Ao fechar ou concluir, resetar o passo também.
+
+Manter a mesma animação de transição entre passos que o onboarding usa, se for fácil — pra ficar coerente. Não é obrigatório.
+
+## 2. Quantidade personalizada
+
+No passo da quantidade, além dos botões fixos (5/10/15/20), adicionar uma opção "Outro número":
+- Ao escolher "Outro", mostrar um campo numérico pra digitar a quantidade.
+- Validar: mínimo 3, máximo 30 (teto pra não gerar um baralho gigante). Se digitar fora, prender no limite.
+- Esse valor alimenta o mesmo `dailyCount` que já é passado pra geração — nada mais muda (a função `selectPersonalizedQuestionIds` já recebe `count` e corta com `Math.min(count, disponíveis)`).
+
+## 3. Nada mais muda
+
+- A geração (`generateDailyDeck`), a animação de "preparando o baralho", o salvamento no histórico e o mapeamento humor/clima → temas continuam exatamente iguais.
+- Continua puxando das perguntas que já existem no app.
+
+## Verificação
+
+- Abrir "Perguntas pra hoje" e ver **uma pergunta por tela**, com progresso (1 de 3 → 2 de 3 → 3 de 3) e botão "Voltar" funcionando.
+- Não conseguir avançar sem responder o passo atual (humor e clima).
+- No passo da quantidade, escolher "Outro", digitar 7, e confirmar que o baralho gerado tem 7 perguntas.
+- Digitar um número fora do limite (ex: 100) e confirmar que prende no teto (30).
+- Confirmar que o baralho gerado continua salvo no histórico, com a animação de preparar, igual antes.

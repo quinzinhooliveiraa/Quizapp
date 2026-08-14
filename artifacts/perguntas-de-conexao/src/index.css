@@ -1997,6 +1997,9 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .app-modal h2 em { color: #bea7ff; font-style: normal; }
 .app-modal > p:not(.modal-eyebrow) { margin: 1rem 0 1.25rem; color: rgba(238,229,242,.57); font-size: .9rem; line-height: 1.45; }
 .daily-form-modal { max-height: calc(100svh - 2rem); overflow-y: auto; }
+.daily-form-progress { display: flex; align-items: center; gap: .7rem; margin: 1.25rem 0 1.35rem; }
+.daily-form-progress .onboarding-progress { min-width: 0; }
+.daily-form-progress .onboarding-progress-value { flex: 0 0 auto; }
 .daily-form-group { margin: 1.35rem 0 0; padding: 0; border: 0; }
 .daily-form-group legend { margin-bottom: .65rem; color: rgba(255,255,255,.84); font-size: .72rem; font-weight: 600; }
 .daily-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
@@ -2005,6 +2008,14 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .daily-option.is-selected { border-color: rgba(190,167,255,.75); color: #fff; background: rgba(139,106,229,.28); box-shadow: inset 0 0 0 1px rgba(190,167,255,.12); }
 .daily-count-grid .daily-option { text-align: center; }
 .daily-form-submit { margin-top: 1.35rem; }
+.daily-step-actions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .6rem; margin-top: 1.35rem; }
+.daily-step-actions .app-primary-button,
+.daily-step-actions .app-secondary-button { min-width: 0; margin-top: 0; padding-inline: .85rem; }
+.daily-step-actions .app-secondary-button { width: auto; }
+.daily-custom-count { display: grid; gap: .45rem; margin-top: .85rem; color: rgba(238,229,242,.7); font-size: .7rem; font-weight: 600; }
+.daily-custom-count input { width: 100%; min-height: 2.8rem; margin-top: .1rem; padding: .65rem .7rem; border: 1px solid rgba(190,167,255,.45); border-radius: .75rem; outline: none; color: #fff; background: rgba(255,255,255,.07); font: .85rem var(--app-font-sans); }
+.daily-custom-count input:focus { border-color: rgba(190,167,255,.85); box-shadow: 0 0 0 3px rgba(139,106,229,.16); }
+.daily-custom-count small { color: rgba(238,229,242,.42); font-size: .6rem; font-weight: 400; }
 .preparing-deck-backdrop { z-index: 25; }
 .deck-preparing { width: min(100%, 22rem); padding: 1.6rem 1.4rem 1.45rem; border: 1px solid rgba(255,255,255,.13); border-radius: 1.6rem; background: linear-gradient(155deg, #252039, #151322); box-shadow: 0 2rem 5rem rgba(0,0,0,.42); text-align: center; animation: card-rise .3s ease both; }
 .deck-preparing h2 { margin: 0; color: #fff; font-size: 1.85rem; line-height: 1.04; letter-spacing: -.065em; }
