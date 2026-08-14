@@ -552,6 +552,9 @@ function AppExperienceReference() {
   const nextQuestionIndex = questions.length > 1 ? getAdjacentQuestionIndex(questionIndex, 1) : null;
   const nextStackQuestion = nextQuestionIndex === null ? null : questions[nextQuestionIndex];
   const nextStackTheme = nextStackQuestion ? themes.find(theme => theme.id === nextStackQuestion.themeId) : null;
+  const secondStackQuestionIndex = nextQuestionIndex === null ? null : getAdjacentQuestionIndex(nextQuestionIndex, 1);
+  const secondStackQuestion = secondStackQuestionIndex === null ? null : questions[secondStackQuestionIndex];
+  const secondStackTheme = secondStackQuestion ? themes.find(theme => theme.id === secondStackQuestion.themeId) : null;
   useEffect(() => markQuestionSeen(currentQuestion), [currentQuestion?.id]);
   useEffect(() => { localStorage.setItem(SAVED_QUESTIONS_STORAGE_KEY, JSON.stringify(saved)); }, [saved]);
   useEffect(() => { localStorage.setItem(FAVORITE_THEMES_STORAGE_KEY, JSON.stringify(favoriteThemeIds)); }, [favoriteThemeIds]);
@@ -695,6 +698,14 @@ function AppExperienceReference() {
               <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> {writingOpen ? 'Escrevendo' : 'Escrever'}</button>
             </div>
               {(dailyMode ? allQuestionsQuery.isLoading : questionsQuery.isLoading) ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : (dailyMode ? allQuestionsQuery.isError : questionsQuery.isError) ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => (dailyMode ? allQuestionsQuery.refetch() : questionsQuery.refetch())} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <div className={`question-card-layers ${questionSwipeExit ? 'is-swiping' : ''}`}>
+                {secondStackQuestion && <article
+                  key={`underlay-${secondStackQuestion.id}`}
+                  className={`question-card question-card-underlay question-gradient-${secondStackQuestionIndex! % 4}`}
+                  aria-hidden="true"
+                >
+                  <div className="question-card-grain" />
+                  <div className="question-card-top"><span>{secondStackTheme?.title}</span><div className="question-card-brand-side"><strong>Perguntas<br /><i>de Conexão</i></strong></div></div>
+                </article>}
                 {nextStackQuestion && <article
                   key={`back-${nextStackQuestion.id}`}
                   className={`question-card question-card-back question-gradient-${nextQuestionIndex! % 4}`}

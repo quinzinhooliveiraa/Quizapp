@@ -3214,13 +3214,15 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 .question-card-layers {
   width: 100%;
-  height: var(--question-card-height, min(117vw, 32rem));
+  height: min(calc(var(--question-card-height, min(117vw, 32rem)) + 4rem), calc(var(--device-height, 100dvh) - 13rem));
   position: relative;
+  margin-top: .35rem;
 }
 
 .question-card-layers .question-card {
   position: absolute;
   inset: 0;
+  height: 100%;
 }
 
 .question-card-front {
@@ -3232,14 +3234,28 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   opacity: .62;
   filter: saturate(.82) brightness(.72);
   pointer-events: none;
-  transform: translate3d(0, .62rem, 0) scale(.965);
+  transform: translate3d(0, -.75rem, 0) scale(.965);
   transition: transform .24s cubic-bezier(.22, .85, .35, 1), opacity .24s ease, filter .24s ease;
+}
+
+.question-card-underlay {
+  z-index: 0;
+  opacity: .36;
+  filter: saturate(.68) brightness(.62);
+  pointer-events: none;
+  transform: translate3d(0, -1.38rem, 0) scale(.93);
 }
 
 .question-card-layers.is-swiping .question-card-back {
   opacity: .96;
   filter: saturate(1) brightness(.96);
   transform: translate3d(0, 0, 0) scale(1);
+}
+
+.question-card-layers.is-swiping .question-card-underlay {
+  opacity: .62;
+  filter: saturate(.8) brightness(.76);
+  transform: translate3d(0, -.7rem, 0) scale(.965);
 }
 
 .question-card-front.is-swiping-out-left {
@@ -3348,6 +3364,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 }
 
 .question-card-back {
+  animation: none;
+}
+
+.question-card-underlay {
   animation: none;
 }
 
@@ -3704,6 +3724,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .question-card {
     padding: .85rem;
     height: min(var(--question-card-height, 440px), calc(var(--device-height, 100dvh) - 19rem));
+  }
+
+  .question-card-layers {
+    height: min(calc(var(--question-card-height, 440px) + 3rem), calc(var(--device-height, 100dvh) - 14rem));
   }
 
   .question-card-copy p {
