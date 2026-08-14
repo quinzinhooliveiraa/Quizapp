@@ -505,7 +505,7 @@
 .eu-collection-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(8,6,18,.42)); }
 .eu-collection-title { position: absolute; right: 1rem; bottom: .85rem; left: 1rem; z-index: 1; display: flex; align-items: center; gap: .45rem; color: #fff; font-size: 1rem; font-weight: 600; letter-spacing: -.04em; }
 .eu-collection-title b { display: inline-grid; place-items: center; min-width: 1.45rem; height: 1.45rem; padding: 0 .3rem; border: 1px solid rgba(220,205,255,.3); border-radius: 999px; color: #ded0ff; background: rgba(148,116,238,.3); font-size: .65rem; }
-.eu-collection-card > small { position: absolute; right: 1rem; bottom: .82rem; left: 1rem; z-index: 1; color: rgba(255,255,255,.6); font-size: .62rem; }
+.eu-collection-card > small { position: absolute; top: 1rem; right: 1rem; left: 1rem; z-index: 1; color: rgba(255,255,255,.64); font-size: .62rem; line-height: 1.35; }
 .eu-favorite-topics { min-width: 0; }
 .eu-favorite-label { margin: 0 0 .55rem; color: rgba(255,255,255,.42); font: .55rem var(--app-font-mono); letter-spacing: .13em; text-transform: uppercase; }
 .eu-topic-row { display: flex; gap: .7rem; overflow-x: auto; padding: .05rem 0 .45rem; scrollbar-width: none; }
