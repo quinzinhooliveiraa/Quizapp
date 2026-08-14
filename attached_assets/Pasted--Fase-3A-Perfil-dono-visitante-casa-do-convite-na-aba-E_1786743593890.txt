@@ -1,0 +1,56 @@
+# Fase 3A — Perfil dono/visitante + casa do convite na aba "Eu" (só telas, sem mexer no servidor)
+
+Esta é a metade de baixo risco do sistema de convite: usar o `conexao-role` (que já é gravado) e os dados de convite que o servidor **já devolve** (`inviteLimit`, `invitesUsed`), pra dar ao dono um lugar fixo pra convidar e ao visitante uma tela que deixa claro que ele é convidado. **Não mexe no servidor nem regenera cliente de API** — tudo aproveita o que já existe. O desconvite + limite de trocas (que precisa de servidor) fica pra Fase 3B.
+
+Tudo aqui é em `artifacts/perguntas-de-conexao/src/App.tsx`.
+
+## 1. Saber quem é dono e quem é visitante
+
+Criar dois valores derivados no `AppExperience` (perto de onde `buyerName`/`sessionId` são lidos, linha ~617):
+
+```js
+const role = localStorage.getItem('conexao-role');
+const isGuest = role === 'guest' || !!localStorage.getItem('conexao-guest-token');
+const isOwner = !isGuest; // dono é o padrão; visitante só quando marcado/convidado
+const guestName = localStorage.getItem('conexao-guest-name') || '';
+```
+
+## 2. Nova seção "Quem joga com você" na aba "Eu"
+
+Na aba "Eu" (`activeNav === 'eu'`, o bloco que começa na linha 1080), adicionar uma seção nova **entre** o card de "Perguntas de hoje" (linha 1082) e a seção "Salvos" (linha 1085). O conteúdo muda conforme dono ou visitante:
+
+### Se for DONO (`isOwner`)
+Uma seção "Quem joga com você" mostrando as cadeiras de convite:
+- Cabeçalho: "Quem joga com você" + um contador "`{invitesUsed}` de `{inviteLimit}` cadeiras usadas" (esses números já vêm de `sessionQuery.data`, linhas 513-515).
+- Se ainda há cadeira livre (`invitesUsed < inviteLimit`, o mesmo que `canInvite`): um card/botão "Convidar alguém" que abre o modal de convite que **já existe** (`setInviteOpen(true)` → o modal da linha 1269). Nada de modal novo.
+- Se todas as cadeiras estão ocupadas: mostrar o estado "cadeira cheia" com um texto tipo "Sua cadeira já está com alguém." (o desconvite pra liberar vem na 3B — por enquanto, só o texto).
+- Reaproveitar o visual dos cards da aba "Eu" (mesmo estilo do `eu-collection-card`/`eu-daily-card`).
+
+### Se for VISITANTE (`isGuest`)
+No lugar da seção acima, um card diferente:
+- Título tipo "Você entrou como convidado" (se tiver `guestName`, pode usar "Oi, {guestName} — você é convidado aqui").
+- Texto curto: "Este baralho é de quem te convidou. Você pode jogar, responder e salvar — só não pode convidar outras pessoas."
+- Um botão secundário "Quero meu próprio baralho" que leva pra página de vendas (`window.location.href = '/'` ou o `Link href="/"`), abrindo caminho pra ele virar dono. (É o começo do "Caminho C" do mapa; a cobrança real vem com o pagamento.)
+
+## 3. Esconder o convite de quem é visitante nos outros lugares
+
+Hoje existem gatilhos de convite espalhados. Garantir que o visitante **não** veja nenhum:
+- O `invite-prompt-card` (linha 1161, aparece na tela de pergunta): só mostrar se `isOwner`. Ajustar a condição `showInvitePrompt` (linha 660) pra incluir `&& isOwner`.
+- Qualquer botão que abra o modal de convite (`setInviteOpen`) só deve existir pra dono.
+
+## 4. Ajuste pequeno nos ajustes (settings)
+
+No modal de ajustes (linha 1268), o campo "Perfil" hoje mostra `{buyerName || 'Visitante'}`. Deixar mais claro o papel: mostrar o nome + uma etiqueta do papel, ex: "{buyerName} · Dono" ou "{guestName} · Convidado", usando `isOwner`/`isGuest`.
+
+## O que NÃO fazer nesta fase (fica pra 3B)
+
+- Não criar endpoint de desconvite nem mexer no servidor/Zod/OpenAPI.
+- Não implementar o limite de reatribuição de cadeira (2 trocas / 7 dias) — isso é servidor.
+- Não bloquear o acesso de quem foi removido (também é servidor). Por enquanto o dono ainda não consegue remover ninguém; só vê as cadeiras.
+
+## Verificação
+
+- Entrar como dono (fluxo normal do onboarding) e ver, na aba "Eu", a seção "Quem joga com você" com "0 de 1 cadeira usada" e o botão "Convidar alguém" abrindo o modal que já existe.
+- Gerar um convite e confirmar que o contador vira "1 de 1" e o botão some/vira "cadeira cheia".
+- Entrar por um link de convite (visitante) e confirmar que, na aba "Eu", aparece o card "Você entrou como convidado" com o botão "Quero meu próprio baralho" (indo pra `/`), e que **nenhum** botão de convidar aparece pra ele em lugar nenhum.
+- Conferir que o campo "Perfil" nos ajustes mostra o papel certo (Dono/Convidado).
