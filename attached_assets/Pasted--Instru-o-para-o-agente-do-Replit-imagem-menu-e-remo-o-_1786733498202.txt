@@ -1,0 +1,36 @@
+# Instrução para o agente do Replit — imagem, menu "⋯" e remoção automática nos baralhos personalizados (aba Eu)
+
+Ajustes nos cards de baralho personalizado que ficam salvos no histórico da aba "Eu" (seção "Perguntas que você criou", `App.tsx` linha 777).
+
+## 1. Cada card vem com uma imagem pré-definida
+
+Hoje o card (`eu-history-card`, linha 777) só mostra um ícone de aspas (`<Quote size={18} />`) num fundo simples. Trocar por uma imagem de capa de verdade:
+
+- Criar um pequeno conjunto fixo de capas pré-prontas (uns 5-6 gradientes ou fotos no mesmo estilo visual já usado nos temas — pode reaproveitar o mesmo banco de imagens/gradientes já definido para os cards de tema).
+- No tipo `PersonalizedDeck` (linha 76-81), adicionar um campo `cover: string` (guardando o id/índice da capa escolhida).
+- Ao gerar um baralho novo (`generateDailyDeck`, linha 560), escolher automaticamente uma dessas capas (por exemplo, com base no `dailyVibe` escolhido — assim baralhos de "esquentar" sempre pegam uma capa, baralhos de "sonhar" pegam outra — ou só um sorteio simples se não quiser mapear por vibe).
+
+## 2. Menu "⋯" em cada card, com renomear / trocar imagem / apagar
+
+Adicionar um botão de três pontinhos no canto de cada `eu-history-card` (mesmo padrão visual que já existe no card "Meu Baralho" da tela inicial). Ao tocar, abre um menu pequeno (ou modal simples) com três opções:
+
+- **Mudar o nome**: um campo de texto simples pra editar o `label` do baralho, salvando de volta no `localStorage` (`PERSONALIZED_DECKS_STORAGE_KEY`).
+- **Mudar a imagem**: mostra o conjunto de capas disponíveis (do item 1) pra pessoa escolher outra, atualizando o campo `cover`.
+- **Apagar**: remove esse baralho específico da lista `personalizedDecks` e do `localStorage` — com uma confirmação simples antes (“Apagar este baralho?”), já que é uma ação sem volta.
+
+Isso precisa de handlers novos, por exemplo `renamePersonalizedDeck(id, newLabel)`, `updatePersonalizedDeckCover(id, coverId)` e `deletePersonalizedDeck(id)`, todos atualizando o estado `personalizedDecks` (linha ~468) e persistindo em `localStorage` do mesmo jeito que `generateDailyDeck` já faz.
+
+## 3. Baralho finalizado some sozinho do histórico
+
+Quando a pessoa termina de ver todas as perguntas de um baralho personalizado, ele deve desaparecer da lista automaticamente (já brincou com aquela carta, não precisa mais ficar ali ocupando espaço).
+
+- Hoje o progresso de "quais perguntas já foram vistas" é rastreado só por tema (`seenByTheme`, linha 490, atualizado por `markQuestionSeen`, linha 529) — isso não serve pra saber se um baralho personalizado específico foi terminado, porque cada pergunta ali pertence originalmente a um tema diferente.
+- Criar um rastreamento novo, específico pra baralhos personalizados: por exemplo, guardar no próprio `PersonalizedDeck` uma lista `seenIds: string[]` (ou um registro separado `seenByPersonalizedDeck`, no mesmo padrão de `seenByTheme`), atualizando toda vez que a pessoa vê uma pergunta enquanto esse baralho específico está aberto (precisa saber qual `PersonalizedDeck` está ativo no momento — guardar o `id` do baralho aberto em algum estado, por exemplo `activeDeckId`, setado em `openSavedDailyDeck`/`generateDailyDeck`).
+- Quando `seenIds.length === deck.ids.length` (viu todas as perguntas daquele baralho), remover automaticamente esse baralho de `personalizedDecks` (e do `localStorage`) — pode ser na hora que a última pergunta é vista, ou a próxima vez que a pessoa voltar pra aba "Eu", o que for mais simples de implementar.
+
+## Verificação
+
+- Gerar um baralho personalizado novo e confirmar que ele aparece no histórico já com uma imagem de capa (não só o ícone genérico).
+- Tocar no "⋯" de um baralho salvo, mudar o nome e a imagem, e confirmar que persiste depois de fechar e abrir o app de novo.
+- Apagar um baralho salvo e confirmar que ele some da lista (com a confirmação antes).
+- Ver todas as perguntas de um baralho personalizado até o fim e confirmar que ele desaparece sozinho do histórico depois.
