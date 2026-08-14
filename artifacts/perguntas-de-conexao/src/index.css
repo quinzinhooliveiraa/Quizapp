@@ -1842,7 +1842,23 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .daily-option { min-height: 2.8rem; padding: .65rem .7rem; border: 1px solid rgba(255,255,255,.12); border-radius: .75rem; color: rgba(238,229,242,.64); background: rgba(255,255,255,.045); font: .65rem/1.2 var(--app-font-sans); text-align: left; transition: border-color .2s ease, color .2s ease, background .2s ease, transform .2s ease; }
 .daily-option:hover { transform: translateY(-1px); border-color: rgba(190,167,255,.42); color: #fff; }
 .daily-option.is-selected { border-color: rgba(190,167,255,.75); color: #fff; background: rgba(139,106,229,.28); box-shadow: inset 0 0 0 1px rgba(190,167,255,.12); }
+.daily-count-grid .daily-option { text-align: center; }
 .daily-form-submit { margin-top: 1.35rem; }
+.preparing-deck-backdrop { z-index: 25; }
+.deck-preparing { width: min(100%, 22rem); padding: 1.6rem 1.4rem 1.45rem; border: 1px solid rgba(255,255,255,.13); border-radius: 1.6rem; background: linear-gradient(155deg, #252039, #151322); box-shadow: 0 2rem 5rem rgba(0,0,0,.42); text-align: center; animation: card-rise .3s ease both; }
+.deck-preparing h2 { margin: 0; color: #fff; font-size: 1.85rem; line-height: 1.04; letter-spacing: -.065em; }
+.deck-preparing h2 em { color: #bea7ff; font-style: normal; }
+.deck-preparing > p:not(.modal-eyebrow) { margin: .9rem auto 0; max-width: 17rem; color: rgba(238,229,242,.57); font-size: .85rem; line-height: 1.45; }
+.deck-preparing-stack { position: relative; width: 7.3rem; height: 6.7rem; margin: 0 auto 1.1rem; }
+.preparing-card { position: absolute; top: 50%; left: 50%; width: 4.15rem; height: 5.55rem; border: 1px solid rgba(255,255,255,.18); border-radius: .75rem; box-shadow: .7rem 1rem 1.8rem rgba(6,3,18,.28); transform-origin: center; }
+.preparing-card-back { background: linear-gradient(145deg, #4c3d8e, #241b48); animation: prepare-card-back 1.2s ease-in-out infinite; }
+.preparing-card-middle { background: linear-gradient(145deg, #795fd0, #33215c); animation: prepare-card-middle 1.2s ease-in-out infinite; }
+.preparing-card-front { background: linear-gradient(145deg, #ae8dff, #513d9a 74%); animation: prepare-card-front 1.2s ease-in-out infinite; }
+.preparing-card-front::before, .preparing-card-middle::before, .preparing-card-back::before { content: ""; position: absolute; top: .72rem; right: .65rem; left: .65rem; height: .28rem; border-radius: 99px; background: rgba(255,255,255,.24); box-shadow: 0 .75rem 0 rgba(255,255,255,.13), 0 1.5rem 0 rgba(255,255,255,.1); }
+.preparing-dots { display: flex; justify-content: center; gap: .35rem; margin-top: 1.2rem; }
+.preparing-dots span { width: .34rem; height: .34rem; border-radius: 50%; background: #bda8ff; animation: preparing-dot 1s ease-in-out infinite; }
+.preparing-dots span:nth-child(2) { animation-delay: .14s; }
+.preparing-dots span:nth-child(3) { animation-delay: .28s; }
 .adult-theme-mark { width: 3rem; height: 3rem; display: grid; place-items: center; margin-bottom: 1.3rem; border: 1px solid rgba(242,215,166,.45); border-radius: 50%; color: #f2d7a6; background: rgba(242,215,166,.1); }
 .adult-theme-modal .app-secondary-button { margin-top: .6rem; }
 .app-text-input { width: 100%; height: 3.35rem; padding: 0 1rem; border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; outline: none; color: #fff; background: rgba(255,255,255,.06); font: inherit; }
@@ -1862,6 +1878,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 @keyframes app-shimmer { 0%, 100% { opacity: .62; } 50% { opacity: 1; } }
 @keyframes card-rise { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes prepare-card-back { 0%, 100% { transform: translate(-50%, -50%) rotate(-15deg) translate(-.35rem, .1rem); } 50% { transform: translate(-50%, -50%) rotate(-24deg) translate(-.75rem, -.2rem); } }
+@keyframes prepare-card-middle { 0%, 100% { transform: translate(-50%, -50%) rotate(8deg) translate(.25rem, .05rem); } 50% { transform: translate(-50%, -50%) rotate(18deg) translate(.65rem, -.2rem); } }
+@keyframes prepare-card-front { 0%, 100% { transform: translate(-50%, -50%) rotate(-2deg) translateY(.1rem); } 50% { transform: translate(-50%, -50%) rotate(4deg) translateY(-.15rem); } }
+@keyframes preparing-dot { 0%, 100% { opacity: .35; transform: translateY(0) scale(.82); } 50% { opacity: 1; transform: translateY(-.18rem) scale(1); } }
 
 @media (min-width: 700px) {
   .app-viewport { padding: 1.5rem 0; align-items: center; }

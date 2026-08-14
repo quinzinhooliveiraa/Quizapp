@@ -1,0 +1,41 @@
+# Instrução para o agente do Replit — completar "Perguntas pra hoje": escolher quantidade + animação de carregando
+
+O formulário de "Perguntas pra hoje" (humor + clima) já está funcionando. Faltam duas coisas da ideia original: a pessoa escolher **quantas perguntas** quer no baralho, e uma **animação de "preparando seu deck"** entre responder o formulário e o baralho abrir.
+
+## 1. Adicionar a escolha de quantidade no formulário
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`, o modal do formulário (por volta da linha 873) hoje tem dois `<fieldset>` (humor e clima). Adicionar um terceiro, com opções fixas de quantidade — por exemplo `5`, `10`, `15`, `20` (esse último como limite máximo) — do mesmo jeito que `dailyMoodOptions`/`dailyVibeOptions` já funcionam:
+
+- Criar `dailyCountOptions` (lista simples de números: `[5, 10, 15, 20]`) e um estado novo `dailyCount` (`useState(10)`, já com um valor padrão selecionado, pra pessoa poder simplesmente confirmar sem escolher se não quiser se preocupar com isso).
+- Renderizar como um terceiro `daily-form-group`, com os botões mostrando "5 perguntas", "10 perguntas", etc.
+- O botão "Montar meu baralho" (`generateDailyDeck`) continua exigindo humor + clima escolhidos; quantidade já vem com padrão, não precisa bloquear o botão por causa dela.
+
+## 2. Fazer a seleção de perguntas respeitar a quantidade escolhida, usando o banco inteiro
+
+Em `selectPersonalizedQuestionIds` (linha 163-178), a função já pega todas as perguntas disponíveis (`allQuestions`), pontua cada uma pela combinação com humor/clima, e corta um número fixo:
+
+```js
+return shuffled
+  .sort((first, second) => score(second) - score(first))
+  .slice(0, Math.min(10, available.length))
+  .map(question => question.id);
+```
+
+Trocar o `10` fixo por um parâmetro `count` que a função passa a receber, e usar `Math.min(count, available.length)` no lugar. Atualizar a chamada em `generateDailyDeck` (linha 560 em diante) pra passar `dailyCount` nessa chamada.
+
+Isso já cobre exatamente a ideia: pegar tudo que existe no app (todos os temas juntos) e trazer as N melhores de acordo com o que a pessoa escolheu — a lógica de pontuação por tema/intensidade já existe, só falta o número ser escolhido pela pessoa em vez de fixo.
+
+## 3. Animação de "preparando seu deck"
+
+Hoje, `generateDailyDeck` (linha 560-579) monta o baralho e já troca de tela na mesma função, na hora — não tem nenhuma espera/animação.
+
+- Criar um novo estado, por exemplo `isPreparingDeck` (`useState(false)`).
+- Ao tocar em "Montar meu baralho": fechar o formulário, ligar `isPreparingDeck`, e mostrar uma tela/overlay de carregando — pode reaproveitar o estilo visual do `card-stack` que já existe (cartas empilhadas), com uma mensagem tipo "Preparando seu baralho…" e algum efeito de movimento simples (as cartas "embaralhando", um spinner discreto, ou um pulso na pilha de cartas — o que for mais fácil de implementar bem).
+- Depois de um tempo curto e fixo (por exemplo 900ms-1.4s — só pra dar a sensação de preparo, não precisa ser um processamento real demorado), rodar a lógica que já existe (gerar o `deck`, salvar no histórico, abrir a pergunta) e desligar `isPreparingDeck`.
+- Cuidado pra não deixar a pessoa presa nessa tela se algo der errado — soltar sempre depois do tempo definido, mesmo que a geração seja instantânea.
+
+## Verificação
+
+- Abrir o formulário, escolher humor, clima e uma quantidade (testar com 5 e com 20) e confirmar que o baralho final tem exatamente essa quantidade de perguntas.
+- Confirmar que ao tocar "Montar meu baralho" aparece a animação de preparando por um instante antes do baralho abrir (não é instantâneo).
+- Confirmar que o baralho gerado continua salvo no histórico da aba "Eu", com o rótulo certo.

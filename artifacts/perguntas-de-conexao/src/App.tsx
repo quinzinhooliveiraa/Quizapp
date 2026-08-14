@@ -94,6 +94,7 @@ const dailyVibeOptions = [
   { value: 'rir', label: 'Só rir e ser leve', themes: ['modo-leve'], intensity: 'gentle' as const },
   { value: 'esquentar', label: 'Esquentar as coisas', themes: ['luzes-baixas'], intensity: 'honest' as const },
 ];
+const dailyCountOptions = [5, 10, 15, 20];
 
 function readStoredArray(key: string): string[] {
   try {
@@ -160,7 +161,7 @@ function deterministicShuffle<T>(items: T[], seed: string) {
   return result;
 }
 
-function selectPersonalizedQuestionIds(allQuestions: Question[], moodValue: string, vibeValue: string, seed: string) {
+function selectPersonalizedQuestionIds(allQuestions: Question[], moodValue: string, vibeValue: string, count: number, seed: string) {
   const available = allQuestions.length ? allQuestions : fallbackQuestions;
   const mood = dailyMoodOptions.find(option => option.value === moodValue) || dailyMoodOptions[0];
   const vibe = dailyVibeOptions.find(option => option.value === vibeValue) || dailyVibeOptions[0];
@@ -173,7 +174,7 @@ function selectPersonalizedQuestionIds(allQuestions: Question[], moodValue: stri
   );
   return shuffled
     .sort((first, second) => score(second) - score(first))
-    .slice(0, Math.min(10, available.length))
+    .slice(0, Math.min(count, available.length))
     .map(question => question.id);
 }
 function Logo({ inverse = false }: { inverse?: boolean }) {
@@ -467,8 +468,10 @@ function AppExperienceReference() {
   const [dailyDeck, setDailyDeck] = useState<string[]>([]);
   const [personalizedDecks, setPersonalizedDecks] = useState<PersonalizedDeck[]>(() => readStoredDecks());
   const [dailyFormOpen, setDailyFormOpen] = useState(false);
+  const [isPreparingDeck, setIsPreparingDeck] = useState(false);
   const [dailyMood, setDailyMood] = useState('');
   const [dailyVibe, setDailyVibe] = useState('');
+  const [dailyCount, setDailyCount] = useState(10);
   const [themeIndex, setThemeIndex] = useState(0);
   const [themeDragOffset, setThemeDragOffset] = useState(0);
   const [isThemeDragging, setIsThemeDragging] = useState(false);
@@ -555,30 +558,41 @@ function AppExperienceReference() {
   const openDailyForm = () => {
     setDailyMood('');
     setDailyVibe('');
+    setDailyCount(10);
     setDailyFormOpen(true);
   };
   const generateDailyDeck = () => {
-    if (!dailyMood || !dailyVibe) return;
-    const mood = dailyMoodOptions.find(option => option.value === dailyMood);
-    const vibe = dailyVibeOptions.find(option => option.value === dailyVibe);
-    const createdAt = new Date().toISOString();
-    const dateLabel = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short' }).format(new Date(createdAt));
-    const deck: PersonalizedDeck = {
-      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `deck-${Date.now()}`,
-      createdAt,
-      label: `${vibe?.label || mood?.label || 'Perguntas pra hoje'} · ${dateLabel}`,
-      ids: selectPersonalizedQuestionIds(availableQuestions, dailyMood, dailyVibe, `${createdAt}-${dailyMood}-${dailyVibe}`),
-    };
-    const nextDecks = [deck, ...personalizedDecks];
-    setPersonalizedDecks(nextDecks);
-    localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
-    setDailyDeck(deck.ids);
-    setActiveNav('eu');
-    setFavoriteMode(false);
-    setDailyMode(true);
-    setThemeId(null);
-    setQuestionIndex(0);
+    if (!dailyMood || !dailyVibe || isPreparingDeck) return;
     setDailyFormOpen(false);
+    setIsPreparingDeck(true);
+    const selectedMood = dailyMood;
+    const selectedVibe = dailyVibe;
+    const selectedCount = dailyCount;
+    window.setTimeout(() => {
+      try {
+        const mood = dailyMoodOptions.find(option => option.value === selectedMood);
+        const vibe = dailyVibeOptions.find(option => option.value === selectedVibe);
+        const createdAt = new Date().toISOString();
+        const dateLabel = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short' }).format(new Date(createdAt));
+        const deck: PersonalizedDeck = {
+          id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `deck-${Date.now()}`,
+          createdAt,
+          label: `${vibe?.label || mood?.label || 'Perguntas pra hoje'} · ${dateLabel}`,
+          ids: selectPersonalizedQuestionIds(availableQuestions, selectedMood, selectedVibe, selectedCount, `${createdAt}-${selectedMood}-${selectedVibe}-${selectedCount}`),
+        };
+        const nextDecks = [deck, ...personalizedDecks];
+        setPersonalizedDecks(nextDecks);
+        localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+        setDailyDeck(deck.ids);
+        setActiveNav('eu');
+        setFavoriteMode(false);
+        setDailyMode(true);
+        setThemeId(null);
+        setQuestionIndex(0);
+      } finally {
+        setIsPreparingDeck(false);
+      }
+    }, 1100);
   };
   const openSavedDailyDeck = (deck: PersonalizedDeck) => {
     setDailyDeck(deck.ids);
@@ -869,7 +883,50 @@ function AppExperienceReference() {
       </nav>
     </main>
     <InstallAppPrompt />
-     {dailyFormOpen && <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="daily-form-title"><div className="app-modal daily-form-modal"><button className="app-modal-close" onClick={() => setDailyFormOpen(false)} aria-label="Fechar perguntas pra hoje" data-testid="button-close-daily-form"><X size={18} /></button><p className="modal-eyebrow">perguntas pra hoje</p><h2 id="daily-form-title">Como vocês estão <em>agora?</em></h2><p>Duas respostas rápidas para montar um baralho que combine com o momento de vocês.</p><fieldset className="daily-form-group"><legend>Como vocês estão hoje?</legend><div className="daily-option-grid">{dailyMoodOptions.map(option => <button key={option.value} type="button" className={`daily-option ${dailyMood === option.value ? 'is-selected' : ''}`} onClick={() => setDailyMood(option.value)} aria-pressed={dailyMood === option.value} data-testid={`button-daily-mood-${option.value}`}>{option.label}</button>)}</div></fieldset><fieldset className="daily-form-group"><legend>O que combina mais com agora?</legend><div className="daily-option-grid">{dailyVibeOptions.filter(option => option.value !== 'esquentar' || themes.some(theme => theme.audience === '18+')).map(option => <button key={option.value} type="button" className={`daily-option ${dailyVibe === option.value ? 'is-selected' : ''}`} onClick={() => setDailyVibe(option.value)} aria-pressed={dailyVibe === option.value} data-testid={`button-daily-vibe-${option.value}`}>{option.label}</button>)}</div></fieldset><button onClick={generateDailyDeck} disabled={!dailyMood || !dailyVibe} className="app-primary-button daily-form-submit" data-testid="button-generate-daily-deck">Montar meu baralho <ArrowRight size={16} /></button></div></div>}
+      {dailyFormOpen && (
+        <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="daily-form-title">
+          <div className="app-modal daily-form-modal">
+            <button className="app-modal-close" onClick={() => setDailyFormOpen(false)} aria-label="Fechar perguntas pra hoje" data-testid="button-close-daily-form"><X size={18} /></button>
+            <p className="modal-eyebrow">perguntas pra hoje</p>
+            <h2 id="daily-form-title">Como vocês estão <em>agora?</em></h2>
+            <p>Duas respostas rápidas para montar um baralho que combine com o momento de vocês.</p>
+            <fieldset className="daily-form-group">
+              <legend>Como vocês estão hoje?</legend>
+              <div className="daily-option-grid">
+                {dailyMoodOptions.map(option => <button key={option.value} type="button" className={`daily-option ${dailyMood === option.value ? 'is-selected' : ''}`} onClick={() => setDailyMood(option.value)} aria-pressed={dailyMood === option.value} data-testid={`button-daily-mood-${option.value}`}>{option.label}</button>)}
+              </div>
+            </fieldset>
+            <fieldset className="daily-form-group">
+              <legend>O que combina mais com agora?</legend>
+              <div className="daily-option-grid">
+                {dailyVibeOptions.filter(option => option.value !== 'esquentar' || themes.some(theme => theme.audience === '18+')).map(option => <button key={option.value} type="button" className={`daily-option ${dailyVibe === option.value ? 'is-selected' : ''}`} onClick={() => setDailyVibe(option.value)} aria-pressed={dailyVibe === option.value} data-testid={`button-daily-vibe-${option.value}`}>{option.label}</button>)}
+              </div>
+            </fieldset>
+            <fieldset className="daily-form-group">
+              <legend>Quantas perguntas vocês querem?</legend>
+              <div className="daily-option-grid daily-count-grid">
+                {dailyCountOptions.map(option => <button key={option} type="button" className={`daily-option ${dailyCount === option ? 'is-selected' : ''}`} onClick={() => setDailyCount(option)} aria-pressed={dailyCount === option} data-testid={`button-daily-count-${option}`}>{option} perguntas</button>)}
+              </div>
+            </fieldset>
+            <button onClick={generateDailyDeck} disabled={!dailyMood || !dailyVibe} className="app-primary-button daily-form-submit" data-testid="button-generate-daily-deck">Montar meu baralho <ArrowRight size={16} /></button>
+          </div>
+        </div>
+      )}
+      {isPreparingDeck && (
+        <div className="app-modal-backdrop preparing-deck-backdrop" role="status" aria-live="polite">
+          <div className="deck-preparing">
+            <div className="deck-preparing-stack" aria-hidden="true">
+              <span className="preparing-card preparing-card-back" />
+              <span className="preparing-card preparing-card-middle" />
+              <span className="preparing-card preparing-card-front" />
+            </div>
+            <p className="modal-eyebrow">um momento só</p>
+            <h2>Preparando seu <em>baralho…</em></h2>
+            <p>Escolhendo perguntas que combinam com vocês agora.</p>
+            <div className="preparing-dots" aria-hidden="true"><span /><span /><span /></div>
+          </div>
+        </div>
+      )}
      {adultThemePrompt && <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="adult-theme-title"><div className="app-modal adult-theme-modal"><button className="app-modal-close" onClick={() => setAdultThemePrompt(null)} aria-label="Fechar aviso" data-testid="button-cancel-adult-theme"><X size={18} /></button><div className="adult-theme-mark" role="img" aria-label="Conteúdo para maiores de 18 anos"><Flame size={19} strokeWidth={2.1} aria-hidden="true" /></div><p className="modal-eyebrow">um espaço para dois</p><h2 id="adult-theme-title">Luzes <em>Baixas.</em></h2><p>Este espaço tem perguntas mais ousadas, pensadas para casais. Quer continuar?</p><button onClick={confirmAdultTheme} className="app-primary-button" data-testid="button-confirm-adult-theme">Quero continuar <ArrowRight size={16} /></button><button onClick={() => setAdultThemePrompt(null)} className="app-secondary-button" data-testid="button-cancel-adult-theme-secondary">Voltar</button></div></div>}
     {welcomeOpen && <div className="app-modal-backdrop"><div className="app-modal welcome-app-modal"><button className="app-modal-close" onClick={() => setWelcomeOpen(false)} aria-label="Fechar apresentação" data-testid="button-close-welcome"><X size={18} /></button><div className="welcome-app-mark"><Feather size={19} /></div><p className="modal-eyebrow">antes da primeira carta</p><h2>Como podemos<br /><em>te chamar?</em></h2><p>É só para deixar este espaço um pouco mais seu. Você pode entrar sem preencher nada.</p><input value={buyerName} onChange={e => setBuyerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && startSession()} placeholder="Seu nome" className="app-text-input" data-testid="input-buyer-name" /><button onClick={startSession} className="app-primary-button" data-testid="button-enter-experience">{createSession.isPending ? 'Abrindo seu espaço…' : 'Entrar na experiência'} <ArrowRight size={16} /></button></div></div>}
     {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{buyerName || 'Visitante'}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button></div></div>}
