@@ -1799,9 +1799,12 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .question-error { padding: 4rem 1.5rem; color: rgba(255,255,255,.7); text-align: center; }
 .question-error button { display: inline-flex; align-items: center; gap: .35rem; margin-top: .7rem; border: 0; color: #cbb5ff; background: none; }
 
-.app-bottom-nav { position: fixed; left: 50%; right: auto; bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 8; width: min(calc(100% - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right)), 24rem); min-height: 4rem; display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; padding: .28rem; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; transform: translateX(-50%); background: rgba(14,12,22,.7); box-shadow: 0 .9rem 2.5rem rgba(0,0,0,.3); backdrop-filter: blur(18px); }
+.app-bottom-nav { position: fixed; left: 50%; right: auto; bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 8; width: min(calc(100% - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right)), 24rem); min-height: 4rem; display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; padding: .28rem; border: 1px solid rgba(218,202,255,.22); border-radius: 999px; transform: translateX(-50%); background: linear-gradient(145deg, rgba(42,31,62,.72), rgba(12,12,23,.62)); box-shadow: inset 0 1px rgba(255,255,255,.12), 0 .9rem 2.5rem rgba(0,0,0,.3); backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%); }
 .app-bottom-nav button { min-height: 3.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .28rem; border: 0; border-radius: 999px; color: rgba(255,255,255,.54); background: transparent; font-size: .73rem; transition: color .2s ease, background .2s ease, transform .2s ease; }
-.app-bottom-nav button.is-active { border: 1px solid rgba(229,216,255,.3); color: #fff; background: linear-gradient(145deg, rgba(199,174,255,.42), rgba(108,79,190,.24)); box-shadow: inset 0 1px rgba(255,255,255,.42), inset 0 -1px rgba(24,15,58,.2), 0 .4rem 1.2rem rgba(76,49,164,.28); backdrop-filter: blur(14px) saturate(145%); }
+.app-bottom-nav button.is-active { position: relative; isolation: isolate; overflow: hidden; border: 1px solid rgba(238,226,255,.46); color: #fff; background: radial-gradient(circle at 22% 8%, rgba(255,255,255,.3), transparent 33%), linear-gradient(145deg, rgba(203,176,255,.42), rgba(117,82,204,.25) 58%, rgba(215,124,190,.18)); box-shadow: inset 0 1px rgba(255,255,255,.56), inset 0 -1px rgba(36,20,76,.28), 0 .45rem 1.3rem rgba(91,54,179,.34); backdrop-filter: blur(18px) saturate(165%); -webkit-backdrop-filter: blur(18px) saturate(165%); }
+.app-bottom-nav button.is-active::before { content: ""; position: absolute; inset: 1px; z-index: -1; border-radius: inherit; background: linear-gradient(112deg, rgba(255,255,255,.2), transparent 36%, rgba(245,197,255,.1) 72%, transparent); pointer-events: none; }
+.app-bottom-nav button.is-active::after { content: ""; position: absolute; top: 1px; right: 18%; left: 18%; height: 1px; border-radius: 999px; background: rgba(255,255,255,.72); filter: blur(.35px); pointer-events: none; }
+.app-bottom-nav button.is-active > * { position: relative; z-index: 1; }
 .app-bottom-nav button:hover { transform: translateY(-1px); }
 .nav-dot { width: .38rem; height: .38rem; border-radius: 50%; background: currentColor; opacity: .7; }
 .nav-dot-vibes { border-radius: .14rem; transform: rotate(45deg); }
@@ -3242,6 +3245,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 .question-card-front {
   z-index: 2;
+  animation: none;
 }
 
 .question-card-back {
@@ -3254,7 +3258,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   bottom: 0 !important;
   left: .3rem !important;
   transform: none;
-  transition: transform .24s cubic-bezier(.22, .85, .35, 1), opacity .24s ease, filter .24s ease;
+  transition: transform .32s cubic-bezier(.22, .85, .35, 1), opacity .32s ease, filter .32s ease;
 }
 
 .question-card-underlay {
@@ -3282,11 +3286,49 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 }
 
 .question-card-front.is-swiping-out-left {
-  transform: translate3d(-120%, 0, 0) rotate(-8deg);
+  transform: translate3d(-110%, 0, 0);
 }
 
 .question-card-front.is-swiping-out-right {
-  transform: translate3d(120%, 0, 0) rotate(8deg);
+  transform: translate3d(110%, 0, 0);
+}
+
+@keyframes question-card-enter-from-left {
+  from {
+    opacity: .78;
+    transform: translate3d(-110%, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes question-card-enter-from-right {
+  from {
+    opacity: .78;
+    transform: translate3d(110%, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.question-card-front.is-entering-from-left,
+.question-card-front.is-entering-from-right {
+  animation-duration: .32s;
+  animation-timing-function: cubic-bezier(.22, .85, .35, 1);
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+.question-card-front.is-entering-from-left {
+  animation-name: question-card-enter-from-left;
+}
+
+.question-card-front.is-entering-from-right {
+  animation-name: question-card-enter-from-right;
 }
 
 .question-view-stage.has-invite-prompt .question-card-stack {
@@ -3383,7 +3425,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   padding: clamp(.95rem, 4vw, 1.25rem);
   touch-action: pan-y;
   transform: translate3d(var(--question-drag-offset, 0px), 0, 0);
-  transition: transform .24s cubic-bezier(.22, .85, .35, 1);
+  transition: transform .32s cubic-bezier(.22, .85, .35, 1);
 }
 
 .question-card-back {

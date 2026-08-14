@@ -1,0 +1,25 @@
+# Instrução para o agente do Replit — transição de troca de pergunta mais parecida com "carta deslizando pro lado"
+
+A troca de pergunta hoje já tem uma animação de saída, mas ela se parece mais com um "flick" de carta de baralho (gira e voa) do que com o deslize suave e reto da referência.
+
+## O que existe hoje
+
+Em `artifacts/perguntas-de-conexao/src/index.css`:
+
+- Linha 3284-3290: quando a pergunta troca, o card que está saindo ganha `.is-swiping-out-left`/`.is-swiping-out-right`, que aplica `transform: translate3d(-120%, 0, 0) rotate(-8deg)` (ou +120%/+8deg) — ou seja, o card sai girando, estilo Tinder.
+- Linha 3386: a transição usa `transition: transform .24s cubic-bezier(.22, .85, .35, 1)` — bem rápida.
+- Linha 1389-1390: o card novo que aparece usa a animação `card-in` (`opacity: 0 → 1`, `translateY(9px) rotate(.7deg) → translateY(0) rotate(0)`) — um fade/leve queda de cima, sem nenhuma relação de direção com o card que acabou de sair.
+
+O resultado: o card antigo voa girando pra um lado, e o card novo simplesmente aparece com um fade — não existe uma sensação de "um substitui o outro no mesmo trilho horizontal", que é o que a referência tem.
+
+## O que mudar
+
+1. **Tirar a rotação do card que sai.** Trocar `rotate(-8deg)`/`rotate(8deg)` por um deslize reto: `transform: translate3d(-110%, 0, 0)` e `translate3d(110%, 0, 0)`, sem rotação — isso também deixa consistente com a decisão já tomada antes pro carrossel de temas, de manter os cards sempre retos, sem inclinação.
+2. **Fazer o card novo entrar do lado oposto, na mesma direção do gesto.** Hoje, `currentQuestion` muda de estado e o React troca o conteúdo do `.question-card-front` — mas a animação de entrada (`card-in`) é sempre a mesma, independente de para qual lado o usuário arrastou. É preciso: ao invés de usar sempre a mesma keyframe `card-in`, aplicar uma classe de entrada que comece do lado oposto de onde o card antigo saiu (se arrastou pra esquerda, o próximo entra vindo da direita, e vice-versa) e termine na posição normal — reaproveitando o estado `questionSwipeExit` (`'left' | 'right' | null`, `App.tsx` linha 410) que já guarda essa direção, aplicando uma classe como `is-entering-from-left`/`is-entering-from-right` no novo card front por um instante (curta duração, ex: 60-80ms de atraso antes de já poder ser arrastado de novo) e depois limpando o estado.
+3. Deixar a duração da transição um pouco mais perceptível (por exemplo, indo de `.24s` para algo entre `.28s`-`.34s`) — testando no celular até sentir mais "deslize" e menos "corte".
+
+## Verificação
+
+- Trocar de pergunta arrastando pra esquerda e pra direita e conferir que o card sai reto (sem girar) e o próximo entra do lado oposto, dando sensação de um trilho contínuo.
+- Trocar de pergunta bem rápido, várias vezes seguidas, e confirmar que não fica nenhum card "preso" no meio da animação nem sobrepõe errado.
+- Comparar lado a lado com o vídeo de referência já enviado antes para calibrar a velocidade.
