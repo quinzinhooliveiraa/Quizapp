@@ -1,0 +1,41 @@
+# Instrução para o agente do Replit — simplificar o menu de baixo pra 3 abas
+
+Decisão: o menu de baixo passa a ter só **Todos**, **Temas** e **Eu** — tira a aba **Favoritos**, porque o que era favorito (cartas salvas e temas favoritados) já vive dentro do "Eu" (seção de favoritos, já especificada em `tab-eu-perfil-replit.md`). Não faz sentido ter as duas coisas.
+
+## Onde mexer
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`, o array `navItems` (por volta da linha 760-765) hoje é:
+
+```js
+const navItems = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'favoritos', label: 'Favoritos' },
+  { id: 'temas', label: 'Temas' },
+  { id: 'eu', label: 'Eu' },
+];
+```
+
+Trocar por:
+
+```js
+const navItems = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'temas', label: 'Temas' },
+  { id: 'eu', label: 'Eu' },
+];
+```
+
+Hoje (confirmei lendo o código, linha 774 em diante) só a aba "eu" realmente muda o conteúdo da tela (`activeNav === 'eu'`); "todos", "favoritos" e "temas" mostram exatamente a mesma coisa (o carrossel padrão de temas). Então tirar "favoritos" não perde nenhuma funcionalidade — mas agora, com só 3 abas, dá pra diferenciar "Todos" de "Temas" de verdade:
+
+- **Todos**: continua mostrando o carrossel como já é hoje (todos os baralhos/temas disponíveis, um a um, no carrossel que já existe).
+- **Temas**: pode virar uma visualização diferente — por exemplo uma grade/lista dos temas agrupados por público (`todos`/`casais`/`18+`), ao invés do carrossel de peek lateral. Se não der tempo de diferenciar agora, pode deixar mostrando o mesmo carrossel por enquanto (igual "Todos") — o importante nessa etapa é só tirar a aba "Favoritos" e ajustar o CSS da barra pra 3 itens (abaixo). Diferenciar "Temas" visualmente fica pra depois, sem problema.
+
+## Ajustar o CSS pra 3 colunas em vez de 4
+
+Em `artifacts/perguntas-de-conexao/src/index.css`, linha 1816, `.app-bottom-nav` tem `grid-template-columns: repeat(4, 1fr);` — trocar pra `repeat(3, 1fr)`. Conferir se não sobra nenhum outro lugar do CSS que assuma 4 itens fixos na barra (buscar por `app-bottom-nav` no arquivo).
+
+## Verificação
+
+- Confirmar que a barra de baixo mostra só 3 botões: Todos, Temas, Eu — bem distribuídos, sem sobra de espaço nem itens espremidos.
+- Confirmar que a aba "Eu" continua funcionando normalmente (favoritos de cartas e de temas, baralho personalizado, histórico).
+- Confirmar que não sobrou nenhuma referência quebrada à aba "favoritos" no código (variável `favoriteMode`/`openFavoritesDeck` continuam existindo e funcionando, só a aba do menu que mudou de nome/sumiu).

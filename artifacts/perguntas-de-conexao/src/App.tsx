@@ -759,7 +759,6 @@ function AppExperienceReference() {
   const copyInvite = () => { if (inviteResult?.inviteUrl) navigator.clipboard?.writeText(inviteResult.inviteUrl); };
   const navItems = [
     { id: 'todos', label: 'Todos' },
-    { id: 'favoritos', label: 'Favoritos' },
     { id: 'temas', label: 'Temas' },
     { id: 'eu', label: 'Eu' },
   ];
