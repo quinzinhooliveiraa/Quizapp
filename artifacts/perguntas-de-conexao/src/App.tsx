@@ -406,9 +406,12 @@ function AppExperienceReference() {
   const suppressThemeClick = useRef(false);
   const [questionDragOffset, setQuestionDragOffset] = useState(0);
   const [isQuestionDragging, setIsQuestionDragging] = useState(false);
+  const [questionSwipeExit, setQuestionSwipeExit] = useState<'left' | 'right' | null>(null);
   const questionDragStartX = useRef<number | null>(null);
   const questionDragDelta = useRef(0);
   const questionPointerCaptured = useRef(false);
+  const questionSwipeLocked = useRef(false);
+  const questionSwipeTimer = useRef<number | null>(null);
   const [activeNav, setActiveNav] = useState('todos');
   const [saved, setSaved] = useState<string[]>(() => readStoredArray(SAVED_QUESTIONS_STORAGE_KEY));
   const [favoriteThemeIds, setFavoriteThemeIds] = useState<string[]>(() => readStoredArray(FAVORITE_THEMES_STORAGE_KEY));
@@ -538,22 +541,27 @@ function AppExperienceReference() {
     }
     themePointerCaptured.current = false;
   };
-  const nextQuestion = () => setQuestionIndex(i => {
-    if (dailyMode || !randomMode || questions.length < 2) return (i + 1) % Math.max(questions.length, 1);
-    const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
-    return (i + randomOffset) % questions.length;
-  });
-  const previousQuestion = () => setQuestionIndex(i => {
-    if (dailyMode || !randomMode || questions.length < 2) return (i - 1 + questions.length) % Math.max(questions.length, 1);
-    const randomOffset = Math.floor(Math.random() * (questions.length - 1)) + 1;
-    return (i + randomOffset) % questions.length;
-  });
+  const getAdjacentQuestionIndex = (index: number, direction: 1 | -1) => {
+    if (questions.length < 2 || dailyMode || !randomMode) return (index + direction + questions.length) % Math.max(questions.length, 1);
+    const questionId = questions[index]?.id || String(index);
+    const randomOffset = Math.floor(seededValue(`${questionId}-${direction}`)() * (questions.length - 1)) + 1;
+    return (index + (randomOffset * direction) + questions.length * 2) % questions.length;
+  };
+  const nextQuestion = () => setQuestionIndex(i => getAdjacentQuestionIndex(i, 1));
+  const previousQuestion = () => setQuestionIndex(i => getAdjacentQuestionIndex(i, -1));
+  const nextQuestionIndex = questions.length > 1 ? getAdjacentQuestionIndex(questionIndex, 1) : null;
+  const nextStackQuestion = nextQuestionIndex === null ? null : questions[nextQuestionIndex];
+  const nextStackTheme = nextStackQuestion ? themes.find(theme => theme.id === nextStackQuestion.themeId) : null;
   useEffect(() => markQuestionSeen(currentQuestion), [currentQuestion?.id]);
   useEffect(() => { localStorage.setItem(SAVED_QUESTIONS_STORAGE_KEY, JSON.stringify(saved)); }, [saved]);
   useEffect(() => { localStorage.setItem(FAVORITE_THEMES_STORAGE_KEY, JSON.stringify(favoriteThemeIds)); }, [favoriteThemeIds]);
+  useEffect(() => () => {
+    if (questionSwipeTimer.current !== null) window.clearTimeout(questionSwipeTimer.current);
+  }, []);
   const toggleThemeFavorite = (id: string) => setFavoriteThemeIds(current => current.includes(id) ? current.filter(themeIdValue => themeIdValue !== id) : [...current, id]);
   const toggleSaved = (id: string) => setSaved(current => current.includes(id) ? current.filter(questionId => questionId !== id) : [...current, id]);
   const handleQuestionPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (questionSwipeLocked.current) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     const target = event.target as HTMLElement;
     if (target.closest('button, textarea, input, a')) return;
@@ -564,7 +572,7 @@ function AppExperienceReference() {
     setIsQuestionDragging(true);
   };
   const handleQuestionPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (questionDragStartX.current === null) return;
+    if (questionDragStartX.current === null || questionSwipeLocked.current) return;
     questionDragDelta.current = event.clientX - questionDragStartX.current;
     if (Math.abs(questionDragDelta.current) >= 8 && !questionPointerCaptured.current) {
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -576,12 +584,21 @@ function AppExperienceReference() {
     if (questionDragStartX.current === null) return;
     const delta = questionDragDelta.current;
     if (Math.abs(delta) >= 44 && questions.length > 1) {
-      if (delta < 0) nextQuestion();
-      else previousQuestion();
+      questionSwipeLocked.current = true;
+      setQuestionSwipeExit(delta < 0 ? 'left' : 'right');
+      questionSwipeTimer.current = window.setTimeout(() => {
+        if (delta < 0) nextQuestion();
+        else previousQuestion();
+        setQuestionSwipeExit(null);
+        setQuestionDragOffset(0);
+        questionSwipeLocked.current = false;
+        questionSwipeTimer.current = null;
+      }, 240);
+    } else {
+      setQuestionDragOffset(0);
     }
     questionDragStartX.current = null;
     questionDragDelta.current = 0;
-    setQuestionDragOffset(0);
     setIsQuestionDragging(false);
     if (questionPointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -589,6 +606,7 @@ function AppExperienceReference() {
     questionPointerCaptured.current = false;
   };
   const handleQuestionPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (questionSwipeLocked.current) return;
     if (questionDragStartX.current === null) return;
     questionDragStartX.current = null;
     questionDragDelta.current = 0;
@@ -676,9 +694,20 @@ function AppExperienceReference() {
               <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
               <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> {writingOpen ? 'Escrevendo' : 'Escrever'}</button>
             </div>
-              {(dailyMode ? allQuestionsQuery.isLoading : questionsQuery.isLoading) ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : (dailyMode ? allQuestionsQuery.isError : questionsQuery.isError) ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => (dailyMode ? allQuestionsQuery.refetch() : questionsQuery.refetch())} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <article
+              {(dailyMode ? allQuestionsQuery.isLoading : questionsQuery.isLoading) ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : (dailyMode ? allQuestionsQuery.isError : questionsQuery.isError) ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => (dailyMode ? allQuestionsQuery.refetch() : questionsQuery.refetch())} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <div className={`question-card-layers ${questionSwipeExit ? 'is-swiping' : ''}`}>
+                {nextStackQuestion && <article
+                  key={`back-${nextStackQuestion.id}`}
+                  className={`question-card question-card-back question-gradient-${nextQuestionIndex! % 4}`}
+                  aria-hidden="true"
+                >
+                  <div className="question-card-grain" />
+                  <div className="question-card-top"><span>{nextStackTheme?.title}</span><div className="question-card-brand-side"><strong>Perguntas<br /><i>de Conexão</i></strong></div></div>
+                  <div className="question-card-copy"><span className="question-kicker">{nextStackQuestion.intensity === 'deep' ? 'PARA IR MAIS FUNDO' : nextStackQuestion.intensity === 'honest' ? 'COM TODA HONESTIDADE' : 'PARA COMEÇAR DEVAGAR'}</span><p>{nextStackQuestion.text}</p></div>
+                  <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
+                </article>}
+                <article
                key={currentQuestion.id}
-               className={`question-card question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''} ${isQuestionDragging ? 'is-dragging' : ''}`}
+                className={`question-card question-card-front question-gradient-${questionIndex % 4} ${writingOpen ? 'is-writing' : ''} ${isQuestionDragging ? 'is-dragging' : ''} ${questionSwipeExit ? `is-swiping-out-${questionSwipeExit}` : ''}`}
                onPointerDown={handleQuestionPointerDown}
                onPointerMove={handleQuestionPointerMove}
                onPointerUp={finishQuestionPointer}
@@ -692,7 +721,8 @@ function AppExperienceReference() {
               {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
               <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
                 <button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => toggleSaved(currentQuestion.id)} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button>
-            </article>}
+                </article>
+              </div>}
           </div>
            {showInvitePrompt && <aside className="invite-prompt-card" aria-labelledby="invite-prompt-title" data-testid="card-invite-prompt">
              <div className="invite-prompt-icon"><Users size={16} /></div>
@@ -703,7 +733,6 @@ function AppExperienceReference() {
              </div>
              <button className="invite-prompt-action" onClick={() => setInviteOpen(true)} data-testid="button-open-invite-prompt">Convidar <Send size={14} /></button>
            </aside>}
-          {currentQuestion && <div className="question-side-nav"><button onClick={previousQuestion} aria-label="Pergunta anterior" data-testid="button-previous-question"><ChevronLeft size={19} /></button><button onClick={nextQuestion} aria-label="Próxima pergunta" data-testid="button-next-question"><ChevronRight size={19} /></button></div>}
            {writingOpen && <button className="writing-done-button" onClick={() => setWritingOpen(false)} data-testid="button-writing-done"><Check size={16} /> Concluído</button>}
         </section>
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>
