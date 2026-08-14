@@ -1006,6 +1006,14 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  touch-action: none;
+  transform: translateY(var(--date-drag-offset, 0px));
+  transition: transform 180ms ease;
+}
+
+.date-column.is-dragging {
+  transition: none;
+  cursor: grabbing;
 }
 
 .date-column button {
@@ -1024,6 +1032,11 @@
   border-radius: 0.65rem;
   background: rgba(255, 255, 255, 0.12);
   font-size: 1.32rem;
+}
+
+.date-column button {
+  touch-action: none;
+  user-select: none;
 }
 
 .date-fade {
@@ -1121,6 +1134,58 @@
   color: #a68eff;
 }
 
+.feeling-construction {
+  width: min(100%, 20rem);
+  height: 3.6rem;
+  position: relative;
+  margin: 1.7rem auto 0;
+  opacity: .76;
+  overflow: hidden;
+  border-top: 1px solid rgba(173, 151, 255, .2);
+  border-bottom: 1px solid rgba(173, 151, 255, .12);
+}
+
+.feeling-construction span,
+.feeling-construction i {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  transform-origin: left center;
+}
+
+.feeling-construction span {
+  top: 50%;
+  left: 8%;
+  width: 84%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(185, 164, 255, .9), transparent);
+  animation: feeling-line-build 2.4s ease-in-out infinite;
+}
+
+.feeling-construction span:nth-child(2) {
+  top: 28%;
+  animation-delay: .35s;
+  opacity: .56;
+}
+
+.feeling-construction span:nth-child(3) {
+  top: 72%;
+  animation-delay: .7s;
+  opacity: .38;
+}
+
+.feeling-construction i {
+  width: .7rem;
+  height: .7rem;
+  border: 1px solid rgba(214, 201, 255, .74);
+  background: rgba(140, 113, 242, .28);
+  animation: feeling-piece-build 2.4s ease-in-out infinite;
+}
+
+.feeling-construction i:nth-of-type(1) { top: 15%; left: 18%; }
+.feeling-construction i:nth-of-type(2) { top: 52%; left: 52%; animation-delay: .3s; }
+.feeling-construction i:nth-of-type(3) { top: 25%; left: 78%; animation-delay: .6s; }
+
 .onboarding-preparing-screen,
 .onboarding-save-screen,
 .onboarding-deck-ready {
@@ -1201,22 +1266,48 @@
   margin: 0.9rem 0 0;
 }
 
-.preparing-loader {
-  width: 100%;
-  height: 0.28rem;
-  margin-top: 2.7rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
+.preparing-incoming-cards {
+  width: 8rem;
+  height: 3.4rem;
+  position: relative;
+  margin-top: 2rem;
 }
 
-.preparing-loader span {
-  display: block;
-  width: 28%;
-  height: 100%;
-  border-radius: inherit;
-  background: #8f79ff;
-  animation: onboarding-loading 1.8s ease-in-out infinite;
+.preparing-incoming-cards i {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2.1rem;
+  height: 2.9rem;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: .45rem;
+  background: linear-gradient(145deg, #b69eff, #4f3a98);
+  box-shadow: 0 .55rem 1.1rem rgba(5, 2, 19, .24);
+  transform: translate(-50%, -2.4rem) rotate(0deg);
+  animation: incoming-card 1.8s cubic-bezier(.2, .75, .25, 1) infinite;
+}
+
+.preparing-incoming-cards i::after {
+  content: "";
+  position: absolute;
+  inset: .42rem;
+  border-top: 1px solid rgba(255, 255, 255, .26);
+  box-shadow: 0 .45rem 0 rgba(255, 255, 255, .13);
+}
+
+.preparing-incoming-cards i:nth-child(1) {
+  margin-left: -2rem;
+  animation-delay: 0s;
+}
+
+.preparing-incoming-cards i:nth-child(2) {
+  margin-left: 0;
+  animation-delay: .28s;
+}
+
+.preparing-incoming-cards i:nth-child(3) {
+  margin-left: 2rem;
+  animation-delay: .56s;
 }
 
 .onboarding-account-actions {
@@ -1926,6 +2017,32 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 @keyframes prepare-card-middle { 0%, 100% { transform: translate(-50%, -50%) rotate(8deg) translate(.25rem, .05rem); } 50% { transform: translate(-50%, -50%) rotate(18deg) translate(.65rem, -.2rem); } }
 @keyframes prepare-card-front { 0%, 100% { transform: translate(-50%, -50%) rotate(-2deg) translateY(.1rem); } 50% { transform: translate(-50%, -50%) rotate(4deg) translateY(-.15rem); } }
 @keyframes preparing-dot { 0%, 100% { opacity: .35; transform: translateY(0) scale(.82); } 50% { opacity: 1; transform: translateY(-.18rem) scale(1); } }
+@keyframes incoming-card {
+  0% { opacity: 0; transform: translate(-50%, -2.2rem) rotate(-14deg) scale(.78); }
+  18% { opacity: 1; }
+  55% { opacity: 1; transform: translate(-50%, .35rem) rotate(8deg) scale(1); }
+  72%, 100% { opacity: 0; transform: translate(-50%, .35rem) rotate(8deg) scale(1); }
+}
+@keyframes feeling-line-build {
+  0%, 100% { opacity: .18; transform: scaleX(.12); }
+  45%, 70% { opacity: .9; transform: scaleX(1); }
+}
+@keyframes feeling-piece-build {
+  0%, 100% { opacity: .18; transform: translateY(.6rem) rotate(16deg) scale(.7); }
+  45%, 70% { opacity: .9; transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-content,
+  .feeling-construction span,
+  .feeling-construction i,
+  .preparing-incoming-cards i {
+    animation: none;
+  }
+  .date-column {
+    transition: none;
+  }
+}
 
 @media (min-width: 700px) {
   .app-viewport { padding: 1.5rem 0; align-items: center; }

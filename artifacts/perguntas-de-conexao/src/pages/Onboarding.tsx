@@ -1,5 +1,5 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Feather, Sparkles } from 'lucide-react';
+import { type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, Feather, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 
 type StepId =
@@ -14,7 +14,6 @@ type StepId =
   | 'feeling'
   | 'insight'
   | 'preparing'
-  | 'save'
   | 'deck';
 
 type Step = { id: StepId; progress: number };
@@ -24,14 +23,13 @@ const steps: Step[] = [
   { id: 'relationship', progress: 0.1 },
   { id: 'note', progress: 0.17 },
   { id: 'name', progress: 0.24 },
-  { id: 'date', progress: 0.31 },
-  { id: 'days', progress: 0.38 },
-  { id: 'curiosity', progress: 0.48 },
-  { id: 'surprise', progress: 0.58 },
-  { id: 'feeling', progress: 0.68 },
-  { id: 'insight', progress: 0.76 },
-  { id: 'preparing', progress: 0.84 },
-  { id: 'save', progress: 0.92 },
+  { id: 'date', progress: 0.32 },
+  { id: 'days', progress: 0.42 },
+  { id: 'curiosity', progress: 0.53 },
+  { id: 'surprise', progress: 0.63 },
+  { id: 'feeling', progress: 0.73 },
+  { id: 'insight', progress: 0.82 },
+  { id: 'preparing', progress: 0.92 },
   { id: 'deck', progress: 1 },
 ];
 
@@ -43,7 +41,12 @@ const curiosityOptions = [
   'Sinceramente, tudo',
 ];
 
-const relationshipOptions = ['Meu namorado ou namorada', 'Alguém com quem estou saindo'];
+const relationshipOptions = [
+  'Meu namorado ou minha namorada',
+  'Meu esposo ou minha esposa',
+  'Alguém com quem estou saindo',
+  'Namoro à distância',
+];
 const surpriseOptions = ['Nesta semana', 'Faz um tempo', 'Sinceramente, não lembro', 'Já passou da hora'];
 const feelingOptions = [
   'Mais perto do que de costume',
@@ -52,6 +55,32 @@ const feelingOptions = [
   'Um pouco perigoso',
 ];
 const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+type DatePartKind = 'day' | 'month' | 'year';
+
+const welcomeDeckStorageKey = 'conexao-personalized-decks';
+const welcomeDeckIdStorageKey = 'conexao-welcome-deck-id';
+const welcomeDeckDoneStorageKey = 'conexao-welcome-deck-done';
+const openWelcomeDeckStorageKey = 'conexao-open-welcome-deck';
+
+function removeWelcomeDeck() {
+  const welcomeDeckId = localStorage.getItem(welcomeDeckIdStorageKey);
+  try {
+    const stored = JSON.parse(localStorage.getItem(welcomeDeckStorageKey) || '[]');
+    const decks = Array.isArray(stored)
+      ? stored.filter((deck: unknown) => {
+        if (!deck || typeof deck !== 'object') return false;
+        const item = deck as { id?: unknown; label?: unknown };
+        return item.id !== welcomeDeckId && item.label !== 'Seu primeiro baralho';
+      })
+      : [];
+    localStorage.setItem(welcomeDeckStorageKey, JSON.stringify(decks));
+  } catch {
+    localStorage.removeItem(welcomeDeckStorageKey);
+  }
+  localStorage.removeItem(welcomeDeckIdStorageKey);
+  localStorage.removeItem(welcomeDeckDoneStorageKey);
+  localStorage.removeItem(openWelcomeDeckStorageKey);
+}
 
 function daysBetween(dateString: string) {
   const start = new Date(`${dateString}T12:00:00`);
@@ -146,6 +175,7 @@ function Choice({
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [stepIndex, setStepIndex] = useState(() => {
     const saved = Number(localStorage.getItem('conexao-onboarding-step'));
     return Number.isInteger(saved) && saved >= 0 && saved < steps.length ? saved : 0;
@@ -163,10 +193,57 @@ export default function Onboarding() {
   });
   const [surprise, setSurprise] = useState('');
   const [feeling, setFeeling] = useState(() => localStorage.getItem('conexao-onboarding-feeling') || '');
+  const [animatedDays, setAnimatedDays] = useState(0);
+  const [dateDragOffset, setDateDragOffset] = useState<Record<DatePartKind, number>>({ day: 0, month: 0, year: 0 });
+  const dateDragKind = useRef<DatePartKind | null>(null);
+  const dateDragStartY = useRef<number | null>(null);
+  const dateDragDelta = useRef(0);
+  const datePointerCaptured = useRef(false);
+  const suppressDateClick = useRef(false);
 
   const step = steps[stepIndex];
   const parts = useMemo(() => dateParts(date), [date]);
   const sharedDays = useMemo(() => daysBetween(date), [date]);
+  const partnerPronoun = pronoun === 'Ele' ? 'ele' : pronoun === 'Ela' ? 'ela' : 'essa pessoa';
+
+  useEffect(() => {
+    if (
+      localStorage.getItem('conexao-session')
+      || localStorage.getItem('conexao-onboarding-complete') === 'true'
+      || localStorage.getItem('conexao-guest-token')
+    ) {
+      navigate('/app', { replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    updateMotionPreference();
+    mediaQuery.addEventListener?.('change', updateMotionPreference);
+    return () => mediaQuery.removeEventListener?.('change', updateMotionPreference);
+  }, []);
+
+  useEffect(() => {
+    if (step.id !== 'days') return undefined;
+    if (prefersReducedMotion) {
+      setAnimatedDays(sharedDays);
+      return undefined;
+    }
+
+    setAnimatedDays(0);
+    const startedAt = performance.now();
+    const duration = 1250;
+    let animationFrame = 0;
+    const animate = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const easedProgress = 1 - (1 - progress) ** 3;
+      setAnimatedDays(Math.round(sharedDays * easedProgress));
+      if (progress < 1) animationFrame = window.requestAnimationFrame(animate);
+    };
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [prefersReducedMotion, sharedDays, step.id]);
 
   useEffect(() => {
     localStorage.setItem('conexao-onboarding-step', String(stepIndex));
@@ -182,9 +259,10 @@ export default function Onboarding() {
       localStorage.setItem('conexao-relationship', relationship);
       localStorage.setItem('conexao-curiosity', JSON.stringify(curiosity));
       localStorage.setItem('conexao-feeling', feeling);
+      localStorage.setItem('conexao-partner-pronoun', pronoun);
       localStorage.setItem('conexao-onboarding-complete', 'true');
     }
-  }, [step.id, stepIndex, name, relationship, date, curiosity, feeling]);
+  }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling]);
 
   const goNext = () => setStepIndex((current) => Math.min(current + 1, steps.length - 1));
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
@@ -195,6 +273,14 @@ export default function Onboarding() {
     localStorage.removeItem('conexao-onboarding-relationship');
     localStorage.removeItem('conexao-onboarding-date');
     localStorage.removeItem('conexao-onboarding-curiosity');
+    localStorage.removeItem('conexao-onboarding-feeling');
+    localStorage.removeItem('conexao-onboarding-complete');
+    localStorage.removeItem('conexao-name');
+    localStorage.removeItem('conexao-relationship');
+    localStorage.removeItem('conexao-curiosity');
+    localStorage.removeItem('conexao-feeling');
+    localStorage.removeItem('conexao-partner-pronoun');
+    removeWelcomeDeck();
     setStepIndex(0);
     setName('');
     setPronoun('');
@@ -205,11 +291,69 @@ export default function Onboarding() {
     setFeeling('');
   };
 
-  const selectDatePart = (kind: 'day' | 'month' | 'year', value: number) => {
+  const selectDatePart = (kind: DatePartKind, value: number) => {
     const next = { ...parts, [kind]: value };
     const safeMonth = String(Math.min(12, Math.max(1, next.month))).padStart(2, '0');
     const safeDay = String(Math.min(28, Math.max(1, next.day))).padStart(2, '0');
     setDate(`${next.year}-${safeMonth}-${safeDay}`);
+  };
+
+  const handleDatePointerDown = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    dateDragKind.current = kind;
+    dateDragStartY.current = event.clientY;
+    dateDragDelta.current = 0;
+    datePointerCaptured.current = false;
+    suppressDateClick.current = false;
+    setDateDragOffset(current => ({ ...current, [kind]: 0 }));
+  };
+
+  const handleDatePointerMove = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dateDragKind.current !== kind || dateDragStartY.current === null) return;
+    dateDragDelta.current = event.clientY - dateDragStartY.current;
+    if (Math.abs(dateDragDelta.current) >= 8 && !datePointerCaptured.current) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      datePointerCaptured.current = true;
+    }
+    setDateDragOffset(current => ({ ...current, [kind]: dateDragDelta.current }));
+  };
+
+  const finishDatePointer = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dateDragKind.current !== kind || dateDragStartY.current === null) return;
+    const delta = dateDragDelta.current;
+    if (Math.abs(delta) >= 24) {
+      suppressDateClick.current = true;
+      selectDatePart(kind, parts[kind] + (delta < 0 ? 1 : -1));
+    }
+    dateDragKind.current = null;
+    dateDragStartY.current = null;
+    dateDragDelta.current = 0;
+    setDateDragOffset(current => ({ ...current, [kind]: 0 }));
+    if (datePointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    datePointerCaptured.current = false;
+  };
+
+  const cancelDatePointer = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dateDragKind.current !== kind) return;
+    dateDragKind.current = null;
+    dateDragStartY.current = null;
+    dateDragDelta.current = 0;
+    setDateDragOffset(current => ({ ...current, [kind]: 0 }));
+    if (datePointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    datePointerCaptured.current = false;
+  };
+
+  const handleDateValueClick = (kind: DatePartKind, value: number, event: ReactMouseEvent<HTMLButtonElement>) => {
+    if (suppressDateClick.current) {
+      event.preventDefault();
+      suppressDateClick.current = false;
+      return;
+    }
+    selectDatePart(kind, value);
   };
 
   const renderStep = () => {
@@ -287,9 +431,39 @@ export default function Onboarding() {
             <div className="date-wheel" aria-label="Escolha a data em que a história começou">
               <div className="date-fade date-fade-top" />
               <div className="date-values">
-                <div className="date-column">{[parts.day - 1, parts.day, parts.day + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={() => selectDatePart('day', value)}>{value}</button>)}</div>
-                <div className="date-column">{[parts.month - 1, parts.month, parts.month + 1].map((month) => { const safeMonth = ((month - 1 + 12) % 12) + 1; return <button key={safeMonth} className={safeMonth === parts.month ? 'is-active' : ''} onClick={() => selectDatePart('month', safeMonth)}>{monthNames[safeMonth - 1]}</button>; })}</div>
-                <div className="date-column">{[parts.year - 1, parts.year, parts.year + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={() => selectDatePart('year', value)}>{value}</button>)}</div>
+                <div
+                  className={`date-column ${dateDragKind.current === 'day' ? 'is-dragging' : ''}`}
+                  style={{ '--date-drag-offset': `${dateDragOffset.day}px` } as CSSProperties}
+                  onPointerDown={event => handleDatePointerDown('day', event)}
+                  onPointerMove={event => handleDatePointerMove('day', event)}
+                  onPointerUp={event => finishDatePointer('day', event)}
+                  onPointerCancel={event => cancelDatePointer('day', event)}
+                >
+                  {[parts.day - 1, parts.day, parts.day + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={event => handleDateValueClick('day', value, event)}>{value}</button>)}
+                </div>
+                <div
+                  className={`date-column ${dateDragKind.current === 'month' ? 'is-dragging' : ''}`}
+                  style={{ '--date-drag-offset': `${dateDragOffset.month}px` } as CSSProperties}
+                  onPointerDown={event => handleDatePointerDown('month', event)}
+                  onPointerMove={event => handleDatePointerMove('month', event)}
+                  onPointerUp={event => finishDatePointer('month', event)}
+                  onPointerCancel={event => cancelDatePointer('month', event)}
+                >
+                  {[parts.month - 1, parts.month, parts.month + 1].map(month => {
+                    const safeMonth = ((month - 1 + 12) % 12) + 1;
+                    return <button key={safeMonth} className={safeMonth === parts.month ? 'is-active' : ''} onClick={event => handleDateValueClick('month', safeMonth, event)}>{monthNames[safeMonth - 1]}</button>;
+                  })}
+                </div>
+                <div
+                  className={`date-column ${dateDragKind.current === 'year' ? 'is-dragging' : ''}`}
+                  style={{ '--date-drag-offset': `${dateDragOffset.year}px` } as CSSProperties}
+                  onPointerDown={event => handleDatePointerDown('year', event)}
+                  onPointerMove={event => handleDatePointerMove('year', event)}
+                  onPointerUp={event => finishDatePointer('year', event)}
+                  onPointerCancel={event => cancelDatePointer('year', event)}
+                >
+                  {[parts.year - 1, parts.year, parts.year + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={event => handleDateValueClick('year', value, event)}>{value}</button>)}
+                </div>
               </div>
               <div className="date-fade date-fade-bottom" />
             </div>
@@ -298,8 +472,14 @@ export default function Onboarding() {
       case 'days':
         return (
           <div className="onboarding-content onboarding-days-screen">
-            <div className="plant-illustration" aria-hidden="true"><span className="plant-ground" /><i /><i /><i /><i /><i /></div>
-            <h1>Vocês já compartilharam<br /><strong>{sharedDays}</strong> dias</h1>
+            <div className="plant-illustration" aria-hidden="true">
+              <span className="plant-ground" />
+              {[0.46, 0.65, 0.82, 1, 1.18].map((scale, index) => {
+                const leafProgress = Math.max(0, Math.min(1, (animatedDays / Math.max(sharedDays, 1)) * 5 - index));
+                return <i key={scale} style={{ opacity: 0.16 + leafProgress * 0.84, transform: `scale(${scale * (0.42 + leafProgress * 0.58)}) rotate(-12deg)` }} />;
+              })}
+            </div>
+            <h1>Vocês já compartilharam<br /><strong>{animatedDays}</strong> dias</h1>
             <p>Ainda é cedo. Tem muita coisa que vocês ainda não perguntaram.</p>
           </div>
         );
@@ -308,7 +488,7 @@ export default function Onboarding() {
           <div className="onboarding-content onboarding-question-screen">
             <div>
               <p className="onboarding-kicker">vamos chegar ao que importa</p>
-              <h1>O que você quer<br /><em>descobrir sobre ela?</em></h1>
+              <h1>O que você quer<br /><em>descobrir sobre {partnerPronoun}?</em></h1>
               <p className="onboarding-subtitle">Selecione quantos quiser.</p>
             </div>
             <div className="onboarding-choice-list">
@@ -321,7 +501,7 @@ export default function Onboarding() {
           <div className="onboarding-content onboarding-question-screen">
             <div>
               <p className="onboarding-kicker">uma pergunta honesta</p>
-              <h1>Quando foi a última vez<br />que ela te surpreendeu<br /><em>com uma resposta?</em></h1>
+              <h1>Quando foi a última vez<br />que {partnerPronoun} te surpreendeu<br /><em>com uma resposta?</em></h1>
             </div>
             <div className="onboarding-choice-list">
               {surpriseOptions.map((option) => <Choice key={option} label={option} selected={surprise === option} onClick={() => setSurprise(option)} />)}
@@ -336,6 +516,7 @@ export default function Onboarding() {
               <h1>Como você quer<br /><em>se sentir hoje à noite?</em></h1>
               <p className="onboarding-subtitle">Escolha o que está mais alto agora.</p>
             </div>
+            <div className="feeling-construction" aria-hidden="true"><span /><span /><span /><i /><i /><i /></div>
             <div className="onboarding-choice-list">
               {feelingOptions.map((option) => <Choice key={option} label={option} selected={feeling === option} onClick={() => setFeeling(option)} />)}
             </div>
@@ -355,20 +536,7 @@ export default function Onboarding() {
             <div className="preparing-deck"><div /><div /><div><span>{name || 'Seu'}'s cartas</span><small>perguntas escolhidas para vocês</small></div></div>
             <h1>Preparando seu<br /><em>baralho...</em></h1>
             <p>Escolhendo perguntas a partir da energia que você trouxe...</p>
-            <div className="preparing-loader"><span /></div>
-          </div>
-        );
-      case 'save':
-        return (
-          <div className="onboarding-content onboarding-save-screen">
-            <div className="save-deck-art"><div /><div /><div><span>{name || 'Seu'}'s cartas</span><small>perguntas selecionadas</small></div></div>
-            <h1>Um baralho feito<br /><em>da energia que você escolheu.</em></h1>
-            <p>Crie uma conta para guardar seu baralho pessoal e voltar quando quiser.</p>
-            <div className="onboarding-account-actions">
-              <button onClick={goNext} className="account-button account-button-dark">Continuar com Apple</button>
-              <button onClick={goNext} className="account-button account-button-light">Continuar com Google</button>
-              <button onClick={goNext} className="account-skip">Continuar sem salvar <ChevronDown size={15} /></button>
-            </div>
+            <div className="preparing-incoming-cards" aria-hidden="true"><i /><i /><i /></div>
           </div>
         );
       case 'deck':
@@ -378,7 +546,7 @@ export default function Onboarding() {
             <p className="onboarding-kicker">seu baralho está pronto</p>
             <h1>Agora é só<br /><em>começar a conversa.</em></h1>
             <p>As perguntas certas não entregam respostas prontas. Elas abrem espaço para vocês se encontrarem.</p>
-            <ContinueButton onClick={() => navigate('/app')} light>Abrir meu baralho</ContinueButton>
+            <ContinueButton onClick={() => { localStorage.setItem(openWelcomeDeckStorageKey, 'true'); navigate('/app'); }} light>Abrir meu baralho</ContinueButton>
             <button onClick={reset} className="onboarding-restart">Refazer o quiz</button>
           </div>
         );
@@ -396,7 +564,7 @@ export default function Onboarding() {
   }, [step.id]);
 
   const canContinue = step.id === 'name' ? name.trim().length > 0 : step.id === 'relationship' ? !!relationship : step.id === 'curiosity' ? curiosity.length > 0 : step.id === 'surprise' ? !!surprise : step.id === 'feeling' ? !!feeling : true;
-  const noButton = ['intro', 'note', 'days', 'insight', 'preparing', 'save', 'deck'].includes(step.id);
+  const noButton = ['intro', 'note', 'days', 'insight', 'preparing', 'deck'].includes(step.id);
 
   return (
     <main className="onboarding-shell">

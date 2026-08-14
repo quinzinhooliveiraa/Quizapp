@@ -119,6 +119,8 @@ const deckCoverByVibe: Record<string, string> = {
   esquentar: 'ember',
 };
 const ONBOARDING_WELCOME_DECK_DONE_KEY = 'conexao-welcome-deck-done';
+const ONBOARDING_WELCOME_DECK_ID_KEY = 'conexao-welcome-deck-id';
+const ONBOARDING_OPEN_WELCOME_DECK_KEY = 'conexao-open-welcome-deck';
 
 const onboardingFeelingToVibe: Record<string, string> = {
   'Mais perto do que de costume': 'fundo',
@@ -128,8 +130,11 @@ const onboardingFeelingToVibe: Record<string, string> = {
 };
 
 const onboardingRelationshipToMood: Record<string, string> = {
+  'Meu namorado ou minha namorada': 'tranquilos',
   'Meu namorado ou namorada': 'tranquilos',
+  'Meu esposo ou minha esposa': 'tranquilos',
   'Alguém com quem estou saindo': 'animados',
+  'Namoro à distância': 'saudade',
 };
 
 function isDeckCoverId(value: unknown): value is string {
@@ -623,6 +628,8 @@ function AppExperienceReference() {
   const questionsQuery = useListQuestions(questionParams, { query: { enabled: !!themeId, queryKey: getListQuestionsQueryKey(questionParams) } });
   const onboardingComplete = localStorage.getItem('conexao-onboarding-complete') === 'true';
   const welcomeDeckDone = localStorage.getItem(ONBOARDING_WELCOME_DECK_DONE_KEY) === 'true';
+  const openWelcomeDeck = localStorage.getItem(ONBOARDING_OPEN_WELCOME_DECK_KEY) === 'true';
+  const welcomeDeckId = localStorage.getItem(ONBOARDING_WELCOME_DECK_ID_KEY) || '';
   const onboardingRelationship = localStorage.getItem('conexao-relationship') || '';
   const onboardingFeeling = localStorage.getItem('conexao-feeling') || '';
   const allQuestionsQuery = useListQuestions({}, {
@@ -743,8 +750,9 @@ function AppExperienceReference() {
     const hasAdultTheme = themes.some(theme => theme.audience === '18+' || theme.id === 'luzes-baixas');
     const vibe = requestedVibe === 'esquentar' && !hasAdultTheme ? 'fundo' : requestedVibe;
     const createdAt = new Date().toISOString();
+    const deckId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `deck-${Date.now()}`;
     const deck: PersonalizedDeck = {
-      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `deck-${Date.now()}`,
+      id: deckId,
       createdAt,
       label: 'Seu primeiro baralho',
       ids: selectPersonalizedQuestionIds(
@@ -752,7 +760,7 @@ function AppExperienceReference() {
         mood,
         vibe,
         8,
-        `${createdAt}-${onboardingRelationship}-${onboardingFeeling}`,
+        `${deckId}-${createdAt}-${onboardingRelationship}-${onboardingFeeling}`,
       ),
       cover: deckCoverByVibe[vibe] || deckCoverOptions[0].id,
       seenIds: [],
@@ -760,6 +768,7 @@ function AppExperienceReference() {
     const nextDecks = [deck, ...personalizedDecks];
 
     localStorage.setItem(ONBOARDING_WELCOME_DECK_DONE_KEY, 'true');
+    localStorage.setItem(ONBOARDING_WELCOME_DECK_ID_KEY, deck.id);
     localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
     setPersonalizedDecks(nextDecks);
     setDailyDeck(deck.ids);
@@ -788,6 +797,15 @@ function AppExperienceReference() {
     setThemeId(null);
     setQuestionIndex(0);
   };
+  useEffect(() => {
+    if (!openWelcomeDeck || !welcomeDeckDone) return;
+    const deck = personalizedDecks.find(item => item.id === welcomeDeckId)
+      || personalizedDecks.find(item => item.label === 'Seu primeiro baralho')
+      || personalizedDecks[0];
+    if (!deck) return;
+    localStorage.removeItem(ONBOARDING_OPEN_WELCOME_DECK_KEY);
+    openSavedDailyDeck(deck);
+  }, [openWelcomeDeck, personalizedDecks, welcomeDeckDone, welcomeDeckId]);
   const persistPersonalizedDecks = (nextDecks: PersonalizedDeck[]) => {
     setPersonalizedDecks(nextDecks);
     localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));

@@ -1,0 +1,92 @@
+# Fase 1B — Ajustes finos do onboarding (complementa a Fase 1)
+
+Complemento do `fase1-conectar-onboarding-ao-app-replit.md`. Aqui são ajustes de fluxo, texto e animação no onboarding (`artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`), mantendo tudo que já existe — a maioria são mudanças pequenas em pontos específicos. Nenhuma imagem externa é necessária: todas as animações podem ser feitas com CSS/JS.
+
+## 1. Onboarding é só pra quem NÃO tem acesso ainda
+
+Se a pessoa já tem conta/acesso (já passou pelo onboarding ou já tem sessão), não deve ver o onboarding de novo — vai direto pro app.
+
+- No topo do componente `Onboarding` (`Onboarding.tsx`, dentro do primeiro `useEffect` ou um novo), checar: se existir `localStorage.getItem('conexao-session')` **ou** `conexao-onboarding-complete === 'true'` **ou** `conexao-guest-token`, redirecionar imediatamente pra `/app` (`navigate('/app', { replace: true })`).
+- Isso garante que o onboarding é uma coisa de primeira vez. Quem volta, cai direto no baralho.
+
+## 2. Tela "Com quem você quer jogar?" — mais categorias, foco em casais
+
+Hoje `relationshipOptions` (linha ~45) só tem duas opções. Trocar por uma lista com foco em casal:
+
+```js
+const relationshipOptions = [
+  'Meu namorado ou minha namorada',
+  'Meu esposo ou minha esposa',
+  'Alguém com quem estou saindo',
+  'Namoro à distância',
+];
+```
+
+(Manter só relação a dois por enquanto — família/grupo fica pra depois, como já definido.)
+
+## 3. O pronome (Ele/Ela) precisa mandar nas telas seguintes
+
+A tela de nome já captura o pronome (`pronoun`: Ela / Ele / Prefiro não dizer — `Onboarding.tsx` linha 267). O problema: as telas seguintes têm o texto fixo em "ela", ignorando essa escolha. Corrigir pra usar o pronome:
+
+- Criar um helper simples, ex: `const partnerPronoun = pronoun === 'Ele' ? 'ele' : 'ela';` e usar nos textos:
+  - Tela `curiosity` (linha 302): "O que você quer descobrir sobre **{ela/ele}**?"
+  - Tela `surprise` (linha 315): "Quando foi a última vez que **{ela/ele}** te surpreendeu com uma resposta?"
+  - Onde mais o texto assumir "ela", trocar pelo pronome escolhido.
+- Se `pronoun === 'Prefiro não dizer'` (ou vazio), usar uma forma neutra ("essa pessoa") em vez de ele/ela.
+- **Persistir o pronome de verdade**: no `useEffect` que salva (linhas 171-178), o array de dependências (linha 178) não inclui `pronoun`, então ele pode não ser salvo de forma confiável. Adicionar `pronoun` nas dependências. E, na ponte da Fase 1 (fim do onboarding), gravar também `localStorage.setItem('conexao-partner-pronoun', pronoun)` pro app poder usar isso no futuro (quando as perguntas forem adaptadas por gênero — inclusive pra casais do mesmo sexo). Por agora, só capturar e guardar; a adaptação do conteúdo das perguntas por gênero vem na fase de conteúdo.
+
+## 4. Tela da data — rolar com o dedo (não só tocar)
+
+Hoje a "roda" de data (`date-wheel`, linha 278-286) mostra 3 valores e só troca no clique. O desejado é rolar com o dedo pra cima/baixo (2025 → 2024/2026, dezembro → novembro, etc.), como um seletor de roda nativo.
+
+- Transformar cada coluna (dia/mês/ano) num seletor arrastável com Pointer Events (o projeto já usa esse padrão no carrossel de temas, dá pra reaproveitar a lógica de `onPointerDown/Move/Up`): arrastar pra cima incrementa, pra baixo decrementa, com "snap" no valor central ao soltar.
+- Manter o clique nos valores de cima/baixo funcionando também (acessibilidade), mas o principal vira o arrasto.
+- Manter os limites que já existem (`selectDatePart`, linha 199, que já protege mês 1-12 e dia 1-28).
+
+## 5. Tela dos dias — animação de planta crescendo + contagem
+
+Hoje já existe uma ilustração de planta (`plant-illustration`, linha 292) e o número de dias (`sharedDays`, linha 293), mas estático. Deixar vivo:
+
+- **Contagem animada**: o número (`sharedDays`) sobe de 0 até o total em ~1-1.5s ao entrar na tela (um contador animado por JS, incrementando com `requestAnimationFrame` ou um intervalo curto).
+- **Planta "sendo regada"**: as folhas (`<i />` dentro de `.plant-illustration`) crescem em sequência conforme o número sobe, como se estivessem sendo regadas — cada folha aparece/cresce com um pequeno atraso escalonado (via `animation-delay` em CSS, ou classes adicionadas em sequência por JS). A ideia que você descreveu: a planta cresce só "uma fração", com o resto mais apagado, dando a sensação de que a história ainda está no começo (as folhas já vividas cheias, as futuras esmaecidas). Respeitar `prefers-reduced-motion` (mostrar o número final direto, sem animação, quando ativado).
+
+## 6. Tela do sentimento — sensação de "sendo construído"
+
+Na tela `feeling` (linha 322), você quer uma animação que passe a ideia de que as coisas estão **sendo montadas** (em construção), não que já estão prontas. Sugestão simples: enquanto a pessoa escolhe, um elemento visual de "montagem" em progresso — por exemplo, cartas/linhas se encaixando levemente em loop suave ao fundo, ou uma barra/traço que se desenha aos poucos. Sutil, só pra dar a sensação de construção. (Não precisa ser complexo; o importante é a sensação, não realismo.)
+
+## 7. Tela "Preparando o baralho" — cartinhas entrando no baralho
+
+Na tela `preparing` (linha 343), trocar o loader atual por uma animação de **cartas entrando no baralho** uma a uma (cada cartinha desliza/cai na pilha, escalonado), reforçando visualmente que o baralho está sendo montado. Reaproveitar o motivo de cartas empilhadas que já existe no app. Curto (o passo `preparing` já avança sozinho por tempo — ver o `useEffect` da linha 381).
+
+## 8. Remover o passo de conta (Apple/Google/sem salvar)
+
+A tela `save` (linha 352-363), com "Continuar com Apple / Google / sem salvar", **sai por completo** — a pessoa que chega aqui já comprou, não precisa criar conta. 
+
+- Remover o passo `'save'` do array `steps` (linha ~30) e o `case 'save'` do `renderStep`.
+- Ajustar os `progress` dos passos pra ficarem contínuos sem o buraco.
+- O fluxo passa a ir de `preparing` → direto pra `deck` (a tela final).
+
+## 9. "Abrir meu baralho" abre o baralho pronto (não a tela inicial)
+
+Hoje o botão final (linha 372) faz `navigate('/app')`, que cai na **tela inicial** de temas. O certo: abrir direto o **baralho de boas-vindas** que foi montado (o mesmo gerado na Fase 1, passo 3).
+
+- Como o `/app` e o `/onboarding` são páginas separadas, a forma mais simples e robusta: no fim do onboarding, gravar uma flag tipo `localStorage.setItem('conexao-open-welcome-deck', '<id-do-baralho>')` (ou só `'true'`), e no `AppExperience` (`App.tsx`), num `useEffect` de montagem, checar essa flag — se estiver setada, abrir aquele baralho automaticamente (chamando o mesmo caminho de `openSavedDailyDeck`) e limpar a flag. Assim o `navigate('/app')` continua igual, mas o app sabe que deve abrir o baralho em vez de mostrar a home.
+
+## 10. "Refazer o quiz" apaga o baralho gerado
+
+No `reset()` (linha 182), além de limpar os `conexao-onboarding-*`, também **apagar o baralho de boas-vindas** que tinha sido gerado (remover ele da lista `conexao-personalized-decks` e limpar a flag `conexao-welcome-deck-done`/`conexao-open-welcome-deck`), pra não acumular baralhos duplicados a cada vez que a pessoa refaz o quiz.
+
+## 11. Variar as perguntas do primeiro baralho
+
+Na geração do baralho de boas-vindas (Fase 1, passo 3), garantir que não saia sempre igual: usar uma semente que inclua um fator variável (por exemplo, a data/hora da geração, ou o `crypto.randomUUID()` que o deck já recebe) no `selectPersonalizedQuestionIds`, pra que refazer o quiz ou dois casais diferentes não caiam sempre nas mesmas perguntas. As perguntas continuam sendo puxadas da base que já existe no app (nada de perguntas novas agora — isso é a fase de conteúdo).
+
+## Verificação
+
+- Já ter feito o onboarding uma vez e tentar abrir `/onboarding` de novo → deve pular direto pro `/app`.
+- Escolher "Ele" no pronome e conferir que as telas seguintes falam "ele" (e "sobre ele"), não "ela".
+- Rolar a data com o dedo pra cima/baixo e ver dia/mês/ano mudando com snap.
+- Na tela dos dias, ver o número subindo animado e a planta "crescendo/sendo regada".
+- Confirmar que a tela de conta (Apple/Google) sumiu.
+- No fim, tocar "Abrir meu baralho" e cair **direto no baralho pronto**, não na tela de temas.
+- Tocar "Refazer o quiz" e confirmar que o baralho anterior foi removido (não duplica no histórico).
+- Refazer o quiz duas vezes e confirmar que as perguntas do primeiro baralho variam.
