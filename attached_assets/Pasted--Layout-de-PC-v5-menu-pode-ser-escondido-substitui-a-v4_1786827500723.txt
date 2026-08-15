@@ -1,0 +1,228 @@
+# Layout de PC v5 — menu pode ser escondido (substitui a v4 inteira)
+
+**Esta instrução substitui a `fase-pc-trilho-lateral-replit.md` por completo.** Ela já inclui tudo daquela (trilho lateral, cartas estilo Netflix maiores, correções de bugs) mais o detalhe novo: um botão pra esconder/mostrar o menu lateral. Se já colou a v4, apague o bloco `@media (min-width: 1180px)` antigo (e a linha `.eu-collection-card { display: block; width: 100%; }` logo antes) e cole o bloco abaixo no lugar. O JavaScript também muda — segue a seção 2 completa, com as duas mudanças (a antiga do clique único + a nova do botão de esconder).
+
+## 1. CSS — colar no final de `src/index.css`
+
+```css
+.eu-collection-card { display: block; width: 100%; }
+
+/* Desktop grande: menu vira trilho lateral, com opção de esconder, e as cartas
+   ganham o espaço todo pra se espalhar de verdade pros lados. Só ativa acima
+   de 1180px. Colado no fim do arquivo de propósito. */
+@media (min-width: 1180px) {
+  .app-viewport { padding: 2.6rem; align-items: center; }
+  .connection-app {
+    width: min(1280px, calc(100vw - 4rem));
+    height: min(860px, calc(100dvh - 5rem));
+    display: grid;
+    grid-template-columns: 15rem 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "nav header" "nav main";
+    transition: grid-template-columns .25s ease;
+  }
+  .connection-app.is-nav-collapsed { grid-template-columns: 3.6rem 1fr; }
+
+  .app-header, .question-header {
+    grid-area: header;
+    width: 100%;
+    max-width: none;
+    padding: 2rem 2.8rem 1rem;
+  }
+
+  .deck-home, .question-view-stage, .connection-app .deck-home.eu-home {
+    grid-area: main;
+    width: 100%;
+    max-width: none;
+    padding-left: 2.8rem;
+    padding-right: 2.8rem;
+    overflow-y: auto;
+  }
+  .deck-home { justify-content: center; padding-top: 0; }
+
+  .app-bottom-nav {
+    grid-area: nav;
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: .4rem;
+    padding: 6.5rem 1rem 1.5rem;
+    margin: 0;
+    border-radius: 0;
+    border: 0;
+    border-right: 1px solid rgba(255,255,255,.08);
+    background: linear-gradient(180deg, rgba(42,31,62,.5), rgba(12,12,23,.42));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: hidden;
+  }
+  .app-bottom-nav button {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: .75rem;
+    padding: 0 1.1rem;
+    min-height: 2.9rem;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+
+  /* botão redondo que esconde/mostra o menu lateral */
+  .app-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    margin: 0 0 1.1rem .95rem;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 50%;
+    color: rgba(255,255,255,.68);
+    background: rgba(255,255,255,.06);
+    flex: 0 0 auto;
+  }
+  .app-nav-toggle:hover { color: #fff; border-color: rgba(255,255,255,.32); }
+
+  .connection-app.is-nav-collapsed .app-bottom-nav button { opacity: 0; pointer-events: none; }
+  .connection-app.is-nav-collapsed .app-nav-toggle { margin-left: .75rem; opacity: 1; pointer-events: auto; }
+
+  .theme-carousel-wrap { height: auto; min-height: 0; margin-top: 2rem; display: block; }
+  .theme-carousel {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 1.4rem .2rem 1.6rem;
+    perspective: none;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  .theme-carousel::-webkit-scrollbar { display: block; height: 6px; }
+  .theme-carousel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 999px; }
+  .theme-cover {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    z-index: auto !important;
+    flex: 0 0 auto;
+    width: 17.5rem;
+    height: 22.5rem;
+    scroll-snap-align: start;
+  }
+  .theme-cover:hover { transform: translateY(-.3rem) !important; }
+  .carousel-dots { display: none; }
+
+  .connection-app .deck-home.eu-home {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 2rem;
+    align-content: start;
+  }
+  .eu-heading, .eu-daily-card, .eu-deck-history { grid-column: 1 / -1; }
+  .eu-invite-section, .eu-continue-section, .eu-favorites-section { grid-column: span 1; }
+  .eu-deck-history-row, .eu-progress-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(11rem, 1fr); overflow-x: visible; }
+  .eu-saved-row { display: flex; flex-direction: column; }
+
+  .question-card-stack { width: min(560px, 100%); margin: 0 auto; }
+  .question-card-layers { height: min(680px, calc(100dvh - 14rem)); }
+
+  .app-modal-backdrop { left: calc(50% + 7.5rem); width: min(1030px, calc(100vw - 4rem - 15rem)); transform: translateX(-50%); }
+  .app-install-prompt { right: 1.5rem; }
+
+  .connection-app.is-question-view .app-bottom-nav { display: flex; }
+
+  .question-hint { grid-area: main; align-self: end; text-align: center; padding-bottom: .5rem; }
+}
+```
+
+## 2. JavaScript — `src/App.tsx`
+
+Precisa de duas mudanças. Se já aplicou a v3/v4 antes, a primeira (clique único) já deve estar lá — confere e aplica se faltar.
+
+### 2.1 Clique único abre direto no PC
+
+Achar `selectThemeCard` (perto da linha 968):
+
+```ts
+const selectThemeCard = (index: number) => {
+  if (suppressThemeClick.current) {
+    suppressThemeClick.current = false;
+    return;
+  }
+  if (index === themeIndex) changeTheme(visibleThemes[index]?.id);
+  else moveThemeIndex(index);
+};
+```
+
+Trocar por:
+
+```ts
+const selectThemeCard = (index: number) => {
+  if (suppressThemeClick.current) {
+    suppressThemeClick.current = false;
+    return;
+  }
+  const isDesktopRow = typeof window !== 'undefined' && window.matchMedia('(min-width: 1180px)').matches;
+  if (isDesktopRow) { changeTheme(visibleThemes[index]?.id); return; }
+  if (index === themeIndex) changeTheme(visibleThemes[index]?.id);
+  else moveThemeIndex(index);
+};
+```
+
+### 2.2 Botão de esconder o menu (novo)
+
+Perto de `const [settingsOpen, setSettingsOpen] = useState(false);`, adicionar logo depois:
+
+```ts
+const [navCollapsed, setNavCollapsed] = useState(() => safeGetItem('conexao-nav-collapsed') === 'true');
+const toggleNavCollapsed = () => setNavCollapsed(current => {
+  const next = !current;
+  safeSetItem('conexao-nav-collapsed', String(next));
+  return next;
+});
+```
+
+Achar a tag `<main>` que monta as classes do app (perto da linha 1148):
+
+```tsx
+<main className={`connection-app ${isQuestionView ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''}`}>
+```
+
+Trocar por:
+
+```tsx
+<main className={`connection-app ${isQuestionView ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''} ${navCollapsed ? 'is-nav-collapsed' : ''}`}>
+```
+
+Por fim, achar `<nav className="app-bottom-nav" ...>` (perto da linha 1258) e adicionar este botão como o **primeiro filho**, antes do `navItems.map(...)`:
+
+```tsx
+<button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu' : 'Esconder menu'} data-testid="button-toggle-nav">{navCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>
+```
+
+`ChevronLeft` e `ChevronRight` já são importados de `lucide-react` no topo do arquivo, não precisa adicionar import novo.
+
+## O que mudou desta vez
+
+- Novo botão redondo no topo do menu lateral (PC): clicar esconde o menu (fica só uma faixa fininha com o botão), clicar de novo mostra tudo de volta.
+- O app lembra a escolha (usa o mesmo armazenamento local do resto do app) — se a pessoa escondeu e recarregar a página, continua escondido.
+- Tudo o que já estava funcionando na v4 (trilho lateral, cartas maiores tipo Netflix, clique único) continua igual.
+- Celular: nada muda, o botão só aparece acima de 1180px de largura.
+
+## Verificação
+- PC (acima de 1180px): deve aparecer um botão redondo (seta) no topo do menu lateral. Clicar nele esconde os textos do menu, deixando só uma faixa estreita com o botão (agora apontando pro outro lado). Clicar de novo mostra tudo.
+- Recarregar a página com o menu escondido: deve continuar escondido.
+- Testar que a tela de pergunta continua com o menu lateral visível (não some).
+- Aba "Eu" em duas colunas, cartas de tema grandes, clique único abrindo — tudo igual à v4.
+- Celular (abaixo de 700px): sem nenhuma mudança visual.

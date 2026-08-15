@@ -645,6 +645,12 @@ function AppExperienceReference() {
   const guestDisplayName = safeGetItem('conexao-guest-name') || '';
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(() => safeGetItem('conexao-nav-collapsed') === 'true');
+  const toggleNavCollapsed = () => setNavCollapsed(current => {
+    const next = !current;
+    safeSetItem('conexao-nav-collapsed', String(next));
+    return next;
+  });
   const [guestName, setGuestName] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
   const visibleThemes = useMemo(() => activeNav === 'temas'
@@ -970,6 +976,11 @@ function AppExperienceReference() {
       suppressThemeClick.current = false;
       return;
     }
+    const isDesktopRow = typeof window !== 'undefined' && window.matchMedia('(min-width: 1180px)').matches;
+    if (isDesktopRow) {
+      changeTheme(visibleThemes[index]?.id);
+      return;
+    }
     if (index === themeIndex) changeTheme(visibleThemes[index]?.id);
     else moveThemeIndex(index);
   };
@@ -1139,7 +1150,7 @@ function AppExperienceReference() {
   const deckMenu = personalizedDecks.find(deck => deck.id === deckMenuId) || null;
 
   return <div className="app-viewport">
-     <main className={`connection-app ${isQuestionView ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''}`}>
+     <main className={`connection-app ${isQuestionView ? 'is-question-view' : 'is-deck-view'} ${writingOpen ? 'is-writing-mode' : ''} ${navCollapsed ? 'is-nav-collapsed' : ''}`}>
        {!isQuestionView ? <>
         <header className="app-header" data-testid="header-decks">
           <div className="app-wordmark" data-testid="text-app-brand"><span className="app-logo-orb"><span /></span><span>Perguntas<br /><b>de Conexão</b></span></div>
@@ -1250,6 +1261,7 @@ function AppExperienceReference() {
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>
       </>}
       <nav className="app-bottom-nav" aria-label="Navegação principal" data-testid="nav-bottom">
+          <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu' : 'Esconder menu'} data-testid="button-toggle-nav">{navCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>
          {navItems.map(item => <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => openDeckTab(item.id)} data-testid={`button-nav-${item.id}`}><span className={`nav-dot nav-dot-${item.id}`} />{item.label}</button>)}
       </nav>
     </main>
