@@ -1,0 +1,119 @@
+# Layout de PC + robustez do código (mudanças mínimas)
+
+Confirmado antes de tudo: a **cor já está de volta no roxo original** (commit `14d4b93` já aplicado, `theme-color: #17121b`, `#b99aff` de volta no CSS). Não precisa mexer em cor.
+
+Duas frentes pedidas: (1) layout de desktop/PC, hoje "desconfigurado"; (2) robustez do código nos fluxos principais. Ambas com o mesmo princípio: **mudanças mínimas, nada de mexer no que já funciona no mobile.**
+
+**Nota importante antes de começar:** o `App.tsx` tem DUAS implementações da tela logada: `AppExperience()` (classes `.ritual-*`/`.intention-*`/`.stories-*`) e `AppExperienceReference()` (classes `.connection-app`/`.deck-home`/`.question-card`). **Só a segunda está em uso** (é a que a rota `/app` renderiza). A primeira e todo o CSS `.ritual-*`/`.intention-*`/`.stories-*` (por volta das linhas 2127–3386 do `index.css`) é código morto, não aparece em lugar nenhum. **Não mexer nela** — qualquer ajuste ali não muda nada visível e é tempo perdido. Todo trabalho abaixo é só em `.connection-app`/`.deck-home`/`.question-card`/`.app-*`/`.eu-*`.
+
+---
+
+## Parte 1 — Layout de PC (CSS, só regras novas `@media (min-width: 700px)`)
+
+Boa notícia: já existe uma regra (`index.css` linha ~2112) que transforma o app numa "moldura de celular" de 430px centralizada em telas grandes — isso já está certo e não deve ser tocado. O problema é que **outras peças não respeitam essa moldura**. São 4 ajustes pequenos, cada um só ativo acima de 700px (mobile fica idêntico):
+
+### 1. Modais "vazam" pra tela toda no desktop (o problema mais visível)
+Modais (`daily-form-modal`, `deck-menu-modal`, `welcome-app-modal`, `settings-app-modal`, `invite-app-modal`, `adult-theme-modal`) usam `.app-modal-backdrop` com `position: fixed; inset: 0`, que cobre a **janela inteira do navegador**, não só a moldura de 430px. No PC, ao abrir "Perguntas pra hoje" ou o menu de ajustes, o modal fica solto no centro da tela toda, desalinhado da moldura. É provavelmente a maior causa da sensação de "desconfigurado".
+
+Adicionar em `src/index.css`:
+```css
+@media (min-width: 700px) {
+  .app-modal-backdrop {
+    left: 50%;
+    width: 430px;
+    transform: translateX(-50%);
+  }
+}
+```
+
+### 2. Balão de "instalar app" flutua no canto da tela, longe da moldura
+`.app-install-prompt` fica fixo no canto inferior direito **do navegador**, mas no PC a moldura do app está centralizada — o balão fica sem relação visual com o app.
+
+```css
+@media (min-width: 700px) {
+  .app-install-prompt { right: max(1.2rem, calc(50% - 215px - 1.2rem)); }
+}
+```
+
+### 3. Fileiras com scroll horizontal (histórico, "continue jogando", temas favoritos) não têm como rolar com mouse
+`.eu-deck-history-row`, `.eu-progress-row`, `.eu-topic-row` têm scroll escondido (`scrollbar-width: none`) e dependem de swipe por toque. No PC com mouse comum (sem trackpad), dá pra ver só os 1-2 primeiros itens, sem nenhum indício visual de que tem mais.
+
+```css
+@media (min-width: 700px) {
+  .eu-deck-history-row,
+  .eu-progress-row,
+  .eu-topic-row {
+    scrollbar-width: thin;
+  }
+  .eu-deck-history-row::-webkit-scrollbar,
+  .eu-progress-row::-webkit-scrollbar,
+  .eu-topic-row::-webkit-scrollbar { display: block; height: 6px; }
+  .eu-deck-history-row::-webkit-scrollbar-thumb,
+  .eu-progress-row::-webkit-scrollbar-thumb,
+  .eu-topic-row::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.25); border-radius: 999px;
+  }
+}
+```
+
+### 4. Cartas arrastáveis (tema e pergunta) não indicam que dá pra arrastar com o mouse
+`.theme-carousel` e `.question-card` já suportam arrastar com mouse (usam Pointer Events, então já funciona!), só falta o cursor mudar pra indicar isso — hoje só a roda de data do onboarding tem esse detalhe.
+
+```css
+@media (min-width: 700px) {
+  .theme-carousel, .question-card { cursor: grab; }
+  .theme-carousel.is-dragging, .question-card.is-dragging { cursor: grabbing; }
+}
+```
+
+**As páginas de marketing/vendas, onboarding e a moldura de 430px já estão OK, não precisam de nada.**
+
+---
+
+## Parte 2 — Robustez do código (mudanças pequenas, mesmo comportamento quando tudo funciona normal)
+
+### 5. `localStorage` sem proteção pode derrubar a tela inteira
+Hoje só 3 funções (`readStoredArray`, `readStoredDecks`, `readStoredRecord`) protegem `localStorage`/`JSON.parse` com try/catch. Todo o resto (a maioria das leituras/escritas em `App.tsx` e `Onboarding.tsx`) não tem proteção. Em navegadores restritivos (modo privado do Safari, e principalmente **navegadores embutidos de Instagram/TikTok/Facebook** — muito relevante porque é exatamente onde um convite compartilhado é aberto), `localStorage` pode lançar erro já na primeira leitura. Sem proteção, isso quebra a tela toda (cai no "Something went wrong" genérico) — pro convidado que acabou de clicar no link, pode significar não conseguir nem entrar.
+
+Adicionar perto das outras funções de storage em `App.tsx` (e duplicar em `Onboarding.tsx`, que não importa de `App.tsx`):
+```ts
+function safeGetItem(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function safeSetItem(key: string, value: string): void {
+  try { localStorage.setItem(key, value); } catch { /* storage indisponível, ignora */ }
+}
+```
+Trocar os `localStorage.getItem`/`localStorage.setItem` diretos por essas versões — prioridade maior pros que rodam durante a montagem da tela (`useState(() => localStorage.getItem(...))`) e no fluxo de convite/onboarding, que é o caminho mais exposto a navegador embutido.
+
+### 6. Data corrompida no onboarding pode gerar "NaN" na roda de data
+Em `Onboarding.tsx`, `dateParts(dateString)` faz `Number(day)` etc. sem checar se o formato é válido. Se o valor salvo no storage não for exatamente `YYYY-MM-DD` (por exemplo dado corrompido), vira `NaN`, e a roda de data passa a mostrar "NaN" nos botões.
+
+Trocar por:
+```ts
+function dateParts(dateString: string) {
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (![year, month, day].every(Number.isFinite)) return { day: 6, month: 12, year: 2025 };
+  return { day, month, year };
+}
+```
+
+### 7. Convite: erro real é escondido atrás de um link falso "funcionando"
+Em `App.tsx`, a função `makeInvite` (tanto a versão morta quanto a ativa), quando a criação do convite falha de verdade (erro de servidor, sessão expirada), o `onError` **fabrica um link de demonstração falso** (`/invite/demo-conexao`) e mostra como se fosse sucesso. O dono vê "convite pronto", manda o link pro parceiro, e só descobre que está quebrado quando o convidado clicar e cair na tela de "não encontrado".
+
+Já existe uma UI de erro pronta e não usada (`createInvite.isError`, renderizada mas nunca acionada porque o `onError` sempre "resolve" com um link falso). Fix: no `onError`, não chamar `setInviteResult(...)` com o link fake — deixar a mensagem de erro já existente aparecer.
+
+---
+
+## O que NÃO fazer
+- Não mexer em `.ritual-*`/`.intention-*`/`.stories-*` (CSS morto, `AppExperience()` não é a tela usada).
+- Não mexer na regra de 430px que já funciona (linha ~2112 do `index.css`).
+- Não alterar nenhuma regra de CSS existente abaixo de 700px — só adicionar blocos novos `@media (min-width: 700px)`.
+
+## Verificação
+- Abrir o app numa tela larga (ou redimensionar o navegador pra >900px): abrir "Perguntas pra hoje", o menu de ajustes e o convite — os modais devem ficar alinhados com a moldura do app, não soltos na tela toda.
+- Testar o mouse: arrastar tema/carta deve mostrar cursor de "mão fechando"; passar o mouse nas fileiras de histórico/temas favoritos deve mostrar uma barra de rolagem fina.
+- Testar no celular normalmente depois — tudo deve continuar idêntico a antes (nenhuma regra abaixo de 700px foi tocada).
+- Simular storage bloqueado (ex: abrir em aba anônima com bloqueio de cookies/site data) e confirmar que o app não quebra a tela inteira.
+- Preencher uma data no onboarding normalmente e confirmar que continua funcionando igual.
+- Tentar gerar um convite (fluxo normal) e confirmar que continua funcionando; não há como simular facilmente o erro de servidor aqui, mas a mudança é só não esconder o erro quando ele acontecer.

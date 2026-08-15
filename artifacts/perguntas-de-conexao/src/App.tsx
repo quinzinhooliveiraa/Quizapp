@@ -157,7 +157,7 @@ function resizeCoverImage(file: File): Promise<string> {
 
 function readStoredArray(key: string): string[] {
   try {
-    const value = JSON.parse(localStorage.getItem(key) || '[]');
+    const value = JSON.parse(safeGetItem(key) || '[]');
     return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
   } catch {
     return [];
@@ -166,7 +166,7 @@ function readStoredArray(key: string): string[] {
 
 function readStoredDecks(): PersonalizedDeck[] {
   try {
-    const value = JSON.parse(localStorage.getItem(PERSONALIZED_DECKS_STORAGE_KEY) || '[]');
+    const value = JSON.parse(safeGetItem(PERSONALIZED_DECKS_STORAGE_KEY) || '[]');
     if (!Array.isArray(value)) return [];
     return value.filter((deck): deck is {
       id: string;
@@ -198,11 +198,35 @@ function readStoredDecks(): PersonalizedDeck[] {
 
 function readStoredRecord(key: string): Record<string, string[]> {
   try {
-    const value = JSON.parse(localStorage.getItem(key) || '{}');
+    const value = JSON.parse(safeGetItem(key) || '{}');
     if (!value || typeof value !== 'object') return {};
     return Object.fromEntries(Object.entries(value).map(([id, ids]) => [id, Array.isArray(ids) ? ids.filter((item): item is string => typeof item === 'string') : []]));
   } catch {
     return {};
+  }
+}
+
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Storage may be unavailable in embedded or private browsers.
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage may be unavailable in embedded or private browsers.
   }
 }
 
@@ -314,7 +338,7 @@ function InstallAppPrompt() {
   const [isIos, setIsIos] = useState(false);
 
   useEffect(() => {
-    if (isStandaloneApp() || localStorage.getItem('conexao-install-dismissed') === 'true') return;
+    if (isStandaloneApp() || safeGetItem('conexao-install-dismissed') === 'true') return;
 
     const iosDevice = /iphone|ipad|ipod/i.test(navigator.userAgent);
     setIsIos(iosDevice);
@@ -331,7 +355,7 @@ function InstallAppPrompt() {
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('conexao-install-dismissed', 'true');
+    safeSetItem('conexao-install-dismissed', 'true');
     setVisible(false);
   };
 
@@ -358,8 +382,8 @@ function InstallAppPrompt() {
 
 function StoredAccessGate() {
   const [, navigate] = useLocation();
-  const storedSessionId = localStorage.getItem('conexao-session')?.trim() || '';
-  const storedGuestToken = localStorage.getItem('conexao-guest-token')?.trim() || '';
+  const storedSessionId = safeGetItem('conexao-session')?.trim() || '';
+  const storedGuestToken = safeGetItem('conexao-guest-token')?.trim() || '';
   const sessionQuery = useGetQuestionSession(storedSessionId, { query: { enabled: !!storedSessionId, queryKey: getGetQuestionSessionQueryKey(storedSessionId) } });
   const guestQuery = useGetInvite(storedGuestToken, { query: { enabled: !!storedGuestToken, queryKey: getGetInviteQueryKey(storedGuestToken) } });
   const hasStoredAccess = !!storedSessionId || !!storedGuestToken;
@@ -487,13 +511,13 @@ function AppExperience() {
   const [themeId, setThemeId] = useState<string | null>(null);
   const [saved, setSaved] = useState<string[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const [sessionId, setSessionId] = useState(() => localStorage.getItem('conexao-session') || '');
-  const [welcomeOpen, setWelcomeOpen] = useState(!localStorage.getItem('conexao-name'));
-  const [buyerName, setBuyerName] = useState(() => localStorage.getItem('conexao-name') || '');
-  const role = localStorage.getItem('conexao-role');
-  const isGuest = role === 'guest' || !!localStorage.getItem('conexao-guest-token');
+  const [sessionId, setSessionId] = useState(() => safeGetItem('conexao-session') || '');
+  const [welcomeOpen, setWelcomeOpen] = useState(!safeGetItem('conexao-name'));
+  const [buyerName, setBuyerName] = useState(() => safeGetItem('conexao-name') || '');
+  const role = safeGetItem('conexao-role');
+  const isGuest = role === 'guest' || !!safeGetItem('conexao-guest-token');
   const isOwner = !isGuest;
-  const guestDisplayName = localStorage.getItem('conexao-guest-name') || '';
+  const guestDisplayName = safeGetItem('conexao-guest-name') || '';
   const [inviteOpen, setInviteOpen] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
@@ -515,15 +539,15 @@ function AppExperience() {
   const nextQuestion = () => { setQuestionIndex(i => (i + 1) % Math.max(questions.length, 1)); };
   const startSession = () => {
     if (!buyerName.trim()) return;
-    localStorage.setItem('conexao-name', buyerName.trim());
+    safeSetItem('conexao-name', buyerName.trim());
     createSession.mutate({ data: { buyerName: buyerName.trim(), packageId: 'couple' } }, {
-      onSuccess: session => { setSessionId(session.id); localStorage.setItem('conexao-session', session.id); setWelcomeOpen(false); queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(session.id) }); },
+      onSuccess: session => { setSessionId(session.id); safeSetItem('conexao-session', session.id); setWelcomeOpen(false); queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(session.id) }); },
       onError: () => setWelcomeOpen(false),
     });
   };
   const makeInvite = () => {
     if (!isOwner || !sessionId || !guestName.trim()) return;
-    createInvite.mutate({ sessionId, data: { guestName: guestName.trim() } }, { onSuccess: result => { setInviteResult(result); queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) }); }, onError: () => setInviteResult({ inviteUrl: `${window.location.origin}/invite/demo-conexao`, guestName: guestName.trim() }) });
+    createInvite.mutate({ sessionId, data: { guestName: guestName.trim() } }, { onSuccess: result => { setInviteResult(result); queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) }); } });
   };
   const copyInvite = () => { if (inviteResult?.inviteUrl) navigator.clipboard?.writeText(inviteResult.inviteUrl); };
   const selectedTheme = themes.find(theme => theme.id === themeId);
@@ -568,7 +592,7 @@ function AppExperienceReference() {
   const themes: QuestionTheme[] = themesData?.length ? themesData : fallbackThemes;
   const [themeId, setThemeId] = useState<string | null>(null);
   const [adultThemePrompt, setAdultThemePrompt] = useState<QuestionTheme | null>(null);
-  const [adultThemeConfirmed, setAdultThemeConfirmed] = useState(() => localStorage.getItem(ADULT_THEME_CONFIRMATION_STORAGE_KEY) === 'true');
+  const [adultThemeConfirmed, setAdultThemeConfirmed] = useState(() => safeGetItem(ADULT_THEME_CONFIRMATION_STORAGE_KEY) === 'true');
   const [dailyMode, setDailyMode] = useState(false);
   const [favoriteMode, setFavoriteMode] = useState(false);
   const [dailyDeck, setDailyDeck] = useState<string[]>([]);
@@ -612,13 +636,13 @@ function AppExperienceReference() {
   const [randomMode, setRandomMode] = useState(true);
   const [writingOpen, setWritingOpen] = useState(false);
   const [responses, setResponses] = useState<Record<string, string>>({});
-  const [sessionId, setSessionId] = useState(() => localStorage.getItem('conexao-session') || '');
-  const [welcomeOpen, setWelcomeOpen] = useState(!localStorage.getItem('conexao-name'));
-  const [buyerName, setBuyerName] = useState(() => localStorage.getItem('conexao-name') || '');
-  const role = localStorage.getItem('conexao-role');
-  const isGuest = role === 'guest' || !!localStorage.getItem('conexao-guest-token');
+  const [sessionId, setSessionId] = useState(() => safeGetItem('conexao-session') || '');
+  const [welcomeOpen, setWelcomeOpen] = useState(!safeGetItem('conexao-name'));
+  const [buyerName, setBuyerName] = useState(() => safeGetItem('conexao-name') || '');
+  const role = safeGetItem('conexao-role');
+  const isGuest = role === 'guest' || !!safeGetItem('conexao-guest-token');
   const isOwner = !isGuest;
-  const guestDisplayName = localStorage.getItem('conexao-guest-name') || '';
+  const guestDisplayName = safeGetItem('conexao-guest-name') || '';
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [guestName, setGuestName] = useState('');
@@ -633,12 +657,12 @@ function AppExperienceReference() {
   const allQuestionsMode = dailyMode || favoriteMode;
   const questionParams = { theme: themeId && !allQuestionsMode ? themeId : undefined };
   const questionsQuery = useListQuestions(questionParams, { query: { enabled: !!themeId, queryKey: getListQuestionsQueryKey(questionParams) } });
-  const onboardingComplete = localStorage.getItem('conexao-onboarding-complete') === 'true';
-  const welcomeDeckDone = localStorage.getItem(ONBOARDING_WELCOME_DECK_DONE_KEY) === 'true';
-  const openWelcomeDeck = localStorage.getItem(ONBOARDING_OPEN_WELCOME_DECK_KEY) === 'true';
-  const welcomeDeckId = localStorage.getItem(ONBOARDING_WELCOME_DECK_ID_KEY) || '';
-  const onboardingRelationship = localStorage.getItem('conexao-relationship') || '';
-  const onboardingFeeling = localStorage.getItem('conexao-feeling') || '';
+  const onboardingComplete = safeGetItem('conexao-onboarding-complete') === 'true';
+  const welcomeDeckDone = safeGetItem(ONBOARDING_WELCOME_DECK_DONE_KEY) === 'true';
+  const openWelcomeDeck = safeGetItem(ONBOARDING_OPEN_WELCOME_DECK_KEY) === 'true';
+  const welcomeDeckId = safeGetItem(ONBOARDING_WELCOME_DECK_ID_KEY) || '';
+  const onboardingRelationship = safeGetItem('conexao-relationship') || '';
+  const onboardingFeeling = safeGetItem('conexao-feeling') || '';
   const relationshipWeights = useMemo(() => getStageWeights(onboardingRelationship), [onboardingRelationship]);
   const allQuestionsQuery = useListQuestions({}, {
     query: {
@@ -683,7 +707,7 @@ function AppExperienceReference() {
     setSeenByTheme(current => {
       const previous = current[question.themeId] || [];
       const next = { ...current, [question.themeId]: [...previous.filter(id => id !== question.id), question.id] };
-      localStorage.setItem(SEEN_BY_THEME_STORAGE_KEY, JSON.stringify(next));
+      safeSetItem(SEEN_BY_THEME_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
     if (activeDeckId) {
@@ -694,7 +718,7 @@ function AppExperienceReference() {
         const nextDecks = seenIds.length >= deck.ids.length && deck.ids.length > 0
           ? current.filter(item => item.id !== activeDeckId)
           : current.map(item => item.id === activeDeckId ? { ...item, seenIds } : item);
-        localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+        safeSetItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
         return nextDecks;
       });
     }
@@ -721,7 +745,7 @@ function AppExperienceReference() {
   };
   const confirmAdultTheme = () => {
     if (!adultThemePrompt) return;
-    localStorage.setItem(ADULT_THEME_CONFIRMATION_STORAGE_KEY, 'true');
+    safeSetItem(ADULT_THEME_CONFIRMATION_STORAGE_KEY, 'true');
     setAdultThemeConfirmed(true);
     applyTheme(adultThemePrompt.id);
     setAdultThemePrompt(null);
@@ -783,7 +807,7 @@ function AppExperienceReference() {
         };
         const nextDecks = [deck, ...personalizedDecks];
         setPersonalizedDecks(nextDecks);
-        localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+        safeSetItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
         setDailyDeck(deck.ids);
         setActiveDeckId(deck.id);
         setActiveNav('eu');
@@ -826,9 +850,9 @@ function AppExperienceReference() {
     };
     const nextDecks = [deck, ...personalizedDecks];
 
-    localStorage.setItem(ONBOARDING_WELCOME_DECK_DONE_KEY, 'true');
-    localStorage.setItem(ONBOARDING_WELCOME_DECK_ID_KEY, deck.id);
-    localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+    safeSetItem(ONBOARDING_WELCOME_DECK_DONE_KEY, 'true');
+    safeSetItem(ONBOARDING_WELCOME_DECK_ID_KEY, deck.id);
+    safeSetItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
     setPersonalizedDecks(nextDecks);
     setDailyDeck(deck.ids);
     setActiveDeckId(deck.id);
@@ -863,12 +887,12 @@ function AppExperienceReference() {
       || personalizedDecks.find(item => item.label === 'Seu primeiro baralho')
       || personalizedDecks[0];
     if (!deck) return;
-    localStorage.removeItem(ONBOARDING_OPEN_WELCOME_DECK_KEY);
+    safeRemoveItem(ONBOARDING_OPEN_WELCOME_DECK_KEY);
     openSavedDailyDeck(deck);
   }, [openWelcomeDeck, personalizedDecks, welcomeDeckDone, welcomeDeckId]);
   const persistPersonalizedDecks = (nextDecks: PersonalizedDeck[]) => {
     setPersonalizedDecks(nextDecks);
-    localStorage.setItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
+    safeSetItem(PERSONALIZED_DECKS_STORAGE_KEY, JSON.stringify(nextDecks));
   };
   const openDeckMenu = (deck: PersonalizedDeck) => {
     setDeckMenuId(deck.id);
@@ -1019,8 +1043,8 @@ function AppExperienceReference() {
   const secondStackQuestion = secondStackQuestionIndex === null ? null : questions[secondStackQuestionIndex];
   const secondStackTheme = secondStackQuestion ? themes.find(theme => theme.id === secondStackQuestion.themeId) : null;
   useEffect(() => markQuestionSeen(currentQuestion), [currentQuestion?.id, activeDeckId]);
-  useEffect(() => { localStorage.setItem(SAVED_QUESTIONS_STORAGE_KEY, JSON.stringify(saved)); }, [saved]);
-  useEffect(() => { localStorage.setItem(FAVORITE_THEMES_STORAGE_KEY, JSON.stringify(favoriteThemeIds)); }, [favoriteThemeIds]);
+  useEffect(() => { safeSetItem(SAVED_QUESTIONS_STORAGE_KEY, JSON.stringify(saved)); }, [saved]);
+  useEffect(() => { safeSetItem(FAVORITE_THEMES_STORAGE_KEY, JSON.stringify(favoriteThemeIds)); }, [favoriteThemeIds]);
   useEffect(() => () => {
     if (questionSwipeTimer.current !== null) window.clearTimeout(questionSwipeTimer.current);
   }, []);
@@ -1093,9 +1117,9 @@ function AppExperienceReference() {
   }, [currentQuestion?.id]);
   const startSession = () => {
     if (!buyerName.trim()) { setWelcomeOpen(false); return; }
-    localStorage.setItem('conexao-name', buyerName.trim());
+    safeSetItem('conexao-name', buyerName.trim());
     createSession.mutate({ data: { buyerName: buyerName.trim(), packageId: 'couple' } }, {
-      onSuccess: session => { setSessionId(session.id); localStorage.setItem('conexao-session', session.id); setWelcomeOpen(false); queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(session.id) }); },
+      onSuccess: session => { setSessionId(session.id); safeSetItem('conexao-session', session.id); setWelcomeOpen(false); queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(session.id) }); },
       onError: () => setWelcomeOpen(false),
     });
   };
@@ -1103,7 +1127,6 @@ function AppExperienceReference() {
     if (!isOwner || !sessionId || !guestName.trim()) return;
     createInvite.mutate({ sessionId, data: { guestName: guestName.trim() } }, {
       onSuccess: result => { setInviteResult(result); queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) }); },
-      onError: () => setInviteResult({ inviteUrl: `${window.location.origin}/invite/demo-conexao`, guestName: guestName.trim() }),
     });
   };
   const copyInvite = () => { if (inviteResult?.inviteUrl) navigator.clipboard?.writeText(inviteResult.inviteUrl); };
@@ -1345,10 +1368,10 @@ function AppExperienceReference() {
   const invite = inviteQuery.data;
   const acceptInvite = () => {
     if (invite && token) {
-      localStorage.setItem('conexao-guest-token', token);
-      localStorage.setItem('conexao-guest-name', invite.guestName);
-      localStorage.setItem('conexao-name', invite.guestName);
-      localStorage.setItem('conexao-role', 'guest');
+      safeSetItem('conexao-guest-token', token);
+      safeSetItem('conexao-guest-name', invite.guestName);
+      safeSetItem('conexao-name', invite.guestName);
+      safeSetItem('conexao-role', 'guest');
     }
   };
   return <div className="invite-page-shell"><main className="invite-entry"><div className="invite-entry-orbit" /><div className="invite-entry-card">{inviteQuery.isLoading ? <><div className="skeleton-line short" /><div className="skeleton-line wide" /><div className="skeleton-line" /></> : invite ? <><div className="invite-symbol"><Feather size={23} /></div><p className="section-kicker light-kicker">um convite para você</p><h1><em>{invite.guestName}</em>, tem uma<br />conversa te esperando.</h1><p className="invite-entry-copy">Você foi convidado para participar de <strong>{invite.packageName}</strong>. Aqui, convidados podem responder e descobrir — só não podem criar novos convites.</p><Link href="/app" onClick={acceptInvite} className="button button-salmon" data-testid="link-accept-invite">Aceitar convite <ArrowRight size={16} /></Link><span className="guest-note"><Users size={14} /> Você entra como convidado</span></> : <><div className="invite-symbol"><X size={23} /></div><p className="section-kicker light-kicker">convite não encontrado</p><h1>Este endereço<br /><em>já mudou de lugar.</em></h1><p className="invite-entry-copy">Peça a quem te convidou para enviar um novo acesso.</p><Link href="/app" className="button button-salmon" data-testid="link-open-demo">Conhecer a experiência <ArrowRight size={16} /></Link></>}</div></main></div>;

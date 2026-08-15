@@ -68,10 +68,34 @@ const welcomeDeckIdStorageKey = 'conexao-welcome-deck-id';
 const welcomeDeckDoneStorageKey = 'conexao-welcome-deck-done';
 const openWelcomeDeckStorageKey = 'conexao-open-welcome-deck';
 
-function removeWelcomeDeck() {
-  const welcomeDeckId = localStorage.getItem(welcomeDeckIdStorageKey);
+function safeGetItem(key: string): string | null {
   try {
-    const stored = JSON.parse(localStorage.getItem(welcomeDeckStorageKey) || '[]');
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Storage may be unavailable in embedded or private browsers.
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage may be unavailable in embedded or private browsers.
+  }
+}
+
+function removeWelcomeDeck() {
+  const welcomeDeckId = safeGetItem(welcomeDeckIdStorageKey);
+  try {
+    const stored = JSON.parse(safeGetItem(welcomeDeckStorageKey) || '[]');
     const decks = Array.isArray(stored)
       ? stored.filter((deck: unknown) => {
         if (!deck || typeof deck !== 'object') return false;
@@ -79,13 +103,13 @@ function removeWelcomeDeck() {
         return item.id !== welcomeDeckId && item.label !== 'Seu primeiro baralho';
       })
       : [];
-    localStorage.setItem(welcomeDeckStorageKey, JSON.stringify(decks));
+    safeSetItem(welcomeDeckStorageKey, JSON.stringify(decks));
   } catch {
-    localStorage.removeItem(welcomeDeckStorageKey);
+    safeRemoveItem(welcomeDeckStorageKey);
   }
-  localStorage.removeItem(welcomeDeckIdStorageKey);
-  localStorage.removeItem(welcomeDeckDoneStorageKey);
-  localStorage.removeItem(openWelcomeDeckStorageKey);
+  safeRemoveItem(welcomeDeckIdStorageKey);
+  safeRemoveItem(welcomeDeckDoneStorageKey);
+  safeRemoveItem(openWelcomeDeckStorageKey);
 }
 
 function daysBetween(dateString: string) {
@@ -97,23 +121,24 @@ function daysBetween(dateString: string) {
 }
 
 function dateParts(dateString: string) {
-  const [year, month, day] = dateString.split('-');
-  return { day: Number(day), month: Number(month), year: Number(year) };
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (![year, month, day].every(Number.isFinite)) return { day: 6, month: 12, year: 2025 };
+  return { day, month, year };
 }
 
 function readOnboardingRole(): OnboardingRole {
-  const role = localStorage.getItem('conexao-role');
+  const role = safeGetItem('conexao-role');
   return role === 'owner' || role === 'guest' ? role : '';
 }
 
 function getInitialOnboardingStep() {
-  const saved = Number(localStorage.getItem('conexao-onboarding-step'));
+  const saved = Number(safeGetItem('conexao-onboarding-step'));
   if (!Number.isInteger(saved) || saved < 0 || saved >= steps.length) return 0;
 
   // Fase 1B stored the old linear step index. Keep an unfinished owner flow
   // in the same place after the two new entry screens were inserted.
   if (!readOnboardingRole() && saved > 0) {
-    localStorage.setItem('conexao-role', 'owner');
+    safeSetItem('conexao-role', 'owner');
     return Math.min(saved + 2, steps.length - 1);
   }
   return saved;
@@ -233,19 +258,19 @@ export default function Onboarding() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [stepIndex, setStepIndex] = useState(getInitialOnboardingStep);
   const [role, setRole] = useState<OnboardingRole>(readOnboardingRole);
-  const [name, setName] = useState(() => localStorage.getItem('conexao-onboarding-name') || '');
-  const [pronoun, setPronoun] = useState(() => localStorage.getItem('conexao-onboarding-pronoun') || '');
-  const [relationship, setRelationship] = useState(() => localStorage.getItem('conexao-onboarding-relationship') || '');
-  const [date, setDate] = useState(() => localStorage.getItem('conexao-onboarding-date') || '2025-12-06');
+  const [name, setName] = useState(() => safeGetItem('conexao-onboarding-name') || '');
+  const [pronoun, setPronoun] = useState(() => safeGetItem('conexao-onboarding-pronoun') || '');
+  const [relationship, setRelationship] = useState(() => safeGetItem('conexao-onboarding-relationship') || '');
+  const [date, setDate] = useState(() => safeGetItem('conexao-onboarding-date') || '2025-12-06');
   const [curiosity, setCuriosity] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem('conexao-onboarding-curiosity') || '[]');
+      return JSON.parse(safeGetItem('conexao-onboarding-curiosity') || '[]');
     } catch {
       return [];
     }
   });
   const [surprise, setSurprise] = useState('');
-  const [feeling, setFeeling] = useState(() => localStorage.getItem('conexao-onboarding-feeling') || '');
+  const [feeling, setFeeling] = useState(() => safeGetItem('conexao-onboarding-feeling') || '');
   const [guestInviteLink, setGuestInviteLink] = useState('');
   const [guestInviteError, setGuestInviteError] = useState('');
   const [animatedDays, setAnimatedDays] = useState(0);
@@ -263,9 +288,9 @@ export default function Onboarding() {
 
   useEffect(() => {
     if (
-      localStorage.getItem('conexao-session')
-      || localStorage.getItem('conexao-onboarding-complete') === 'true'
-      || localStorage.getItem('conexao-guest-token')
+      safeGetItem('conexao-session')
+      || safeGetItem('conexao-onboarding-complete') === 'true'
+      || safeGetItem('conexao-guest-token')
     ) {
       navigate('/app', { replace: true });
     }
@@ -301,42 +326,42 @@ export default function Onboarding() {
   }, [prefersReducedMotion, sharedDays, step.id]);
 
   useEffect(() => {
-    localStorage.setItem('conexao-onboarding-step', String(stepIndex));
-    localStorage.setItem('conexao-onboarding-name', name);
-    localStorage.setItem('conexao-onboarding-pronoun', pronoun);
-    localStorage.setItem('conexao-onboarding-relationship', relationship);
-    localStorage.setItem('conexao-onboarding-date', date);
-    localStorage.setItem('conexao-onboarding-curiosity', JSON.stringify(curiosity));
-    localStorage.setItem('conexao-onboarding-feeling', feeling);
-    if (role) localStorage.setItem('conexao-role', role);
+    safeSetItem('conexao-onboarding-step', String(stepIndex));
+    safeSetItem('conexao-onboarding-name', name);
+    safeSetItem('conexao-onboarding-pronoun', pronoun);
+    safeSetItem('conexao-onboarding-relationship', relationship);
+    safeSetItem('conexao-onboarding-date', date);
+    safeSetItem('conexao-onboarding-curiosity', JSON.stringify(curiosity));
+    safeSetItem('conexao-onboarding-feeling', feeling);
+    if (role) safeSetItem('conexao-role', role);
 
     if (step.id === 'preparing') {
-      localStorage.setItem('conexao-name', name.trim());
-      localStorage.setItem('conexao-relationship', relationship);
-      localStorage.setItem('conexao-curiosity', JSON.stringify(curiosity));
-      localStorage.setItem('conexao-feeling', feeling);
-      localStorage.setItem('conexao-partner-pronoun', pronoun);
-      localStorage.setItem('conexao-onboarding-complete', 'true');
+      safeSetItem('conexao-name', name.trim());
+      safeSetItem('conexao-relationship', relationship);
+      safeSetItem('conexao-curiosity', JSON.stringify(curiosity));
+      safeSetItem('conexao-feeling', feeling);
+      safeSetItem('conexao-partner-pronoun', pronoun);
+      safeSetItem('conexao-onboarding-complete', 'true');
     }
   }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling, role]);
 
   const goNext = () => setStepIndex((current) => Math.min(current + 1, steps.length - 1));
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
   const reset = () => {
-    localStorage.removeItem('conexao-onboarding-step');
-    localStorage.removeItem('conexao-onboarding-name');
-    localStorage.removeItem('conexao-onboarding-pronoun');
-    localStorage.removeItem('conexao-onboarding-relationship');
-    localStorage.removeItem('conexao-onboarding-date');
-    localStorage.removeItem('conexao-onboarding-curiosity');
-    localStorage.removeItem('conexao-onboarding-feeling');
-    localStorage.removeItem('conexao-onboarding-complete');
-    localStorage.removeItem('conexao-role');
-    localStorage.removeItem('conexao-name');
-    localStorage.removeItem('conexao-relationship');
-    localStorage.removeItem('conexao-curiosity');
-    localStorage.removeItem('conexao-feeling');
-    localStorage.removeItem('conexao-partner-pronoun');
+    safeRemoveItem('conexao-onboarding-step');
+    safeRemoveItem('conexao-onboarding-name');
+    safeRemoveItem('conexao-onboarding-pronoun');
+    safeRemoveItem('conexao-onboarding-relationship');
+    safeRemoveItem('conexao-onboarding-date');
+    safeRemoveItem('conexao-onboarding-curiosity');
+    safeRemoveItem('conexao-onboarding-feeling');
+    safeRemoveItem('conexao-onboarding-complete');
+    safeRemoveItem('conexao-role');
+    safeRemoveItem('conexao-name');
+    safeRemoveItem('conexao-relationship');
+    safeRemoveItem('conexao-curiosity');
+    safeRemoveItem('conexao-feeling');
+    safeRemoveItem('conexao-partner-pronoun');
     removeWelcomeDeck();
     setStepIndex(0);
     setName('');
@@ -455,7 +480,7 @@ export default function Onboarding() {
                 selected={role === 'owner'}
                 onClick={() => {
                   setRole('owner');
-                  localStorage.setItem('conexao-role', 'owner');
+                  safeSetItem('conexao-role', 'owner');
                 }}
               />
               <Choice
@@ -464,7 +489,7 @@ export default function Onboarding() {
                 selected={role === 'guest'}
                 onClick={() => {
                   setRole('guest');
-                  localStorage.setItem('conexao-role', 'guest');
+                  safeSetItem('conexao-role', 'guest');
                 }}
               />
             </div>
@@ -664,7 +689,7 @@ export default function Onboarding() {
             <p className="onboarding-kicker">seu baralho está pronto</p>
             <h1>Agora é só<br /><em>começar a conversa.</em></h1>
             <p>As perguntas certas não entregam respostas prontas. Elas abrem espaço para vocês se encontrarem.</p>
-            <ContinueButton onClick={() => { localStorage.setItem(openWelcomeDeckStorageKey, 'true'); navigate('/app'); }} light>Abrir meu baralho</ContinueButton>
+            <ContinueButton onClick={() => { safeSetItem(openWelcomeDeckStorageKey, 'true'); navigate('/app'); }} light>Abrir meu baralho</ContinueButton>
             <button onClick={reset} className="onboarding-restart">Refazer o quiz</button>
           </div>
         );
@@ -697,7 +722,7 @@ export default function Onboarding() {
         setGuestInviteError('Esse link não parece certo — confere e cola de novo');
         return;
       }
-      localStorage.setItem('conexao-role', 'guest');
+      safeSetItem('conexao-role', 'guest');
       navigate(`/invite/${encodeURIComponent(token)}`);
       return;
     }

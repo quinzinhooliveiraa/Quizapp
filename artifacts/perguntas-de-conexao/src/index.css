@@ -4269,3 +4269,45 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   width: min(calc(100% - 3rem - env(safe-area-inset-left) - env(safe-area-inset-right)), 470px);
   padding-inline: 0;
 }
+
+@media (min-width: 700px) {
+  .app-modal-backdrop {
+    left: 50%;
+    width: 430px;
+    transform: translateX(-50%);
+  }
+
+  .app-install-prompt {
+    right: max(1.2rem, calc(50% - 215px - 1.2rem));
+  }
+
+  .eu-deck-history-row,
+  .eu-progress-row,
+  .eu-topic-row {
+    scrollbar-width: thin;
+  }
+
+  .eu-deck-history-row::-webkit-scrollbar,
+  .eu-progress-row::-webkit-scrollbar,
+  .eu-topic-row::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+
+  .eu-deck-history-row::-webkit-scrollbar-thumb,
+  .eu-progress-row::-webkit-scrollbar-thumb,
+  .eu-topic-row::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.25);
+    border-radius: 999px;
+  }
+
+  .theme-carousel,
+  .question-card {
+    cursor: grab;
+  }
+
+  .theme-carousel.is-dragging,
+  .question-card.is-dragging {
+    cursor: grabbing;
+  }
+}
