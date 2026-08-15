@@ -1,0 +1,29 @@
+Instrução Replit — trocar o conteúdo pelo acervo completo (459 perguntas, 15 categorias)
+
+Vêm junto dois arquivos com o código já pronto:
+
+connection-data.ts.txt → arrays themes e questions do servidor.
+connection-frontend.ts.txt → fallbackThemes e fallbackQuestions do front-end.
+PARTE A — Núcleo (faz o conteúdo entrar; baixo risco)
+1. Servidor: artifacts/api-server/src/routes/connection.ts
+No tipo Question (por volta da linha 26-31), adicionar o campo de estágio:
+ts
+  stage: "novo" | "firme" | "qualquer";
+Substituir o array themes inteiro e o array questions inteiro pelos que estão em connection-data.ts.txt (é só colar por cima dos dois arrays atuais). São 15 categorias e 459 perguntas, com kind, audience, intensity e stage já preenchidos.
+Observação: o endpoint /questions valida a resposta com Zod (ListQuestionsResponse.parse). O campo stage extra é simplesmente ignorado por enquanto — não quebra nada. Ele só passa a ser usado pelo cliente na Parte B.
+2. Front-end: artifacts/perguntas-de-conexao/src/App.tsx
+Substituir fallbackThemes e fallbackQuestions (por volta das linhas 29-68) pelos que estão em connection-frontend.ts.txt. Mantém servidor e offline consistentes.
+3. Categorias novas aparecem sozinhas
+As duas categorias novas (depois-da-tempestade, e as 18+ fogo-alto/sem-freio) já entram no menu, porque o carrossel filtra por kind (tema/vibe) e o aviso 18+ dispara por audience: "18+". Conferir que abrir "Fogo Alto" e "Sem Freio" mostra o aviso de confirmação 18+ antes de entrar (mesmo comportamento de "Luzes Baixas").
+4. Formulário "Perguntas pra hoje" — incluir as categorias novas
+
+Em App.tsx, nos mapeamentos dailyVibeOptions (por volta da linha 92) e dailyMoodOptions, ajustar pra que a geração possa puxar das categorias novas:
+
+Na opção de vibe "esquentar" (themes: ['luzes-baixas']), incluir também as novas 18+: themes: ['luzes-baixas', 'fogo-alto', 'sem-freio'].
+Adicionar uma opção de vibe nova pra reconciliação, ex: { value: 'reconectar', label: 'Resolver o que ficou', themes: ['depois-da-tempestade', 'perto-de-novo'], intensity: 'honest' }.
+Conferir que todas as themes citadas em dailyMoodOptions/dailyVibeOptions são ids que existem no acervo novo (os ids antigos mesmo-longe, perto-de-novo, modo-leve, etc. continuam válidos).
+Verificação da Parte A
+Abrir cada aba (Todos/Temas/Vibes) e ver as 15 categorias, contagem certa por card.
+Abrir 4-5 categorias diferentes e confirmar que as perguntas são as novas, sem repetição nem pergunta trocada de categoria.
+Confirmar o aviso 18+ em Luzes Baixas, Fogo Alto e Sem Freio.
+Gerar um baralho no "Perguntas pra hoje" e confirmar que funciona com o acervo novo.

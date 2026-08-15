@@ -14,6 +14,11 @@ import {
   ReceiveCheckoutWebhookBody,
   ReceiveCheckoutWebhookResponse,
 } from "@workspace/api-zod";
+import {
+  questions as connectionQuestions,
+  themes as connectionThemes,
+  type ConnectionQuestion,
+} from "@workspace/connection-content";
 import crypto from "node:crypto";
 
 type Theme = {
@@ -25,12 +30,7 @@ type Theme = {
   kind: "tema" | "vibe";
 };
 
-type Question = {
-  id: string;
-  themeId: string;
-  text: string;
-  intensity: "gentle" | "honest" | "deep";
-};
+type Question = ConnectionQuestion;
 
 type Session = {
   id: string;
@@ -50,7 +50,7 @@ type Invite = {
   isUsed: boolean;
 };
 
-const themes: Theme[] = [
+const legacyThemes: Theme[] = [
   {
     id: "porto-seguro",
     title: "Porto Seguro",
@@ -165,7 +165,7 @@ const themes: Theme[] = [
   },
 ];
 
-const questions: Question[] = [
+const legacyQuestions = [
   { id: "ps1", themeId: "porto-seguro", intensity: "gentle", text: "O que faz você se sentir realmente à vontade perto de alguém?" },
   { id: "ps2", themeId: "porto-seguro", intensity: "gentle", text: "Qual detalhe pequeno do nosso primeiro encontro você ainda lembra?" },
   { id: "ps3", themeId: "porto-seguro", intensity: "honest", text: "Que assunto você gostaria que a gente conversasse mais?" },
@@ -205,6 +205,9 @@ const questions: Question[] = [
   { id: "cd1", themeId: "carreira-dinheiro", intensity: "honest", text: "Que sonho profissional você gostaria que a gente construísse lado a lado?" },
   { id: "cd2", themeId: "carreira-dinheiro", intensity: "deep", text: "Como vocês gostariam de conversar sobre dinheiro quando a vida apertar?" },
 ];
+
+const themes = connectionThemes;
+const questions: Question[] = connectionQuestions;
 
 const sessions = new Map<string, Session>();
 const invites = new Map<string, Invite>();
