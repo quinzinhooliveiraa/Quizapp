@@ -1,0 +1,41 @@
+# Instrução Replit — trocar o roxo por vinho (identidade própria)
+
+Rebrand de cor: manter o tema escuro e todo o estilo, só trocar a família de **roxo/violeta** por **vinho/vermelho profundo**. Isso diferencia da referência (que é roxo) e vira a cara da marca. Foi calculado por rotação de matiz mantendo o brilho de cada cor, então o contraste e a legibilidade continuam iguais — nada de texto sumindo.
+
+Vem junto o arquivo **`apply-cores-vinho.py`** (script pronto) e **`mapa-cores-vinho.txt`** (a lista de-para, pra referência).
+
+## Como aplicar (jeito mais seguro — 1 comando)
+
+Rodar o script na raiz do artifact do app:
+
+```
+cd artifacts/perguntas-de-conexao
+python3 apply-cores-vinho.py
+```
+
+Ele faz, numa passada só (sem encadear substituições), a troca de **162 tons** de roxo→vinho em:
+- `src/index.css` (todos os roxos de destaque, gradientes e fundos escuros)
+- `index.html` (a meta `theme-color`)
+- `public/manifest.json` (`theme_color` e `background_color` do PWA)
+
+Depois de rodar, o app inteiro passa de "roxo escuro" pra "vinho escuro": os destaques claros (ex: `#b99aff`) viram rosa-vinho, os roxos médios (ex: `#6945d5`) viram vinho, e os fundos plum escuros esquentam pro bordô. Os cards que já eram rosados (os gradientes de pergunta) continuam iguais e passam a combinar naturalmente.
+
+## Se preferir não rodar script
+Usar o `mapa-cores-vinho.txt` como lista de find→replace (cada linha é `#roxo -> #vinho`) e aplicar em `src/index.css`, `index.html` e `public/manifest.json`. Importante: aplicar tudo **de uma vez** (não em cadeia), pra um valor novo não ser pego por outra regra.
+
+## Depois de aplicar — dar uma olhada humana
+O script acerta a matiz automaticamente, mas vale conferir no olho 4-5 pontos e ajustar fino se algum ficar estranho:
+- Botões principais e o botão "Adicionar/Entrar".
+- O ponto ativo do menu de baixo e os estados "is-active".
+- O onboarding (gradientes, a planta, a barra de progresso).
+- As 3 categorias 18+ (os selos).
+- Se algum vinho ficar vermelho vivo demais num botão grande, escurecer um tico à mão (ex: puxar pro `#a12a44`).
+
+## Verificação
+- Abrir o app e confirmar que **não sobrou roxo** em lugar nenhum (menu, cards, onboarding, modais).
+- Confirmar que todo texto continua legível (o brilho foi preservado, então deve estar ok).
+- Instalar/atualizar o PWA e ver a cor da barra/splash em vinho escuro (não mais roxo).
+- Comparar rapidamente com o app de referência e confirmar que agora tem cara própria.
+
+## Observação
+Pra facilitar trocas de cor no futuro, num momento calmo vale extrair a família de destaque pra variáveis CSS (ex: `--brand`, `--brand-soft`, `--brand-deep`) e usar a variável no lugar dos hexes — aí mudar a cor da marca vira um lugar só. Não é pra agora; é só uma nota de manutenção.
