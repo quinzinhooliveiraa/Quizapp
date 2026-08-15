@@ -30,6 +30,13 @@ const queryClient = new QueryClient();
 const fallbackThemes: QuestionTheme[] = connectionThemes;
 const fallbackQuestions: Question[] = connectionQuestions.map(({ stage: _stage, ...question }) => question);
 
+type QuestionStage = 'novo' | 'firme' | 'qualquer';
+type StageWeights = Record<QuestionStage, number>;
+
+const stageById: Record<string, QuestionStage> = Object.fromEntries(
+  connectionQuestions.map(question => [question.id, question.stage]),
+);
+
 const PERSONALIZED_DECKS_STORAGE_KEY = 'conexao-personalized-decks';
 const SEEN_BY_THEME_STORAGE_KEY = 'conexao-seen-by-theme';
 const SAVED_QUESTIONS_STORAGE_KEY = 'conexao-saved-question-ids';
@@ -227,7 +234,33 @@ function deterministicShuffle<T>(items: T[], seed: string) {
   return result;
 }
 
-function selectPersonalizedQuestionIds(allQuestions: Question[], moodValue: string, vibeValue: string, count: number, seed: string) {
+function getStageWeights(relationship: string): StageWeights {
+  if (relationship.includes('saindo')) return { novo: 3, qualquer: 2, firme: 0 };
+  if (relationship.includes('esposo') || relationship.includes('esposa')) return { novo: 0, qualquer: 2, firme: 3 };
+  if (relationship.includes('distância') || relationship.includes('distancia')) return { novo: 1, qualquer: 2, firme: 2 };
+  return { novo: 1, qualquer: 2, firme: 1 };
+}
+
+function weightByStage(list: Question[], seed: string, weights: StageWeights): Question[] {
+  const random = seededValue(seed);
+  return [...list]
+    .map((question, index) => ({
+      question,
+      index,
+      key: weights[stageById[question.id] || 'qualquer'] + random() * 2,
+    }))
+    .sort((first, second) => second.key - first.key || first.index - second.index)
+    .map(item => item.question);
+}
+
+function selectPersonalizedQuestionIds(
+  allQuestions: Question[],
+  moodValue: string,
+  vibeValue: string,
+  count: number,
+  seed: string,
+  weights: StageWeights,
+) {
   const available = allQuestions.length ? allQuestions : fallbackQuestions;
   const mood = dailyMoodOptions.find(option => option.value === moodValue) || dailyMoodOptions[0];
   const vibe = dailyVibeOptions.find(option => option.value === vibeValue) || dailyVibeOptions[0];
@@ -237,6 +270,7 @@ function selectPersonalizedQuestionIds(allQuestions: Question[], moodValue: stri
     (preferredThemes.has(question.themeId) ? 4 : 0)
     + (question.intensity === vibe.intensity ? 2 : 0)
     + (question.intensity === mood.intensity ? 1 : 0)
+    + weights[stageById[question.id] || 'qualquer']
   );
   return shuffled
     .sort((first, second) => score(second) - score(first))
@@ -605,6 +639,7 @@ function AppExperienceReference() {
   const welcomeDeckId = localStorage.getItem(ONBOARDING_WELCOME_DECK_ID_KEY) || '';
   const onboardingRelationship = localStorage.getItem('conexao-relationship') || '';
   const onboardingFeeling = localStorage.getItem('conexao-feeling') || '';
+  const relationshipWeights = useMemo(() => getStageWeights(onboardingRelationship), [onboardingRelationship]);
   const allQuestionsQuery = useListQuestions({}, {
     query: {
       enabled: activeNav === 'eu' || allQuestionsMode || (onboardingComplete && !welcomeDeckDone),
@@ -614,14 +649,25 @@ function AppExperienceReference() {
   const createSession = useCreateQuestionSession();
   const createInvite = useCreateInvite();
   const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
-  const dailyQuestions = dailyDeck.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question));
+  const dailyQuestions = useMemo(() => dailyDeck.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, dailyDeck]);
   const favoriteQuestions = useMemo(() => saved.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, saved]);
   const inProgressThemes = useMemo(() => themes.filter(theme => {
     const count = seenByTheme[theme.id]?.length || 0;
     return count > 0 && count < theme.count;
   }), [themes, seenByTheme]);
   const continueThemes = inProgressThemes.length ? inProgressThemes : themes.slice(0, 2);
-  const questions = favoriteMode ? favoriteQuestions : dailyMode ? dailyQuestions : themeId ? (questionsQuery.data?.length ? questionsQuery.data : (fallbackQuestions.filter(q => q.themeId === themeId).length ? fallbackQuestions.filter(q => q.themeId === themeId) : fallbackQuestions)) : [];
+  const themeQuestions = useMemo(() => {
+    if (!themeId) return [];
+    if (questionsQuery.data?.length) return questionsQuery.data;
+    const fallbackThemeQuestions = fallbackQuestions.filter(question => question.themeId === themeId);
+    return fallbackThemeQuestions.length ? fallbackThemeQuestions : fallbackQuestions;
+  }, [questionsQuery.data, themeId]);
+  const questions = useMemo(() => {
+    if (favoriteMode) return favoriteQuestions;
+    if (dailyMode) return dailyQuestions;
+    if (!themeId) return [];
+    return weightByStage(themeQuestions, `${themeId}-${onboardingRelationship}`, relationshipWeights);
+  }, [dailyQuestions, dailyMode, favoriteMode, favoriteQuestions, onboardingRelationship, relationshipWeights, themeId, themeQuestions]);
   const currentQuestion = questions.length ? questions[questionIndex % questions.length] : null;
   const activeAccess = sessionQuery.data || accessQuery.data;
   const canInvite = sessionQuery.data ? sessionQuery.data.invitesUsed < sessionQuery.data.inviteLimit : !!accessQuery.data?.canInvite;
@@ -731,7 +777,7 @@ function AppExperienceReference() {
           id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `deck-${Date.now()}`,
           createdAt,
           label: `${vibe?.label || mood?.label || 'Perguntas pra hoje'} · ${dateLabel}`,
-          ids: selectPersonalizedQuestionIds(availableQuestions, selectedMood, selectedVibe, selectedCount, `${createdAt}-${selectedMood}-${selectedVibe}-${selectedCount}`),
+          ids: selectPersonalizedQuestionIds(availableQuestions, selectedMood, selectedVibe, selectedCount, `${createdAt}-${selectedMood}-${selectedVibe}-${selectedCount}`, relationshipWeights),
           cover: deckCoverByVibe[selectedVibe] || deckCoverOptions[Math.floor(Math.random() * deckCoverOptions.length)].id,
           seenIds: [],
         };
@@ -773,6 +819,7 @@ function AppExperienceReference() {
         vibe,
         8,
         `${deckId}-${createdAt}-${onboardingRelationship}-${onboardingFeeling}`,
+        relationshipWeights,
       ),
       cover: deckCoverByVibe[vibe] || deckCoverOptions[0].id,
       seenIds: [],

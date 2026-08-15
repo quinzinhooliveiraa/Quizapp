@@ -1,0 +1,83 @@
+# Parte B — Ponderação por estágio (sem codegen, usando o pacote compartilhado)
+
+Boa notícia: como o front-end já importa `questions as connectionQuestions` de `@workspace/connection-content` (`App.tsx`, linha 22) — e esse pacote **já tem o campo `stage`** (`novo`/`firme`/`qualquer`) — dá pra fazer a ponderação **só no cliente, sem tocar no schema Zod, sem OpenAPI e sem regenerar o Orval.** O `stage` que sumia na API a gente recupera por um lookup pelo `id`.
+
+Objetivo: quem está "saindo" vê mais perguntas de início; quem é "casado" vê mais de história; todos veem as `qualquer`. É **peso, não filtro** — nada é escondido.
+
+## 1. Lookup de estágio por id (a peça que resolve o "API não tem stage")
+
+Em `App.tsx`, perto de onde `connectionQuestions` é importado, criar um mapa:
+
+```ts
+const stageById: Record<string, 'novo' | 'firme' | 'qualquer'> =
+  Object.fromEntries(connectionQuestions.map(q => [q.id, q.stage]));
+```
+
+Assim, mesmo quando as perguntas vêm da API (sem `stage`), a gente descobre o estágio pelo `id`. Fallback: se um id não estiver no mapa, tratar como `'qualquer'`.
+
+## 2. Ler o estágio do onboarding e virar peso
+
+O onboarding já salva `conexao-relationship` (o app já lê isso como `onboardingRelationship`). Mapear pra um peso por estágio:
+
+```ts
+const relationship = localStorage.getItem('conexao-relationship') || '';
+function stageWeights(rel: string): Record<'novo'|'firme'|'qualquer', number> {
+  if (rel.includes('saindo'))        return { novo: 3, qualquer: 2, firme: 0 };
+  if (rel.includes('esposo') || rel.includes('esposa')) return { novo: 0, qualquer: 2, firme: 3 };
+  if (rel.includes('distância') || rel.includes('distancia')) return { novo: 1, qualquer: 2, firme: 2 };
+  // namorado(a) e qualquer outro caso: equilibrado
+  return { novo: 1, qualquer: 2, firme: 1 };
+}
+const weights = stageWeights(relationship);
+```
+
+(Os textos exatos das opções estão no onboarding: "Alguém com quem estou saindo", "Meu esposo ou minha esposa", "Namoro à distância", "Meu namorado ou minha namorada" — por isso o `includes` casa por trecho.)
+
+## 3. Aplicar o peso na ordem das perguntas de um tema
+
+Hoje as perguntas de um tema são usadas na ordem que vêm (`questions`, ~linha 472 e ~624). Fazer uma **reordenação ponderada e estável** (determinística na sessão, pra não "pular" a cada render): dar a cada pergunta uma chave = peso do seu estágio + um ruído pseudo-aleatório com semente fixa, e ordenar por essa chave (maior peso tende a vir antes, mas tudo continua alcançável).
+
+Reaproveitar o `seededValue`/`deterministicShuffle` que já existem no arquivo. Exemplo de helper:
+
+```ts
+function weightByStage(list: Question[], seed: string): Question[] {
+  const rnd = seededValue(seed);
+  return [...list]
+    .map(q => {
+      const w = weights[stageById[q.id] || 'qualquer'];
+      // peso alto empurra pra frente; ruído mantém variedade e reachability
+      return { q, key: w + rnd() * 2 };
+    })
+    .sort((a, b) => b.key - a.key)
+    .map(x => x.q);
+}
+```
+
+Aplicar isso ao montar a lista `questions` de um tema (quando não está em `dailyMode`/`favoriteMode`), usando uma semente que inclua o `themeId` (pra cada tema ter sua ordem, estável no dia). Não aplicar quando `allQuestionsMode` (aí quem manda é a lógica do baralho personalizado, abaixo).
+
+## 4. Aplicar o peso também no baralho personalizado
+
+Em `selectPersonalizedQuestionIds` (a função que monta o "Perguntas pra hoje"), somar o peso de estágio ao `score` que já existe:
+
+```ts
+const score = (question) => (
+  (preferredThemes.has(question.themeId) ? 4 : 0)
+  + (question.intensity === vibe.intensity ? 2 : 0)
+  + (question.intensity === mood.intensity ? 1 : 0)
+  + (weights[stageById[question.id] || 'qualquer'])   // <-- novo
+);
+```
+
+Passar os `weights` pra função (ou lê-los lá dentro do `localStorage`), pra o baralho do dia também respeitar o estágio.
+
+## 5. Nada é escondido
+
+Reforçando: é ponderação. Uma pergunta `firme` ainda pode aparecer pra quem está "saindo" (só com menos prioridade), e uma `novo` ainda aparece pra quem é casado. As `qualquer` têm peso médio e aparecem pra todos. Ninguém fica sem conteúdo.
+
+## Verificação
+
+- Refazer o onboarding escolhendo "Alguém com quem estou saindo", abrir um tema e conferir que as primeiras perguntas tendem a ser de início (`novo`/`qualquer`).
+- Refazer escolhendo "Meu esposo ou minha esposa" e conferir que aparecem mais perguntas de história (`firme`), mas as universais continuam vindo.
+- Gerar um "Perguntas pra hoje" nos dois casos e confirmar que o baralho reflete o estágio.
+- Confirmar que, rolando bastante, ainda dá pra chegar em perguntas de todos os estágios (nada sumiu).
+- Confirmar que a ordem não "pula" a cada toque (é estável na sessão).
