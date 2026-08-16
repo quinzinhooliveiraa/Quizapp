@@ -1220,16 +1220,6 @@ function AppExperienceReference() {
                 <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
                 <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> {writingOpen ? 'Escrevendo' : 'Escrever'}</button>
              </div>
-             <button
-               className="question-navigation-button question-navigation-next"
-               onClick={nextQuestion}
-               aria-label="Próxima pergunta"
-               title="Próxima pergunta"
-               data-testid="button-next-question-arrow"
-             >
-               <ChevronRight size={21} />
-             </button>
-           </div>
               {(allQuestionsMode ? allQuestionsQuery.isLoading : questionsQuery.isLoading) ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : (allQuestionsMode ? allQuestionsQuery.isError : questionsQuery.isError) ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => (allQuestionsMode ? allQuestionsQuery.refetch() : questionsQuery.refetch())} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <div className={`question-card-layers ${questionSwipeExit ? 'is-swiping' : ''}`}>
                 {secondStackQuestion && <article
                   key={`underlay-${secondStackQuestion.id}`}
@@ -1267,6 +1257,16 @@ function AppExperienceReference() {
                 <button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => toggleSaved(currentQuestion.id)} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button>
                 </article>
               </div>}
+             </div>
+             <button
+               className="question-navigation-button question-navigation-next"
+               onClick={nextQuestion}
+               aria-label="Próxima pergunta"
+               title="Próxima pergunta"
+               data-testid="button-next-question-arrow"
+             >
+               <ChevronRight size={21} />
+             </button>
           </div>
            {showInvitePrompt && <aside className="invite-prompt-card" aria-labelledby="invite-prompt-title" data-testid="card-invite-prompt">
              <div className="invite-prompt-icon"><Users size={16} /></div>
