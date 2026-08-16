@@ -5889,9 +5889,25 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 /* Touch layouts use swipe and the in-card actions instead of desktop
    navigation controls. */
 @media (max-width: 699px) {
-  .question-navigation-button,
-  .app-bottom-nav {
+  .theme-carousel-arrow,
+  .question-navigation-button {
     display: none !important;
+  }
+
+  .app-bottom-nav {
+    display: grid !important;
+  }
+
+  .app-bottom-nav > button:not(.app-nav-toggle) {
+    gap: 0;
+    min-height: 2.8rem;
+    font-size: clamp(.58rem, 2.8vw, .72rem);
+    font-weight: 600;
+  }
+
+  .app-bottom-nav > button:not(.app-nav-toggle) svg,
+  .app-bottom-nav > button:not(.app-nav-toggle) .nav-dot {
+    display: none;
   }
 }
 
