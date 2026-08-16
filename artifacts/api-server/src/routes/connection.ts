@@ -23,7 +23,14 @@ import {
   themes as connectionThemes,
   type ConnectionQuestion,
 } from "@workspace/connection-content";
+import {
+  db,
+  invitesTable,
+  processedEventsTable,
+  sessionsTable,
+} from "@workspace/db";
 import crypto from "node:crypto";
+import { and, eq, sql } from "drizzle-orm";
 import {
   createAbacateCheckout,
   verifyAbacateSignature,
@@ -39,24 +46,6 @@ type Theme = {
 };
 
 type Question = ConnectionQuestion;
-
-type Session = {
-  id: string;
-  buyerName: string;
-  packageId: string;
-  packageName: string;
-  inviteLimit: number;
-  invitesUsed: number;
-  accessGranted: boolean;
-};
-
-type Invite = {
-  token: string;
-  guestName: string;
-  sessionId: string;
-  inviteUrl: string;
-  isUsed: boolean;
-};
 
 const legacyThemes: Theme[] = [
   {
@@ -217,10 +206,6 @@ const legacyQuestions = [
 const themes = connectionThemes;
 const questions: Question[] = connectionQuestions;
 
-const sessions = new Map<string, Session>();
-const invites = new Map<string, Invite>();
-const processedEvents = new Set<string>();
-
 const packageConfig = {
   couple: { name: "Pacote Casal", limit: 1 },
   family: { name: "Pacote Família", limit: 5 },
@@ -256,7 +241,7 @@ router.get("/access/preview", (_req, res): void => {
   }));
 });
 
-router.post("/access/sessions", (req, res): void => {
+router.post("/access/sessions", async (req, res): Promise<void> => {
   if (process.env.ALLOW_DEMO_ACCESS !== "true") {
     res.status(403).json({ error: "Acesso direto desativado. Use /checkout/create." });
     return;
@@ -267,7 +252,7 @@ router.post("/access/sessions", (req, res): void => {
     return;
   }
   const config = packageConfig[parsed.data.packageId];
-  const session: Session = {
+  const [session] = await db.insert(sessionsTable).values({
     id: crypto.randomUUID(),
     buyerName: parsed.data.buyerName,
     packageId: parsed.data.packageId,
@@ -275,8 +260,7 @@ router.post("/access/sessions", (req, res): void => {
     inviteLimit: config.limit,
     invitesUsed: 0,
     accessGranted: true,
-  };
-  sessions.set(session.id, session);
+  }).returning();
   res.status(201).json(CreateQuestionSessionResponse.parse(session));
 });
 
@@ -299,16 +283,16 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
 
   const config = packageConfig[parsed.data.packageId];
   const sessionId = crypto.randomUUID();
-  const session: Session = {
+  const [session] = await db.insert(sessionsTable).values({
     id: sessionId,
     buyerName: parsed.data.buyerName.trim(),
+    buyerEmail: parsed.data.buyerEmail,
     packageId: parsed.data.packageId,
     packageName: config.name,
     inviteLimit: config.limit,
     invitesUsed: 0,
     accessGranted: false,
-  };
-  sessions.set(sessionId, session);
+  }).returning();
 
   try {
     const { checkoutUrl } = await createAbacateCheckout({
@@ -319,7 +303,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     });
     res.status(201).json(CreateCheckoutResponse.parse({ sessionId, checkoutUrl }));
   } catch (error) {
-    sessions.delete(sessionId);
+    await db.delete(sessionsTable).where(eq(sessionsTable.id, sessionId));
     req.log.error({ err: error, sessionId }, "Failed to create Abacate Pay checkout");
     res.status(502).json({
       error: "Não foi possível iniciar o pagamento. Tenta de novo em instantes.",
@@ -327,7 +311,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/checkout/abacatepay-webhook", (req, res): void => {
+router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
   const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
   const signature = req.header("X-Webhook-Signature");
   if (!rawBody || !verifyAbacateSignature(rawBody, signature)) {
@@ -343,21 +327,32 @@ router.post("/checkout/abacatepay-webhook", (req, res): void => {
 
   const eventId = parsed.data.id;
   const sessionId = parsed.data.data.metadata?.sessionId ?? parsed.data.data.externalId;
-  if (eventId && processedEvents.has(eventId)) {
-    res.json(ReceiveAbacatePayWebhookResponse.parse({
-      accepted: true,
-      message: "Evento já processado",
-    }));
-    return;
-  }
-  if (eventId) processedEvents.add(eventId);
+  if (eventId) {
+    const result = await db.transaction(async (tx) => {
+      const [processedEvent] = await tx.insert(processedEventsTable)
+        .values({ id: eventId })
+        .onConflictDoNothing()
+        .returning();
+      if (!processedEvent) return "duplicate" as const;
 
-  if (parsed.data.event === "checkout.completed" && typeof sessionId === "string") {
-    const session = sessions.get(sessionId);
-    if (session) {
-      session.accessGranted = true;
-      sessions.set(sessionId, session);
+      if (parsed.data.event === "checkout.completed" && typeof sessionId === "string") {
+        await tx.update(sessionsTable)
+          .set({ accessGranted: true })
+          .where(eq(sessionsTable.id, sessionId));
+      }
+      return "processed" as const;
+    });
+    if (result === "duplicate") {
+      res.json(ReceiveAbacatePayWebhookResponse.parse({
+        accepted: true,
+        message: "Evento já processado",
+      }));
+      return;
     }
+  } else if (parsed.data.event === "checkout.completed" && typeof sessionId === "string") {
+    await db.update(sessionsTable)
+      .set({ accessGranted: true })
+      .where(eq(sessionsTable.id, sessionId));
   }
 
   res.json(ReceiveAbacatePayWebhookResponse.parse({
@@ -366,13 +361,16 @@ router.post("/checkout/abacatepay-webhook", (req, res): void => {
   }));
 });
 
-router.get("/access/sessions/:sessionId", (req, res): void => {
+router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
   const parsed = GetQuestionSessionParams.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const session = sessions.get(parsed.data.sessionId);
+  const [session] = await db.select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, parsed.data.sessionId))
+    .limit(1);
   if (!session) {
     res.status(404).json({ error: "Sessão não encontrada" });
     return;
@@ -380,14 +378,17 @@ router.get("/access/sessions/:sessionId", (req, res): void => {
   res.json(GetQuestionSessionResponse.parse(session));
 });
 
-router.post("/access/sessions/:sessionId/invites", (req, res): void => {
+router.post("/access/sessions/:sessionId/invites", async (req, res): Promise<void> => {
   const params = CreateInviteParams.safeParse(req.params);
   const body = CreateInviteBody.safeParse(req.body);
   if (!params.success || !body.success) {
     res.status(400).json({ error: "Dados do convite inválidos" });
     return;
   }
-  const session = sessions.get(params.data.sessionId);
+  const [session] = await db.select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, params.data.sessionId))
+    .limit(1);
   if (!session) {
     res.status(404).json({ error: "Sessão não encontrada" });
     return;
@@ -397,33 +398,54 @@ router.post("/access/sessions/:sessionId/invites", (req, res): void => {
     return;
   }
   const token = crypto.randomBytes(12).toString("base64url");
-  const baseUrl = process.env.REPLIT_DOMAINS?.split(",")[0]
-    ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
-    : "http://localhost";
-  const invite: Invite = {
-    token,
-    guestName: body.data.guestName,
-    sessionId: session.id,
-    inviteUrl: `${baseUrl}/invite/${token}`,
-    isUsed: false,
-  };
-  invites.set(token, invite);
-  session.invitesUsed += 1;
+  const baseUrl = process.env.PUBLIC_APP_URL?.replace(/\/+$/, "")
+    || (process.env.REPLIT_DOMAINS?.split(",")[0]
+      ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+      : "http://localhost");
+  const invite = await db.transaction(async (tx) => {
+    const [updatedSession] = await tx.update(sessionsTable)
+      .set({ invitesUsed: sql`${sessionsTable.invitesUsed} + 1` })
+      .where(and(
+        eq(sessionsTable.id, session.id),
+        sql`${sessionsTable.invitesUsed} < ${sessionsTable.inviteLimit}`,
+      ))
+      .returning();
+    if (!updatedSession) return null;
+
+    const [createdInvite] = await tx.insert(invitesTable).values({
+      token,
+      guestName: body.data.guestName,
+      sessionId: session.id,
+      inviteUrl: `${baseUrl}/invite/${token}`,
+      isUsed: false,
+    }).returning();
+    return createdInvite;
+  });
+  if (!invite) {
+    res.status(409).json({ error: "O limite de convites deste pacote foi atingido" });
+    return;
+  }
   res.status(201).json(invite);
 });
 
-router.get("/access/invites/:token", (req, res): void => {
+router.get("/access/invites/:token", async (req, res): Promise<void> => {
   const parsed = GetInviteParams.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const invite = invites.get(parsed.data.token);
+  const [invite] = await db.select()
+    .from(invitesTable)
+    .where(eq(invitesTable.token, parsed.data.token))
+    .limit(1);
   if (!invite) {
     res.status(404).json({ error: "Convite não encontrado ou expirado" });
     return;
   }
-  const session = sessions.get(invite.sessionId);
+  const [session] = await db.select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, invite.sessionId))
+    .limit(1);
   if (!session) {
     res.status(404).json({ error: "Sessão não encontrada" });
     return;
@@ -437,7 +459,7 @@ router.get("/access/invites/:token", (req, res): void => {
   });
 });
 
-router.post("/checkout/webhook", (req, res): void => {
+router.post("/checkout/webhook", async (req, res): Promise<void> => {
   if (process.env.ALLOW_DEMO_ACCESS !== "true") {
     res.status(403).json({ error: "Webhook de demonstração desativado." });
     return;
@@ -447,25 +469,36 @@ router.post("/checkout/webhook", (req, res): void => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  if (processedEvents.has(parsed.data.eventId)) {
+  const config = packageConfig[parsed.data.packageId];
+  const result = await db.transaction(async (tx) => {
+    const [processedEvent] = await tx.insert(processedEventsTable)
+      .values({ id: parsed.data.eventId })
+      .onConflictDoNothing()
+      .returning();
+    if (!processedEvent) return { status: "duplicate" as const, session: null };
+
+    const [session] = await tx.insert(sessionsTable).values({
+      id: parsed.data.paymentReference,
+      buyerName: parsed.data.buyerName,
+      buyerEmail: parsed.data.buyerEmail,
+      packageId: parsed.data.packageId,
+      packageName: config.name,
+      inviteLimit: config.limit,
+      invitesUsed: 0,
+      accessGranted: true,
+    }).onConflictDoUpdate({
+      target: sessionsTable.id,
+      set: { accessGranted: true },
+    }).returning();
+    return { status: "processed" as const, session };
+  });
+  if (result.status === "duplicate") {
     res.json({ accepted: true, accessId: parsed.data.paymentReference, message: "Evento já processado" });
     return;
   }
-  processedEvents.add(parsed.data.eventId);
-  const config = packageConfig[parsed.data.packageId];
-  const session: Session = {
-    id: parsed.data.paymentReference,
-    buyerName: parsed.data.buyerName,
-    packageId: parsed.data.packageId,
-    packageName: config.name,
-    inviteLimit: config.limit,
-    invitesUsed: 0,
-    accessGranted: true,
-  };
-  sessions.set(session.id, session);
   res.json(ReceiveCheckoutWebhookResponse.parse({
     accepted: true,
-    accessId: session.id,
+    accessId: result.session.id,
     message: "Pagamento confirmado e acesso liberado",
   }));
 });

@@ -1,0 +1,335 @@
+# Base de dados de verdade — Postgres no Railway
+
+Contexto: eu já **adicionei o Postgres no Railway** e conectei ele ao serviço `@workspace/api-server` via variável `DATABASE_URL` (referência ao serviço Postgres). Não precisa mexer em nada no painel. Também: o pacote `@workspace/db` já existe no projeto com Drizzle e pg configurados; só o schema estava vazio.
+
+Esta instrução faz duas coisas:
+1. Define as tabelas no schema (sessões, convites, eventos de webhook)
+2. Substitui os `Map`/`Set` em memória do `artifacts/api-server/src/routes/connection.ts` por chamadas ao banco
+
+Depois de aplicar e commitar, o Railway republica sozinho, o Drizzle cria as tabelas via `push`, e as sessões param de se perder quando o servidor reinicia.
+
+## 1. Definir as tabelas — `lib/db/src/schema/index.ts`
+
+Substituir o conteúdo inteiro do arquivo por:
+
+```ts
+import { pgTable, text, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const sessionsTable = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  buyerName: text("buyer_name").notNull(),
+  buyerEmail: text("buyer_email"),
+  packageId: text("package_id").notNull(),
+  packageName: text("package_name").notNull(),
+  inviteLimit: integer("invite_limit").notNull(),
+  invitesUsed: integer("invites_used").notNull().default(0),
+  accessGranted: boolean("access_granted").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const invitesTable = pgTable("invites", {
+  token: text("token").primaryKey(),
+  sessionId: text("session_id").notNull().references(() => sessionsTable.id, { onDelete: "cascade" }),
+  guestName: text("guest_name").notNull(),
+  inviteUrl: text("invite_url").notNull(),
+  isUsed: boolean("is_used").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const processedEventsTable = pgTable("processed_events", {
+  id: text("id").primaryKey(),
+  processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const insertSessionSchema = createInsertSchema(sessionsTable);
+export const insertInviteSchema = createInsertSchema(invitesTable);
+
+export type Session = typeof sessionsTable.$inferSelect;
+export type NewSession = typeof sessionsTable.$inferInsert;
+export type Invite = typeof invitesTable.$inferSelect;
+export type NewInvite = typeof invitesTable.$inferInsert;
+```
+
+## 2. Criar as tabelas no Postgres (uma vez, depois do deploy)
+
+O `@workspace/db` já tem o script `push` no `package.json`. **Depois** que o Railway subir o novo deploy com o schema acima, rodar (no console do Replit ou local, apontando pra `DATABASE_URL` de produção):
+
+```
+pnpm --filter @workspace/db push
+```
+
+Isso cria as 3 tabelas no Postgres do Railway sem migrations complicadas (só pra esse projeto simples, ok). Se preferir automatizar isso a cada deploy, adicionar `pnpm --filter @workspace/db push` como pre-deploy step do api-server no Railway — mas pro primeiro deploy, rodar manual é mais seguro pra ver se dá erro.
+
+## 3. Migrar `connection.ts` — trocar Map por banco
+
+Em `artifacts/api-server/src/routes/connection.ts`:
+
+### 3.1 Imports (no topo do arquivo, perto dos outros imports)
+
+Trocar:
+
+```ts
+import crypto from "node:crypto";
+```
+
+Por (adicionar os do @workspace/db):
+
+```ts
+import crypto from "node:crypto";
+import { db, sessionsTable, invitesTable, processedEventsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+```
+
+### 3.2 Remover os Maps antigos
+
+Achar e **remover** estas 3 linhas (perto da linha 212):
+
+```ts
+const sessions = new Map<string, Session>();
+const invites = new Map<string, Invite>();
+const processedEvents = new Set<string>();
+```
+
+Remover também os `type Session` e `type Invite` locais do arquivo (linhas ~34-49 aproximadamente) — agora vêm do `@workspace/db`.
+
+### 3.3 Substituir cada rota — versão nova completa
+
+**Trocar `router.post("/access/sessions", ...)` inteira por:**
+
+```ts
+router.post("/access/sessions", async (req, res): Promise<void> => {
+  if (process.env.ALLOW_DEMO_ACCESS !== "true") {
+    res.status(403).json({ error: "Acesso direto desativado. Use /checkout/create." });
+    return;
+  }
+  const parsed = CreateQuestionSessionBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const config = packageConfig[parsed.data.packageId];
+  const [session] = await db.insert(sessionsTable).values({
+    id: crypto.randomUUID(),
+    buyerName: parsed.data.buyerName,
+    packageId: parsed.data.packageId,
+    packageName: config.name,
+    inviteLimit: config.limit,
+    invitesUsed: 0,
+    accessGranted: true,
+  }).returning();
+  res.status(201).json(CreateQuestionSessionResponse.parse(session));
+});
+```
+
+**Trocar `router.get("/access/sessions/:sessionId", ...)` inteira por:**
+
+```ts
+router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
+  const parsed = GetQuestionSessionParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, parsed.data.sessionId)).limit(1);
+  if (!session) {
+    res.status(404).json({ error: "Sessão não encontrada" });
+    return;
+  }
+  res.json(GetQuestionSessionResponse.parse(session));
+});
+```
+
+**Trocar `router.post("/access/sessions/:sessionId/invites", ...)` inteira por:**
+
+```ts
+router.post("/access/sessions/:sessionId/invites", async (req, res): Promise<void> => {
+  const params = CreateInviteParams.safeParse(req.params);
+  const body = CreateInviteBody.safeParse(req.body);
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: "Dados do convite inválidos" });
+    return;
+  }
+  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, params.data.sessionId)).limit(1);
+  if (!session) {
+    res.status(404).json({ error: "Sessão não encontrada" });
+    return;
+  }
+  if (session.invitesUsed >= session.inviteLimit) {
+    res.status(409).json({ error: "O limite de convites deste pacote foi atingido" });
+    return;
+  }
+  const token = crypto.randomBytes(12).toString("base64url");
+  const baseUrl = process.env.PUBLIC_APP_URL?.replace(/\/+$/, "")
+    || (process.env.REPLIT_DOMAINS?.split(",")[0] ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}` : "http://localhost");
+  const [invite] = await db.insert(invitesTable).values({
+    token,
+    sessionId: session.id,
+    guestName: body.data.guestName,
+    inviteUrl: `${baseUrl}/invite/${token}`,
+    isUsed: false,
+  }).returning();
+  await db.update(sessionsTable).set({ invitesUsed: session.invitesUsed + 1 }).where(eq(sessionsTable.id, session.id));
+  res.status(201).json(invite);
+});
+```
+
+**Trocar `router.get("/access/invites/:token", ...)` inteira por:**
+
+```ts
+router.get("/access/invites/:token", async (req, res): Promise<void> => {
+  const parsed = GetInviteParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [invite] = await db.select().from(invitesTable).where(eq(invitesTable.token, parsed.data.token)).limit(1);
+  if (!invite) {
+    res.status(404).json({ error: "Convite não encontrado ou expirado" });
+    return;
+  }
+  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, invite.sessionId)).limit(1);
+  if (!session) {
+    res.status(404).json({ error: "Sessão não encontrada" });
+    return;
+  }
+  res.json({
+    role: "guest",
+    hasAccess: session.accessGranted,
+    canInvite: false,
+    guestName: invite.guestName,
+    packageName: session.packageName,
+  });
+});
+```
+
+**Trocar `router.post("/checkout/webhook", ...)` (a antiga) inteira por:**
+
+```ts
+router.post("/checkout/webhook", async (req, res): Promise<void> => {
+  const parsed = ReceiveCheckoutWebhookBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [existing] = await db.select().from(processedEventsTable).where(eq(processedEventsTable.id, parsed.data.eventId)).limit(1);
+  if (existing) {
+    res.json({ accepted: true, accessId: parsed.data.paymentReference, message: "Evento já processado" });
+    return;
+  }
+  await db.insert(processedEventsTable).values({ id: parsed.data.eventId }).onConflictDoNothing();
+  const config = packageConfig[parsed.data.packageId];
+  const [session] = await db.insert(sessionsTable).values({
+    id: parsed.data.paymentReference,
+    buyerName: parsed.data.buyerName,
+    buyerEmail: parsed.data.buyerEmail,
+    packageId: parsed.data.packageId,
+    packageName: config.name,
+    inviteLimit: config.limit,
+    invitesUsed: 0,
+    accessGranted: true,
+  }).onConflictDoUpdate({
+    target: sessionsTable.id,
+    set: { accessGranted: true },
+  }).returning();
+  res.json(ReceiveCheckoutWebhookResponse.parse({
+    accepted: true,
+    accessId: session.id,
+    message: "Pagamento confirmado e acesso liberado",
+  }));
+});
+```
+
+**Se a instrução da Abacate Pay já foi aplicada**, o `router.post("/checkout/create", ...)` também precisa ser convertido — trocar por:
+
+```ts
+router.post("/checkout/create", async (req, res): Promise<void> => {
+  const { packageId, buyerName, buyerEmail } = req.body ?? {};
+  if (packageId !== "couple" || typeof buyerName !== "string" || !buyerName.trim()) {
+    res.status(400).json({ error: "Dados de checkout inválidos" });
+    return;
+  }
+  const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;
+  if (!productId) {
+    res.status(500).json({ error: "Produto da Abacate Pay não configurado" });
+    return;
+  }
+  const config = packageConfig[packageId];
+  const sessionId = crypto.randomUUID();
+  const [session] = await db.insert(sessionsTable).values({
+    id: sessionId,
+    buyerName: buyerName.trim(),
+    buyerEmail,
+    packageId,
+    packageName: config.name,
+    inviteLimit: config.limit,
+    invitesUsed: 0,
+    accessGranted: false,
+  }).returning();
+
+  try {
+    const { createAbacateCheckout } = await import("../lib/abacatepay");
+    const { checkoutUrl } = await createAbacateCheckout({
+      sessionId,
+      productId,
+      buyerName: session.buyerName,
+      buyerEmail,
+    });
+    res.status(201).json({ sessionId, checkoutUrl });
+  } catch (error) {
+    await db.delete(sessionsTable).where(eq(sessionsTable.id, sessionId));
+    res.status(502).json({ error: "Não foi possível iniciar o pagamento. Tenta de novo em instantes." });
+  }
+});
+```
+
+**E o `router.post("/checkout/abacatepay-webhook", ...)` (da Abacate Pay, se já foi aplicado):**
+
+```ts
+router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
+  const { verifyAbacateSignature } = await import("../lib/abacatepay");
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
+  const signature = req.header("X-Webhook-Signature");
+  if (!rawBody || !verifyAbacateSignature(rawBody, signature)) {
+    res.status(401).json({ error: "Assinatura inválida" });
+    return;
+  }
+
+  const event = req.body?.event;
+  const eventId = req.body?.id;
+  const sessionId = req.body?.data?.metadata?.sessionId ?? req.body?.data?.externalId;
+
+  if (eventId) {
+    const [existing] = await db.select().from(processedEventsTable).where(eq(processedEventsTable.id, eventId)).limit(1);
+    if (existing) {
+      res.json({ accepted: true, message: "Evento já processado" });
+      return;
+    }
+    await db.insert(processedEventsTable).values({ id: eventId }).onConflictDoNothing();
+  }
+
+  if (event === "checkout.completed" && typeof sessionId === "string") {
+    await db.update(sessionsTable).set({ accessGranted: true }).where(eq(sessionsTable.id, sessionId));
+  }
+
+  res.json({ accepted: true });
+});
+```
+
+## 4. Depois do deploy, criar as tabelas
+
+**Isto é o único passo manual depois do commit.** No Replit (ou local, com `DATABASE_URL` apontando pro Postgres do Railway), rodar uma vez:
+
+```
+pnpm --filter @workspace/db push
+```
+
+Confirma a criação das 3 tabelas. Não precisa rodar de novo enquanto o schema não mudar.
+
+## Verificação
+- Deploy do api-server no Railway sobe verde (sem erro de "DATABASE_URL").
+- Rodar `pnpm --filter @workspace/db push` — deve criar `sessions`, `invites`, `processed_events` no Postgres.
+- Testar o fluxo: comprar (mesmo modo teste) → acesso libera → **reiniciar o serviço do api-server no Railway** → abrir o app de novo → o acesso continua liberado (antes se perdia).
+- Convidar alguém → link ainda funciona depois de restart.
+- No Replit local, se `DATABASE_URL` não estiver setada, o servidor vai dar erro na hora de subir (é o próprio `@workspace/db` que checa isso). Pra desenvolvimento local, ou seta a `DATABASE_URL` pro Postgres do Railway (rápido), ou sobe um Postgres local via Docker.
