@@ -1,0 +1,79 @@
+# Railway: destravar o build + fazer o site enxergar a API
+
+Já configurei tudo o que dava pra configurar no painel do Railway (projeto criado, 2 serviços, variáveis, portas, domínios). Sobraram **duas coisas que só dá pra resolver no código** — por isso este prompt. Depois de aplicar, o Railway republica sozinho e deve subir.
+
+## Parte 1 — Fixar a versão do pnpm (isto é o que está quebrando o build)
+
+O build no Railway falha assim:
+
+```
+ERR_PNPM_LOCKFILE_CONFIG_MISMATCH Cannot proceed with the frozen installation.
+The current "overrides" configuration doesn't match the value found in the lockfile
+```
+
+**Causa (confirmada olhando o log do build):** o Railway instala **pnpm 9.15.9**, mas este projeto usa **pnpm 10.28.0**. O `pnpm-workspace.yaml` deste repositório usa recursos que só existem no pnpm 10 — a seção `overrides` (81 entradas) e o `minimumReleaseAge: 1440`. O pnpm 9 **não lê** `overrides` de dentro do `pnpm-workspace.yaml` (no pnpm 9 isso ficava no `package.json`). Resultado: o pnpm 9 acha que existem 0 overrides, o lockfile diz que existem 81, e ele aborta. Não é o lockfile que está errado — é a versão do pnpm que está errada no Railway.
+
+**Correção:** no `package.json` da **raiz** do projeto, adicionar o campo `packageManager`. Ele fica assim (só a linha nova, o resto não muda):
+
+```json
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+```
+
+Só isso. O Railway lê esse campo e passa a instalar o pnpm 10.28.0 (a mesma versão que o projeto já usa), e o build passa.
+
+**Não** rodar `pnpm install --no-frozen-lockfile` nem regenerar o `pnpm-lock.yaml` — o lockfile está correto, o problema era só a versão. Regenerar sem necessidade traz risco de mudar versões de pacote sem motivo.
+
+## Parte 2 — O site precisa saber o endereço da API
+
+No Railway o site e a API ficam em dois endereços diferentes:
+
+- Site: `https://workspaceperguntas-de-conexao-production.up.railway.app`
+- API: `https://workspaceapi-server-production-0516.up.railway.app`
+
+Hoje o app chama a API por caminho relativo (`/api/...`). Isso funciona no Replit, porque lá o site e a API respondem no mesmo endereço. No Railway isso quebraria: o site chamaria `/api/questions` nele mesmo e receberia 404 — ou seja, o app abriria sem nenhuma pergunta.
+
+Já criei a variável `VITE_API_URL` no Railway com o endereço da API. Falta o código usá-la.
+
+Em `artifacts/perguntas-de-conexao/src/main.tsx`, adicionar o import e a chamada logo antes do `createRoot`:
+
+```tsx
+import { createRoot } from 'react-dom/client';
+import { setBaseUrl } from '@workspace/api-client-react';
+
+import App from './App';
+import { ErrorBoundary } from '@/components/error-boundary';
+
+import './index.css';
+
+// No Railway o site e a API ficam em endereços diferentes, então as chamadas
+// precisam do endereço completo da API. Em desenvolvimento (e no Replit, onde
+// os dois respondem no mesmo endereço) a variável não existe e tudo continua
+// funcionando por caminho relativo, como antes.
+const apiUrl = import.meta.env.VITE_API_URL;
+if (apiUrl) setBaseUrl(apiUrl);
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+```
+
+O resto do arquivo continua igual.
+
+**Importante:** essa mudança é segura pro Replit — lá a variável `VITE_API_URL` não existe, então o `if` não roda e tudo continua exatamente como está hoje.
+
+**Observação sobre a instrução de pagamento:** se você já aplicou o prompt do Abacate Pay, ele tem chamadas escritas como `fetch('/api/checkout/create')` e `fetch('/api/access/sessions/...')`. Essas precisam do mesmo tratamento pra funcionar no Railway. A forma mais simples é criar um helper no topo do `App.tsx` e usar ele nessas duas chamadas:
+
+```tsx
+const apiBase = import.meta.env.VITE_API_URL || '';
+// e então trocar fetch('/api/...') por fetch(`${apiBase}/api/...`)
+```
+
+Se ainda não aplicou o prompt do pagamento, pode ignorar esta observação — eu já mando ele corrigido quando chegar a hora.
+
+## Verificação
+- Depois do commit, o Railway republica sozinho. Os dois serviços (`@workspace/api-server` e `@workspace/perguntas-de-conexao`) devem sair de "Build failed" e ficar verdes/online.
+- Abrir `https://workspaceperguntas-de-conexao-production.up.railway.app` — o site deve carregar e mostrar os temas (se aparecer sem nenhuma pergunta, é sinal de que a Parte 2 não pegou).
+- No Replit, tudo deve continuar funcionando igual — nenhuma dessas mudanças altera o comportamento lá.
