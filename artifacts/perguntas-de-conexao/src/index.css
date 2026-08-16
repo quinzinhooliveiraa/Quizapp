@@ -6277,10 +6277,9 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     padding: 1.2rem 1rem 1.5rem;
     perspective: none;
     scroll-snap-type: x proximity;
-    scrollbar-width: thin;
+    scrollbar-width: none;
   }
-  .theme-carousel::-webkit-scrollbar { display: block; height: 6px; }
-  .theme-carousel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 999px; }
+  .theme-carousel::-webkit-scrollbar { display: none; width: 0; height: 0; }
   .theme-cover {
     position: relative !important;
     top: auto !important;
