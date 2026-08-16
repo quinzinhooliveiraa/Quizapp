@@ -6260,40 +6260,95 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .app-wordmark { display: none; }
 }
 
-/* A faixa "tablet" (700-1179px) já vira trilho lateral, mas a fileira de
-   temas continua no modo leque antigo (uma carta ativa + vizinhas coladas,
-   borradas, cortadas) — nessa largura isso fica com cara de bagunça (selos
-   "perguntas"/"casais" de cartas vizinhas se sobrepondo, cartas cortadas de
-   um jeito estranho). Estende o mesmo tratamento "fileira" do PC pra essa
-   faixa também, só que com cartas um pouco menores (cabe menos coisa que no
-   PC grande). */
+/* Tablet and desktop use the same focused fan carousel as the reference
+   layout: one readable card in front, with the neighboring cards peeking
+   behind it. Mobile keeps its existing touch-first treatment below 700px. */
 @media (min-width: 700px) {
-  .theme-carousel-wrap { height: auto; min-height: 0; margin-top: 2rem; display: block; }
-  .theme-carousel {
+  .theme-carousel-wrap {
+    height: min(68vh, 35rem);
+    min-height: 29rem;
+    margin-top: 1.25rem;
     display: flex;
-    gap: 1.2rem;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 1.2rem 1rem 1.5rem;
-    perspective: none;
-    scroll-snap-type: x proximity;
+    align-items: center;
+  }
+
+  .theme-carousel {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: visible;
+    padding: 0;
+    perspective: 1000px;
+    scroll-snap-type: none;
     scrollbar-width: none;
   }
-  .theme-carousel::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+  .theme-carousel::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
   .theme-cover {
     position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    transform: none !important;
-    opacity: 1 !important;
-    filter: none !important;
-    z-index: auto !important;
-    flex: 0 0 auto;
-    width: 13rem;
-    height: 17rem;
-    scroll-snap-align: start;
+    top: 50% !important;
+    left: 50% !important;
+    flex: none;
+    width: 17rem;
+    height: 22rem;
+    scroll-snap-align: none;
   }
-  .theme-cover:hover { transform: translateY(-.3rem) !important; }
-  .carousel-dots { display: none; }
-  .theme-carousel-arrow { display: none; }
+
+  .theme-cover.theme-offset-0 {
+    position: absolute !important;
+    transform: translate(-50%, -50%) translateX(var(--theme-drag-offset, 0px)) scale(1.05) !important;
+    opacity: 1 !important;
+    z-index: 5 !important;
+    filter: saturate(1.05) !important;
+  }
+
+  .theme-cover.theme-offset-1 {
+    position: absolute !important;
+    transform: translate(-50%, -50%) translateX(calc(46% + var(--theme-drag-offset, 0px))) scale(.84) !important;
+    opacity: .47 !important;
+    z-index: 3 !important;
+    filter: none !important;
+  }
+
+  .theme-cover.theme-offset--1 {
+    position: absolute !important;
+    transform: translate(-50%, -50%) translateX(calc(-46% + var(--theme-drag-offset, 0px))) scale(.84) !important;
+    opacity: .47 !important;
+    z-index: 3 !important;
+    filter: none !important;
+  }
+
+  .theme-cover.theme-offset-2 {
+    position: absolute !important;
+    transform: translate(-50%, -50%) translateX(calc(76% + var(--theme-drag-offset, 0px))) scale(.73) !important;
+    opacity: .18 !important;
+    z-index: 2 !important;
+    filter: none !important;
+  }
+
+  .theme-cover.theme-offset--2 {
+    position: absolute !important;
+    transform: translate(-50%, -50%) translateX(calc(-76% + var(--theme-drag-offset, 0px))) scale(.73) !important;
+    opacity: .18 !important;
+    z-index: 2 !important;
+    filter: none !important;
+  }
+
+  .theme-cover:hover {
+    border-color: rgba(255,255,255,.36);
+  }
+
+  .carousel-dots {
+    display: none;
+  }
+
+  .theme-carousel-arrow {
+    display: grid;
+  }
 }
