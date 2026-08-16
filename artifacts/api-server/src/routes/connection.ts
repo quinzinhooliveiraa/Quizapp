@@ -33,6 +33,7 @@ import crypto from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import {
   createAbacateCheckout,
+  fetchAbacateBillingStatus,
   verifyAbacateSignature,
 } from "../lib/abacatepay";
 
@@ -295,13 +296,13 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
   }).returning();
 
   try {
-    const { checkoutUrl } = await createAbacateCheckout({
+    const { checkoutUrl, billId } = await createAbacateCheckout({
       sessionId,
       productId,
       buyerName: session.buyerName,
       buyerEmail: parsed.data.buyerEmail,
     });
-    res.status(201).json(CreateCheckoutResponse.parse({ sessionId, checkoutUrl }));
+    res.status(201).json(CreateCheckoutResponse.parse({ sessionId, checkoutUrl, billId }));
   } catch (error) {
     await db.delete(sessionsTable).where(eq(sessionsTable.id, sessionId));
     req.log.error({ err: error, sessionId }, "Failed to create Abacate Pay checkout");
@@ -314,19 +315,34 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
 router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
   const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
   const signature = req.header("X-Webhook-Signature");
-  if (!rawBody || !verifyAbacateSignature(rawBody, signature)) {
-    res.status(401).json({ error: "Assinatura inválida" });
-    return;
-  }
-
   const parsed = ReceiveAbacatePayWebhookBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Payload de webhook inválido" });
     return;
   }
 
+  const signatureValid = !!rawBody && verifyAbacateSignature(rawBody, signature);
+  const event = parsed.data.event;
   const eventId = parsed.data.id;
-  const sessionId = parsed.data.data.metadata?.sessionId ?? parsed.data.data.externalId;
+  const billId = typeof parsed.data.data.id === "string" ? parsed.data.data.id : null;
+  const sessionIdFromBody = parsed.data.data.metadata?.sessionId ?? parsed.data.data.externalId;
+  let sessionId = typeof sessionIdFromBody === "string" ? sessionIdFromBody : null;
+  let paymentConfirmed = signatureValid && event === "checkout.completed" && !!sessionId;
+
+  if (!paymentConfirmed && billId) {
+    const billing = await fetchAbacateBillingStatus(billId);
+    if (billing?.status === "PAID") {
+      const metadataSessionId = billing.metadata?.sessionId;
+      if (typeof metadataSessionId === "string") sessionId = metadataSessionId;
+      paymentConfirmed = !!sessionId;
+    }
+  }
+
+  if (!paymentConfirmed) {
+    res.status(401).json({ error: "Não foi possível confirmar o pagamento" });
+    return;
+  }
+
   if (eventId) {
     const result = await db.transaction(async (tx) => {
       const [processedEvent] = await tx.insert(processedEventsTable)
@@ -335,7 +351,7 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
         .returning();
       if (!processedEvent) return "duplicate" as const;
 
-      if (parsed.data.event === "checkout.completed" && typeof sessionId === "string") {
+      if (typeof sessionId === "string") {
         await tx.update(sessionsTable)
           .set({ accessGranted: true })
           .where(eq(sessionsTable.id, sessionId));
@@ -349,7 +365,7 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
       }));
       return;
     }
-  } else if (parsed.data.event === "checkout.completed" && typeof sessionId === "string") {
+  } else if (typeof sessionId === "string") {
     await db.update(sessionsTable)
       .set({ accessGranted: true })
       .where(eq(sessionsTable.id, sessionId));
@@ -375,6 +391,21 @@ router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Sessão não encontrada" });
     return;
   }
+
+  if (!session.accessGranted) {
+    const bill = req.query.bill;
+    const billId = typeof bill === "string" ? bill : undefined;
+    if (billId) {
+      const billing = await fetchAbacateBillingStatus(billId);
+      if (billing?.status === "PAID" && billing.metadata?.sessionId === session.id) {
+        await db.update(sessionsTable)
+          .set({ accessGranted: true })
+          .where(eq(sessionsTable.id, session.id));
+        session.accessGranted = true;
+      }
+    }
+  }
+
   res.json(GetQuestionSessionResponse.parse(session));
 });
 

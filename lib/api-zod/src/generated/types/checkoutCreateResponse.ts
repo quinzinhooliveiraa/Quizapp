@@ -9,4 +9,5 @@
 export interface CheckoutCreateResponse {
   sessionId: string;
   checkoutUrl: string;
+  billId: string;
 }

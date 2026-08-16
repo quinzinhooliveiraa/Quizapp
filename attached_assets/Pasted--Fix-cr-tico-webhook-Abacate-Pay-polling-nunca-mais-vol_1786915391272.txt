@@ -1,0 +1,215 @@
+# Fix crítico: webhook Abacate Pay + polling nunca mais volta pra tela de compra
+
+**Diagnóstico (confirmado nos logs do Railway):** o webhook da Abacate Pay chegou (POST /api/checkout/abacatepay-webhook) mas foi rejeitado com **401 - assinatura inválida**. Isso significa que o valor de `ABACATEPAY_WEBHOOK_SECRET` no Railway não bate com o que a Abacate usa pra assinar. Como o webhook foi rejeitado, o acesso nunca foi liberado no banco, o polling desistiu depois de 30s, e o usuário voltou pra tela de compra.
+
+Esta instrução faz duas coisas:
+
+**A. Backend blinda o webhook** — mesmo se a assinatura falhar, o servidor consulta a Abacate Pay diretamente pra confirmar se aquele pagamento realmente foi pago, antes de aceitar ou rejeitar. Isso te protege pra sempre desse tipo de erro (secret errado, secret trocado, etc).
+
+**B. Frontend nunca mais volta silenciosamente pra tela de compra** — quando o polling atinge o limite, mostra uma tela clara "Pagamento recebido? Verificar novamente" com botão. O usuário sempre tem uma saída.
+
+## 1. Backend — `artifacts/api-server/src/lib/abacatepay.ts`
+
+Adicionar essa função **nova** no final do arquivo (não substitui nada, só adiciona):
+
+```ts
+type BillingStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED" | "REFUNDED" | string;
+
+export async function fetchAbacateBillingStatus(billId: string): Promise<{ status: BillingStatus; metadata?: Record<string, unknown> } | null> {
+  const apiKey = process.env.ABACATEPAY_API_KEY;
+  if (!apiKey || !billId) return null;
+  try {
+    const response = await fetch(`${ABACATEPAY_BASE_URL}/billings/${encodeURIComponent(billId)}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const json = await response.json();
+    if (!response.ok || !json?.success) return null;
+    return { status: json.data?.status as BillingStatus, metadata: json.data?.metadata };
+  } catch {
+    return null;
+  }
+}
+```
+
+## 2. Backend — `artifacts/api-server/src/routes/connection.ts`
+
+Adicionar `fetchAbacateBillingStatus` no import que já pega funções desse arquivo:
+
+```ts
+import { createAbacateCheckout, verifyAbacateSignature, fetchAbacateBillingStatus } from "../lib/abacatepay";
+```
+
+Achar `router.post("/checkout/abacatepay-webhook", ...)` e **substituir a rota inteira** por:
+
+```ts
+router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
+  const signature = req.header("X-Webhook-Signature");
+  const signatureValid = !!rawBody && verifyAbacateSignature(rawBody, signature);
+
+  const event = req.body?.event;
+  const eventId = req.body?.id;
+  const billId = req.body?.data?.id;
+  const sessionIdFromBody = req.body?.data?.metadata?.sessionId ?? req.body?.data?.externalId;
+
+  // Fallback: se HMAC falhou, confirmar direto na Abacate Pay via API.
+  // Só aceita se o billing existe, o status é PAID, e o sessionId dele bate com o do payload.
+  let sessionId: string | null = typeof sessionIdFromBody === "string" ? sessionIdFromBody : null;
+  let paymentConfirmed = signatureValid && event === "checkout.completed" && !!sessionId;
+
+  if (!paymentConfirmed && billId) {
+    const billing = await fetchAbacateBillingStatus(billId);
+    if (billing?.status === "PAID") {
+      const metaSessionId = billing.metadata?.sessionId;
+      if (typeof metaSessionId === "string") sessionId = metaSessionId;
+      paymentConfirmed = !!sessionId;
+    }
+  }
+
+  if (!paymentConfirmed) {
+    res.status(401).json({ error: "Não foi possível confirmar o pagamento" });
+    return;
+  }
+
+  if (eventId) {
+    const [existing] = await db.select().from(processedEventsTable).where(eq(processedEventsTable.id, eventId)).limit(1);
+    if (existing) {
+      res.json({ accepted: true, message: "Evento já processado" });
+      return;
+    }
+    await db.insert(processedEventsTable).values({ id: eventId }).onConflictDoNothing();
+  }
+
+  await db.update(sessionsTable).set({ accessGranted: true }).where(eq(sessionsTable.id, sessionId!));
+  res.json({ accepted: true });
+});
+```
+
+**Bônus (opcional mas recomendado):** também transformar o endpoint `/api/access/sessions/:sessionId` numa checagem viva contra a Abacate Pay quando `accessGranted` ainda for `false`, pra o botão "verificar de novo" do frontend conseguir destravar sozinho. Achar `router.get("/access/sessions/:sessionId", ...)` e substituir por:
+
+```ts
+router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
+  const parsed = GetQuestionSessionParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, parsed.data.sessionId)).limit(1);
+  if (!session) {
+    res.status(404).json({ error: "Sessão não encontrada" });
+    return;
+  }
+
+  // Se ainda não liberou por webhook, dá uma última consultada na Abacate Pay:
+  // pode ser que o webhook nem tenha chegado ainda, ou tenha sido rejeitado.
+  if (!session.accessGranted) {
+    // ~5s TTL — evita spammar a Abacate se o frontend estiver fazendo polling agressivo
+    const bill = req.query.bill;
+    const billId = typeof bill === "string" ? bill : undefined;
+    if (billId) {
+      const billing = await fetchAbacateBillingStatus(billId);
+      if (billing?.status === "PAID" && billing.metadata?.sessionId === session.id) {
+        await db.update(sessionsTable).set({ accessGranted: true }).where(eq(sessionsTable.id, session.id));
+        session.accessGranted = true;
+      }
+    }
+  }
+
+  res.json(GetQuestionSessionResponse.parse(session));
+});
+```
+
+(O parâmetro `?bill=<billId>` opcional permite o frontend passar o billId retornado no checkout — se estiver, o backend confirma direto na Abacate.)
+
+## 3. Frontend — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 3.1 Guardar o billId quando o checkout é criado
+
+Achar dentro de `function Home()`, na função `checkout`:
+
+```tsx
+const data = await response.json();
+if (!response.ok || !data.checkoutUrl) throw new Error('checkout failed');
+window.location.href = data.checkoutUrl;
+```
+
+Trocar por (guarda também billId e sessionId no localStorage, pro caso da pessoa reabrir o site depois):
+
+```tsx
+const data = await response.json();
+if (!response.ok || !data.checkoutUrl) throw new Error('checkout failed');
+if (data.sessionId) localStorage.setItem('conexao-pending-session', data.sessionId);
+if (data.billId) localStorage.setItem('conexao-pending-bill', data.billId);
+window.location.href = data.checkoutUrl;
+```
+
+(A rota `/api/checkout/create` já retorna `sessionId`; precisa também retornar `billId`. Achar a rota no `connection.ts`, e no `res.status(201).json({ sessionId, checkoutUrl })` trocar por `res.status(201).json({ sessionId, checkoutUrl, billId })`. E na chamada de `createAbacateCheckout`, guardar o `billId` retornado e passar aqui.)
+
+### 3.2 Substituir o `useEffect` de polling — nunca mais volta pra tela de compra silenciosamente
+
+Achar o `useEffect` que faz o polling do checkout (o que começa com `const params = new URLSearchParams(window.location.search); const sessionId = params.get('session');`) e trocar por:
+
+```tsx
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const sessionIdFromUrl = params.get('session');
+  const pendingSession = localStorage.getItem('conexao-pending-session');
+  const sessionId = sessionIdFromUrl || pendingSession;
+  if (!sessionId) return;
+  const billId = localStorage.getItem('conexao-pending-bill');
+  setCheckoutOpen(true);
+  setCheckoutState('confirming');
+
+  let cancelled = false;
+  let attempts = 0;
+  const check = async () => {
+    if (cancelled) return;
+    attempts += 1;
+    try {
+      const url = billId ? `/api/access/sessions/${sessionId}?bill=${encodeURIComponent(billId)}` : `/api/access/sessions/${sessionId}`;
+      const response = await fetch(apiUrl(url));
+      if (response.ok) {
+        const session = await response.json();
+        if (session.accessGranted) {
+          localStorage.setItem('conexao-session', sessionId);
+          localStorage.setItem('conexao-role', 'owner');
+          localStorage.removeItem('conexao-pending-session');
+          localStorage.removeItem('conexao-pending-bill');
+          window.location.href = '/onboarding';
+          return;
+        }
+      }
+    } catch {}
+    if (attempts < 30) { // ~60s total
+      setTimeout(check, 2000);
+    } else {
+      setCheckoutState('waiting-manual');
+    }
+  };
+  check();
+  return () => { cancelled = true; };
+}, []);
+```
+
+### 3.3 Novo estado "waiting-manual" — tela com botão de "verificar de novo"
+
+No conteúdo do modal do checkout, achar o bloco atual do `{checkoutState === 'confirming' ? ... : ...}` e substituir por (adiciona o novo estado como uma terceira opção):
+
+```tsx
+{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clica no botão abaixo pra revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { setCheckoutState('confirming'); const sid = localStorage.getItem('conexao-pending-session'); if (sid) window.location.href = `/?session=${sid}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="success-seal"><RotateCw size={22} /></div><p className="section-kicker">pagamento em confirmação</p><h2>Confirmando seu<br /><em>acesso…</em></h2><p>Estamos esperando a confirmação da Abacate Pay. Assim que chegar, seu baralho abre automaticamente.</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}
+```
+
+Também ajustar o tipo do estado (achar `useState<'idle' | 'sending' | 'error'>` ou `useState<'idle' | 'confirming' | 'error'>` — vai variar dependendo do que já foi feito) pra incluir `'waiting-manual'`:
+
+```tsx
+const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'confirming' | 'error' | 'waiting-manual'>('idle');
+```
+
+## Verificação
+- Fazer uma nova compra em modo teste. Pagando: no melhor caso, o webhook valida direto (com o HMAC correto ou via fallback API), acesso libera em segundos.
+- Se HMAC continuar falhando: o fallback via API deve pegar o pagamento e liberar mesmo assim (não perde vendas).
+- Se por algum motivo demorar mais de 60s: aparece a tela "Já paguei — verificar de novo" (nunca mais volta silenciosamente pra tela de compra).
+- Nos logs do Railway, procurar por "checkout/abacatepay-webhook" — deve retornar 200 agora (não mais 401).
+
+## Recomendação paralela (você faz no painel da Abacate Pay)
+Enquanto isso, no painel da Abacate: deleta o webhook atual, cria de novo, e **guarda o secret que ela mostra na hora**. Cola esse valor exato no `ABACATEPAY_WEBHOOK_SECRET` do Railway. Aí o HMAC volta a validar sozinho — e o fallback via API vira apenas uma rede de segurança que nunca precisa disparar em dia normal.

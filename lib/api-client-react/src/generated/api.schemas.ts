@@ -171,6 +171,7 @@ export interface CheckoutCreateInput {
 export interface CheckoutCreateResponse {
   sessionId: string;
   checkoutUrl: string;
+  billId: string;
 }
 
 export type AbacatePayWebhookDataMetadata = {
@@ -179,6 +180,7 @@ export type AbacatePayWebhookDataMetadata = {
  };
 
 export type AbacatePayWebhookData = {
+  id?: string;
   externalId?: string;
   metadata?: AbacatePayWebhookDataMetadata;
   [key: string]: unknown;

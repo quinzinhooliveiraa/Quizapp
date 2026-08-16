@@ -177,7 +177,8 @@ export const CreateCheckoutBody = zod.object({
 
 export const CreateCheckoutResponse = zod.object({
   "sessionId": zod.string(),
-  "checkoutUrl": zod.string()
+  "checkoutUrl": zod.string(),
+  "billId": zod.string()
 })
 
 
@@ -188,6 +189,7 @@ export const ReceiveAbacatePayWebhookBody = zod.object({
   "id": zod.string().optional(),
   "event": zod.string(),
   "data": zod.object({
+  "id": zod.string().optional(),
   "externalId": zod.string().optional(),
   "metadata": zod.object({
   "sessionId": zod.string().optional()

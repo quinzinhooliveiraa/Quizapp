@@ -77,3 +77,50 @@ export function verifyAbacateSignature(
     && crypto.timingSafeEqual(expectedBuffer, actualBuffer)
   );
 }
+
+type BillingStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED" | "REFUNDED" | string;
+
+type BillingStatusResult = {
+  status: BillingStatus;
+  metadata?: Record<string, unknown>;
+};
+
+type AbacateBillingResponse = {
+  success?: boolean;
+  data?: {
+    status?: unknown;
+    metadata?: Record<string, unknown>;
+  };
+};
+
+const BILLING_STATUS_CACHE_TTL_MS = 5_000;
+const billingStatusCache = new Map<string, { checkedAt: number; result: BillingStatusResult | null }>();
+
+export async function fetchAbacateBillingStatus(
+  billId: string,
+): Promise<BillingStatusResult | null> {
+  const apiKey = process.env.ABACATEPAY_API_KEY;
+  if (!apiKey || !billId) return null;
+
+  const cached = billingStatusCache.get(billId);
+  if (cached && Date.now() - cached.checkedAt < BILLING_STATUS_CACHE_TTL_MS) {
+    return cached.result;
+  }
+
+  try {
+    const response = await fetch(`${ABACATEPAY_BASE_URL}/billings/${encodeURIComponent(billId)}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const json = await response.json() as AbacateBillingResponse;
+    const result = response.ok
+      && json.success
+      && typeof json.data?.status === "string"
+      ? { status: json.data.status, metadata: json.data.metadata }
+      : null;
+    billingStatusCache.set(billId, { checkedAt: Date.now(), result });
+    return result;
+  } catch {
+    billingStatusCache.set(billId, { checkedAt: Date.now(), result: null });
+    return null;
+  }
+}

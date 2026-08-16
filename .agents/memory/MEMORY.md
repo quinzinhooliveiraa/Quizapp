@@ -4,3 +4,4 @@
 - [Wine rebrand color maps](wine-rebrand-color-maps.md) — the provided hex map needs a separate pass for PWA theme values, semantic names, and translucent violet effects.
 - [Onboarding desktop breakpoint](onboarding-desktop-breakpoint.md) — keep the onboarding rail limited to wide screens so medium desktop widths retain a usable content area.
 - [Modal overlay stacking](modal-overlay-breakpoints.md) — modal backdrops must be finalized after legacy breakpoint rules so the full viewport stays blurred and non-interactive.
+- [OpenAPI query parameter generation](openapi-query-params.md) — avoid adding generated query params to an operation whose generated path params already use the same name; manual query reads can preserve compatibility.

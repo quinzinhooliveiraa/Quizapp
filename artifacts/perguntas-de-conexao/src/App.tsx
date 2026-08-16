@@ -406,11 +406,13 @@ function StoredAccessGate() {
 function Home() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<'couple' | 'family'>('couple');
-  const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'confirming' | 'error'>('idle');
+  const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'confirming' | 'error' | 'waiting-manual'>('idle');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session');
+    const sessionIdFromUrl = params.get('session');
+    const pendingSession = safeGetItem('conexao-pending-session');
+    const sessionId = sessionIdFromUrl || pendingSession;
     const checkoutCancelled = params.get('checkout') === 'cancelado';
     if (checkoutCancelled) {
       setCheckoutState('error');
@@ -419,6 +421,7 @@ function Home() {
     }
     if (!sessionId) return;
 
+    const billId = safeGetItem('conexao-pending-bill');
     setCheckoutState('confirming');
     setCheckoutOpen(true);
     let attempts = 0;
@@ -429,12 +432,17 @@ function Home() {
       attempts += 1;
       if (cancelled) return;
       try {
-        const response = await fetch(apiUrl(`/api/access/sessions/${encodeURIComponent(sessionId)}`));
+        const sessionUrl = billId
+          ? `/api/access/sessions/${encodeURIComponent(sessionId)}?bill=${encodeURIComponent(billId)}`
+          : `/api/access/sessions/${encodeURIComponent(sessionId)}`;
+        const response = await fetch(apiUrl(sessionUrl));
         if (response.ok) {
           const session = await response.json() as { accessGranted?: boolean };
           if (!cancelled && session.accessGranted) {
             safeSetItem('conexao-session', sessionId);
             safeSetItem('conexao-role', 'owner');
+            safeRemoveItem('conexao-pending-session');
+            safeRemoveItem('conexao-pending-bill');
             window.location.href = '/onboarding';
             return;
           }
@@ -444,10 +452,10 @@ function Home() {
       }
 
       if (cancelled) return;
-      if (attempts < 15) {
+      if (attempts < 30) {
         timeoutId = window.setTimeout(checkPayment, 2000);
       } else {
-        setCheckoutState('error');
+        setCheckoutState('waiting-manual');
       }
     };
 
@@ -470,8 +478,10 @@ function Home() {
           buyerName: buyerNameInput.trim(),
         }),
       });
-      const data = await response.json() as { checkoutUrl?: string };
+      const data = await response.json() as { checkoutUrl?: string; sessionId?: string; billId?: string };
       if (!response.ok || !data.checkoutUrl) throw new Error('checkout failed');
+      if (data.sessionId) safeSetItem('conexao-pending-session', data.sessionId);
+      if (data.billId) safeSetItem('conexao-pending-bill', data.billId);
       window.location.href = data.checkoutUrl;
     } catch {
       setCheckoutState('error');
@@ -520,7 +530,7 @@ function Home() {
 
       <section className="quote-section"><Quote size={35} strokeWidth={1} /><blockquote>“A pergunta certa não abre uma conversa.<br /><em>Abre uma pessoa.</em>”</blockquote><span>— uma ideia para levar com vocês</span></section>
     </main>
-     {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'confirming' ? <><div className="success-seal"><RotateCw size={22} /></div><p className="section-kicker">pagamento em confirmação</p><h2>Confirmando seu<br /><em>acesso…</em></h2><p>Estamos esperando a confirmação da Abacate Pay. Assim que chegar, seu baralho abre automaticamente.</p></> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
+     {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clique no botão abaixo para revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { const pendingSessionId = safeGetItem('conexao-pending-session'); if (pendingSessionId) window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="success-seal"><RotateCw size={22} /></div><p className="section-kicker">pagamento em confirmação</p><h2>Confirmando seu<br /><em>acesso…</em></h2><p>Estamos esperando a confirmação da Abacate Pay. Assim que chegar, seu baralho abre automaticamente.</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
   </Shell>;
 }
 

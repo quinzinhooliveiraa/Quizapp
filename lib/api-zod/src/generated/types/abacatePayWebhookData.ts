@@ -8,6 +8,7 @@
 import type { AbacatePayWebhookDataMetadata } from './abacatePayWebhookDataMetadata';
 
 export type AbacatePayWebhookData = {
+  id?: string;
   externalId?: string;
   metadata?: AbacatePayWebhookDataMetadata;
   [key: string]: unknown;

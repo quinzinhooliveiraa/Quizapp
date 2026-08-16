@@ -396,7 +396,9 @@ components:
           type: string
         checkoutUrl:
           type: string
-      required: [sessionId, checkoutUrl]
+        billId:
+          type: string
+      required: [sessionId, checkoutUrl, billId]
     AbacatePayWebhook:
       type: object
       additionalProperties: true
@@ -409,6 +411,8 @@ components:
           type: object
           additionalProperties: true
           properties:
+            id:
+              type: string
             externalId:
               type: string
             metadata:
