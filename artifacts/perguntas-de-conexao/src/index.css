@@ -5886,39 +5886,12 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .question-navigation-next { right: .15rem; }
 }
 
-/* Keep the question controls available on touch screens too. The card still
-   supports swipe gestures, while these explicit controls provide a reliable
-   alternative for users who prefer tapping. */
+/* Touch layouts use swipe and the in-card actions instead of desktop
+   navigation controls. */
 @media (max-width: 699px) {
-  .question-navigation {
-    width: 100%;
-    min-height: 0;
-    flex: 0 0 auto;
-  }
-
-  .question-navigation-button {
-    display: grid;
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-    z-index: 12;
-  }
-}
-
-/* On phones the bottom menu is intentionally word-led: keep the four
-   destinations easy to scan without stacking an icon and status dot under
-   each label. */
-@media (max-width: 699px) {
-  .app-bottom-nav > button:not(.app-nav-toggle) {
-    gap: 0;
-    min-height: 2.8rem;
-    font-size: clamp(.58rem, 2.8vw, .72rem);
-    font-weight: 600;
-  }
-
-  .app-bottom-nav > button:not(.app-nav-toggle) svg,
-  .app-bottom-nav > button:not(.app-nav-toggle) .nav-dot {
-    display: none;
+  .question-navigation-button,
+  .app-bottom-nav {
+    display: none !important;
   }
 }
 
