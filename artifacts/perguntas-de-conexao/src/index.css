@@ -6273,7 +6273,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     display: flex;
     gap: 1.2rem;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden;
     padding: 1.2rem 1rem 1.5rem;
     perspective: none;
     scroll-snap-type: x proximity;
@@ -6290,8 +6290,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     filter: none !important;
     z-index: auto !important;
     flex: 0 0 auto;
-    width: 15rem;
-    height: 20rem;
+    width: 13rem;
+    height: 17rem;
     scroll-snap-align: start;
   }
   .theme-cover:hover { transform: translateY(-.3rem) !important; }
