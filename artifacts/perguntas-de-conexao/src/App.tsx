@@ -1153,7 +1153,7 @@ function AppExperienceReference() {
   };
   const copyInvite = () => { if (inviteResult?.inviteUrl) navigator.clipboard?.writeText(inviteResult.inviteUrl); };
   const navItems = [
-    { id: 'todos', label: 'Descobrir', icon: House },
+    { id: 'todos', label: 'Todos', icon: House },
     { id: 'temas', label: 'Temas', icon: Layers3 },
     { id: 'vibes', label: 'Vibes', icon: WandSparkles },
     { id: 'eu', label: 'Meu espaço', icon: UserRound },
