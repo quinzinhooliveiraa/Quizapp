@@ -5886,6 +5886,25 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .question-navigation-next { right: .15rem; }
 }
 
+/* Keep the question controls available on touch screens too. The card still
+   supports swipe gestures, while these explicit controls provide a reliable
+   alternative for users who prefer tapping. */
+@media (max-width: 699px) {
+  .question-navigation {
+    width: 100%;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+
+  .question-navigation-button {
+    display: grid;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 12;
+  }
+}
+
 /* Modal overlays must cover the whole browser, including the desktop rail.
    Older desktop rules narrowed this backdrop to the workspace beside the
    rail, leaving the navigation and outer edges sharp behind the modal. */
