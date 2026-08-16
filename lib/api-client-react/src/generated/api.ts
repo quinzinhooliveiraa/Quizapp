@@ -20,7 +20,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AbacatePayWebhook,
+  AbacatePayWebhookResult,
   AccessState,
+  CheckoutCreateInput,
+  CheckoutCreateResponse,
   CheckoutWebhook,
   GuestAccess,
   HealthStatus,
@@ -743,5 +747,147 @@ export const useReceiveCheckoutWebhook = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getReceiveCheckoutWebhookMutationOptions(options));
+    }
+
+export const getCreateCheckoutUrl = () => {
+
+
+
+
+  return `/api/checkout/create`
+}
+
+/**
+ * @summary Create an Abacate Pay checkout
+ */
+export const createCheckout = async (checkoutCreateInput: CheckoutCreateInput, options?: Parameters<typeof customFetch>[1]): Promise<CheckoutCreateResponse> => {
+
+  return customFetch<CheckoutCreateResponse>(getCreateCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(checkoutCreateInput)
+  }
+);}
+
+
+
+
+
+export const getCreateCheckoutMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckout>>, TError,{data: BodyType<CheckoutCreateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCheckout>>, TError,{data: BodyType<CheckoutCreateInput>}, TContext> => {
+
+const mutationKey = ['createCheckout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCheckout>>, {data: BodyType<CheckoutCreateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof createCheckout>>>
+    export type CreateCheckoutMutationBody = BodyType<CheckoutCreateInput>
+    export type CreateCheckoutMutationError = ErrorType<void>
+
+    /**
+ * @summary Create an Abacate Pay checkout
+ */
+export const useCreateCheckout = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckout>>, TError,{data: BodyType<CheckoutCreateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCheckout>>,
+        TError,
+        {data: BodyType<CheckoutCreateInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCheckoutMutationOptions(options));
+    }
+
+export const getReceiveAbacatePayWebhookUrl = () => {
+
+
+
+
+  return `/api/checkout/abacatepay-webhook`
+}
+
+/**
+ * @summary Receive an authenticated Abacate Pay completion webhook
+ */
+export const receiveAbacatePayWebhook = async (abacatePayWebhook: AbacatePayWebhook, options?: Parameters<typeof customFetch>[1]): Promise<AbacatePayWebhookResult> => {
+
+  return customFetch<AbacatePayWebhookResult>(getReceiveAbacatePayWebhookUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(abacatePayWebhook)
+  }
+);}
+
+
+
+
+
+export const getReceiveAbacatePayWebhookMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveAbacatePayWebhook>>, TError,{data: BodyType<AbacatePayWebhook>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveAbacatePayWebhook>>, TError,{data: BodyType<AbacatePayWebhook>}, TContext> => {
+
+const mutationKey = ['receiveAbacatePayWebhook'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveAbacatePayWebhook>>, {data: BodyType<AbacatePayWebhook>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  receiveAbacatePayWebhook(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveAbacatePayWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveAbacatePayWebhook>>>
+    export type ReceiveAbacatePayWebhookMutationBody = BodyType<AbacatePayWebhook>
+    export type ReceiveAbacatePayWebhookMutationError = ErrorType<void>
+
+    /**
+ * @summary Receive an authenticated Abacate Pay completion webhook
+ */
+export const useReceiveAbacatePayWebhook = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveAbacatePayWebhook>>, TError,{data: BodyType<AbacatePayWebhook>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof receiveAbacatePayWebhook>>,
+        TError,
+        {data: BodyType<AbacatePayWebhook>},
+        TContext
+      > => {
+      return useMutation(getReceiveAbacatePayWebhookMutationOptions(options));
     }
 

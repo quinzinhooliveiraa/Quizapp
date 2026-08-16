@@ -287,8 +287,13 @@ export default function Onboarding() {
   const partnerPronoun = pronoun === 'Ele' ? 'ele' : pronoun === 'Ela' ? 'ela' : 'essa pessoa';
 
   useEffect(() => {
-    if (
+    const hasPaidOwnerSession = Boolean(
       safeGetItem('conexao-session')
+      && readOnboardingRole() === 'owner'
+      && safeGetItem('conexao-onboarding-complete') !== 'true',
+    );
+    if (
+      (safeGetItem('conexao-session') && !hasPaidOwnerSession)
       || safeGetItem('conexao-onboarding-complete') === 'true'
       || safeGetItem('conexao-guest-token')
     ) {

@@ -1604,6 +1604,9 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .checkout-modal > p:not(.section-kicker), .welcome-modal > p:not(.section-kicker), .invite-modal > p:not(.section-kicker) { color: #856f75; font-size: 12px; line-height: 1.6; margin-bottom: 23px; }
 .modal-close { width: 30px; height: 30px; border: 1px solid #d4bdb3; color: #856f75; border-radius: 50%; background: transparent; cursor: pointer; position: absolute; right: 18px; top: 18px; display: grid; place-items: center; }
 .success-seal, .welcome-flourish, .invite-symbol { color: var(--wine); width: 48px; height: 48px; border-radius: 50%; background: #e8ddd2; display: grid; place-items: center; }
+.checkout-name-input { width: 100%; border: 1px solid #d4bdb3; border-radius: 3px; padding: 13px 12px; margin: 2px 0 13px; background: #fffaf5; color: var(--ink); font: 13px var(--app-font-sans); outline: none; }
+.checkout-name-input:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px #e78e7540; }
+.checkout-error { color: #a74444 !important; font-size: 11px !important; margin: -2px 0 14px !important; }
 .text-input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid #cdb8ad; padding: 12px 2px; outline: none; font: 14px var(--app-font-sans); color: var(--ink); margin: 4px 0 21px; }
 .text-input:focus { border-color: var(--salmon); }
 .copy-row { display: flex; gap: 8px; align-items: center; }

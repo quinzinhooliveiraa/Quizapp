@@ -2,8 +2,12 @@ import { Router, type IRouter } from "express";
 import {
   CreateInviteBody,
   CreateInviteParams,
+  CreateCheckoutBody,
+  CreateCheckoutResponse,
   CreateQuestionSessionBody,
   CreateQuestionSessionResponse,
+  ReceiveAbacatePayWebhookBody,
+  ReceiveAbacatePayWebhookResponse,
   GetAccessPreviewResponse,
   GetInviteParams,
   GetQuestionSessionParams,
@@ -20,6 +24,10 @@ import {
   type ConnectionQuestion,
 } from "@workspace/connection-content";
 import crypto from "node:crypto";
+import {
+  createAbacateCheckout,
+  verifyAbacateSignature,
+} from "../lib/abacatepay";
 
 type Theme = {
   id: string;
@@ -249,6 +257,10 @@ router.get("/access/preview", (_req, res): void => {
 });
 
 router.post("/access/sessions", (req, res): void => {
+  if (process.env.ALLOW_DEMO_ACCESS !== "true") {
+    res.status(403).json({ error: "Acesso direto desativado. Use /checkout/create." });
+    return;
+  }
   const parsed = CreateQuestionSessionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -266,6 +278,92 @@ router.post("/access/sessions", (req, res): void => {
   };
   sessions.set(session.id, session);
   res.status(201).json(CreateQuestionSessionResponse.parse(session));
+});
+
+router.post("/checkout/create", async (req, res): Promise<void> => {
+  const parsed = CreateCheckoutBody.safeParse(req.body);
+  if (
+    !parsed.success
+    || parsed.data.packageId !== "couple"
+    || !parsed.data.buyerName.trim()
+  ) {
+    res.status(400).json({ error: "Dados de checkout inválidos" });
+    return;
+  }
+
+  const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;
+  if (!productId) {
+    res.status(500).json({ error: "Produto da Abacate Pay não configurado" });
+    return;
+  }
+
+  const config = packageConfig[parsed.data.packageId];
+  const sessionId = crypto.randomUUID();
+  const session: Session = {
+    id: sessionId,
+    buyerName: parsed.data.buyerName.trim(),
+    packageId: parsed.data.packageId,
+    packageName: config.name,
+    inviteLimit: config.limit,
+    invitesUsed: 0,
+    accessGranted: false,
+  };
+  sessions.set(sessionId, session);
+
+  try {
+    const { checkoutUrl } = await createAbacateCheckout({
+      sessionId,
+      productId,
+      buyerName: session.buyerName,
+      buyerEmail: parsed.data.buyerEmail,
+    });
+    res.status(201).json(CreateCheckoutResponse.parse({ sessionId, checkoutUrl }));
+  } catch (error) {
+    sessions.delete(sessionId);
+    req.log.error({ err: error, sessionId }, "Failed to create Abacate Pay checkout");
+    res.status(502).json({
+      error: "Não foi possível iniciar o pagamento. Tenta de novo em instantes.",
+    });
+  }
+});
+
+router.post("/checkout/abacatepay-webhook", (req, res): void => {
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
+  const signature = req.header("X-Webhook-Signature");
+  if (!rawBody || !verifyAbacateSignature(rawBody, signature)) {
+    res.status(401).json({ error: "Assinatura inválida" });
+    return;
+  }
+
+  const parsed = ReceiveAbacatePayWebhookBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Payload de webhook inválido" });
+    return;
+  }
+
+  const eventId = parsed.data.id;
+  const sessionId = parsed.data.data.metadata?.sessionId ?? parsed.data.data.externalId;
+  if (eventId && processedEvents.has(eventId)) {
+    res.json(ReceiveAbacatePayWebhookResponse.parse({
+      accepted: true,
+      message: "Evento já processado",
+    }));
+    return;
+  }
+  if (eventId) processedEvents.add(eventId);
+
+  if (parsed.data.event === "checkout.completed" && typeof sessionId === "string") {
+    const session = sessions.get(sessionId);
+    if (session) {
+      session.accessGranted = true;
+      sessions.set(sessionId, session);
+    }
+  }
+
+  res.json(ReceiveAbacatePayWebhookResponse.parse({
+    accepted: true,
+    message: "Webhook recebido",
+  }));
 });
 
 router.get("/access/sessions/:sessionId", (req, res): void => {
@@ -340,6 +438,10 @@ router.get("/access/invites/:token", (req, res): void => {
 });
 
 router.post("/checkout/webhook", (req, res): void => {
+  if (process.env.ALLOW_DEMO_ACCESS !== "true") {
+    res.status(403).json({ error: "Webhook de demonstração desativado." });
+    return;
+  }
   const parsed = ReceiveCheckoutWebhookBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

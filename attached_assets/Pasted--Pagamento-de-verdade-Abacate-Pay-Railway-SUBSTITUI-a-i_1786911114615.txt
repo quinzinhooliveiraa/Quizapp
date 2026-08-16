@@ -1,0 +1,327 @@
+# Pagamento de verdade — Abacate Pay (Railway) — SUBSTITUI a instrução anterior
+
+Esta instrução **substitui por completo** a `fase-pagamento-abacatepay-replit.md` que mandei antes (aquela era pré-Railway e usava caminhos relativos `/api/...` que não funcionam agora que site e API estão em endereços diferentes).
+
+Hoje o app não tem trava de pagamento: o botão "Escolher Casal" simula pagamento aprovado na hora e o endpoint que libera acesso já retorna `accessGranted: true` sem checar nada. Esta instrução conecta a Abacate Pay de verdade: cria um checkout real (Pix/cartão), espera o pagamento ser confirmado por webhook com HMAC, e só então libera o acesso.
+
+Pesquisei a documentação oficial (https://docs.abacatepay.com) antes de escrever. Preço: **R$ 47,90**, pacote Casal, vitalício.
+
+## 0. Passos manuais no painel da Abacate Pay (você faz — não é código)
+
+1. **Criar o produto**: cadastra "Perguntas de Conexão — Casal", preço R$ 47,90, pagamento único. Anota o `id` do produto (algo tipo `prod_xxxxx`).
+2. **Pegar a API key**: em Desenvolvedores/API keys. Não me manda a chave — é você que cola no Railway como Secret.
+3. **Criar o webhook** (agora dá, temos URL fixa):
+   - `endpoint`: `https://workspaceapi-server-production-0516.up.railway.app/api/checkout/abacatepay-webhook`
+   - `events`: só `checkout.completed`
+   - Ao criar, a Abacate Pay te dá um `secret` — guarda pra colar no Railway.
+
+## 1. Variáveis no Railway (você adiciona no painel — mais fácil eu te guiar depois)
+
+Vão as 3 novas variáveis **no serviço `@workspace/api-server`** (o `PUBLIC_APP_URL` já tá lá, não precisa mexer):
+
+```
+ABACATEPAY_API_KEY=<passo 0.2>
+ABACATEPAY_WEBHOOK_SECRET=<passo 0.3>
+ABACATEPAY_PRODUCT_ID_CASAL=<passo 0.1>
+```
+
+Depois de você criar o webhook e ter esses três valores em mãos, eu volto aqui no Railway e configuro pra você — só precisa me avisar.
+
+## 2. Backend — `artifacts/api-server`
+
+### 2.1 Capturar o corpo bruto (necessário pra validar a assinatura do webhook)
+
+Em `src/app.ts`, achar:
+
+```ts
+app.use(express.json());
+```
+
+Trocar por:
+
+```ts
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+  },
+}));
+```
+
+### 2.2 (Opcional agora, recomendado antes de vender) Restringir CORS
+
+Ainda em `src/app.ts`, hoje está `app.use(cors());` (aceita qualquer origem). Trocar por:
+
+```ts
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // ferramentas server-to-server, testes locais
+    const allowed = [process.env.PUBLIC_APP_URL, "http://localhost:5173", "http://localhost:5180"].filter(Boolean);
+    cb(null, allowed.includes(origin));
+  },
+  credentials: true,
+}));
+```
+
+### 2.3 Novo arquivo `src/lib/abacatepay.ts`
+
+```ts
+import crypto from "node:crypto";
+
+const ABACATEPAY_BASE_URL = "https://api.abacatepay.com/v2";
+
+type CreateCheckoutParams = {
+  sessionId: string;
+  productId: string;
+  buyerName: string;
+  buyerEmail?: string;
+};
+
+export async function createAbacateCheckout({ sessionId, productId, buyerName, buyerEmail }: CreateCheckoutParams) {
+  const apiKey = process.env.ABACATEPAY_API_KEY;
+  if (!apiKey) throw new Error("ABACATEPAY_API_KEY não configurada");
+  const publicUrl = process.env.PUBLIC_APP_URL?.replace(/\/+$/, "") || "";
+
+  const response = await fetch(`${ABACATEPAY_BASE_URL}/checkouts/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      items: [{ id: productId, quantity: 1 }],
+      methods: ["PIX", "CARD"],
+      externalId: sessionId,
+      metadata: { sessionId, buyerName, buyerEmail },
+      returnUrl: `${publicUrl}/?checkout=cancelado`,
+      completionUrl: `${publicUrl}/?session=${sessionId}`,
+    }),
+  });
+
+  const json = await response.json();
+  if (!response.ok || !json?.success) {
+    throw new Error(`Falha ao criar checkout na Abacate Pay: ${JSON.stringify(json)}`);
+  }
+  return { checkoutUrl: json.data.url as string, billId: json.data.id as string };
+}
+
+export function verifyAbacateSignature(rawBody: Buffer, signatureFromHeader: string | undefined): boolean {
+  const secret = process.env.ABACATEPAY_WEBHOOK_SECRET;
+  if (!secret || !signatureFromHeader) return false;
+  const expectedSig = crypto.createHmac("sha256", secret).update(rawBody).digest("base64");
+  const a = Buffer.from(expectedSig);
+  const b = Buffer.from(signatureFromHeader);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+```
+
+### 2.4 Duas rotas novas em `src/routes/connection.ts`
+
+Import no topo do arquivo:
+
+```ts
+import { createAbacateCheckout, verifyAbacateSignature } from "../lib/abacatepay";
+```
+
+Achar `router.post("/access/sessions", ...)` (a rota que libera acesso na hora, sem checar pagamento) e envolver com uma trava — pra não sobrar porta aberta de acesso grátis em produção:
+
+```ts
+router.post("/access/sessions", (req, res): void => {
+  if (process.env.ALLOW_DEMO_ACCESS !== "true") {
+    res.status(403).json({ error: "Acesso direto desativado. Use /checkout/create." });
+    return;
+  }
+  const parsed = CreateQuestionSessionBody.safeParse(req.body);
+  // ...resto continua igual
+```
+
+Adicionar as duas rotas novas (podem ficar próximas da `/checkout/webhook` que já existe — não precisa remover a antiga):
+
+```ts
+router.post("/checkout/create", async (req, res): Promise<void> => {
+  const { packageId, buyerName, buyerEmail } = req.body ?? {};
+  if (packageId !== "couple" || typeof buyerName !== "string" || !buyerName.trim()) {
+    res.status(400).json({ error: "Dados de checkout inválidos" });
+    return;
+  }
+  const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;
+  if (!productId) {
+    res.status(500).json({ error: "Produto da Abacate Pay não configurado" });
+    return;
+  }
+  const config = packageConfig[packageId];
+  const sessionId = crypto.randomUUID();
+  const session: Session = {
+    id: sessionId,
+    buyerName: buyerName.trim(),
+    packageId,
+    packageName: config.name,
+    inviteLimit: config.limit,
+    invitesUsed: 0,
+    accessGranted: false,
+  };
+  sessions.set(sessionId, session);
+
+  try {
+    const { checkoutUrl } = await createAbacateCheckout({
+      sessionId,
+      productId,
+      buyerName: session.buyerName,
+      buyerEmail,
+    });
+    res.status(201).json({ sessionId, checkoutUrl });
+  } catch (error) {
+    sessions.delete(sessionId);
+    res.status(502).json({ error: "Não foi possível iniciar o pagamento. Tenta de novo em instantes." });
+  }
+});
+
+router.post("/checkout/abacatepay-webhook", (req, res): void => {
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
+  const signature = req.header("X-Webhook-Signature");
+  if (!rawBody || !verifyAbacateSignature(rawBody, signature)) {
+    res.status(401).json({ error: "Assinatura inválida" });
+    return;
+  }
+
+  const event = req.body?.event;
+  const eventId = req.body?.id;
+  const sessionId = req.body?.data?.metadata?.sessionId ?? req.body?.data?.externalId;
+
+  if (eventId && processedEvents.has(eventId)) {
+    res.json({ accepted: true, message: "Evento já processado" });
+    return;
+  }
+  if (eventId) processedEvents.add(eventId);
+
+  if (event === "checkout.completed" && typeof sessionId === "string") {
+    const session = sessions.get(sessionId);
+    if (session) {
+      session.accessGranted = true;
+      sessions.set(sessionId, session);
+    }
+  }
+
+  res.json({ accepted: true });
+});
+```
+
+**Nota importante:** essas sessões ainda vivem só na memória do servidor (`sessions = new Map()`), igual antes — se o serviço reiniciar (o Railway reinicia em novos deploys), quem comprou e ainda não abriu o app perde a sessão pendente. Quem já abriu o app e salvou o acesso no aparelho continua bem. Isso já estava mapeado no roadmap pra entrar junto com base de dados de verdade; pra lançamento, aceito.
+
+## 3. Frontend — `src/App.tsx`
+
+### 3.1 Preço, texto e esconder card "Família"
+
+Achar:
+
+```tsx
+<article className="package-card package-featured"><div className="package-tag">para dois</div><div className="package-top"><h3>Casal</h3><span className="package-price">R$ 39<span>/único</span></span></div>
+```
+
+Trocar `R$ 39` por `R$ 47,90` e `/único` por `/vitalício`.
+
+Achar o bloco `<article className="package-card"><div className="package-tag">para a roda toda">...Família...` e envolver em `{false && (...)}` (pra ser fácil trazer de volta depois):
+
+```tsx
+{false && (
+  <article className="package-card">...(conteúdo continua igual dentro)...</article>
+)}
+```
+
+### 3.2 Helper de URL da API + trocar o checkout falso pelo real
+
+No topo do `src/App.tsx` (perto dos outros hooks/consts do arquivo), adicionar:
+
+```tsx
+const apiBase = import.meta.env.VITE_API_URL || '';
+const apiUrl = (path: string) => `${apiBase}${path}`;
+```
+
+Achar dentro de `function Home()`:
+
+```tsx
+const receiveWebhook = useReceiveCheckoutWebhook();
+const [checkoutState, setCheckoutState] = useState<'idle' | 'sent'>('idle');
+const checkout = () => {
+  receiveWebhook.mutate({ data: { eventId: `demo-${Date.now()}`, eventType: 'payment.completed', buyerEmail: 'demo@conexao.local', buyerName: 'Visitante', packageId: selectedPackage, paymentReference: 'demo-access' } }, { onSuccess: () => setCheckoutState('sent'), onError: () => setCheckoutState('sent') });
+};
+```
+
+Trocar por:
+
+```tsx
+const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'error'>('idle');
+const [buyerNameInput, setBuyerNameInput] = useState('');
+const checkout = async () => {
+  if (!buyerNameInput.trim()) return;
+  setCheckoutState('sending');
+  try {
+    const response = await fetch(apiUrl('/api/checkout/create'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packageId: selectedPackage, buyerName: buyerNameInput.trim() }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.checkoutUrl) throw new Error('checkout failed');
+    window.location.href = data.checkoutUrl;
+  } catch {
+    setCheckoutState('error');
+  }
+};
+```
+
+E no modal do checkout (achar `{checkoutOpen && <div className="modal-backdrop">...`), trocar o parágrafo final:
+
+```tsx
+<p>Você escolheu o pacote <strong>{selectedPackage === 'couple' ? 'Casal' : 'Família & amigos'}</strong>. Em uma compra real, o acesso chega no seu e-mail.</p><button onClick={checkout} disabled={receiveWebhook.isPending} className="button button-primary button-full" data-testid="button-confirm-checkout">{receiveWebhook.isPending ? 'Preparando seu acesso…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button>
+```
+
+Por:
+
+```tsx
+<p>Você escolheu o pacote <strong>Casal</strong>. Você vai pra tela de pagamento da Abacate Pay (Pix ou cartão) — o acesso libera assim que o pagamento for confirmado.</p>
+<input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={e => setBuyerNameInput(e.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />
+{checkoutState === 'error' && <p className="checkout-error">Não deu pra iniciar o pagamento agora. Tenta de novo.</p>}
+<button onClick={checkout} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button>
+```
+
+(Se `.checkout-name-input` / `.checkout-error` não existirem no CSS, o Replit Agent pode criar estilos simples coerentes com o modal.)
+
+### 3.3 Depois do pagamento: confirmar e liberar o app
+
+No componente `Home`, adicionar (junto dos outros hooks, no topo da função):
+
+```tsx
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session');
+  if (!sessionId) return;
+  let attempts = 0;
+  const check = async () => {
+    attempts += 1;
+    const response = await fetch(apiUrl(`/api/access/sessions/${sessionId}`));
+    if (response.ok) {
+      const session = await response.json();
+      if (session.accessGranted) {
+        localStorage.setItem('conexao-session', sessionId);
+        localStorage.setItem('conexao-role', 'owner');
+        window.location.href = '/onboarding';
+        return;
+      }
+    }
+    if (attempts < 15) setTimeout(check, 2000);
+  };
+  check();
+}, []);
+```
+
+## 4. Testar antes de anunciar
+
+1. A Abacate Pay tem modo de testes (devmode) — usa ele primeiro. Fluxo esperado: clica Escolher Casal → preenche nome → cai na página de pagamento da Abacate Pay → paga (modo teste) → volta pro site → tela de "confirmando" → cai automaticamente no app em até 30s.
+2. Só depois de ver isso funcionar de teste, ativa modo produção (chave de produção) e faz uma compra real pequena.
+3. Confirma que `POST /access/sessions` (o antigo) retorna 403 sem `ALLOW_DEMO_ACCESS=true`.
+
+## Verificação
+- Clicar "Escolher Casal" → preencher nome → deve abrir página real da Abacate Pay, não mais o "checkout de demonstração".
+- Pagando (em teste), a pessoa volta pro site, vê "confirmando", cai no app em até 30s.
+- Sem pagar, ninguém consegue acesso.
+- Preço mostrado: R$ 47,90 / vitalício. Card de Família some.

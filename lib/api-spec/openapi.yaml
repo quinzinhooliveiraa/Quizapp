@@ -184,6 +184,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WebhookResult"
+  /checkout/create:
+    post:
+      operationId: createCheckout
+      tags: [checkout]
+      summary: Create an Abacate Pay checkout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutCreateInput"
+      responses:
+        "201":
+          description: Checkout created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutCreateResponse"
+        "400":
+          description: Invalid checkout data
+        "502":
+          description: Payment provider unavailable
+  /checkout/abacatepay-webhook:
+    post:
+      operationId: receiveAbacatePayWebhook
+      tags: [checkout]
+      summary: Receive an authenticated Abacate Pay completion webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AbacatePayWebhook"
+      responses:
+        "200":
+          description: Webhook accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbacatePayWebhookResult"
+        "401":
+          description: Invalid webhook signature
 components:
   schemas:
     HealthStatus:
@@ -334,4 +376,54 @@ components:
         message:
           type: string
       required: [accepted, accessId, message]
+    CheckoutCreateInput:
+      type: object
+      properties:
+        packageId:
+          type: string
+          enum: [couple]
+        buyerName:
+          type: string
+          minLength: 1
+        buyerEmail:
+          type: string
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+      required: [packageId, buyerName]
+    CheckoutCreateResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        checkoutUrl:
+          type: string
+      required: [sessionId, checkoutUrl]
+    AbacatePayWebhook:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+          properties:
+            externalId:
+              type: string
+            metadata:
+              type: object
+              additionalProperties: true
+              properties:
+                sessionId:
+                  type: string
+      required: [event, data]
+    AbacatePayWebhookResult:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+        message:
+          type: string
+      required: [accepted, message]
 

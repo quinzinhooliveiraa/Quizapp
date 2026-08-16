@@ -153,6 +153,49 @@ export interface WebhookResult {
   message: string;
 }
 
+export type CheckoutCreateInputPackageId = typeof CheckoutCreateInputPackageId[keyof typeof CheckoutCreateInputPackageId];
+
+
+export const CheckoutCreateInputPackageId = {
+  couple: 'couple',
+} as const;
+
+export interface CheckoutCreateInput {
+  packageId: CheckoutCreateInputPackageId;
+  /** @minLength 1 */
+  buyerName: string;
+  /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
+  buyerEmail?: string;
+}
+
+export interface CheckoutCreateResponse {
+  sessionId: string;
+  checkoutUrl: string;
+}
+
+export type AbacatePayWebhookDataMetadata = {
+  sessionId?: string;
+  [key: string]: unknown;
+ };
+
+export type AbacatePayWebhookData = {
+  externalId?: string;
+  metadata?: AbacatePayWebhookDataMetadata;
+  [key: string]: unknown;
+ };
+
+export interface AbacatePayWebhook {
+  id?: string;
+  event: string;
+  data: AbacatePayWebhookData;
+  [key: string]: unknown;
+ }
+
+export interface AbacatePayWebhookResult {
+  accepted: boolean;
+  message: string;
+}
+
 export type ListQuestionsParams = {
 theme?: string;
 mode?: ListQuestionsMode;

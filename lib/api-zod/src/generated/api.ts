@@ -162,3 +162,42 @@ export const ReceiveCheckoutWebhookResponse = zod.object({
 })
 
 
+/**
+ * @summary Create an Abacate Pay checkout
+ */
+
+export const createCheckoutBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+
+
+export const CreateCheckoutBody = zod.object({
+  "packageId": zod.enum(['couple']),
+  "buyerName": zod.string().min(1),
+  "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional()
+})
+
+export const CreateCheckoutResponse = zod.object({
+  "sessionId": zod.string(),
+  "checkoutUrl": zod.string()
+})
+
+
+/**
+ * @summary Receive an authenticated Abacate Pay completion webhook
+ */
+export const ReceiveAbacatePayWebhookBody = zod.object({
+  "id": zod.string().optional(),
+  "event": zod.string(),
+  "data": zod.object({
+  "externalId": zod.string().optional(),
+  "metadata": zod.object({
+  "sessionId": zod.string().optional()
+}).optional()
+})
+})
+
+export const ReceiveAbacatePayWebhookResponse = zod.object({
+  "accepted": zod.boolean(),
+  "message": zod.string()
+})
+
+

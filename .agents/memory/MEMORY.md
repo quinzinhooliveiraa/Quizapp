@@ -1,4 +1,4 @@
-- [External checkout access](external-checkout-access.md) — keep payment-provider wiring deferred while preserving package-based buyer and guest permissions.
+- [External checkout access](external-checkout-access.md) — Abacate Pay is the selected provider; keep buyer/guest access gated by authenticated idempotent webhooks.
 - [Perguntas preview workflow](pwa-preview-workflow.md) — use the artifact-managed web workflow; a duplicate legacy workflow can conflict on the assigned port.
 - [PWA stable viewport](pwa-stable-viewport.md) — avoid visualViewport resize-driven jumps in the installed full-height card deck.
 - [Wine rebrand color maps](wine-rebrand-color-maps.md) — the provided hex map needs a separate pass for PWA theme values, semantic names, and translucent violet effects.

@@ -25,8 +25,26 @@ app.use(
     },
   }),
 );
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    const allowedOrigins = [
+      process.env.PUBLIC_APP_URL?.replace(/\/+$/, ""),
+      "http://localhost:5173",
+      "http://localhost:5180",
+    ].filter((value): value is string => Boolean(value));
+    callback(null, allowedOrigins.includes(origin));
+  },
+  credentials: true,
+}));
+app.use(express.json({
+  verify: (req, _res, buffer) => {
+    (req as express.Request & { rawBody?: Buffer }).rawBody = buffer;
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);

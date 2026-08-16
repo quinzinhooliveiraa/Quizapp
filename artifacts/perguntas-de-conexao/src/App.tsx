@@ -15,7 +15,6 @@ import {
   useCreateInvite,
   useGetInvite,
   getGetInviteQueryKey,
-  useReceiveCheckoutWebhook,
   type Question,
   type QuestionTheme,
 } from '@workspace/api-client-react';
@@ -26,6 +25,8 @@ import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
 
 const queryClient = new QueryClient();
+const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const apiUrl = (path: string) => `${apiBase}${path}`;
 
 const fallbackThemes: QuestionTheme[] = connectionThemes;
 const fallbackQuestions: Question[] = connectionQuestions.map(({ stage: _stage, ...question }) => question);
@@ -405,11 +406,78 @@ function StoredAccessGate() {
 function Home() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<'couple' | 'family'>('couple');
-  const receiveWebhook = useReceiveCheckoutWebhook();
-  const [checkoutState, setCheckoutState] = useState<'idle' | 'sent'>('idle');
-  const checkout = () => {
-    receiveWebhook.mutate({ data: { eventId: `demo-${Date.now()}`, eventType: 'payment.completed', buyerEmail: 'demo@conexao.local', buyerName: 'Visitante', packageId: selectedPackage, paymentReference: 'demo-access' } }, { onSuccess: () => setCheckoutState('sent'), onError: () => setCheckoutState('sent') });
+  const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'confirming' | 'error'>('idle');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session');
+    const checkoutCancelled = params.get('checkout') === 'cancelado';
+    if (checkoutCancelled) {
+      setCheckoutState('error');
+      setCheckoutOpen(true);
+      return;
+    }
+    if (!sessionId) return;
+
+    setCheckoutState('confirming');
+    setCheckoutOpen(true);
+    let attempts = 0;
+    let timeoutId: number | null = null;
+    let cancelled = false;
+
+    const checkPayment = async () => {
+      attempts += 1;
+      if (cancelled) return;
+      try {
+        const response = await fetch(apiUrl(`/api/access/sessions/${encodeURIComponent(sessionId)}`));
+        if (response.ok) {
+          const session = await response.json() as { accessGranted?: boolean };
+          if (!cancelled && session.accessGranted) {
+            safeSetItem('conexao-session', sessionId);
+            safeSetItem('conexao-role', 'owner');
+            window.location.href = '/onboarding';
+            return;
+          }
+        }
+      } catch {
+        // Keep polling while the webhook and API settle.
+      }
+
+      if (cancelled) return;
+      if (attempts < 15) {
+        timeoutId = window.setTimeout(checkPayment, 2000);
+      } else {
+        setCheckoutState('error');
+      }
+    };
+
+    void checkPayment();
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  const checkout = async () => {
+    if (!buyerNameInput.trim()) return;
+    setCheckoutState('sending');
+    try {
+      const response = await fetch(apiUrl('/api/checkout/create'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageId: selectedPackage,
+          buyerName: buyerNameInput.trim(),
+        }),
+      });
+      const data = await response.json() as { checkoutUrl?: string };
+      if (!response.ok || !data.checkoutUrl) throw new Error('checkout failed');
+      window.location.href = data.checkoutUrl;
+    } catch {
+      setCheckoutState('error');
+    }
   };
+  const [buyerNameInput, setBuyerNameInput] = useState('');
   return <Shell>
     <StoredAccessGate />
     <main>
@@ -445,14 +513,14 @@ function Home() {
       <section className="packages-section" id="pacotes">
         <div className="packages-intro"><p className="section-kicker">um acesso, muitas conversas</p><h2>Escolha quem você<br /><em>quer trazer para perto.</em></h2><p>Pagamento único. Acesso imediato ao baralho completo e convites para quem importa.</p></div>
         <div className="package-list">
-          <article className="package-card package-featured"><div className="package-tag">para dois</div><div className="package-top"><h3>Casal</h3><span className="package-price">R$ 39<span>/único</span></span></div><p>Para criar um espaço só de vocês — em qualquer fase da história.</p><ul><li><Check size={15} /> Baralho completo</li><li><Check size={15} /> 1 convite especial</li><li><Check size={15} /> Modo resposta e favoritos</li></ul><button onClick={() => { setSelectedPackage('couple'); setCheckoutOpen(true); }} className="button button-primary button-full" data-testid="button-buy-couple">Escolher Casal <ArrowRight size={16} /></button></article>
-          <article className="package-card"><div className="package-tag">para a roda toda</div><div className="package-top"><h3>Família & amigos</h3><span className="package-price">R$ 59<span>/único</span></span></div><p>Para reunir as pessoas que fazem uma casa ser casa, mesmo à distância.</p><ul><li><Check size={15} /> Baralho completo</li><li><Check size={15} /> 5 convites especiais</li><li><Check size={15} /> Modo resposta e favoritos</li></ul><button onClick={() => { setSelectedPackage('family'); setCheckoutOpen(true); }} className="button button-outline button-full" data-testid="button-buy-family">Escolher Família <ArrowRight size={16} /></button></article>
+          <article className="package-card package-featured"><div className="package-tag">para dois</div><div className="package-top"><h3>Casal</h3><span className="package-price">R$ 47,90<span>/vitalício</span></span></div><p>Para criar um espaço só de vocês — em qualquer fase da história.</p><ul><li><Check size={15} /> Baralho completo</li><li><Check size={15} /> 1 convite especial</li><li><Check size={15} /> Modo resposta e favoritos</li></ul><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="button button-primary button-full" data-testid="button-buy-couple">Escolher Casal <ArrowRight size={16} /></button></article>
+          {false && <article className="package-card"><div className="package-tag">para a roda toda</div><div className="package-top"><h3>Família & amigos</h3><span className="package-price">R$ 59<span>/único</span></span></div><p>Para reunir as pessoas que fazem uma casa ser casa, mesmo à distância.</p><ul><li><Check size={15} /> Baralho completo</li><li><Check size={15} /> 5 convites especiais</li><li><Check size={15} /> Modo resposta e favoritos</li></ul><button onClick={() => { setSelectedPackage('family'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="button button-outline button-full" data-testid="button-buy-family">Escolher Família <ArrowRight size={16} /></button></article>}
         </div>
       </section>
 
       <section className="quote-section"><Quote size={35} strokeWidth={1} /><blockquote>“A pergunta certa não abre uma conversa.<br /><em>Abre uma pessoa.</em>”</blockquote><span>— uma ideia para levar com vocês</span></section>
     </main>
-    {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'sent' ? <><div className="success-seal"><Check size={24} /></div><h2>A experiência está pronta.</h2><p>Este é um checkout de demonstração. Você já pode abrir seu baralho e começar uma conversa.</p><Link href="/app" onClick={() => setCheckoutOpen(false)} className="button button-primary button-full" data-testid="link-checkout-app">Abrir experiência <ArrowRight size={16} /></Link></> : <><p className="section-kicker">acesso imediato</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você escolheu o pacote <strong>{selectedPackage === 'couple' ? 'Casal' : 'Família & amigos'}</strong>. Em uma compra real, o acesso chega no seu e-mail.</p><button onClick={checkout} disabled={receiveWebhook.isPending} className="button button-primary button-full" data-testid="button-confirm-checkout">{receiveWebhook.isPending ? 'Preparando seu acesso…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
+     {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'confirming' ? <><div className="success-seal"><RotateCw size={22} /></div><p className="section-kicker">pagamento em confirmação</p><h2>Confirmando seu<br /><em>acesso…</em></h2><p>Estamos esperando a confirmação da Abacate Pay. Assim que chegar, seu baralho abre automaticamente.</p></> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix ou cartão. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
   </Shell>;
 }
 
@@ -1427,8 +1495,44 @@ function AppExperienceReference() {
   return <div className="invite-page-shell"><main className="invite-entry"><div className="invite-entry-orbit" /><div className="invite-entry-card">{inviteQuery.isLoading ? <><div className="skeleton-line short" /><div className="skeleton-line wide" /><div className="skeleton-line" /></> : invite ? <><div className="invite-symbol"><Feather size={23} /></div><p className="section-kicker light-kicker">um convite para você</p><h1><em>{invite.guestName}</em>, tem uma<br />conversa te esperando.</h1><p className="invite-entry-copy">Você foi convidado para participar de <strong>{invite.packageName}</strong>. Aqui, convidados podem responder e descobrir — só não podem criar novos convites.</p><Link href="/app" onClick={acceptInvite} className="button button-salmon" data-testid="link-accept-invite">Aceitar convite <ArrowRight size={16} /></Link><span className="guest-note"><Users size={14} /> Você entra como convidado</span></> : <><div className="invite-symbol"><X size={23} /></div><p className="section-kicker light-kicker">convite não encontrado</p><h1>Este endereço<br /><em>já mudou de lugar.</em></h1><p className="invite-entry-copy">Peça a quem te convidou para enviar um novo acesso.</p><Link href="/app" className="button button-salmon" data-testid="link-open-demo">Conhecer a experiência <ArrowRight size={16} /></Link></>}</div></main></div>;
 }
 
+function ProtectedExperienceRoute() {
+  const [, navigate] = useLocation();
+  const storedSessionId = safeGetItem('conexao-session')?.trim() || '';
+  const storedGuestToken = safeGetItem('conexao-guest-token')?.trim() || '';
+  const sessionQuery = useGetQuestionSession(storedSessionId, {
+    query: {
+      enabled: !!storedSessionId,
+      queryKey: getGetQuestionSessionQueryKey(storedSessionId),
+    },
+  });
+  const guestQuery = useGetInvite(storedGuestToken, {
+    query: {
+      enabled: !!storedGuestToken,
+      queryKey: getGetInviteQueryKey(storedGuestToken),
+    },
+  });
+  const hasAccess = sessionQuery.data?.accessGranted || guestQuery.data?.hasAccess;
+  const isChecking = (storedSessionId && sessionQuery.isPending) || (storedGuestToken && guestQuery.isPending);
+
+  useEffect(() => {
+    if (!storedSessionId && !storedGuestToken) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if (!isChecking && !hasAccess) {
+      navigate('/', { replace: true });
+    }
+  }, [hasAccess, isChecking, navigate, storedGuestToken, storedSessionId]);
+
+  if (isChecking || !hasAccess) {
+    return <div className="access-gate-overlay" role="status" aria-live="polite"><div className="access-gate"><span className="access-gate-mark"><Feather size={18} /></span><p>Verificando seu acesso…</p></div></div>;
+  }
+
+  return <AppExperienceReference />;
+}
+
  function Router() {
-   return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/app" component={AppExperienceReference} /><Route path="/invite/:token" component={InvitePage} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+   return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 function RoutedErrorBoundary({ children }: { children: ReactNode }) { const [location] = useLocation(); return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>; }
 function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>; }
