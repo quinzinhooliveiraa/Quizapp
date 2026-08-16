@@ -5905,6 +5905,23 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   }
 }
 
+/* On phones the bottom menu is intentionally word-led: keep the four
+   destinations easy to scan without stacking an icon and status dot under
+   each label. */
+@media (max-width: 699px) {
+  .app-bottom-nav > button:not(.app-nav-toggle) {
+    gap: 0;
+    min-height: 2.8rem;
+    font-size: clamp(.58rem, 2.8vw, .72rem);
+    font-weight: 600;
+  }
+
+  .app-bottom-nav > button:not(.app-nav-toggle) svg,
+  .app-bottom-nav > button:not(.app-nav-toggle) .nav-dot {
+    display: none;
+  }
+}
+
 /* Modal overlays must cover the whole browser, including the desktop rail.
    Older desktop rules narrowed this backdrop to the workspace beside the
    rail, leaving the navigation and outer edges sharp behind the modal. */
