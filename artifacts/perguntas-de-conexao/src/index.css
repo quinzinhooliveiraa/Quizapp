@@ -6050,3 +6050,29 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     width: min(100%, 1080px);
   }
 }
+
+/* Desktop viewport guard
+   The experience is the product on wider screens, not a phone preview.
+   Keep this final override after the legacy card-deck rules so the browser
+   cannot reintroduce the centered 430px shell. */
+@media (min-width: 900px) {
+  .app-viewport {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 0;
+    display: block;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .connection-app {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    min-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+}
