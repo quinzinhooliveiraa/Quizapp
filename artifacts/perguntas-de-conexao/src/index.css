@@ -6255,3 +6255,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 @media (min-width: 1180px) {
   .theme-carousel-arrow { display: none; }
 }
+
+@media (min-width: 900px) {
+  .app-wordmark { display: none; }
+}
