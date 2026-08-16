@@ -1205,11 +1205,31 @@ function AppExperienceReference() {
           <div className="question-header-count" data-testid="text-question-position">{String(dailyPosition).padStart(2, '0')} <span>/ {String(questions.length || dailyTotal).padStart(2, '0')}</span></div>
         </header>
         <section className={`question-view-stage ${showInvitePrompt ? 'has-invite-prompt' : ''}`}>
-           <div className="question-card-stack">
+           <div className="question-navigation" aria-label="Navegação entre perguntas">
+             <button
+               className="question-navigation-button question-navigation-previous"
+               onClick={previousQuestion}
+               aria-label="Pergunta anterior"
+               title="Pergunta anterior"
+               data-testid="button-previous-question-arrow"
+             >
+               <ChevronLeft size={21} />
+             </button>
+             <div className="question-card-stack">
               <div className="question-mode-bar" aria-label="Modo da carta">
                 <button className={`question-mode-button ${!writingOpen ? 'is-active' : ''}`} onClick={toggleQuestionMode} aria-label={randomMode ? 'Alternar para perguntas sequenciais' : 'Alternar para perguntas aleatórias'} data-testid="button-random-question"><Shuffle size={13} /> {randomMode ? 'Aleatória' : 'Sequencial'}</button>
                 <button className={`question-mode-button ${writingOpen ? 'is-active' : ''}`} onClick={() => setWritingOpen(open => !open)} aria-pressed={writingOpen} data-testid="button-writing-mode"><Feather size={13} /> {writingOpen ? 'Escrevendo' : 'Escrever'}</button>
-              </div>
+             </div>
+             <button
+               className="question-navigation-button question-navigation-next"
+               onClick={nextQuestion}
+               aria-label="Próxima pergunta"
+               title="Próxima pergunta"
+               data-testid="button-next-question-arrow"
+             >
+               <ChevronRight size={21} />
+             </button>
+           </div>
               {(allQuestionsMode ? allQuestionsQuery.isLoading : questionsQuery.isLoading) ? <div className="question-card question-card-loading" data-testid="loading-questions"><div className="loading-pill" /><div className="loading-copy" /><div className="loading-copy short" /></div> : (allQuestionsMode ? allQuestionsQuery.isError : questionsQuery.isError) ? <div className="question-error" data-testid="status-questions-error"><p>Esta seleção não abriu agora.</p><button onClick={() => (allQuestionsMode ? allQuestionsQuery.refetch() : questionsQuery.refetch())} data-testid="button-retry-questions">Tentar novamente <RotateCw size={14} /></button></div> : currentQuestion && <div className={`question-card-layers ${questionSwipeExit ? 'is-swiping' : ''}`}>
                 {secondStackQuestion && <article
                   key={`underlay-${secondStackQuestion.id}`}
@@ -1263,7 +1283,7 @@ function AppExperienceReference() {
       </>}
       <nav className="app-bottom-nav" aria-label="Navegação principal" data-testid="nav-bottom">
           <div className="app-nav-identity"><span className="app-nav-identity-mark"><Feather size={15} /></span><span className="app-nav-identity-copy"><strong>Perguntas</strong><small>de Conexão</small></span></div>
-           <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} aria-pressed={navCollapsed} title={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} data-testid="button-toggle-nav"><span className="nav-toggle-icon">{navCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}</span><span className="nav-toggle-label">{navCollapsed ? 'Mostrar menu' : 'Esconder menu'}</span></button>
+           <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} aria-pressed={navCollapsed} title={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} data-testid="button-toggle-nav"><span className="nav-toggle-icon">{navCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}</span></button>
           <p className="app-nav-label">Navegação</p>
          {navItems.map(item => { const Icon = item.icon; return <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => openDeckTab(item.id)} data-testid={`button-nav-${item.id}`}><Icon size={17} strokeWidth={1.8} /><span className="nav-item-label">{item.label}</span><span className={`nav-dot nav-dot-${item.id}`} /></button>; })}
           <div className="app-nav-footer"><span className="app-nav-status"><span /> pronto para a próxima conversa</span><span className="app-nav-version">PC · 01</span></div>
