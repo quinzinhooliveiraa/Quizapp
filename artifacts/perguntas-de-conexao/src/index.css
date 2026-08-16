@@ -6119,3 +6119,21 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     border-radius: 0;
   }
 }
+
+/* Absolute last word for every in-app modal.
+   Keep this outside all breakpoint blocks so no legacy workspace-only
+   positioning can leave the rail or outer cards interactive. */
+.app-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  transform: none !important;
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+}
