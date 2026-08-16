@@ -6029,3 +6029,22 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     width: min(1030px, calc(100vw - 3rem - 14rem));
   }
 }
+
+/* Keep the onboarding rail for true wide desktop only. Between 900px and
+   1179px the rail does not have enough room for its copy and competes with
+   the intro grid, which makes the first screen overflow horizontally. */
+@media (min-width: 900px) and (max-width: 1179px) {
+  .onboarding-shell {
+    display: flex;
+    grid-template-columns: none;
+    justify-content: center;
+  }
+
+  .onboarding-desktop-rail {
+    display: none;
+  }
+
+  .onboarding-frame {
+    width: min(100%, 1080px);
+  }
+}

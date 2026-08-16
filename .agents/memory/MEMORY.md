@@ -2,3 +2,4 @@
 - [Perguntas preview workflow](pwa-preview-workflow.md) — use the artifact-managed web workflow; a duplicate legacy workflow can conflict on the assigned port.
 - [PWA stable viewport](pwa-stable-viewport.md) — avoid visualViewport resize-driven jumps in the installed full-height card deck.
 - [Wine rebrand color maps](wine-rebrand-color-maps.md) — the provided hex map needs a separate pass for PWA theme values, semantic names, and translucent violet effects.
+- [Onboarding desktop breakpoint](onboarding-desktop-breakpoint.md) — keep the onboarding rail limited to wide screens so medium desktop widths retain a usable content area.
