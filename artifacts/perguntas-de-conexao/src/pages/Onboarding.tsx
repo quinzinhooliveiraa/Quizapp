@@ -746,9 +746,27 @@ export default function Onboarding() {
                 ? !!feeling
                 : true;
   const noButton = ['intro', 'note', 'days', 'insight', 'preparing', 'deck'].includes(step.id);
+  const onboardingStage = stepIndex <= steps.findIndex(item => item.id === 'guest-entry')
+    ? 0
+    : stepIndex <= steps.findIndex(item => item.id === 'feeling')
+      ? 1
+      : 2;
 
   return (
     <main className="onboarding-shell">
+      <aside className="onboarding-desktop-rail" aria-hidden="true">
+        <div className="onboarding-rail-brand"><span><Feather size={16} /></span><strong>Perguntas<br /><em>de Conexão</em></strong></div>
+        <div className="onboarding-rail-intro">
+          <span className="onboarding-rail-kicker">primeiro acesso</span>
+          <p>Um espaço para voltar a ouvir quem está perto.</p>
+        </div>
+        <div className="onboarding-rail-steps">
+           <div className={`onboarding-rail-step ${onboardingStage === 0 ? 'is-current' : ''} ${onboardingStage > 0 ? 'is-complete' : ''}`}><span>01</span><strong>Seu começo</strong></div>
+           <div className={`onboarding-rail-step ${onboardingStage === 1 ? 'is-current' : ''} ${onboardingStage > 1 ? 'is-complete' : ''}`}><span>02</span><strong>O que importa</strong></div>
+           <div className={`onboarding-rail-step ${onboardingStage === 2 ? 'is-current' : ''}`}><span>03</span><strong>Seu baralho</strong></div>
+        </div>
+        <span className="onboarding-rail-foot">feito para conversas que ficam</span>
+      </aside>
       <div className="onboarding-frame">
         <StepHeader step={step} onBack={goBack} showBack={stepIndex > 0 && step.id !== 'preparing'} />
         {renderStep()}

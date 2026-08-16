@@ -20,7 +20,7 @@ import {
   type QuestionTheme,
 } from '@workspace/api-client-react';
 import { questions as connectionQuestions, themes as connectionThemes } from '@workspace/connection-content';
-import { Heart, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Link as LinkIcon, Menu, MoreHorizontal, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Upload, Users, X } from 'lucide-react';
+import { ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Heart, House, Layers3, Link as LinkIcon, Menu, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Upload, UserRound, Users, WandSparkles, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
@@ -1142,10 +1142,10 @@ function AppExperienceReference() {
   };
   const copyInvite = () => { if (inviteResult?.inviteUrl) navigator.clipboard?.writeText(inviteResult.inviteUrl); };
   const navItems = [
-    { id: 'todos', label: 'Todos' },
-    { id: 'temas', label: 'Temas' },
-    { id: 'vibes', label: 'Vibes' },
-    { id: 'eu', label: 'Eu' },
+    { id: 'todos', label: 'Descobrir', icon: House },
+    { id: 'temas', label: 'Temas', icon: Layers3 },
+    { id: 'vibes', label: 'Vibes', icon: WandSparkles },
+    { id: 'eu', label: 'Meu espaço', icon: UserRound },
   ];
   const deckMenu = personalizedDecks.find(deck => deck.id === deckMenuId) || null;
 
@@ -1154,7 +1154,8 @@ function AppExperienceReference() {
        {!isQuestionView ? <>
         <header className="app-header" data-testid="header-decks">
           <div className="app-wordmark" data-testid="text-app-brand"><span className="app-logo-orb"><span /></span><span>Perguntas<br /><b>de Conexão</b></span></div>
-          <button className="app-icon-button" onClick={() => setSettingsOpen(true)} aria-label="Abrir ajustes" data-testid="button-open-settings"><Settings2 size={21} /></button>
+          <div className="app-header-context"><span className="app-header-overline">seu espaço de conversa</span><strong>{navItems.find(item => item.id === activeNav)?.label || 'Descobrir'}</strong></div>
+          <div className="app-header-actions"><span className="app-access-note"><span className="app-access-note-dot" /> acesso ativo</span><button className="app-icon-button" onClick={() => setSettingsOpen(true)} aria-label="Abrir ajustes" data-testid="button-open-settings"><Settings2 size={19} /></button></div>
         </header>
          {activeNav === 'eu' ? <section className="deck-home eu-home" aria-labelledby="eu-home-title">
             <div className="eu-heading"><div><p className="eu-kicker">seu espaço</p><h1 id="eu-home-title">Olá, {buyerName || 'por aqui'}.</h1></div><time className="eu-date" dateTime={localDateKey()}>{new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}</time></div>
@@ -1261,8 +1262,11 @@ function AppExperienceReference() {
         <p className="question-hint" data-testid="text-question-hint">deslize ou use as setas para continuar</p>
       </>}
       <nav className="app-bottom-nav" aria-label="Navegação principal" data-testid="nav-bottom">
-          <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu' : 'Esconder menu'} data-testid="button-toggle-nav">{navCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}</button>
-         {navItems.map(item => <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => openDeckTab(item.id)} data-testid={`button-nav-${item.id}`}><span className={`nav-dot nav-dot-${item.id}`} />{item.label}</button>)}
+          <div className="app-nav-identity"><span className="app-nav-identity-mark"><Feather size={15} /></span><span className="app-nav-identity-copy"><strong>Perguntas</strong><small>de Conexão</small></span></div>
+          <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu' : 'Esconder menu'} data-testid="button-toggle-nav">{navCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}</button>
+          <p className="app-nav-label">Navegação</p>
+         {navItems.map(item => { const Icon = item.icon; return <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => openDeckTab(item.id)} data-testid={`button-nav-${item.id}`}><Icon size={17} strokeWidth={1.8} /><span className="nav-item-label">{item.label}</span><span className={`nav-dot nav-dot-${item.id}`} /></button>; })}
+          <div className="app-nav-footer"><span className="app-nav-status"><span /> pronto para a próxima conversa</span><span className="app-nav-version">PC · 01</span></div>
       </nav>
     </main>
     <InstallAppPrompt />
