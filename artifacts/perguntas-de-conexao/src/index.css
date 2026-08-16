@@ -5817,25 +5817,26 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .app-viewport {
     width: 100%;
     min-height: 100dvh;
-    padding: 2.6rem;
-    align-items: center;
+    height: 100dvh;
+    padding: 0;
+    align-items: stretch;
   }
 
   .connection-app {
-    width: min(1280px, calc(100vw - 5.2rem));
-    height: min(860px, calc(100dvh - 5.2rem));
-    min-height: 0;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
     display: grid;
     grid-template-columns: 15rem minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas: "nav header" "nav main";
     overflow: hidden;
-    border: 1px solid rgba(255, 228, 229, .1);
-    border-radius: 1.7rem;
+    border: 0;
+    border-radius: 0;
     background:
       radial-gradient(circle at 76% 2%, rgba(145, 52, 79, .16), transparent 26rem),
       linear-gradient(135deg, #111116 0%, #0e0e13 56%, #171016 100%);
-    box-shadow: 0 2.5rem 7rem rgba(0, 0, 0, .42);
+    box-shadow: none;
   }
 
   .connection-app.is-nav-collapsed {
@@ -6012,12 +6013,13 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 
 @media (min-width: 1180px) and (max-width: 1380px) {
   .app-viewport {
-    padding-inline: 1.5rem;
+    padding-inline: 0;
   }
 
   .connection-app {
     grid-template-columns: 14rem minmax(0, 1fr);
-    width: min(1280px, calc(100vw - 3rem));
+    width: 100%;
+    max-width: none;
   }
 
   .connection-app.is-nav-collapsed {
