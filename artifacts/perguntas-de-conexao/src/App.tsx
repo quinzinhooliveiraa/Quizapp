@@ -615,6 +615,7 @@ function AppExperienceReference() {
   const [themeIndex, setThemeIndex] = useState(0);
   const [themeDragOffset, setThemeDragOffset] = useState(0);
   const [isThemeDragging, setIsThemeDragging] = useState(false);
+  const themeCarouselRef = useRef<HTMLDivElement | null>(null);
   const themeDragStartX = useRef<number | null>(null);
   const themeDragDelta = useRef(0);
   const themePointerCaptured = useRef(false);
@@ -984,6 +985,16 @@ function AppExperienceReference() {
     if (index === themeIndex) changeTheme(visibleThemes[index]?.id);
     else moveThemeIndex(index);
   };
+  const navigateThemeCarousel = (direction: 1 | -1) => {
+    if (!visibleThemes.length) return;
+    const nextIndex = (themeIndex + direction + visibleThemes.length) % visibleThemes.length;
+    moveThemeIndex(nextIndex);
+    window.requestAnimationFrame(() => {
+      themeCarouselRef.current
+        ?.querySelector<HTMLElement>(`[data-theme-index="${nextIndex}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    });
+  };
   const handleThemePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     themeDragStartX.current = event.clientX;
@@ -1175,8 +1186,10 @@ function AppExperienceReference() {
            <section className="eu-section eu-favorites-section" aria-labelledby="favorites-title"><div className="eu-section-heading"><div><p className="eu-kicker">salvos</p><h2 id="favorites-title">Salvos</h2></div><span>{saved.length + favoriteThemeIds.length} salvos</span></div><div className="eu-saved-row"><button className={`eu-collection-card eu-collection-cards ${saved.length ? 'has-content' : ''}`} onClick={openFavoritesDeck} disabled={!saved.length} data-testid="button-favorite-cards"><span className="eu-collection-shade" /><span className="eu-collection-title">Cartas favoritas <b>{saved.length}</b></span>{!saved.length && <small>suas perguntas salvas aparecem aqui</small>}</button><div className="eu-favorite-topics"><p className="eu-favorite-label">Temas favoritos</p><div className="eu-topic-row">{favoriteThemeIds.length ? favoriteThemeIds.map(id => { const theme = themes.find(item => item.id === id); return theme ? <button key={id} className={`eu-topic-card theme-cover-${themes.indexOf(theme) % 5}`} onClick={() => changeTheme(id)} data-testid={`button-favorite-theme-${id}`}><span className="eu-topic-shade" /><strong>{theme.title}</strong><ArrowRight size={15} /></button> : null; }) : <div className="eu-topic-empty">Favorite um tema para encontrá-lo aqui.</div>}</div></div></div></section>
           </section> : <section className="deck-home" aria-labelledby="deck-home-title">
             <div className="deck-home-heading"><h1 id="deck-home-title" data-testid="text-deck-title">{activeNav === 'temas' ? 'Escolha um assunto pra começar' : activeNav === 'vibes' ? 'Escolha uma vibe pra agora' : 'Escolha um objetivo pra começar'}</h1><p className="deck-home-subtitle">{activeNav === 'temas' ? 'Conversas sobre as histórias e planos que fazem parte de vocês' : activeNav === 'vibes' ? 'Encontrem o clima que combina com este momento' : 'Por exemplo, descobrir algo novo, imaginar o que vem'}</p></div>
-          <div className="theme-carousel-wrap">
+           <div className="theme-carousel-wrap">
+             <button className="theme-carousel-arrow theme-carousel-arrow-previous" onClick={() => navigateThemeCarousel(-1)} disabled={!visibleThemes.length} aria-label="Objetivo anterior" title="Objetivo anterior" data-testid="button-previous-theme"><ChevronLeft size={20} /></button>
               <div
+                 ref={themeCarouselRef}
                 className={`theme-carousel ${isThemeDragging ? 'is-dragging' : ''}`}
                 aria-label={activeNav === 'temas' ? 'Assuntos de conexão' : activeNav === 'vibes' ? 'Vibes de conexão' : 'Objetivos de conexão'}
                 onPointerDown={handleThemePointerDown}
@@ -1188,12 +1201,13 @@ function AppExperienceReference() {
               {themesLoading && <div className="theme-skeleton" data-testid="loading-themes" />}
               {visibleThemes.map((theme, index) => {
                 const offset = Math.max(-2, Math.min(2, index - themeIndex));
-                 return <div key={theme.id} className={`theme-cover theme-cover-${index % 5} theme-offset-${offset} ${index === themeIndex ? 'is-active' : ''}`} onClick={() => selectThemeCard(index)} onKeyDown={event => event.key === 'Enter' && selectThemeCard(index)} role="button" tabIndex={0} data-testid={`button-theme-card-${theme.id}`}>
+                  return <div key={theme.id} className={`theme-cover theme-cover-${index % 5} theme-offset-${offset} ${index === themeIndex ? 'is-active' : ''}`} onClick={() => selectThemeCard(index)} onKeyDown={event => event.key === 'Enter' && selectThemeCard(index)} role="button" tabIndex={0} data-theme-index={index} data-testid={`button-theme-card-${theme.id}`}>
                     <span className="theme-cover-shade" /><span className="theme-cover-top"><span className="theme-cover-meta"><span>{theme.count} perguntas</span>{theme.audience === '18+' && <span className="theme-cover-audience" role="img" aria-label="Conteúdo para maiores de 18 anos" title="Maiores de 18 anos"><Flame size={13} strokeWidth={2.2} aria-hidden="true" /></span>}{theme.audience === 'casais' && <span className="theme-cover-audience">casais</span>}</span><button className={`theme-cover-heart ${favoriteThemeIds.includes(theme.id) ? 'is-favorite' : ''}`} onClick={event => { event.stopPropagation(); toggleThemeFavorite(theme.id); }} aria-label={favoriteThemeIds.includes(theme.id) ? `Remover ${theme.title} dos favoritos` : `Favoritar ${theme.title}`} data-testid={`button-favorite-theme-card-${theme.id}`}><Heart size={20} strokeWidth={1.8} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></button></span>
                   <span className="theme-cover-copy"><b>{theme.title}</b><small>{theme.description}</small><i>{index === themeIndex ? 'Toque novamente para abrir' : 'ver objetivo'}</i></span>
                  </div>;
               })}
             </div>
+             <button className="theme-carousel-arrow theme-carousel-arrow-next" onClick={() => navigateThemeCarousel(1)} disabled={!visibleThemes.length} aria-label="Próximo objetivo" title="Próximo objetivo" data-testid="button-next-theme"><ChevronRight size={20} /></button>
             <div className="carousel-dots" aria-label="Posição do objetivo">{visibleThemes.map((theme, index) => <button key={theme.id} className={index === themeIndex ? 'is-active' : ''} onClick={() => moveThemeIndex(index)} aria-label={`Selecionar ${theme.title}`} data-testid={`button-theme-dot-${theme.id}`} />)}</div>
           </div>
           {themesError && <div className="app-inline-error" data-testid="status-themes-error"><span>Não conseguimos atualizar os objetivos.</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar novamente <RotateCw size={13} /></button></div>}
