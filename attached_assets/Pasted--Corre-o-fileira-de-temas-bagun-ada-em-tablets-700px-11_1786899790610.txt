@@ -1,0 +1,57 @@
+# Correção: fileira de temas bagunçada em tablets (700px–1179px)
+
+Vi suas 4 fotos e testei exatamente essas larguras. As duas primeiras (janela mais estreita, tipo iPad retrato) e as duas últimas (mais larga, tipo iPad paisagem) são a mesma coisa. Boas notícias: **o menu (trilho lateral) não está quebrado** — funciona certo, e o logo duplicado que corrigimos antes sumiu mesmo. O que fica com "cara de quebrado" é a **fileira de temas**: nessa faixa de tamanho (tablet), ela ainda usa o carrossel em leque antigo (uma carta ativa na frente, com as cartas vizinhas coladas atrás, cortadas, com os selinhos "31 perguntas"/"casais"/coração se sobrepondo). Isso é **estético**, não vaza nem quebra nada — mas fica poluído visualmente numa tela de tablet, porque sobra espaço pra ver demais dessas cartas cortadas atrás.
+
+Causa: quando fiz a fileira estilo Netflix (cartas lado a lado, sem sobreposição), só liguei ela a partir de 1180px — pensando em "PC". Não tinha testado a faixa de tablet (700–1179px) especificamente, e é exatamente aí que sobra esse visual velho e poluído.
+
+## O que fazer
+
+No arquivo `src/index.css`, adicionar isto no **final do arquivo** (é independente dos outros 2 prompts que já mandei — pode colar junto ou separado, não conflita):
+
+```css
+/* A faixa "tablet" (700-1179px) já vira trilho lateral, mas a fileira de
+   temas continua no modo leque antigo (uma carta ativa + vizinhas coladas,
+   borradas, cortadas) — nessa largura isso fica com cara de bagunça (selos
+   "perguntas"/"casais" de cartas vizinhas se sobrepondo, cartas cortadas de
+   um jeito estranho). Estende o mesmo tratamento "fileira" do PC pra essa
+   faixa também, só que com cartas um pouco menores (cabe menos coisa que no
+   PC grande). */
+@media (min-width: 700px) {
+  .theme-carousel-wrap { height: auto; min-height: 0; margin-top: 2rem; display: block; }
+  .theme-carousel {
+    display: flex;
+    gap: 1.2rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 1.2rem 1rem 1.5rem;
+    perspective: none;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  .theme-carousel::-webkit-scrollbar { display: block; height: 6px; }
+  .theme-carousel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 999px; }
+  .theme-cover {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    z-index: auto !important;
+    flex: 0 0 auto;
+    width: 15rem;
+    height: 20rem;
+    scroll-snap-align: start;
+  }
+  .theme-cover:hover { transform: translateY(-.3rem) !important; }
+  .carousel-dots { display: none; }
+  .theme-carousel-arrow { display: none; }
+}
+```
+
+Testei em 700px, 750px, 850px, 900px, 950px, 1050px e 1180px — em toda essa faixa agora as cartas ficam lado a lado, do mesmo tamanho, sem sobreposição, com scroll (arrasta ou usa trackpad). Celular de verdade (abaixo de 700px) continua exatamente igual, com o leque de sempre — não toquei nisso.
+
+## Verificação
+- Redimensionar entre 700px e 1179px de largura (ou testar num iPad/tablet de verdade, deitado ou em pé): a fileira de temas deve mostrar cartas inteiras, lado a lado, sem cortar/sobrepor selos.
+- Celular de verdade (abaixo de 700px): sem nenhuma mudança, continua o leque com toque duplo.
+- PC (1180px+): sem mudança, já estava bom.

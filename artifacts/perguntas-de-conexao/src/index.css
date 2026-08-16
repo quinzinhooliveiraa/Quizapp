@@ -6259,3 +6259,42 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 @media (min-width: 900px) {
   .app-wordmark { display: none; }
 }
+
+/* A faixa "tablet" (700-1179px) já vira trilho lateral, mas a fileira de
+   temas continua no modo leque antigo (uma carta ativa + vizinhas coladas,
+   borradas, cortadas) — nessa largura isso fica com cara de bagunça (selos
+   "perguntas"/"casais" de cartas vizinhas se sobrepondo, cartas cortadas de
+   um jeito estranho). Estende o mesmo tratamento "fileira" do PC pra essa
+   faixa também, só que com cartas um pouco menores (cabe menos coisa que no
+   PC grande). */
+@media (min-width: 700px) {
+  .theme-carousel-wrap { height: auto; min-height: 0; margin-top: 2rem; display: block; }
+  .theme-carousel {
+    display: flex;
+    gap: 1.2rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 1.2rem 1rem 1.5rem;
+    perspective: none;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  .theme-carousel::-webkit-scrollbar { display: block; height: 6px; }
+  .theme-carousel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 999px; }
+  .theme-cover {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    z-index: auto !important;
+    flex: 0 0 auto;
+    width: 15rem;
+    height: 20rem;
+    scroll-snap-align: start;
+  }
+  .theme-cover:hover { transform: translateY(-.3rem) !important; }
+  .carousel-dots { display: none; }
+  .theme-carousel-arrow { display: none; }
+}
