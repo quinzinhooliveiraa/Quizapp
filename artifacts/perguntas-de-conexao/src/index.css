@@ -4321,6 +4321,10 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   display: none;
 }
 
+.desktop-nav-toggle {
+  display: none;
+}
+
 /* On large desktop screens the app opens into a roomy workspace: navigation
    becomes a collapsible rail and the decks can use the available width. */
 @media (min-width: 1180px) {
@@ -4677,6 +4681,33 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     opacity: 1 !important;
     visibility: visible !important;
     pointer-events: auto !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .desktop-nav-toggle {
+    width: 2.35rem;
+    height: 2.35rem;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid rgba(255, 228, 229, .14);
+    border-radius: .7rem;
+    color: rgba(255, 239, 240, .68);
+    background: rgba(255, 255, 255, .045);
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease, background-color .2s ease, transform .2s ease;
+  }
+
+  .desktop-nav-toggle:hover,
+  .desktop-nav-toggle:focus-visible {
+    color: #fff;
+    border-color: rgba(229, 138, 107, .48);
+    background: rgba(229, 138, 107, .12);
+    outline: none;
+    transform: translateY(-1px);
   }
 }
 
@@ -5776,6 +5807,18 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .onboarding-desktop-rail {
     display: none;
   }
+}
+
+/* Modal overlays must cover the whole browser, including the desktop rail.
+   Older desktop rules narrowed this backdrop to the workspace beside the
+   rail, leaving the navigation and outer edges sharp behind the modal. */
+.app-modal-backdrop {
+  inset: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  max-width: none;
+  transform: none;
 }
 
 /* Final PC pass ------------------------------------------------------------

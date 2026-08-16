@@ -1263,7 +1263,7 @@ function AppExperienceReference() {
       </>}
       <nav className="app-bottom-nav" aria-label="Navegação principal" data-testid="nav-bottom">
           <div className="app-nav-identity"><span className="app-nav-identity-mark"><Feather size={15} /></span><span className="app-nav-identity-copy"><strong>Perguntas</strong><small>de Conexão</small></span></div>
-          <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu' : 'Esconder menu'} data-testid="button-toggle-nav">{navCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}</button>
+           <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} aria-pressed={navCollapsed} title={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} data-testid="button-toggle-nav"><span className="nav-toggle-icon">{navCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}</span><span className="nav-toggle-label">{navCollapsed ? 'Mostrar menu' : 'Esconder menu'}</span></button>
           <p className="app-nav-label">Navegação</p>
          {navItems.map(item => { const Icon = item.icon; return <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => openDeckTab(item.id)} data-testid={`button-nav-${item.id}`}><Icon size={17} strokeWidth={1.8} /><span className="nav-item-label">{item.label}</span><span className={`nav-dot nav-dot-${item.id}`} /></button>; })}
           <div className="app-nav-footer"><span className="app-nav-status"><span /> pronto para a próxima conversa</span><span className="app-nav-version">PC · 01</span></div>
