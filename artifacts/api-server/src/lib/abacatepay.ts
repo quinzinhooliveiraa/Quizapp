@@ -78,14 +78,14 @@ export function verifyAbacateSignature(
   );
 }
 
-type BillingStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED" | "REFUNDED" | string;
+type CheckoutStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED" | "REFUNDED" | string;
 
-type BillingStatusResult = {
-  status: BillingStatus;
+type CheckoutStatusResult = {
+  status: CheckoutStatus;
   metadata?: Record<string, unknown>;
 };
 
-type AbacateBillingResponse = {
+type AbacateCheckoutStatusResponse = {
   success?: boolean;
   data?: {
     status?: unknown;
@@ -93,34 +93,34 @@ type AbacateBillingResponse = {
   };
 };
 
-const BILLING_STATUS_CACHE_TTL_MS = 5_000;
-const billingStatusCache = new Map<string, { checkedAt: number; result: BillingStatusResult | null }>();
+const CHECKOUT_STATUS_CACHE_TTL_MS = 5_000;
+const checkoutStatusCache = new Map<string, { checkedAt: number; result: CheckoutStatusResult | null }>();
 
-export async function fetchAbacateBillingStatus(
+export async function fetchAbacateCheckoutStatus(
   billId: string,
-): Promise<BillingStatusResult | null> {
+): Promise<CheckoutStatusResult | null> {
   const apiKey = process.env.ABACATEPAY_API_KEY;
   if (!apiKey || !billId) return null;
 
-  const cached = billingStatusCache.get(billId);
-  if (cached && Date.now() - cached.checkedAt < BILLING_STATUS_CACHE_TTL_MS) {
+  const cached = checkoutStatusCache.get(billId);
+  if (cached && Date.now() - cached.checkedAt < CHECKOUT_STATUS_CACHE_TTL_MS) {
     return cached.result;
   }
 
   try {
-    const response = await fetch(`${ABACATEPAY_BASE_URL}/billings/${encodeURIComponent(billId)}`, {
+    const response = await fetch(`${ABACATEPAY_BASE_URL}/checkouts/get?id=${encodeURIComponent(billId)}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
-    const json = await response.json() as AbacateBillingResponse;
+    const json = await response.json() as AbacateCheckoutStatusResponse;
     const result = response.ok
       && json.success
       && typeof json.data?.status === "string"
       ? { status: json.data.status, metadata: json.data.metadata }
       : null;
-    billingStatusCache.set(billId, { checkedAt: Date.now(), result });
+    checkoutStatusCache.set(billId, { checkedAt: Date.now(), result });
     return result;
   } catch {
-    billingStatusCache.set(billId, { checkedAt: Date.now(), result: null });
+    checkoutStatusCache.set(billId, { checkedAt: Date.now(), result: null });
     return null;
   }
 }

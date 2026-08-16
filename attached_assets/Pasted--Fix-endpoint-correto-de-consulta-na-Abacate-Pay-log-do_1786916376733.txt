@@ -1,0 +1,63 @@
+# Fix: endpoint correto de consulta na Abacate Pay + log do webhook
+
+**Diagnóstico:** O webhook chegou 3x, todas retornaram 401. O fallback (que ia consultar a Abacate direto se HMAC falhasse) tava chamando o endpoint errado: `/billings/{id}`. O endpoint certo, segundo a doc oficial da Abacate, é **`GET /checkouts/get?id=...`**. Como o fallback dava 404, `paymentConfirmed` ficava false, e o webhook retornava 401.
+
+Também vou adicionar um log detalhado que grava o payload real do webhook — assim se der outro erro depois, eu tenho o que preciso pra depurar sem chutar.
+
+## 1. `artifacts/api-server/src/lib/abacatepay.ts`
+
+Achar a função `fetchAbacateBillingStatus` que eu adicionei antes e trocar por (nome mais claro + endpoint corrigido):
+
+```ts
+type CheckoutStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED" | "REFUNDED" | string;
+
+export async function fetchAbacateCheckoutStatus(billId: string): Promise<{ status: CheckoutStatus; metadata?: Record<string, unknown> } | null> {
+  const apiKey = process.env.ABACATEPAY_API_KEY;
+  if (!apiKey || !billId) return null;
+  try {
+    const response = await fetch(`${ABACATEPAY_BASE_URL}/checkouts/get?id=${encodeURIComponent(billId)}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const json = await response.json();
+    if (!response.ok || !json?.success) return null;
+    return { status: json.data?.status as CheckoutStatus, metadata: json.data?.metadata };
+  } catch {
+    return null;
+  }
+}
+```
+
+## 2. `artifacts/api-server/src/routes/connection.ts`
+
+Trocar o import antigo:
+
+```ts
+import { createAbacateCheckout, verifyAbacateSignature, fetchAbacateBillingStatus } from "../lib/abacatepay";
+```
+
+Por:
+
+```ts
+import { createAbacateCheckout, verifyAbacateSignature, fetchAbacateCheckoutStatus } from "../lib/abacatepay";
+```
+
+E dentro do handler do webhook, trocar todas as ocorrências de `fetchAbacateBillingStatus` por `fetchAbacateCheckoutStatus` (é só o nome — a assinatura é a mesma). Mesma coisa no handler do `router.get("/access/sessions/:sessionId", ...)` se ele também usa.
+
+E adicionar um log logo no início do handler do webhook, pra futuro debug:
+
+Achar `router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {` e logo depois do `{`, adicionar:
+
+```ts
+console.log("[abacate-webhook] incoming", JSON.stringify({
+  headers: { signature: req.header("X-Webhook-Signature")?.slice(0, 12) + "…" },
+  body: req.body,
+}));
+```
+
+(O log só grava os primeiros 12 chars da assinatura — não vaza o secret nem nada sensível. Ajuda muito pra debug futuro.)
+
+## Verificação
+- Fazer uma nova compra em modo sandbox + Simular Pagamento.
+- No log do api-server: deve aparecer a linha `[abacate-webhook] incoming` com o payload real. Isso confirma que o webhook chegou.
+- Se o HMAC ainda falhar (secret errado), o fallback via `/checkouts/get` deve dar `PAID` e liberar mesmo assim.
+- No frontend: tela "Confirmando…" deve sumir em <30s e cair no onboarding.

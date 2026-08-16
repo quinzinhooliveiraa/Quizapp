@@ -33,7 +33,7 @@ import crypto from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import {
   createAbacateCheckout,
-  fetchAbacateBillingStatus,
+  fetchAbacateCheckoutStatus,
   verifyAbacateSignature,
 } from "../lib/abacatepay";
 
@@ -313,8 +313,17 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
 });
 
 router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
-  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
   const signature = req.header("X-Webhook-Signature");
+  req.log.info({
+    webhook: {
+      headers: {
+        signature: signature ? `${signature.slice(0, 12)}…` : undefined,
+      },
+      body: req.body,
+    },
+  }, "Abacate webhook incoming");
+
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
   const parsed = ReceiveAbacatePayWebhookBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Payload de webhook inválido" });
@@ -330,9 +339,9 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
   let paymentConfirmed = signatureValid && event === "checkout.completed" && !!sessionId;
 
   if (!paymentConfirmed && billId) {
-    const billing = await fetchAbacateBillingStatus(billId);
-    if (billing?.status === "PAID") {
-      const metadataSessionId = billing.metadata?.sessionId;
+    const checkout = await fetchAbacateCheckoutStatus(billId);
+    if (checkout?.status === "PAID") {
+      const metadataSessionId = checkout.metadata?.sessionId;
       if (typeof metadataSessionId === "string") sessionId = metadataSessionId;
       paymentConfirmed = !!sessionId;
     }
@@ -396,8 +405,8 @@ router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
     const bill = req.query.bill;
     const billId = typeof bill === "string" ? bill : undefined;
     if (billId) {
-      const billing = await fetchAbacateBillingStatus(billId);
-      if (billing?.status === "PAID" && billing.metadata?.sessionId === session.id) {
+      const checkout = await fetchAbacateCheckoutStatus(billId);
+      if (checkout?.status === "PAID" && checkout.metadata?.sessionId === session.id) {
         await db.update(sessionsTable)
           .set({ accessGranted: true })
           .where(eq(sessionsTable.id, session.id));
