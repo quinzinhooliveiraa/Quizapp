@@ -37,7 +37,7 @@ export async function createAbacateCheckout({
     },
     body: JSON.stringify({
       items: [{ id: productId, quantity: 1 }],
-      methods: ["PIX", "CARD"],
+      methods: ["PIX"],
       externalId: sessionId,
       metadata: { sessionId, buyerName, buyerEmail },
       returnUrl: `${publicUrl}/?checkout=cancelado`,
