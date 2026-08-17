@@ -22,6 +22,7 @@ export * from './guestAccess';
 export * from './guestAccessRole';
 export * from './healthStatus';
 export * from './invite';
+export * from './inviteAccepted';
 export * from './inviteInput';
 export * from './inviteListItem';
 export * from './listQuestionsMode';

@@ -2141,6 +2141,48 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .invite-copy-row button { width: 3.35rem; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.13); border-radius: .9rem; color: #fff; background: rgba(255,255,255,.08); }
 .app-text-button { display: inline-flex; align-items: center; gap: .4rem; margin-top: 1rem; padding: 0; border: 0; color: #c7b3ff; background: transparent; font-size: .82rem; }
 .app-form-error { color: #f0a7b6 !important; font-size: .75rem !important; }
+.invite-share-block { display: flex; flex-direction: column; gap: .8rem; margin-top: .5rem; }
+.invite-share-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+  width: 100%; min-height: 3.35rem; padding: 0 1.2rem;
+  border: 0; border-radius: .9rem;
+  color: #fff;
+  background: linear-gradient(135deg, #916fef 0%, #6f4ec7 100%);
+  box-shadow: 0 .9rem 1.8rem rgba(111,78,199,.32), inset 0 1px rgba(255,255,255,.18);
+  font: inherit; font-weight: 600; letter-spacing: .01em;
+  cursor: pointer; transition: transform .15s ease, box-shadow .2s ease;
+}
+.invite-share-button:hover { transform: translateY(-1px); box-shadow: 0 1.1rem 2.2rem rgba(111,78,199,.42), inset 0 1px rgba(255,255,255,.22); }
+.invite-share-button:active { transform: translateY(0); }
+.invite-share-details { text-align: center; }
+.invite-share-details summary {
+  cursor: pointer; user-select: none;
+  font-size: .78rem; color: rgba(255,255,255,.5);
+  padding: .35rem 0; list-style: none;
+}
+.invite-share-details summary:hover { color: rgba(255,255,255,.75); }
+.invite-share-details summary::-webkit-details-marker { display: none; }
+.invite-share-details[open] summary { color: rgba(255,255,255,.7); margin-bottom: .5rem; }
+.invite-share-details .app-text-input { font-size: .82rem; padding: 0 .8rem; }
+.invite-share-block-light .invite-share-details summary { color: #947b7e; }
+.invite-share-block-light .invite-share-details summary:hover,
+.invite-share-block-light .invite-share-details[open] summary { color: var(--wine); }
+.invite-share-block-light .invite-share-details .app-text-input {
+  margin: 0;
+  height: 2.75rem;
+  border-color: rgba(92,55,47,.18);
+  color: var(--ink);
+  background: rgba(92,55,47,.05);
+  font-size: .78rem;
+}
+.invite-share-block-light .invite-share-details .app-text-input:focus {
+  border-color: var(--salmon);
+  box-shadow: 0 0 0 3px rgba(207,115,91,.12);
+}
+.invite-share-block-light .invite-share-details .text-input {
+  margin: 0;
+  font-size: .78rem;
+}
 
 @keyframes app-shimmer { 0%, 100% { opacity: .62; } 50% { opacity: 1; } }
 @keyframes card-rise { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }

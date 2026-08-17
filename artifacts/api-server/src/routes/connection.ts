@@ -490,11 +490,6 @@ router.get("/access/invites/:token", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Sessão não encontrada" });
     return;
   }
-  if (!invite.isUsed) {
-    await db.update(invitesTable)
-      .set({ isUsed: true, usedAt: new Date() })
-      .where(eq(invitesTable.token, invite.token));
-  }
   res.json({
     role: "guest",
     hasAccess: session.accessGranted,
@@ -503,6 +498,28 @@ router.get("/access/invites/:token", async (req, res): Promise<void> => {
     packageName: session.packageName,
     ownerName: session.buyerName,
   });
+});
+
+router.post("/access/invites/:token/accept", async (req, res): Promise<void> => {
+  const parsed = GetInviteParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [invite] = await db.select()
+    .from(invitesTable)
+    .where(eq(invitesTable.token, parsed.data.token))
+    .limit(1);
+  if (!invite) {
+    res.status(404).json({ error: "Convite não encontrado" });
+    return;
+  }
+  if (!invite.isUsed) {
+    await db.update(invitesTable)
+      .set({ isUsed: true, usedAt: new Date() })
+      .where(eq(invitesTable.token, invite.token));
+  }
+  res.json({ accepted: true });
 });
 
 router.get("/access/sessions/:sessionId/invites", async (req, res): Promise<void> => {

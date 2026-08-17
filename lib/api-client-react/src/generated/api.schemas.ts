@@ -113,6 +113,10 @@ export interface InviteListItem {
   createdAt: string;
 }
 
+export interface InviteAccepted {
+  accepted: boolean;
+}
+
 export type GuestAccessRole = typeof GuestAccessRole[keyof typeof GuestAccessRole];
 
 

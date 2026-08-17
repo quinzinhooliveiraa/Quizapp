@@ -1,0 +1,142 @@
+# Modal de convite + status "entrou" errado — 3 fixes juntos
+
+**Bugs observados (screenshots do dono):**
+1. Modal de convite: input do URL aparece vazio, botão de copiar não funciona, e está visualmente desalinhado.
+2. Botão "Criar outro convite" aparece mesmo quando não há mais convites disponíveis (pacote Casal tem 1 convite; depois de criar, não deveria oferecer criar outro).
+3. Aba "Meu espaço" mostra convite como "entrou dd/mm/aaaa" mesmo sem ninguém ter aberto o link — porque o backend marca isUsed logo no primeiro GET, o que dispara ao próprio dono testar o link, refresh de página, etc.
+
+## 1. Backend — desacoplar "ler convite" de "aceitar convite"
+
+Em `artifacts/api-server/src/routes/connection.ts`, achar `router.get("/access/invites/:token", ...)` e remover o trecho que marca `isUsed`. A rota deve apenas LER, nunca mais escrever. Ficar assim:
+
+```ts
+router.get("/access/invites/:token", async (req, res): Promise<void> => {
+  const parsed = GetInviteParams.safeParse(req.params);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [invite] = await db.select().from(invitesTable).where(eq(invitesTable.token, parsed.data.token)).limit(1);
+  if (!invite) { res.status(404).json({ error: "Convite não encontrado ou expirado" }); return; }
+  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, invite.sessionId)).limit(1);
+  if (!session) { res.status(404).json({ error: "Sessão não encontrada" }); return; }
+  res.json({
+    role: "guest",
+    hasAccess: session.accessGranted,
+    canInvite: false,
+    guestName: invite.guestName,
+    packageName: session.packageName,
+    ownerName: session.buyerName,
+  });
+});
+```
+
+E adicionar uma rota nova `POST /access/invites/:token/accept` que é chamada só quando o convidado de fato entra:
+
+```ts
+router.post("/access/invites/:token/accept", async (req, res): Promise<void> => {
+  const parsed = GetInviteParams.safeParse(req.params);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [invite] = await db.select().from(invitesTable).where(eq(invitesTable.token, parsed.data.token)).limit(1);
+  if (!invite) { res.status(404).json({ error: "Convite não encontrado" }); return; }
+  if (!invite.isUsed) {
+    await db.update(invitesTable).set({ isUsed: true, usedAt: new Date() }).where(eq(invitesTable.token, invite.token));
+  }
+  res.json({ accepted: true });
+});
+```
+
+## 2. Frontend — chamar POST accept quando o convidado entra
+
+Achar o ponto no `App.tsx` onde o convidado salva `conexao-guest-token` no localStorage (parece ser perto da linha 1421 ou similar, no fluxo do onboarding do convidado). Logo depois do `safeSetItem('conexao-guest-token', token)`, adicionar:
+
+```tsx
+fetch(apiUrl(`/api/access/invites/${encodeURIComponent(token)}/accept`), { method: 'POST' }).catch(() => {});
+```
+
+(`.catch(() => {})` porque se falhar não é crítico — só o status na lista do dono fica "ainda não entrou". A ação principal — entrar no app — não depende disso.)
+
+## 3. Frontend — modal de convite: botão Copiar como herói, URL escondida
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`, achar o modal do convite quando `inviteResult` existe (tem em dois lugares — linha ~676 e linha ~1512). Nos dois, achar o bloco atual:
+
+```tsx
+<div className="copy-row"><input readOnly value={inviteResult.token ? inviteUrlFromToken(inviteResult.token) : ''} className="text-input" data-testid="input-invite-url" /><button onClick={copyInvite} className="round-button" aria-label="Copiar convite" data-testid="button-copy-invite"><Copy size={17} /></button></div>
+```
+
+(e o outro, com classe `invite-copy-row` e `app-text-input`)
+
+Trocar por (mesma versão nos dois lugares):
+
+```tsx
+<div className="invite-share-block"><button onClick={copyInvite} className="invite-share-button" data-testid="button-copy-invite"><Copy size={18} /> {copiedInvite ? 'Copiado!' : 'Copiar link do convite'}</button><details className="invite-share-details"><summary>Ver o link</summary><input readOnly value={inviteResult.token ? inviteUrlFromToken(inviteResult.token) : ''} className="app-text-input" data-testid="input-invite-url" onFocus={e => e.currentTarget.select()} /></details></div>
+```
+
+E no `copyInvite` (em cada um dos escopos onde ele vive), adicionar o feedback "Copiado!" por 2s. Perto da declaração antiga:
+
+```tsx
+const copyInvite = () => { if (inviteResult?.token) navigator.clipboard?.writeText(inviteUrlFromToken(inviteResult.token)); };
+```
+
+Trocar por:
+
+```tsx
+const [copiedInvite, setCopiedInvite] = useState(false);
+const copyInvite = () => {
+  if (!inviteResult?.token) return;
+  navigator.clipboard?.writeText(inviteUrlFromToken(inviteResult.token)).then(() => {
+    setCopiedInvite(true);
+    setTimeout(() => setCopiedInvite(false), 2000);
+  });
+};
+```
+
+## 4. Frontend — "Criar outro convite" só quando ainda há slots
+
+No mesmo modal, achar:
+
+```tsx
+<button onClick={() => { setInviteResult(null); setGuestName(''); }} className="text-link" data-testid="button-new-invite">Criar outro convite <ArrowRight size={15} /></button>
+```
+
+(e o outro similar com `app-text-button`)
+
+Envolver em condicional que checa se ainda pode convidar. Nos dois lugares, algo tipo:
+
+```tsx
+{canInvite && <button onClick={() => { setInviteResult(null); setGuestName(''); setCopiedInvite(false); }} className="text-link" data-testid="button-new-invite">Criar outro convite <ArrowRight size={15} /></button>}
+```
+
+(Se o escopo não tiver `canInvite`, usar `invitesUsed < inviteLimit` ou a variável equivalente que já existe naquele componente.)
+
+## 5. CSS — colar no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.invite-share-block { display: flex; flex-direction: column; gap: .8rem; margin-top: .5rem; }
+
+.invite-share-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+  width: 100%; min-height: 3.35rem; padding: 0 1.2rem;
+  border: 0; border-radius: .9rem;
+  color: #fff;
+  background: linear-gradient(135deg, #916fef 0%, #6f4ec7 100%);
+  box-shadow: 0 .9rem 1.8rem rgba(111,78,199,.32), inset 0 1px rgba(255,255,255,.18);
+  font: inherit; font-weight: 600; letter-spacing: .01em;
+  cursor: pointer; transition: transform .15s ease, box-shadow .2s ease;
+}
+.invite-share-button:hover { transform: translateY(-1px); box-shadow: 0 1.1rem 2.2rem rgba(111,78,199,.42), inset 0 1px rgba(255,255,255,.22); }
+.invite-share-button:active { transform: translateY(0); }
+
+.invite-share-details { text-align: center; }
+.invite-share-details summary {
+  cursor: pointer; user-select: none;
+  font-size: .78rem; color: rgba(255,255,255,.5);
+  padding: .35rem 0; list-style: none;
+}
+.invite-share-details summary:hover { color: rgba(255,255,255,.75); }
+.invite-share-details summary::-webkit-details-marker { display: none; }
+.invite-share-details[open] summary { color: rgba(255,255,255,.7); margin-bottom: .5rem; }
+.invite-share-details .app-text-input { font-size: .82rem; padding: 0 .8rem; }
+```
+
+## Verificação
+- Modal de convite: aparece um botão roxo grande "Copiar link do convite" (não mais input feio + botão isolado). Clicando, muda pra "Copiado!" por 2s. Cola em outro app, link válido.
+- "Criar outro convite" só aparece se ainda houver slots disponíveis (no pacote Casal, some depois de criar 1 convite).
+- Aba "Meu espaço": convite recém-criado aparece "ainda não entrou". Só vira "entrou dd/mm/aaaa" DEPOIS que a pessoa clica no link E de fato entra no app.

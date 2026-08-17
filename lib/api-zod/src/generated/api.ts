@@ -156,6 +156,18 @@ export const GetInviteResponse = zod.object({
 
 
 /**
+ * @summary Accept a guest invite
+ */
+export const AcceptInviteParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const AcceptInviteResponse = zod.object({
+  "accepted": zod.boolean()
+})
+
+
+/**
  * @summary Receive a one-time checkout confirmation
  */
 export const receiveCheckoutWebhookBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');

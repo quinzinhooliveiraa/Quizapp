@@ -185,6 +185,26 @@ paths:
                 $ref: "#/components/schemas/GuestAccess"
         "404":
           description: Invite not found
+  /access/invites/{token}/accept:
+    post:
+      operationId: acceptInvite
+      tags: [access]
+      summary: Accept a guest invite
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invite accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteAccepted"
+        "404":
+          description: Invite not found
   /checkout/webhook:
     post:
       operationId: receiveCheckoutWebhook
@@ -361,6 +381,12 @@ components:
           type: string
           format: date-time
       required: [token, guestName, isUsed, usedAt, createdAt]
+    InviteAccepted:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+      required: [accepted]
     GuestAccess:
       type: object
       properties:
