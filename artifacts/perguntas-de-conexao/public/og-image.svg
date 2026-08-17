@@ -1,0 +1,54 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="glow" x1="135" y1="55" x2="1080" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF3C00" stop-opacity="0.28"/>
+      <stop offset="0.48" stop-color="#8B3DFF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#17121B" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="card" x1="825" y1="139" x2="1015" y2="385" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF6840"/>
+      <stop offset="1" stop-color="#FF3C00"/>
+    </linearGradient>
+    <filter id="shadow" x="760" y="90" width="310" height="400" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="22" stdDeviation="20" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="#17121B"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <circle cx="1040" cy="50" r="170" fill="#FF3C00" fill-opacity="0.05"/>
+  <circle cx="1040" cy="50" r="118" stroke="#FF3C00" stroke-opacity="0.16" stroke-width="1"/>
+  <circle cx="1040" cy="50" r="72" stroke="#FF3C00" stroke-opacity="0.12" stroke-width="1"/>
+
+  <g filter="url(#shadow)" transform="rotate(10 930 290)">
+    <rect x="800" y="110" width="202" height="290" rx="22" fill="#F5EDE6"/>
+    <rect x="821" y="131" width="160" height="248" rx="14" stroke="#FF3C00" stroke-opacity="0.35" stroke-width="2"/>
+    <path d="M901 191C887 169 849 177 849 208C849 244 901 278 901 278C901 278 953 244 953 208C953 177 915 169 901 191Z" fill="#FF3C00"/>
+    <path d="M901 309V332M878 321H924" stroke="#FF3C00" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="850" cy="157" r="4" fill="#FF3C00"/>
+    <circle cx="952" cy="353" r="4" fill="#FF3C00"/>
+  </g>
+
+  <g filter="url(#shadow)" transform="rotate(-9 944 285)">
+    <rect x="850" y="96" width="202" height="290" rx="22" fill="url(#card)"/>
+    <rect x="871" y="117" width="160" height="248" rx="14" stroke="#FFF7F2" stroke-opacity="0.55" stroke-width="2"/>
+    <path d="M951 178C937 156 899 164 899 195C899 231 951 265 951 265C951 265 1003 231 1003 195C1003 164 965 156 951 178Z" fill="#FFF7F2"/>
+    <path d="M951 296V319M928 308H974" stroke="#FFF7F2" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="900" cy="143" r="4" fill="#FFF7F2"/>
+    <circle cx="1002" cy="339" r="4" fill="#FFF7F2"/>
+  </g>
+
+  <g opacity="0.65">
+    <path d="M84 544H1116" stroke="#FFF7F2" stroke-opacity="0.12"/>
+    <circle cx="84" cy="544" r="5" fill="#FF3C00"/>
+    <circle cx="1116" cy="544" r="5" fill="#FF3C00"/>
+  </g>
+
+  <text x="84" y="238" fill="#FFF7F2" font-family="Inter, Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="-2">Perguntas de</text>
+  <text x="84" y="314" fill="#FFF7F2" font-family="Inter, Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="-2">Conexão</text>
+  <rect x="88" y="355" width="64" height="6" rx="3" fill="#FF3C00"/>
+  <text x="84" y="414" fill="#F5EDE6" fill-opacity="0.82" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="400">Um baralho digital para conversas honestas.</text>
+
+  <text x="84" y="585" fill="#F5EDE6" fill-opacity="0.45" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600" letter-spacing="2.5">ABRA ESPAÇO PARA O QUE IMPORTA</text>
+</svg>
