@@ -605,7 +605,7 @@ function AppExperience() {
   const [saved, setSaved] = useState<string[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [sessionId, setSessionId] = useState(() => safeGetItem('conexao-session') || '');
-  const [welcomeOpen, setWelcomeOpen] = useState(!safeGetItem('conexao-name'));
+  const [welcomeOpen, setWelcomeOpen] = useState(!safeGetItem('conexao-name') && !safeGetItem('conexao-guest-token'));
   const [buyerName, setBuyerName] = useState(() => safeGetItem('conexao-name') || '');
   const role = safeGetItem('conexao-role');
   const isGuest = role === 'guest' || !!safeGetItem('conexao-guest-token');
@@ -740,7 +740,7 @@ function AppExperienceReference() {
   const [writingOpen, setWritingOpen] = useState(false);
   const [responses, setResponses] = useState<Record<string, string>>({});
   const [sessionId, setSessionId] = useState(() => safeGetItem('conexao-session') || '');
-  const [welcomeOpen, setWelcomeOpen] = useState(!safeGetItem('conexao-name'));
+  const [welcomeOpen, setWelcomeOpen] = useState(!safeGetItem('conexao-name') && !safeGetItem('conexao-guest-token'));
   const [buyerName, setBuyerName] = useState(() => safeGetItem('conexao-name') || '');
   const role = safeGetItem('conexao-role');
   const isGuest = role === 'guest' || !!safeGetItem('conexao-guest-token');
@@ -1318,7 +1318,7 @@ function AppExperienceReference() {
               {isOwner ? canInvite
                 ? <button className="eu-collection-card" onClick={() => setInviteOpen(true)} data-testid="button-open-invite-eu"><span className="eu-collection-shade" /><span className="eu-collection-title"><Users size={17} /> Convidar alguém <ArrowRight size={15} /></span><small>Abra uma cadeira para alguém jogar com você.</small></button>
                 : <div className="eu-collection-card" role="status" data-testid="card-invite-full"><span className="eu-collection-shade" /><span className="eu-collection-title"><Users size={17} /> Cadeira cheia</span><small>Sua cadeira já está com alguém.</small></div>
-                : <div className="eu-empty-state" data-testid="card-guest-access"><span><Users size={16} /></span><div><strong>{guestDisplayName ? `Oi, ${guestDisplayName} — você é convidado aqui` : 'Você entrou como convidado'}</strong>{guestQuery.data?.ownerName && <p className="guest-invited-by">Você foi convidado por <strong>{guestQuery.data.ownerName}</strong></p>}<p>Este baralho é de quem te convidou. Você pode jogar, responder e salvar — só não pode convidar outras pessoas.</p><Link href="/" className="app-secondary-button" data-testid="link-own-deck">Quero meu próprio baralho <ArrowRight size={15} /></Link></div></div>}
+                : <div className="eu-empty-state" data-testid="card-guest-access"><span><Users size={16} /></span><div><strong>{guestDisplayName ? `Oi, ${guestDisplayName} — você é convidado aqui` : 'Você entrou como convidado'}</strong>{guestQuery.data?.ownerName && <p className="guest-invited-by">Você foi convidado por <strong>{guestQuery.data.ownerName}</strong></p>}<p>Este baralho é de quem te convidou. Você pode jogar, responder e salvar — só não pode convidar outras pessoas.</p><Link href="/#pacotes" className="app-secondary-button" data-testid="link-own-deck">Quero meu próprio baralho <ArrowRight size={15} /></Link></div></div>}
                {isOwner && invitesList.length > 0 && <ul className="invites-list" aria-label="Convites enviados">{invitesList.map(invite => <li key={invite.token} className={`invite-item${invite.isUsed ? ' is-used' : ''}`}><div className="invite-item-main"><span className="invite-item-name">{invite.guestName}</span><span className="invite-item-status">{invite.isUsed && invite.usedAt ? `entrou ${new Date(invite.usedAt).toLocaleDateString('pt-BR')}` : 'ainda não entrou'}</span></div><button type="button" className="invite-item-cancel" onClick={() => cancelInvite(invite)} data-testid={`button-cancel-invite-${invite.token}`} aria-label={`Cancelar convite de ${invite.guestName}`}>Desconvidar</button></li>)}</ul>}
            </section>
             {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <article key={deck.id} className="eu-history-card"><button className="eu-history-card-open" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className={`eu-history-art deck-cover-${isDeckCoverId(deck.cover) ? deck.cover : 'custom'}`} style={deckCoverStyle(deck.cover)} aria-hidden="true"><span className="deck-cover-orbit" /><span className="deck-cover-spark" /></span><span className="eu-history-card-shade" /><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span></button><button className="eu-history-menu-button" onClick={() => openDeckMenu(deck)} aria-label={`Ações para ${deck.label}`} data-testid={`button-menu-daily-deck-${deck.id}`}><MoreHorizontal size={18} /></button></article>)}</div></section>}
