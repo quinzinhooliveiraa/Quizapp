@@ -19,8 +19,8 @@ export const invitesTable = pgTable("invites", {
     .notNull()
     .references(() => sessionsTable.id, { onDelete: "cascade" }),
   guestName: text("guest_name").notNull(),
-  inviteUrl: text("invite_url").notNull(),
   isUsed: boolean("is_used").notNull().default(false),
+  usedAt: timestamp("used_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

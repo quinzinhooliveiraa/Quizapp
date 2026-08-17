@@ -102,6 +102,23 @@ export const GetQuestionSessionResponse = zod.object({
 
 
 /**
+ * @summary List guest invites for a session
+ */
+export const ListInvitesParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const ListInvitesResponseItem = zod.object({
+  "token": zod.string(),
+  "guestName": zod.string(),
+  "isUsed": zod.boolean(),
+  "usedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+})
+export const ListInvitesResponse = zod.array(ListInvitesResponseItem)
+
+
+/**
  * @summary Create a guest invite
  */
 export const CreateInviteParams = zod.object({
@@ -117,10 +134,7 @@ export const CreateInviteBody = zod.object({
 
 export const CreateInviteResponse = zod.object({
   "token": zod.string(),
-  "guestName": zod.string(),
-  "sessionId": zod.string(),
-  "inviteUrl": zod.string(),
-  "isUsed": zod.boolean()
+  "guestName": zod.string()
 })
 
 
@@ -136,7 +150,8 @@ export const GetInviteResponse = zod.object({
   "hasAccess": zod.boolean(),
   "canInvite": zod.boolean(),
   "guestName": zod.string(),
-  "packageName": zod.string()
+  "packageName": zod.string(),
+  "ownerName": zod.string()
 })
 
 

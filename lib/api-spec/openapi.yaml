@@ -121,6 +121,25 @@ paths:
         "404":
           description: Session not found
   /access/sessions/{sessionId}/invites:
+    get:
+      operationId: listInvites
+      tags: [access]
+      summary: List guest invites for a session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guest invites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InviteListItem"
     post:
       operationId: createInvite
       tags: [access]
@@ -325,13 +344,23 @@ components:
           type: string
         guestName:
           type: string
-        sessionId:
+      required: [token, guestName]
+    InviteListItem:
+      type: object
+      properties:
+        token:
           type: string
-        inviteUrl:
+        guestName:
           type: string
         isUsed:
           type: boolean
-      required: [token, guestName, sessionId, inviteUrl, isUsed]
+        usedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [token, guestName, isUsed, usedAt, createdAt]
     GuestAccess:
       type: object
       properties:
@@ -346,7 +375,9 @@ components:
           type: string
         packageName:
           type: string
-      required: [role, hasAccess, canInvite, guestName, packageName]
+        ownerName:
+          type: string
+      required: [role, hasAccess, canInvite, guestName, packageName, ownerName]
     CheckoutWebhook:
       type: object
       properties:

@@ -13,4 +13,5 @@ export interface GuestAccess {
   canInvite: boolean;
   guestName: string;
   packageName: string;
+  ownerName: string;
 }

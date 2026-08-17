@@ -6,7 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Invite {
+export interface InviteListItem {
   token: string;
   guestName: string;
+  isUsed: boolean;
+  /** @nullable */
+  usedAt: Date | null;
+  createdAt: Date;
 }

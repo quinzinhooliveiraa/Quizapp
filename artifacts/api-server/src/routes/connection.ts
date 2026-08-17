@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import {
   CreateInviteBody,
   CreateInviteParams,
+  CreateInviteResponse,
   CreateCheckoutBody,
   CreateCheckoutResponse,
   CreateQuestionSessionBody,
@@ -13,6 +14,7 @@ import {
   GetQuestionSessionParams,
   GetQuestionSessionResponse,
   ListQuestionThemesResponse,
+  ListInvitesResponse,
   ListQuestionsQueryParams,
   ListQuestionsResponse,
   ReceiveCheckoutWebhookBody,
@@ -438,10 +440,6 @@ router.post("/access/sessions/:sessionId/invites", async (req, res): Promise<voi
     return;
   }
   const token = crypto.randomBytes(12).toString("base64url");
-  const baseUrl = process.env.PUBLIC_APP_URL?.replace(/\/+$/, "")
-    || (process.env.REPLIT_DOMAINS?.split(",")[0]
-      ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
-      : "http://localhost");
   const invite = await db.transaction(async (tx) => {
     const [updatedSession] = await tx.update(sessionsTable)
       .set({ invitesUsed: sql`${sessionsTable.invitesUsed} + 1` })
@@ -456,7 +454,6 @@ router.post("/access/sessions/:sessionId/invites", async (req, res): Promise<voi
       token,
       guestName: body.data.guestName,
       sessionId: session.id,
-      inviteUrl: `${baseUrl}/invite/${token}`,
       isUsed: false,
     }).returning();
     return createdInvite;
@@ -465,7 +462,10 @@ router.post("/access/sessions/:sessionId/invites", async (req, res): Promise<voi
     res.status(409).json({ error: "O limite de convites deste pacote foi atingido" });
     return;
   }
-  res.status(201).json(invite);
+  res.status(201).json(CreateInviteResponse.parse({
+    token: invite.token,
+    guestName: invite.guestName,
+  }));
 });
 
 router.get("/access/invites/:token", async (req, res): Promise<void> => {
@@ -490,13 +490,45 @@ router.get("/access/invites/:token", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Sessão não encontrada" });
     return;
   }
+  if (!invite.isUsed) {
+    await db.update(invitesTable)
+      .set({ isUsed: true, usedAt: new Date() })
+      .where(eq(invitesTable.token, invite.token));
+  }
   res.json({
     role: "guest",
     hasAccess: session.accessGranted,
     canInvite: false,
     guestName: invite.guestName,
     packageName: session.packageName,
+    ownerName: session.buyerName,
   });
+});
+
+router.get("/access/sessions/:sessionId/invites", async (req, res): Promise<void> => {
+  const parsed = GetQuestionSessionParams.safeParse(req.params);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const invites = await db.select({
+    token: invitesTable.token,
+    guestName: invitesTable.guestName,
+    isUsed: invitesTable.isUsed,
+    usedAt: invitesTable.usedAt,
+    createdAt: invitesTable.createdAt,
+  })
+    .from(invitesTable)
+    .where(eq(invitesTable.sessionId, parsed.data.sessionId));
+
+  res.json(ListInvitesResponse.parse(invites.map(invite => ({
+    token: invite.token,
+    guestName: invite.guestName,
+    isUsed: invite.isUsed,
+    usedAt: invite.usedAt?.toISOString() ?? null,
+    createdAt: invite.createdAt.toISOString(),
+  }))));
 });
 
 router.post("/checkout/webhook", async (req, res): Promise<void> => {

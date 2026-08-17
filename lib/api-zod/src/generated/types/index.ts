@@ -23,6 +23,7 @@ export * from './guestAccessRole';
 export * from './healthStatus';
 export * from './invite';
 export * from './inviteInput';
+export * from './inviteListItem';
 export * from './listQuestionsMode';
 export * from './listQuestionsParams';
 export * from './question';

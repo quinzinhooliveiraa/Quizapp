@@ -102,9 +102,15 @@ export interface InviteInput {
 export interface Invite {
   token: string;
   guestName: string;
-  sessionId: string;
-  inviteUrl: string;
+}
+
+export interface InviteListItem {
+  token: string;
+  guestName: string;
   isUsed: boolean;
+  /** @nullable */
+  usedAt: string | null;
+  createdAt: string;
 }
 
 export type GuestAccessRole = typeof GuestAccessRole[keyof typeof GuestAccessRole];
@@ -120,6 +126,7 @@ export interface GuestAccess {
   canInvite: boolean;
   guestName: string;
   packageName: string;
+  ownerName: string;
 }
 
 export type CheckoutWebhookEventType = typeof CheckoutWebhookEventType[keyof typeof CheckoutWebhookEventType];

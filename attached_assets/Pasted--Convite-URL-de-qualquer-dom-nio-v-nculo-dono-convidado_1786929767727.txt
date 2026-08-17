@@ -1,0 +1,149 @@
+# Convite: URL de qualquer domínio + vínculo dono↔convidado visível
+
+Três coisas juntas:
+(A) Backend não guarda mais a URL cheia — só o token. Frontend monta a URL usando window.location.origin. Assim, trocar de domínio nunca quebra convite algum.
+(B) Convidado, ao entrar, vê "Você foi convidado por [Nome do dono]".
+(C) Dono, na aba Meu espaço, vê a lista dos convites que fez e se cada um já foi usado.
+
+## 1. Schema — lib/db/src/schema/index.ts
+
+Achar a tabela invitesTable e adicionar dois campos (usedAt e sem inviteUrl obrigatório):
+
+export const invitesTable = pgTable("invites", {
+  token: text("token").primaryKey(),
+  sessionId: text("session_id").notNull().references(() => sessionsTable.id, { onDelete: "cascade" }),
+  guestName: text("guest_name").notNull(),
+  isUsed: boolean("is_used").notNull().default(false),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+(Remover o campo inviteUrl — não precisamos mais dele. Se pnpm --filter @workspace/db push der aviso de coluna sendo removida, aceitar.)
+
+Depois rodar no console do Railway do api-server:
+cd /app && pnpm --filter @workspace/db push
+
+## 2. Backend — artifacts/api-server/src/routes/connection.ts
+
+### 2.1 Criar convite: não gera mais URL, só devolve token
+
+Achar router.post("/access/sessions/:sessionId/invites", ...) — no INSERT do invite, tirar o campo inviteUrl. E na resposta, devolver { token, guestName } (sem inviteUrl):
+
+const [invite] = await db.insert(invitesTable).values({
+  token,
+  sessionId: session.id,
+  guestName: body.data.guestName,
+}).returning();
+await db.update(sessionsTable).set({ invitesUsed: session.invitesUsed + 1 }).where(eq(sessionsTable.id, session.id));
+res.status(201).json({ token: invite.token, guestName: invite.guestName });
+
+### 2.2 Ler convite: incluir nome do dono e marcar como usado
+
+Achar router.get("/access/invites/:token", ...) e substituir por:
+
+router.get("/access/invites/:token", async (req, res): Promise<void> => {
+  const parsed = GetInviteParams.safeParse(req.params);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [invite] = await db.select().from(invitesTable).where(eq(invitesTable.token, parsed.data.token)).limit(1);
+  if (!invite) { res.status(404).json({ error: "Convite não encontrado ou expirado" }); return; }
+  const [session] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, invite.sessionId)).limit(1);
+  if (!session) { res.status(404).json({ error: "Sessão não encontrada" }); return; }
+  if (!invite.isUsed) {
+    await db.update(invitesTable).set({ isUsed: true, usedAt: new Date() }).where(eq(invitesTable.token, invite.token));
+  }
+  res.json({
+    role: "guest",
+    hasAccess: session.accessGranted,
+    canInvite: false,
+    guestName: invite.guestName,
+    packageName: session.packageName,
+    ownerName: session.buyerName,
+  });
+});
+
+### 2.3 Nova rota: dono lista os convites que fez
+
+Adicionar (perto das outras rotas de sessions/invites):
+
+router.get("/access/sessions/:sessionId/invites", async (req, res): Promise<void> => {
+  const parsed = GetQuestionSessionParams.safeParse(req.params);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const list = await db.select({
+    token: invitesTable.token,
+    guestName: invitesTable.guestName,
+    isUsed: invitesTable.isUsed,
+    usedAt: invitesTable.usedAt,
+    createdAt: invitesTable.createdAt,
+  }).from(invitesTable).where(eq(invitesTable.sessionId, parsed.data.sessionId));
+  res.json(list);
+});
+
+## 3. Frontend — artifacts/perguntas-de-conexao/src/App.tsx
+
+### 3.1 Helper pra montar URL do convite
+
+Perto do apiUrl (topo do arquivo), adicionar:
+
+const inviteUrlFromToken = (token: string) => `${window.location.origin}/invite/${token}`;
+
+### 3.2 Onde exibe/copia a URL do convite
+
+Achar todo uso de `inviteResult.inviteUrl` e trocar por `inviteUrlFromToken(inviteResult.token)`. Ex:
+
+<input readOnly value={inviteUrlFromToken(inviteResult.token)} className="app-text-input" ... />
+
+E no copyInvite:
+
+const copyInvite = () => {
+  if (!inviteResult?.token) return;
+  navigator.clipboard?.writeText(inviteUrlFromToken(inviteResult.token)).then(() => {
+    setCopiedInvite(true);
+    setTimeout(() => setCopiedInvite(false), 2000);
+  });
+};
+
+### 3.3 Convidado vê quem convidou
+
+Onde o guest é recebido (achar o componente que renderiza o "Olá, [nome do convidado]" ou similar — deve estar perto de guestQuery/guestData) — adicionar uma linha embaixo do nome:
+
+{guestData?.ownerName && <p className="guest-invited-by">Você foi convidado por <strong>{guestData.ownerName}</strong></p>}
+
+(Se o objeto do guest se chama diferente, adaptar. O importante é: onde já mostra o nome do convidado, adicionar a linha com ownerName.)
+
+### 3.4 Dono vê lista de convites
+
+Na aba "Meu espaço", achar a seção de convites (perto de "1 convite disponível" ou similar) e adicionar embaixo:
+
+const [invitesList, setInvitesList] = useState<Array<{token:string; guestName:string; isUsed:boolean; usedAt:string|null; createdAt:string}>>([]);
+useEffect(() => {
+  if (!sessionId || !isOwner) return;
+  fetch(apiUrl(`/api/access/sessions/${sessionId}/invites`)).then(r => r.ok ? r.json() : []).then(setInvitesList).catch(() => {});
+}, [sessionId, isOwner, inviteResult]);
+
+E na renderização da seção, embaixo do "X convites disponíveis":
+
+{invitesList.length > 0 && <ul className="invites-list">
+  {invitesList.map(inv => (
+    <li key={inv.token} className={inv.isUsed ? 'invite-item is-used' : 'invite-item'}>
+      <span className="invite-item-name">{inv.guestName}</span>
+      <span className="invite-item-status">{inv.isUsed ? `entrou ${new Date(inv.usedAt!).toLocaleDateString('pt-BR')}` : 'ainda não entrou'}</span>
+    </li>
+  ))}
+</ul>}
+
+## 4. CSS — colar no final de artifacts/perguntas-de-conexao/src/index.css
+
+.guest-invited-by { color: rgba(255,255,255,.65); font-size: .88rem; margin: .3rem 0 0; }
+.guest-invited-by strong { color: #fff; font-weight: 500; }
+
+.invites-list { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+.invite-item { display: flex; justify-content: space-between; align-items: center; padding: .7rem .9rem; border: 1px solid rgba(255,255,255,.08); border-radius: .8rem; background: rgba(255,255,255,.03); }
+.invite-item-name { color: #fff; font-weight: 500; }
+.invite-item-status { color: rgba(255,255,255,.5); font-size: .78rem; }
+.invite-item.is-used { border-color: rgba(145,111,239,.35); background: rgba(145,111,239,.08); }
+.invite-item.is-used .invite-item-status { color: #a98dff; }
+
+## Verificação
+- Dono cria convite → copia link → o link mostra o domínio atual (workspaceperguntas-...railway.app hoje; amanhã, o domínio novo). Nada mais quebra.
+- Convidado clica no link → entra → vê "Você foi convidado por [nome do dono]".
+- Dono volta na aba "Meu espaço" → vê a lista com nome do convidado + status ("entrou dd/mm/aaaa" ou "ainda não entrou").
