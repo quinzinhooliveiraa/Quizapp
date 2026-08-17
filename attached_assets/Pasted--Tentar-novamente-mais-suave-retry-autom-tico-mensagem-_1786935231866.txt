@@ -1,0 +1,55 @@
+# "Tentar novamente" mais suave: retry automático + mensagem melhor
+
+Hoje, quando o servidor demora ou reinicia (deploy, cold start, internet ruim), a tela mostra "Esta seleção não abriu agora / Tentar novamente" já na primeira tentativa. Fica pesado. O ajuste: React Query já retenta sozinho com delay crescente, e a mensagem vira "Reconectando..." em vez de erro seco.
+
+## Fix 1 — configurar retry no QueryClient
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`, achar (perto da linha 30):
+
+```tsx
+const queryClient = new QueryClient();
+```
+
+Trocar por:
+
+```tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 4,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 8000),
+      staleTime: 30_000,
+    },
+  },
+});
+```
+
+(Retenta até 4 vezes com backoff exponencial: 1s, 2s, 4s, 8s. Se em ~15s o servidor voltou, o usuário nem viu o erro.)
+
+## Fix 2 — mensagens dos erros mais suaves
+
+Achar (linha ~672):
+
+```tsx
+{themesError && <div className="intention-error"><span>Mostrando uma seleção essencial.</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar novamente <RotateCw size={13} /></button></div>}
+```
+
+Deixar como está — essa mensagem já é ok ("Mostrando uma seleção essencial", com opção de tentar de novo).
+
+Achar (linha ~1357):
+
+```tsx
+{themesError && <div className="app-inline-error" data-testid="status-themes-error"><span>Não conseguimos atualizar os objetivos.</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar novamente <RotateCw size={13} /></button></div>}
+```
+
+Trocar `Não conseguimos atualizar os objetivos.` por `Reconectando…`:
+
+```tsx
+{themesError && <div className="app-inline-error" data-testid="status-themes-error"><span>Reconectando…</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar agora <RotateCw size={13} /></button></div>}
+```
+
+E se tiver alguma mensagem parecida com "Esta seleção não abriu agora" em outro lugar do App.tsx, trocar por `Reconectando…` também (mesma linha do botão).
+
+## Verificação
+- Se o servidor cair por 5s (deploy), o app fica "reconectando" no fundo mas na maior parte das vezes o retry pega antes do usuário ver qualquer coisa.
+- Se demorar mais, aparece "Reconectando…" (mais suave) em vez de "Não conseguimos atualizar".
