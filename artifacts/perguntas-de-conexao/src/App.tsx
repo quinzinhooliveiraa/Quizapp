@@ -19,6 +19,7 @@ import {
   getGetInviteQueryKey,
   type Question,
   type QuestionTheme,
+  type InviteListItem,
 } from '@workspace/api-client-react';
 import { questions as connectionQuestions, themes as connectionThemes } from '@workspace/connection-content';
 import { ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Heart, House, Layers3, Link as LinkIcon, Menu, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Upload, UserRound, Users, WandSparkles, X } from 'lucide-react';
@@ -784,7 +785,10 @@ function AppExperienceReference() {
   });
   const createSession = useCreateQuestionSession();
   const createInvite = useCreateInvite();
-  const invitesList = invitesQuery.data || [];
+  const [invitesList, setInvitesList] = useState<InviteListItem[]>([]);
+  useEffect(() => {
+    setInvitesList(invitesQuery.data || []);
+  }, [invitesQuery.data]);
   const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
   const dailyQuestions = useMemo(() => dailyDeck.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, dailyDeck]);
   const favoriteQuestions = useMemo(() => saved.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, saved]);
@@ -815,6 +819,23 @@ function AppExperienceReference() {
   const dailyTotal = favoriteMode ? questions.length || 1 : selectedTheme?.count || questions.length || 1;
   const dailyPosition = questions.length ? (questionIndex % questions.length) + 1 : 1;
   const isQuestionView = Boolean(themeId || dailyMode || favoriteMode);
+  const cancelInvite = async (invite: InviteListItem) => {
+    const confirmMsg = invite.isUsed
+      ? `Cancelar o acesso de ${invite.guestName}? Isso vai retirar o acesso e liberar 1 vaga.`
+      : `Cancelar o convite para ${invite.guestName}? A vaga volta pra você.`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      const response = await fetch(
+        apiUrl(`/api/access/sessions/${encodeURIComponent(sessionId)}/invites/${encodeURIComponent(invite.token)}`),
+        { method: 'DELETE' },
+      );
+      if (!response.ok) return;
+      setInvitesList(current => current.filter(item => item.token !== invite.token));
+      queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) });
+    } catch {
+      // Keep the invite visible when the cancellation request fails.
+    }
+  };
   const markQuestionSeen = (question: Question | null) => {
     if (!question) return;
     setSeenByTheme(current => {
@@ -1298,7 +1319,7 @@ function AppExperienceReference() {
                 ? <button className="eu-collection-card" onClick={() => setInviteOpen(true)} data-testid="button-open-invite-eu"><span className="eu-collection-shade" /><span className="eu-collection-title"><Users size={17} /> Convidar alguém <ArrowRight size={15} /></span><small>Abra uma cadeira para alguém jogar com você.</small></button>
                 : <div className="eu-collection-card" role="status" data-testid="card-invite-full"><span className="eu-collection-shade" /><span className="eu-collection-title"><Users size={17} /> Cadeira cheia</span><small>Sua cadeira já está com alguém.</small></div>
                 : <div className="eu-empty-state" data-testid="card-guest-access"><span><Users size={16} /></span><div><strong>{guestDisplayName ? `Oi, ${guestDisplayName} — você é convidado aqui` : 'Você entrou como convidado'}</strong>{guestQuery.data?.ownerName && <p className="guest-invited-by">Você foi convidado por <strong>{guestQuery.data.ownerName}</strong></p>}<p>Este baralho é de quem te convidou. Você pode jogar, responder e salvar — só não pode convidar outras pessoas.</p><Link href="/" className="app-secondary-button" data-testid="link-own-deck">Quero meu próprio baralho <ArrowRight size={15} /></Link></div></div>}
-              {isOwner && invitesList.length > 0 && <ul className="invites-list" aria-label="Convites enviados">{invitesList.map(invite => <li key={invite.token} className={`invite-item${invite.isUsed ? ' is-used' : ''}`}><span className="invite-item-name">{invite.guestName}</span><span className="invite-item-status">{invite.isUsed && invite.usedAt ? `entrou ${new Date(invite.usedAt).toLocaleDateString('pt-BR')}` : 'ainda não entrou'}</span></li>)}</ul>}
+               {isOwner && invitesList.length > 0 && <ul className="invites-list" aria-label="Convites enviados">{invitesList.map(invite => <li key={invite.token} className={`invite-item${invite.isUsed ? ' is-used' : ''}`}><div className="invite-item-main"><span className="invite-item-name">{invite.guestName}</span><span className="invite-item-status">{invite.isUsed && invite.usedAt ? `entrou ${new Date(invite.usedAt).toLocaleDateString('pt-BR')}` : 'ainda não entrou'}</span></div><button type="button" className="invite-item-cancel" onClick={() => cancelInvite(invite)} data-testid={`button-cancel-invite-${invite.token}`} aria-label={`Cancelar convite de ${invite.guestName}`}>Desconvidar</button></li>)}</ul>}
            </section>
             {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <article key={deck.id} className="eu-history-card"><button className="eu-history-card-open" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className={`eu-history-art deck-cover-${isDeckCoverId(deck.cover) ? deck.cover : 'custom'}`} style={deckCoverStyle(deck.cover)} aria-hidden="true"><span className="deck-cover-orbit" /><span className="deck-cover-spark" /></span><span className="eu-history-card-shade" /><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span></button><button className="eu-history-menu-button" onClick={() => openDeckMenu(deck)} aria-label={`Ações para ${deck.label}`} data-testid={`button-menu-daily-deck-${deck.id}`}><MoreHorizontal size={18} /></button></article>)}</div></section>}
              <section className="eu-section eu-continue-section" aria-labelledby="continue-title"><div className="eu-section-heading"><div><p className="eu-kicker">continue jogando</p><h2 id="continue-title" className="sr-only">Continue jogando</h2></div><span>{inProgressThemes.length ? `${inProgressThemes.length} em andamento` : 'comece por aqui'}</span></div><div className="eu-progress-row">{continueThemes.map(theme => { const seenCount = seenByTheme[theme.id]?.length || 0; const lastQuestionId = seenByTheme[theme.id]?.at(-1); const themeQuestions = availableQuestions.filter(question => question.themeId === theme.id); const resumeIndex = Math.max(0, themeQuestions.findIndex(question => question.id === lastQuestionId)); return <button key={theme.id} className="eu-progress-card" onClick={() => { changeTheme(theme.id); setQuestionIndex(resumeIndex); }} data-testid={`button-continue-theme-${theme.id}`}><div className={`eu-progress-cover theme-cover-${themes.indexOf(theme) % 5}`}><span className="eu-progress-number">{String(seenCount).padStart(2, '0')}</span><Heart className="eu-progress-heart" size={20} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></div><div className="eu-progress-copy"><strong>{theme.title}</strong><small>{seenCount ? `${seenCount} de ${theme.count} perguntas` : 'comece agora'}</small><span className="eu-progress-bar"><i style={{ width: `${Math.min(100, (seenCount / Math.max(theme.count, 1)) * 100)}%` }} /></span><em>Retomar <ArrowRight size={13} /></em></div></button>; })}</div>{continueThemes.length === 0 && <div className="eu-empty-state"><span><Sparkles size={16} /></span><p>Quando uma pergunta ficar pelo caminho, ela aparece aqui para você continuar.</p></div>}</section>

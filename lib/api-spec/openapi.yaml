@@ -205,6 +205,33 @@ paths:
                 $ref: "#/components/schemas/InviteAccepted"
         "404":
           description: Invite not found
+  /access/sessions/{sessionId}/invites/{token}:
+    delete:
+      operationId: cancelInvite
+      tags: [access]
+      summary: Cancel a guest invite
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invite cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
   /checkout/webhook:
     post:
       operationId: receiveCheckoutWebhook

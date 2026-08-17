@@ -2183,6 +2183,24 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   margin: 0;
   font-size: .78rem;
 }
+.invite-item { gap: 1rem; }
+.invite-item-main { display: flex; flex-direction: column; gap: .2rem; min-width: 0; flex: 1 1 auto; }
+.invite-item-cancel {
+  flex: 0 0 auto;
+  padding: .35rem .7rem;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .6rem;
+  background: transparent;
+  color: rgba(255,255,255,.65);
+  font-size: .74rem; font-weight: 500;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.invite-item-cancel:hover {
+  color: #ff9d9d;
+  border-color: rgba(255,157,157,.4);
+  background: rgba(255,157,157,.08);
+}
 
 @keyframes app-shimmer { 0%, 100% { opacity: .62; } 50% { opacity: 1; } }
 @keyframes card-rise { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }

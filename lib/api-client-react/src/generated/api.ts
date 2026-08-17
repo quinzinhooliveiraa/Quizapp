@@ -23,6 +23,7 @@ import type {
   AbacatePayWebhook,
   AbacatePayWebhookResult,
   AccessState,
+  CancelInvite200,
   CheckoutCreateInput,
   CheckoutCreateResponse,
   CheckoutWebhook,
@@ -826,6 +827,79 @@ export const useAcceptInvite = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getAcceptInviteMutationOptions(options));
+    }
+
+export const getCancelInviteUrl = (sessionId: string,
+    token: string,) => {
+
+
+
+
+  return `/api/access/sessions/${sessionId}/invites/${token}`
+}
+
+/**
+ * @summary Cancel a guest invite
+ */
+export const cancelInvite = async (sessionId: string,
+    token: string, options?: Parameters<typeof customFetch>[1]): Promise<CancelInvite200> => {
+
+  return customFetch<CancelInvite200>(getCancelInviteUrl(sessionId,token),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getCancelInviteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelInvite>>, TError,{sessionId: string;token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelInvite>>, TError,{sessionId: string;token: string}, TContext> => {
+
+const mutationKey = ['cancelInvite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelInvite>>, {sessionId: string;token: string}> = (props) => {
+          const {sessionId,token} = props ?? {};
+
+          return  cancelInvite(sessionId,token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelInviteMutationResult = NonNullable<Awaited<ReturnType<typeof cancelInvite>>>
+
+    export type CancelInviteMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Cancel a guest invite
+ */
+export const useCancelInvite = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelInvite>>, TError,{sessionId: string;token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelInvite>>,
+        TError,
+        {sessionId: string;token: string},
+        TContext
+      > => {
+      return useMutation(getCancelInviteMutationOptions(options));
     }
 
 export const getReceiveCheckoutWebhookUrl = () => {

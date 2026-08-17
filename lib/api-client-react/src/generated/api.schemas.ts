@@ -223,3 +223,7 @@ export const ListQuestionsMode = {
   friends: 'friends',
 } as const;
 
+export type CancelInvite200 = {
+  ok: boolean;
+};
+

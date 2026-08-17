@@ -12,6 +12,7 @@ export * from './abacatePayWebhookDataMetadata';
 export * from './abacatePayWebhookResult';
 export * from './accessState';
 export * from './accessStateRole';
+export * from './cancelInvite200';
 export * from './checkoutCreateInput';
 export * from './checkoutCreateInputPackageId';
 export * from './checkoutCreateResponse';

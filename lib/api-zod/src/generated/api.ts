@@ -168,6 +168,19 @@ export const AcceptInviteResponse = zod.object({
 
 
 /**
+ * @summary Cancel a guest invite
+ */
+export const CancelInviteParams = zod.object({
+  "sessionId": zod.coerce.string(),
+  "token": zod.coerce.string()
+})
+
+export const CancelInviteResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary Receive a one-time checkout confirmation
  */
 export const receiveCheckoutWebhookBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');

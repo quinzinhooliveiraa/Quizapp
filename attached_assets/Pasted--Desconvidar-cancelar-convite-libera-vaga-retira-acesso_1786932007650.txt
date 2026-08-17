@@ -1,0 +1,102 @@
+# Desconvidar: cancelar convite (libera vaga + retira acesso do convidado)
+
+Hoje não dá pra "desconvidar". O dono precisa poder cancelar um convite pra: (a) testar de novo, (b) trocar de parceiro se o convite foi errado, ou (c) uma vida real onde a relação mudou. Quando cancelar, a vaga volta pro dono e o acesso do convidado deixa de valer.
+
+## 1. Backend — nova rota DELETE
+
+Em `artifacts/api-server/src/routes/connection.ts`, adicionar (perto das outras rotas de invites):
+
+```ts
+router.delete("/access/sessions/:sessionId/invites/:token", async (req, res): Promise<void> => {
+  const sessionId = req.params.sessionId;
+  const token = req.params.token;
+  if (!sessionId || !token) { res.status(400).json({ error: "Dados inválidos" }); return; }
+
+  await db.transaction(async (tx) => {
+    const [invite] = await tx.select().from(invitesTable)
+      .where(and(eq(invitesTable.token, token), eq(invitesTable.sessionId, sessionId)))
+      .limit(1);
+    if (!invite) return;
+    await tx.delete(invitesTable).where(eq(invitesTable.token, token));
+    await tx.update(sessionsTable)
+      .set({ invitesUsed: sql`GREATEST(${sessionsTable.invitesUsed} - 1, 0)` })
+      .where(eq(sessionsTable.id, sessionId));
+  });
+
+  res.json({ ok: true });
+});
+```
+
+## 2. Frontend — botão "Desconvidar" na lista da aba "Meu espaço"
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`, achar a renderização da lista de convites (`invites-list` / `invite-item`) e trocar cada `<li>` por uma versão com botão:
+
+```tsx
+{invitesList.map(inv => (
+  <li key={inv.token} className={inv.isUsed ? 'invite-item is-used' : 'invite-item'}>
+    <div className="invite-item-main">
+      <span className="invite-item-name">{inv.guestName}</span>
+      <span className="invite-item-status">{inv.isUsed ? `entrou ${new Date(inv.usedAt!).toLocaleDateString('pt-BR')}` : 'ainda não entrou'}</span>
+    </div>
+    <button
+      type="button"
+      className="invite-item-cancel"
+      onClick={async () => {
+        const confirmMsg = inv.isUsed
+          ? `Cancelar o acesso de ${inv.guestName}? Isso vai retirar o acesso e liberar 1 vaga.`
+          : `Cancelar o convite para ${inv.guestName}? A vaga volta pra você.`;
+        if (!confirm(confirmMsg)) return;
+        try {
+          const response = await fetch(apiUrl(`/api/access/sessions/${sessionId}/invites/${encodeURIComponent(inv.token)}`), { method: 'DELETE' });
+          if (response.ok) {
+            setInvitesList(list => list.filter(i => i.token !== inv.token));
+            queryClientRef.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) });
+          }
+        } catch {}
+      }}
+      data-testid={`button-cancel-invite-${inv.token}`}
+      aria-label={`Cancelar convite de ${inv.guestName}`}
+    >Desconvidar</button>
+  </li>
+))}
+```
+
+Se `queryClientRef` não estiver disponível no escopo, remover essa linha (a lista já atualiza pelo `setInvitesList`).
+
+## 3. CSS — adicionar no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.invite-item { gap: 1rem; }
+.invite-item-main { display: flex; flex-direction: column; gap: .2rem; min-width: 0; flex: 1 1 auto; }
+.invite-item-cancel {
+  flex: 0 0 auto;
+  padding: .35rem .7rem;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: .6rem;
+  background: transparent;
+  color: rgba(255,255,255,.65);
+  font-size: .74rem; font-weight: 500;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.invite-item-cancel:hover {
+  color: #ff9d9d;
+  border-color: rgba(255,157,157,.4);
+  background: rgba(255,157,157,.08);
+}
+```
+
+## 4. Nota importante — o convidado com acesso cancelado
+
+Depois de desconvidar alguém que já tinha entrado, o token dele fica inválido no servidor. Na próxima vez que abrir o app, ele vai receber 404 no `GET /access/invites/:token`. **O comportamento hoje pode ser um erro feio na tela** — não fatal, o app não trava, mas fica estranho pro convidado.
+
+Não vou consertar isso agora (não é bloqueante), mas fica registrado: **em algum momento adicionar tela "Seu acesso a esta conversa foi encerrado. Fale com quem te convidou se quiser voltar."** Marcar isso no roadmap depois.
+
+## 5. Anti-abuso (deixar pra depois)
+
+Hoje não tem limite de quantas vezes o dono pode cancelar/recriar convite. Isso permite que alguém "compartilhe" o acesso rotacionando convites entre vários amigos. Pra pacote Casal / vitalício isso é raro na prática, mas se virar problema, adicionar depois: **máximo 2 trocas por 7 dias** (já estava planejado no roadmap). Por agora, deixar aberto.
+
+## Verificação
+- Aba "Meu espaço" → cada convite mostra botão "Desconvidar" ao lado do nome/status.
+- Clicar → confirma → convite some da lista, vaga é liberada, botão "Gerar convite" volta a funcionar.
+- Se o convidado estava com acesso ativo em outro aparelho, abrir o app dele deve dar erro (backend não reconhece mais o token).

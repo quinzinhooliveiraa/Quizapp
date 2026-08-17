@@ -548,6 +548,32 @@ router.get("/access/sessions/:sessionId/invites", async (req, res): Promise<void
   }))));
 });
 
+router.delete("/access/sessions/:sessionId/invites/:token", async (req, res): Promise<void> => {
+  const { sessionId, token } = req.params;
+  if (!sessionId || !token) {
+    res.status(400).json({ error: "Dados inválidos" });
+    return;
+  }
+
+  await db.transaction(async (tx) => {
+    const [invite] = await tx.select()
+      .from(invitesTable)
+      .where(and(
+        eq(invitesTable.token, token),
+        eq(invitesTable.sessionId, sessionId),
+      ))
+      .limit(1);
+    if (!invite) return;
+
+    await tx.delete(invitesTable).where(eq(invitesTable.token, token));
+    await tx.update(sessionsTable)
+      .set({ invitesUsed: sql`GREATEST(${sessionsTable.invitesUsed} - 1, 0)` })
+      .where(eq(sessionsTable.id, sessionId));
+  });
+
+  res.json({ ok: true });
+});
+
 router.post("/checkout/webhook", async (req, res): Promise<void> => {
   if (process.env.ALLOW_DEMO_ACCESS !== "true") {
     res.status(403).json({ error: "Webhook de demonstração desativado." });
