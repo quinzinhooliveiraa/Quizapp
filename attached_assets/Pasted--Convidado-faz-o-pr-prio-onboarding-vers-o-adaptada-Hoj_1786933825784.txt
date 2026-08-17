@@ -1,0 +1,136 @@
+# Convidado faz o próprio onboarding (versão adaptada)
+
+Hoje, quando o convidado aceita o link, ele é jogado direto no `/app` — pula o onboarding inteiro. O correto é fazer ele passar pelo onboarding também, pra o app conhecer ele (nome dele, pronome, tipo de relação, curiosidade, sentimento). Só que pulando as etapas que só fazem sentido pro dono (a pergunta "você comprou ou foi convidado?" e a de pedir link de convite — ele já tá dentro pelo link).
+
+## Fix 1 — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar (perto da linha 1568, no `acceptInvite` — dentro de `InvitePage`):
+
+```tsx
+<Link href="/app" onClick={acceptInvite} className="button button-salmon" data-testid="link-accept-invite">Aceitar convite <ArrowRight size={16} /></Link>
+```
+
+Trocar `href="/app"` por `href="/onboarding"`:
+
+```tsx
+<Link href="/onboarding" onClick={acceptInvite} className="button button-salmon" data-testid="link-accept-invite">Aceitar convite <ArrowRight size={16} /></Link>
+```
+
+## Fix 2 — `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+### 2.1 Tirar o redirect que pula onboarding pra convidado
+
+Achar (perto da linha 289):
+
+```tsx
+useEffect(() => {
+  const hasPaidOwnerSession = Boolean(
+    safeGetItem('conexao-session')
+    && readOnboardingRole() === 'owner'
+    && safeGetItem('conexao-onboarding-complete') !== 'true',
+  );
+  if (
+    (safeGetItem('conexao-session') && !hasPaidOwnerSession)
+    || safeGetItem('conexao-onboarding-complete') === 'true'
+    || safeGetItem('conexao-guest-token')
+  ) {
+    navigate('/app', { replace: true });
+  }
+}, [navigate]);
+```
+
+Trocar por (retira `|| safeGetItem('conexao-guest-token')` como motivo pra pular — convidado agora passa pelo onboarding):
+
+```tsx
+useEffect(() => {
+  const hasPaidOwnerSession = Boolean(
+    safeGetItem('conexao-session')
+    && readOnboardingRole() === 'owner'
+    && safeGetItem('conexao-onboarding-complete') !== 'true',
+  );
+  if (
+    (safeGetItem('conexao-session') && !hasPaidOwnerSession)
+    || safeGetItem('conexao-onboarding-complete') === 'true'
+  ) {
+    navigate('/app', { replace: true });
+  }
+}, [navigate]);
+```
+
+(Se `conexao-onboarding-complete=true` continua pulando — porque quem já fez uma vez não repete.)
+
+### 2.2 Pular etapas que não fazem sentido pra convidado
+
+Convidado já veio pelo link, então já tem `conexao-role='guest'` e `conexao-guest-token`. Não precisa passar por: `welcome-role` (pergunta se comprou ou foi convidado), `guest-entry` (onde pediria o link do convite).
+
+Achar (perto da linha 22):
+
+```tsx
+const steps: Step[] = [
+  { id: 'intro', progress: 0.05 },
+  { id: 'welcome-role', progress: 0.1 },
+  { id: 'guest-entry', progress: 0.15 },
+  { id: 'relationship', progress: 0.18 },
+  { id: 'note', progress: 0.24 },
+  { id: 'name', progress: 0.3 },
+  { id: 'date', progress: 0.38 },
+  { id: 'days', progress: 0.47 },
+  { id: 'curiosity', progress: 0.58 },
+  { id: 'surprise', progress: 0.68 },
+  { id: 'feeling', progress: 0.77 },
+  { id: 'insight', progress: 0.85 },
+  { id: 'preparing', progress: 0.93 },
+  { id: 'deck', progress: 1 },
+];
+```
+
+Deixar como está. E, dentro do componente `Onboarding()`, logo depois do `const [stepIndex, setStepIndex] = useState(getInitialOnboardingStep);` (linha ~259), adicionar:
+
+```tsx
+const isInvitedGuest = !!safeGetItem('conexao-guest-token');
+const activeSteps = useMemo(
+  () => isInvitedGuest ? steps.filter(s => s.id !== 'welcome-role' && s.id !== 'guest-entry') : steps,
+  [isInvitedGuest]
+);
+```
+
+E onde o código usa `steps[stepIndex]`, `steps.length`, `steps.findIndex`, etc — trocar `steps` por `activeSteps` (o `steps` original vira só a lista mestre; `activeSteps` é a que o usuário atual vê). Fazer isso em TODAS as referências dentro do componente `Onboarding()`.
+
+Ex: se tiver algo tipo `const step = steps[stepIndex]`, virar `const step = activeSteps[stepIndex]`.
+
+### 2.3 Pré-preencher o nome com o nome que o dono deu no convite
+
+Achar (perto da linha 261):
+
+```tsx
+const [name, setName] = useState(() => safeGetItem('conexao-onboarding-name') || '');
+```
+
+Trocar por:
+
+```tsx
+const [name, setName] = useState(() => safeGetItem('conexao-onboarding-name') || safeGetItem('conexao-guest-name') || safeGetItem('conexao-name') || '');
+```
+
+(Se é convidado, o nome que o dono digitou já vem pré-preenchido. A pessoa pode confirmar ou editar. Mesmo pra dono, se ele já digitou nome no welcome modal, vem preenchido.)
+
+### 2.4 No final do onboarding, não mexer no role
+
+Achar onde marca `safeSetItem('conexao-onboarding-complete', 'true')` (perto da linha 349) e ver o que mais é setado no fim. Se tiver algum `safeSetItem('conexao-role', 'owner')` sem checar se já é guest — só setar role='owner' se ainda não tiver role definido. Exemplo:
+
+Se tiver algo tipo:
+```tsx
+safeSetItem('conexao-role', 'owner');
+```
+
+Trocar por:
+```tsx
+if (!safeGetItem('conexao-role')) safeSetItem('conexao-role', 'owner');
+```
+
+(Convidado não deve virar dono ao terminar onboarding.)
+
+## Verificação
+- Novo fluxo: link de convite → tela "Joaquim, tem uma conversa te esperando" → botão "Aceitar convite" → cai em `/onboarding` → passa pelas etapas (nome já preenchido, relação, data, curiosidade, sentimento, etc), pulando "comprou ou foi convidado" e "cole seu link de convite" → cai em `/app` como convidado.
+- Dono continua fazendo onboarding igual (14 etapas, sem alteração).
+- Uma vez concluído, `conexao-onboarding-complete=true` — futuras aberturas vão direto pra `/app`.

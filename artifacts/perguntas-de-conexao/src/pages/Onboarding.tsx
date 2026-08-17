@@ -132,14 +132,17 @@ function readOnboardingRole(): OnboardingRole {
 }
 
 function getInitialOnboardingStep() {
+  const availableSteps = safeGetItem('conexao-guest-token')
+    ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry')
+    : steps;
   const saved = Number(safeGetItem('conexao-onboarding-step'));
-  if (!Number.isInteger(saved) || saved < 0 || saved >= steps.length) return 0;
+  if (!Number.isInteger(saved) || saved < 0 || saved >= availableSteps.length) return 0;
 
   // Fase 1B stored the old linear step index. Keep an unfinished owner flow
   // in the same place after the two new entry screens were inserted.
   if (!readOnboardingRole() && saved > 0) {
     safeSetItem('conexao-role', 'owner');
-    return Math.min(saved + 2, steps.length - 1);
+    return Math.min(saved + 2, availableSteps.length - 1);
   }
   return saved;
 }
@@ -257,8 +260,13 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [stepIndex, setStepIndex] = useState(getInitialOnboardingStep);
+  const isInvitedGuest = !!safeGetItem('conexao-guest-token');
+  const activeSteps = useMemo(
+    () => isInvitedGuest ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry') : steps,
+    [isInvitedGuest],
+  );
   const [role, setRole] = useState<OnboardingRole>(readOnboardingRole);
-  const [name, setName] = useState(() => safeGetItem('conexao-onboarding-name') || '');
+  const [name, setName] = useState(() => safeGetItem('conexao-onboarding-name') || safeGetItem('conexao-guest-name') || safeGetItem('conexao-name') || '');
   const [pronoun, setPronoun] = useState(() => safeGetItem('conexao-onboarding-pronoun') || '');
   const [relationship, setRelationship] = useState(() => safeGetItem('conexao-onboarding-relationship') || '');
   const [date, setDate] = useState(() => safeGetItem('conexao-onboarding-date') || '2025-12-06');
@@ -281,7 +289,7 @@ export default function Onboarding() {
   const datePointerCaptured = useRef(false);
   const suppressDateClick = useRef(false);
 
-  const step = steps[stepIndex];
+  const step = activeSteps[stepIndex];
   const parts = useMemo(() => dateParts(date), [date]);
   const sharedDays = useMemo(() => daysBetween(date), [date]);
   const partnerPronoun = pronoun === 'Ele' ? 'ele' : pronoun === 'Ela' ? 'ela' : 'essa pessoa';
@@ -295,7 +303,6 @@ export default function Onboarding() {
     if (
       (safeGetItem('conexao-session') && !hasPaidOwnerSession)
       || safeGetItem('conexao-onboarding-complete') === 'true'
-      || safeGetItem('conexao-guest-token')
     ) {
       navigate('/app', { replace: true });
     }
@@ -350,7 +357,7 @@ export default function Onboarding() {
     }
   }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling, role]);
 
-  const goNext = () => setStepIndex((current) => Math.min(current + 1, steps.length - 1));
+  const goNext = () => setStepIndex((current) => Math.min(current + 1, activeSteps.length - 1));
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
   const reset = () => {
     safeRemoveItem('conexao-onboarding-step');
@@ -714,9 +721,9 @@ export default function Onboarding() {
   const continueOnboarding = () => {
     if (step.id === 'welcome-role') {
       if (role === 'owner') {
-        setStepIndex(steps.findIndex(item => item.id === 'relationship'));
+        setStepIndex(activeSteps.findIndex(item => item.id === 'relationship'));
       } else if (role === 'guest') {
-        setStepIndex(steps.findIndex(item => item.id === 'guest-entry'));
+        setStepIndex(activeSteps.findIndex(item => item.id === 'guest-entry'));
       }
       return;
     }
@@ -751,9 +758,9 @@ export default function Onboarding() {
                 ? !!feeling
                 : true;
   const noButton = ['intro', 'note', 'days', 'insight', 'preparing', 'deck'].includes(step.id);
-  const onboardingStage = stepIndex <= steps.findIndex(item => item.id === 'guest-entry')
+  const onboardingStage = stepIndex <= activeSteps.findIndex(item => item.id === 'guest-entry')
     ? 0
-    : stepIndex <= steps.findIndex(item => item.id === 'feeling')
+    : stepIndex <= activeSteps.findIndex(item => item.id === 'feeling')
       ? 1
       : 2;
 
