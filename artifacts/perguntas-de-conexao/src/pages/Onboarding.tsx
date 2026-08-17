@@ -287,6 +287,8 @@ export default function Onboarding() {
   const dateDragStartY = useRef<number | null>(null);
   const dateDragDelta = useRef(0);
   const datePointerCaptured = useRef(false);
+  const DATE_ROW_HEIGHT = 40; // altura de 1 botão em px (bate com 2.55rem)
+  const DATE_VISIBLE_ROWS = 3; // números renderizados de cada lado do centro
   const suppressDateClick = useRef(false);
 
   const step = activeSteps[stepIndex];
@@ -418,9 +420,11 @@ export default function Onboarding() {
   const finishDatePointer = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
     if (dateDragKind.current !== kind || dateDragStartY.current === null) return;
     const delta = dateDragDelta.current;
-    if (Math.abs(delta) >= 24) {
+    // Quantas posições avançar: dedo pra cima (delta negativo) aumenta o valor
+    const steps = Math.round(-delta / DATE_ROW_HEIGHT);
+    if (steps !== 0) {
       suppressDateClick.current = true;
-      selectDatePart(kind, parts[kind] + (delta < 0 ? 1 : -1));
+      selectDatePart(kind, parts[kind] + steps);
     }
     dateDragKind.current = null;
     dateDragStartY.current = null;
@@ -588,36 +592,41 @@ export default function Onboarding() {
               <div className="date-values">
                 <div
                   className={`date-column ${dateDragKind.current === 'day' ? 'is-dragging' : ''}`}
-                  style={{ '--date-drag-offset': `${dateDragOffset.day}px` } as CSSProperties}
+                  style={{ '--date-drag-offset': `${dateDragOffset.day}px`, touchAction: 'none' } as CSSProperties}
                   onPointerDown={event => handleDatePointerDown('day', event)}
                   onPointerMove={event => handleDatePointerMove('day', event)}
                   onPointerUp={event => finishDatePointer('day', event)}
                   onPointerCancel={event => cancelDatePointer('day', event)}
                 >
-                  {[parts.day - 1, parts.day, parts.day + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={event => handleDateValueClick('day', value, event)}>{value}</button>)}
+                  {Array.from({ length: DATE_VISIBLE_ROWS * 2 + 1 }, (_, i) => parts.day + (i - DATE_VISIBLE_ROWS)).map(value => {
+                    const clamped = Math.min(28, Math.max(1, value));
+                    return <button key={`day-${value}`} className={value === parts.day ? 'is-active' : ''} onClick={event => handleDateValueClick('day', clamped, event)}>{clamped}</button>;
+                  })}
                 </div>
                 <div
                   className={`date-column ${dateDragKind.current === 'month' ? 'is-dragging' : ''}`}
-                  style={{ '--date-drag-offset': `${dateDragOffset.month}px` } as CSSProperties}
+                  style={{ '--date-drag-offset': `${dateDragOffset.month}px`, touchAction: 'none' } as CSSProperties}
                   onPointerDown={event => handleDatePointerDown('month', event)}
                   onPointerMove={event => handleDatePointerMove('month', event)}
                   onPointerUp={event => finishDatePointer('month', event)}
                   onPointerCancel={event => cancelDatePointer('month', event)}
                 >
-                  {[parts.month - 1, parts.month, parts.month + 1].map(month => {
-                    const safeMonth = ((month - 1 + 12) % 12) + 1;
-                    return <button key={safeMonth} className={safeMonth === parts.month ? 'is-active' : ''} onClick={event => handleDateValueClick('month', safeMonth, event)}>{monthNames[safeMonth - 1]}</button>;
+                  {Array.from({ length: DATE_VISIBLE_ROWS * 2 + 1 }, (_, i) => parts.month + (i - DATE_VISIBLE_ROWS)).map(rawMonth => {
+                    const safeMonth = ((rawMonth - 1) % 12 + 12) % 12 + 1;
+                    return <button key={`month-${rawMonth}`} className={rawMonth === parts.month ? 'is-active' : ''} onClick={event => handleDateValueClick('month', safeMonth, event)}>{monthNames[safeMonth - 1]}</button>;
                   })}
                 </div>
                 <div
                   className={`date-column ${dateDragKind.current === 'year' ? 'is-dragging' : ''}`}
-                  style={{ '--date-drag-offset': `${dateDragOffset.year}px` } as CSSProperties}
+                  style={{ '--date-drag-offset': `${dateDragOffset.year}px`, touchAction: 'none' } as CSSProperties}
                   onPointerDown={event => handleDatePointerDown('year', event)}
                   onPointerMove={event => handleDatePointerMove('year', event)}
                   onPointerUp={event => finishDatePointer('year', event)}
                   onPointerCancel={event => cancelDatePointer('year', event)}
                 >
-                  {[parts.year - 1, parts.year, parts.year + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={event => handleDateValueClick('year', value, event)}>{value}</button>)}
+                  {Array.from({ length: DATE_VISIBLE_ROWS * 2 + 1 }, (_, i) => parts.year + (i - DATE_VISIBLE_ROWS)).map(value => (
+                    <button key={`year-${value}`} className={value === parts.year ? 'is-active' : ''} onClick={event => handleDateValueClick('year', value, event)}>{value}</button>
+                  ))}
                 </div>
               </div>
               <div className="date-fade date-fade-bottom" />
