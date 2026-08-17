@@ -1,0 +1,50 @@
+# PWA nunca mostra página de vendas
+
+**Ideia:** quem instalou o PWA quer usar o app, não ver vendas. Se abriu o PWA:
+
+- Com sessão salva → `/app` (já acontece via `StoredAccessGate`)
+- Sem sessão, mas com onboarding em andamento → `/onboarding` (continua de onde parou)
+- Sem sessão e sem onboarding → `/onboarding` (começa)
+
+Nunca vê a página de vendas de dentro do PWA. Se a pessoa ainda está no browser (não instalou), tudo continua como hoje.
+
+*(Nota: quando login por email existir, o destino "sem sessão" vira `/login` em vez de `/onboarding`. Por enquanto vai pro onboarding — a pessoa recupera criando/refazendo o acesso.)*
+
+## Fix — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar o começo do componente `Home()` (perto da linha 422):
+
+```tsx
+function Home() {
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<'couple' | 'family'>('couple');
+```
+
+Adicionar logo abaixo, ainda dentro do componente (antes de qualquer `useEffect` existente):
+
+```tsx
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isStandaloneApp()) return;
+    // Se tem sessão ou é convidado, o StoredAccessGate já cuida de mandar pro /app
+    if (safeGetItem('conexao-session') || safeGetItem('conexao-guest-token')) return;
+    // PWA sem sessão: manda pro onboarding (que continua de onde parou, se tiver)
+    navigate('/onboarding', { replace: true });
+  }, [navigate]);
+```
+
+**Importante:** se o componente `Home()` já tem um `const [, navigate] = useLocation();` em outro lugar, NÃO duplicar — só adicionar o `useEffect`. Verificar antes.
+
+O import `useLocation` já existe no arquivo (é usado em outros componentes), então não precisa importar de novo. `isStandaloneApp` e `safeGetItem` também já estão no arquivo.
+
+## Verificação
+1. **PWA + com sessão do dono** → abre PWA → vai direto pra `/app` (comportamento antigo, via StoredAccessGate). ✅
+2. **PWA + com token de convidado** → abre PWA → vai direto pra `/app`. ✅
+3. **PWA + sem sessão** → abre PWA → cai em `/onboarding` (não vê vendas). ✅
+4. **PWA + onboarding no meio** → abre PWA → cai em `/onboarding` e continua no step onde parou (o Onboarding já lê `conexao-onboarding-step` do localStorage). ✅
+5. **Browser normal (não PWA) sem sessão** → abre `/` → vê a página de vendas normalmente (comportamento antigo). ✅
+6. **Browser normal + começou experiência + instalou PWA no meio** → depois abre PWA → cai em `/onboarding` no step correto. ✅
+
+## Nota pra depois (não é agora)
+Quando o login por email existir, trocar `navigate('/onboarding', ...)` por `navigate('/login', ...)` nessa mesma parte. Aí "PWA sem sessão" vira "vai pro login" em vez de "refaz onboarding".

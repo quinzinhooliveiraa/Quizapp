@@ -424,6 +424,15 @@ function Home() {
   const [selectedPackage, setSelectedPackage] = useState<'couple' | 'family'>('couple');
   const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'confirming' | 'error' | 'waiting-manual'>('idle');
   const [confirmingLong, setConfirmingLong] = useState(false);
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isStandaloneApp()) return;
+    // If access is stored, StoredAccessGate handles redirecting to /app.
+    if (safeGetItem('conexao-session') || safeGetItem('conexao-guest-token')) return;
+    // An installed app without access should continue through onboarding, not sales.
+    navigate('/onboarding', { replace: true });
+  }, [navigate]);
 
   useEffect(() => {
     if (checkoutState !== 'confirming') {
