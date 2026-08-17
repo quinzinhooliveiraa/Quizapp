@@ -1,0 +1,70 @@
+# Melhorar a tela "Confirmando seu acesso" — animação de cartas + copy
+
+## 1. CSS — colar no final de artifacts/perguntas-de-conexao/src/index.css
+
+.checkout-confirming {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6rem;
+  padding: .5rem 0 .3rem;
+}
+
+.confirming-deck {
+  position: relative;
+  width: 8.5rem;
+  height: 11rem;
+  perspective: 800px;
+}
+
+.confirming-deck .conf-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: linear-gradient(155deg, rgba(159,118,201,.85), rgba(74,49,120,.9) 60%, rgba(22,15,42,.95));
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 1.2rem 2.4rem rgba(3,2,12,.35), inset 0 1px rgba(255,255,255,.10);
+  opacity: 0;
+  transform: translate(-40%, -35%) rotate(-18deg) scale(.9);
+  animation: conf-card-in 3.6s cubic-bezier(.2,.7,.2,1) infinite;
+}
+
+.confirming-deck .conf-card:nth-child(1) { animation-delay: 0s;    }
+.confirming-deck .conf-card:nth-child(2) { animation-delay: .6s;   }
+.confirming-deck .conf-card:nth-child(3) { animation-delay: 1.2s;  }
+.confirming-deck .conf-card:nth-child(4) { animation-delay: 1.8s;  }
+
+@keyframes conf-card-in {
+  0%   { opacity: 0; transform: translate(-140%, -60%) rotate(-32deg) scale(.85); }
+  25%  { opacity: 1; }
+  55%  { opacity: 1; transform: translate(0, 0) rotate(-2deg) scale(1); }
+  85%  { opacity: 1; transform: translate(0, 0) rotate(-2deg) scale(1); }
+  100% { opacity: 0; transform: translate(0, -8%) rotate(-2deg) scale(1); }
+}
+
+.checkout-confirming .conf-kicker {
+  font-size: .68rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+}
+
+.checkout-confirming h2 { margin: 0; text-align: center; font-size: 1.8rem; line-height: 1.15; }
+.checkout-confirming p { text-align: center; color: rgba(255,255,255,.72); margin: 0; max-width: 26rem; }
+
+## 2. React — em artifacts/perguntas-de-conexao/src/App.tsx
+
+Dentro do function Home(), junto dos outros hooks, adicionar:
+
+const [confirmingLong, setConfirmingLong] = useState(false);
+useEffect(() => {
+  if (checkoutState !== 'confirming') { setConfirmingLong(false); return; }
+  const timer = setTimeout(() => setConfirmingLong(true), 15000);
+  return () => clearTimeout(timer);
+}, [checkoutState]);
+
+E no modal, achar o bloco {checkoutState === 'confirming' ? ... e trocar por:
+
+{checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu baralho</p><h2>{confirmingLong ? <>Quase lá…<br /><em>as cartas estão chegando.</em></> : <>Suas cartas estão<br /><em>entrando no baralho.</em></>}</h2><p>{confirmingLong ? 'Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela.' : 'Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente.'}</p></div> :
+
+(mantém o resto do ternário igual — o estado 'waiting-manual' e o default continuam como estão.)
