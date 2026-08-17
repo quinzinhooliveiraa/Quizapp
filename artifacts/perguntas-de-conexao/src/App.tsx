@@ -26,6 +26,7 @@ import { ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, 
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
+import Login from '@/pages/Login';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -526,6 +527,7 @@ function Home() {
   const [buyerNameInput, setBuyerNameInput] = useState('');
   return <Shell>
     <StoredAccessGate />
+    <Link href="/login" className="home-login-link" data-testid="link-home-login">Já tem baralho? Entrar</Link>
     <main>
       <section className="hero">
         <div className="hero-copy">
@@ -1662,7 +1664,7 @@ function ProtectedExperienceRoute() {
 }
 
  function Router() {
-   return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+   return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/login" component={Login} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 function RoutedErrorBoundary({ children }: { children: ReactNode }) { const [location] = useLocation(); return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>; }
 function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>; }

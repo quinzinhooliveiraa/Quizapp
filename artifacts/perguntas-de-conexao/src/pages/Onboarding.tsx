@@ -402,7 +402,7 @@ export default function Onboarding() {
               <p>Um baralho feito para duas pessoas se encontrarem de verdade.</p>
             </div>
             <ContinueButton onClick={goNext}>Começar</ContinueButton>
-            <p className="onboarding-login-note">Já tem um baralho? <Link href="/app">Abrir meu acesso</Link></p>
+             <p className="onboarding-login-note">Já tem um baralho? <Link href="/login">Abrir meu acesso</Link></p>
           </div>
         );
       case 'welcome-role':
