@@ -29,10 +29,23 @@ export const processedEventsTable = pgTable("processed_events", {
   processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const authCodesTable = pgTable("auth_codes", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const insertSessionSchema = createInsertSchema(sessionsTable);
 export const insertInviteSchema = createInsertSchema(invitesTable);
+export const insertAuthCodeSchema = createInsertSchema(authCodesTable);
 
 export type Session = typeof sessionsTable.$inferSelect;
 export type NewSession = typeof sessionsTable.$inferInsert;
 export type Invite = typeof invitesTable.$inferSelect;
 export type NewInvite = typeof invitesTable.$inferInsert;
+export type AuthCode = typeof authCodesTable.$inferSelect;
+export type NewAuthCode = typeof authCodesTable.$inferInsert;
