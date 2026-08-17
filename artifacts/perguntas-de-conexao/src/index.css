@@ -6603,3 +6603,47 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .invite-item.is-used .invite-item-status {
   color: #a98dff;
 }
+
+.date-native {
+  margin-top: auto;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.date-native-display {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #f9f8fb;
+  letter-spacing: -0.02em;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 16rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.date-native-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  color-scheme: dark;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+}
+
+.date-native:hover .date-native-display,
+.date-native:focus-within .date-native-display {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(196, 172, 255, 0.3);
+}

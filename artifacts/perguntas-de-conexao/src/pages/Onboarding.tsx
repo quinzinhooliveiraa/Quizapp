@@ -1,4 +1,4 @@
-import { type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Feather, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 
@@ -61,7 +61,6 @@ const feelingOptions = [
   'Um pouco perigoso',
 ];
 const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-type DatePartKind = 'day' | 'month' | 'year';
 
 const welcomeDeckStorageKey = 'conexao-personalized-decks';
 const welcomeDeckIdStorageKey = 'conexao-welcome-deck-id';
@@ -282,14 +281,6 @@ export default function Onboarding() {
   const [guestInviteLink, setGuestInviteLink] = useState('');
   const [guestInviteError, setGuestInviteError] = useState('');
   const [animatedDays, setAnimatedDays] = useState(0);
-  const [dateDragOffset, setDateDragOffset] = useState<Record<DatePartKind, number>>({ day: 0, month: 0, year: 0 });
-  const dateDragKind = useRef<DatePartKind | null>(null);
-  const dateDragStartY = useRef<number | null>(null);
-  const dateDragDelta = useRef(0);
-  const datePointerCaptured = useRef(false);
-  const DATE_ROW_HEIGHT = 40; // altura de 1 botão em px (bate com 2.55rem)
-  const DATE_VISIBLE_ROWS = 3; // números renderizados de cada lado do centro
-  const suppressDateClick = useRef(false);
 
   const step = activeSteps[stepIndex];
   const parts = useMemo(() => dateParts(date), [date]);
@@ -388,73 +379,6 @@ export default function Onboarding() {
     setRole('');
     setGuestInviteLink('');
     setGuestInviteError('');
-  };
-
-  const selectDatePart = (kind: DatePartKind, value: number) => {
-    const next = { ...parts, [kind]: value };
-    const safeMonth = String(Math.min(12, Math.max(1, next.month))).padStart(2, '0');
-    const safeDay = String(Math.min(28, Math.max(1, next.day))).padStart(2, '0');
-    setDate(`${next.year}-${safeMonth}-${safeDay}`);
-  };
-
-  const handleDatePointerDown = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    dateDragKind.current = kind;
-    dateDragStartY.current = event.clientY;
-    dateDragDelta.current = 0;
-    datePointerCaptured.current = false;
-    suppressDateClick.current = false;
-    setDateDragOffset(current => ({ ...current, [kind]: 0 }));
-  };
-
-  const handleDatePointerMove = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
-    if (dateDragKind.current !== kind || dateDragStartY.current === null) return;
-    dateDragDelta.current = event.clientY - dateDragStartY.current;
-    if (Math.abs(dateDragDelta.current) >= 8 && !datePointerCaptured.current) {
-      event.currentTarget.setPointerCapture(event.pointerId);
-      datePointerCaptured.current = true;
-    }
-    setDateDragOffset(current => ({ ...current, [kind]: dateDragDelta.current }));
-  };
-
-  const finishDatePointer = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
-    if (dateDragKind.current !== kind || dateDragStartY.current === null) return;
-    const delta = dateDragDelta.current;
-    // Quantas posições avançar: dedo pra cima (delta negativo) aumenta o valor
-    const steps = Math.round(-delta / DATE_ROW_HEIGHT);
-    if (steps !== 0) {
-      suppressDateClick.current = true;
-      selectDatePart(kind, parts[kind] + steps);
-    }
-    dateDragKind.current = null;
-    dateDragStartY.current = null;
-    dateDragDelta.current = 0;
-    setDateDragOffset(current => ({ ...current, [kind]: 0 }));
-    if (datePointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    datePointerCaptured.current = false;
-  };
-
-  const cancelDatePointer = (kind: DatePartKind, event: ReactPointerEvent<HTMLDivElement>) => {
-    if (dateDragKind.current !== kind) return;
-    dateDragKind.current = null;
-    dateDragStartY.current = null;
-    dateDragDelta.current = 0;
-    setDateDragOffset(current => ({ ...current, [kind]: 0 }));
-    if (datePointerCaptured.current && event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    datePointerCaptured.current = false;
-  };
-
-  const handleDateValueClick = (kind: DatePartKind, value: number, event: ReactMouseEvent<HTMLButtonElement>) => {
-    if (suppressDateClick.current) {
-      event.preventDefault();
-      suppressDateClick.current = false;
-      return;
-    }
-    selectDatePart(kind, value);
   };
 
   const renderStep = () => {
@@ -587,49 +511,19 @@ export default function Onboarding() {
               <p className="onboarding-kicker">uma história tem um começo</p>
               <h1>Quando a história<br /><em>de vocês começou?</em></h1>
             </div>
-            <div className="date-wheel" aria-label="Escolha a data em que a história começou">
-              <div className="date-fade date-fade-top" />
-              <div className="date-values">
-                <div
-                  className={`date-column ${dateDragKind.current === 'day' ? 'is-dragging' : ''}`}
-                  style={{ '--date-drag-offset': `${dateDragOffset.day}px`, touchAction: 'none' } as CSSProperties}
-                  onPointerDown={event => handleDatePointerDown('day', event)}
-                  onPointerMove={event => handleDatePointerMove('day', event)}
-                  onPointerUp={event => finishDatePointer('day', event)}
-                  onPointerCancel={event => cancelDatePointer('day', event)}
-                >
-                  {Array.from({ length: DATE_VISIBLE_ROWS * 2 + 1 }, (_, i) => parts.day + (i - DATE_VISIBLE_ROWS)).map(value => {
-                    const clamped = Math.min(28, Math.max(1, value));
-                    return <button key={`day-${value}`} className={value === parts.day ? 'is-active' : ''} onClick={event => handleDateValueClick('day', clamped, event)}>{clamped}</button>;
-                  })}
-                </div>
-                <div
-                  className={`date-column ${dateDragKind.current === 'month' ? 'is-dragging' : ''}`}
-                  style={{ '--date-drag-offset': `${dateDragOffset.month}px`, touchAction: 'none' } as CSSProperties}
-                  onPointerDown={event => handleDatePointerDown('month', event)}
-                  onPointerMove={event => handleDatePointerMove('month', event)}
-                  onPointerUp={event => finishDatePointer('month', event)}
-                  onPointerCancel={event => cancelDatePointer('month', event)}
-                >
-                  {Array.from({ length: DATE_VISIBLE_ROWS * 2 + 1 }, (_, i) => parts.month + (i - DATE_VISIBLE_ROWS)).map(rawMonth => {
-                    const safeMonth = ((rawMonth - 1) % 12 + 12) % 12 + 1;
-                    return <button key={`month-${rawMonth}`} className={rawMonth === parts.month ? 'is-active' : ''} onClick={event => handleDateValueClick('month', safeMonth, event)}>{monthNames[safeMonth - 1]}</button>;
-                  })}
-                </div>
-                <div
-                  className={`date-column ${dateDragKind.current === 'year' ? 'is-dragging' : ''}`}
-                  style={{ '--date-drag-offset': `${dateDragOffset.year}px`, touchAction: 'none' } as CSSProperties}
-                  onPointerDown={event => handleDatePointerDown('year', event)}
-                  onPointerMove={event => handleDatePointerMove('year', event)}
-                  onPointerUp={event => finishDatePointer('year', event)}
-                  onPointerCancel={event => cancelDatePointer('year', event)}
-                >
-                  {Array.from({ length: DATE_VISIBLE_ROWS * 2 + 1 }, (_, i) => parts.year + (i - DATE_VISIBLE_ROWS)).map(value => (
-                    <button key={`year-${value}`} className={value === parts.year ? 'is-active' : ''} onClick={event => handleDateValueClick('year', value, event)}>{value}</button>
-                  ))}
-                </div>
+            <div className="date-native" aria-label="Escolha a data em que a história começou">
+              <div className="date-native-display">
+                {parts.day} de {monthNames[parts.month - 1]} de {parts.year}
               </div>
-              <div className="date-fade date-fade-bottom" />
+              <input
+                type="date"
+                className="date-native-input"
+                value={date}
+                onChange={event => { if (event.target.value) setDate(event.target.value); }}
+                max={new Date().toISOString().slice(0, 10)}
+                data-testid="input-onboarding-date"
+                aria-label="Data em que a história começou"
+              />
             </div>
           </div>
         );

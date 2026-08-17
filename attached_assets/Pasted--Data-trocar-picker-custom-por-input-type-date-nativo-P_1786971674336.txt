@@ -1,0 +1,131 @@
+# Data: trocar picker custom por `<input type="date">` nativo
+
+**Por quê:** o picker custom com deslize não está funcionando bem. A solução é usar `<input type="date">` nativo — no iPhone abre o wheel picker do próprio iOS (que é justamente o comportamento bonito de rolar com o dedo), e no PC vira um input padrão de data. Zero código de gesto, zero bug possível.
+
+**IMPORTANTE: aplique as mudanças diretamente no arquivo do código. Não é pra apenas salvar este prompt como asset — é pra editar o `.tsx` e o `.css` mesmo.**
+
+## Fix 1 — `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+Achar o bloco inteiro do date wheel (perto da linha 586, começa em `<div className="date-wheel" ...>` e vai até o `</div>` de fechamento dessa div, umas ~40 linhas depois):
+
+```tsx
+<div className="date-wheel" aria-label="Escolha a data em que a história começou">
+  <div className="date-fade date-fade-top" />
+  <div className="date-values">
+    <div
+      className={`date-column ${dateDragKind.current === 'day' ? 'is-dragging' : ''}`}
+      style={{ '--date-drag-offset': `${dateDragOffset.day}px` } as CSSProperties}
+      onPointerDown={event => handleDatePointerDown('day', event)}
+      onPointerMove={event => handleDatePointerMove('day', event)}
+      onPointerUp={event => finishDatePointer('day', event)}
+      onPointerCancel={event => cancelDatePointer('day', event)}
+    >
+      {[parts.day - 1, parts.day, parts.day + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={event => handleDateValueClick('day', value, event)}>{value}</button>)}
+    </div>
+    <div
+      className={`date-column ${dateDragKind.current === 'month' ? 'is-dragging' : ''}`}
+      style={{ '--date-drag-offset': `${dateDragOffset.month}px` } as CSSProperties}
+      onPointerDown={event => handleDatePointerDown('month', event)}
+      onPointerMove={event => handleDatePointerMove('month', event)}
+      onPointerUp={event => finishDatePointer('month', event)}
+      onPointerCancel={event => cancelDatePointer('month', event)}
+    >
+      {[parts.month - 1, parts.month, parts.month + 1].map(month => {
+        const safeMonth = ((month - 1 + 12) % 12) + 1;
+        return <button key={safeMonth} className={safeMonth === parts.month ? 'is-active' : ''} onClick={event => handleDateValueClick('month', safeMonth, event)}>{monthNames[safeMonth - 1]}</button>;
+      })}
+    </div>
+    <div
+      className={`date-column ${dateDragKind.current === 'year' ? 'is-dragging' : ''}`}
+      style={{ '--date-drag-offset': `${dateDragOffset.year}px` } as CSSProperties}
+      onPointerDown={event => handleDatePointerDown('year', event)}
+      onPointerMove={event => handleDatePointerMove('year', event)}
+      onPointerUp={event => finishDatePointer('year', event)}
+      onPointerCancel={event => cancelDatePointer('year', event)}
+    >
+      {[parts.year - 1, parts.year, parts.year + 1].map((value, index) => <button key={value} className={index === 1 ? 'is-active' : ''} onClick={event => handleDateValueClick('year', value, event)}>{value}</button>)}
+    </div>
+  </div>
+  <div className="date-fade date-fade-bottom" />
+</div>
+```
+
+Trocar TUDO isso por:
+
+```tsx
+<div className="date-native" aria-label="Escolha a data em que a história começou">
+  <div className="date-native-display">
+    {parts.day} de {monthNames[parts.month - 1]} de {parts.year}
+  </div>
+  <input
+    type="date"
+    className="date-native-input"
+    value={date}
+    onChange={event => { if (event.target.value) setDate(event.target.value); }}
+    max={new Date().toISOString().slice(0, 10)}
+    data-testid="input-onboarding-date"
+    aria-label="Data em que a história começou"
+  />
+</div>
+```
+
+(O `<input type="date">` já usa formato `YYYY-MM-DD`, que é o mesmo formato que o state `date` já usa. Zero conversão. O `max` impede escolher data futura. O `<div className="date-native-display">` mostra a data escolhida em português bonito por cima do input.)
+
+**Nota (opcional):** os handlers antigos (`handleDatePointerDown`, `handleDatePointerMove`, `finishDatePointer`, `cancelDatePointer`, `selectDatePart`, `handleDateValueClick`) e os refs (`dateDragKind`, `dateDragStartY`, `dateDragDelta`, `datePointerCaptured`, `suppressDateClick`) e o state `dateDragOffset` ficaram sem uso. Se o TypeScript reclamar de "variável não usada", pode remover eles. Se não reclamar, pode deixar por enquanto — não atrapalham.
+
+## Fix 2 — `artifacts/perguntas-de-conexao/src/index.css`
+
+Adicionar no final do arquivo:
+
+```css
+.date-native {
+  margin-top: auto;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.date-native-display {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #f9f8fb;
+  letter-spacing: -0.02em;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 16rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.date-native-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  color-scheme: dark;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 16px; /* evita zoom no iOS */
+}
+
+.date-native:hover .date-native-display,
+.date-native:focus-within .date-native-display {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(196, 172, 255, 0.3);
+}
+```
+
+## Verificação
+- **iPhone:** toca na tela da data → abre o wheel picker nativo do iOS (aquele com dia/mês/ano rolando com o dedo). Escolhe a data → aparece "5 de dezembro de 2022" no botão.
+- **Android:** abre o date picker nativo do Android.
+- **PC (Chrome/Firefox/Safari):** clica → abre o calendário nativo do browser.
+- **Data futura bloqueada:** não deixa escolher data depois de hoje (o `max` impede).
+- **Continuar:** botão de continuar funciona normal, salva a data escolhida (o state `date` já era usado antes, nada muda).
