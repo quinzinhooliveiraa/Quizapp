@@ -1,0 +1,57 @@
+# Convidado consegue chegar na página de vendas (StoredAccessGate)
+
+**Bug real:** o `StoredAccessGate` (que roda na home) automaticamente redireciona qualquer pessoa com sessão salva de volta pro `/app`. Isso é útil pro dono voltar rápido, mas trava o convidado quando ele quer chegar na página de vendas pra comprar o próprio acesso.
+
+Fluxo hoje (quebrado): convidado clica "Quero meu próprio baralho" → cai em `/#pacotes` → o gate detecta `conexao-guest-token` → devolve pro `/app`. Impossível chegar na seção de vendas.
+
+**Fix:** ignorar o redirect automático quando a URL tem `?comprar=1` ou hash `#pacotes` (sinais de intenção de comprar).
+
+## Em `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar o `useEffect` do `StoredAccessGate` (perto da linha 397):
+
+```tsx
+useEffect(() => {
+  if ((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)) {
+    navigate('/app', { replace: true });
+  }
+}, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
+```
+
+Trocar por:
+
+```tsx
+useEffect(() => {
+  const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
+  if (wantsToBuy) return;
+  if ((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)) {
+    navigate('/app', { replace: true });
+  }
+}, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
+```
+
+E logo abaixo, no bloco que decide se renderiza o overlay ou não (perto da linha 403):
+
+```tsx
+if (!hasStoredAccess || (!isChecking && !((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)))) {
+  return null;
+}
+```
+
+Trocar por:
+
+```tsx
+const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
+if (wantsToBuy) return null;
+if (!hasStoredAccess || (!isChecking && !((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)))) {
+  return null;
+}
+```
+
+(Duas mudanças: o `useEffect` não redireciona quando é intenção de compra, e o overlay "Abrindo seu espaço" também não aparece nesse caso.)
+
+## Verificação
+- Convidado logado abre `/#pacotes` diretamente → deve ver a seção de pacotes, sem ser redirecionado pro `/app`.
+- Convidado clica em "Quero meu próprio baralho" na aba Meu espaço → cai em `/#pacotes` → vê a página de vendas normalmente.
+- Convidado abre `/` (home simples) → continua sendo redirecionado pro `/app` (comportamento antigo, correto — sem intenção de compra).
+- Dono continua tendo o mesmo comportamento (abrir `/` volta pro app; abrir `/#pacotes` também deixa passar, o que é OK — dono pode querer conferir a página de vendas).
