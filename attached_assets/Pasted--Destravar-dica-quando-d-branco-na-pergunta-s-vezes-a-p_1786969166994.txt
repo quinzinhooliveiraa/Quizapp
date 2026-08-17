@@ -1,0 +1,139 @@
+# "Destravar": dica quando dá branco na pergunta
+
+Às vezes a pessoa lê uma pergunta e trava — não sabe o que responder, se sente cobrada, ou fica pensando "qual seria a resposta certa". Um botão pequeno, discreto, escondido por padrão. Só aparece se a pessoa tocar. Ajuda o **COMO** responder (jamais o **QUÊ** — nunca dá exemplo de resposta).
+
+## Em `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 1. Adicionar estado no componente `AppExperienceReference` (perto de onde tem `writingOpen`)
+
+Achar (perto da linha 1289):
+
+```tsx
+const currentResponse = currentQuestion ? responses[currentQuestion.id] || '' : '';
+```
+
+Adicionar logo antes ou depois:
+
+```tsx
+const [unstuckOpen, setUnstuckOpen] = useState(false);
+useEffect(() => { setUnstuckOpen(false); }, [currentQuestion?.id]);
+```
+
+(Fecha automaticamente quando muda de pergunta.)
+
+### 2. Adicionar o botão + painel dentro do `question-card-front`
+
+Achar (linha ~1434):
+
+```tsx
+<div className="question-card-copy"><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
+```
+
+Adicionar logo depois (antes do `{writingOpen && ...}`):
+
+```tsx
+<div className="question-unstuck">
+  {unstuckOpen ? (
+    <div className="question-unstuck-panel" data-testid="panel-unstuck">
+      <p className="question-unstuck-title">Sem pressa. Se ajudar:</p>
+      <ul>
+        <li>Responde a primeira coisa que veio à cabeça — sem editar.</li>
+        <li>Reformula a pergunta com suas próprias palavras.</li>
+        <li>Pega só um pedacinho: uma cena, uma sensação, uma palavra.</li>
+      </ul>
+      <button
+        type="button"
+        className="question-unstuck-close"
+        onClick={() => setUnstuckOpen(false)}
+        data-testid="button-close-unstuck"
+      >Fechar</button>
+    </div>
+  ) : (
+    <button
+      type="button"
+      className="question-unstuck-trigger"
+      onClick={() => setUnstuckOpen(true)}
+      data-testid="button-open-unstuck"
+    >Travou?</button>
+  )}
+</div>
+```
+
+## 3. CSS — adicionar no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.question-unstuck {
+  display: flex;
+  justify-content: center;
+  margin-top: .6rem;
+}
+.question-unstuck-trigger {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, .38);
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .01em;
+  cursor: pointer;
+  padding: .3rem .5rem;
+  border-radius: .4rem;
+  transition: color .15s ease;
+}
+.question-unstuck-trigger:hover { color: rgba(255, 255, 255, .7); }
+
+.question-unstuck-panel {
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: .8rem;
+  padding: .85rem 1rem;
+  margin-top: .3rem;
+  max-width: 320px;
+  animation: unstuckIn .2s ease;
+}
+.question-unstuck-title {
+  font-size: .78rem;
+  color: rgba(255, 255, 255, .55);
+  margin: 0 0 .5rem 0;
+}
+.question-unstuck-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 .6rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+.question-unstuck-panel li {
+  font-size: .82rem;
+  color: rgba(255, 255, 255, .78);
+  line-height: 1.4;
+}
+.question-unstuck-panel li::before {
+  content: "· ";
+  color: rgba(255, 255, 255, .35);
+  margin-right: .2rem;
+}
+.question-unstuck-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, .5);
+  font-size: .75rem;
+  cursor: pointer;
+  padding: .2rem .4rem;
+}
+.question-unstuck-close:hover { color: rgba(255, 255, 255, .85); }
+
+@keyframes unstuckIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+```
+
+## Regra fundamental (não pode quebrar)
+As dicas ajudam **como responder**, nunca **o que responder**. Nunca dar exemplo de resposta, sugerir tema específico, ou fazer perguntas mais fáceis no lugar. Se em algum momento futuro alguém pedir pra "colocar exemplos", tem que dizer não — quebra o produto.
+
+## Verificação
+- Abre uma pergunta → embaixo aparece um texto pequeno cinza "Travou?"
+- Toca → substitui pelo painel com as 3 dicas
+- Passa pra próxima pergunta → o painel some sozinho, volta o "Travou?"
+- Toca em "Fechar" → volta o "Travou?" sem trocar de pergunta

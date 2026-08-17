@@ -1287,8 +1287,10 @@ function AppExperienceReference() {
     setRandomMode(mode => !mode);
   };
   const currentResponse = currentQuestion ? responses[currentQuestion.id] || '' : '';
+  const [unstuckOpen, setUnstuckOpen] = useState(false);
   useEffect(() => {
     setWritingOpen(false);
+    setUnstuckOpen(false);
   }, [currentQuestion?.id]);
   const startSession = () => {
     if (!buyerName.trim()) { setWelcomeOpen(false); return; }
@@ -1432,6 +1434,35 @@ function AppExperienceReference() {
               <div className="question-card-grain" />
                <div className="question-card-top"><span data-testid="text-question-theme">{selectedTheme?.title}</span><div className="question-card-brand-side"><strong data-testid="text-card-brand">Perguntas<br /><i>de Conexão</i></strong></div></div>
                <div className="question-card-copy"><p data-testid={`text-question-${currentQuestion.id}`}>{currentQuestion.text}</p></div>
+               <div className="question-unstuck">
+                 {unstuckOpen ? (
+                   <div className="question-unstuck-panel" data-testid="panel-unstuck">
+                     <p className="question-unstuck-title">Sem pressa. Se ajudar:</p>
+                     <ul>
+                       <li>Responde a primeira coisa que veio à cabeça — sem editar.</li>
+                       <li>Reformula a pergunta com suas próprias palavras.</li>
+                       <li>Pega só um pedacinho: uma cena, uma sensação, uma palavra.</li>
+                     </ul>
+                     <button
+                       type="button"
+                       className="question-unstuck-close"
+                       onClick={() => setUnstuckOpen(false)}
+                       data-testid="button-close-unstuck"
+                     >
+                       Fechar
+                     </button>
+                   </div>
+                 ) : (
+                   <button
+                     type="button"
+                     className="question-unstuck-trigger"
+                     onClick={() => setUnstuckOpen(true)}
+                     data-testid="button-open-unstuck"
+                   >
+                     Travou?
+                   </button>
+                 )}
+               </div>
               {writingOpen && <div className="question-response"><textarea value={currentResponse} onChange={event => setResponses(current => ({ ...current, [currentQuestion.id]: event.target.value }))} placeholder="Escreva aqui, se quiser..." aria-label="Sua resposta para esta pergunta" data-testid={`textarea-response-${currentQuestion.id}`} /></div>}
               <div className="question-card-foot"><span>não existe resposta certa</span><span className="question-card-progress"><i /><i /><i /></span></div>
                 <button className={`question-favorite-button ${saved.includes(currentQuestion.id) ? 'is-saved' : ''}`} onClick={() => toggleSaved(currentQuestion.id)} aria-label={saved.includes(currentQuestion.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'} aria-pressed={saved.includes(currentQuestion.id)} data-testid={`button-favorite-question-${currentQuestion.id}`}><Star size={16} fill={saved.includes(currentQuestion.id) ? 'currentColor' : 'none'} /></button>
