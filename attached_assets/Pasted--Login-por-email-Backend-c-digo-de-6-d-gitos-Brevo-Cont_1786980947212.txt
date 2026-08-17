@@ -1,0 +1,326 @@
+# Login por email — Backend (código de 6 dígitos + Brevo)
+
+**Contexto:** hoje quem perde o localStorage perde acesso ao baralho (mesmo já tendo comprado). Fix: pessoa digita email, recebe código de 6 dígitos, valida, sessão restaurada. `buyerEmail` já existe na tabela `sessions` (quem paga pelo Abacate já fica com email salvo), então basta criar a tabela de códigos + endpoints + integração Brevo.
+
+**IMPORTANTE: aplicar as mudanças diretamente nos arquivos. Não é pra apenas salvar como asset.**
+
+## 1. Adicionar tabela no schema — `lib/db/src/schema/index.ts`
+
+Adicionar ao final do arquivo (antes dos exports):
+
+```ts
+export const authCodesTable = pgTable("auth_codes", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+E adicionar aos exports no final:
+
+```ts
+export const insertAuthCodeSchema = createInsertSchema(authCodesTable);
+export type AuthCode = typeof authCodesTable.$inferSelect;
+export type NewAuthCode = typeof authCodesTable.$inferInsert;
+```
+
+## 2. Criar integração Brevo — `artifacts/api-server/src/lib/brevo.ts` (novo arquivo)
+
+```ts
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
+type SendEmailParams = {
+  to: string;
+  toName?: string;
+  subject: string;
+  htmlContent: string;
+  textContent?: string;
+};
+
+export async function sendEmailViaBrevo(params: SendEmailParams): Promise<{ ok: boolean; error?: string }> {
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.EMAIL_FROM;
+  const fromName = process.env.EMAIL_FROM_NAME || "Perguntas de Conexão";
+
+  if (!apiKey || !fromEmail) {
+    console.error("[brevo] Missing BREVO_API_KEY or EMAIL_FROM env var");
+    return { ok: false, error: "email not configured" };
+  }
+
+  try {
+    const response = await fetch(BREVO_API_URL, {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "api-key": apiKey,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: { email: fromEmail, name: fromName },
+        to: [{ email: params.to, name: params.toName || params.to }],
+        subject: params.subject,
+        htmlContent: params.htmlContent,
+        textContent: params.textContent,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      console.error(`[brevo] send failed ${response.status}:`, body);
+      return { ok: false, error: `brevo ${response.status}` };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("[brevo] send exception:", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+export function buildLoginCodeEmail(code: string) {
+  const subject = `Seu código de acesso: ${code}`;
+  const htmlContent = `
+    <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #17121b;">
+      <p style="font-size: 14px; color: #6b6070; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Perguntas de Conexão</p>
+      <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 24px;">Seu código de acesso</h1>
+      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Use o código abaixo para entrar no seu baralho. Ele expira em 15 minutos.</p>
+      <div style="background: #f4f0f8; border-radius: 12px; padding: 24px; text-align: center; letter-spacing: 0.5em; font-size: 32px; font-weight: 600; color: #17121b; margin: 0 0 20px;">${code}</div>
+      <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0;">Se você não solicitou este código, pode ignorar este email.</p>
+    </div>
+  `;
+  const textContent = `Perguntas de Conexão\n\nSeu código de acesso: ${code}\n\nEle expira em 15 minutos.\n\nSe você não solicitou este código, pode ignorar este email.`;
+  return { subject, htmlContent, textContent };
+}
+```
+
+## 3. Criar rotas de auth — `artifacts/api-server/src/routes/auth.ts` (novo arquivo)
+
+```ts
+import { Router, type IRouter } from "express";
+import crypto from "node:crypto";
+import { and, desc, eq, gt, lt, sql } from "drizzle-orm";
+import { db, authCodesTable, sessionsTable } from "@workspace/db";
+import { sendEmailViaBrevo, buildLoginCodeEmail } from "../lib/brevo";
+
+const router: IRouter = Router();
+
+const CODE_TTL_MINUTES = 15;
+const REQUEST_COOLDOWN_SECONDS = 60;
+const MAX_ATTEMPTS = 5;
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function generateCode(): string {
+  return String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
+}
+
+// POST /auth/request-code — pede código de acesso pro email
+router.post("/auth/request-code", async (req, res): Promise<void> => {
+  const email = normalizeEmail(String(req.body?.email || ""));
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ error: "Email inválido" });
+    return;
+  }
+
+  // Rate limit básico: se pediu código pra esse email há menos de 60s, bloqueia
+  const cooldownAgo = new Date(Date.now() - REQUEST_COOLDOWN_SECONDS * 1000);
+  const [recent] = await db.select({ createdAt: authCodesTable.createdAt })
+    .from(authCodesTable)
+    .where(and(eq(authCodesTable.email, email), gt(authCodesTable.createdAt, cooldownAgo)))
+    .orderBy(desc(authCodesTable.createdAt))
+    .limit(1);
+  if (recent) {
+    res.status(429).json({ error: "Aguarde um instante antes de pedir outro código" });
+    return;
+  }
+
+  // Limpa códigos expirados do email (housekeeping)
+  await db.delete(authCodesTable).where(and(
+    eq(authCodesTable.email, email),
+    lt(authCodesTable.expiresAt, new Date()),
+  ));
+
+  // IMPORTANTE de segurança: sempre responde OK, mesmo se o email não existe
+  // (evita que atacante descubra quais emails estão cadastrados)
+  const [existingSession] = await db.select({ id: sessionsTable.id })
+    .from(sessionsTable)
+    .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+    .limit(1);
+
+  if (!existingSession) {
+    // Não tem conta com esse email — responde OK mesmo assim, mas não manda email
+    res.json({ ok: true });
+    return;
+  }
+
+  // Cria o código
+  const code = generateCode();
+  const id = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000);
+  await db.insert(authCodesTable).values({ id, email, code, expiresAt });
+
+  // Envia por email (Brevo)
+  const emailPayload = buildLoginCodeEmail(code);
+  const result = await sendEmailViaBrevo({
+    to: email,
+    subject: emailPayload.subject,
+    htmlContent: emailPayload.htmlContent,
+    textContent: emailPayload.textContent,
+  });
+
+  if (!result.ok) {
+    console.error("[auth/request-code] email failed:", result.error);
+    // Ainda responde OK pro cliente (não vazar detalhe), mas loga
+  }
+
+  res.json({ ok: true });
+});
+
+// POST /auth/verify-code — valida código, retorna sessões do email
+router.post("/auth/verify-code", async (req, res): Promise<void> => {
+  const email = normalizeEmail(String(req.body?.email || ""));
+  const code = String(req.body?.code || "").trim();
+
+  if (!email || !code || code.length !== 6) {
+    res.status(400).json({ error: "Email e código de 6 dígitos são obrigatórios" });
+    return;
+  }
+
+  // Busca código válido (não usado, não expirado)
+  const [authCode] = await db.select()
+    .from(authCodesTable)
+    .where(and(
+      eq(authCodesTable.email, email),
+      eq(authCodesTable.code, code),
+      gt(authCodesTable.expiresAt, new Date()),
+    ))
+    .orderBy(desc(authCodesTable.createdAt))
+    .limit(1);
+
+  if (!authCode) {
+    // Pode ser: código errado, expirado, ou email não tem código
+    // Incrementa tentativas em códigos ativos desse email (rate limit contra brute force)
+    await db.update(authCodesTable)
+      .set({ attempts: sql`${authCodesTable.attempts} + 1` })
+      .where(and(
+        eq(authCodesTable.email, email),
+        gt(authCodesTable.expiresAt, new Date()),
+      ));
+    res.status(401).json({ error: "Código inválido ou expirado" });
+    return;
+  }
+
+  if (authCode.usedAt) {
+    res.status(401).json({ error: "Este código já foi usado" });
+    return;
+  }
+
+  if (authCode.attempts >= MAX_ATTEMPTS) {
+    res.status(429).json({ error: "Muitas tentativas. Peça um novo código." });
+    return;
+  }
+
+  // Marca o código como usado
+  await db.update(authCodesTable)
+    .set({ usedAt: new Date() })
+    .where(eq(authCodesTable.id, authCode.id));
+
+  // Busca todas as sessões pagas desse email
+  const sessions = await db.select({
+    id: sessionsTable.id,
+    buyerName: sessionsTable.buyerName,
+    packageName: sessionsTable.packageName,
+    createdAt: sessionsTable.createdAt,
+  })
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .orderBy(desc(sessionsTable.createdAt));
+
+  if (sessions.length === 0) {
+    res.status(404).json({ error: "Nenhum acesso encontrado para este email" });
+    return;
+  }
+
+  res.json({ sessions });
+});
+
+export default router;
+```
+
+## 4. Registrar rotas — `artifacts/api-server/src/routes/index.ts`
+
+Adicionar import e uso do router:
+
+```ts
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import connectionRouter from "./connection";
+import authRouter from "./auth";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(connectionRouter);
+router.use(authRouter);
+
+export default router;
+```
+
+## 5. Exportar `authCodesTable` do `@workspace/db`
+
+Achar `lib/db/src/index.ts` (ou onde os exports do pacote db ficam). Se estiver exportando `sessionsTable`, `invitesTable`, etc, adicionar `authCodesTable` na mesma exportação. Exemplo típico:
+
+```ts
+export * from "./schema";
+```
+
+Se for isso, já está exportando. Se for lista explícita, adicionar `authCodesTable`.
+
+## 6. Depois de aplicar tudo, rodar migration no Railway
+
+No terminal do serviço api-server no Railway (Shell do serviço), rodar:
+
+```bash
+pnpm --filter @workspace/db push
+```
+
+Vai criar a tabela `auth_codes` no Postgres. Se pedir confirmação, dizer sim.
+
+## 7. Confirmar variáveis de ambiente no Railway
+
+No serviço **api-server**, aba **Variables**, garantir que existem:
+- `BREVO_API_KEY` = a chave xkeysib-...
+- `EMAIL_FROM` = perguntasdeconexao@gmail.com (o email cadastrado como Sender no Brevo)
+- `EMAIL_FROM_NAME` = Perguntas de Conexão
+
+## Verificação (fazer via terminal ou Postman/Insomnia)
+
+```bash
+# 1. Pede código
+curl -X POST https://[seu-api-server].railway.app/api/auth/request-code \
+  -H "Content-Type: application/json" \
+  -d '{"email":"perguntasdeconexao@gmail.com"}'
+# → {"ok":true}
+
+# Chega email com código de 6 dígitos na caixa
+
+# 2. Verifica código (usa o código que chegou)
+curl -X POST https://[seu-api-server].railway.app/api/auth/verify-code \
+  -H "Content-Type: application/json" \
+  -d '{"email":"perguntasdeconexao@gmail.com","code":"123456"}'
+# → {"sessions":[{"id":"...","buyerName":"...","packageName":"..."}]}
+```
+
+Se o email chegar e o verify retornar sessões, backend tá pronto. Aí segue pro Prompt 2 (frontend).
+
+## Notas de segurança
+- Códigos expiram em 15 min
+- Máximo 5 tentativas por código
+- Rate limit: 1 pedido de código por email a cada 60s
+- Códigos são one-time-use
+- Se email não existe no sistema, ainda respondemos "ok" (não vazamos quais emails estão cadastrados)
