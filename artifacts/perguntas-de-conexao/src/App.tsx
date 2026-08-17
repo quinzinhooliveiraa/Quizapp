@@ -791,7 +791,12 @@ function AppExperienceReference() {
   const createInvite = useCreateInvite();
   const [invitesList, setInvitesList] = useState<InviteListItem[]>([]);
   useEffect(() => {
-    setInvitesList(invitesQuery.data || []);
+    const raw = invitesQuery.data || [];
+    const sorted = [...raw].sort((a, b) => {
+      if (a.isUsed !== b.isUsed) return a.isUsed ? 1 : -1;
+      return 0;
+    });
+    setInvitesList(sorted);
   }, [invitesQuery.data]);
   const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
   const dailyQuestions = useMemo(() => dailyDeck.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, dailyDeck]);
