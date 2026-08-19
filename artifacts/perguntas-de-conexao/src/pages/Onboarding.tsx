@@ -344,6 +344,7 @@ export default function Onboarding() {
     safeSetItem('conexao-onboarding-curiosity', JSON.stringify(curiosity));
     safeSetItem('conexao-onboarding-feeling', feeling);
     if (role) safeSetItem('conexao-role', role);
+    if (guestEmail.trim()) safeSetItem('conexao-guest-email', guestEmail.trim());
 
     if (step.id === 'preparing') {
       safeSetItem('conexao-name', name.trim());
@@ -352,8 +353,19 @@ export default function Onboarding() {
       safeSetItem('conexao-feeling', feeling);
       safeSetItem('conexao-partner-pronoun', pronoun);
       safeSetItem('conexao-onboarding-complete', 'true');
+
+      const guestToken = safeGetItem('conexao-guest-token');
+      const trimmedEmail = guestEmail.trim().toLowerCase();
+      if (guestToken && trimmedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+        fetch(`${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/claim-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: trimmedEmail }),
+        }).catch(() => { /* não bloqueia a conclusão do onboarding */ });
+      }
     }
-  }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling, role]);
+  }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling, role, guestEmail]);
 
   const goNext = () => setStepIndex((current) => Math.min(current + 1, activeSteps.length - 1));
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
@@ -365,6 +377,7 @@ export default function Onboarding() {
     safeRemoveItem('conexao-onboarding-date');
     safeRemoveItem('conexao-onboarding-curiosity');
     safeRemoveItem('conexao-onboarding-feeling');
+    safeRemoveItem('conexao-guest-email');
     safeRemoveItem('conexao-onboarding-complete');
     safeRemoveItem('conexao-role');
     safeRemoveItem('conexao-name');
@@ -379,6 +392,7 @@ export default function Onboarding() {
     setRelationship('');
     setDate('2025-12-06');
     setCuriosity([]);
+    setGuestEmail('');
     setSurprise('');
     setFeeling('');
     setRole('');
@@ -506,6 +520,28 @@ export default function Onboarding() {
             <div className="onboarding-name-form">
               <input value={name} onChange={(event) => setName(event.target.value)} autoFocus placeholder="Seu nome" data-testid="input-onboarding-name" />
               <div className="name-suggestions"><button type="button" className={pronoun === 'Ela' ? 'is-selected' : ''} onClick={() => setPronoun('Ela')}>Ela</button><button type="button" className={pronoun === 'Ele' ? 'is-selected' : ''} onClick={() => setPronoun('Ele')}>Ele</button><button type="button" className={pronoun === 'Prefiro não dizer' ? 'is-selected' : ''} onClick={() => setPronoun('Prefiro não dizer')}>Prefiro não dizer</button></div>
+            </div>
+          </div>
+        );
+      case 'email':
+        return (
+          <div className="onboarding-content onboarding-name-screen">
+            <div>
+              <p className="onboarding-kicker">pra você não perder</p>
+              <h1>Qual seu <em>email?</em></h1>
+              <p className="onboarding-subtitle">Se você mudar de aparelho ou limpar o app, é com ele que você volta pro baralho.</p>
+            </div>
+            <div className="onboarding-name-form">
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={guestEmail}
+                onChange={(event) => setGuestEmail(event.target.value)}
+                autoFocus
+                placeholder="seu@email.com"
+                data-testid="input-onboarding-guest-email"
+              />
             </div>
           </div>
         );
@@ -664,15 +700,17 @@ export default function Onboarding() {
       ? true
       : step.id === 'name'
         ? name.trim().length > 0
-        : step.id === 'relationship'
-          ? !!relationship
-          : step.id === 'curiosity'
-            ? curiosity.length > 0
-            : step.id === 'surprise'
-              ? !!surprise
-              : step.id === 'feeling'
-                ? !!feeling
-                : true;
+        : step.id === 'email'
+          ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
+          : step.id === 'relationship'
+            ? !!relationship
+            : step.id === 'curiosity'
+              ? curiosity.length > 0
+              : step.id === 'surprise'
+                ? !!surprise
+                : step.id === 'feeling'
+                  ? !!feeling
+                  : true;
   const noButton = ['intro', 'note', 'days', 'insight', 'preparing', 'deck'].includes(step.id);
   const onboardingStage = stepIndex <= activeSteps.findIndex(item => item.id === 'guest-entry')
     ? 0

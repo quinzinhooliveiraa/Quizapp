@@ -19,6 +19,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [invites, setInvites] = useState<InviteSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
