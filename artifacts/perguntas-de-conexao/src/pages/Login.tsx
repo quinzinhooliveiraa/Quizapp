@@ -44,8 +44,11 @@ export default function Login() {
           safeSet('conexao-session', data.sessionId);
           safeSet('conexao-name', 'Admin');
           safeSet('conexao-role', 'owner');
-          safeSet('conexao-onboarding-complete', 'true');
-          navigate('/app', { replace: true });
+          const alreadyOnboarded = (() => {
+            try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
+            catch { return false; }
+          })();
+          navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
           return;
         }
         setEmail(trimmed);
@@ -135,8 +138,11 @@ export default function Login() {
     safeSet('conexao-session', session.id);
     safeSet('conexao-name', session.buyerName);
     safeSet('conexao-role', 'owner');
-    safeSet('conexao-onboarding-complete', 'true');
-    navigate('/app', { replace: true });
+    const alreadyOnboarded = (() => {
+      try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
+      catch { return false; }
+    })();
+    navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
   }
 
   return (

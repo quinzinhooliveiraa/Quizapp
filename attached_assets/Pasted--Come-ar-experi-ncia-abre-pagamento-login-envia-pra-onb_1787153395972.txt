@@ -1,0 +1,89 @@
+# "Começar experiência" abre pagamento + login envia pra onboarding se ainda não fez
+
+**Contexto:** hoje o botão "Começar a experiência" na página de vendas vai direto pro onboarding, mas deveria ir pra pagamento. Onboarding só faz sentido depois que a pessoa pagou (ou depois de logar, se ela ainda não fez). Correção em 2 lugares.
+
+**IMPORTANTE: aplicar diretamente nos arquivos. Não é pra salvar como asset.**
+
+## Fix 1 — "Começar a experiência" abre o checkout (não vai pro onboarding)
+
+`artifacts/perguntas-de-conexao/src/App.tsx`, perto da linha 537.
+
+Achar:
+
+```tsx
+<div className="hero-actions"><Link href="/onboarding" className="button button-primary" data-testid="button-start-demo">Começar a experiência <ArrowRight size={17} /></Link><a href="#como-funciona" className="text-link" data-testid="link-learn-more">Entender o ritual <ChevronRight size={16} /></a></div>
+```
+
+Trocar por (botão em vez de Link, abre o modal de checkout igual ao "Escolher Casal"):
+
+```tsx
+<div className="hero-actions"><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="button button-primary" data-testid="button-start-demo">Começar a experiência <ArrowRight size={17} /></button><a href="#como-funciona" className="text-link" data-testid="link-learn-more">Entender o ritual <ChevronRight size={16} /></a></div>
+```
+
+(A função `checkout()` que roda depois do modal já leva pra Abacate Pay, e depois do pagamento redireciona pra `/onboarding` automaticamente — não muda nada nesse fluxo.)
+
+## Fix 2 — Login envia pra onboarding se pessoa ainda não fez
+
+`artifacts/perguntas-de-conexao/src/pages/Login.tsx`
+
+Achar a função `completeLogin`:
+
+```tsx
+function completeLogin(session: SessionSummary) {
+  safeSet('conexao-session', session.id);
+  safeSet('conexao-name', session.buyerName);
+  safeSet('conexao-role', 'owner');
+  safeSet('conexao-onboarding-complete', 'true');
+  navigate('/app', { replace: true });
+}
+```
+
+Trocar por (não força `onboarding-complete: true` — checa se já foi feito, senão manda pra onboarding):
+
+```tsx
+function completeLogin(session: SessionSummary) {
+  safeSet('conexao-session', session.id);
+  safeSet('conexao-name', session.buyerName);
+  safeSet('conexao-role', 'owner');
+  const alreadyOnboarded = (() => {
+    try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
+    catch { return false; }
+  })();
+  navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+}
+```
+
+E ainda no mesmo arquivo, achar o bloco de admin bypass dentro da função `requestCode` (perto de `if (data.adminBypass && data.sessionId)`):
+
+```tsx
+if (data.adminBypass && data.sessionId) {
+  safeSet('conexao-session', data.sessionId);
+  safeSet('conexao-name', 'Admin');
+  safeSet('conexao-role', 'owner');
+  safeSet('conexao-onboarding-complete', 'true');
+  navigate('/app', { replace: true });
+  return;
+}
+```
+
+Trocar por (mesma lógica — admin também vai pra onboarding se ainda não fez):
+
+```tsx
+if (data.adminBypass && data.sessionId) {
+  safeSet('conexao-session', data.sessionId);
+  safeSet('conexao-name', 'Admin');
+  safeSet('conexao-role', 'owner');
+  const alreadyOnboarded = (() => {
+    try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
+    catch { return false; }
+  })();
+  navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+  return;
+}
+```
+
+## Verificação
+1. **Novo cliente:** vendas → clica "Começar experiência" → abre modal de pagamento → digita nome → paga na Abacate → volta pro app com sessão → cai em /onboarding automaticamente → completa → /app. ✅
+2. **Cliente voltando no MESMO aparelho:** login com email → código → cai direto no /app (porque `conexao-onboarding-complete` já é true nesse aparelho). ✅
+3. **Cliente voltando em aparelho NOVO** (localStorage vazio): login → cai em /onboarding pra completar dados aqui também → depois /app. ✅
+4. **Admin (você) na primeira vez:** login → cai em /onboarding pra você configurar dados de teste (se quiser). Da próxima vez em diante, direto no /app. ✅

@@ -534,7 +534,7 @@ function Home() {
           <p className="eyebrow"><span className="eyebrow-line" /> um baralho para estar perto</p>
           <h1>Há coisas que só aparecem quando a gente <em>pergunta.</em></h1>
           <p className="hero-lede">Perguntas de Conexão é um convite para sair do automático. Um baralho digital, feito para abrir espaço para histórias, silêncios e respostas honestas.</p>
-           <div className="hero-actions"><Link href="/onboarding" className="button button-primary" data-testid="button-start-demo">Começar a experiência <ArrowRight size={17} /></Link><a href="#como-funciona" className="text-link" data-testid="link-learn-more">Entender o ritual <ChevronRight size={16} /></a></div>
+           <div className="hero-actions"><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="button button-primary" data-testid="button-start-demo">Começar a experiência <ArrowRight size={17} /></button><a href="#como-funciona" className="text-link" data-testid="link-learn-more">Entender o ritual <ChevronRight size={16} /></a></div>
           <div className="hero-note"><span className="tiny-avatar">M</span><span>Uma pergunta por vez.<br /><strong>O resto acontece entre vocês.</strong></span></div>
         </div>
         <div className="hero-art">
