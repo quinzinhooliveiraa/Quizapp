@@ -19,6 +19,8 @@ export * from './checkoutCreateResponse';
 export * from './checkoutWebhook';
 export * from './checkoutWebhookEventType';
 export * from './checkoutWebhookPackageId';
+export * from './completeGuestOnboarding200';
+export * from './completeOwnerOnboarding200';
 export * from './guestAccess';
 export * from './guestAccessRole';
 export * from './healthStatus';

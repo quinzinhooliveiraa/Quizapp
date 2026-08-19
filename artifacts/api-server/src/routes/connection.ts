@@ -420,6 +420,23 @@ router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
   res.json(GetQuestionSessionResponse.parse(session));
 });
 
+router.post("/access/sessions/:sessionId/complete-onboarding", async (req, res): Promise<void> => {
+  const sessionId = String(req.params.sessionId || "").trim();
+  if (!sessionId) {
+    res.status(400).json({ error: "Sessão inválida" });
+    return;
+  }
+  const [updated] = await db.update(sessionsTable)
+    .set({ onboardingComplete: true })
+    .where(eq(sessionsTable.id, sessionId))
+    .returning({ id: sessionsTable.id });
+  if (!updated) {
+    res.status(404).json({ error: "Sessão não encontrada" });
+    return;
+  }
+  res.json({ ok: true });
+});
+
 router.post("/access/sessions/:sessionId/invites", async (req, res): Promise<void> => {
   const params = CreateInviteParams.safeParse(req.params);
   const body = CreateInviteBody.safeParse(req.body);
@@ -497,7 +514,25 @@ router.get("/access/invites/:token", async (req, res): Promise<void> => {
     guestName: invite.guestName,
     packageName: session.packageName,
     ownerName: session.buyerName,
+    onboardingComplete: invite.onboardingComplete,
   });
+});
+
+router.post("/access/invites/:token/complete-onboarding", async (req, res): Promise<void> => {
+  const token = String(req.params.token || "").trim();
+  if (!token) {
+    res.status(400).json({ error: "Token inválido" });
+    return;
+  }
+  const [updated] = await db.update(invitesTable)
+    .set({ onboardingComplete: true })
+    .where(eq(invitesTable.token, token))
+    .returning({ token: invitesTable.token });
+  if (!updated) {
+    res.status(404).json({ error: "Convite não encontrado" });
+    return;
+  }
+  res.json({ ok: true });
 });
 
 router.post("/access/invites/:token/claim-email", async (req, res): Promise<void> => {

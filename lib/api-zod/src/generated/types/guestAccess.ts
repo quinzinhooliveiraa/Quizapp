@@ -14,4 +14,5 @@ export interface GuestAccess {
   guestName: string;
   packageName: string;
   ownerName: string;
+  onboardingComplete: boolean;
 }

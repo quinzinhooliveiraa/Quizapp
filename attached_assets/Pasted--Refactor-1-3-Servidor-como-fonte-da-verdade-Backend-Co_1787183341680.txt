@@ -1,0 +1,222 @@
+# Refactor 1/3 — Servidor como fonte da verdade (Backend)
+
+**Contexto:** hoje o estado de identidade e onboarding vive no `localStorage` do navegador, causando bugs quando alguém troca de papel (dono ↔ convidado) ou muda de aparelho. Solução: servidor guarda onboarding-complete no banco, endpoints já retornam isso, e temos rotas pra marcar como completo.
+
+**IMPORTANTE: aplicar direto nos arquivos. Não é pra salvar como asset.**
+
+## 1. Adicionar colunas no schema — `lib/db/src/schema/index.ts`
+
+Achar a `sessionsTable`:
+
+```ts
+export const sessionsTable = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  buyerName: text("buyer_name").notNull(),
+  buyerEmail: text("buyer_email"),
+  packageId: text("package_id").notNull(),
+  packageName: text("package_name").notNull(),
+  inviteLimit: integer("invite_limit").notNull(),
+  invitesUsed: integer("invites_used").notNull().default(0),
+  accessGranted: boolean("access_granted").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+Adicionar `onboardingComplete`:
+
+```ts
+export const sessionsTable = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  buyerName: text("buyer_name").notNull(),
+  buyerEmail: text("buyer_email"),
+  packageId: text("package_id").notNull(),
+  packageName: text("package_name").notNull(),
+  inviteLimit: integer("invite_limit").notNull(),
+  invitesUsed: integer("invites_used").notNull().default(0),
+  accessGranted: boolean("access_granted").notNull().default(false),
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+E na `invitesTable`, adicionar `onboardingComplete` também:
+
+```ts
+export const invitesTable = pgTable("invites", {
+  token: text("token").primaryKey(),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessionsTable.id, { onDelete: "cascade" }),
+  guestName: text("guest_name").notNull(),
+  guestEmail: text("guest_email"),
+  isUsed: boolean("is_used").notNull().default(false),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+## 2. Expor `onboardingComplete` nas respostas dos endpoints existentes
+
+`artifacts/api-server/src/routes/connection.ts`
+
+### 2.1. GET /access/sessions/:sessionId — incluir onboardingComplete
+
+Achar o handler `router.get("/access/sessions/:sessionId"...`. Onde monta a resposta com `id`, `buyerName`, etc., adicionar `onboardingComplete: session.onboardingComplete` ao objeto de resposta.
+
+### 2.2. GET /access/invites/:token — incluir onboardingComplete
+
+Achar `router.get("/access/invites/:token"...`. Adicionar `onboardingComplete: invite.onboardingComplete` na resposta.
+
+## 3. Novas rotas pra marcar onboarding como completo
+
+Adicionar em `artifacts/api-server/src/routes/connection.ts` (junto das outras rotas de session/invite):
+
+```ts
+// Dono marca onboarding como completo
+router.post("/access/sessions/:sessionId/complete-onboarding", async (req, res): Promise<void> => {
+  const sessionId = req.params.sessionId;
+  if (!sessionId) { res.status(400).json({ error: "Sessão inválida" }); return; }
+  const [updated] = await db.update(sessionsTable)
+    .set({ onboardingComplete: true })
+    .where(eq(sessionsTable.id, sessionId))
+    .returning({ id: sessionsTable.id });
+  if (!updated) { res.status(404).json({ error: "Sessão não encontrada" }); return; }
+  res.json({ ok: true });
+});
+
+// Convidado marca onboarding como completo
+router.post("/access/invites/:token/complete-onboarding", async (req, res): Promise<void> => {
+  const token = req.params.token;
+  if (!token) { res.status(400).json({ error: "Token inválido" }); return; }
+  const [updated] = await db.update(invitesTable)
+    .set({ onboardingComplete: true })
+    .where(eq(invitesTable.token, token))
+    .returning({ token: invitesTable.token });
+  if (!updated) { res.status(404).json({ error: "Convite não encontrado" }); return; }
+  res.json({ ok: true });
+});
+```
+
+## 4. Atualizar schema OpenAPI — `lib/api-spec/openapi.yaml`
+
+### 4.1. Adicionar `onboardingComplete` no schema `QuestionSession` (perto da linha 362-379):
+
+```yaml
+    QuestionSession:
+      type: object
+      properties:
+        id:
+          type: string
+        buyerName:
+          type: string
+        packageId:
+          type: string
+        packageName:
+          type: string
+        inviteLimit:
+          type: number
+        invitesUsed:
+          type: number
+        accessGranted:
+          type: boolean
+        onboardingComplete:
+          type: boolean
+      required: [id, buyerName, packageId, packageName, inviteLimit, invitesUsed, accessGranted, onboardingComplete]
+```
+
+### 4.2. Adicionar `onboardingComplete` no schema `GuestAccess` (perto da linha 417-433):
+
+```yaml
+    GuestAccess:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [guest]
+        hasAccess:
+          type: boolean
+        canInvite:
+          type: boolean
+        guestName:
+          type: string
+        packageName:
+          type: string
+        ownerName:
+          type: string
+        onboardingComplete:
+          type: boolean
+      required: [role, hasAccess, canInvite, guestName, packageName, ownerName, onboardingComplete]
+```
+
+### 4.3. Adicionar as 2 novas rotas no OpenAPI (junto das outras `/access/...`):
+
+```yaml
+  /access/sessions/{sessionId}/complete-onboarding:
+    post:
+      operationId: completeOwnerOnboarding
+      tags: [access]
+      summary: Mark owner onboarding as complete
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding marked complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+
+  /access/invites/{token}/complete-onboarding:
+    post:
+      operationId: completeGuestOnboarding
+      tags: [access]
+      summary: Mark guest onboarding as complete
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding marked complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+```
+
+### 4.4. Regenerar clients gerados (a partir do OpenAPI)
+
+Se tiver script `pnpm generate` ou similar, rodar. Isso regera os hooks `useCompleteOwnerOnboarding`, `useCompleteGuestOnboarding` e adiciona `onboardingComplete` nos tipos gerados. Se não tiver, o front pode chamar via fetch direto (não é bloqueador).
+
+## 5. Deploy
+
+Como o `db push` já roda automático no start do api-server (mudança que fizemos antes), ao fazer deploy o schema atualiza sozinho no Postgres.
+
+## Verificação
+```bash
+# Deve incluir "onboardingComplete": false nos primeiros acessos:
+curl https://[api-server].railway.app/api/access/sessions/[UM_SESSION_ID]
+
+# Marca como completo:
+curl -X POST https://[api-server].railway.app/api/access/sessions/[UM_SESSION_ID]/complete-onboarding
+
+# Agora retorna true:
+curl https://[api-server].railway.app/api/access/sessions/[UM_SESSION_ID]
+```
+
+Quando esse prompt tiver aplicado + deployado, me confirma. Aí mando o **Prompt 2 (frontend)** que faz o React ler onboardingComplete do servidor em vez do localStorage.

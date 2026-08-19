@@ -14,4 +14,5 @@ export interface QuestionSession {
   inviteLimit: number;
   invitesUsed: number;
   accessGranted: boolean;
+  onboardingComplete: boolean;
 }

@@ -27,6 +27,8 @@ import type {
   CheckoutCreateInput,
   CheckoutCreateResponse,
   CheckoutWebhook,
+  CompleteGuestOnboarding200,
+  CompleteOwnerOnboarding200,
   GuestAccess,
   HealthStatus,
   Invite,
@@ -532,6 +534,77 @@ export function useGetQuestionSession<TData = Awaited<ReturnType<typeof getQuest
 
 
 
+export const getCompleteOwnerOnboardingUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/access/sessions/${sessionId}/complete-onboarding`
+}
+
+/**
+ * @summary Mark owner onboarding as complete
+ */
+export const completeOwnerOnboarding = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<CompleteOwnerOnboarding200> => {
+
+  return customFetch<CompleteOwnerOnboarding200>(getCompleteOwnerOnboardingUrl(sessionId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCompleteOwnerOnboardingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeOwnerOnboarding>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeOwnerOnboarding>>, TError,{sessionId: string}, TContext> => {
+
+const mutationKey = ['completeOwnerOnboarding'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeOwnerOnboarding>>, {sessionId: string}> = (props) => {
+          const {sessionId} = props ?? {};
+
+          return  completeOwnerOnboarding(sessionId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteOwnerOnboardingMutationResult = NonNullable<Awaited<ReturnType<typeof completeOwnerOnboarding>>>
+
+    export type CompleteOwnerOnboardingMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark owner onboarding as complete
+ */
+export const useCompleteOwnerOnboarding = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeOwnerOnboarding>>, TError,{sessionId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeOwnerOnboarding>>,
+        TError,
+        {sessionId: string},
+        TContext
+      > => {
+      return useMutation(getCompleteOwnerOnboardingMutationOptions(options));
+    }
+
 export const getListInvitesUrl = (sessionId: string,) => {
 
 
@@ -827,6 +900,77 @@ export const useAcceptInvite = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getAcceptInviteMutationOptions(options));
+    }
+
+export const getCompleteGuestOnboardingUrl = (token: string,) => {
+
+
+
+
+  return `/api/access/invites/${token}/complete-onboarding`
+}
+
+/**
+ * @summary Mark guest onboarding as complete
+ */
+export const completeGuestOnboarding = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<CompleteGuestOnboarding200> => {
+
+  return customFetch<CompleteGuestOnboarding200>(getCompleteGuestOnboardingUrl(token),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCompleteGuestOnboardingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeGuestOnboarding>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeGuestOnboarding>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['completeGuestOnboarding'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeGuestOnboarding>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  completeGuestOnboarding(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteGuestOnboardingMutationResult = NonNullable<Awaited<ReturnType<typeof completeGuestOnboarding>>>
+
+    export type CompleteGuestOnboardingMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark guest onboarding as complete
+ */
+export const useCompleteGuestOnboarding = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeGuestOnboarding>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeGuestOnboarding>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+      return useMutation(getCompleteGuestOnboardingMutationOptions(options));
     }
 
 export const getCancelInviteUrl = (sessionId: string,

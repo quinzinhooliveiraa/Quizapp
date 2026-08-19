@@ -10,6 +10,7 @@ export const sessionsTable = pgTable("sessions", {
   inviteLimit: integer("invite_limit").notNull(),
   invitesUsed: integer("invites_used").notNull().default(0),
   accessGranted: boolean("access_granted").notNull().default(false),
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -22,6 +23,7 @@ export const invitesTable = pgTable("invites", {
   guestEmail: text("guest_email"),
   isUsed: boolean("is_used").notNull().default(false),
   usedAt: timestamp("used_at", { withTimezone: true }),
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

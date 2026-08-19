@@ -120,6 +120,28 @@ paths:
                 $ref: "#/components/schemas/QuestionSession"
         "404":
           description: Session not found
+  /access/sessions/{sessionId}/complete-onboarding:
+    post:
+      operationId: completeOwnerOnboarding
+      tags: [access]
+      summary: Mark owner onboarding as complete
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding marked complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
   /access/sessions/{sessionId}/invites:
     get:
       operationId: listInvites
@@ -205,6 +227,28 @@ paths:
                 $ref: "#/components/schemas/InviteAccepted"
         "404":
           description: Invite not found
+  /access/invites/{token}/complete-onboarding:
+    post:
+      operationId: completeGuestOnboarding
+      tags: [access]
+      summary: Mark guest onboarding as complete
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding marked complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
   /access/sessions/{sessionId}/invites/{token}:
     delete:
       operationId: cancelInvite
@@ -376,7 +420,9 @@ components:
           type: number
         accessGranted:
           type: boolean
-      required: [id, buyerName, packageId, packageName, inviteLimit, invitesUsed, accessGranted]
+        onboardingComplete:
+          type: boolean
+      required: [id, buyerName, packageId, packageName, inviteLimit, invitesUsed, accessGranted, onboardingComplete]
     InviteInput:
       type: object
       properties:
@@ -430,7 +476,9 @@ components:
           type: string
         ownerName:
           type: string
-      required: [role, hasAccess, canInvite, guestName, packageName, ownerName]
+        onboardingComplete:
+          type: boolean
+      required: [role, hasAccess, canInvite, guestName, packageName, ownerName, onboardingComplete]
     CheckoutWebhook:
       type: object
       properties:

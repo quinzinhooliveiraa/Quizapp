@@ -92,6 +92,7 @@ export interface QuestionSession {
   inviteLimit: number;
   invitesUsed: number;
   accessGranted: boolean;
+  onboardingComplete: boolean;
 }
 
 export interface InviteInput {
@@ -131,6 +132,7 @@ export interface GuestAccess {
   guestName: string;
   packageName: string;
   ownerName: string;
+  onboardingComplete: boolean;
 }
 
 export type CheckoutWebhookEventType = typeof CheckoutWebhookEventType[keyof typeof CheckoutWebhookEventType];
@@ -222,6 +224,14 @@ export const ListQuestionsMode = {
   family: 'family',
   friends: 'friends',
 } as const;
+
+export type CompleteOwnerOnboarding200 = {
+  ok: boolean;
+};
+
+export type CompleteGuestOnboarding200 = {
+  ok: boolean;
+};
 
 export type CancelInvite200 = {
   ok: boolean;

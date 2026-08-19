@@ -79,7 +79,8 @@ export const CreateQuestionSessionResponse = zod.object({
   "packageName": zod.string(),
   "inviteLimit": zod.number(),
   "invitesUsed": zod.number(),
-  "accessGranted": zod.boolean()
+  "accessGranted": zod.boolean(),
+  "onboardingComplete": zod.boolean()
 })
 
 
@@ -97,7 +98,20 @@ export const GetQuestionSessionResponse = zod.object({
   "packageName": zod.string(),
   "inviteLimit": zod.number(),
   "invitesUsed": zod.number(),
-  "accessGranted": zod.boolean()
+  "accessGranted": zod.boolean(),
+  "onboardingComplete": zod.boolean()
+})
+
+
+/**
+ * @summary Mark owner onboarding as complete
+ */
+export const CompleteOwnerOnboardingParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const CompleteOwnerOnboardingResponse = zod.object({
+  "ok": zod.boolean()
 })
 
 
@@ -151,7 +165,8 @@ export const GetInviteResponse = zod.object({
   "canInvite": zod.boolean(),
   "guestName": zod.string(),
   "packageName": zod.string(),
-  "ownerName": zod.string()
+  "ownerName": zod.string(),
+  "onboardingComplete": zod.boolean()
 })
 
 
@@ -164,6 +179,18 @@ export const AcceptInviteParams = zod.object({
 
 export const AcceptInviteResponse = zod.object({
   "accepted": zod.boolean()
+})
+
+
+/**
+ * @summary Mark guest onboarding as complete
+ */
+export const CompleteGuestOnboardingParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const CompleteGuestOnboardingResponse = zod.object({
+  "ok": zod.boolean()
 })
 
 
