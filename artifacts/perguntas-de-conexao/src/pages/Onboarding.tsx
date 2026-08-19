@@ -9,6 +9,7 @@ type StepId =
   | 'relationship'
   | 'note'
   | 'name'
+  | 'email'
   | 'date'
   | 'days'
   | 'curiosity'
@@ -27,6 +28,7 @@ const steps: Step[] = [
   { id: 'relationship', progress: 0.18 },
   { id: 'note', progress: 0.24 },
   { id: 'name', progress: 0.3 },
+  { id: 'email', progress: 0.34 },
   { id: 'date', progress: 0.38 },
   { id: 'days', progress: 0.47 },
   { id: 'curiosity', progress: 0.58 },
@@ -133,7 +135,7 @@ function readOnboardingRole(): OnboardingRole {
 function getInitialOnboardingStep() {
   const availableSteps = safeGetItem('conexao-guest-token')
     ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry')
-    : steps;
+    : steps.filter(step => step.id !== 'email');
   const saved = Number(safeGetItem('conexao-onboarding-step'));
   if (!Number.isInteger(saved) || saved < 0 || saved >= availableSteps.length) return 0;
 
@@ -261,7 +263,9 @@ export default function Onboarding() {
   const [stepIndex, setStepIndex] = useState(getInitialOnboardingStep);
   const isInvitedGuest = !!safeGetItem('conexao-guest-token');
   const activeSteps = useMemo(
-    () => isInvitedGuest ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry') : steps,
+    () => isInvitedGuest
+      ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry')
+      : steps.filter(step => step.id !== 'email'),
     [isInvitedGuest],
   );
   const [role, setRole] = useState<OnboardingRole>(readOnboardingRole);
@@ -276,6 +280,7 @@ export default function Onboarding() {
       return [];
     }
   });
+  const [guestEmail, setGuestEmail] = useState(() => safeGetItem('conexao-guest-email') || '');
   const [surprise, setSurprise] = useState('');
   const [feeling, setFeeling] = useState(() => safeGetItem('conexao-onboarding-feeling') || '');
   const [guestInviteLink, setGuestInviteLink] = useState('');

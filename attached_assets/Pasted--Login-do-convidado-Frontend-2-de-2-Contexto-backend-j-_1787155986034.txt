@@ -1,0 +1,333 @@
+# Login do convidado — Frontend (2 de 2)
+
+**Contexto:** backend já aceita email do convidado. Falta: (1) pedir email no onboarding do convidado, (2) mandar pro backend, (3) tela de login mostrar tanto sessões (dono) quanto convites (convidado) do email.
+
+**IMPORTANTE: aplicar direto nos arquivos. Não é pra salvar como asset.**
+
+## Fix 1 — Adicionar step `email` no onboarding do convidado
+
+`artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+### 1.1. Adicionar `'email'` no tipo StepId (linha 5-19)
+
+Achar:
+```ts
+type StepId =
+  | 'intro'
+  | 'welcome-role'
+  | 'guest-entry'
+  | 'relationship'
+  | 'note'
+  | 'name'
+  | 'date'
+```
+
+Trocar por (adiciona `'email'` entre `name` e `date`):
+```ts
+type StepId =
+  | 'intro'
+  | 'welcome-role'
+  | 'guest-entry'
+  | 'relationship'
+  | 'note'
+  | 'name'
+  | 'email'
+  | 'date'
+```
+
+### 1.2. Adicionar no array `steps` (linha 23-38)
+
+Achar `{ id: 'name', progress: 0.3 },` e adicionar `email` logo abaixo:
+```ts
+  { id: 'name', progress: 0.3 },
+  { id: 'email', progress: 0.34 },
+  { id: 'date', progress: 0.38 },
+```
+
+### 1.3. No filtro `activeSteps`, remover email pro dono
+
+Achar (perto da linha 260):
+```tsx
+const activeSteps = useMemo(
+  () => isInvitedGuest ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry') : steps,
+  [isInvitedGuest],
+);
+```
+
+Trocar por (email só aparece pra convidado):
+```tsx
+const activeSteps = useMemo(
+  () => isInvitedGuest
+    ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry')
+    : steps.filter(step => step.id !== 'email'),
+  [isInvitedGuest],
+);
+```
+
+### 1.4. Adicionar estado `guestEmail` no componente (perto de outros useState de nome/pronoun/etc, ~linha 264)
+
+Adicionar:
+```tsx
+const [guestEmail, setGuestEmail] = useState(() => {
+  try { return window.localStorage?.getItem('conexao-guest-email') || ''; }
+  catch { return ''; }
+});
+```
+
+### 1.5. Renderizar o step email — achar `case 'name':` (linha 493) e adicionar novo case logo depois do `</div>` de fechamento (antes do `case 'date':`)
+
+Achar o final do case 'name' (linha ~505-506):
+```tsx
+          </div>
+        );
+      case 'date':
+```
+
+Trocar por (adiciona o case 'email' entre eles):
+```tsx
+          </div>
+        );
+      case 'email':
+        return (
+          <div className="onboarding-content onboarding-name-screen">
+            <div>
+              <p className="onboarding-kicker">pra você não perder</p>
+              <h1>Qual seu <em>email?</em></h1>
+              <p className="onboarding-subtitle">Se você mudar de aparelho ou limpar o app, é com ele que você volta pro baralho.</p>
+            </div>
+            <div className="onboarding-name-form">
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={guestEmail}
+                onChange={(event) => setGuestEmail(event.target.value)}
+                autoFocus
+                placeholder="seu@email.com"
+                data-testid="input-onboarding-guest-email"
+              />
+            </div>
+          </div>
+        );
+      case 'date':
+```
+
+### 1.6. Salvar email no localStorage + registrar no backend
+
+Achar o useEffect que salva os dados (perto da linha 340):
+
+```tsx
+safeSetItem('conexao-onboarding-feeling', feeling);
+if (role) safeSetItem('conexao-role', role);
+
+if (step.id === 'preparing') {
+  safeSetItem('conexao-name', name.trim());
+  safeSetItem('conexao-relationship', relationship);
+  safeSetItem('conexao-curiosity', JSON.stringify(curiosity));
+  safeSetItem('conexao-feeling', feeling);
+  safeSetItem('conexao-partner-pronoun', pronoun);
+  safeSetItem('conexao-onboarding-complete', 'true');
+}
+```
+
+Trocar por (salva email + registra no backend se for convidado):
+```tsx
+safeSetItem('conexao-onboarding-feeling', feeling);
+if (role) safeSetItem('conexao-role', role);
+if (guestEmail.trim()) safeSetItem('conexao-guest-email', guestEmail.trim());
+
+if (step.id === 'preparing') {
+  safeSetItem('conexao-name', name.trim());
+  safeSetItem('conexao-relationship', relationship);
+  safeSetItem('conexao-curiosity', JSON.stringify(curiosity));
+  safeSetItem('conexao-feeling', feeling);
+  safeSetItem('conexao-partner-pronoun', pronoun);
+  safeSetItem('conexao-onboarding-complete', 'true');
+
+  // Se é convidado, registra o email no backend pra permitir login futuro
+  const guestToken = safeGetItem('conexao-guest-token');
+  const trimmedEmail = guestEmail.trim().toLowerCase();
+  if (guestToken && trimmedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+    fetch(`${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/claim-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmedEmail }),
+    }).catch(() => { /* silently fail — não bloqueia onboarding */ });
+  }
+}
+```
+
+### 1.7. Validação (bloquear "Continuar" no step email se email inválido)
+
+Achar onde está o `canContinue` ou lógica que decide se botão Continuar tá ativo (perto da linha ~750):
+
+```tsx
+const canContinue = step.id === 'name'
+              ? !!name.trim()
+              : ...
+```
+
+Adicionar case pro step 'email' (se você achar essa estrutura, adiciona `email`; se for outra estrutura, aplica o padrão equivalente):
+
+```tsx
+const canContinue = step.id === 'name'
+              ? !!name.trim()
+              : step.id === 'email'
+                ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
+                : ...
+```
+
+(Se o padrão do `canContinue` for diferente, adapte na mesma lógica: precisa validar email básico antes de deixar avançar.)
+
+## Fix 2 — Login mostra tanto sessions quanto invites
+
+`artifacts/perguntas-de-conexao/src/pages/Login.tsx`
+
+### 2.1. Adicionar tipo InviteSummary
+
+Perto do topo, adicionar após `SessionSummary`:
+```tsx
+type InviteSummary = { token: string; guestName: string; ownerName: string; createdAt: string };
+```
+
+### 2.2. Adicionar state pra invites
+
+Achar `const [sessions, setSessions] = useState<SessionSummary[]>([]);` e adicionar linha abaixo:
+```tsx
+const [invites, setInvites] = useState<InviteSummary[]>([]);
+```
+
+### 2.3. Atualizar `verifyCode` pra lidar com sessions + invites
+
+Achar o bloco que processa a resposta do verify-code (na função `verifyCode`, depois de `const data = await response.json()`):
+
+Trocar por:
+```tsx
+const data = await response.json() as { sessions?: SessionSummary[]; invites?: InviteSummary[] };
+const allSessions = data.sessions || [];
+const allInvites = data.invites || [];
+if (allSessions.length === 0 && allInvites.length === 0) {
+  setError('Nenhum acesso encontrado para este email.');
+  setLoading(false);
+  return;
+}
+// Uma única entrada — auto-seleciona
+if (allSessions.length === 1 && allInvites.length === 0) {
+  completeLoginAsOwner(allSessions[0]);
+  return;
+}
+if (allSessions.length === 0 && allInvites.length === 1) {
+  completeLoginAsGuest(allInvites[0]);
+  return;
+}
+// Múltiplas entradas — mostra picker
+setSessions(allSessions);
+setInvites(allInvites);
+setStage('picker');
+```
+
+### 2.4. Renomear `completeLogin` pra `completeLoginAsOwner` e adicionar `completeLoginAsGuest`
+
+Achar `function completeLogin(session: SessionSummary)`. Renomear pra `completeLoginAsOwner`:
+```tsx
+function completeLoginAsOwner(session: SessionSummary) {
+  safeSet('conexao-session', session.id);
+  safeSet('conexao-name', session.buyerName);
+  safeSet('conexao-role', 'owner');
+  // Remove qualquer token de convidado caso a pessoa tenha sido as duas coisas antes
+  try { window.localStorage?.removeItem('conexao-guest-token'); } catch { /* noop */ }
+  const alreadyOnboarded = (() => {
+    try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
+    catch { return false; }
+  })();
+  navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+}
+
+function completeLoginAsGuest(invite: InviteSummary) {
+  safeSet('conexao-guest-token', invite.token);
+  safeSet('conexao-name', invite.guestName);
+  safeSet('conexao-role', 'guest');
+  safeSet('conexao-guest-name', invite.guestName);
+  try { window.localStorage?.removeItem('conexao-session'); } catch { /* noop */ }
+  const alreadyOnboarded = (() => {
+    try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
+    catch { return false; }
+  })();
+  navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+}
+```
+
+### 2.5. Atualizar o picker (stage === 'picker') pra mostrar as duas listas
+
+Achar `{stage === 'picker' && ...}`:
+
+Trocar todo o bloco por:
+```tsx
+{stage === 'picker' && <>
+  <h1>Qual espaço <em>abrir?</em></h1>
+  <p className="login-copy">Encontramos mais de um acesso vinculado a este email.</p>
+  <div className="login-picker">
+    {sessions.map(session => (
+      <button
+        key={`s-${session.id}`}
+        onClick={() => completeLoginAsOwner(session)}
+        className="login-picker-item"
+        data-testid={`button-select-session-${session.id}`}
+      >
+        <span className="login-picker-name">{session.buyerName}</span>
+        <span className="login-picker-meta">Meu baralho · {session.packageName} · {new Date(session.createdAt).toLocaleDateString('pt-BR')}</span>
+      </button>
+    ))}
+    {invites.map(invite => (
+      <button
+        key={`i-${invite.token}`}
+        onClick={() => completeLoginAsGuest(invite)}
+        className="login-picker-item"
+        data-testid={`button-select-invite-${invite.token}`}
+      >
+        <span className="login-picker-name">Convite de {invite.ownerName}</span>
+        <span className="login-picker-meta">Você entrou como {invite.guestName} · {new Date(invite.createdAt).toLocaleDateString('pt-BR')}</span>
+      </button>
+    ))}
+  </div>
+</>}
+```
+
+### 2.6. Atualizar o admin bypass pra usar `completeLoginAsOwner` (a função foi renomeada)
+
+Achar (dentro de `requestCode`):
+```tsx
+if (data.adminBypass && data.sessionId) {
+  safeSet('conexao-session', data.sessionId);
+  safeSet('conexao-name', 'Admin');
+  safeSet('conexao-role', 'owner');
+  const alreadyOnboarded = ...
+  navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+  return;
+}
+```
+
+Substituir por:
+```tsx
+if (data.adminBypass && data.sessionId) {
+  completeLoginAsOwner({ id: data.sessionId, buyerName: 'Admin', packageName: 'Admin', createdAt: new Date().toISOString() });
+  return;
+}
+```
+
+## Verificação
+
+**Fluxo do convidado (novo):**
+1. Convidado clica link do convite → tela "aceite convite" → clica Aceitar
+2. Cai no onboarding — passa por relationship, note, name → **novo step: email**
+3. Digita email → continua onboarding normal
+4. No final, backend recebe o email do convidado
+5. Se depois ele limpar cache/trocar aparelho: vai em `/login` → digita email → recebe código → vê "Convite de [dono]" → clica → cai no /app com acesso restaurado ✅
+
+**Fluxo do dono (sem mudança):**
+1. Vendas → compra → onboarding → app (não vê step de email — foi filtrado) ✅
+2. Se perder cache: /login → digita email → código → cai no /app ✅
+
+**Fluxo com múltiplos acessos:**
+- Se o mesmo email é dono de um baralho E convidado de outro → picker mostra os dois com labels claros ("Meu baralho" vs "Convite de X"), você escolhe qual abrir.

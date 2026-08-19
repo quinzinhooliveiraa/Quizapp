@@ -7,6 +7,7 @@ const apiUrl = (path: string) => `${apiBase}${path}`;
 
 type Stage = 'email' | 'code' | 'picker';
 type SessionSummary = { id: string; buyerName: string; packageName: string; createdAt: string };
+type InviteSummary = { token: string; guestName: string; ownerName: string; createdAt: string };
 
 function safeSet(key: string, value: string) {
   try { window.localStorage?.setItem(key, value); } catch { /* noop */ }
@@ -41,14 +42,7 @@ export default function Login() {
       if (response.ok) {
         const data = await response.json() as { ok: boolean; adminBypass?: boolean; sessionId?: string };
         if (data.adminBypass && data.sessionId) {
-          safeSet('conexao-session', data.sessionId);
-          safeSet('conexao-name', 'Admin');
-          safeSet('conexao-role', 'owner');
-          const alreadyOnboarded = (() => {
-            try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
-            catch { return false; }
-          })();
-          navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+          completeLoginAsOwner({ id: data.sessionId, buyerName: 'Admin', packageName: 'Admin', createdAt: new Date().toISOString() });
           return;
         }
         setEmail(trimmed);
@@ -116,17 +110,24 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      const data = await response.json() as { sessions: SessionSummary[] };
-      if (!data.sessions?.length) {
+      const data = await response.json() as { sessions?: SessionSummary[]; invites?: InviteSummary[] };
+      const allSessions = data.sessions || [];
+      const allInvites = data.invites || [];
+      if (allSessions.length === 0 && allInvites.length === 0) {
         setError('Nenhum acesso encontrado para este email.');
         setLoading(false);
         return;
       }
-      if (data.sessions.length === 1) {
-        completeLogin(data.sessions[0]);
+      if (allSessions.length === 1 && allInvites.length === 0) {
+        completeLoginAsOwner(allSessions[0]);
         return;
       }
-      setSessions(data.sessions);
+      if (allSessions.length === 0 && allInvites.length === 1) {
+        completeLoginAsGuest(allInvites[0]);
+        return;
+      }
+      setSessions(allSessions);
+      setInvites(allInvites);
       setStage('picker');
     } catch {
       setError('Sem conexão. Tente novamente.');
@@ -134,10 +135,24 @@ export default function Login() {
     setLoading(false);
   }
 
-  function completeLogin(session: SessionSummary) {
+  function completeLoginAsOwner(session: SessionSummary) {
     safeSet('conexao-session', session.id);
     safeSet('conexao-name', session.buyerName);
     safeSet('conexao-role', 'owner');
+    try { window.localStorage?.removeItem('conexao-guest-token'); } catch { /* noop */ }
+    const alreadyOnboarded = (() => {
+      try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
+      catch { return false; }
+    })();
+    navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+  }
+
+  function completeLoginAsGuest(invite: InviteSummary) {
+    safeSet('conexao-guest-token', invite.token);
+    safeSet('conexao-name', invite.guestName);
+    safeSet('conexao-role', 'guest');
+    safeSet('conexao-guest-name', invite.guestName);
+    try { window.localStorage?.removeItem('conexao-session'); } catch { /* noop */ }
     const alreadyOnboarded = (() => {
       try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
       catch { return false; }
@@ -207,18 +222,29 @@ export default function Login() {
         </>}
 
         {stage === 'picker' && <>
-          <h1>Qual baralho <em>abrir?</em></h1>
+          <h1>Qual espaço <em>abrir?</em></h1>
           <p className="login-copy">Encontramos mais de um acesso vinculado a este email.</p>
           <div className="login-picker">
             {sessions.map(session => (
               <button
-                key={session.id}
-                onClick={() => completeLogin(session)}
+                key={`s-${session.id}`}
+                onClick={() => completeLoginAsOwner(session)}
                 className="login-picker-item"
                 data-testid={`button-select-session-${session.id}`}
               >
                 <span className="login-picker-name">{session.buyerName}</span>
-                <span className="login-picker-meta">{session.packageName} · {new Date(session.createdAt).toLocaleDateString('pt-BR')}</span>
+                <span className="login-picker-meta">Meu baralho · {session.packageName} · {new Date(session.createdAt).toLocaleDateString('pt-BR')}</span>
+              </button>
+            ))}
+            {invites.map(invite => (
+              <button
+                key={`i-${invite.token}`}
+                onClick={() => completeLoginAsGuest(invite)}
+                className="login-picker-item"
+                data-testid={`button-select-invite-${invite.token}`}
+              >
+                <span className="login-picker-name">Convite de {invite.ownerName}</span>
+                <span className="login-picker-meta">Você entrou como {invite.guestName} · {new Date(invite.createdAt).toLocaleDateString('pt-BR')}</span>
               </button>
             ))}
           </div>
