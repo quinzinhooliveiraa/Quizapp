@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { Router, type IRouter } from "express";
 import { and, desc, eq, gt, isNull, lt, sql } from "drizzle-orm";
-import { authCodesTable, db, sessionsTable } from "@workspace/db";
+import { authCodesTable, db, invitesTable, sessionsTable } from "@workspace/db";
 import { buildLoginCodeEmail, sendEmailViaBrevo } from "../lib/brevo";
 
 const router: IRouter = Router();
@@ -54,6 +54,12 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
     .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
     .limit(1);
 
+  const existingInvites = await db.select({ token: invitesTable.token })
+    .from(invitesTable)
+    .where(eq(invitesTable.guestEmail, email))
+    .limit(1);
+  const hasInvite = existingInvites.length > 0;
+
   if (!existingSession && isAdmin) {
     const newSessionId = crypto.randomUUID();
     await db.insert(sessionsTable).values({
@@ -77,7 +83,7 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
   }
 
   // Non-admin accounts that do not exist receive a clear error.
-  if (!existingSession) {
+  if (!existingSession && !hasInvite) {
     res.status(404).json({ error: "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho." });
     return;
   }
@@ -165,12 +171,35 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
     .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
     .orderBy(desc(sessionsTable.createdAt));
 
-  if (sessions.length === 0) {
+  const invites = await db.select({
+    token: invitesTable.token,
+    guestName: invitesTable.guestName,
+    sessionId: invitesTable.sessionId,
+    createdAt: invitesTable.createdAt,
+  })
+    .from(invitesTable)
+    .where(eq(invitesTable.guestEmail, email))
+    .orderBy(desc(invitesTable.createdAt));
+
+  const inviteEntries = await Promise.all(invites.map(async (invite) => {
+    const [owner] = await db.select({ buyerName: sessionsTable.buyerName })
+      .from(sessionsTable)
+      .where(eq(sessionsTable.id, invite.sessionId))
+      .limit(1);
+    return {
+      token: invite.token,
+      guestName: invite.guestName,
+      ownerName: owner?.buyerName || "alguém",
+      createdAt: invite.createdAt,
+    };
+  }));
+
+  if (sessions.length === 0 && inviteEntries.length === 0) {
     res.status(404).json({ error: "Nenhum acesso encontrado para este email" });
     return;
   }
 
-  res.json({ sessions });
+  res.json({ sessions, invites: inviteEntries });
 });
 
 export default router;

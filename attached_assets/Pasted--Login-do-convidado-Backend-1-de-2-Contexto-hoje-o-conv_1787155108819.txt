@@ -1,0 +1,236 @@
+# Login do convidado — Backend (1 de 2)
+
+**Contexto:** hoje o convidado usa `conexao-guest-token` no localStorage — se perde, perde acesso pra sempre. Fix: guardar email do convidado no invite, e o mesmo `/auth/request-code` funciona pra ele. Login pode retornar tanto sessions (dono) quanto invites (convidado) do mesmo email.
+
+**IMPORTANTE: aplicar diretamente nos arquivos. Não é pra salvar como asset.**
+
+## 1. Adicionar `guestEmail` no schema — `lib/db/src/schema/index.ts`
+
+Achar a `invitesTable`:
+
+```ts
+export const invitesTable = pgTable("invites", {
+  token: text("token").primaryKey(),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessionsTable.id, { onDelete: "cascade" }),
+  guestName: text("guest_name").notNull(),
+  isUsed: boolean("is_used").notNull().default(false),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+Adicionar `guestEmail` (nullable — invites antigos ficam sem):
+
+```ts
+export const invitesTable = pgTable("invites", {
+  token: text("token").primaryKey(),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessionsTable.id, { onDelete: "cascade" }),
+  guestName: text("guest_name").notNull(),
+  guestEmail: text("guest_email"),
+  isUsed: boolean("is_used").notNull().default(false),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+## 2. Nova rota pra convidado registrar email — `artifacts/api-server/src/routes/connection.ts`
+
+Adicionar essa rota junto com as outras de invite (procurar por `router.get("/access/invites/:token"` e adicionar depois):
+
+```ts
+router.post("/access/invites/:token/claim-email", async (req, res): Promise<void> => {
+  const token = req.params.token;
+  const rawEmail = String((req.body as { email?: unknown } | undefined)?.email || "").trim().toLowerCase();
+  if (!token) { res.status(400).json({ error: "Token inválido" }); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+    res.status(400).json({ error: "Email inválido" });
+    return;
+  }
+  const [invite] = await db.select().from(invitesTable).where(eq(invitesTable.token, token)).limit(1);
+  if (!invite) { res.status(404).json({ error: "Convite não encontrado" }); return; }
+  await db.update(invitesTable).set({ guestEmail: rawEmail }).where(eq(invitesTable.token, token));
+  res.json({ ok: true });
+});
+```
+
+## 3. Atualizar `/auth/request-code` pra reconhecer convidados também
+
+`artifacts/api-server/src/routes/auth.ts`
+
+Achar o import de tabelas no topo:
+
+```ts
+import { authCodesTable, db, sessionsTable } from "@workspace/db";
+```
+
+Adicionar `invitesTable`:
+
+```ts
+import { authCodesTable, db, invitesTable, sessionsTable } from "@workspace/db";
+```
+
+Depois, na função `router.post("/auth/request-code"...`, achar o bloco:
+
+```ts
+let [existingSession] = await db.select({ id: sessionsTable.id })
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .limit(1);
+
+if (!existingSession && isAdmin) {
+  // ... admin auto-provision
+}
+
+if (isAdmin && existingSession) {
+  res.json({ ok: true, adminBypass: true, sessionId: existingSession.id });
+  return;
+}
+
+if (!existingSession) {
+  res.status(404).json({ error: "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho." });
+  return;
+}
+```
+
+Trocar por (agora também procura em invites — se achar um dos dois, manda o código):
+
+```ts
+let [existingSession] = await db.select({ id: sessionsTable.id })
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .limit(1);
+
+const existingInvites = await db.select({ token: invitesTable.token })
+  .from(invitesTable)
+  .where(eq(invitesTable.guestEmail, email))
+  .limit(1);
+const hasInvite = existingInvites.length > 0;
+
+if (!existingSession && isAdmin) {
+  // Admin sem sessão — cria uma automaticamente
+  const newSessionId = crypto.randomUUID();
+  await db.insert(sessionsTable).values({
+    id: newSessionId,
+    buyerName: "Admin",
+    buyerEmail: email,
+    packageId: "family",
+    packageName: "Pacote Família",
+    inviteLimit: 5,
+    invitesUsed: 0,
+    accessGranted: true,
+  });
+  existingSession = { id: newSessionId };
+  req.log.info({ email }, "Admin session auto-created");
+}
+
+if (isAdmin && existingSession) {
+  res.json({ ok: true, adminBypass: true, sessionId: existingSession.id });
+  return;
+}
+
+if (!existingSession && !hasInvite) {
+  res.status(404).json({ error: "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho." });
+  return;
+}
+```
+
+## 4. Atualizar `/auth/verify-code` pra retornar invites também
+
+Ainda em `auth.ts`, achar o bloco final da função `router.post("/auth/verify-code"...`:
+
+```ts
+const sessions = await db.select({
+  id: sessionsTable.id,
+  buyerName: sessionsTable.buyerName,
+  packageName: sessionsTable.packageName,
+  createdAt: sessionsTable.createdAt,
+})
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .orderBy(desc(sessionsTable.createdAt));
+
+if (sessions.length === 0) {
+  res.status(404).json({ error: "Nenhum acesso encontrado para este email" });
+  return;
+}
+
+res.json({ sessions });
+```
+
+Trocar por:
+
+```ts
+const sessions = await db.select({
+  id: sessionsTable.id,
+  buyerName: sessionsTable.buyerName,
+  packageName: sessionsTable.packageName,
+  createdAt: sessionsTable.createdAt,
+})
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .orderBy(desc(sessionsTable.createdAt));
+
+// Também busca invites vinculados ao email (convidados que passaram por onboarding)
+const invites = await db.select({
+  token: invitesTable.token,
+  guestName: invitesTable.guestName,
+  sessionId: invitesTable.sessionId,
+  createdAt: invitesTable.createdAt,
+})
+  .from(invitesTable)
+  .where(eq(invitesTable.guestEmail, email))
+  .orderBy(desc(invitesTable.createdAt));
+
+// Buscar nome do dono de cada invite pra mostrar "convite de [nome]"
+const inviteEntries = await Promise.all(invites.map(async (invite) => {
+  const [owner] = await db.select({ buyerName: sessionsTable.buyerName })
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, invite.sessionId))
+    .limit(1);
+  return {
+    token: invite.token,
+    guestName: invite.guestName,
+    ownerName: owner?.buyerName || 'alguém',
+    createdAt: invite.createdAt,
+  };
+}));
+
+if (sessions.length === 0 && inviteEntries.length === 0) {
+  res.status(404).json({ error: "Nenhum acesso encontrado para este email" });
+  return;
+}
+
+res.json({ sessions, invites: inviteEntries });
+```
+
+## 5. Depois de aplicar, rodar migration no Railway
+
+Shell do api-server:
+
+```bash
+pnpm --filter @workspace/db push
+```
+
+(Vai adicionar a coluna `guest_email` na tabela `invites`. Se pedir confirmação, diz sim.)
+
+## Verificação
+Precisa do próximo prompt (frontend) pra testar completamente. Mas dá pra validar o backend via curl:
+
+```bash
+# Um email com invite (se você tiver algum manualmente adicionado no DB):
+curl -X POST https://[api-server].railway.app/api/access/invites/[TOKEN]/claim-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"convidado@teste.com"}'
+
+# Depois:
+curl -X POST https://[api-server].railway.app/api/auth/request-code \
+  -H "Content-Type: application/json" \
+  -d '{"email":"convidado@teste.com"}'
+# → {"ok":true} (código enviado)
+```
+
+Se responder ok, backend tá pronto. Passa pro prompt 2 (frontend).

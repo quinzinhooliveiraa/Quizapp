@@ -500,6 +500,33 @@ router.get("/access/invites/:token", async (req, res): Promise<void> => {
   });
 });
 
+router.post("/access/invites/:token/claim-email", async (req, res): Promise<void> => {
+  const token = String(req.params.token || "").trim();
+  const rawEmail = String((req.body as { email?: unknown } | undefined)?.email || "").trim().toLowerCase();
+  if (!token) {
+    res.status(400).json({ error: "Token inválido" });
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+    res.status(400).json({ error: "Email inválido" });
+    return;
+  }
+
+  const [invite] = await db.select({ token: invitesTable.token })
+    .from(invitesTable)
+    .where(eq(invitesTable.token, token))
+    .limit(1);
+  if (!invite) {
+    res.status(404).json({ error: "Convite não encontrado" });
+    return;
+  }
+
+  await db.update(invitesTable)
+    .set({ guestEmail: rawEmail })
+    .where(eq(invitesTable.token, token));
+  res.json({ ok: true });
+});
+
 router.post("/access/invites/:token/accept", async (req, res): Promise<void> => {
   const parsed = GetInviteParams.safeParse(req.params);
   if (!parsed.success) {
