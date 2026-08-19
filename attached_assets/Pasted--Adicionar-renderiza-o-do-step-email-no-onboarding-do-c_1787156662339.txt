@@ -1,0 +1,113 @@
+# Adicionar renderização do step 'email' no onboarding do convidado
+
+**Contexto:** o step 'email' foi adicionado no fluxo do onboarding do convidado, mas ficou uma tela em branco porque falta o `case 'email':` dentro da função de renderização. Só precisa adicionar esse case.
+
+**IMPORTANTE: aplicar direto no arquivo. Não é pra salvar como asset.**
+
+## Fix — `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+### 1. Adicionar o estado `guestEmail` (se ainda não existir)
+
+Procurar no componente Onboarding se já existe `const [guestEmail, setGuestEmail]`. Se NÃO existir, adicionar junto com os outros useState (perto de onde tem `const [name, setName]` etc):
+
+```tsx
+const [guestEmail, setGuestEmail] = useState(() => {
+  try { return window.localStorage?.getItem('conexao-guest-email') || ''; }
+  catch { return ''; }
+});
+```
+
+### 2. Adicionar o `case 'email':` na função de renderização dos steps
+
+Achar (perto da linha 498-512):
+
+```tsx
+      case 'name':
+        return (
+          <div className="onboarding-content onboarding-name-screen">
+            <div>
+              <p className="onboarding-kicker">seu baralho é pessoal</p>
+              <h1>Como devo<br /><em>te chamar?</em></h1>
+              <p className="onboarding-subtitle">Esse nome aparece no seu baralho.</p>
+            </div>
+            <div className="onboarding-name-form">
+              <input value={name} onChange={(event) => setName(event.target.value)} autoFocus placeholder="Seu nome" data-testid="input-onboarding-name" />
+              <div className="name-suggestions">...</div>
+            </div>
+          </div>
+        );
+      case 'date':
+```
+
+**Entre o `case 'name'` e o `case 'date':`**, adicionar o case 'email':
+
+```tsx
+      case 'email':
+        return (
+          <div className="onboarding-content onboarding-name-screen">
+            <div>
+              <p className="onboarding-kicker">pra você não perder</p>
+              <h1>Qual seu <em>email?</em></h1>
+              <p className="onboarding-subtitle">Se você mudar de aparelho ou limpar o app, é com ele que você volta pro baralho.</p>
+            </div>
+            <div className="onboarding-name-form">
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={guestEmail}
+                onChange={(event) => setGuestEmail(event.target.value)}
+                autoFocus
+                placeholder="seu@email.com"
+                data-testid="input-onboarding-guest-email"
+              />
+            </div>
+          </div>
+        );
+      case 'date':
+```
+
+### 3. Verificar se o botão "Continuar" bloqueia com email inválido
+
+Procurar por `canContinue` no arquivo. Se tiver algo tipo:
+
+```tsx
+const canContinue = step.id === 'name' ? !!name.trim() : ...;
+```
+
+Adicionar o caso do email antes/depois do 'name':
+
+```tsx
+const canContinue = step.id === 'name'
+              ? !!name.trim()
+              : step.id === 'email'
+                ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
+                : ...; // resto igual
+```
+
+### 4. Salvar o email no localStorage + mandar pro backend no fim (se ainda não estiver)
+
+Procurar `if (step.id === 'preparing')` no useEffect que salva os dados. Confirmar que dentro dele já tem esse trecho:
+
+```tsx
+const guestToken = safeGetItem('conexao-guest-token');
+const trimmedEmail = guestEmail.trim().toLowerCase();
+if (guestToken && trimmedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  fetch(`${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/claim-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: trimmedEmail }),
+  }).catch(() => { /* silently fail */ });
+}
+```
+
+Se não tiver, adicionar dentro do `if (step.id === 'preparing')`. E adicionar acima:
+
+```tsx
+if (guestEmail.trim()) safeSetItem('conexao-guest-email', guestEmail.trim());
+```
+
+## Verificação
+- Onboarding do convidado: passa por relationship, note, name → aparece tela com "Qual seu email?" e input → digita email → botão Continuar habilita → segue pro step date normal.
+- Onboarding do dono (não é convidado): pula o step email direto do name pro date.
