@@ -37,6 +37,31 @@ export default function Login() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmed }),
       });
+
+      if (response.ok) {
+        const data = await response.json() as { ok: boolean; adminBypass?: boolean; sessionId?: string };
+        if (data.adminBypass && data.sessionId) {
+          safeSet('conexao-session', data.sessionId);
+          safeSet('conexao-name', 'Admin');
+          safeSet('conexao-role', 'owner');
+          safeSet('conexao-onboarding-complete', 'true');
+          navigate('/app', { replace: true });
+          return;
+        }
+        setEmail(trimmed);
+        setStage('code');
+        setNotice(`Enviamos um código de 6 dígitos para ${trimmed}. Verifique sua caixa de entrada (e o spam).`);
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 404) {
+        const data = await response.json().catch(() => ({})) as { error?: string };
+        setError(data.error || 'Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho.');
+        setLoading(false);
+        return;
+      }
+
       if (response.status === 429) {
         setError('Aguarde um instante antes de pedir outro código.');
         setLoading(false);
@@ -47,9 +72,7 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      setEmail(trimmed);
-      setStage('code');
-      setNotice('Se houver acesso vinculado a esse email, você receberá um código em instantes.');
+       setError('Não foi possível enviar o código agora. Tente novamente.');
     } catch {
       setError('Sem conexão. Tente novamente.');
     }

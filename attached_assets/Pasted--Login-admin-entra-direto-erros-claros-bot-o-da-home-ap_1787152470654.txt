@@ -1,0 +1,163 @@
+# Login: admin entra direto + erros claros + botão da home aponta pra login
+
+**Contexto:** o fluxo atual está confuso: admin ainda tem que digitar código (deveria entrar direto), email não cadastrado responde silêncio (deveria mostrar erro claro), e o botão "Abrir meu baralho" no header da home vai direto pro /app (deveria ir pro login).
+
+**IMPORTANTE: aplicar diretamente nos arquivos. Não é pra salvar como asset.**
+
+## Fix 1 — Backend: admin bypass sem código + erro claro pra email não cadastrado
+
+`artifacts/api-server/src/routes/auth.ts`
+
+Achar o handler `router.post("/auth/request-code"...`. Substituir a lógica do bloco `isAdmin` + `if (!existingSession)` (perto das linhas 46-77) por:
+
+```ts
+const adminEmails = (process.env.ADMIN_EMAILS || "")
+  .split(",")
+  .map((value) => value.trim().toLowerCase())
+  .filter(Boolean);
+const isAdmin = adminEmails.includes(email);
+
+let [existingSession] = await db.select({ id: sessionsTable.id })
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .limit(1);
+
+if (!existingSession && isAdmin) {
+  // Admin sem sessão — cria uma automaticamente
+  const newSessionId = crypto.randomUUID();
+  await db.insert(sessionsTable).values({
+    id: newSessionId,
+    buyerName: "Admin",
+    buyerEmail: email,
+    packageId: "family",
+    packageName: "Pacote Família",
+    inviteLimit: 5,
+    invitesUsed: 0,
+    accessGranted: true,
+  });
+  existingSession = { id: newSessionId };
+  req.log.info({ email }, "Admin session auto-created");
+}
+
+// ADMIN BYPASS: retorna sessão direto, sem mandar código
+if (isAdmin && existingSession) {
+  res.json({ ok: true, adminBypass: true, sessionId: existingSession.id });
+  return;
+}
+
+// Não-admin sem conta: responde com erro claro (não fica em silêncio)
+if (!existingSession) {
+  res.status(404).json({ error: "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho." });
+  return;
+}
+
+// Fluxo normal: gera código e envia por email
+const code = generateCode();
+const id = crypto.randomUUID();
+const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000);
+await db.insert(authCodesTable).values({ id, email, code, expiresAt });
+
+const emailPayload = buildLoginCodeEmail(code);
+const result = await sendEmailViaBrevo({
+  to: email,
+  subject: emailPayload.subject,
+  htmlContent: emailPayload.htmlContent,
+  textContent: emailPayload.textContent,
+});
+
+if (!result.ok) {
+  req.log.error({ error: result.error }, "Failed to send email login code");
+  res.status(500).json({ error: "Não conseguimos enviar o código agora. Tente novamente." });
+  return;
+}
+
+res.json({ ok: true });
+```
+
+## Fix 2 — Frontend: admin entra direto + mensagem de "conta não encontrada"
+
+`artifacts/perguntas-de-conexao/src/pages/Login.tsx`
+
+Achar a função `requestCode()`. Trocar o corpo do try/catch por (adiciona os 2 casos novos: adminBypass e 404):
+
+```tsx
+async function requestCode() {
+  setError('');
+  setNotice('');
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    setError('Digite um email válido.');
+    return;
+  }
+  setLoading(true);
+  try {
+    const response = await fetch(apiUrl('/api/auth/request-code'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmed }),
+    });
+
+    // Admin bypass: sessão vem no response, entra direto
+    if (response.ok) {
+      const data = await response.json() as { ok: boolean; adminBypass?: boolean; sessionId?: string };
+      if (data.adminBypass && data.sessionId) {
+        safeSet('conexao-session', data.sessionId);
+        safeSet('conexao-name', 'Admin');
+        safeSet('conexao-role', 'owner');
+        safeSet('conexao-onboarding-complete', 'true');
+        navigate('/app', { replace: true });
+        return;
+      }
+      // Usuário normal: pediu código, avança pra tela de código
+      setEmail(trimmed);
+      setStage('code');
+      setNotice(`Enviamos um código de 6 dígitos para ${trimmed}. Verifique sua caixa de entrada (e o spam).`);
+      setLoading(false);
+      return;
+    }
+
+    if (response.status === 404) {
+      const data = await response.json().catch(() => ({}));
+      setError(data.error || 'Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho.');
+      setLoading(false);
+      return;
+    }
+    if (response.status === 429) {
+      setError('Aguarde um instante antes de pedir outro código.');
+      setLoading(false);
+      return;
+    }
+    setError('Não foi possível enviar o código agora. Tente novamente.');
+  } catch {
+    setError('Sem conexão. Tente novamente.');
+  }
+  setLoading(false);
+}
+```
+
+## Fix 3 — Home: botão "Abrir meu baralho" do header vai pro login
+
+`artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar (perto da linha 332):
+
+```tsx
+<Link href="/app" className="header-cta" data-testid="link-header-cta">Abrir meu baralho <ArrowRight size={16} /></Link>
+```
+
+Trocar `href="/app"` por `href="/login"`:
+
+```tsx
+<Link href="/login" className="header-cta" data-testid="link-header-cta">Abrir meu baralho <ArrowRight size={16} /></Link>
+```
+
+## Verificação
+1. **Você (admin):** vai em `/login` → digita `quinzinhooliveiraa@gmail.com` → clica Enviar código → cai DIRETO no `/app` sem digitar código nenhum. ✅
+2. **Cliente pagante:** digita email que comprou → recebe código no email → digita → entra no `/app`. ✅
+3. **Alguém sem conta:** digita email qualquer → vê mensagem "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho." (com link "Ver pacotes"). ✅
+4. **Botão "Abrir meu baralho" no header da home:** vai pra `/login` (não mais direto pro `/app`). ✅
+
+## Se ainda falhar depois de aplicar
+- Confirma no Railway se `ADMIN_EMAILS` tá exatamente `quinzinhooliveiraa@gmail.com` (sem espaço, sem aspas)
+- Confirma se rodou `pnpm --filter @workspace/db push` (cria a tabela `auth_codes`)
+- Ver logs em Deploy Logs do Railway pra pegar o erro exato

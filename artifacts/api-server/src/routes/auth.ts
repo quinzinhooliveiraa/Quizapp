@@ -54,7 +54,6 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
     .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
     .limit(1);
 
-  // Always return the same success response so this endpoint cannot enumerate accounts.
   if (!existingSession && isAdmin) {
     const newSessionId = crypto.randomUUID();
     await db.insert(sessionsTable).values({
@@ -71,8 +70,15 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
     req.log.info({ email }, "Admin session auto-created");
   }
 
+  // Admin bypass: an admin session is returned directly without sending a code.
+  if (isAdmin && existingSession) {
+    res.json({ ok: true, adminBypass: true, sessionId: existingSession.id });
+    return;
+  }
+
+  // Non-admin accounts that do not exist receive a clear error.
   if (!existingSession) {
-    res.json({ ok: true });
+    res.status(404).json({ error: "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho." });
     return;
   }
 
@@ -91,6 +97,8 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
 
   if (!result.ok) {
     req.log.error({ error: result.error }, "Failed to send email login code");
+    res.status(500).json({ error: "Não conseguimos enviar o código agora. Tente novamente." });
+    return;
   }
 
   res.json({ ok: true });

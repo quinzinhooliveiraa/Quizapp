@@ -329,7 +329,7 @@ function Shell({ children, dark = false }: { children: ReactNode; dark?: boolean
         <a href="#como-funciona" data-testid="link-how-it-works">Como funciona</a>
         <a href="#pacotes" data-testid="link-packages">Pacotes</a>
       </nav>
-      <Link href="/app" className="header-cta" data-testid="link-header-cta">Abrir meu baralho <ArrowRight size={16} /></Link>
+       <Link href="/login" className="header-cta" data-testid="link-header-cta">Abrir meu baralho <ArrowRight size={16} /></Link>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menu" data-testid="button-menu"><Menu size={22} /></button>
     </header>
     {children}
