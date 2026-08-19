@@ -1,0 +1,114 @@
+# Admin bypass + fix fim do onboarding
+
+**Contexto:** o dono do produto precisa poder testar tudo sem pagar. Solução: definir emails "admin" que sempre têm acesso, auto-criando sessão se não existir. Segundo problema: fim do onboarding tá dando loop/erro em PWA quando não tem sessão — corrigir também.
+
+**IMPORTANTE: aplicar as mudanças diretamente nos arquivos (não é pra salvar como asset).**
+
+## Fix 1 — Admin bypass no backend
+
+### 1.1. `artifacts/api-server/src/routes/auth.ts`
+
+Achar a função `router.post("/auth/request-code"...` e a parte que verifica se o email tem sessão. Vai ter algo tipo:
+
+```ts
+const [existingSession] = await db.select({ id: sessionsTable.id })
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .limit(1);
+
+if (!existingSession) {
+  // Não tem conta com esse email — responde OK mesmo assim, mas não manda email
+  res.json({ ok: true });
+  return;
+}
+```
+
+Trocar por (adiciona o auto-provision pra admins ANTES do check):
+
+```ts
+// Admin bypass: emails listados em ADMIN_EMAILS sempre têm acesso — auto-cria sessão se não existir
+const adminEmails = (process.env.ADMIN_EMAILS || "")
+  .split(",")
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
+const isAdmin = adminEmails.includes(email);
+
+let [existingSession] = await db.select({ id: sessionsTable.id })
+  .from(sessionsTable)
+  .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+  .limit(1);
+
+if (!existingSession && isAdmin) {
+  // Admin sem sessão — cria uma com acesso completo (pacote família = 5 convites)
+  const newSessionId = crypto.randomUUID();
+  await db.insert(sessionsTable).values({
+    id: newSessionId,
+    buyerName: "Admin",
+    buyerEmail: email,
+    packageId: "family",
+    packageName: "Pacote Família",
+    inviteLimit: 5,
+    invitesUsed: 0,
+    accessGranted: true,
+  });
+  existingSession = { id: newSessionId };
+  console.log(`[auth] admin session auto-created for ${email}`);
+}
+
+if (!existingSession) {
+  // Não é admin e não tem conta — responde OK mesmo assim, mas não manda email
+  res.json({ ok: true });
+  return;
+}
+```
+
+### 1.2. Adicionar env var no Railway
+
+Serviço **api-server** → **Variables** → adicionar:
+
+- `ADMIN_EMAILS` = `perguntasdeconexao@gmail.com` (o SEU email — o que você quer que tenha acesso master; pode listar vários separados por vírgula, ex: `email1@gmail.com,email2@gmail.com`)
+
+## Fix 2 — Fim do onboarding não dá mais loop/erro
+
+`artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+Achar o botão do step `deck` (perto da linha 607):
+
+```tsx
+<ContinueButton onClick={() => { safeSetItem(openWelcomeDeckStorageKey, 'true'); navigate('/app'); }} light>Abrir meu baralho</ContinueButton>
+```
+
+Trocar por (verifica se tem sessão antes de ir pra `/app` — se não tem, vai pra vendas):
+
+```tsx
+<ContinueButton onClick={() => {
+  const hasAccess = safeGetItem('conexao-session') || safeGetItem('conexao-guest-token');
+  if (hasAccess) {
+    safeSetItem(openWelcomeDeckStorageKey, 'true');
+    navigate('/app');
+  } else {
+    navigate('/#pacotes');
+  }
+}} light>{safeGetItem('conexao-session') || safeGetItem('conexao-guest-token') ? 'Abrir meu baralho' : 'Escolher meu baralho'}</ContinueButton>
+```
+
+## Como testar depois de aplicar
+
+**1. Limpar o app do celular primeiro** (importante — pra sumir com o lixo do loop antigo):
+- iPhone: se o PWA tá instalado, desinstala (segura o ícone → Remover App) — vamos reinstalar depois
+- Ou limpa dados do Safari: Ajustes → Safari → Limpar Histórico e Dados
+
+**2. Testar login master no PC** (mais fácil):
+- Abre janela anônima → vai no site → clica "Já tem baralho? Entrar" (topo direito)
+- Digita seu email admin (o que você colocou em `ADMIN_EMAILS`)
+- Clica Enviar código → em 1-2 min chega email
+- Digita os 6 dígitos → cai em `/app` ✅
+- Agora você tem acesso completo (5 convites, dono, tudo)
+
+**3. No celular:** mesmo processo. Como agora sua conta admin existe, funciona igual.
+
+## Verificação
+- Admin (email listado): request-code auto-cria sessão se não existir → recebe email → entra normal ✅
+- Não-admin sem conta: request-code responde OK mas não manda email (comportamento antigo, seguro)
+- Não-admin com conta: continua funcionando normal
+- Fim do onboarding sem sessão: vai pra vendas (não loopa mais)

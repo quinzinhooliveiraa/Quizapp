@@ -43,12 +43,34 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
     lt(authCodesTable.expiresAt, new Date()),
   ));
 
-  const [existingSession] = await db.select({ id: sessionsTable.id })
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  const isAdmin = adminEmails.includes(email);
+
+  let [existingSession] = await db.select({ id: sessionsTable.id })
     .from(sessionsTable)
     .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
     .limit(1);
 
   // Always return the same success response so this endpoint cannot enumerate accounts.
+  if (!existingSession && isAdmin) {
+    const newSessionId = crypto.randomUUID();
+    await db.insert(sessionsTable).values({
+      id: newSessionId,
+      buyerName: "Admin",
+      buyerEmail: email,
+      packageId: "family",
+      packageName: "Pacote Família",
+      inviteLimit: 5,
+      invitesUsed: 0,
+      accessGranted: true,
+    });
+    existingSession = { id: newSessionId };
+    req.log.info({ email }, "Admin session auto-created");
+  }
+
   if (!existingSession) {
     res.json({ ok: true });
     return;

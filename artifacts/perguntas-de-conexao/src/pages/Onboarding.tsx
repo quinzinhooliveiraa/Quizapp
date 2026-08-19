@@ -604,7 +604,15 @@ export default function Onboarding() {
             <p className="onboarding-kicker">seu baralho está pronto</p>
             <h1>Agora é só<br /><em>começar a conversa.</em></h1>
             <p>As perguntas certas não entregam respostas prontas. Elas abrem espaço para vocês se encontrarem.</p>
-            <ContinueButton onClick={() => { safeSetItem(openWelcomeDeckStorageKey, 'true'); navigate('/app'); }} light>Abrir meu baralho</ContinueButton>
+             <ContinueButton onClick={() => {
+               const hasAccess = safeGetItem('conexao-session') || safeGetItem('conexao-guest-token');
+               if (hasAccess) {
+                 safeSetItem(openWelcomeDeckStorageKey, 'true');
+                 navigate('/app');
+               } else {
+                 navigate('/#pacotes');
+               }
+             }} light>{safeGetItem('conexao-session') || safeGetItem('conexao-guest-token') ? 'Abrir meu baralho' : 'Escolher meu baralho'}</ContinueButton>
             <button onClick={reset} className="onboarding-restart">Refazer o quiz</button>
           </div>
         );
