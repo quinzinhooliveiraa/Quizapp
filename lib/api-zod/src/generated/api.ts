@@ -62,6 +62,20 @@ export const GetAccessPreviewResponse = zod.object({
 
 
 /**
+ * @summary Check whether an email already belongs to an active access
+ */
+export const CheckAccessEmailQueryParams = zod.object({
+  "email": zod.coerce.string()
+})
+
+export const CheckAccessEmailResponse = zod.object({
+  "exists": zod.boolean(),
+  "asOwner": zod.boolean(),
+  "asGuest": zod.boolean()
+})
+
+
+/**
  * @summary Create a buyer question session
  */
 

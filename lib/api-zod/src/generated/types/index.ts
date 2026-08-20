@@ -13,6 +13,8 @@ export * from './abacatePayWebhookResult';
 export * from './accessState';
 export * from './accessStateRole';
 export * from './cancelInvite200';
+export * from './checkAccessEmail200';
+export * from './checkAccessEmailParams';
 export * from './checkoutCreateInput';
 export * from './checkoutCreateInputPackageId';
 export * from './checkoutCreateResponse';

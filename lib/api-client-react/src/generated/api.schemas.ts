@@ -225,6 +225,16 @@ export const ListQuestionsMode = {
   friends: 'friends',
 } as const;
 
+export type CheckAccessEmailParams = {
+email: string;
+};
+
+export type CheckAccessEmail200 = {
+  exists: boolean;
+  asOwner: boolean;
+  asGuest: boolean;
+};
+
 export type CompleteOwnerOnboarding200 = {
   ok: boolean;
 };

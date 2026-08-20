@@ -24,6 +24,8 @@ import type {
   AbacatePayWebhookResult,
   AccessState,
   CancelInvite200,
+  CheckAccessEmail200,
+  CheckAccessEmailParams,
   CheckoutCreateInput,
   CheckoutCreateResponse,
   CheckoutWebhook,
@@ -376,6 +378,90 @@ export function useGetAccessPreview<TData = Awaited<ReturnType<typeof getAccessP
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAccessPreviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCheckAccessEmailUrl = (params: CheckAccessEmailParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/access/check-email?${stringifiedParams}` : `/api/access/check-email`
+}
+
+/**
+ * @summary Check whether an email already belongs to an active access
+ */
+export const checkAccessEmail = async (params: CheckAccessEmailParams, options?: Parameters<typeof customFetch>[1]): Promise<CheckAccessEmail200> => {
+
+  return customFetch<CheckAccessEmail200>(getCheckAccessEmailUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCheckAccessEmailQueryKey = (params?: CheckAccessEmailParams,) => {
+    return [
+    `/api/access/check-email`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCheckAccessEmailQueryOptions = <TData = Awaited<ReturnType<typeof checkAccessEmail>>, TError = ErrorType<void>>(params: CheckAccessEmailParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof checkAccessEmail>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCheckAccessEmailQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof checkAccessEmail>>> = ({ signal }) => checkAccessEmail(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof checkAccessEmail>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type CheckAccessEmailQueryResult = NonNullable<Awaited<ReturnType<typeof checkAccessEmail>>>
+export type CheckAccessEmailQueryError = ErrorType<void>
+
+
+/**
+ * @summary Check whether an email already belongs to an active access
+ */
+
+export function useCheckAccessEmail<TData = Awaited<ReturnType<typeof checkAccessEmail>>, TError = ErrorType<void>>(
+ params: CheckAccessEmailParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof checkAccessEmail>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getCheckAccessEmailQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
