@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { ArrowLeft, ArrowRight, Check, Clipboard, Feather, Link2, LoaderCircle, LockKeyhole, MessageCircle, RotateCw, Send, Sparkles, Users, Wifi, WifiOff, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bookmark, Check, Clipboard, Feather, Link2, LoaderCircle, LockKeyhole, MessageCircle, RotateCw, Send, Sparkles, Users, Wifi, WifiOff, X } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { questions, themes } from '@workspace/connection-content';
 import { type LobbyEvent, type LobbyMode, type LobbyPlayer, useLobbySocket } from '@/hooks/useLobbySocket';
@@ -32,6 +32,7 @@ export default function Play() {
   const [answers, setAnswers] = useState<{ playerId: string; playerName: string; answer: string }[]>([]);
   const [copied, setCopied] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   const selectedTheme = useMemo(() => themes.find(theme => theme.id === themeId), [themeId]);
   const currentQuestion = useMemo(() => questions.find(question => question.id === questionId), [questionId]);
@@ -40,6 +41,9 @@ export default function Play() {
   const isHost = playerId === hostId || Boolean(me?.isHost);
   const submitted = Boolean(me?.hasSubmitted);
   const isMyTurn = mode === 'both' || turnPlayerId === playerId;
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const sessionId = localStorage.getItem('conexao-session') || '';
+  const guestToken = localStorage.getItem('conexao-guest-token') || '';
 
   useEffect(() => {
     const event = socket.lastEvent;
@@ -66,6 +70,10 @@ export default function Play() {
     if (socket.error) setLocalError(socket.error);
   }, [socket.error]);
 
+  useEffect(() => {
+    setSavedIds(new Set());
+  }, [questionId]);
+
   const submitEntry = (event: FormEvent) => {
     event.preventDefault();
     const cleanName = name.trim();
@@ -86,6 +94,34 @@ export default function Play() {
   const exit = () => { socket.leave(); navigate('/app'); };
   const sendAnswer = (event: FormEvent) => { event.preventDefault(); if (answer.trim() && isMyTurn) socket.submitAnswer(answer.trim()); };
   const chooseTheme = (id: string) => { setThemeId(id); socket.setTheme(id); };
+  const saveMoment = async (item: { playerId: string; playerName: string; answer: string }) => {
+    if (!currentQuestion || !themeId) return;
+    const key = `${item.playerId}:${currentQuestion.id}`;
+    if (savedIds.has(key)) return;
+    if (!sessionId && !guestToken) {
+      setLocalError('Entre na sua conta para guardar momentos.');
+      return;
+    }
+    try {
+      const response = await fetch(`${apiBase}/api/moments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: sessionId || undefined,
+          guestToken: guestToken || undefined,
+          questionId: currentQuestion.id,
+          themeId,
+          fromPlayerName: item.playerName,
+          answerText: item.answer,
+          roomCode: lobbyCode,
+        }),
+      });
+      if (!response.ok) throw new Error('save failed');
+      setSavedIds(previous => new Set(previous).add(key));
+    } catch {
+      setLocalError('Não conseguimos guardar esse momento agora.');
+    }
+  };
 
   return <main className="play-page" data-testid="page-play">
     <div className="play-stars" aria-hidden="true"><span /><span /><span /></div>
@@ -118,7 +154,7 @@ export default function Play() {
     </section>}
     {view === 'game' && <section className="play-game" data-testid="section-game">
       <div className="game-topbar"><button className="play-quiet-button" onClick={exit} data-testid="button-leave-game"><ArrowLeft size={15} /> Sair</button><span className="game-room-label"><span className="presence-pulse" /> sala {lobbyCode}</span><span className="game-round-label">{selectedTheme?.title || 'conversa'}</span></div>
-      <div className="game-layout"><aside className="game-side-panel"><div className="panel-heading"><span><Users size={16} /> Na sala</span><b>{players.length}</b></div><div className="game-player-list" data-testid="list-game-players">{players.map((player, index) => <div className={`game-player ${player.id === playerId ? 'is-me' : ''}`} key={player.id} data-testid={`game-player-${player.id}`}><span className={`player-avatar avatar-${index % 4}`}>{initials(player.name)}</span><span>{player.name}</span>{player.hasSubmitted && <Check size={14} />}</div>)}</div><div className="game-mode-caption"><span>{mode === 'both' ? 'todos respondem' : 'uma pessoa por vez'}</span></div></aside><div className="question-stage">{!currentQuestion ? <div className="question-empty"><Sparkles size={22} /><h2>A primeira pergunta<br /><em>vai chegar agora.</em></h2><p>Um pequeno silêncio antes de começar.</p>{isHost && <button className="play-primary-button" onClick={() => socket.nextQuestion(availableQuestionIds)} data-testid="button-next-question">Puxar primeira pergunta <ArrowRight size={16} /></button>}</div> : <><div className="question-meta"><span>pergunta para vocês</span><span>{answers.length ? 'respostas reveladas' : submitted ? 'resposta enviada' : 'escutem com calma'}</span></div><article className="live-question-card" data-testid={`card-live-question-${currentQuestion.id}`}><div className="question-orbit" /><span className="question-number">Q. {String(availableQuestionIds.indexOf(currentQuestion.id) + 1).padStart(2, '0')}</span><blockquote data-testid={`text-live-question-${currentQuestion.id}`}>{currentQuestion.text}</blockquote><span className="question-card-signature">perguntas de conexão</span></article>{answers.length > 0 && <div className="answer-reveal" data-testid="list-revealed-answers"><div className="reveal-heading"><span><Sparkles size={15} /> agora, escutem</span><small>{answers.length} resposta{answers.length > 1 ? 's' : ''}</small></div>{answers.map(item => <div className="revealed-answer" key={item.playerId} data-testid={`text-revealed-answer-${item.playerId}`}><span className="player-avatar avatar-2">{initials(item.playerName)}</span><p><small>{item.playerName}</small>{item.answer}</p></div>)}</div>}{!answers.length && <form className="answer-form" onSubmit={sendAnswer}><label htmlFor="live-answer">Sua resposta</label><textarea id="live-answer" value={answer} onChange={event => setAnswer(event.target.value)} disabled={submitted || !isMyTurn} placeholder={isMyTurn ? 'Escreva o que veio primeiro…' : `${players.find(player => player.id === turnPlayerId)?.name || 'Outra pessoa'} está com a palavra…`} maxLength={1000} data-testid="textarea-live-answer" /><div className="answer-form-footer"><span>{submitted ? 'Sua resposta chegou. Agora é ouvir.' : isMyTurn ? 'Não existe resposta certa.' : 'Aguarde sua vez.'}</span><button className="play-primary-button" type="submit" disabled={submitted || !answer.trim() || !isMyTurn} data-testid="button-submit-answer">{submitted ? <><Check size={16} /> Enviada</> : <><Send size={15} /> Enviar</>}</button></div></form>}{answers.length > 0 && isHost && <button className="play-primary-button next-question-button" onClick={() => socket.nextQuestion(availableQuestionIds)} data-testid="button-next-question">Próxima pergunta <ArrowRight size={16} /></button>}</>}</div></div>
+       <div className="game-layout"><aside className="game-side-panel"><div className="panel-heading"><span><Users size={16} /> Na sala</span><b>{players.length}</b></div><div className="game-player-list" data-testid="list-game-players">{players.map((player, index) => <div className={`game-player ${player.id === playerId ? 'is-me' : ''}`} key={player.id} data-testid={`game-player-${player.id}`}><span className={`player-avatar avatar-${index % 4}`}>{initials(player.name)}</span><span>{player.name}</span>{player.hasSubmitted && <Check size={14} />}</div>)}</div><div className="game-mode-caption"><span>{mode === 'both' ? 'todos respondem' : 'uma pessoa por vez'}</span></div></aside><div className="question-stage">{!currentQuestion ? <div className="question-empty"><Sparkles size={22} /><h2>A primeira pergunta<br /><em>vai chegar agora.</em></h2><p>Um pequeno silêncio antes de começar.</p>{isHost && <button className="play-primary-button" onClick={() => socket.nextQuestion(availableQuestionIds)} data-testid="button-next-question">Puxar primeira pergunta <ArrowRight size={16} /></button>}</div> : <><div className="question-meta"><span>pergunta para vocês</span><span>{answers.length ? 'respostas reveladas' : submitted ? 'resposta enviada' : 'escutem com calma'}</span></div><article className="live-question-card" data-testid={`card-live-question-${currentQuestion.id}`}><div className="question-orbit" /><span className="question-number">Q. {String(availableQuestionIds.indexOf(currentQuestion.id) + 1).padStart(2, '0')}</span><blockquote data-testid={`text-live-question-${currentQuestion.id}`}>{currentQuestion.text}</blockquote><span className="question-card-signature">perguntas de conexão</span></article>{answers.length > 0 && <div className="answer-reveal" data-testid="list-revealed-answers"><div className="reveal-heading"><span><Sparkles size={15} /> agora, escutem</span><small>{answers.length} resposta{answers.length > 1 ? 's' : ''}</small></div>{answers.map(item => <div className="revealed-answer" key={item.playerId} data-testid={`text-revealed-answer-${item.playerId}`}><span className="player-avatar avatar-2">{initials(item.playerName)}</span><p><small>{item.playerName}</small>{item.answer}</p>{item.playerId !== playerId && <button type="button" className="play-save-moment" onClick={() => saveMoment(item)} disabled={savedIds.has(`${item.playerId}:${currentQuestion.id}`)} data-testid={`button-save-moment-${item.playerId}`}><Bookmark size={14} fill={savedIds.has(`${item.playerId}:${currentQuestion.id}`) ? 'currentColor' : 'none'} />{savedIds.has(`${item.playerId}:${currentQuestion.id}`) ? 'Momento guardado' : 'Guardar esse momento'}</button>}</div>)}</div>}{!answers.length && <form className="answer-form" onSubmit={sendAnswer}><label htmlFor="live-answer">Sua resposta</label><textarea id="live-answer" value={answer} onChange={event => setAnswer(event.target.value)} disabled={submitted || !isMyTurn} placeholder={isMyTurn ? 'Escreva o que veio primeiro…' : `${players.find(player => player.id === turnPlayerId)?.name || 'Outra pessoa'} está com a palavra…`} maxLength={1000} data-testid="textarea-live-answer" /><div className="answer-form-footer"><span>{submitted ? 'Sua resposta chegou. Agora é ouvir.' : isMyTurn ? 'Não existe resposta certa.' : 'Aguarde sua vez.'}</span><button className="play-primary-button" type="submit" disabled={submitted || !answer.trim() || !isMyTurn} data-testid="button-submit-answer">{submitted ? <><Check size={16} /> Enviada</> : <><Send size={15} /> Enviar</>}</button></div></form>}{answers.length > 0 && isHost && <button className="play-primary-button next-question-button" onClick={() => socket.nextQuestion(availableQuestionIds)} data-testid="button-next-question">Próxima pergunta <ArrowRight size={16} /></button>}</>}</div></div>
     </section>}
     <footer className="play-footer"><span><Link2 size={13} /> conexão protegida pela presença de vocês</span><span>PC · online</span></footer>
   </main>;

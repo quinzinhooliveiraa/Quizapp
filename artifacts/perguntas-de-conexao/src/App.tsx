@@ -74,6 +74,16 @@ type PersonalizedDeck = {
   seenIds: string[];
 };
 
+type SavedMoment = {
+  id: string;
+  questionId: string;
+  themeId: string;
+  fromPlayerName: string;
+  answerText: string;
+  roomCode: string | null;
+  createdAt: string;
+};
+
 const dailyMoodOptions = [
   { value: 'tranquilos', label: 'Tranquilos', themes: ['porto-seguro'], intensity: 'gentle' as const },
   { value: 'saudade', label: 'Com saudade um do outro', themes: ['mesmo-longe', 'perto-de-novo'], intensity: 'honest' as const },
@@ -650,6 +660,7 @@ function AppExperience() {
   const [guestName, setGuestName] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
   const [copiedInvite, setCopiedInvite] = useState(false);
+  const [savedMoments, setSavedMoments] = useState<SavedMoment[]>([]);
   const accessQuery = useGetAccessPreview({ query: { queryKey: ['access-preview'] } });
   const sessionQuery = useGetQuestionSession(sessionId, { query: { enabled: !!sessionId, queryKey: getGetQuestionSessionQueryKey(sessionId) } });
   const questionParams = { theme: themeId || undefined };
@@ -874,6 +885,35 @@ function AppExperienceReference() {
     setInvitesList(sorted);
   }, [invitesQuery.data]);
   const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
+  useEffect(() => {
+    const sid = safeGetItem('conexao-session');
+    const tok = safeGetItem('conexao-guest-token');
+    if (!sid && !tok) {
+      setSavedMoments([]);
+      return;
+    }
+    const qs = sid ? `sessionId=${encodeURIComponent(sid)}` : `guestToken=${encodeURIComponent(tok)}`;
+    fetch(apiUrl(`/api/moments?${qs}`))
+      .then(response => response.ok ? response.json() as Promise<{ moments?: SavedMoment[] }> : null)
+      .then(data => {
+        if (data?.moments) setSavedMoments(data.moments);
+      })
+      .catch(() => {
+        // Keep the existing list visible when the moments endpoint is temporarily unavailable.
+      });
+  }, [activeNav]);
+  const deleteMoment = async (id: string) => {
+    const sid = safeGetItem('conexao-session');
+    const tok = safeGetItem('conexao-guest-token');
+    const qs = sid ? `sessionId=${encodeURIComponent(sid)}` : `guestToken=${encodeURIComponent(tok)}`;
+    try {
+      const response = await fetch(apiUrl(`/api/moments/${encodeURIComponent(id)}?${qs}`), { method: 'DELETE' });
+      if (!response.ok) return;
+      setSavedMoments(current => current.filter(moment => moment.id !== id));
+    } catch {
+      // Keep the moment visible when deletion fails.
+    }
+  };
   const dailyQuestions = useMemo(() => dailyDeck.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, dailyDeck]);
   const favoriteQuestions = useMemo(() => saved.map(id => availableQuestions.find(question => question.id === id)).filter((question): question is Question => Boolean(question)), [availableQuestions, saved]);
   const inProgressThemes = useMemo(() => themes.filter(theme => {
@@ -1411,6 +1451,7 @@ function AppExperienceReference() {
             {personalizedDecks.length > 0 && <section className="eu-deck-history" aria-labelledby="deck-history-title"><div className="eu-section-heading"><div><p className="eu-kicker">seu histórico</p><h2 id="deck-history-title">Perguntas que você criou</h2></div><span>{personalizedDecks.length} {personalizedDecks.length === 1 ? 'baralho' : 'baralhos'}</span></div><div className="eu-deck-history-row">{personalizedDecks.map(deck => <article key={deck.id} className="eu-history-card"><button className="eu-history-card-open" onClick={() => openSavedDailyDeck(deck)} data-testid={`button-open-daily-deck-${deck.id}`}><span className={`eu-history-art deck-cover-${isDeckCoverId(deck.cover) ? deck.cover : 'custom'}`} style={deckCoverStyle(deck.cover)} aria-hidden="true"><span className="deck-cover-orbit" /><span className="deck-cover-spark" /></span><span className="eu-history-card-shade" /><span className="eu-history-copy"><strong>{deck.label}</strong><small>{deck.ids.length} perguntas · reabrir</small></span></button><button className="eu-history-menu-button" onClick={() => openDeckMenu(deck)} aria-label={`Ações para ${deck.label}`} data-testid={`button-menu-daily-deck-${deck.id}`}><MoreHorizontal size={18} /></button></article>)}</div></section>}
              <section className="eu-section eu-continue-section" aria-labelledby="continue-title"><div className="eu-section-heading"><div><p className="eu-kicker">continue jogando</p><h2 id="continue-title" className="sr-only">Continue jogando</h2></div><span>{inProgressThemes.length ? `${inProgressThemes.length} em andamento` : 'comece por aqui'}</span></div><div className="eu-progress-row">{continueThemes.map(theme => { const seenCount = seenByTheme[theme.id]?.length || 0; const lastQuestionId = seenByTheme[theme.id]?.at(-1); const themeQuestions = availableQuestions.filter(question => question.themeId === theme.id); const resumeIndex = Math.max(0, themeQuestions.findIndex(question => question.id === lastQuestionId)); return <button key={theme.id} className="eu-progress-card" onClick={() => { changeTheme(theme.id); setQuestionIndex(resumeIndex); }} data-testid={`button-continue-theme-${theme.id}`}><div className={`eu-progress-cover theme-cover-${themes.indexOf(theme) % 5}`}><span className="eu-progress-number">{String(seenCount).padStart(2, '0')}</span><Heart className="eu-progress-heart" size={20} fill={favoriteThemeIds.includes(theme.id) ? 'currentColor' : 'none'} /></div><div className="eu-progress-copy"><strong>{theme.title}</strong><small>{seenCount ? `${seenCount} de ${theme.count} perguntas` : 'comece agora'}</small><span className="eu-progress-bar"><i style={{ width: `${Math.min(100, (seenCount / Math.max(theme.count, 1)) * 100)}%` }} /></span><em>Retomar <ArrowRight size={13} /></em></div></button>; })}</div>{continueThemes.length === 0 && <div className="eu-empty-state"><span><Sparkles size={16} /></span><p>Quando uma pergunta ficar pelo caminho, ela aparece aqui para você continuar.</p></div>}</section>
            <section className="eu-section eu-favorites-section" aria-labelledby="favorites-title"><div className="eu-section-heading"><div><p className="eu-kicker">salvos</p><h2 id="favorites-title">Salvos</h2></div><span>{saved.length + favoriteThemeIds.length} salvos</span></div><div className="eu-saved-row"><button className={`eu-collection-card eu-collection-cards ${saved.length ? 'has-content' : ''}`} onClick={openFavoritesDeck} disabled={!saved.length} data-testid="button-favorite-cards"><span className="eu-collection-shade" /><span className="eu-collection-title">Cartas favoritas <b>{saved.length}</b></span>{!saved.length && <small>suas perguntas salvas aparecem aqui</small>}</button><div className="eu-favorite-topics"><p className="eu-favorite-label">Temas favoritos</p><div className="eu-topic-row">{favoriteThemeIds.length ? favoriteThemeIds.map(id => { const theme = themes.find(item => item.id === id); return theme ? <button key={id} className={`eu-topic-card theme-cover-${themes.indexOf(theme) % 5}`} onClick={() => changeTheme(id)} data-testid={`button-favorite-theme-${id}`}><span className="eu-topic-shade" /><strong>{theme.title}</strong><ArrowRight size={15} /></button> : null; }) : <div className="eu-topic-empty">Favorite um tema para encontrá-lo aqui.</div>}</div></div></div></section>
+             <section className="eu-section eu-moments-section" aria-labelledby="moments-title"><div className="eu-section-heading"><div><p className="eu-kicker">momentos</p><h2 id="moments-title">Respostas guardadas</h2></div><span>{savedMoments.length} {savedMoments.length === 1 ? 'momento' : 'momentos'}</span></div>{savedMoments.length === 0 ? <div className="eu-empty-state" data-testid="empty-saved-moments"><span><Bookmark size={16} /></span><p>Quando alguém responder algo que você quer guardar, salve por aqui. Fica só pra você.</p></div> : <div className="eu-moments-list">{savedMoments.map(moment => { const theme = themes.find(item => item.id === moment.themeId); const question = availableQuestions.find(item => item.id === moment.questionId); return <article key={moment.id} className="eu-moment-card" data-testid={`moment-${moment.id}`}><div className="eu-moment-header"><div><p className="eu-moment-kicker">{theme?.title || 'Tema'}</p><p className="eu-moment-question">{question?.text || 'Pergunta'}</p></div><button type="button" onClick={() => deleteMoment(moment.id)} className="eu-moment-delete" aria-label="Remover momento" data-testid={`button-delete-moment-${moment.id}`}><X size={14} /></button></div><p className="eu-moment-answer">“{moment.answerText}”</p><p className="eu-moment-attribution">— {moment.fromPlayerName} · {new Date(moment.createdAt).toLocaleDateString('pt-BR')}</p></article>; })}</div>}</section>
           </section> : <section className="deck-home" aria-labelledby="deck-home-title">
             <div className="deck-home-heading"><h1 id="deck-home-title" data-testid="text-deck-title">{activeNav === 'temas' ? 'Escolha um assunto pra começar' : activeNav === 'vibes' ? 'Escolha uma vibe pra agora' : 'Escolha um objetivo pra começar'}</h1><p className="deck-home-subtitle">{activeNav === 'temas' ? 'Conversas sobre as histórias e planos que fazem parte de vocês' : activeNav === 'vibes' ? 'Encontrem o clima que combina com este momento' : 'Por exemplo, descobrir algo novo, imaginar o que vem'}</p></div>
            <div className="theme-carousel-wrap">
