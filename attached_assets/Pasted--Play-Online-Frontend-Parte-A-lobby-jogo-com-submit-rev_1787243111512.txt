@@ -1,0 +1,591 @@
+# Play Online — Frontend Parte A (lobby + jogo com submit/reveal)
+
+**Contexto:** backend com WebSocket já está no ar. Agora criar as telas do frontend: escolher modo → criar/entrar em sala → lobby waiting → jogo com resposta + revelação sincronizada. Nova aba "Jogar" adicionada no menu.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+## 1. Criar hook `useLobbySocket` — `artifacts/perguntas-de-conexao/src/hooks/useLobbySocket.ts` (novo arquivo)
+
+```ts
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+const apiBase = (import.meta.env.VITE_API_URL || '').replace(/^https?:/, '').replace(/\/+$/, '');
+const WS_URL = apiBase
+  ? `wss:${apiBase}/ws/lobby`
+  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/lobby`;
+
+export type GameMode = 'both' | 'turn';
+export type LobbyPhase = 'idle' | 'lobby' | 'playing' | 'revealing';
+
+export type LobbyPlayer = {
+  id: string;
+  name: string;
+  isHost: boolean;
+  identity: 'owner' | 'guest' | 'unknown';
+  hasSubmitted: boolean;
+};
+
+export type RevealedAnswer = {
+  playerId: string;
+  playerName: string;
+  answer: string;
+};
+
+export type LobbyState = {
+  phase: LobbyPhase;
+  code: string | null;
+  playerId: string | null;
+  hostId: string | null;
+  mode: GameMode;
+  themeId: string | null;
+  currentQuestionId: string | null;
+  currentTurnPlayerId: string | null;
+  players: LobbyPlayer[];
+  answers: RevealedAnswer[];
+  error: string | null;
+};
+
+const INITIAL: LobbyState = {
+  phase: 'idle',
+  code: null,
+  playerId: null,
+  hostId: null,
+  mode: 'both',
+  themeId: null,
+  currentQuestionId: null,
+  currentTurnPlayerId: null,
+  players: [],
+  answers: [],
+  error: null,
+};
+
+export function useLobbySocket() {
+  const wsRef = useRef<WebSocket | null>(null);
+  const pendingRef = useRef<object[]>([]);
+  const [state, setState] = useState<LobbyState>(INITIAL);
+  const [connected, setConnected] = useState(false);
+
+  const connect = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return;
+    const ws = new WebSocket(WS_URL);
+    ws.onopen = () => {
+      setConnected(true);
+      pendingRef.current.forEach(m => ws.send(JSON.stringify(m)));
+      pendingRef.current = [];
+    };
+    ws.onclose = () => setConnected(false);
+    ws.onerror = () => setConnected(false);
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        setState((prev) => {
+          switch (msg.type) {
+            case 'created':
+              return { ...prev, phase: 'lobby', code: msg.code, playerId: msg.playerId, hostId: msg.playerId, mode: msg.mode, players: msg.players, error: null };
+            case 'joined':
+              return { ...prev, phase: 'lobby', code: msg.code, playerId: msg.playerId, hostId: msg.hostId, mode: msg.mode, themeId: msg.themeId, players: msg.players, error: null };
+            case 'player_joined':
+            case 'player_left':
+              return { ...prev, players: msg.players, hostId: msg.hostId ?? prev.hostId };
+            case 'theme_changed':
+              return { ...prev, themeId: msg.themeId, currentQuestionId: null };
+            case 'game_started':
+              return { ...prev, phase: 'playing', currentTurnPlayerId: msg.currentTurnPlayerId, themeId: msg.themeId, mode: msg.mode, players: msg.players, answers: [] };
+            case 'question_changed':
+              return { ...prev, phase: 'playing', currentQuestionId: msg.questionId, themeId: msg.themeId, currentTurnPlayerId: msg.currentTurnPlayerId, players: msg.players, answers: [] };
+            case 'player_submitted':
+              return { ...prev, players: msg.players };
+            case 'answers_revealed':
+              return { ...prev, phase: 'revealing', answers: msg.answers };
+            case 'error':
+              return { ...prev, error: msg.message };
+            default:
+              return prev;
+          }
+        });
+      } catch { /* noop */ }
+    };
+    wsRef.current = ws;
+  }, []);
+
+  const send = useCallback((msg: object) => {
+    const ws = wsRef.current;
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(msg));
+    } else {
+      pendingRef.current.push(msg);
+      connect();
+    }
+  }, [connect]);
+
+  const disconnect = useCallback(() => {
+    try { wsRef.current?.send(JSON.stringify({ type: 'leave' })); } catch { /* noop */ }
+    try { wsRef.current?.close(); } catch { /* noop */ }
+    wsRef.current = null;
+    setConnected(false);
+    setState(INITIAL);
+  }, []);
+
+  useEffect(() => () => { try { wsRef.current?.close(); } catch { /* noop */ } }, []);
+
+  return { state, connected, connect, send, disconnect };
+}
+```
+
+## 2. Criar página `Play` — `artifacts/perguntas-de-conexao/src/pages/Play.tsx` (novo arquivo)
+
+```tsx
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'wouter';
+import { ArrowRight, Copy, Users, X, Check, Send, Share2, ChevronRight } from 'lucide-react';
+import { useLobbySocket, type GameMode } from '@/hooks/useLobbySocket';
+import { questions as allQuestions, themes as allThemes } from '@workspace/connection-content';
+
+function safeGet(key: string) { try { return window.localStorage?.getItem(key) || ''; } catch { return ''; } }
+
+type Stage = 'choose' | 'create-setup' | 'join-form' | 'lobby' | 'playing' | 'revealing';
+
+export default function Play() {
+  const [, navigate] = useLocation();
+  const { state, connected, connect, send, disconnect } = useLobbySocket();
+  const [stage, setStage] = useState<Stage>('choose');
+  const [inputCode, setInputCode] = useState('');
+  const [myName, setMyName] = useState(() => safeGet('conexao-name') || 'Jogador');
+  const [chosenMode, setChosenMode] = useState<GameMode>('both');
+  const [answerText, setAnswerText] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const identity: 'owner' | 'guest' = safeGet('conexao-guest-token') ? 'guest' : 'owner';
+
+  // Sincroniza stage com state.phase do socket
+  useEffect(() => {
+    if (state.phase === 'lobby') setStage('lobby');
+    else if (state.phase === 'playing') setStage('playing');
+    else if (state.phase === 'revealing') setStage('revealing');
+    // Não reset stage quando idle — deixa o usuário voltar manual
+  }, [state.phase]);
+
+  const currentQuestion = useMemo(
+    () => state.currentQuestionId ? allQuestions.find(q => q.id === state.currentQuestionId) : null,
+    [state.currentQuestionId]
+  );
+  const currentTheme = useMemo(
+    () => state.themeId ? allThemes.find(t => t.id === state.themeId) : null,
+    [state.themeId]
+  );
+
+  const isHost = state.playerId === state.hostId;
+  const canStart = isHost && state.players.length >= 2 && !!state.themeId;
+  const isMyTurn = state.mode === 'turn' ? state.playerId === state.currentTurnPlayerId : true;
+
+  const doCreate = () => {
+    connect();
+    send({ type: 'create', name: myName.trim() || 'Jogador', identity, mode: chosenMode });
+  };
+  const doJoin = () => {
+    const code = inputCode.trim().toUpperCase();
+    if (code.length !== 5) return;
+    connect();
+    send({ type: 'join', code, name: myName.trim() || 'Jogador', identity });
+  };
+  const doSetTheme = (themeId: string) => send({ type: 'set_theme', themeId });
+  const doStart = () => send({ type: 'start' });
+  const doNextQuestion = () => {
+    const themeQuestions = state.themeId ? allQuestions.filter(q => q.themeId === state.themeId) : allQuestions;
+    send({ type: 'next_question', availableQuestionIds: themeQuestions.map(q => q.id) });
+    setAnswerText('');
+  };
+  const doSubmit = () => {
+    if (!answerText.trim()) return;
+    send({ type: 'submit_answer', answer: answerText.trim() });
+  };
+  const doLeave = () => {
+    disconnect();
+    setStage('choose');
+    setInputCode('');
+    setAnswerText('');
+  };
+
+  const copyCode = async () => {
+    if (!state.code) return;
+    try { await navigator.clipboard.writeText(state.code); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* noop */ }
+  };
+
+  const shareCode = () => {
+    if (!state.code) return;
+    const text = `Vamos jogar Perguntas de Conexão comigo? Entra na sala ${state.code}: ${window.location.origin}/play?code=${state.code}`;
+    if (navigator.share) navigator.share({ text }).catch(() => { /* noop */ });
+    else copyCode();
+  };
+
+  // Se URL tem ?code=XYZ, pré-preenche o code no join
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code && stage === 'choose') {
+      setInputCode(code.toUpperCase());
+      setStage('join-form');
+    }
+  }, []);
+
+  return (
+    <div className="play-shell">
+      <button onClick={() => navigate('/app')} className="play-back" data-testid="button-play-back">← voltar ao app</button>
+
+      {stage === 'choose' && (
+        <div className="play-card">
+          <p className="play-kicker">Jogar online</p>
+          <h1>Conectados pelo <em>mesmo baralho.</em></h1>
+          <p className="play-copy">Crie uma sala e compartilhe o código, ou entre em uma que já existe.</p>
+          <button onClick={() => setStage('create-setup')} className="play-primary" data-testid="button-create-room">Criar sala <ArrowRight size={17} /></button>
+          <button onClick={() => setStage('join-form')} className="play-secondary" data-testid="button-join-room">Entrar em uma sala</button>
+        </div>
+      )}
+
+      {stage === 'create-setup' && (
+        <div className="play-card">
+          <p className="play-kicker">criar sala</p>
+          <h1>Como vocês querem <em>jogar?</em></h1>
+          <div className="play-mode-options">
+            <button onClick={() => setChosenMode('both')} className={`play-mode-option ${chosenMode === 'both' ? 'is-selected' : ''}`} data-testid="button-mode-both">
+              <strong>Os dois respondem</strong>
+              <span>Cada um responde a mesma pergunta. Ao terminar, as respostas são reveladas juntas.</span>
+            </button>
+            <button onClick={() => setChosenMode('turn')} className={`play-mode-option ${chosenMode === 'turn' ? 'is-selected' : ''}`} data-testid="button-mode-turn">
+              <strong>Um de cada vez</strong>
+              <span>Rodada de turnos. Quem tira a carta responde. Os outros esperam e leem.</span>
+            </button>
+          </div>
+          <label className="play-input-label">Seu nome<input value={myName} onChange={e => setMyName(e.target.value)} className="play-input" data-testid="input-my-name" placeholder="Como devo te chamar?" /></label>
+          <button onClick={doCreate} className="play-primary" data-testid="button-confirm-create">Criar sala <ArrowRight size={17} /></button>
+          <button onClick={() => setStage('choose')} className="play-secondary">Voltar</button>
+        </div>
+      )}
+
+      {stage === 'join-form' && (
+        <div className="play-card">
+          <p className="play-kicker">entrar em uma sala</p>
+          <h1>Digite o <em>código.</em></h1>
+          <label className="play-input-label">Código de 5 letras<input value={inputCode} onChange={e => setInputCode(e.target.value.toUpperCase().slice(0, 5))} className="play-code-input" placeholder="XKJDR" data-testid="input-lobby-code" autoFocus /></label>
+          <label className="play-input-label">Seu nome<input value={myName} onChange={e => setMyName(e.target.value)} className="play-input" data-testid="input-my-name" /></label>
+          {state.error && <p className="play-error">{state.error}</p>}
+          <button onClick={doJoin} disabled={inputCode.length !== 5} className="play-primary" data-testid="button-confirm-join">Entrar <ArrowRight size={17} /></button>
+          <button onClick={() => setStage('choose')} className="play-secondary">Voltar</button>
+        </div>
+      )}
+
+      {stage === 'lobby' && (
+        <div className="play-card">
+          <p className="play-kicker">sala aberta</p>
+          <h1>Código: <em className="play-code">{state.code}</em></h1>
+          <div className="play-share-actions">
+            <button onClick={copyCode} className="play-icon-btn" data-testid="button-copy-code"><Copy size={16} /> {copied ? 'Copiado!' : 'Copiar'}</button>
+            <button onClick={shareCode} className="play-icon-btn" data-testid="button-share-code"><Share2 size={16} /> Compartilhar</button>
+          </div>
+          <p className="play-copy">Compartilhe esse código com quem vai jogar com você.</p>
+
+          <div className="play-players">
+            <p className="play-section-label">Na sala ({state.players.length}/8)</p>
+            {state.players.map(p => (
+              <div key={p.id} className="play-player" data-testid={`player-${p.id}`}>
+                <span>{p.name}{p.id === state.playerId ? ' (você)' : ''}</span>
+                {p.isHost && <span className="play-badge">Host</span>}
+              </div>
+            ))}
+          </div>
+
+          {isHost && (
+            <div className="play-theme-picker">
+              <p className="play-section-label">Escolha o tema</p>
+              <div className="play-theme-list">
+                {allThemes.map(t => (
+                  <button key={t.id} onClick={() => doSetTheme(t.id)} className={`play-theme-chip ${state.themeId === t.id ? 'is-selected' : ''}`} data-testid={`button-theme-${t.id}`}>
+                    {t.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {!isHost && state.themeId && currentTheme && <p className="play-copy">Tema escolhido: <strong>{currentTheme.title}</strong></p>}
+          {!isHost && !state.themeId && <p className="play-copy">Aguardando o host escolher o tema…</p>}
+
+          {isHost ? (
+            <button onClick={doStart} disabled={!canStart} className="play-primary" data-testid="button-start-game">
+              {state.players.length < 2 ? 'Aguardando ao menos 2 pessoas' : !state.themeId ? 'Escolha um tema' : <>Começar <ArrowRight size={17} /></>}
+            </button>
+          ) : (
+            <p className="play-waiting">Aguardando o host começar…</p>
+          )}
+          <button onClick={doLeave} className="play-secondary" data-testid="button-leave-lobby">Sair da sala</button>
+        </div>
+      )}
+
+      {(stage === 'playing' || stage === 'revealing') && (
+        <div className="play-game">
+          <div className="play-game-top">
+            <span className="play-code-badge">Sala {state.code}</span>
+            <button onClick={doLeave} className="play-icon-btn play-icon-btn-small" data-testid="button-leave-game"><X size={16} /></button>
+          </div>
+
+          {currentQuestion ? (
+            <div className={`play-question-card intensity-${currentQuestion.intensity}`}>
+              <div className="play-question-theme">{currentTheme?.title}</div>
+              <p className="play-question-text">{currentQuestion.text}</p>
+            </div>
+          ) : (
+            <div className="play-question-card play-question-empty">
+              <p>Toque em "Próxima pergunta" pra começar.</p>
+            </div>
+          )}
+
+          {stage === 'playing' && currentQuestion && (
+            <div className="play-answer-area">
+              {isMyTurn ? (
+                <>
+                  <textarea
+                    value={answerText}
+                    onChange={e => setAnswerText(e.target.value)}
+                    placeholder="Escreva sua resposta…"
+                    className="play-answer-input"
+                    data-testid="textarea-answer"
+                    maxLength={1000}
+                  />
+                  <button onClick={doSubmit} disabled={!answerText.trim()} className="play-primary" data-testid="button-submit-answer">
+                    Enviar resposta <Send size={16} />
+                  </button>
+                </>
+              ) : (
+                <p className="play-waiting">É a vez de <strong>{state.players.find(p => p.id === state.currentTurnPlayerId)?.name || 'outro jogador'}</strong>… Aguarde.</p>
+              )}
+              {state.mode === 'both' && (
+                <p className="play-status">{state.players.filter(p => p.hasSubmitted).length}/{state.players.length} responderam</p>
+              )}
+            </div>
+          )}
+
+          {stage === 'revealing' && (
+            <div className="play-reveal">
+              <p className="play-section-label">Respostas</p>
+              {state.answers.map((a) => (
+                <article key={a.playerId} className="play-answer-card" data-testid={`answer-${a.playerId}`}>
+                  <span className="play-answer-name">{a.playerName}{a.playerId === state.playerId ? ' (você)' : ''}</span>
+                  <p className="play-answer-text">{a.answer}</p>
+                </article>
+              ))}
+              <button onClick={doNextQuestion} className="play-primary" data-testid="button-next-question">Próxima pergunta <ChevronRight size={17} /></button>
+            </div>
+          )}
+
+          {stage === 'playing' && !currentQuestion && (
+            <button onClick={doNextQuestion} className="play-primary" data-testid="button-first-question">
+              Próxima pergunta <ChevronRight size={17} />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## 3. Registrar rota `/play` no Router — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar a função `Router()`:
+```tsx
+function Router() {
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/login" component={Login} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+}
+```
+
+Adicionar `<Route path="/play" component={Play} />`:
+```tsx
+function Router() {
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/login" component={Login} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/play" component={Play} /><Route path="/invite/:token" component={InvitePage} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+}
+```
+
+E adicionar o import junto com Login:
+```tsx
+import Play from '@/pages/Play';
+```
+
+## 4. Adicionar botão "Jogar online" na aba "Meu espaço"
+
+Ainda em App.tsx, achar dentro do bloco `activeNav === 'eu'` (perto da seção "SEUS DECKS"). Adicionar um card grande antes:
+
+```tsx
+<div className="eu-play-online-card">
+  <div>
+    <p className="eu-kicker">jogar ao vivo</p>
+    <h2>Uma pergunta,<br /><em>a mesma pra vocês.</em></h2>
+    <p>Crie uma sala, compartilhe o código e joguem juntos — cada um no próprio aparelho.</p>
+    <Link href="/play" className="app-primary-button" data-testid="link-play-online">
+      Jogar online <ArrowRight size={16} />
+    </Link>
+  </div>
+</div>
+```
+
+(Coloca em posição de destaque na aba Meu Espaço.)
+
+## 5. CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.play-shell {
+  min-height: 100svh;
+  background: radial-gradient(circle at 50% 20%, rgba(196, 172, 255, 0.09), transparent 32rem), #08090f;
+  color: #f6f5fa;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1.2rem;
+}
+.play-back {
+  position: absolute; top: 1.2rem; left: 1.2rem;
+  background: transparent; border: 0; color: rgba(255,255,255,0.5);
+  font-size: 0.82rem; cursor: pointer;
+}
+.play-back:hover { color: rgba(255,255,255,0.9); }
+
+.play-card {
+  width: min(100%, 460px);
+  padding: 1.5rem 1.4rem 2rem;
+  display: flex; flex-direction: column; gap: 0.9rem;
+  margin-top: 4rem;
+}
+.play-kicker {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em;
+  color: #c4acff; margin: 0;
+}
+.play-card h1 {
+  font: 500 2rem/1.15 var(--font-sans);
+  letter-spacing: -0.03em; color: #f9f8fb; margin: 0 0 0.3rem;
+}
+.play-card h1 em { color: #c4acff; font-style: normal; }
+.play-code { font-family: ui-monospace, monospace; letter-spacing: 0.2em; font-weight: 600; }
+.play-copy { color: rgba(246,245,250,0.7); font-size: 0.95rem; line-height: 1.5; margin: 0.2rem 0; }
+.play-error { color: #ff9d9d; font-size: 0.85rem; margin: 0.3rem 0; }
+.play-waiting { color: rgba(196,172,255,0.85); font-size: 0.9rem; text-align: center; padding: 1rem; }
+.play-status { text-align: center; font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 0.5rem; }
+.play-section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); margin: 0.6rem 0 0.4rem; }
+
+.play-input-label { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+.play-input, .play-code-input {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0.7rem; padding: 0.85rem 1rem; color: #f6f5fa; font-size: 1rem; outline: none;
+}
+.play-code-input { font-family: ui-monospace, monospace; letter-spacing: 0.3em; text-align: center; font-size: 1.4rem; text-transform: uppercase; }
+.play-input:focus, .play-code-input:focus { border-color: rgba(196,172,255,0.5); }
+
+.play-primary {
+  background: #f9f8fb; color: #17121b; border: 0; border-radius: 0.8rem;
+  padding: 0.95rem 1.2rem; font-size: 0.95rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  cursor: pointer; margin-top: 0.6rem;
+}
+.play-primary:hover:not(:disabled) { transform: translateY(-1px); }
+.play-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.play-secondary {
+  background: transparent; color: rgba(255,255,255,0.6); border: 0;
+  padding: 0.6rem; font-size: 0.85rem; cursor: pointer; align-self: center;
+}
+.play-secondary:hover { color: rgba(255,255,255,0.9); }
+
+.play-mode-options { display: flex; flex-direction: column; gap: 0.6rem; }
+.play-mode-option {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.8rem; padding: 1rem; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 0.3rem; color: #f6f5fa;
+  transition: all 0.15s ease;
+}
+.play-mode-option strong { font-size: 1rem; font-weight: 500; }
+.play-mode-option span { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.4; }
+.play-mode-option.is-selected {
+  background: rgba(196,172,255,0.12); border-color: rgba(196,172,255,0.4);
+}
+
+.play-share-actions { display: flex; gap: 0.6rem; }
+.play-icon-btn {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.7rem; padding: 0.6rem 0.9rem; color: rgba(255,255,255,0.85);
+  cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;
+}
+.play-icon-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.play-icon-btn-small { padding: 0.4rem 0.6rem; }
+
+.play-players { display: flex; flex-direction: column; gap: 0.4rem; }
+.play-player {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.04);
+  border-radius: 0.6rem; font-size: 0.9rem;
+}
+.play-badge { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #c4acff; background: rgba(196,172,255,0.12); padding: 0.15rem 0.5rem; border-radius: 999px; }
+
+.play-theme-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.play-theme-chip {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px; padding: 0.5rem 0.9rem; color: rgba(255,255,255,0.75);
+  cursor: pointer; font-size: 0.82rem;
+}
+.play-theme-chip:hover { color: #fff; }
+.play-theme-chip.is-selected { background: rgba(196,172,255,0.18); border-color: rgba(196,172,255,0.5); color: #c4acff; font-weight: 500; }
+
+.play-game {
+  width: min(100%, 560px);
+  margin: 4rem auto 2rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.play-game-top { display: flex; justify-content: space-between; align-items: center; }
+.play-code-badge { font-family: ui-monospace, monospace; letter-spacing: 0.2em; font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+
+.play-question-card {
+  background: linear-gradient(160deg, rgba(196,172,255,0.15), rgba(64,50,120,0.35));
+  border: 1px solid rgba(196,172,255,0.2);
+  border-radius: 1.2rem; padding: 2rem 1.6rem;
+  min-height: 12rem; display: flex; flex-direction: column; justify-content: center; gap: 0.8rem;
+}
+.play-question-theme { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.55); }
+.play-question-text { font-size: 1.35rem; line-height: 1.35; color: #f9f8fb; margin: 0; font-weight: 500; letter-spacing: -0.01em; }
+.play-question-empty { text-align: center; color: rgba(255,255,255,0.5); }
+.play-question-empty p { margin: 0; font-size: 1rem; }
+
+.play-answer-area { display: flex; flex-direction: column; gap: 0.7rem; }
+.play-answer-input {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0.8rem; padding: 0.9rem 1rem; color: #f6f5fa; font-size: 1rem;
+  min-height: 6rem; resize: vertical; font-family: inherit; outline: none;
+}
+.play-answer-input:focus { border-color: rgba(196,172,255,0.5); }
+
+.play-reveal { display: flex; flex-direction: column; gap: 0.6rem; }
+.play-answer-card {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.9rem; padding: 0.9rem 1rem;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+.play-answer-name { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #c4acff; }
+.play-answer-text { font-size: 1rem; line-height: 1.5; color: #f6f5fa; margin: 0; white-space: pre-wrap; }
+
+.eu-play-online-card {
+  background: linear-gradient(140deg, rgba(196,172,255,0.15), rgba(78,58,140,0.3));
+  border: 1px solid rgba(196,172,255,0.25);
+  border-radius: 1.2rem; padding: 1.6rem; margin: 1rem 0;
+}
+.eu-play-online-card h2 { font: 500 1.4rem/1.2 var(--font-sans); margin: 0.3rem 0 0.5rem; letter-spacing: -0.02em; }
+.eu-play-online-card h2 em { color: #c4acff; font-style: normal; }
+.eu-play-online-card p { color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 1.5; margin: 0 0 1rem; }
+```
+
+## Verificação (2 janelas anônimas)
+
+1. Janela A: vai em `/app` → aba "Meu espaço" → clica "Jogar online" → cai em `/play` → escolhe "Criar sala" → escolhe modo "Os dois respondem" → clica "Criar sala"
+2. Janela A: vê o código (ex `XKJDR`), lista com 1 pessoa. Botão "Começar" desabilitado com "Aguardando ao menos 2 pessoas".
+3. Janela B: vai em `/play` → "Entrar em uma sala" → digita `XKJDR` → nome "Julia" → Entrar
+4. Janela A: vê Julia entrar. Escolhe tema. Botão "Começar" habilita.
+5. Janela A: clica Começar → ambas caem na tela de jogo
+6. Uma clica "Próxima pergunta" → mesma pergunta aparece nas duas
+7. Cada uma digita resposta e clica Enviar → outra vê "1/2 responderam"
+8. Quando ambas enviarem → tela de revelação com as 2 respostas
+9. Uma clica "Próxima pergunta" → nova pergunta pra ambas
+
+Se tudo isso rolar, Parte A tá completa. Aí mando a Parte B (salvar momento + aba "Momentos guardados").
