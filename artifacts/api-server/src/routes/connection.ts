@@ -437,6 +437,18 @@ router.post("/access/sessions/:sessionId/complete-onboarding", async (req, res):
   res.json({ ok: true });
 });
 
+router.post("/access/sessions/:sessionId/reset-onboarding", async (req, res): Promise<void> => {
+  const sessionId = String(req.params.sessionId || "").trim();
+  if (!sessionId) {
+    res.status(400).json({ error: "Sessão inválida" });
+    return;
+  }
+  await db.update(sessionsTable)
+    .set({ onboardingComplete: false })
+    .where(eq(sessionsTable.id, sessionId));
+  res.json({ ok: true });
+});
+
 router.post("/access/sessions/:sessionId/invites", async (req, res): Promise<void> => {
   const params = CreateInviteParams.safeParse(req.params);
   const body = CreateInviteBody.safeParse(req.body);
@@ -532,6 +544,18 @@ router.post("/access/invites/:token/complete-onboarding", async (req, res): Prom
     res.status(404).json({ error: "Convite não encontrado" });
     return;
   }
+  res.json({ ok: true });
+});
+
+router.post("/access/invites/:token/reset-onboarding", async (req, res): Promise<void> => {
+  const token = String(req.params.token || "").trim();
+  if (!token) {
+    res.status(400).json({ error: "Token inválido" });
+    return;
+  }
+  await db.update(invitesTable)
+    .set({ onboardingComplete: false })
+    .where(eq(invitesTable.token, token));
   res.json({ ok: true });
 });
 

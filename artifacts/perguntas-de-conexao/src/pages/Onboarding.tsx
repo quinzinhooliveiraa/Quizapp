@@ -413,6 +413,15 @@ export default function Onboarding() {
     safeRemoveItem('conexao-feeling');
     safeRemoveItem('conexao-partner-pronoun');
     removeWelcomeDeck();
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+    const sid = safeGetItem('conexao-session');
+    const tok = safeGetItem('conexao-guest-token');
+    const resetUrl = tok
+      ? `${apiBase}/api/access/invites/${encodeURIComponent(tok)}/reset-onboarding`
+      : sid
+        ? `${apiBase}/api/access/sessions/${encodeURIComponent(sid)}/reset-onboarding`
+        : null;
+    if (resetUrl) fetch(resetUrl, { method: 'POST' }).catch(() => { /* noop */ });
     setStepIndex(0);
     setName('');
     setPronoun('');

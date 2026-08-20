@@ -1,0 +1,86 @@
+# Refactor 3/3 — Cleanup (remover últimos vestígios do localStorage 'onboarding-complete')
+
+**Contexto:** o servidor já é a fonte da verdade pro onboarding. Sobraram 4 referências ao `localStorage 'conexao-onboarding-complete'` espalhadas — vamos remover todas.
+
+**IMPORTANTE: aplicar direto nos arquivos. Não é pra salvar como asset.**
+
+## Fix 1 — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar (perto da linha 801):
+```tsx
+const onboardingComplete = safeGetItem('conexao-onboarding-complete') === 'true';
+```
+
+Trocar por (lê do servidor):
+```tsx
+const onboardingComplete = Boolean(
+  (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+  || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+);
+```
+
+## Fix 2 — `artifacts/perguntas-de-conexao/src/pages/Login.tsx`
+
+Manter os dois `removeItem('conexao-onboarding-complete')` — eles limpam lixo antigo do navegador, o que é positivo, sem custo. Deixa como está.
+
+## Fix 3 — `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+Achar (perto da linha 408, dentro da função `reset`):
+```tsx
+safeRemoveItem('conexao-onboarding-complete');
+```
+
+**Manter essa linha** — a função `reset` (chamada pelo botão "Refazer o quiz") limpa localStorage local. Fica como higiene, não custa nada.
+
+**Adicionar depois dela:** também chamar o servidor pra desmarcar (opcional mas correto):
+```tsx
+safeRemoveItem('conexao-onboarding-complete');
+// Também limpa no servidor pra pessoa poder refazer onboarding
+const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const sid = safeGetItem('conexao-session');
+const tok = safeGetItem('conexao-guest-token');
+const resetUrl = tok
+  ? `${apiBase}/api/access/invites/${encodeURIComponent(tok)}/reset-onboarding`
+  : sid
+    ? `${apiBase}/api/access/sessions/${encodeURIComponent(sid)}/reset-onboarding`
+    : null;
+if (resetUrl) fetch(resetUrl, { method: 'POST' }).catch(() => { /* noop */ });
+```
+
+## Fix 4 — Backend: adicionar rotas `/reset-onboarding` (pra o Refazer o quiz funcionar)
+
+`artifacts/api-server/src/routes/connection.ts` — adicionar junto das rotas `/complete-onboarding`:
+
+```ts
+router.post("/access/sessions/:sessionId/reset-onboarding", async (req, res): Promise<void> => {
+  const sessionId = req.params.sessionId;
+  if (!sessionId) { res.status(400).json({ error: "Sessão inválida" }); return; }
+  await db.update(sessionsTable)
+    .set({ onboardingComplete: false })
+    .where(eq(sessionsTable.id, sessionId));
+  res.json({ ok: true });
+});
+
+router.post("/access/invites/:token/reset-onboarding", async (req, res): Promise<void> => {
+  const token = req.params.token;
+  if (!token) { res.status(400).json({ error: "Token inválido" }); return; }
+  await db.update(invitesTable)
+    .set({ onboardingComplete: false })
+    .where(eq(invitesTable.token, token));
+  res.json({ ok: true });
+});
+```
+
+## Verificação final (o teste que fecha o capítulo)
+
+Depois do deploy:
+
+1. **Admin já logado**: cria invite pra "Julia"
+2. **No MESMO navegador** (não anônima), cola o link → clica "Aceitar convite"
+3. **Deve começar em `/onboarding` no intro (5%)** ✅ (antes ia direto pro /app — era o bug original)
+4. **Passa por todos os steps**, inclusive email
+5. **Cai em `/app` como Julia** — perfeito
+6. **Faz login como admin de novo** (`/login` com seu email) → cai DIRETO no /app (porque no banco o `onboardingComplete=true` da tua sessão foi persistido)
+7. **"Refazer o quiz" no menu** → refaz do zero (servidor volta pra false)
+
+Se todos os 7 passos passarem, o refactor tá completo. Bugs de "localStorage sujo confundindo o app" são impossíveis agora — servidor manda em tudo.

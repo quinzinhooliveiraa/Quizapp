@@ -229,7 +229,15 @@ export type CompleteOwnerOnboarding200 = {
   ok: boolean;
 };
 
+export type ResetOwnerOnboarding200 = {
+  ok: boolean;
+};
+
 export type CompleteGuestOnboarding200 = {
+  ok: boolean;
+};
+
+export type ResetGuestOnboarding200 = {
   ok: boolean;
 };
 

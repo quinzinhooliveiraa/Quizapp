@@ -36,6 +36,8 @@ export * from './questionSession';
 export * from './questionTheme';
 export * from './questionThemeAudience';
 export * from './questionThemeKind';
+export * from './resetGuestOnboarding200';
+export * from './resetOwnerOnboarding200';
 export * from './sessionInput';
 export * from './sessionInputPackageId';
 export * from './webhookResult';

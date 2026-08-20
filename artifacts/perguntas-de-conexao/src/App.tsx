@@ -798,7 +798,10 @@ function AppExperienceReference() {
   const allQuestionsMode = dailyMode || favoriteMode;
   const questionParams = { theme: themeId && !allQuestionsMode ? themeId : undefined };
   const questionsQuery = useListQuestions(questionParams, { query: { enabled: !!themeId, queryKey: getListQuestionsQueryKey(questionParams) } });
-  const onboardingComplete = safeGetItem('conexao-onboarding-complete') === 'true';
+  const onboardingComplete = Boolean(
+    (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+    || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
+  );
   const welcomeDeckDone = safeGetItem(ONBOARDING_WELCOME_DECK_DONE_KEY) === 'true';
   const openWelcomeDeck = safeGetItem(ONBOARDING_OPEN_WELCOME_DECK_KEY) === 'true';
   const welcomeDeckId = safeGetItem(ONBOARDING_WELCOME_DECK_ID_KEY) || '';

@@ -116,6 +116,18 @@ export const CompleteOwnerOnboardingResponse = zod.object({
 
 
 /**
+ * @summary Reset owner onboarding
+ */
+export const ResetOwnerOnboardingParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const ResetOwnerOnboardingResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary List guest invites for a session
  */
 export const ListInvitesParams = zod.object({
@@ -190,6 +202,18 @@ export const CompleteGuestOnboardingParams = zod.object({
 })
 
 export const CompleteGuestOnboardingResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Reset guest onboarding
+ */
+export const ResetGuestOnboardingParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const ResetGuestOnboardingResponse = zod.object({
   "ok": zod.boolean()
 })
 

@@ -142,6 +142,28 @@ paths:
                   ok:
                     type: boolean
                 required: [ok]
+  /access/sessions/{sessionId}/reset-onboarding:
+    post:
+      operationId: resetOwnerOnboarding
+      tags: [access]
+      summary: Reset owner onboarding
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
   /access/sessions/{sessionId}/invites:
     get:
       operationId: listInvites
@@ -241,6 +263,28 @@ paths:
       responses:
         "200":
           description: Onboarding marked complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+  /access/invites/{token}/reset-onboarding:
+    post:
+      operationId: resetGuestOnboarding
+      tags: [access]
+      summary: Reset guest onboarding
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Onboarding reset
           content:
             application/json:
               schema:
