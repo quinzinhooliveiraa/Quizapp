@@ -406,9 +406,14 @@ function StoredAccessGate() {
   useEffect(() => {
     const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
     if (wantsToBuy) return;
-    if ((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)) {
-      navigate('/app', { replace: true });
-    }
+    const ownerReady = sessionQuery.isSuccess && sessionQuery.data.accessGranted;
+    const guestReady = guestQuery.isSuccess && guestQuery.data.hasAccess;
+    if (!ownerReady && !guestReady) return;
+    const onboardingDone = Boolean(
+      (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+      || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
+    );
+    navigate(onboardingDone ? '/app' : '/onboarding', { replace: true });
   }, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
 
   const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
