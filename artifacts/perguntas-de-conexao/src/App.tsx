@@ -660,7 +660,6 @@ function AppExperience() {
   const [guestName, setGuestName] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
   const [copiedInvite, setCopiedInvite] = useState(false);
-  const [savedMoments, setSavedMoments] = useState<SavedMoment[]>([]);
   const accessQuery = useGetAccessPreview({ query: { queryKey: ['access-preview'] } });
   const sessionQuery = useGetQuestionSession(sessionId, { query: { enabled: !!sessionId, queryKey: getGetQuestionSessionQueryKey(sessionId) } });
   const questionParams = { theme: themeId || undefined };
@@ -817,6 +816,7 @@ function AppExperienceReference() {
   const [guestName, setGuestName] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
   const [copiedInvite, setCopiedInvite] = useState(false);
+  const [savedMoments, setSavedMoments] = useState<SavedMoment[]>([]);
   const handleLogout = () => {
     const keysToRemove = [
       'conexao-session',
@@ -887,7 +887,7 @@ function AppExperienceReference() {
   const availableQuestions = useMemo(() => (allQuestionsQuery.data?.length ? allQuestionsQuery.data : fallbackQuestions) as Question[], [allQuestionsQuery.data]);
   useEffect(() => {
     const sid = safeGetItem('conexao-session');
-    const tok = safeGetItem('conexao-guest-token');
+    const tok = safeGetItem('conexao-guest-token') || '';
     if (!sid && !tok) {
       setSavedMoments([]);
       return;
@@ -904,7 +904,7 @@ function AppExperienceReference() {
   }, [activeNav]);
   const deleteMoment = async (id: string) => {
     const sid = safeGetItem('conexao-session');
-    const tok = safeGetItem('conexao-guest-token');
+    const tok = safeGetItem('conexao-guest-token') || '';
     const qs = sid ? `sessionId=${encodeURIComponent(sid)}` : `guestToken=${encodeURIComponent(tok)}`;
     try {
       const response = await fetch(apiUrl(`/api/moments/${encodeURIComponent(id)}?${qs}`), { method: 'DELETE' });

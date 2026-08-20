@@ -1,0 +1,273 @@
+# Play Online — Frontend Parte B (salvar momento + aba "Momentos guardados")
+
+**Contexto:** completar o play online. Depois que os jogadores revelam as respostas, cada um pode salvar a resposta do parceiro como "momento". Esses momentos ficam guardados na aba "Meu espaço" numa seção nova, separada das perguntas favoritas.
+
+Backend das rotas `/api/moments` já existe (feito na Parte B do backend anterior). Este prompt é só frontend.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+## 1. Adicionar botão "Salvar momento" na tela de revelação — `artifacts/perguntas-de-conexao/src/pages/Play.tsx`
+
+Achar a seção de revelação (`stage === 'revealing'`):
+
+```tsx
+{state.answers.map((a) => (
+  <article key={a.playerId} className="play-answer-card" data-testid={`answer-${a.playerId}`}>
+    <span className="play-answer-name">{a.playerName}{a.playerId === state.playerId ? ' (você)' : ''}</span>
+    <p className="play-answer-text">{a.answer}</p>
+  </article>
+))}
+```
+
+Trocar por (adiciona botão "Guardar" nas respostas dos OUTROS jogadores):
+
+```tsx
+{state.answers.map((a) => {
+  const isMe = a.playerId === state.playerId;
+  return (
+    <article key={a.playerId} className="play-answer-card" data-testid={`answer-${a.playerId}`}>
+      <span className="play-answer-name">{a.playerName}{isMe ? ' (você)' : ''}</span>
+      <p className="play-answer-text">{a.answer}</p>
+      {!isMe && currentQuestion && (
+        <button
+          type="button"
+          onClick={() => saveMoment(a)}
+          disabled={savedIds.has(a.playerId + ':' + currentQuestion.id)}
+          className="play-save-moment"
+          data-testid={`button-save-moment-${a.playerId}`}
+        >
+          <Bookmark size={14} />
+          {savedIds.has(a.playerId + ':' + currentQuestion.id) ? 'Momento guardado' : 'Guardar esse momento'}
+        </button>
+      )}
+    </article>
+  );
+})}
+```
+
+Adicionar o import de `Bookmark` no topo do Play.tsx (junto com outros ícones):
+```tsx
+import { ArrowRight, Copy, X, Send, Share2, ChevronRight, Bookmark } from 'lucide-react';
+```
+
+E adicionar state + função `saveMoment` no topo do componente (perto de outros useState):
+
+```tsx
+const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const sessionIdLS = safeGet('conexao-session');
+const guestTokenLS = safeGet('conexao-guest-token');
+
+const saveMoment = async (answer: { playerId: string; playerName: string; answer: string }) => {
+  if (!currentQuestion || !state.themeId) return;
+  const key = answer.playerId + ':' + currentQuestion.id;
+  if (savedIds.has(key)) return;
+  try {
+    await fetch(`${apiBase}/api/moments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sessionIdLS,
+        guestToken: guestTokenLS,
+        questionId: currentQuestion.id,
+        themeId: state.themeId,
+        fromPlayerName: answer.playerName,
+        answerText: answer.answer,
+        roomCode: state.code,
+      }),
+    });
+    setSavedIds(prev => { const next = new Set(prev); next.add(key); return next; });
+  } catch { /* silently fail */ }
+};
+```
+
+E reset dos `savedIds` quando muda de pergunta:
+```tsx
+useEffect(() => { setSavedIds(new Set()); }, [state.currentQuestionId]);
+```
+
+## 2. Nova seção "Momentos guardados" na aba Meu Espaço — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar a seção de favoritos (perto da linha 1413, com `eu-favorites-section`). Adicionar uma seção nova logo abaixo dela:
+
+```tsx
+<section className="eu-section eu-moments-section" aria-labelledby="moments-title">
+  <div className="eu-section-heading">
+    <div>
+      <p className="eu-kicker">momentos</p>
+      <h2 id="moments-title">Respostas guardadas</h2>
+    </div>
+    <span>{savedMoments.length} {savedMoments.length === 1 ? 'momento' : 'momentos'}</span>
+  </div>
+  {savedMoments.length === 0 ? (
+    <div className="eu-empty-state">
+      <span><Bookmark size={16} /></span>
+      <p>Quando alguém responder algo que você quer guardar, salve por aqui. Fica só pra você.</p>
+    </div>
+  ) : (
+    <div className="eu-moments-list">
+      {savedMoments.map(m => {
+        const theme = themes.find(t => t.id === m.themeId);
+        const question = availableQuestions.find(q => q.id === m.questionId);
+        return (
+          <article key={m.id} className="eu-moment-card" data-testid={`moment-${m.id}`}>
+            <div className="eu-moment-header">
+              <div>
+                <p className="eu-moment-kicker">{theme?.title || 'Tema'}</p>
+                <p className="eu-moment-question">{question?.text || 'Pergunta'}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => deleteMoment(m.id)}
+                className="eu-moment-delete"
+                aria-label="Remover momento"
+                data-testid={`button-delete-moment-${m.id}`}
+              ><X size={14} /></button>
+            </div>
+            <p className="eu-moment-answer">"{m.answerText}"</p>
+            <p className="eu-moment-attribution">— {m.fromPlayerName} · {new Date(m.createdAt).toLocaleDateString('pt-BR')}</p>
+          </article>
+        );
+      })}
+    </div>
+  )}
+</section>
+```
+
+E adicionar state + fetch dos momentos no componente `AppExperienceReference` (perto de outros useState):
+
+```tsx
+type SavedMoment = {
+  id: string;
+  questionId: string;
+  themeId: string;
+  fromPlayerName: string;
+  answerText: string;
+  roomCode: string | null;
+  createdAt: string;
+};
+const [savedMoments, setSavedMoments] = useState<SavedMoment[]>([]);
+
+useEffect(() => {
+  const sid = safeGetItem('conexao-session');
+  const tok = safeGetItem('conexao-guest-token');
+  if (!sid && !tok) return;
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const qs = sid ? `sessionId=${encodeURIComponent(sid)}` : `guestToken=${encodeURIComponent(tok || '')}`;
+  fetch(`${apiBase}/api/moments?${qs}`)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => { if (data?.moments) setSavedMoments(data.moments); })
+    .catch(() => { /* noop */ });
+}, [activeNav]); // Refetch quando muda de aba (entrar em "Meu espaço" traz o estado atualizado)
+
+const deleteMoment = async (id: string) => {
+  const sid = safeGetItem('conexao-session');
+  const tok = safeGetItem('conexao-guest-token');
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const qs = sid ? `sessionId=${encodeURIComponent(sid)}` : `guestToken=${encodeURIComponent(tok || '')}`;
+  await fetch(`${apiBase}/api/moments/${encodeURIComponent(id)}?${qs}`, { method: 'DELETE' }).catch(() => { /* noop */ });
+  setSavedMoments(prev => prev.filter(m => m.id !== id));
+};
+```
+
+Adicionar import de `Bookmark` no topo do App.tsx (junto com outros ícones lucide-react).
+
+## CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.play-save-moment {
+  margin-top: 0.7rem;
+  background: transparent;
+  border: 1px solid rgba(196, 172, 255, 0.3);
+  color: #c4acff;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.15s ease;
+}
+.play-save-moment:hover:not(:disabled) {
+  background: rgba(196, 172, 255, 0.08);
+  border-color: rgba(196, 172, 255, 0.5);
+}
+.play-save-moment:disabled {
+  color: rgba(196, 172, 255, 0.5);
+  border-color: rgba(196, 172, 255, 0.15);
+  cursor: default;
+}
+
+.eu-moments-section { margin-top: 2rem; }
+.eu-moments-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+.eu-moment-card {
+  background: linear-gradient(150deg, rgba(196, 172, 255, 0.06), rgba(64, 50, 120, 0.12));
+  border: 1px solid rgba(196, 172, 255, 0.15);
+  border-radius: 0.9rem;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.eu-moment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.eu-moment-kicker {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(196, 172, 255, 0.75);
+  margin: 0 0 0.2rem;
+}
+.eu-moment-question {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+  margin: 0;
+  font-style: italic;
+}
+.eu-moment-answer {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #f9f8fb;
+  margin: 0.3rem 0 0;
+  white-space: pre-wrap;
+}
+.eu-moment-attribution {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0.3rem 0 0;
+}
+.eu-moment-delete {
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 0.3rem;
+  flex-shrink: 0;
+}
+.eu-moment-delete:hover {
+  color: #ff9d9d;
+  background: rgba(255, 157, 157, 0.08);
+}
+```
+
+## Verificação (depois que Railway voltar)
+
+1. Cria sala com 2 janelas anônimas
+2. Escolhe tema, começa, ambas respondem uma pergunta
+3. Na tela de revelação, cada uma clica "Guardar esse momento" na resposta da OUTRA
+4. Sai, volta pro /app → aba "Meu espaço"
+5. Rola até a seção "Respostas guardadas" — os momentos guardados aparecem em cards com a pergunta, a resposta e "— Nome · data"
+6. Clica no X pra remover um momento — some
+7. Volta pra jogar, salva outro → aparece na aba
