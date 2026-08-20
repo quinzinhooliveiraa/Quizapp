@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ArrowRight, Feather, Mail } from 'lucide-react';
 
@@ -23,6 +23,13 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown(current => current - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   async function requestCode() {
     setError('');
@@ -55,6 +62,7 @@ export default function Login() {
         setEmail(trimmed);
         setStage('code');
         setNotice(`Enviamos um código de 6 dígitos para ${trimmed}. Verifique sua caixa de entrada (e o spam).`);
+        setResendCooldown(60);
         setLoading(false);
         return;
       }
@@ -77,6 +85,30 @@ export default function Login() {
         return;
       }
        setError('Não foi possível enviar o código agora. Tente novamente.');
+    } catch {
+      setError('Sem conexão. Tente novamente.');
+    }
+    setLoading(false);
+  }
+
+  async function resendCode() {
+    if (resendCooldown > 0 || loading) return;
+    setError('');
+    setLoading(true);
+    try {
+      const response = await fetch(apiUrl('/api/auth/request-code'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (response.ok) {
+        setNotice(`Reenviamos o código para ${email}. Confere seu email (e o spam).`);
+        setResendCooldown(60);
+      } else if (response.status === 429) {
+        setError('Aguarde um pouco antes de pedir outro código.');
+      } else {
+        setError('Não foi possível reenviar agora. Tente daqui a pouco.');
+      }
     } catch {
       setError('Sem conexão. Tente novamente.');
     }
@@ -217,7 +249,16 @@ export default function Login() {
           <button onClick={verifyCode} disabled={loading || code.length !== 6} className="login-primary" data-testid="button-verify-code">
             {loading ? 'Verificando…' : <>Entrar <ArrowRight size={16} /></>}
           </button>
-          <button type="button" onClick={() => { setStage('email'); setCode(''); setError(''); setNotice(''); }} className="login-secondary" data-testid="button-change-email">
+          <button
+            type="button"
+            onClick={resendCode}
+            disabled={resendCooldown > 0 || loading}
+            className="login-secondary"
+            data-testid="button-resend-code"
+          >
+            {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar código'}
+          </button>
+          <button type="button" onClick={() => { setStage('email'); setCode(''); setError(''); setNotice(''); setResendCooldown(0); }} className="login-secondary" data-testid="button-change-email">
             Trocar email
           </button>
         </>}

@@ -1,0 +1,175 @@
+# Reenviar código no login + Botão de logout
+
+**Contexto:** duas features essenciais faltando:
+1. Se o código de login não chega (email atrasa, foi pro spam), a pessoa fica travada — não tem como pedir de novo.
+2. Não existe forma de deslogar. Uma vez logado, a única saída é limpar dados do navegador manual.
+
+**IMPORTANTE: aplicar direto nos arquivos. Não é pra salvar como asset.**
+
+## Fix 1 — Reenviar código no `/login`
+
+`artifacts/perguntas-de-conexao/src/pages/Login.tsx`
+
+### 1.1. Adicionar state pro cooldown do reenvio
+
+Perto dos outros `useState` (topo do componente `Login()`), adicionar:
+```tsx
+const [resendCooldown, setResendCooldown] = useState(0);
+useEffect(() => {
+  if (resendCooldown <= 0) return;
+  const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+  return () => clearTimeout(t);
+}, [resendCooldown]);
+```
+
+Adicionar import de `useEffect` se ainda não estiver:
+```tsx
+import { useEffect, useState } from 'react';
+```
+
+### 1.2. No fim da função `requestCode`, iniciar o cooldown quando dá certo
+
+Achar dentro de `requestCode`, no bloco onde avança pra tela de código (`setStage('code')`), adicionar `setResendCooldown(60);`:
+
+```tsx
+setEmail(trimmed);
+setStage('code');
+setNotice(`Enviamos um código de 6 dígitos para ${trimmed}. Verifique sua caixa de entrada (e o spam).`);
+setResendCooldown(60);  // <-- NOVO
+setLoading(false);
+return;
+```
+
+### 1.3. Criar função `resendCode`
+
+Adicionar logo depois da função `requestCode`:
+```tsx
+async function resendCode() {
+  if (resendCooldown > 0 || loading) return;
+  setError('');
+  setLoading(true);
+  try {
+    const response = await fetch(apiUrl('/api/auth/request-code'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (response.ok) {
+      setNotice(`Reenviamos o código para ${email}. Confere seu email (e o spam).`);
+      setResendCooldown(60);
+    } else if (response.status === 429) {
+      setError('Aguarde um pouco antes de pedir outro código.');
+    } else {
+      setError('Não foi possível reenviar agora. Tente daqui a pouco.');
+    }
+  } catch {
+    setError('Sem conexão. Tente novamente.');
+  }
+  setLoading(false);
+}
+```
+
+### 1.4. Adicionar botão "Reenviar código" na tela de código
+
+Achar o bloco `{stage === 'code' && <>...</>}` e adicionar o botão de reenvio logo antes do "Trocar email":
+
+Achar:
+```tsx
+<button type="button" onClick={() => { setStage('email'); setCode(''); setError(''); setNotice(''); }} className="login-secondary" data-testid="button-change-email">
+  Trocar email
+</button>
+```
+
+Substituir por (adiciona botão de reenvio antes):
+```tsx
+<button
+  type="button"
+  onClick={resendCode}
+  disabled={resendCooldown > 0 || loading}
+  className="login-secondary"
+  data-testid="button-resend-code"
+>
+  {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar código'}
+</button>
+<button type="button" onClick={() => { setStage('email'); setCode(''); setError(''); setNotice(''); setResendCooldown(0); }} className="login-secondary" data-testid="button-change-email">
+  Trocar email
+</button>
+```
+
+## Fix 2 — Botão de Logout no menu de Ajustes
+
+`artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 2.1. Adicionar função de logout no componente `AppExperienceReference`
+
+Perto de outras funções utilitárias no topo do componente (por exemplo, junto de `startSession` ou `toggleQuestionMode`), adicionar:
+
+```tsx
+const [, navigateLogout] = useLocation();
+const handleLogout = () => {
+  const keysToRemove = [
+    'conexao-session',
+    'conexao-guest-token',
+    'conexao-guest-name',
+    'conexao-guest-email',
+    'conexao-name',
+    'conexao-role',
+    'conexao-onboarding-complete',
+    'conexao-onboarding-step',
+    'conexao-onboarding-name',
+    'conexao-onboarding-pronoun',
+    'conexao-onboarding-relationship',
+    'conexao-onboarding-date',
+    'conexao-onboarding-curiosity',
+    'conexao-onboarding-feeling',
+    'conexao-relationship',
+    'conexao-curiosity',
+    'conexao-feeling',
+    'conexao-partner-pronoun',
+    'conexao-pending-session',
+    'conexao-pending-bill',
+  ];
+  keysToRemove.forEach(key => {
+    try { window.localStorage?.removeItem(key); } catch { /* noop */ }
+  });
+  navigateLogout('/login', { replace: true });
+};
+```
+
+(Se `useLocation` já estiver desestruturado com outro nome, use aquele.)
+
+### 2.2. Adicionar botão "Sair" dentro do modal de settings
+
+Achar o modal de settings (perto da linha 1611, tem `{settingsOpen && <div className="app-modal-backdrop">...`):
+
+Achar o botão "Editar como te chamar":
+```tsx
+<button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button>
+```
+
+Adicionar depois:
+```tsx
+<button onClick={() => { setSettingsOpen(false); handleLogout(); }} className="app-secondary-button app-logout-button" data-testid="button-logout">Sair da conta</button>
+```
+
+### 2.3. CSS discreto pro botão de logout
+
+Adicionar no final de `artifacts/perguntas-de-conexao/src/index.css`:
+
+```css
+.app-logout-button {
+  margin-top: 0.6rem;
+  color: rgba(255, 157, 157, 0.85) !important;
+  border-color: rgba(255, 157, 157, 0.25) !important;
+}
+.app-logout-button:hover {
+  color: #ff9d9d !important;
+  border-color: rgba(255, 157, 157, 0.5) !important;
+  background: rgba(255, 157, 157, 0.08) !important;
+}
+```
+
+## Verificação
+1. **Login**: digita email → "Enviar código" → cai na tela de código → botão "Reenviar em 60s" desabilitado com contagem regressiva. Depois de 60s vira "Reenviar código" clicável. Clica → chega novo email.
+2. **Logout**: no /app, abre ⚙️ Ajustes → aparece "Sair da conta" em vermelho discreto. Clica → limpa tudo, cai em /login.
+3. **Depois de logar de novo**: volta pro /app normal (servidor lembra do onboarding).

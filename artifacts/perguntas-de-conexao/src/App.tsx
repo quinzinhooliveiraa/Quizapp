@@ -717,6 +717,7 @@ function AppExperience() {
 
 function AppExperienceReference() {
   useDeviceViewport();
+  const [, navigateLogout] = useLocation();
   const queryClientRef = useQueryClient();
   const { data: themesData, isLoading: themesLoading, isError: themesError } = useListQuestionThemes({ query: { queryKey: getListQuestionThemesQueryKey() } });
   const themes: QuestionTheme[] = themesData?.length ? themesData : fallbackThemes;
@@ -786,6 +787,34 @@ function AppExperienceReference() {
   const [guestName, setGuestName] = useState('');
   const [inviteResult, setInviteResult] = useState<any>(null);
   const [copiedInvite, setCopiedInvite] = useState(false);
+  const handleLogout = () => {
+    const keysToRemove = [
+      'conexao-session',
+      'conexao-guest-token',
+      'conexao-guest-name',
+      'conexao-guest-email',
+      'conexao-name',
+      'conexao-role',
+      'conexao-onboarding-complete',
+      'conexao-onboarding-step',
+      'conexao-onboarding-name',
+      'conexao-onboarding-pronoun',
+      'conexao-onboarding-relationship',
+      'conexao-onboarding-date',
+      'conexao-onboarding-curiosity',
+      'conexao-onboarding-feeling',
+      'conexao-relationship',
+      'conexao-curiosity',
+      'conexao-feeling',
+      'conexao-partner-pronoun',
+      'conexao-pending-session',
+      'conexao-pending-bill',
+    ];
+    keysToRemove.forEach(key => {
+      try { window.localStorage?.removeItem(key); } catch { /* noop */ }
+    });
+    navigateLogout('/login', { replace: true });
+  };
   const visibleThemes = useMemo(() => activeNav === 'temas'
     ? themes.filter(theme => theme.kind === 'tema')
     : activeNav === 'vibes'
@@ -1614,7 +1643,7 @@ function AppExperienceReference() {
       )}
      {adultThemePrompt && <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="adult-theme-title"><div className="app-modal adult-theme-modal"><button className="app-modal-close" onClick={() => setAdultThemePrompt(null)} aria-label="Fechar aviso" data-testid="button-cancel-adult-theme"><X size={18} /></button><div className="adult-theme-mark" role="img" aria-label="Conteúdo para maiores de 18 anos"><Flame size={19} strokeWidth={2.1} aria-hidden="true" /></div><p className="modal-eyebrow">um espaço para dois</p><h2 id="adult-theme-title">{adultThemePrompt.title}<em>.</em></h2><p>Este espaço tem perguntas mais ousadas, pensadas para casais. Quer continuar?</p><button onClick={confirmAdultTheme} className="app-primary-button" data-testid="button-confirm-adult-theme">Quero continuar <ArrowRight size={16} /></button><button onClick={() => setAdultThemePrompt(null)} className="app-secondary-button" data-testid="button-cancel-adult-theme-secondary">Voltar</button></div></div>}
     {welcomeOpen && <div className="app-modal-backdrop"><div className="app-modal welcome-app-modal"><button className="app-modal-close" onClick={() => setWelcomeOpen(false)} aria-label="Fechar apresentação" data-testid="button-close-welcome"><X size={18} /></button><div className="welcome-app-mark"><Feather size={19} /></div><p className="modal-eyebrow">antes da primeira carta</p><h2>Como podemos<br /><em>te chamar?</em></h2><p>É só para deixar este espaço um pouco mais seu. Você pode entrar sem preencher nada.</p><input value={buyerName} onChange={e => setBuyerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && startSession()} placeholder="Seu nome" className="app-text-input" data-testid="input-buyer-name" /><button onClick={startSession} className="app-primary-button" data-testid="button-enter-experience">{createSession.isPending ? 'Abrindo seu espaço…' : 'Entrar na experiência'} <ArrowRight size={16} /></button></div></div>}
-      {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{`${isGuest ? (guestDisplayName || buyerName || 'Visitante') : (buyerName || 'Visitante')} · ${isOwner ? 'Dono' : 'Convidado'}`}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button></div></div>}
+       {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{`${isGuest ? (guestDisplayName || buyerName || 'Visitante') : (buyerName || 'Visitante')} · ${isOwner ? 'Dono' : 'Convidado'}`}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button><button onClick={() => { setSettingsOpen(false); handleLogout(); }} className="app-secondary-button app-logout-button" data-testid="button-logout">Sair da conta</button></div></div>}
        {inviteOpen && isOwner && <div className="app-modal-backdrop"><div className="app-modal invite-app-modal"><button className="app-modal-close" onClick={() => setInviteOpen(false)} aria-label="Fechar convite" data-testid="button-close-invite"><X size={18} /></button>{inviteResult ? <><div className="invite-success-mark"><Check size={21} /></div><p className="modal-eyebrow">convite pronto</p><h2>Leve essa pergunta<br /><em>para mais perto.</em></h2><p>Compartilhe este endereço com <strong>{inviteResult.guestName}</strong>.</p><div className="invite-share-block"><button onClick={copyInvite} className="invite-share-button" data-testid="button-copy-invite"><Copy size={18} /> {copiedInvite ? 'Copiado!' : 'Copiar link do convite'}</button><details className="invite-share-details"><summary>Ver o link</summary><input readOnly value={inviteResult.token ? inviteUrlFromToken(inviteResult.token) : ''} className="app-text-input" data-testid="input-invite-url" onFocus={e => e.currentTarget.select()} /></details></div>{canInvite && <button onClick={() => { setInviteResult(null); setGuestName(''); setCopiedInvite(false); }} className="app-text-button" data-testid="button-new-invite">Criar outro convite <ArrowRight size={15} /></button>}</> : <><p className="modal-eyebrow">um convite especial</p><h2>Quem você quer<br /><em>trazer para a conversa?</em></h2><input value={guestName} onChange={e => setGuestName(e.target.value)} className="app-text-input" placeholder="Nome de quem vai receber" data-testid="input-guest-name" /><button onClick={makeInvite} className="app-primary-button" disabled={!guestName.trim() || createInvite.isPending || (!!sessionId && !canInvite)} data-testid="button-create-invite">{createInvite.isPending ? 'Criando convite…' : canInvite || !sessionId ? 'Gerar convite' : 'Sem convites disponíveis'} <LinkIcon size={16} /></button>{createInvite.isError && <p className="app-form-error" data-testid="status-invite-error">Não foi possível gerar agora. Tente novamente.</p>}</>}</div></div>}
   </div>;
 }
