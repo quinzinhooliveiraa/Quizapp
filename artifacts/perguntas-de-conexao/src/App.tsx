@@ -409,12 +409,11 @@ function StoredAccessGate() {
     const ownerReady = sessionQuery.isSuccess && sessionQuery.data.accessGranted;
     const guestReady = guestQuery.isSuccess && guestQuery.data.hasAccess;
     if (!ownerReady && !guestReady) return;
-    const onboardingDone = Boolean(
-      (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
-      || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
-    );
+    const onboardingDone = storedGuestToken
+      ? Boolean((guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete)
+      : Boolean((sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete);
     navigate(onboardingDone ? '/app' : '/onboarding', { replace: true });
-  }, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
+  }, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess, storedGuestToken]);
 
   const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
   if (wantsToBuy) return null;
@@ -1654,6 +1653,25 @@ function AppExperienceReference() {
   const invite = inviteQuery.data;
   const acceptInvite = () => {
     if (invite && token) {
+      const keysToRemove = [
+        'conexao-session',
+        'conexao-onboarding-complete',
+        'conexao-onboarding-step',
+        'conexao-onboarding-name',
+        'conexao-onboarding-pronoun',
+        'conexao-onboarding-relationship',
+        'conexao-onboarding-date',
+        'conexao-onboarding-curiosity',
+        'conexao-onboarding-feeling',
+        'conexao-relationship',
+        'conexao-curiosity',
+        'conexao-feeling',
+        'conexao-partner-pronoun',
+        'conexao-guest-email',
+      ];
+      keysToRemove.forEach(key => {
+        try { window.localStorage?.removeItem(key); } catch { /* noop */ }
+      });
       safeSetItem('conexao-guest-token', token);
       safeSetItem('conexao-guest-name', invite.guestName);
       safeSetItem('conexao-name', invite.guestName);

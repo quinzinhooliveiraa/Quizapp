@@ -1,0 +1,121 @@
+# Fix crítico: aceitar convite não limpa sessão do dono + Onboarding usa role certo
+
+**Bug:** admin logado clica no link do convite → aceitar → cai direto no /app pulando onboarding. Motivo: `acceptInvite` adiciona guest-token mas mantém `conexao-session` do admin. O Onboarding vê que o admin já completou (via sessionQuery), fica confuso, e redireciona pro /app.
+
+**IMPORTANTE: aplicar direto nos arquivos. Não é pra salvar como asset.**
+
+## Fix 1 — `artifacts/perguntas-de-conexao/src/App.tsx` — acceptInvite limpa sessão anterior
+
+Achar (perto da linha 1626):
+
+```tsx
+const acceptInvite = () => {
+  if (invite && token) {
+    safeSetItem('conexao-guest-token', token);
+    safeSetItem('conexao-guest-name', invite.guestName);
+    safeSetItem('conexao-name', invite.guestName);
+    safeSetItem('conexao-role', 'guest');
+    fetch(apiUrl(`/api/access/invites/${encodeURIComponent(token)}/accept`), { method: 'POST' }).catch(() => {});
+  }
+};
+```
+
+Trocar por (limpa completamente qualquer resíduo de sessão anterior — dono ou onboarding pela metade):
+
+```tsx
+const acceptInvite = () => {
+  if (invite && token) {
+    const keysToRemove = [
+      'conexao-session',
+      'conexao-onboarding-complete',
+      'conexao-onboarding-step',
+      'conexao-onboarding-name',
+      'conexao-onboarding-pronoun',
+      'conexao-onboarding-relationship',
+      'conexao-onboarding-date',
+      'conexao-onboarding-curiosity',
+      'conexao-onboarding-feeling',
+      'conexao-relationship',
+      'conexao-curiosity',
+      'conexao-feeling',
+      'conexao-partner-pronoun',
+      'conexao-guest-email',
+    ];
+    keysToRemove.forEach(key => {
+      try { window.localStorage?.removeItem(key); } catch { /* noop */ }
+    });
+    safeSetItem('conexao-guest-token', token);
+    safeSetItem('conexao-guest-name', invite.guestName);
+    safeSetItem('conexao-name', invite.guestName);
+    safeSetItem('conexao-role', 'guest');
+    fetch(apiUrl(`/api/access/invites/${encodeURIComponent(token)}/accept`), { method: 'POST' }).catch(() => {});
+  }
+};
+```
+
+## Fix 2 — `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx` — checar só o role atual
+
+Achar (perto da linha 310):
+
+```tsx
+const serverOnboardingComplete = Boolean(
+  (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+  || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
+);
+```
+
+Trocar por (só checa o RELEVANTE — se tem guest token, é convidado e ignora sessionQuery; se tem session, é dono):
+
+```tsx
+const currentRole = safeGetItem('conexao-guest-token') ? 'guest' : 'owner';
+const serverOnboardingComplete = currentRole === 'guest'
+  ? Boolean((guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete)
+  : Boolean((sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete);
+```
+
+## Fix 3 — Aplicar a mesma lógica de role no `StoredAccessGate` do App.tsx
+
+Achar (perto da linha 405-418, o useEffect no StoredAccessGate):
+
+```tsx
+useEffect(() => {
+  const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
+  if (wantsToBuy) return;
+  const ownerReady = sessionQuery.isSuccess && sessionQuery.data.accessGranted;
+  const guestReady = guestQuery.isSuccess && guestQuery.data.hasAccess;
+  if (!ownerReady && !guestReady) return;
+  const onboardingDone = Boolean(
+    (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+    || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
+  );
+  navigate(onboardingDone ? '/app' : '/onboarding', { replace: true });
+}, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
+```
+
+Trocar por (mesma lógica: checa o role atual pra decidir):
+
+```tsx
+useEffect(() => {
+  const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
+  if (wantsToBuy) return;
+  const isGuest = !!storedGuestToken;
+  const ownerReady = sessionQuery.isSuccess && sessionQuery.data.accessGranted;
+  const guestReady = guestQuery.isSuccess && guestQuery.data.hasAccess;
+  if (!ownerReady && !guestReady) return;
+  const onboardingDone = isGuest
+    ? Boolean((guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete)
+    : Boolean((sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete);
+  navigate(onboardingDone ? '/app' : '/onboarding', { replace: true });
+}, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess, storedGuestToken]);
+```
+
+## Verificação
+1. Como admin, cria convite pra "Julia"
+2. Cola link no MESMO navegador → clica "Aceitar convite"
+3. **Deve começar em /onboarding no intro (5%)** — se ainda cair no /app, o Replit não aplicou
+4. Passa por todos os steps (inclusive email do convidado)
+5. Cai no /app como Julia
+6. Volta admin via /login → cai direto no /app
+
+## Sobre "a outra aba deslogou automaticamente"
+Isso é comportamento **esperado** do localStorage — abas do mesmo navegador compartilham. Se você aceita convite numa aba, todas as outras abas viram convidado também. **1 navegador = 1 identidade.** Pra manter admin em uma aba e convidado em outra: usa janelas anônimas ou navegadores diferentes.

@@ -307,10 +307,10 @@ export default function Onboarding() {
     query: { enabled: !!storedGuestToken, queryKey: getGetInviteQueryKey(storedGuestToken) },
   });
   const queryClient = useQueryClient();
-  const serverOnboardingComplete = Boolean(
-    (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
-    || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
-  );
+  const currentRole = storedGuestToken ? 'guest' : 'owner';
+  const serverOnboardingComplete = currentRole === 'guest'
+    ? Boolean((guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete)
+    : Boolean((sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete);
 
   useEffect(() => {
     if (serverOnboardingComplete) {
