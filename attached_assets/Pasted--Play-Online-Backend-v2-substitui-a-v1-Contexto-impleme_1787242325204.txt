@@ -1,0 +1,499 @@
+# Play Online — Backend v2 (substitui a v1)
+
+**Contexto:** implementar play online com padrão do Casa dos 20, adaptado ao produto. Duas ou mais pessoas entram numa sala via código de 5 letras, veem a mesma pergunta ao mesmo tempo, respondem por escrito, e revelam as respostas juntos. Salvam momentos importantes ("resposta guardada").
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+## 1. Adicionar tabela `saved_moments` no schema — `lib/db/src/schema/index.ts`
+
+Adicionar antes dos exports:
+
+```ts
+export const savedMomentsTable = pgTable("saved_moments", {
+  id: text("id").primaryKey(),
+  ownerSessionId: text("owner_session_id"),
+  ownerGuestToken: text("owner_guest_token"),
+  questionId: text("question_id").notNull(),
+  themeId: text("theme_id").notNull(),
+  fromPlayerName: text("from_player_name").notNull(),
+  answerText: text("answer_text").notNull(),
+  roomCode: text("room_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+E nos exports adicionar:
+```ts
+export const insertSavedMomentSchema = createInsertSchema(savedMomentsTable);
+export type SavedMoment = typeof savedMomentsTable.$inferSelect;
+```
+
+## 2. Adicionar dependência `ws` — `artifacts/api-server/package.json`
+
+`dependencies`:
+```json
+"ws": "^8.18.0"
+```
+`devDependencies`:
+```json
+"@types/ws": "^8.5.13"
+```
+
+## 3. Criar `artifacts/api-server/src/lib/lobby.ts` (novo arquivo)
+
+```ts
+import type { WebSocket } from "ws";
+import crypto from "node:crypto";
+
+export type GameMode = "both" | "turn";
+export type LobbyPhase = "waiting" | "playing" | "revealing";
+
+export interface LobbyPlayer {
+  ws: WebSocket;
+  id: string;
+  name: string;
+  identity: "owner" | "guest" | "unknown";
+  currentAnswer: string | null;
+  hasSubmittedThisRound: boolean;
+}
+
+export interface Lobby {
+  code: string;
+  hostId: string;
+  players: LobbyPlayer[];
+  mode: GameMode;
+  phase: LobbyPhase;
+  themeId: string | null;
+  currentQuestionId: string | null;
+  currentTurnPlayerId: string | null;
+  seenQuestionIds: string[];
+  createdAt: number;
+}
+
+export const lobbies = new Map<string, Lobby>();
+
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+export function generateLobbyCode(): string {
+  let code: string;
+  do {
+    code = "";
+    for (let i = 0; i < 5; i++) {
+      code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+    }
+  } while (lobbies.has(code));
+  return code;
+}
+
+export function generatePlayerId(): string {
+  return crypto.randomBytes(6).toString("hex");
+}
+
+export function broadcastToLobby(lobby: Lobby, message: object, excludeId?: string) {
+  const payload = JSON.stringify(message);
+  lobby.players.forEach((p) => {
+    if (p.id !== excludeId && p.ws.readyState === 1) {
+      try { p.ws.send(payload); } catch { /* noop */ }
+    }
+  });
+}
+
+export function playerListPayload(lobby: Lobby) {
+  return lobby.players.map((p) => ({
+    id: p.id,
+    name: p.name,
+    isHost: p.id === lobby.hostId,
+    identity: p.identity,
+    hasSubmitted: p.hasSubmittedThisRound,
+  }));
+}
+
+export function resetAnswers(lobby: Lobby) {
+  lobby.players.forEach((p) => {
+    p.currentAnswer = null;
+    p.hasSubmittedThisRound = false;
+  });
+}
+
+export function reapEmptyLobbies() {
+  const now = Date.now();
+  const FOUR_HOURS = 4 * 60 * 60 * 1000;
+  for (const [code, lobby] of lobbies.entries()) {
+    if (lobby.players.length === 0 || now - lobby.createdAt > FOUR_HOURS) {
+      lobbies.delete(code);
+    }
+  }
+}
+```
+
+## 4. Criar `artifacts/api-server/src/lib/lobbyServer.ts` (novo arquivo)
+
+```ts
+import { WebSocketServer, WebSocket } from "ws";
+import type { Server } from "http";
+import { broadcastToLobby, generateLobbyCode, generatePlayerId, lobbies, playerListPayload, reapEmptyLobbies, resetAnswers, type GameMode, type Lobby } from "./lobby";
+import { logger } from "./logger";
+
+const MAX_PLAYERS = 8;
+const MIN_TO_START = 2;
+
+export function attachLobbyServer(httpServer: Server) {
+  const wss = new WebSocketServer({ noServer: true });
+
+  httpServer.on("upgrade", (req, socket, head) => {
+    if (req.url === "/ws/lobby") {
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+      });
+    }
+  });
+
+  setInterval(reapEmptyLobbies, 30 * 60 * 1000);
+
+  wss.on("connection", (ws: WebSocket) => {
+    let currentLobby: Lobby | null = null;
+    const playerId = generatePlayerId();
+    logger.info({ playerId }, "WS connected");
+
+    ws.on("message", (raw) => {
+      let msg: { type?: string; [k: string]: unknown };
+      try { msg = JSON.parse(raw.toString()); } catch { return; }
+
+      // CREATE
+      if (msg.type === "create") {
+        const mode: GameMode = msg.mode === "turn" ? "turn" : "both";
+        const code = generateLobbyCode();
+        const lobby: Lobby = {
+          code,
+          hostId: playerId,
+          players: [{
+            ws,
+            id: playerId,
+            name: String(msg.name || "").trim().slice(0, 40) || "Jogador",
+            identity: (msg.identity === "owner" || msg.identity === "guest") ? msg.identity : "unknown",
+            currentAnswer: null,
+            hasSubmittedThisRound: false,
+          }],
+          mode,
+          phase: "waiting",
+          themeId: null,
+          currentQuestionId: null,
+          currentTurnPlayerId: null,
+          seenQuestionIds: [],
+          createdAt: Date.now(),
+        };
+        lobbies.set(code, lobby);
+        currentLobby = lobby;
+        logger.info({ code, mode, playerId }, "Lobby created");
+        ws.send(JSON.stringify({
+          type: "created",
+          code,
+          playerId,
+          mode,
+          players: playerListPayload(lobby),
+        }));
+      }
+
+      // JOIN
+      else if (msg.type === "join") {
+        const code = String(msg.code || "").trim().toUpperCase();
+        logger.info({ code, playerId, lobbiesCount: lobbies.size }, "Join attempt");
+        const lobby = lobbies.get(code);
+        if (!lobby) {
+          logger.warn({ code, availableLobbies: [...lobbies.keys()] }, "Lobby not found on join");
+          ws.send(JSON.stringify({ type: "error", message: "Sala não encontrada. Confirme o código." }));
+          return;
+        }
+        if (lobby.players.length >= MAX_PLAYERS) {
+          ws.send(JSON.stringify({ type: "error", message: `Sala cheia (máx ${MAX_PLAYERS})` }));
+          return;
+        }
+        if (lobby.phase !== "waiting") {
+          ws.send(JSON.stringify({ type: "error", message: "Este jogo já começou. Peça pra criarem uma nova sala." }));
+          return;
+        }
+        lobby.players.push({
+          ws,
+          id: playerId,
+          name: String(msg.name || "").trim().slice(0, 40) || "Jogador",
+          identity: (msg.identity === "owner" || msg.identity === "guest") ? msg.identity : "unknown",
+          currentAnswer: null,
+          hasSubmittedThisRound: false,
+        });
+        currentLobby = lobby;
+        ws.send(JSON.stringify({
+          type: "joined",
+          code: lobby.code,
+          playerId,
+          hostId: lobby.hostId,
+          mode: lobby.mode,
+          themeId: lobby.themeId,
+          players: playerListPayload(lobby),
+        }));
+        broadcastToLobby(lobby, { type: "player_joined", players: playerListPayload(lobby) }, playerId);
+      }
+
+      // SET_THEME (host)
+      else if (msg.type === "set_theme" && currentLobby && currentLobby.hostId === playerId) {
+        currentLobby.themeId = typeof msg.themeId === "string" ? msg.themeId : null;
+        currentLobby.currentQuestionId = null;
+        currentLobby.seenQuestionIds = [];
+        resetAnswers(currentLobby);
+        broadcastToLobby(currentLobby, { type: "theme_changed", themeId: currentLobby.themeId });
+      }
+
+      // START (host, ≥ MIN_TO_START players)
+      else if (msg.type === "start" && currentLobby && currentLobby.hostId === playerId) {
+        if (currentLobby.players.length < MIN_TO_START) {
+          ws.send(JSON.stringify({ type: "error", message: `Precisa de pelo menos ${MIN_TO_START} pessoas pra começar.` }));
+          return;
+        }
+        if (!currentLobby.themeId) {
+          ws.send(JSON.stringify({ type: "error", message: "Escolha um tema primeiro." }));
+          return;
+        }
+        currentLobby.phase = "playing";
+        currentLobby.currentTurnPlayerId = currentLobby.players[0].id;
+        resetAnswers(currentLobby);
+        broadcastToLobby(currentLobby, {
+          type: "game_started",
+          mode: currentLobby.mode,
+          themeId: currentLobby.themeId,
+          currentTurnPlayerId: currentLobby.currentTurnPlayerId,
+          players: playerListPayload(currentLobby),
+        });
+      }
+
+      // NEXT_QUESTION
+      else if (msg.type === "next_question" && currentLobby && currentLobby.phase !== "waiting") {
+        const available: string[] = Array.isArray(msg.availableQuestionIds) ? msg.availableQuestionIds : [];
+        if (available.length === 0) return;
+        const unseen = available.filter((id) => !currentLobby!.seenQuestionIds.includes(id));
+        const pool = unseen.length > 0 ? unseen : available;
+        const next = pool[Math.floor(Math.random() * pool.length)];
+        if (unseen.length === 0) currentLobby.seenQuestionIds = [];
+        currentLobby.currentQuestionId = next;
+        currentLobby.seenQuestionIds.push(next);
+        currentLobby.phase = "playing";
+        resetAnswers(currentLobby);
+
+        // Se modo turn, avança turno (rotativo)
+        if (currentLobby.mode === "turn") {
+          const idx = currentLobby.players.findIndex((p) => p.id === currentLobby!.currentTurnPlayerId);
+          const nextIdx = idx < 0 ? 0 : (idx + 1) % currentLobby.players.length;
+          currentLobby.currentTurnPlayerId = currentLobby.players[nextIdx].id;
+        }
+
+        broadcastToLobby(currentLobby, {
+          type: "question_changed",
+          questionId: next,
+          themeId: currentLobby.themeId,
+          currentTurnPlayerId: currentLobby.currentTurnPlayerId,
+          players: playerListPayload(currentLobby),
+        });
+      }
+
+      // SUBMIT_ANSWER
+      else if (msg.type === "submit_answer" && currentLobby && currentLobby.phase === "playing") {
+        const answer = String(msg.answer || "").trim().slice(0, 1000);
+        const player = currentLobby.players.find((p) => p.id === playerId);
+        if (!player || player.hasSubmittedThisRound) return;
+
+        // Modo turn: só o da vez pode enviar
+        if (currentLobby.mode === "turn" && playerId !== currentLobby.currentTurnPlayerId) {
+          ws.send(JSON.stringify({ type: "error", message: "Não é sua vez ainda." }));
+          return;
+        }
+
+        player.currentAnswer = answer;
+        player.hasSubmittedThisRound = true;
+
+        broadcastToLobby(currentLobby, {
+          type: "player_submitted",
+          playerId,
+          playerName: player.name,
+          players: playerListPayload(currentLobby),
+        });
+
+        // Verifica se todo mundo submeteu (modo both) ou o único da vez (modo turn)
+        const shouldReveal = currentLobby.mode === "turn"
+          ? player.id === currentLobby.currentTurnPlayerId
+          : currentLobby.players.every((p) => p.hasSubmittedThisRound);
+
+        if (shouldReveal) {
+          currentLobby.phase = "revealing";
+          broadcastToLobby(currentLobby, {
+            type: "answers_revealed",
+            answers: currentLobby.players
+              .filter((p) => p.currentAnswer !== null)
+              .map((p) => ({ playerId: p.id, playerName: p.name, answer: p.currentAnswer })),
+            questionId: currentLobby.currentQuestionId,
+          });
+        }
+      }
+
+      // LEAVE
+      else if (msg.type === "leave") {
+        removePlayer();
+      }
+    });
+
+    ws.on("close", () => { removePlayer(); });
+
+    function removePlayer() {
+      if (!currentLobby) return;
+      currentLobby.players = currentLobby.players.filter((p) => p.id !== playerId);
+      if (currentLobby.players.length === 0) {
+        lobbies.delete(currentLobby.code);
+      } else {
+        if (currentLobby.hostId === playerId) {
+          currentLobby.hostId = currentLobby.players[0].id;
+        }
+        broadcastToLobby(currentLobby, {
+          type: "player_left",
+          players: playerListPayload(currentLobby),
+          hostId: currentLobby.hostId,
+        });
+      }
+      currentLobby = null;
+    }
+  });
+
+  logger.info({ path: "/ws/lobby" }, "Lobby WebSocket server attached");
+}
+```
+
+## 5. Rotas REST pra saved moments — `artifacts/api-server/src/routes/moments.ts` (novo arquivo)
+
+```ts
+import { Router, type IRouter } from "express";
+import crypto from "node:crypto";
+import { and, desc, eq, or } from "drizzle-orm";
+import { db, savedMomentsTable } from "@workspace/db";
+
+const router: IRouter = Router();
+
+// GET /moments — lista respostas guardadas pelo usuário atual
+router.get("/moments", async (req, res): Promise<void> => {
+  const sessionId = String(req.query.sessionId || "").trim();
+  const guestToken = String(req.query.guestToken || "").trim();
+  if (!sessionId && !guestToken) {
+    res.status(400).json({ error: "Precisa passar sessionId ou guestToken" });
+    return;
+  }
+  const rows = await db.select()
+    .from(savedMomentsTable)
+    .where(sessionId
+      ? eq(savedMomentsTable.ownerSessionId, sessionId)
+      : eq(savedMomentsTable.ownerGuestToken, guestToken))
+    .orderBy(desc(savedMomentsTable.createdAt))
+    .limit(200);
+  res.json({ moments: rows });
+});
+
+// POST /moments — salva uma resposta
+router.post("/moments", async (req, res): Promise<void> => {
+  const body = req.body as {
+    sessionId?: string;
+    guestToken?: string;
+    questionId?: string;
+    themeId?: string;
+    fromPlayerName?: string;
+    answerText?: string;
+    roomCode?: string;
+  };
+  const sessionId = body.sessionId?.trim() || "";
+  const guestToken = body.guestToken?.trim() || "";
+  if (!sessionId && !guestToken) { res.status(400).json({ error: "sessionId ou guestToken" }); return; }
+  if (!body.questionId || !body.themeId || !body.fromPlayerName || !body.answerText) {
+    res.status(400).json({ error: "campos obrigatórios faltando" });
+    return;
+  }
+  const id = crypto.randomUUID();
+  await db.insert(savedMomentsTable).values({
+    id,
+    ownerSessionId: sessionId || null,
+    ownerGuestToken: guestToken || null,
+    questionId: body.questionId,
+    themeId: body.themeId,
+    fromPlayerName: body.fromPlayerName.trim().slice(0, 60),
+    answerText: body.answerText.trim().slice(0, 2000),
+    roomCode: body.roomCode?.trim().slice(0, 5) || null,
+  });
+  res.status(201).json({ id, ok: true });
+});
+
+// DELETE /moments/:id — remove um momento guardado
+router.delete("/moments/:id", async (req, res): Promise<void> => {
+  const id = req.params.id;
+  const sessionId = String(req.query.sessionId || "").trim();
+  const guestToken = String(req.query.guestToken || "").trim();
+  await db.delete(savedMomentsTable).where(and(
+    eq(savedMomentsTable.id, id),
+    or(
+      sessionId ? eq(savedMomentsTable.ownerSessionId, sessionId) : undefined,
+      guestToken ? eq(savedMomentsTable.ownerGuestToken, guestToken) : undefined,
+    ),
+  ));
+  res.json({ ok: true });
+});
+
+export default router;
+```
+
+## 6. Registrar rotas de moments — `artifacts/api-server/src/routes/index.ts`
+
+Adicionar import e uso:
+```ts
+import momentsRouter from "./moments";
+// ...
+router.use(momentsRouter);
+```
+
+## 7. Atualizar `artifacts/api-server/src/index.ts` pra criar httpServer + anexar WS
+
+Substituir o arquivo inteiro por:
+
+```ts
+import http from "http";
+import app from "./app";
+import { attachLobbyServer } from "./lib/lobbyServer";
+import { logger } from "./lib/logger";
+
+const rawPort = process.env["PORT"];
+if (!rawPort) throw new Error("PORT env var required");
+const port = Number(rawPort);
+if (Number.isNaN(port) || port <= 0) throw new Error(`Invalid PORT: "${rawPort}"`);
+
+const httpServer = http.createServer(app);
+attachLobbyServer(httpServer);
+
+httpServer.listen(port, (err?: Error) => {
+  if (err) { logger.error({ err }, "Error listening"); process.exit(1); }
+  logger.info({ port }, "Server listening (HTTP + WebSocket)");
+});
+```
+
+## 8. IMPORTANTE — configurar Railway pra 1 replica só (evitar bug de sala não achada)
+
+WebSocket em memória só funciona corretamente se todos os clientes conectam no MESMO servidor. Se o Railway rodar 2 replicas do api-server, uma pode criar a sala e a outra não encontrar. **Confirma no Railway: api-server → Settings → Replicas = 1**.
+
+## Verificação (depois do deploy)
+
+Console do navegador 1:
+```js
+const ws = new WebSocket('wss://workspaceapi-server-production-0516.up.railway.app/ws/lobby');
+ws.onopen = () => ws.send(JSON.stringify({ type: 'create', name: 'Quinzinho', identity: 'owner', mode: 'both' }));
+ws.onmessage = (e) => console.log('👤 A:', JSON.parse(e.data));
+```
+Deve receber `{ type: "created", code: "XKJDR", playerId, mode, players }`.
+
+Console do navegador 2 (mesma máquina, aba anônima):
+```js
+const ws2 = new WebSocket('wss://.../ws/lobby');
+ws2.onopen = () => ws2.send(JSON.stringify({ type: 'join', code: 'XKJDR', name: 'Julia', identity: 'guest' }));
+ws2.onmessage = (e) => console.log('👤 B:', JSON.parse(e.data));
+```
+Deve receber `{ type: "joined", ... }` e o navegador 1 deve receber `player_joined`.
+
+Se isso passar, backend tá redondo. Me confirma, aí mando o **Prompt 2 (frontend)** com todas as telas.
