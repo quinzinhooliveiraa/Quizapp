@@ -6438,6 +6438,123 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   font-weight: 500;
 }
 
+.settings-row-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0.7rem 0.5rem;
+  border-radius: 0.5rem;
+  margin: 0 -0.5rem;
+}
+
+.settings-row-clickable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.settings-row-clickable strong {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.settings-chevron {
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.settings-chevron.is-open {
+  transform: rotate(90deg);
+  color: rgba(196, 172, 255, 0.9);
+}
+
+.settings-choices-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.6rem 0 1rem 0.5rem;
+  animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.access-gate-denied {
+  max-width: 380px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.access-gate-denied h2 {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #f9f8fb;
+  margin: 0.8rem 0 0.4rem;
+  letter-spacing: -0.02em;
+}
+
+.access-gate-denied p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0.3rem 0;
+}
+
+.access-gate-denied .access-gate-hint {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.6rem;
+}
+
+.access-gate-actions {
+  margin-top: 1.4rem;
+}
+
+/* Onboarding: centralizado e cabendo na tela no PC. */
+@media (min-width: 900px) {
+  .onboarding-shell {
+    align-items: center;
+    padding: 2rem;
+  }
+
+  .onboarding-frame {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-top: 0;
+    justify-content: center;
+    min-height: auto;
+  }
+
+  .onboarding-content {
+    text-align: center;
+    align-items: center;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    justify-content: center;
+  }
+
+  .onboarding-content h1 {
+    max-width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .onboarding-content > p,
+  .onboarding-content .onboarding-kicker,
+  .onboarding-content .onboarding-subtitle {
+    text-align: center;
+    max-width: 34rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .onboarding-content .onboarding-name-form,
+  .onboarding-content .name-suggestions {
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 @media (min-width: 900px) {
   .app-wordmark { display: none; }
 }

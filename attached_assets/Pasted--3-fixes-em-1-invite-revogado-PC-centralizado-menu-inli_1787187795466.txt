@@ -1,0 +1,242 @@
+# 3 fixes em 1: invite revogado, PC centralizado, menu ⚙️ inline
+
+3 melhorias reais de UX. Todas independentes, aplique tudo de uma vez.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## Fix 1 — Invite revogado dá tela clara (em vez de "Verificando acesso" pra sempre)
+
+**Bug:** quando dono desconvida alguém, o convidado (se ainda tem token no localStorage) fica na tela "Verificando seu acesso…" pra sempre. Devia mostrar "Seu acesso foi encerrado".
+
+### `artifacts/perguntas-de-conexao/src/App.tsx` — dentro do `ProtectedExperienceRoute`
+
+Achar (perto da linha 1734):
+
+```tsx
+if (isChecking || !hasAccess) {
+  return <div className="access-gate-overlay" role="status" aria-live="polite"><div className="access-gate"><span className="access-gate-mark"><Feather size={18} /></span><p>Verificando seu acesso…</p></div></div>;
+}
+```
+
+Trocar por:
+
+```tsx
+// Detecta se convite/sessão foi revogado (404 ou hasAccess=false depois de resolvido)
+const inviteRevoked = storedGuestToken && guestQuery.isError;
+const sessionRevoked = storedSessionId && sessionQuery.isError;
+
+if (inviteRevoked || sessionRevoked) {
+  const clearAndGo = () => {
+    ['conexao-session', 'conexao-guest-token', 'conexao-guest-name', 'conexao-name', 'conexao-role', 'conexao-onboarding-complete'].forEach(key => {
+      try { window.localStorage?.removeItem(key); } catch { /* noop */ }
+    });
+    navigate('/', { replace: true });
+  };
+  return <div className="access-gate-overlay" role="status">
+    <div className="access-gate access-gate-denied">
+      <span className="access-gate-mark"><X size={20} /></span>
+      <h2>Seu acesso foi encerrado.</h2>
+      <p>{inviteRevoked ? 'Quem te convidou removeu seu acesso a este baralho.' : 'Sua sessão não é mais válida.'}</p>
+      <p className="access-gate-hint">Fale com quem te convidou pra receber um novo convite, ou compre seu próprio baralho.</p>
+      <div className="access-gate-actions">
+        <button onClick={clearAndGo} className="button button-primary" data-testid="button-clear-revoked">Voltar ao início</button>
+      </div>
+    </div>
+  </div>;
+}
+
+if (isChecking || !hasAccess) {
+  return <div className="access-gate-overlay" role="status" aria-live="polite"><div className="access-gate"><span className="access-gate-mark"><Feather size={18} /></span><p>Verificando seu acesso…</p></div></div>;
+}
+```
+
+### CSS pra tela — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.access-gate-denied {
+  max-width: 380px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+.access-gate-denied h2 {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #f9f8fb;
+  margin: 0.8rem 0 0.4rem;
+  letter-spacing: -0.02em;
+}
+.access-gate-denied p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0.3rem 0;
+}
+.access-gate-denied .access-gate-hint {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.6rem;
+}
+.access-gate-actions {
+  margin-top: 1.4rem;
+}
+```
+
+---
+
+## Fix 2 — Onboarding centralizado no PC (não fica quebrado à esquerda)
+
+**Bug:** no desktop, o conteúdo do onboarding fica à esquerda, quebrado, exige scroll. Deveria centralizar e caber na tela.
+
+### `artifacts/perguntas-de-conexao/src/index.css`
+
+Procurar a regra `.onboarding-content` já existente. Se já tem media query pra desktop, atualize; senão adicione no final:
+
+```css
+/* Onboarding: centralizado e cabendo na tela no PC */
+@media (min-width: 900px) {
+  .onboarding-shell {
+    align-items: center;
+    padding: 2rem;
+  }
+  .onboarding-frame {
+    max-width: 720px;
+    margin: 0 auto;
+    padding-top: 0;
+    justify-content: center;
+    min-height: auto;
+  }
+  .onboarding-content {
+    text-align: center;
+    align-items: center;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    justify-content: center;
+  }
+  .onboarding-content h1 {
+    max-width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .onboarding-content > p,
+  .onboarding-content .onboarding-kicker,
+  .onboarding-content .onboarding-subtitle {
+    text-align: center;
+    max-width: 34rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .onboarding-content .onboarding-name-form,
+  .onboarding-content .name-suggestions {
+    align-items: center;
+    justify-content: center;
+  }
+}
+```
+
+(Se algo específico não centralizar após esse CSS, o Replit pode adicionar mais seletores conforme necessário — a regra é: no PC, centralizar tudo horizontal e verticalmente, caber sem scroll.)
+
+---
+
+## Fix 3 — Menu ⚙️ inline (label + valor selecionado, clica pra expandir)
+
+**Bug:** hoje mostra todas as opções de relacionamento/pronome sempre visíveis, quebrando estética. Deveria ser tipo:
+```
+Tipo de relacionamento     Meu esposo ou minha esposa  ›
+Pronome do parceiro        Ela  ›
+```
+Clicar expande as opções, escolhe, colapsa.
+
+### `artifacts/perguntas-de-conexao/src/App.tsx` — dentro do modal de settings
+
+Achar o bloco de configurações (perto da linha 1665) que renderiza as `settings-editable` com chips. Substituir os 2 blocos `<div className="settings-editable">...` (relacionamento + pronome) e o botão "Salvar preferências" por essa estrutura:
+
+```tsx
+<div className="settings-row settings-row-clickable" onClick={() => setExpandedField(expandedField === 'relationship' ? null : 'relationship')} data-testid="row-relationship">
+  <span>Tipo de relacionamento</span>
+  <strong>{editRelationship || 'Não definido'} <ChevronRight size={14} className={`settings-chevron ${expandedField === 'relationship' ? 'is-open' : ''}`} /></strong>
+</div>
+{expandedField === 'relationship' && <div className="settings-choices-inline">
+  {RELATIONSHIP_OPTIONS.map(opt => (
+    <button
+      key={opt}
+      type="button"
+      onClick={() => { setEditRelationship(opt); safeSetItem('conexao-relationship', opt); setExpandedField(null); }}
+      className={`settings-choice ${editRelationship === opt ? 'is-selected' : ''}`}
+      data-testid={`button-relationship-${opt}`}
+    >{opt}</button>
+  ))}
+</div>}
+
+<div className="settings-row settings-row-clickable" onClick={() => setExpandedField(expandedField === 'pronoun' ? null : 'pronoun')} data-testid="row-pronoun">
+  <span>Pronome do parceiro</span>
+  <strong>{editPronoun || 'Não definido'} <ChevronRight size={14} className={`settings-chevron ${expandedField === 'pronoun' ? 'is-open' : ''}`} /></strong>
+</div>
+{expandedField === 'pronoun' && <div className="settings-choices-inline">
+  {PRONOUN_OPTIONS.map(opt => (
+    <button
+      key={opt}
+      type="button"
+      onClick={() => { setEditPronoun(opt); safeSetItem('conexao-partner-pronoun', opt); setExpandedField(null); }}
+      className={`settings-choice ${editPronoun === opt ? 'is-selected' : ''}`}
+      data-testid={`button-pronoun-${opt}`}
+    >{opt}</button>
+  ))}
+</div>}
+```
+
+E adicionar o state pra controlar qual campo está aberto (perto de outros useState do componente):
+
+```tsx
+const [expandedField, setExpandedField] = useState<'relationship' | 'pronoun' | null>(null);
+useEffect(() => { if (!settingsOpen) setExpandedField(null); }, [settingsOpen]);
+```
+
+**Remover o botão "Salvar preferências"** — não precisa mais, cada escolha salva na hora.
+
+Adicionar import de `ChevronRight` se não estiver (já deve estar, mas garantir).
+
+### CSS pra inline — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.settings-row-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0.7rem 0.5rem;
+  border-radius: 0.5rem;
+  margin: 0 -0.5rem;
+}
+.settings-row-clickable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.settings-row-clickable strong {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.settings-chevron {
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s ease;
+}
+.settings-chevron.is-open {
+  transform: rotate(90deg);
+  color: rgba(196, 172, 255, 0.9);
+}
+.settings-choices-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.6rem 0 1rem 0.5rem;
+  animation: fadeInDown 0.2s ease;
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+```
+
+## Verificação
+1. Convidado desconvidado tenta abrir app → vê tela clara "Seu acesso foi encerrado" com botão "Voltar ao início"
+2. PC → onboarding: conteúdo centralizado, cabe na tela sem scroll
+3. ⚙️ Ajustes: cada linha é "Tipo de relacionamento: Meu esposo ›" — clica → chips aparecem embaixo pra escolher, clica em uma → chip vira o valor selecionado, opções colapsam
