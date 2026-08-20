@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Bookmark, Check, Clipboard, Feather, Link2, Load
 import { Link, useLocation } from 'wouter';
 import { questions, themes } from '@workspace/connection-content';
 import { type LobbyEvent, type LobbyMode, type LobbyPlayer, useLobbySocket } from '@/hooks/useLobbySocket';
+import { apiBaseUrl } from '@/config';
 
 type View = 'entry' | 'lobby' | 'game';
 
@@ -41,7 +42,7 @@ export default function Play() {
   const isHost = playerId === hostId || Boolean(me?.isHost);
   const submitted = Boolean(me?.hasSubmitted);
   const isMyTurn = mode === 'both' || turnPlayerId === playerId;
-  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const apiBase = apiBaseUrl;
   const sessionId = localStorage.getItem('conexao-session') || '';
   const guestToken = localStorage.getItem('conexao-guest-token') || '';
 

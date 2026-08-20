@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ArrowRight, Feather, Mail } from 'lucide-react';
+import { apiBaseUrl } from '@/config';
 
-const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
 
 type Stage = 'email' | 'code' | 'picker';

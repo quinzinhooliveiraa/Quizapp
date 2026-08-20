@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { apiBaseUrl } from '@/config';
 
 export type LobbyMode = 'both' | 'turn';
 export type LobbyPhase = 'idle' | 'waiting' | 'playing' | 'revealing';
@@ -25,7 +26,7 @@ export type LobbyEvent =
 type ConnectionStatus = 'connecting' | 'open' | 'closed' | 'error';
 
 function lobbyUrl() {
-  const configured = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const configured = apiBaseUrl;
   if (configured) {
     try {
       const url = new URL(configured);

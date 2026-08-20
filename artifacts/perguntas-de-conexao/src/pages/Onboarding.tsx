@@ -8,6 +8,7 @@ import {
   useGetInvite,
   useGetQuestionSession,
 } from '@workspace/api-client-react';
+import { apiBaseUrl } from '@/config';
 
 type StepId =
   | 'intro'
@@ -367,7 +368,7 @@ export default function Onboarding() {
       safeSetItem('conexao-feeling', feeling);
       safeSetItem('conexao-partner-pronoun', pronoun);
 
-      const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+      const apiBase = apiBaseUrl;
       const guestToken = safeGetItem('conexao-guest-token');
       const sessionId = safeGetItem('conexao-session');
       const completeUrl = guestToken
@@ -406,7 +407,7 @@ export default function Onboarding() {
       setGuestEmailChecking(true);
       setGuestEmailError('');
       try {
-        const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+      const apiBase = apiBaseUrl;
         const response = await fetch(`${apiBase}/api/access/check-email?email=${encodeURIComponent(trimmed)}`);
         const data = await response.json() as { exists?: boolean; asOwner?: boolean };
         if (data.exists) {
@@ -441,7 +442,7 @@ export default function Onboarding() {
     safeRemoveItem('conexao-feeling');
     safeRemoveItem('conexao-partner-pronoun');
     removeWelcomeDeck();
-    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+    const apiBase = apiBaseUrl;
     const sid = safeGetItem('conexao-session');
     const tok = safeGetItem('conexao-guest-token');
     const resetUrl = tok

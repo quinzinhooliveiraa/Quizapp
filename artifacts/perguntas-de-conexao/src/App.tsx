@@ -28,6 +28,7 @@ import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
 import Login from '@/pages/Login';
 import Play from '@/pages/Play';
+import { apiBaseUrl } from '@/config';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +39,7 @@ const queryClient = new QueryClient({
     },
   },
 });
-const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
 const inviteUrlFromToken = (token: string) => `${window.location.origin}/invite/${token}`;
 
