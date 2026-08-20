@@ -1,0 +1,270 @@
+# Refactor 2/3 — Servidor como fonte da verdade (Frontend)
+
+**Contexto:** backend agora tem `onboardingComplete` no banco (dono e convidado), e endpoints retornam esse campo. Este prompt faz o frontend **ignorar** o `localStorage 'conexao-onboarding-complete'` pra decidir se onboarding tá completo — passa a ler direto do servidor. E quando o onboarding termina, chama endpoint pra salvar no servidor.
+
+**IMPORTANTE: aplicar direto nos arquivos. Não é pra salvar como asset.**
+
+## Fix 1 — Backend: `/auth/verify-code` também retorna `onboardingComplete`
+
+`artifacts/api-server/src/routes/auth.ts` — achar a query que busca sessions e a que busca invites:
+
+Na query de sessions, adicionar `onboardingComplete: sessionsTable.onboardingComplete`:
+```ts
+const sessions = await db.select({
+  id: sessionsTable.id,
+  buyerName: sessionsTable.buyerName,
+  packageName: sessionsTable.packageName,
+  createdAt: sessionsTable.createdAt,
+  onboardingComplete: sessionsTable.onboardingComplete,
+})
+```
+
+Na query de invites, adicionar `onboardingComplete: invitesTable.onboardingComplete`:
+```ts
+const invites = await db.select({
+  token: invitesTable.token,
+  guestName: invitesTable.guestName,
+  sessionId: invitesTable.sessionId,
+  createdAt: invitesTable.createdAt,
+  onboardingComplete: invitesTable.onboardingComplete,
+})
+```
+
+E na construção do `inviteEntries`, incluir também:
+```ts
+return {
+  token: invite.token,
+  guestName: invite.guestName,
+  ownerName: owner?.buyerName || 'alguém',
+  createdAt: invite.createdAt,
+  onboardingComplete: invite.onboardingComplete,
+};
+```
+
+E no admin bypass, retornar também:
+```ts
+if (isAdmin && existingSession) {
+  // Buscar o dado completo pra retornar onboardingComplete
+  const [fullSession] = await db.select({ id: sessionsTable.id, onboardingComplete: sessionsTable.onboardingComplete })
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, existingSession.id))
+    .limit(1);
+  res.json({ ok: true, adminBypass: true, sessionId: existingSession.id, onboardingComplete: fullSession?.onboardingComplete ?? false });
+  return;
+}
+```
+
+## Fix 2 — Login.tsx: usar `onboardingComplete` do servidor pra decidir /app vs /onboarding
+
+`artifacts/perguntas-de-conexao/src/pages/Login.tsx`
+
+Atualizar os tipos:
+```tsx
+type SessionSummary = { id: string; buyerName: string; packageName: string; createdAt: string; onboardingComplete?: boolean };
+type InviteSummary = { token: string; guestName: string; ownerName: string; createdAt: string; onboardingComplete?: boolean };
+```
+
+Trocar `completeLoginAsOwner`:
+```tsx
+function completeLoginAsOwner(session: SessionSummary) {
+  safeSet('conexao-session', session.id);
+  safeSet('conexao-name', session.buyerName);
+  safeSet('conexao-role', 'owner');
+  try { window.localStorage?.removeItem('conexao-guest-token'); } catch { /* noop */ }
+  try { window.localStorage?.removeItem('conexao-onboarding-complete'); } catch { /* noop */ }
+  navigate(session.onboardingComplete ? '/app' : '/onboarding', { replace: true });
+}
+```
+
+Trocar `completeLoginAsGuest`:
+```tsx
+function completeLoginAsGuest(invite: InviteSummary) {
+  safeSet('conexao-guest-token', invite.token);
+  safeSet('conexao-name', invite.guestName);
+  safeSet('conexao-role', 'guest');
+  safeSet('conexao-guest-name', invite.guestName);
+  try { window.localStorage?.removeItem('conexao-session'); } catch { /* noop */ }
+  try { window.localStorage?.removeItem('conexao-onboarding-complete'); } catch { /* noop */ }
+  navigate(invite.onboardingComplete ? '/app' : '/onboarding', { replace: true });
+}
+```
+
+E o admin bypass usa `data.onboardingComplete`:
+```tsx
+if (data.adminBypass && data.sessionId) {
+  completeLoginAsOwner({
+    id: data.sessionId,
+    buyerName: 'Admin',
+    packageName: 'Admin',
+    createdAt: new Date().toISOString(),
+    onboardingComplete: (data as { onboardingComplete?: boolean }).onboardingComplete ?? false,
+  });
+  return;
+}
+```
+
+## Fix 3 — Onboarding.tsx: verificar onboardingComplete no servidor, não no localStorage
+
+`artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+### 3.1. Adicionar imports (topo do arquivo, junto com outros imports)
+
+```tsx
+import { useGetInvite, useGetQuestionSession, getGetInviteQueryKey, getGetQuestionSessionQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+```
+
+(Se algum já estiver importado, pula.)
+
+### 3.2. Dentro do componente `Onboarding()`, ANTES do useEffect atual (perto da linha 295)
+
+Adicionar:
+```tsx
+const storedSessionId = safeGetItem('conexao-session')?.trim() || '';
+const storedGuestToken = safeGetItem('conexao-guest-token')?.trim() || '';
+const sessionQuery = useGetQuestionSession(storedSessionId, {
+  query: { enabled: !!storedSessionId, queryKey: getGetQuestionSessionQueryKey(storedSessionId) },
+});
+const guestQuery = useGetInvite(storedGuestToken, {
+  query: { enabled: !!storedGuestToken, queryKey: getGetInviteQueryKey(storedGuestToken) },
+});
+const queryClient = useQueryClient();
+
+const serverOnboardingComplete = Boolean(
+  (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+  || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
+);
+```
+
+### 3.3. Trocar o useEffect confuso de redirect (linhas 295-307)
+
+De:
+```tsx
+useEffect(() => {
+  const hasPaidOwnerSession = Boolean(
+    safeGetItem('conexao-session')
+    && readOnboardingRole() === 'owner'
+    && safeGetItem('conexao-onboarding-complete') !== 'true',
+  );
+  if (
+    (safeGetItem('conexao-session') && !hasPaidOwnerSession)
+    || safeGetItem('conexao-onboarding-complete') === 'true'
+  ) {
+    navigate('/app', { replace: true });
+  }
+}, [navigate]);
+```
+
+Para (agora simples: se servidor diz que já fez, vai pro /app):
+```tsx
+useEffect(() => {
+  if (serverOnboardingComplete) {
+    navigate('/app', { replace: true });
+  }
+}, [serverOnboardingComplete, navigate]);
+```
+
+### 3.4. Trocar o bloco que grava `conexao-onboarding-complete` no localStorage
+
+Achar (perto da linha 349, dentro do useEffect que roda no step 'preparing'):
+```tsx
+if (step.id === 'preparing') {
+  safeSetItem('conexao-name', name.trim());
+  safeSetItem('conexao-relationship', relationship);
+  safeSetItem('conexao-curiosity', JSON.stringify(curiosity));
+  safeSetItem('conexao-feeling', feeling);
+  safeSetItem('conexao-partner-pronoun', pronoun);
+  safeSetItem('conexao-onboarding-complete', 'true');
+  // ... resto do bloco com o claim-email
+}
+```
+
+Trocar por (agora envia pro servidor e invalida a query pra o /app pegar o estado atualizado):
+```tsx
+if (step.id === 'preparing') {
+  safeSetItem('conexao-name', name.trim());
+  safeSetItem('conexao-relationship', relationship);
+  safeSetItem('conexao-curiosity', JSON.stringify(curiosity));
+  safeSetItem('conexao-feeling', feeling);
+  safeSetItem('conexao-partner-pronoun', pronoun);
+
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const guestToken = safeGetItem('conexao-guest-token');
+  const sessionId = safeGetItem('conexao-session');
+
+  // Salva onboardingComplete no servidor (dono OU convidado)
+  const completeUrl = guestToken
+    ? `${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/complete-onboarding`
+    : sessionId
+      ? `${apiBase}/api/access/sessions/${encodeURIComponent(sessionId)}/complete-onboarding`
+      : null;
+
+  if (completeUrl) {
+    fetch(completeUrl, { method: 'POST' })
+      .then(() => {
+        // Invalida query pra próxima leitura pegar onboardingComplete=true do servidor
+        if (guestToken) queryClient.invalidateQueries({ queryKey: getGetInviteQueryKey(guestToken) });
+        if (sessionId) queryClient.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) });
+      })
+      .catch(() => { /* silently fail */ });
+  }
+
+  // Se é convidado, também registra o email no backend pra login futuro
+  const trimmedEmail = guestEmail.trim().toLowerCase();
+  if (guestToken && trimmedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    fetch(`${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/claim-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmedEmail }),
+    }).catch(() => { /* silently fail */ });
+  }
+}
+```
+
+## Fix 4 — App.tsx StoredAccessGate: também respeitar onboardingComplete do servidor
+
+`artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar o `useEffect` dentro de `StoredAccessGate` (perto da linha 405-411):
+```tsx
+useEffect(() => {
+  const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
+  if (wantsToBuy) return;
+  if ((sessionQuery.isSuccess && sessionQuery.data.accessGranted) || (guestQuery.isSuccess && guestQuery.data.hasAccess)) {
+    navigate('/app', { replace: true });
+  }
+}, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
+```
+
+Trocar por (se onboarding não tá completo, redireciona pra /onboarding em vez de /app):
+```tsx
+useEffect(() => {
+  const wantsToBuy = typeof window !== 'undefined' && (window.location.hash === '#pacotes' || new URLSearchParams(window.location.search).get('comprar') === '1');
+  if (wantsToBuy) return;
+  const ownerReady = sessionQuery.isSuccess && sessionQuery.data.accessGranted;
+  const guestReady = guestQuery.isSuccess && guestQuery.data.hasAccess;
+  if (!ownerReady && !guestReady) return;
+  const onboardingDone = Boolean(
+    (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+    || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
+  );
+  navigate(onboardingDone ? '/app' : '/onboarding', { replace: true });
+}, [guestQuery.data, guestQuery.isSuccess, navigate, sessionQuery.data, sessionQuery.isSuccess]);
+```
+
+## Fix 5 — App.tsx: aceitar convite não precisa mais limpar `conexao-onboarding-complete`
+
+Já mandei um prompt antes que limpa localStorage no aceite. **Aquele prompt ainda é útil** (limpa `conexao-session` do dono anterior). Se ainda não foi aplicado, aplique também. A limpeza específica do `conexao-onboarding-complete` continua valendo por segurança, mas agora o servidor manda mesmo.
+
+## Deploy
+- Backend: já deveria redeployar sozinho quando fizer commit
+- Frontend: idem
+- Nada de comando manual — o `db push` automático que a gente configurou faz o serviço
+
+## Verificação
+1. **Como admin**, login → cai em /onboarding (porque servidor diz onboardingComplete=false pra tua session).
+2. **Passa todo o onboarding** → no fim, cai em /app. Servidor recebeu POST /complete-onboarding.
+3. **Fecha o navegador, abre de novo em janela anônima**, faz login → cai DIRETO no /app (porque servidor lembra que já fez).
+4. **Cria convite, aceita no mesmo navegador (admin logado)** → agora vai passar pelo onboarding do convidado inteiro (porque servidor diz que aquele invite ainda não completou), incluindo step de email. No fim, cai no /app como convidado.
+
+Se tudo passar, o problema de "localStorage sujo" está estruturalmente resolvido. Depois vem o **Prompt 3/3 (cleanup)** que remove os últimos vestígios do `localStorage 'conexao-onboarding-complete'` e outros checks legado.

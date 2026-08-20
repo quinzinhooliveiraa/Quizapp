@@ -6,8 +6,8 @@ const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 const apiUrl = (path: string) => `${apiBase}${path}`;
 
 type Stage = 'email' | 'code' | 'picker';
-type SessionSummary = { id: string; buyerName: string; packageName: string; createdAt: string };
-type InviteSummary = { token: string; guestName: string; ownerName: string; createdAt: string };
+type SessionSummary = { id: string; buyerName: string; packageName: string; createdAt: string; onboardingComplete?: boolean };
+type InviteSummary = { token: string; guestName: string; ownerName: string; createdAt: string; onboardingComplete?: boolean };
 
 function safeSet(key: string, value: string) {
   try { window.localStorage?.setItem(key, value); } catch { /* noop */ }
@@ -41,9 +41,15 @@ export default function Login() {
       });
 
       if (response.ok) {
-        const data = await response.json() as { ok: boolean; adminBypass?: boolean; sessionId?: string };
+        const data = await response.json() as { ok: boolean; adminBypass?: boolean; sessionId?: string; onboardingComplete?: boolean };
         if (data.adminBypass && data.sessionId) {
-          completeLoginAsOwner({ id: data.sessionId, buyerName: 'Admin', packageName: 'Admin', createdAt: new Date().toISOString() });
+          completeLoginAsOwner({
+            id: data.sessionId,
+            buyerName: 'Admin',
+            packageName: 'Admin',
+            createdAt: new Date().toISOString(),
+            onboardingComplete: data.onboardingComplete ?? false,
+          });
           return;
         }
         setEmail(trimmed);
@@ -141,11 +147,8 @@ export default function Login() {
     safeSet('conexao-name', session.buyerName);
     safeSet('conexao-role', 'owner');
     try { window.localStorage?.removeItem('conexao-guest-token'); } catch { /* noop */ }
-    const alreadyOnboarded = (() => {
-      try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
-      catch { return false; }
-    })();
-    navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+    try { window.localStorage?.removeItem('conexao-onboarding-complete'); } catch { /* noop */ }
+    navigate(session.onboardingComplete ? '/app' : '/onboarding', { replace: true });
   }
 
   function completeLoginAsGuest(invite: InviteSummary) {
@@ -154,11 +157,8 @@ export default function Login() {
     safeSet('conexao-role', 'guest');
     safeSet('conexao-guest-name', invite.guestName);
     try { window.localStorage?.removeItem('conexao-session'); } catch { /* noop */ }
-    const alreadyOnboarded = (() => {
-      try { return window.localStorage?.getItem('conexao-onboarding-complete') === 'true'; }
-      catch { return false; }
-    })();
-    navigate(alreadyOnboarded ? '/app' : '/onboarding', { replace: true });
+    try { window.localStorage?.removeItem('conexao-onboarding-complete'); } catch { /* noop */ }
+    navigate(invite.onboardingComplete ? '/app' : '/onboarding', { replace: true });
   }
 
   return (

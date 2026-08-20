@@ -1,6 +1,13 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Check, Feather, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import {
+  getGetInviteQueryKey,
+  getGetQuestionSessionQueryKey,
+  useGetInvite,
+  useGetQuestionSession,
+} from '@workspace/api-client-react';
 
 type StepId =
   | 'intro'
@@ -291,20 +298,25 @@ export default function Onboarding() {
   const parts = useMemo(() => dateParts(date), [date]);
   const sharedDays = useMemo(() => daysBetween(date), [date]);
   const partnerPronoun = pronoun === 'Ele' ? 'ele' : pronoun === 'Ela' ? 'ela' : 'essa pessoa';
+  const storedSessionId = safeGetItem('conexao-session')?.trim() || '';
+  const storedGuestToken = safeGetItem('conexao-guest-token')?.trim() || '';
+  const sessionQuery = useGetQuestionSession(storedSessionId, {
+    query: { enabled: !!storedSessionId, queryKey: getGetQuestionSessionQueryKey(storedSessionId) },
+  });
+  const guestQuery = useGetInvite(storedGuestToken, {
+    query: { enabled: !!storedGuestToken, queryKey: getGetInviteQueryKey(storedGuestToken) },
+  });
+  const queryClient = useQueryClient();
+  const serverOnboardingComplete = Boolean(
+    (sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete
+    || (guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete,
+  );
 
   useEffect(() => {
-    const hasPaidOwnerSession = Boolean(
-      safeGetItem('conexao-session')
-      && readOnboardingRole() === 'owner'
-      && safeGetItem('conexao-onboarding-complete') !== 'true',
-    );
-    if (
-      (safeGetItem('conexao-session') && !hasPaidOwnerSession)
-      || safeGetItem('conexao-onboarding-complete') === 'true'
-    ) {
+    if (serverOnboardingComplete) {
       navigate('/app', { replace: true });
     }
-  }, [navigate]);
+  }, [serverOnboardingComplete, navigate]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -352,12 +364,27 @@ export default function Onboarding() {
       safeSetItem('conexao-curiosity', JSON.stringify(curiosity));
       safeSetItem('conexao-feeling', feeling);
       safeSetItem('conexao-partner-pronoun', pronoun);
-      safeSetItem('conexao-onboarding-complete', 'true');
 
+      const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
       const guestToken = safeGetItem('conexao-guest-token');
+      const sessionId = safeGetItem('conexao-session');
+      const completeUrl = guestToken
+        ? `${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/complete-onboarding`
+        : sessionId
+          ? `${apiBase}/api/access/sessions/${encodeURIComponent(sessionId)}/complete-onboarding`
+          : null;
+
+      if (completeUrl) {
+        fetch(completeUrl, { method: 'POST' })
+          .then(() => {
+            if (guestToken) queryClient.invalidateQueries({ queryKey: getGetInviteQueryKey(guestToken) });
+            if (sessionId) queryClient.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) });
+          })
+          .catch(() => { /* não bloqueia a conclusão do onboarding */ });
+      }
+
       const trimmedEmail = guestEmail.trim().toLowerCase();
       if (guestToken && trimmedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-        const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
         fetch(`${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/claim-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

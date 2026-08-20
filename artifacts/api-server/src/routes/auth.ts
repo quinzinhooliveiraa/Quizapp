@@ -166,6 +166,7 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
     buyerName: sessionsTable.buyerName,
     packageName: sessionsTable.packageName,
     createdAt: sessionsTable.createdAt,
+    onboardingComplete: sessionsTable.onboardingComplete,
   })
     .from(sessionsTable)
     .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
@@ -176,6 +177,7 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
     guestName: invitesTable.guestName,
     sessionId: invitesTable.sessionId,
     createdAt: invitesTable.createdAt,
+    onboardingComplete: invitesTable.onboardingComplete,
   })
     .from(invitesTable)
     .where(eq(invitesTable.guestEmail, email))
@@ -191,6 +193,7 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
       guestName: invite.guestName,
       ownerName: owner?.buyerName || "alguém",
       createdAt: invite.createdAt,
+      onboardingComplete: invite.onboardingComplete,
     };
   }));
 
