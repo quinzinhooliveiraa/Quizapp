@@ -42,9 +42,22 @@ export const authCodesTable = pgTable("auth_codes", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const savedMomentsTable = pgTable("saved_moments", {
+  id: text("id").primaryKey(),
+  ownerSessionId: text("owner_session_id"),
+  ownerGuestToken: text("owner_guest_token"),
+  questionId: text("question_id").notNull(),
+  themeId: text("theme_id").notNull(),
+  fromPlayerName: text("from_player_name").notNull(),
+  answerText: text("answer_text").notNull(),
+  roomCode: text("room_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const insertSessionSchema = createInsertSchema(sessionsTable);
 export const insertInviteSchema = createInsertSchema(invitesTable);
 export const insertAuthCodeSchema = createInsertSchema(authCodesTable);
+export const insertSavedMomentSchema = createInsertSchema(savedMomentsTable);
 
 export type Session = typeof sessionsTable.$inferSelect;
 export type NewSession = typeof sessionsTable.$inferInsert;
@@ -52,3 +65,4 @@ export type Invite = typeof invitesTable.$inferSelect;
 export type NewInvite = typeof invitesTable.$inferInsert;
 export type AuthCode = typeof authCodesTable.$inferSelect;
 export type NewAuthCode = typeof authCodesTable.$inferInsert;
+export type SavedMoment = typeof savedMomentsTable.$inferSelect;
