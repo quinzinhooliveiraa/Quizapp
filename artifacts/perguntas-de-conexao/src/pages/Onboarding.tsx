@@ -288,6 +288,8 @@ export default function Onboarding() {
     }
   });
   const [guestEmail, setGuestEmail] = useState(() => safeGetItem('conexao-guest-email') || '');
+  const [guestEmailError, setGuestEmailError] = useState('');
+  const [guestEmailChecking, setGuestEmailChecking] = useState(false);
   const [surprise, setSurprise] = useState('');
   const [feeling, setFeeling] = useState(() => safeGetItem('conexao-onboarding-feeling') || '');
   const [guestInviteLink, setGuestInviteLink] = useState('');
@@ -394,7 +396,33 @@ export default function Onboarding() {
     }
   }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling, role, guestEmail]);
 
-  const goNext = () => setStepIndex((current) => Math.min(current + 1, activeSteps.length - 1));
+  const goNext = async () => {
+    if (step.id === 'email' && guestEmail.trim()) {
+      const trimmed = guestEmail.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+        setGuestEmailError('Digite um email válido.');
+        return;
+      }
+      setGuestEmailChecking(true);
+      setGuestEmailError('');
+      try {
+        const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+        const response = await fetch(`${apiBase}/api/access/check-email?email=${encodeURIComponent(trimmed)}`);
+        const data = await response.json() as { exists?: boolean; asOwner?: boolean };
+        if (data.exists) {
+          setGuestEmailError(data.asOwner
+            ? 'Este email já é o email do dono deste baralho. Use o SEU email pessoal.'
+            : 'Este email já tem acesso a outro convite. Use outro.');
+          setGuestEmailChecking(false);
+          return;
+        }
+      } catch {
+        // Se falhar a checagem, deixa passar — a validação server-side é backup.
+      }
+      setGuestEmailChecking(false);
+    }
+    setStepIndex((current) => Math.min(current + 1, activeSteps.length - 1));
+  };
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
   const reset = () => {
     safeRemoveItem('conexao-onboarding-step');
@@ -573,11 +601,12 @@ export default function Onboarding() {
                 inputMode="email"
                 autoComplete="email"
                 value={guestEmail}
-                onChange={(event) => setGuestEmail(event.target.value)}
+                 onChange={(event) => { setGuestEmail(event.target.value); setGuestEmailError(''); }}
                 autoFocus
                 placeholder="seu@email.com"
                 data-testid="input-onboarding-guest-email"
               />
+               {guestEmailError && <p className="onboarding-input-error" data-testid="text-email-error">{guestEmailError}</p>}
             </div>
           </div>
         );
@@ -737,7 +766,7 @@ export default function Onboarding() {
       : step.id === 'name'
         ? name.trim().length > 0
         : step.id === 'email'
-          ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())
+          ? guestEmail.trim().length > 0
           : step.id === 'relationship'
             ? !!relationship
             : step.id === 'curiosity'
@@ -772,7 +801,7 @@ export default function Onboarding() {
       <div className="onboarding-frame">
         <StepHeader step={step} onBack={goBack} showBack={stepIndex > 0 && step.id !== 'preparing'} />
         {renderStep()}
-        {!noButton && <ContinueButton onClick={continueOnboarding} disabled={!canContinue} />}
+        {!noButton && <ContinueButton onClick={continueOnboarding} disabled={!canContinue || guestEmailChecking} />}
         {['note', 'days', 'insight'].includes(step.id) && <ContinueButton onClick={goNext} />}
       </div>
     </main>

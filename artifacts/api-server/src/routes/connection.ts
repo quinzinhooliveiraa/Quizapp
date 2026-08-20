@@ -244,6 +244,27 @@ router.get("/access/preview", (_req, res): void => {
   }));
 });
 
+router.get("/access/check-email", async (req, res): Promise<void> => {
+  const raw = String(req.query.email || "").trim().toLowerCase();
+  if (!raw || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+    res.status(400).json({ error: "Email inválido" });
+    return;
+  }
+  const [session] = await db.select({ id: sessionsTable.id })
+    .from(sessionsTable)
+    .where(and(eq(sessionsTable.buyerEmail, raw), eq(sessionsTable.accessGranted, true)))
+    .limit(1);
+  const [invite] = await db.select({ token: invitesTable.token })
+    .from(invitesTable)
+    .where(eq(invitesTable.guestEmail, raw))
+    .limit(1);
+  res.json({
+    exists: !!(session || invite),
+    asOwner: !!session,
+    asGuest: !!invite,
+  });
+});
+
 router.post("/access/sessions", async (req, res): Promise<void> => {
   if (process.env.ALLOW_DEMO_ACCESS !== "true") {
     res.status(403).json({ error: "Acesso direto desativado. Use /checkout/create." });

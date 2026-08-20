@@ -1,0 +1,227 @@
+# Fix intro do onboarding no PC + verificação de email já cadastrado
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## Fix 1 — Intro do onboarding no PC (h1 tá quebrando vertical)
+
+**Bug:** no PC, a primeira tela do onboarding (intro) ficou horrível. O h1 "Troque o 'como foi seu dia?' por algo que fica" tá quebrando em cada palavra (uma por linha), porque minha regra genérica de centralização deu conflito com o layout específico do intro.
+
+### `artifacts/perguntas-de-conexao/src/index.css` — adicionar no final
+
+```css
+/* Intro do onboarding no PC: layout hero horizontal (texto + deck art) */
+@media (min-width: 900px) {
+  .onboarding-intro {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "logo logo"
+      "copy art"
+      "cta art"
+      "note art";
+    gap: 2rem;
+    align-items: center;
+    text-align: left !important;
+    padding-top: 0 !important;
+    max-width: 960px;
+    margin: 0 auto;
+    min-height: 80vh;
+  }
+  .onboarding-intro .onboarding-logo { grid-area: logo; }
+  .onboarding-intro .onboarding-deck-art { grid-area: art; justify-self: end; }
+  .onboarding-intro .onboarding-intro-copy {
+    grid-area: copy;
+    text-align: left !important;
+    padding-top: 0 !important;
+    max-width: none !important;
+  }
+  .onboarding-intro .onboarding-intro-copy h1 {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    font-size: clamp(2.4rem, 3.5vw, 3.4rem) !important;
+    line-height: 1.05 !important;
+    text-align: left !important;
+  }
+  .onboarding-intro .onboarding-intro-copy > p,
+  .onboarding-intro .onboarding-intro-copy .onboarding-kicker {
+    text-align: left !important;
+    max-width: 28rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .onboarding-intro > button,
+  .onboarding-intro .onboarding-login-note {
+    justify-self: start;
+    text-align: left;
+  }
+  .onboarding-intro .onboarding-login-note {
+    grid-area: note;
+  }
+  /* Botão Continuar da intro */
+  .onboarding-intro > button:not(.onboarding-login-note button) {
+    grid-area: cta;
+    justify-self: start;
+    max-width: 20rem;
+    width: auto;
+  }
+}
+```
+
+## Fix 2 — Verificar se email já tem conta no step de email (evita duplicata)
+
+**Regra:** convidado não pode usar o mesmo email do dono nem de outro convidado ativo. Se tentar, aparece erro claro.
+
+### 2.1. Backend — nova rota `GET /api/access/check-email` — `artifacts/api-server/src/routes/connection.ts`
+
+Adicionar junto das outras rotas de invite:
+
+```ts
+router.get("/access/check-email", async (req, res): Promise<void> => {
+  const raw = String(req.query.email || "").trim().toLowerCase();
+  if (!raw || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+    res.status(400).json({ error: "Email inválido" });
+    return;
+  }
+  const [session] = await db.select({ id: sessionsTable.id })
+    .from(sessionsTable)
+    .where(and(eq(sessionsTable.buyerEmail, raw), eq(sessionsTable.accessGranted, true)))
+    .limit(1);
+  const [invite] = await db.select({ token: invitesTable.token })
+    .from(invitesTable)
+    .where(eq(invitesTable.guestEmail, raw))
+    .limit(1);
+  res.json({
+    exists: !!(session || invite),
+    asOwner: !!session,
+    asGuest: !!invite,
+  });
+});
+```
+
+### 2.2. Frontend — checar antes de avançar do step 'email' — `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+Adicionar estado pra erro no email (perto de outros useState do componente):
+```tsx
+const [guestEmailError, setGuestEmailError] = useState('');
+const [guestEmailChecking, setGuestEmailChecking] = useState(false);
+```
+
+Renderizar o erro no case 'email' (adicionar depois do input, antes do fechamento):
+
+Achar:
+```tsx
+case 'email':
+  return (
+    <div className="onboarding-content onboarding-name-screen">
+      <div>
+        <p className="onboarding-kicker">pra você não perder</p>
+        <h1>Qual seu <em>email?</em></h1>
+        <p className="onboarding-subtitle">Se você mudar de aparelho ou limpar o app, é com ele que você volta pro baralho.</p>
+      </div>
+      <div className="onboarding-name-form">
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={guestEmail}
+          onChange={(event) => { setGuestEmail(event.target.value); setGuestEmailError(''); }}
+          autoFocus
+          placeholder="seu@email.com"
+          data-testid="input-onboarding-guest-email"
+        />
+      </div>
+    </div>
+  );
+```
+
+Trocar por (adiciona onChange que limpa erro + renderiza erro):
+```tsx
+case 'email':
+  return (
+    <div className="onboarding-content onboarding-name-screen">
+      <div>
+        <p className="onboarding-kicker">pra você não perder</p>
+        <h1>Qual seu <em>email?</em></h1>
+        <p className="onboarding-subtitle">Se você mudar de aparelho ou limpar o app, é com ele que você volta pro baralho.</p>
+      </div>
+      <div className="onboarding-name-form">
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={guestEmail}
+          onChange={(event) => { setGuestEmail(event.target.value); setGuestEmailError(''); }}
+          autoFocus
+          placeholder="seu@email.com"
+          data-testid="input-onboarding-guest-email"
+        />
+        {guestEmailError && <p className="onboarding-input-error" data-testid="text-email-error">{guestEmailError}</p>}
+      </div>
+    </div>
+  );
+```
+
+E interceptar o `goNext` quando estiver no step 'email' pra fazer a checagem antes:
+
+Achar `const goNext = () => setStepIndex(...)` (perto da linha 353):
+
+```tsx
+const goNext = () => setStepIndex((current) => Math.min(current + 1, activeSteps.length - 1));
+```
+
+Trocar por:
+```tsx
+const goNext = async () => {
+  // Se está no step de email do convidado, checa se o email já não é usado
+  if (step.id === 'email' && guestEmail.trim()) {
+    const trimmed = guestEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setGuestEmailError('Digite um email válido.');
+      return;
+    }
+    setGuestEmailChecking(true);
+    setGuestEmailError('');
+    try {
+      const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+      const response = await fetch(`${apiBase}/api/access/check-email?email=${encodeURIComponent(trimmed)}`);
+      const data = await response.json() as { exists?: boolean; asOwner?: boolean };
+      if (data.exists) {
+        setGuestEmailError(data.asOwner
+          ? 'Este email já é o email do dono deste baralho. Use o SEU email pessoal.'
+          : 'Este email já tem acesso a outro convite. Use outro.');
+        setGuestEmailChecking(false);
+        return;
+      }
+    } catch {
+      // Se falhar a checagem, deixa passar — a validação server-side é backup
+    }
+    setGuestEmailChecking(false);
+  }
+  setStepIndex((current) => Math.min(current + 1, activeSteps.length - 1));
+};
+```
+
+### 2.3. CSS pro erro do email — adicionar no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.onboarding-input-error {
+  color: #ff9d9d;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  line-height: 1.4;
+}
+```
+
+## Verificação
+
+**Intro no PC:**
+- Abre em janela de desktop → primeira tela tem: logo em cima, texto grande "Troque o 'como foi seu dia?' por algo que fica" à esquerda em linhas normais (2-3 linhas), cards decorativos à direita, botão "Começar" embaixo do texto. Cabe na tela sem scroll.
+
+**Email duplicado:**
+- Como admin (email `quinzinhooliveiraa@gmail.com`), cria invite pra "Julia"
+- Aceita convite em outro navegador/anon → chega no step de email
+- Digita `quinzinhooliveiraa@gmail.com` → clica Continuar → aparece erro em vermelho: "Este email já é o email do dono deste baralho..."
+- Digita um email inventado novo → clica Continuar → passa normal

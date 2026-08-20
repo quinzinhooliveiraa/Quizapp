@@ -6555,6 +6555,75 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   }
 }
 
+/* Intro do onboarding no PC: layout hero horizontal (texto + deck art). */
+@media (min-width: 900px) {
+  .onboarding-intro {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "logo logo"
+      "copy art"
+      "cta art"
+      "note art";
+    gap: 2rem;
+    align-items: center;
+    text-align: left !important;
+    padding-top: 0 !important;
+    max-width: 960px;
+    margin: 0 auto;
+    min-height: 80vh;
+  }
+
+  .onboarding-intro .onboarding-logo { grid-area: logo; }
+  .onboarding-intro .onboarding-deck-art { grid-area: art; justify-self: end; }
+
+  .onboarding-intro .onboarding-intro-copy {
+    grid-area: copy;
+    text-align: left !important;
+    padding-top: 0 !important;
+    max-width: none !important;
+  }
+
+  .onboarding-intro .onboarding-intro-copy h1 {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    font-size: clamp(2.4rem, 3.5vw, 3.4rem) !important;
+    line-height: 1.05 !important;
+    text-align: left !important;
+  }
+
+  .onboarding-intro .onboarding-intro-copy > p,
+  .onboarding-intro .onboarding-intro-copy .onboarding-kicker {
+    text-align: left !important;
+    max-width: 28rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .onboarding-intro > button,
+  .onboarding-intro .onboarding-login-note {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .onboarding-intro .onboarding-login-note { grid-area: note; }
+
+  .onboarding-intro > button:not(.onboarding-login-note button) {
+    grid-area: cta;
+    justify-self: start;
+    max-width: 20rem;
+    width: auto;
+  }
+}
+
+.onboarding-input-error {
+  color: #ff9d9d;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  line-height: 1.4;
+}
+
 @media (min-width: 900px) {
   .app-wordmark { display: none; }
 }

@@ -82,6 +82,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccessState"
+  /access/check-email:
+    get:
+      operationId: checkAccessEmail
+      tags: [access]
+      summary: Check whether an email already belongs to an active access
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Email access status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                  asOwner:
+                    type: boolean
+                  asGuest:
+                    type: boolean
+                required: [exists, asOwner, asGuest]
+        "400":
+          description: Invalid email
   /access/sessions:
     post:
       operationId: createQuestionSession
