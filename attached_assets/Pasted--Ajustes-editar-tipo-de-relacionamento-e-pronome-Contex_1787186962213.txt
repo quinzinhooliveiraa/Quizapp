@@ -1,0 +1,147 @@
+# Ajustes: editar tipo de relacionamento e pronome
+
+**Contexto:** no menu de Ajustes (⚙️) hoje só dá pra editar o nome. Precisa também editar o tipo de relacionamento e o pronome do parceiro (o que a pessoa escolheu no onboarding). Isso afeta o peso das perguntas (Parte B) — se a pessoa mudou de "saindo com alguém" pra "esposa", faz sentido as perguntas mudarem.
+
+Por enquanto salva só no localStorage (mesma abordagem do onboarding). Sincronização com servidor pra funcionar em outros aparelhos vira um refactor futuro.
+
+**IMPORTANTE: aplicar direto nos arquivos. Não é pra salvar como asset.**
+
+## Fix — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 1. Adicionar constante com as opções (topo do arquivo, junto de outras constantes)
+
+Procurar onde ficam as constantes globais (perto de `PERSONALIZED_DECKS_STORAGE_KEY`, linha ~53) e adicionar:
+
+```tsx
+const RELATIONSHIP_OPTIONS = [
+  'Meu namorado ou minha namorada',
+  'Meu esposo ou minha esposa',
+  'Alguém com quem estou saindo',
+  'Namoro à distância',
+];
+const PRONOUN_OPTIONS = ['Ela', 'Ele', 'Prefiro não dizer'];
+```
+
+### 2. Dentro do `AppExperienceReference`, adicionar state e handler
+
+Perto de outros useState (por exemplo perto de `const [settingsOpen, setSettingsOpen]`), adicionar:
+
+```tsx
+const [editRelationship, setEditRelationship] = useState(() => safeGetItem('conexao-relationship') || '');
+const [editPronoun, setEditPronoun] = useState(() => safeGetItem('conexao-partner-pronoun') || '');
+useEffect(() => {
+  if (settingsOpen) {
+    setEditRelationship(safeGetItem('conexao-relationship') || '');
+    setEditPronoun(safeGetItem('conexao-partner-pronoun') || '');
+  }
+}, [settingsOpen]);
+
+const savePreferences = () => {
+  if (editRelationship) safeSetItem('conexao-relationship', editRelationship);
+  if (editPronoun) safeSetItem('conexao-partner-pronoun', editPronoun);
+  setSettingsOpen(false);
+};
+```
+
+### 3. Atualizar o modal de Ajustes com as novas opções
+
+Achar o modal de settings (perto da linha 1617, começa com `{settingsOpen && <div className="app-modal-backdrop">`):
+
+Antes do botão "Editar como te chamar", adicionar essas seções:
+
+```tsx
+<div className="settings-editable">
+  <label className="settings-label">Tipo de relacionamento</label>
+  <div className="settings-choices">
+    {RELATIONSHIP_OPTIONS.map(opt => (
+      <button
+        key={opt}
+        type="button"
+        onClick={() => setEditRelationship(opt)}
+        className={`settings-choice ${editRelationship === opt ? 'is-selected' : ''}`}
+        data-testid={`button-relationship-${opt}`}
+      >
+        {opt}
+      </button>
+    ))}
+  </div>
+</div>
+
+<div className="settings-editable">
+  <label className="settings-label">Pronome do parceiro</label>
+  <div className="settings-choices">
+    {PRONOUN_OPTIONS.map(opt => (
+      <button
+        key={opt}
+        type="button"
+        onClick={() => setEditPronoun(opt)}
+        className={`settings-choice ${editPronoun === opt ? 'is-selected' : ''}`}
+        data-testid={`button-pronoun-${opt}`}
+      >
+        {opt}
+      </button>
+    ))}
+  </div>
+</div>
+
+<button
+  onClick={savePreferences}
+  className="app-primary-button"
+  data-testid="button-save-preferences"
+>
+  Salvar preferências
+</button>
+```
+
+## CSS — adicionar no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.settings-editable {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.settings-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.settings-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.settings-choice {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.settings-choice:hover {
+  color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(196, 172, 255, 0.3);
+}
+.settings-choice.is-selected {
+  background: rgba(196, 172, 255, 0.18);
+  border-color: rgba(196, 172, 255, 0.5);
+  color: #c4acff;
+  font-weight: 500;
+}
+```
+
+## Verificação
+1. Entra no /app → clica ⚙️ → modal abre
+2. Aparecem as seções "Tipo de relacionamento" e "Pronome do parceiro" com chips selecionáveis
+3. Clica em outra opção → chip fica destacado (roxo)
+4. Clica "Salvar preferências" → modal fecha
+5. Reabre o ⚙️ → seleção continua salva (persiste no localStorage)
+6. O peso das perguntas se ajusta automaticamente ao novo relacionamento (Parte B já usa `conexao-relationship`)
+
+## Nota pra depois
+Hoje esses dados só ficam no localStorage. Se a pessoa loga em outro aparelho, começa do zero. Pra sincronizar entre aparelhos: adicionar coluna `onboardingData JSONB` nas tabelas `sessions` e `invites`, salvar via novo endpoint quando muda, ler junto com onboardingComplete. É refactor separado — deixar pra depois.
