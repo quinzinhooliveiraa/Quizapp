@@ -1,0 +1,232 @@
+# Dar mais destaque ao "Jogar Online" (banner no Todos + card grande no Meu Espaço)
+
+**Objetivo:** hoje o CTA "Uma sala pra vocês, mesmo de longe" fica escondido no meio do Meu Espaço. Vamos: (a) colocar um **banner no topo da aba "Todos"** (primeira que a pessoa vê) e (b) aumentar o destaque no Meu Espaço.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+## Fix — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 1. Adicionar banner no topo da aba "Todos"
+
+Achar onde renderiza o conteúdo da aba "Todos" (`activeNav === 'todos'`). Vai ter algo tipo:
+
+```tsx
+{activeNav === 'todos' && (
+  <>
+    <section className="today-hero">...</section>
+    ...
+  </>
+)}
+```
+
+Adicionar ANTES do `<section className="today-hero">` (ou no topo do bloco todos):
+
+```tsx
+{isOwner && (
+  <button
+    type="button"
+    onClick={() => setLocation('/play')}
+    className="play-banner-cta"
+    data-testid="button-play-online-top"
+  >
+    <div className="play-banner-glow" aria-hidden="true" />
+    <div className="play-banner-icon">
+      <Wifi size={20} />
+    </div>
+    <div className="play-banner-text">
+      <p className="play-banner-kicker">jogar online</p>
+      <strong>Uma sala pra vocês, mesmo de longe</strong>
+      <small>Crie uma sala em segundos e mande o código pra qualquer pessoa</small>
+    </div>
+    <ArrowRight size={20} className="play-banner-arrow" />
+  </button>
+)}
+```
+
+Se estiver usando `wouter`, `setLocation` já é o `useLocation()[1]`. Se não, usar `window.location.assign('/play')`.
+
+**Adicionar imports** no topo (com os outros de lucide-react):
+```tsx
+import { ..., Wifi } from 'lucide-react';
+```
+
+### 2. Aumentar destaque do card no Meu Espaço
+
+Achar o card atual do "jogar online" no Meu Espaço (procurar por `Uma sala para vocês` ou `link-play-online`). Está algo tipo:
+
+```tsx
+<Link href="/play" className="eu-play-card">
+  <span><Wifi size={...} /></span>
+  <div>
+    <p>JOGAR ONLINE</p>
+    <p>Uma sala para vocês, mesmo de longe.</p>
+    <p>criar ou entrar com código →</p>
+  </div>
+</Link>
+```
+
+Substituir por (card grande, chamativo, altura dobrada):
+
+```tsx
+{isOwner && (
+  <Link href="/play" className="eu-play-hero" data-testid="link-play-online">
+    <div className="eu-play-hero-glow" aria-hidden="true" />
+    <div className="eu-play-hero-content">
+      <div className="eu-play-hero-icon"><Wifi size={26} /></div>
+      <div>
+        <p className="eu-kicker">jogar online</p>
+        <h2>Uma sala pra vocês,<br /><em>mesmo de longe.</em></h2>
+        <p className="eu-play-hero-note">Crie uma sala, mande o código, e joguem juntos em tempo real de qualquer lugar.</p>
+        <span className="eu-play-hero-cta">Criar ou entrar com código <ArrowRight size={16} /></span>
+      </div>
+    </div>
+  </Link>
+)}
+```
+
+## CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+/* Banner topo da aba Todos */
+.play-banner-cta {
+  position: relative;
+  display: flex; align-items: center; gap: 1.1rem;
+  width: 100%; padding: 1.1rem 1.4rem;
+  margin: 0 0 1.5rem;
+  background: linear-gradient(115deg, rgba(120, 90, 200, 0.18), rgba(196, 172, 255, 0.08) 60%, transparent);
+  border: 1px solid rgba(196, 172, 255, 0.28);
+  border-radius: 1.1rem;
+  color: #f6f5fa;
+  cursor: pointer; text-align: left;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.play-banner-cta:hover {
+  border-color: rgba(196, 172, 255, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(120, 90, 200, 0.2);
+}
+.play-banner-glow {
+  position: absolute; top: -50%; right: -20%;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(196, 172, 255, 0.25), transparent 70%);
+  pointer-events: none;
+}
+.play-banner-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(196, 172, 255, 0.2);
+  color: #c4acff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  position: relative; z-index: 1;
+}
+.play-banner-text { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; position: relative; z-index: 1; }
+.play-banner-kicker {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(196, 172, 255, 0.9);
+  margin: 0 0 0.15rem;
+}
+.play-banner-text strong { font-size: 1.05rem; font-weight: 500; }
+.play-banner-text small { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); margin-top: 0.1rem; }
+.play-banner-arrow {
+  color: #c4acff;
+  flex-shrink: 0;
+  position: relative; z-index: 1;
+  transition: transform 0.15s ease;
+}
+.play-banner-cta:hover .play-banner-arrow { transform: translateX(4px); }
+
+@media (max-width: 640px) {
+  .play-banner-cta { padding: 1rem 1.1rem; gap: 0.8rem; }
+  .play-banner-text strong { font-size: 0.95rem; }
+  .play-banner-text small { font-size: 0.75rem; }
+}
+
+/* Card grande no Meu Espaço */
+.eu-play-hero {
+  position: relative;
+  display: block;
+  padding: 1.6rem 1.6rem 1.5rem;
+  margin: 1.5rem 0;
+  background: linear-gradient(135deg, rgba(120, 90, 200, 0.22), rgba(196, 172, 255, 0.08));
+  border: 1px solid rgba(196, 172, 255, 0.3);
+  border-radius: 1.2rem;
+  color: #f6f5fa;
+  text-decoration: none;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.eu-play-hero:hover {
+  transform: translateY(-2px);
+  border-color: rgba(196, 172, 255, 0.5);
+  box-shadow: 0 12px 32px rgba(120, 90, 200, 0.25);
+}
+.eu-play-hero-glow {
+  position: absolute; top: -40%; right: -15%;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(196, 172, 255, 0.3), transparent 70%);
+  pointer-events: none;
+}
+.eu-play-hero-content {
+  position: relative;
+  display: flex; gap: 1.2rem;
+  align-items: flex-start;
+}
+.eu-play-hero-icon {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(196, 172, 255, 0.25);
+  color: #c4acff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.eu-play-hero h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 0.2rem 0 0.5rem;
+  line-height: 1.2;
+}
+.eu-play-hero h2 em {
+  font-style: italic;
+  color: #c4acff;
+}
+.eu-play-hero-note {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.5;
+  margin: 0 0 1rem;
+}
+.eu-play-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  background: rgba(196, 172, 255, 0.15);
+  border: 1px solid rgba(196, 172, 255, 0.3);
+  border-radius: 0.6rem;
+  color: #c4acff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.eu-play-hero:hover .eu-play-hero-cta {
+  background: rgba(196, 172, 255, 0.25);
+}
+
+@media (max-width: 640px) {
+  .eu-play-hero { padding: 1.3rem; }
+  .eu-play-hero-content { gap: 0.9rem; }
+  .eu-play-hero h2 { font-size: 1.25rem; }
+}
+
+/* Esconde o card antigo se ainda existir */
+.eu-play-card { display: none !important; }
+```
+
+## Verificação
+- Aba "Todos" (primeira coisa que vê ao abrir o app) → banner roxo no topo com "Uma sala pra vocês, mesmo de longe" + seta
+- Aba "Meu espaço" → o card do jogar online agora é BEM maior, com brilho, gradiente, e botão dentro
+- Clica em qualquer um dos dois → vai pro `/play`
+- Convidado (não é dono) → NÃO vê o banner nem o card (só donos jogam online)
