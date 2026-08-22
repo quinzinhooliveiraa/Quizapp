@@ -1,0 +1,320 @@
+# Mover lista de convidados PARA DENTRO do modal "Convidar alguém"
+
+**Objetivo:** limpar o Meu Espaço. Hoje mostra a lista de convidados direto na tela. Nova UX: um único card "Convidar alguém" (sem lista), clica → modal abre com a lista + formulário de convidar tudo junto.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+## Fix — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 1. Achar a seção `eu-companions-section` (feita no prompt anterior, ~linha 1400+)
+
+Está mais ou menos assim:
+
+```tsx
+<section className="eu-section eu-companions-section" aria-labelledby="companions-title">
+  <div className="eu-section-heading">...Convidados... 3/5 cadeiras...</div>
+  {!isOwner && (<div className="eu-guest-panel">...</div>)}
+  {isOwner && (
+    <>
+      <button ... className="eu-invite-cta">... Convidar alguém ...</button>
+      {invitesList.length > 0 && (
+        <ul className="eu-companions-list">
+          {invitesList.map(...)}
+        </ul>
+      )}
+    </>
+  )}
+</section>
+```
+
+### 2. Substituir por (SEM a `<ul>` inline — só o card CTA que ABRE o modal, mostrando um contador dos que já entraram):
+
+```tsx
+<section className="eu-section eu-companions-section" aria-labelledby="companions-title">
+  <div className="eu-section-heading">
+    <div>
+      <p className="eu-kicker">{isOwner ? 'quem joga com você' : 'acesso compartilhado'}</p>
+      <h2 id="companions-title">{isOwner ? 'Convidados' : 'Este baralho'}</h2>
+    </div>
+  </div>
+
+  {!isOwner && (
+    <div className="eu-guest-panel" data-testid="card-guest-access">
+      <div className="eu-guest-avatar">{(guestDisplayName || 'V').charAt(0).toUpperCase()}</div>
+      <div className="eu-guest-info">
+        <strong>{guestDisplayName ? `Oi, ${guestDisplayName}` : 'Você é convidado aqui'}</strong>
+        {guestQuery.data?.ownerName && <p>Convidado por <strong>{guestQuery.data.ownerName}</strong></p>}
+        <p className="eu-guest-note">Você pode jogar, responder e salvar. Só não pode convidar outras pessoas.</p>
+        <Link href="/#pacotes" className="eu-guest-link" data-testid="link-own-deck">Quero meu próprio baralho <ArrowRight size={13} /></Link>
+      </div>
+    </div>
+  )}
+
+  {isOwner && (
+    <button
+      type="button"
+      onClick={() => setInviteOpen(true)}
+      className="eu-invite-hub"
+      data-testid="button-open-invite-eu"
+    >
+      <div className="eu-invite-hub-icon">
+        <UserPlus size={22} />
+      </div>
+      <div className="eu-invite-hub-text">
+        <strong>Convidar alguém</strong>
+        <small>
+          {invitesList.length === 0
+            ? `${inviteLimit} cadeiras livres para gente próxima`
+            : `${invitesList.filter(i => i.isUsed).length} entraram · ${invitesList.length}/${inviteLimit} cadeiras usadas`}
+        </small>
+      </div>
+      <ArrowRight size={18} className="eu-invite-hub-arrow" />
+    </button>
+  )}
+</section>
+```
+
+**Adicionar import** `UserPlus` no topo (com os outros de lucide-react):
+```tsx
+import { ..., UserPlus } from 'lucide-react';
+```
+
+### 3. Expandir o modal `inviteOpen` (que já existe ~linha 732 no AppExperienceReference)
+
+Achar o modal atual:
+```tsx
+{inviteOpen && isOwner && <div className="modal-backdrop"><div className="invite-modal">...</div></div>}
+```
+
+Substituir TODO o conteúdo dentro de `.invite-modal` por (adiciona a lista de convidados no TOPO do modal + formulário embaixo):
+
+```tsx
+{inviteOpen && isOwner && (
+  <div className="modal-backdrop" onClick={() => setInviteOpen(false)}>
+    <div className="invite-modal invite-modal-hub" onClick={e => e.stopPropagation()}>
+      <button className="modal-close" onClick={() => setInviteOpen(false)} data-testid="button-close-invite"><X size={18} /></button>
+
+      <p className="section-kicker">quem joga com você</p>
+      <h2>Convidados<br /><em>desse baralho.</em></h2>
+
+      <div className="invite-hub-stats">
+        <div><strong>{invitesList.filter(i => i.isUsed).length}</strong><small>entraram</small></div>
+        <div><strong>{invitesList.filter(i => !i.isUsed).length}</strong><small>aguardando</small></div>
+        <div><strong>{inviteLimit - invitesList.length}</strong><small>cadeiras livres</small></div>
+      </div>
+
+      {invitesList.length > 0 && (
+        <ul className="invite-hub-list" aria-label="Convites">
+          {invitesList.map(invite => {
+            const initial = (invite.guestName || '?').charAt(0).toUpperCase();
+            return (
+              <li key={invite.token} className={`invite-hub-row${invite.isUsed ? ' is-active' : ''}`} data-testid={`companion-${invite.token}`}>
+                <div className={`invite-hub-avatar${invite.isUsed ? ' is-active' : ''}`}>{initial}</div>
+                <div className="invite-hub-main">
+                  <span className="invite-hub-name">{invite.guestName}</span>
+                  <span className="invite-hub-status">
+                    {invite.isUsed && invite.usedAt
+                      ? `entrou em ${new Date(invite.usedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
+                      : 'aguardando aceitar'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => cancelInvite(invite)}
+                  className="invite-hub-remove"
+                  aria-label={`Desconvidar ${invite.guestName}`}
+                  data-testid={`button-cancel-invite-${invite.token}`}
+                ><X size={14} /></button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {canInvite ? (
+        inviteResult ? (
+          <div className="invite-hub-success">
+            <div className="success-seal"><Check size={22} /></div>
+            <p className="section-kicker">convite criado</p>
+            <h3>Compartilhe com <em>{inviteResult.guestName}</em></h3>
+            <div className="invite-share-block invite-share-block-light">
+              <button onClick={copyInvite} className="invite-share-button" data-testid="button-copy-invite">
+                <Copy size={18} /> {copiedInvite ? 'Copiado!' : 'Copiar link do convite'}
+              </button>
+              <details className="invite-share-details">
+                <summary>Ver o link</summary>
+                <input readOnly value={inviteResult.token ? inviteUrlFromToken(inviteResult.token) : ''} className="text-input" data-testid="input-invite-url" onFocus={e => e.currentTarget.select()} />
+              </details>
+            </div>
+            <button onClick={() => { setInviteResult(null); setGuestName(''); setCopiedInvite(false); }} className="text-link" data-testid="button-new-invite">
+              Criar outro convite <ArrowRight size={15} />
+            </button>
+          </div>
+        ) : (
+          <div className="invite-hub-form">
+            <p className="section-kicker">novo convite</p>
+            <label className="invite-hub-label">Nome de quem vai receber</label>
+            <input value={guestName} onChange={e => setGuestName(e.target.value)} className="text-input" placeholder="Ex: Ana" data-testid="input-guest-name" />
+            <button onClick={makeInvite} className="button button-primary button-full" disabled={!guestName.trim() || createInvite.isPending} data-testid="button-create-invite">
+              {createInvite.isPending ? 'Criando…' : 'Gerar convite'} <LinkIcon size={16} />
+            </button>
+            {createInvite.isError && <p className="form-error">Não foi possível gerar agora. Tente novamente.</p>}
+          </div>
+        )
+      ) : (
+        <div className="invite-hub-full">
+          <p><strong>Cadeiras cheias.</strong> Desconvide alguém acima pra liberar espaço.</p>
+        </div>
+      )}
+    </div>
+  </div>
+)}
+```
+
+### 4. Remover o state `companionMenuOpen` (não usado mais)
+
+Apagar essa linha (que veio do prompt anterior):
+```tsx
+const [companionMenuOpen, setCompanionMenuOpen] = useState<string | null>(null);
+```
+
+## CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+/* Hub button (o card compacto no Meu Espaço) */
+.eu-invite-hub {
+  display: flex; align-items: center; gap: 1rem;
+  width: 100%; padding: 1.1rem 1.2rem;
+  background: linear-gradient(135deg, rgba(196, 172, 255, 0.09), rgba(120, 90, 200, 0.06));
+  border: 1px solid rgba(196, 172, 255, 0.22);
+  border-radius: 1rem;
+  color: #f6f5fa;
+  cursor: pointer; text-align: left;
+  transition: all 0.15s ease;
+}
+.eu-invite-hub:hover {
+  background: linear-gradient(135deg, rgba(196, 172, 255, 0.13), rgba(120, 90, 200, 0.09));
+  border-color: rgba(196, 172, 255, 0.4);
+  transform: translateY(-1px);
+}
+.eu-invite-hub-icon {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: rgba(196, 172, 255, 0.18);
+  color: #c4acff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.eu-invite-hub-text { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+.eu-invite-hub-text strong { font-size: 1rem; font-weight: 500; }
+.eu-invite-hub-text small { font-size: 0.8rem; color: rgba(255, 255, 255, 0.55); }
+.eu-invite-hub-arrow { color: rgba(196, 172, 255, 0.6); flex-shrink: 0; }
+
+/* Modal hub (o modal ampliado com lista + convidar) */
+.invite-modal-hub {
+  max-width: 480px !important;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.invite-hub-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 1.2rem 0;
+  padding: 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.7rem;
+}
+.invite-hub-stats > div { text-align: center; }
+.invite-hub-stats strong {
+  display: block; font-size: 1.4rem; color: #c4acff; font-weight: 500;
+}
+.invite-hub-stats small {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.invite-hub-list {
+  list-style: none; padding: 0; margin: 0 0 1.2rem;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+.invite-hub-row {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.6rem;
+}
+.invite-hub-row.is-active {
+  background: rgba(196, 172, 255, 0.06);
+  border-color: rgba(196, 172, 255, 0.15);
+}
+.invite-hub-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.65);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.invite-hub-avatar.is-active {
+  background: linear-gradient(135deg, rgba(196, 172, 255, 0.4), rgba(120, 90, 200, 0.55));
+  color: #fff;
+}
+.invite-hub-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.invite-hub-name { font-size: 0.9rem; color: #f6f5fa; font-weight: 500; }
+.invite-hub-status { font-size: 0.72rem; color: rgba(255, 255, 255, 0.5); }
+.invite-hub-remove {
+  background: transparent; border: 0;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer; padding: 0.4rem;
+  border-radius: 0.35rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.invite-hub-remove:hover {
+  color: #ff9d9d;
+  background: rgba(255, 157, 157, 0.08);
+}
+
+.invite-hub-form {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1.2rem;
+}
+.invite-hub-label {
+  display: block; font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0.5rem 0 0.4rem;
+}
+
+.invite-hub-full {
+  text-align: center; padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+.invite-hub-full strong { color: #f6f5fa; }
+
+.invite-hub-success { text-align: center; padding-top: 0.5rem; }
+.invite-hub-success h3 { font-size: 1.15rem; margin: 0.5rem 0 1rem; color: #f6f5fa; }
+.invite-hub-success h3 em { color: #c4acff; font-style: normal; font-weight: 500; }
+
+/* Remover CSS antigo do menu 3-dots que não usa mais */
+.eu-companions-list, .eu-companion-item, .eu-companion-avatar,
+.eu-companion-main, .eu-companion-name, .eu-companion-status,
+.eu-companion-actions, .eu-companion-menu-btn, .eu-companion-menu,
+.eu-companion-menu-item, .eu-invite-cta, .eu-invite-cta-icon,
+.eu-invite-cta-text, .eu-companions-count { display: none !important; }
+```
+
+## Verificação
+- Aba "Meu espaço" → seção "Convidados" agora mostra **só um card** "Convidar alguém" (sem lista visível)
+- O card mostra: "0 entraram · 3/5 cadeiras usadas" (ou "5 cadeiras livres para gente próxima" quando vazio)
+- Clica no card → abre modal com:
+  - Título "Convidados desse baralho"
+  - Stats (entraram / aguardando / livres)
+  - Lista dos convidados (avatar + nome + status + X pra desconvidar)
+  - Formulário "novo convite" embaixo (ou "cadeiras cheias" se atingiu limite)
+- Depois de gerar convite → tela de sucesso com botão de copiar

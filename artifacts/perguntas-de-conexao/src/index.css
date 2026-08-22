@@ -7259,3 +7259,47 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   border-color: rgba(255, 157, 157, 0.5) !important;
   background: rgba(255, 157, 157, 0.08) !important;
 }
+
+/* Compact invite hub: the guest list lives inside the modal. */
+.eu-invite-hub {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.1rem 1.2rem;
+  background: linear-gradient(135deg, rgba(196, 172, 255, .09), rgba(120, 90, 200, .06));
+  border: 1px solid rgba(196, 172, 255, .22);
+  border-radius: 1rem;
+  color: #f6f5fa;
+  cursor: pointer;
+  text-align: left;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.eu-invite-hub:hover { transform: translateY(-1px); border-color: rgba(196, 172, 255, .4); background: linear-gradient(135deg, rgba(196, 172, 255, .13), rgba(120, 90, 200, .09)); }
+.eu-invite-hub-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(196, 172, 255, .18); color: #c4acff; display: grid; place-items: center; flex-shrink: 0; }
+.eu-invite-hub-text { flex: 1; display: flex; flex-direction: column; gap: .2rem; }
+.eu-invite-hub-text strong { font-size: 1rem; font-weight: 500; }
+.eu-invite-hub-text small { font-size: .8rem; color: rgba(255,255,255,.55); }
+.eu-invite-hub-arrow { color: rgba(196,172,255,.6); flex-shrink: 0; }
+.invite-modal-hub { max-width: 480px !important; max-height: 90vh; overflow-y: auto; }
+.invite-hub-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin: 1.2rem 0; padding: .9rem; background: rgba(255,255,255,.03); border-radius: .7rem; }
+.invite-hub-stats > div { text-align: center; }
+.invite-hub-stats strong { display: block; font-size: 1.4rem; color: #c4acff; font-weight: 500; }
+.invite-hub-stats small { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+.invite-hub-list { list-style: none; padding: 0; margin: 0 0 1.2rem; display: flex; flex-direction: column; gap: .4rem; }
+.invite-hub-row { display: flex; align-items: center; gap: .8rem; padding: .6rem .8rem; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: .6rem; }
+.invite-hub-row.is-active { background: rgba(196,172,255,.06); border-color: rgba(196,172,255,.15); }
+.invite-hub-avatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.08); color: rgba(255,255,255,.65); display: grid; place-items: center; font-weight: 600; font-size: .9rem; flex-shrink: 0; }
+.invite-hub-avatar.is-active { background: linear-gradient(135deg, rgba(196,172,255,.4), rgba(120,90,200,.55)); color: #fff; }
+.invite-hub-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.invite-hub-name { font-size: .9rem; color: #f6f5fa; font-weight: 500; }
+.invite-hub-status { font-size: .72rem; color: rgba(255,255,255,.5); }
+.invite-hub-remove { background: transparent; border: 0; color: rgba(255,255,255,.35); cursor: pointer; padding: .4rem; border-radius: .35rem; display: grid; place-items: center; flex-shrink: 0; }
+.invite-hub-remove:hover { color: #ff9d9d; background: rgba(255,157,157,.08); }
+.invite-hub-form { border-top: 1px solid rgba(255,255,255,.06); padding-top: 1.2rem; }
+.invite-hub-label { display: block; font-size: .85rem; color: rgba(255,255,255,.7); margin: .5rem 0 .4rem; }
+.invite-hub-full { text-align: center; padding: 1rem; background: rgba(255,255,255,.03); border-radius: .7rem; color: rgba(255,255,255,.6); font-size: .9rem; }
+.invite-hub-full strong { color: #f6f5fa; }
+.invite-hub-success { text-align: center; padding-top: .5rem; }
+.invite-hub-success h3 { font-size: 1.15rem; margin: .5rem 0 1rem; color: #f6f5fa; }
+.invite-hub-success h3 em { color: #c4acff; font-style: normal; font-weight: 500; }
