@@ -7461,8 +7461,12 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 }
 
 @media (min-width: 1180px) {
+  .connection-app .eu-home .eu-online-section {
+    grid-column: span 1;
+  }
+
   .connection-app .eu-home .eu-play-hero {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 }
 
