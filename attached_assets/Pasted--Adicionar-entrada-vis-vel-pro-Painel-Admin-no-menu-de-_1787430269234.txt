@@ -1,0 +1,76 @@
+# Adicionar entrada visível pro Painel Admin (no menu de Ajustes)
+
+**Problema:** o `/admin` existe mas não tem nenhum link visível pra chegar lá — a pessoa precisa digitar a URL manualmente. Precisamos que apareça um botão "Painel Admin" dentro do menu de Ajustes (⚙️), SÓ quando a conta logada é a conta admin.
+
+**Pré-requisito:** este prompt assume que o `painel-admin-v1-replit.md` (endpoint `/api/admin/check` + página `/admin`) já foi aplicado. Se ainda não aplicou, aplica ele primeiro.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Adicionar checagem de admin no componente `AppExperienceReference` — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar o componente `AppExperienceReference` (~linha 736) e, perto dos outros `useState`/`useEffect` (por exemplo perto de `settingsOpen`), adicionar:
+
+```tsx
+const [isAdminAccount, setIsAdminAccount] = useState(false);
+
+useEffect(() => {
+  const sessionId = safeGetItem('conexao-session');
+  if (!sessionId) return;
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  fetch(`${apiBase}/api/admin/check?sessionId=${encodeURIComponent(sessionId)}`)
+    .then(r => (r.ok ? r.json() : { isAdmin: false }))
+    .then(data => setIsAdminAccount(!!data.isAdmin))
+    .catch(() => setIsAdminAccount(false));
+}, []);
+```
+
+## 2. Adicionar o botão dentro do modal de Ajustes (mesmo arquivo, ~linha 1708)
+
+Achar, dentro do `settingsOpen && <div className="app-modal-backdrop">...`, o trecho que tem os dois botões finais:
+
+```tsx
+<button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button>
+<button onClick={() => { setSettingsOpen(false); handleLogout(); }} className="app-secondary-button app-logout-button" data-testid="button-logout">Sair da conta</button>
+```
+
+Adicionar o botão do painel admin ENTRE esses dois (só renderiza se `isAdminAccount` for true), SEM alterar as duas linhas existentes:
+
+```tsx
+<button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button>
+{isAdminAccount && (
+  <Link href="/admin" className="app-secondary-button admin-panel-link" data-testid="button-open-admin-panel" onClick={() => setSettingsOpen(false)}>
+    <LayoutTemplate size={15} /> Painel Admin
+  </Link>
+)}
+<button onClick={() => { setSettingsOpen(false); handleLogout(); }} className="app-secondary-button app-logout-button" data-testid="button-logout">Sair da conta</button>
+```
+
+`Link` do wouter já deve estar importado no topo do arquivo (é usado em outras partes). Se não estiver, adicionar:
+```tsx
+import { Link } from 'wouter';
+```
+
+**Adicionar import** `LayoutTemplate` no topo do arquivo (com os outros de lucide-react), se ainda não tiver:
+```tsx
+import { ..., LayoutTemplate } from 'lucide-react';
+```
+
+## 3. CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.admin-panel-link {
+  display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+  text-decoration: none;
+}
+.admin-panel-link svg { color: #c4acff; }
+```
+
+---
+
+## Verificação
+
+1. Loga com seu email admin (`quinzinhooliveiraa@gmail.com`) → abre o app → clica no ⚙️ (Ajustes) → aparece o botão "Painel Admin" com ícone, entre "Editar como te chamar" e "Sair da conta"
+2. Clica nele → vai pra `/admin` → mostra a lista de landing pages
+3. Loga com outra conta (não admin) → abre Ajustes → o botão "Painel Admin" NÃO aparece

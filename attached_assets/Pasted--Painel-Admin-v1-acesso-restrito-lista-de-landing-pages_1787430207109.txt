@@ -1,0 +1,258 @@
+# Painel Admin v1 — acesso restrito + lista de landing pages
+
+**Objetivo:** criar uma tela `/admin` visível SÓ pra sua conta (email admin já configurado em `ADMIN_EMAILS` no Railway). Por enquanto, o painel só mostra os links de cada landing page ativa, montados com o domínio ATUAL (adapta sozinho se o domínio mudar depois — usa a URL do próprio navegador, não uma fixa). Estatísticas de conversão entram depois, em outro prompt.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Backend — novo endpoint de checagem de admin
+
+Criar `artifacts/api-server/src/routes/admin.ts`:
+
+```ts
+import { Router } from "express";
+import { eq } from "drizzle-orm";
+import { db, sessionsTable } from "@workspace/db";
+
+const router = Router();
+
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((v) => v.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+// GET /api/admin/check?sessionId=...
+router.get("/check", async (req, res) => {
+  const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!sessionId) return res.json({ isAdmin: false });
+
+  const [row] = await db
+    .select({ buyerEmail: sessionsTable.buyerEmail })
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, sessionId))
+    .limit(1);
+
+  if (!row?.buyerEmail) return res.json({ isAdmin: false });
+
+  const isAdmin = getAdminEmails().includes(row.buyerEmail.trim().toLowerCase());
+  return res.json({ isAdmin });
+});
+
+export const adminRouter = router;
+```
+
+Registrar em `artifacts/api-server/src/routes/index.ts` (junto com os outros):
+```ts
+import { adminRouter } from "./admin.js";
+// ...
+router.use("/admin", adminRouter);
+```
+
+---
+
+## 2. Frontend — nova página `artifacts/perguntas-de-conexao/src/pages/Admin.tsx`
+
+```tsx
+import { useEffect, useState } from 'react';
+import { Link } from 'wouter';
+import { ArrowLeft, ExternalLink, Copy, Check, ShieldAlert, LayoutTemplate } from 'lucide-react';
+
+function safeGetItem(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+type LandingEntry = {
+  id: string;
+  label: string;
+  path: string;
+  description: string;
+};
+
+// Lista de landing pages ativas. Adicionar novas aqui conforme criadas.
+const LANDINGS: LandingEntry[] = [
+  { id: 'v1', label: 'Landing V1 — Estática', path: '/', description: 'Hero + dor + solução + temas + prova social + preço + FAQ, tudo em scroll.' },
+  { id: 'v2', label: 'Landing V2 — Quiz interativo', path: '/lp2', description: 'Mesma base, mas com mini-quiz de 3 perguntas antes de mostrar o preço.' },
+];
+
+export default function Admin() {
+  const [status, setStatus] = useState<'checking' | 'denied' | 'ok'>('checking');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sessionId = safeGetItem('conexao-session');
+    if (!sessionId) { setStatus('denied'); return; }
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+    fetch(`${apiBase}/api/admin/check?sessionId=${encodeURIComponent(sessionId)}`)
+      .then((r) => (r.ok ? r.json() : { isAdmin: false }))
+      .then((data) => setStatus(data.isAdmin ? 'ok' : 'denied'))
+      .catch(() => setStatus('denied'));
+  }, []);
+
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+  const copyLink = (entry: LandingEntry) => {
+    const url = `${origin}${entry.path}`;
+    navigator.clipboard?.writeText(url).then(() => {
+      setCopiedId(entry.id);
+      setTimeout(() => setCopiedId((current) => (current === entry.id ? null : current)), 1800);
+    });
+  };
+
+  if (status === 'checking') {
+    return <div className="admin-page admin-loading"><p>Verificando acesso…</p></div>;
+  }
+
+  if (status === 'denied') {
+    return (
+      <div className="admin-page admin-denied">
+        <ShieldAlert size={32} />
+        <h1>Acesso restrito</h1>
+        <p>Esta área é reservada. Se você acha que deveria ter acesso, entre com sua conta primeiro.</p>
+        <Link href="/login" className="button button-primary">Ir para o login</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-page">
+      <header className="admin-header">
+        <Link href="/app" className="admin-back"><ArrowLeft size={16} /> Voltar ao app</Link>
+        <h1><LayoutTemplate size={22} /> Painel Admin</h1>
+        <p>Links das landing pages ativas. Estatísticas de conversão entram numa próxima etapa.</p>
+      </header>
+
+      <section className="admin-section">
+        <h2>Landing pages</h2>
+        <div className="admin-landing-grid">
+          {LANDINGS.map((entry) => (
+            <article key={entry.id} className="admin-landing-card" data-testid={`card-landing-${entry.id}`}>
+              <div className="admin-landing-info">
+                <strong>{entry.label}</strong>
+                <p>{entry.description}</p>
+                <code className="admin-landing-url">{origin}{entry.path}</code>
+              </div>
+              <div className="admin-landing-actions">
+                <a
+                  href={`${origin}${entry.path}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admin-icon-button"
+                  data-testid={`link-open-landing-${entry.id}`}
+                  aria-label={`Abrir ${entry.label}`}
+                >
+                  <ExternalLink size={16} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => copyLink(entry)}
+                  className="admin-icon-button"
+                  data-testid={`button-copy-landing-${entry.id}`}
+                  aria-label={`Copiar link de ${entry.label}`}
+                >
+                  {copiedId === entry.id ? <Check size={16} /> : <Copy size={16} />}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+```
+
+---
+
+## 3. Registrar a rota `/admin` — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar a função `Router` (~linha 1797):
+```tsx
+function Router() {
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/login" component={Login} /><Route path="/play" component={Play} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+```
+
+Adicionar o import no topo:
+```tsx
+import Admin from './pages/Admin';
+```
+
+Adicionar a rota (antes do `<Route component={NotFound} />`):
+```tsx
+<Route path="/admin" component={Admin} />
+```
+
+---
+
+## 4. CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.admin-page { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.4rem 4rem; color: #f9f8fb; }
+.admin-loading, .admin-denied {
+  min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 0.8rem; color: rgba(255, 255, 255, 0.7);
+}
+.admin-denied svg { color: #ff9d9d; }
+.admin-denied h1 { color: #f9f8fb; font-size: 1.4rem; font-weight: 400; margin: 0; }
+.admin-denied p { max-width: 360px; font-size: 0.9rem; }
+
+.admin-header { margin-bottom: 2.5rem; }
+.admin-back {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.55); font-size: 0.85rem; text-decoration: none;
+  margin-bottom: 1.2rem;
+}
+.admin-back:hover { color: #c4acff; }
+.admin-header h1 {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 1.6rem; font-weight: 400; color: #f9f8fb; margin: 0 0 0.5rem;
+}
+.admin-header h1 svg { color: #c4acff; }
+.admin-header p { color: rgba(255, 255, 255, 0.55); font-size: 0.92rem; margin: 0; }
+
+.admin-section h2 {
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: rgba(196, 172, 255, 0.75); margin: 0 0 1rem;
+}
+.admin-landing-grid { display: flex; flex-direction: column; gap: 0.8rem; }
+.admin-landing-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  padding: 1.2rem 1.4rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(196, 172, 255, 0.18);
+  border-radius: 0.9rem;
+  flex-wrap: wrap;
+}
+.admin-landing-info strong { display: block; font-size: 1rem; color: #f9f8fb; margin-bottom: 0.3rem; }
+.admin-landing-info p { margin: 0 0 0.5rem; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4; max-width: 480px; }
+.admin-landing-url {
+  display: inline-block; font-size: 0.78rem; color: #c4acff;
+  background: rgba(196, 172, 255, 0.08); padding: 0.25rem 0.55rem; border-radius: 0.4rem;
+  font-family: var(--app-font-mono);
+}
+.admin-landing-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+.admin-icon-button {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75); cursor: pointer; text-decoration: none;
+  transition: all 0.15s ease;
+}
+.admin-icon-button:hover { background: rgba(196, 172, 255, 0.12); border-color: rgba(196, 172, 255, 0.4); color: #c4acff; }
+
+@media (max-width: 600px) {
+  .admin-landing-card { flex-direction: column; align-items: flex-start; }
+  .admin-landing-actions { align-self: flex-end; }
+}
+```
+
+---
+
+## Verificação
+
+1. Confirme no Railway (Variables do serviço `api-server`) que `ADMIN_EMAILS` tem o seu email (`quinzinhooliveiraa@gmail.com`) — se não tiver, adicione lá (separado por vírgula se tiver mais de um)
+2. Logado com seu email admin → acessa `workspaceperguntas-de-conexao-production.up.railway.app/admin` (ou o domínio que estiver ativo) → vê o painel com as 2 landing pages listadas, cada uma com o link completo, botão de abrir em nova aba e botão de copiar
+3. Deslogado ou logado com outra conta → acessa `/admin` → vê tela "Acesso restrito" com botão pro login
+4. Confirma que o link mostrado usa o domínio ATUAL do navegador (não um hardcoded) — se um dia trocar pra `perguntasdeconexao.com.br`, o painel mostra sozinho o link certo, sem precisar mexer no código
