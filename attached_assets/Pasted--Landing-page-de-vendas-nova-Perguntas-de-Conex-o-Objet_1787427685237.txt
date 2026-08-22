@@ -1,0 +1,759 @@
+# Landing page de vendas nova — Perguntas de Conexão
+
+**Objetivo:** substituir a landing atual (que hoje é só um hero + pacotes bem simples) por uma landing dedicada de vendas, otimizada pra tráfego pago do Facebook. Estrutura híbrida com mini-quiz interativo pra criar engajamento sem afastar tráfego.
+
+**Estratégia (importante entender):** fluxo continua o mesmo (paga → onboarding → app). A landing tem um mini-quiz de 3 telas que dá "gostinho" de personalização e mostra 3 perguntas de verdade, depois CTA de compra. NÃO é pra fazer onboarding grátis antes de pagar.
+
+**Referências que inspiraram**: How Deep Will You Go (US), We're Not Really Strangers, Segredo do Relacionamento, Casados e Felizes.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Substituir a `<section className="hero">` até a `<section className="quote-section">` — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar essa faixa (aproximadamente linhas 555-592). Substituir TUDO (do `<section className="hero">` até o fechamento da `</section>` do quote-section) por:
+
+```tsx
+{/* ==================== HERO ==================== */}
+<section className="lp-hero">
+  <div className="lp-hero-inner">
+    <div className="lp-hero-copy">
+      <span className="lp-eyebrow">baralho digital de perguntas · para casais</span>
+      <h1 className="lp-hero-h1">
+        Suas conversas viraram <em>logística.</em><br />
+        <strong>É hora de voltar a se conhecer.</strong>
+      </h1>
+      <p className="lp-hero-sub">
+        300+ perguntas de conexão real. Sem quiz de revista, sem clichê.
+        Uma pergunta por vez — o resto acontece entre vocês.
+      </p>
+      <div className="lp-hero-actions">
+        <button
+          onClick={() => document.getElementById('lp-quiz')?.scrollIntoView({ behavior: 'smooth' })}
+          className="lp-cta-primary"
+          data-testid="button-hero-cta"
+        >
+          Ver 3 perguntas grátis <ArrowRight size={18} />
+        </button>
+        <a href="#lp-precos" className="lp-cta-secondary">Ir direto pro preço</a>
+      </div>
+      <div className="lp-hero-trust">
+        <div className="lp-trust-avatars">
+          <span className="lp-trust-avatar lp-trust-a">M</span>
+          <span className="lp-trust-avatar lp-trust-b">L</span>
+          <span className="lp-trust-avatar lp-trust-c">R</span>
+        </div>
+        <span>Já usado por <strong>+300 casais</strong> no Brasil</span>
+      </div>
+    </div>
+
+    <div className="lp-hero-mockups" aria-hidden="true">
+      {/* Mockup Mac */}
+      <div className="lp-mockup-mac">
+        <div className="lp-mockup-mac-bar">
+          <span /><span /><span />
+        </div>
+        <div className="lp-mockup-mac-screen">
+          <div className="lp-mock-card lp-mock-card-front">
+            <span className="lp-mock-tag">porto seguro</span>
+            <p className="lp-mock-text">"Qual foi a última vez que você se sentiu <em>completamente</em> em casa comigo?"</p>
+            <span className="lp-mock-num">03 / 31</span>
+          </div>
+        </div>
+      </div>
+      {/* Mockup Mobile */}
+      <div className="lp-mockup-phone">
+        <div className="lp-mockup-phone-notch" />
+        <div className="lp-mockup-phone-screen">
+          <div className="lp-mock-card lp-mock-card-back">
+            <span className="lp-mock-tag lp-mock-tag-vibe">faísca</span>
+            <p className="lp-mock-text">"O que em mim ainda te <em>surpreende?</em>"</p>
+            <span className="lp-mock-num">07 / 31</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* ==================== DOR (relacionável) ==================== */}
+<section className="lp-pain">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">quem tá aí sabe</p>
+    <h2 className="lp-h2">
+      Você olha pra ele(a) e pensa:<br />
+      <em>"onde a gente se perdeu?"</em>
+    </h2>
+    <ul className="lp-pain-list">
+      <li>
+        <span className="lp-pain-icon">💤</span>
+        <div>
+          <strong>As conversas viraram logística.</strong>
+          <p>"Buscou pão?" "Que horas vem?" "Feriado a gente vai onde?"</p>
+        </div>
+      </li>
+      <li>
+        <span className="lp-pain-icon">📱</span>
+        <div>
+          <strong>Cada um no próprio celular.</strong>
+          <p>Sentados no mesmo sofá, quilômetros de distância um do outro.</p>
+        </div>
+      </li>
+      <li>
+        <span className="lp-pain-icon">🤷</span>
+        <div>
+          <strong>Você tentou "vamos conversar".</strong>
+          <p>Deu silêncio, resposta seca, ou desviou pro Netflix. De novo.</p>
+        </div>
+      </li>
+    </ul>
+    <p className="lp-pain-close">
+      Não é falta de amor. É que <strong>ninguém ensinou a fazer as perguntas certas.</strong>
+    </p>
+  </div>
+</section>
+
+{/* ==================== SOLUÇÃO ==================== */}
+<section className="lp-solution">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">a proposta</p>
+    <h2 className="lp-h2">
+      Um baralho digital<br /><em>que faz o trabalho pesado.</em>
+    </h2>
+    <p className="lp-solution-lede">
+      300+ perguntas escritas pra abrir espaço — sem quiz de revista, sem clichê,
+      sem "qual seu animal favorito". Uma pergunta por vez. Você abre, lê em voz alta,
+      escuta. O resto acontece entre vocês.
+    </p>
+    <div className="lp-solution-pillars">
+      <div className="lp-pillar">
+        <div className="lp-pillar-icon">🎴</div>
+        <strong>15 baralhos temáticos</strong>
+        <p>De "Porto Seguro" (as conversas que parecem casa) até "Fogo Alto" (18+ sem tabu)</p>
+      </div>
+      <div className="lp-pillar">
+        <div className="lp-pillar-icon">📱</div>
+        <strong>Roda no celular e PC</strong>
+        <p>Abre no navegador, sem instalar app. Login por email, funciona em qualquer aparelho.</p>
+      </div>
+      <div className="lp-pillar">
+        <div className="lp-pillar-icon">🌐</div>
+        <strong>Jogue junto de longe</strong>
+        <p>Sala online sincronizada — cada um no seu celular, mesma pergunta ao mesmo tempo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* ==================== MINI-QUIZ INTERATIVO ==================== */}
+<section className="lp-quiz-section" id="lp-quiz">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">experimente</p>
+    <h2 className="lp-h2">
+      Ver 3 perguntas de verdade,<br /><em>feitas pra vocês.</em>
+    </h2>
+    <LandingQuiz onFinish={() => document.getElementById('lp-precos')?.scrollIntoView({ behavior: 'smooth' })} />
+  </div>
+</section>
+
+{/* ==================== COMO FUNCIONA ==================== */}
+<section className="lp-how" id="como-funciona">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">como funciona</p>
+    <h2 className="lp-h2">Três passos, um ritual novo.</h2>
+    <div className="lp-how-steps">
+      <div className="lp-how-step">
+        <span className="lp-how-num">01</span>
+        <strong>Escolhem juntos o tema da noite</strong>
+        <p>Podem começar por "Porto Seguro" pra aquecer, ou já ir direto pro "Livro Aberto" se estão de peito aberto.</p>
+      </div>
+      <div className="lp-how-step">
+        <span className="lp-how-num">02</span>
+        <strong>Uma pergunta por vez</strong>
+        <p>Vira a carta, lê em voz alta, escuta a resposta. Sem pressa. Sem julgamento. Sem interrupção.</p>
+      </div>
+      <div className="lp-how-step">
+        <span className="lp-how-num">03</span>
+        <strong>Salvem os momentos que importam</strong>
+        <p>Uma resposta que te marcou? Salva no "meu espaço" — fica guardada pra sempre.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* ==================== TEMAS DISPONÍVEIS ==================== */}
+<section className="lp-themes">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p>
+    <h2 className="lp-h2">
+      15 baralhos temáticos,<br /><em>pra cada momento de vocês.</em>
+    </h2>
+    <div className="lp-themes-grid">
+      {[
+        { name: 'Porto Seguro', desc: 'As conversas que parecem casa.', count: 31, kind: 'tema' },
+        { name: 'Livro Aberto', desc: 'Sem filtro, cara a cara.', count: 31, kind: 'tema' },
+        { name: 'Você Não Sabia', desc: 'Descobertas que ainda cabem entre vocês.', count: 32, kind: 'tema' },
+        { name: 'Em Voz Alta', desc: 'A vida que os dois querem construir.', count: 30, kind: 'tema' },
+        { name: 'Lá Atrás', desc: 'O que formou quem você é hoje.', count: 28, kind: 'tema' },
+        { name: 'Modo Leve', desc: 'Pra rir e não levar tão a sério.', count: 31, kind: 'tema' },
+        { name: 'Viagens', desc: 'Lugares que já foram, os que ainda vão ser.', count: 30, kind: 'tema' },
+        { name: 'Carreira & Dinheiro', desc: 'Como pensam o lado prático.', count: 30, kind: 'tema' },
+        { name: 'Depois da Tempestade', desc: 'Brigas, mágoas e o caminho de volta.', count: 30, kind: 'tema' },
+        { name: 'Faísca', desc: 'O lado mais provocante de vocês.', count: 31, kind: 'vibe' },
+        { name: 'Luzes Baixas', desc: 'Quando a noite pede mais coragem. 18+', count: 35, kind: 'vibe' },
+        { name: 'Fogo Alto', desc: 'Desejos, curiosidades, limites. 18+', count: 30, kind: 'vibe' },
+        { name: 'Sem Freio', desc: 'O mais ousado. Só pra quem topa. 18+', count: 30, kind: 'vibe' },
+        { name: 'Mesmo Longe', desc: 'Quando rotina ou distância afastam.', count: 30, kind: 'vibe' },
+        { name: 'Perto de Novo', desc: 'Esquentar o espaço entre vocês.', count: 30, kind: 'vibe' },
+      ].map(t => (
+        <div key={t.name} className={`lp-theme-card ${t.kind === 'vibe' ? 'lp-theme-vibe' : ''}`}>
+          <strong>{t.name}</strong>
+          <p>{t.desc}</p>
+          <span>{t.count} cartas</span>
+        </div>
+      ))}
+    </div>
+    <p className="lp-themes-note">
+      <strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos — o seu acesso é vitalício.
+    </p>
+  </div>
+</section>
+
+{/* ==================== PROVA SOCIAL (placeholder) ==================== */}
+<section className="lp-social">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">o que dizem</p>
+    <h2 className="lp-h2">
+      Casais que já usaram<br /><em>e não largam mais.</em>
+    </h2>
+    <div className="lp-social-grid">
+      <blockquote className="lp-testimonial">
+        <p>"Descobri coisas do meu marido em uma noite que 8 anos de casamento não tinham me mostrado. Nem sabia o que perguntar antes."</p>
+        <footer>— Marina L. · Belo Horizonte</footer>
+      </blockquote>
+      <blockquote className="lp-testimonial">
+        <p>"A gente fez a distância desaparecer por 40 minutos. Vale mais que qualquer terapia de casal que a gente pagou."</p>
+        <footer>— Rafael C. · Curitiba</footer>
+      </blockquote>
+      <blockquote className="lp-testimonial">
+        <p>"Comprei achando que ia ser uma bobeirinha. Virou nosso ritual de sexta à noite. Sério."</p>
+        <footer>— Julia M. · São Paulo</footer>
+      </blockquote>
+    </div>
+    <p className="lp-social-note lp-tiny-note">Depoimentos de casais em fase de teste. Substituir por depoimentos reais quando disponíveis.</p>
+  </div>
+</section>
+
+{/* ==================== PREÇO + GARANTIA ==================== */}
+<section className="lp-price" id="lp-precos">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
+    <h2 className="lp-h2">
+      Um baralho que dura<br /><em>o quanto vocês quiserem.</em>
+    </h2>
+
+    <div className="lp-price-card">
+      <div className="lp-price-badge">Oferta de lançamento</div>
+      <div className="lp-price-main">
+        <span className="lp-price-old">De <s>R$ 97,00</s></span>
+        <div className="lp-price-value">
+          <span className="lp-price-currency">R$</span>
+          <span className="lp-price-big">47</span>
+          <span className="lp-price-cents">,90</span>
+        </div>
+        <span className="lp-price-installments">à vista <strong>ou</strong> 5x de R$ 9,58</span>
+      </div>
+
+      <ul className="lp-price-includes">
+        <li>✓ 445+ perguntas nos 15 baralhos temáticos</li>
+        <li>✓ Acesso pra <strong>2 pessoas</strong> (você + convite)</li>
+        <li>✓ Salas online sincronizadas (jogar de longe)</li>
+        <li>✓ Roda em celular e computador</li>
+        <li>✓ Novos baralhos incluídos, pra sempre</li>
+        <li>✓ Sem mensalidade. Paga uma vez.</li>
+      </ul>
+
+      <button
+        onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }}
+        className="lp-cta-primary lp-cta-full"
+        data-testid="button-price-cta"
+      >
+        Começar agora por R$ 47,90 <ArrowRight size={18} />
+      </button>
+
+      <div className="lp-guarantee">
+        <div className="lp-guarantee-seal">🛡️</div>
+        <div>
+          <strong>Garantia incondicional de 7 dias.</strong>
+          <p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama, sem "por quê".</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{/* ==================== FAQ ==================== */}
+<section className="lp-faq">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">perguntas frequentes</p>
+    <h2 className="lp-h2">Ainda em dúvida?</h2>
+    <div className="lp-faq-list">
+      {[
+        { q: 'Precisa instalar app?', a: 'Não. É um site que roda no navegador — abre no celular ou PC. Se quiser, dá pra "salvar na tela de início" no celular pra virar ícone (mas é opcional).' },
+        { q: 'Funciona pra quem tá namorando há pouco tempo?', a: 'Funciona ainda melhor. Casais recentes ficam sem assunto rápido porque não construíram muitas referências ainda. O baralho dá o "empurrão" pra ir mais fundo em vez de conversa de superfície.' },
+        { q: 'E se meu parceiro(a) não gostar da ideia?', a: 'Comum. Sugestão: proponha "10 minutos e se não gostar, para". Quase todo mundo passa dos 10 min. O truque é começar pelo baralho "Modo Leve" ou "Porto Seguro" — nada pesado.' },
+        { q: 'É vitalício mesmo?', a: 'Sim, sem mensalidade. Paga uma vez, usa o quanto quiser, incluindo os baralhos novos que a gente for adicionando.' },
+        { q: 'Dá pra usar longe? Distância?', a: 'Sim. Tem função "sala online" — você cria uma sala, manda o código pro seu parceiro, e joguem sincronizado (mesma pergunta pros dois ao mesmo tempo).' },
+        { q: 'Tem 18+?', a: 'Sim, 3 baralhos separados (Luzes Baixas, Fogo Alto, Sem Freio). Ficam num espaço à parte pra você acessar só quando quiser.' },
+        { q: 'Como recebo depois de pagar?', a: 'Na hora. O pagamento é via Pix, cai em segundos, e o app abre automático já com o convite pra pessoa que você quer trazer.' },
+      ].map((item, i) => (
+        <details key={i} className="lp-faq-item">
+          <summary>{item.q}</summary>
+          <p>{item.a}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* ==================== CTA FINAL ==================== */}
+<section className="lp-final-cta">
+  <div className="lp-container lp-final-cta-inner">
+    <h2 className="lp-h2">
+      O próximo bom papo<br /><em>tá a uma pergunta de distância.</em>
+    </h2>
+    <p>Começa hoje. R$ 47,90 vitalício, garantia de 7 dias.</p>
+    <button
+      onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }}
+      className="lp-cta-primary lp-cta-big"
+      data-testid="button-final-cta"
+    >
+      Quero começar agora <ArrowRight size={20} />
+    </button>
+  </div>
+</section>
+```
+
+## 2. Adicionar componente `LandingQuiz` no MESMO arquivo `App.tsx`
+
+No topo do arquivo (perto de outros componentes internos), adicionar:
+
+```tsx
+function LandingQuiz({ onFinish }: { onFinish: () => void }) {
+  const [step, setStep] = useState(0);
+  const [role, setRole] = useState<'namorando' | 'casado' | 'longa' | ''>('');
+  const [phase, setPhase] = useState<'inicio' | 'anos' | 'reconectar' | ''>('');
+  const [theme, setTheme] = useState<'porto' | 'faisca' | 'livro' | ''>('');
+
+  const PREVIEWS: Record<string, { title: string; questions: string[] }> = {
+    porto: {
+      title: 'Porto Seguro',
+      questions: [
+        'Qual foi a última vez que você se sentiu completamente em casa comigo?',
+        'O que eu faço, sem perceber, que te faz respirar mais fundo?',
+        'Se um dia esta versão nossa acabasse, do que você mais sentiria falta?',
+      ],
+    },
+    faisca: {
+      title: 'Faísca',
+      questions: [
+        'O que em mim ainda te surpreende — que você não esperava?',
+        'Quando foi a última vez que você me olhou e pensou "quero de novo"?',
+        'Qual gesto meu, mesmo bobo, te desarma na hora?',
+      ],
+    },
+    livro: {
+      title: 'Livro Aberto',
+      questions: [
+        'Qual medo você tem sobre nós que ainda não me disse?',
+        'O que você acha que eu deveria saber sobre você e nunca perguntei?',
+        'Existe algo que você mudaria na gente hoje, se pudesse?',
+      ],
+    },
+  };
+
+  if (step === 3) {
+    const preview = PREVIEWS[theme] || PREVIEWS.porto;
+    return (
+      <div className="lp-quiz-result">
+        <p className="lp-quiz-pill">Seu baralho ideal pra começar:</p>
+        <h3 className="lp-quiz-result-title">{preview.title}</h3>
+        <div className="lp-quiz-cards">
+          {preview.questions.map((q, i) => (
+            <div key={i} className="lp-quiz-preview-card">
+              <span className="lp-mock-tag">{preview.title.toLowerCase()}</span>
+              <p>"{q}"</p>
+              <span className="lp-mock-num">{String(i + 1).padStart(2, '0')} / {preview.questions.length}+</span>
+            </div>
+          ))}
+        </div>
+        <p className="lp-quiz-cta-text">
+          <strong>Essas são 3 de {preview.title === 'Porto Seguro' ? '31' : preview.title === 'Faísca' ? '31' : '31'}.</strong> Destrave as outras + os outros 14 baralhos:
+        </p>
+        <button onClick={onFinish} className="lp-cta-primary lp-cta-big" data-testid="button-quiz-cta">
+          Ver o preço <ArrowRight size={18} />
+        </button>
+      </div>
+    );
+  }
+
+  const stepConfig = [
+    { key: 'role', label: 'Vocês estão:', options: [{ v: 'namorando', l: 'Namorando' }, { v: 'casado', l: 'Casados' }, { v: 'longa', l: 'Relação longa' }], set: (v: string) => { setRole(v as typeof role); setStep(1); } },
+    { key: 'phase', label: 'Como você descreveria a fase de vocês?', options: [{ v: 'inicio', l: 'Início, descobrindo' }, { v: 'anos', l: 'Anos juntos, rotina' }, { v: 'reconectar', l: 'Precisamos reconectar' }], set: (v: string) => { setPhase(v as typeof phase); setStep(2); } },
+    { key: 'theme', label: 'O que mais te chama agora?', options: [{ v: 'porto', l: 'Aquecer, sem susto' }, { v: 'faisca', l: 'Provocar, apimentar' }, { v: 'livro', l: 'Ir fundo de verdade' }], set: (v: string) => { setTheme(v as typeof theme); setStep(3); } },
+  ][step];
+
+  return (
+    <div className="lp-quiz">
+      <div className="lp-quiz-progress">
+        <span className={step >= 0 ? 'is-active' : ''} />
+        <span className={step >= 1 ? 'is-active' : ''} />
+        <span className={step >= 2 ? 'is-active' : ''} />
+      </div>
+      <p className="lp-quiz-question">{stepConfig.label}</p>
+      <div className="lp-quiz-options">
+        {stepConfig.options.map(opt => (
+          <button
+            key={opt.v}
+            onClick={() => stepConfig.set(opt.v)}
+            className="lp-quiz-option"
+            data-testid={`button-quiz-${stepConfig.key}-${opt.v}`}
+          >
+            {opt.l}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 3. CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+/* ==================== LANDING BASE ==================== */
+.lp-container { max-width: 1120px; margin: 0 auto; padding: 0 1.4rem; }
+.lp-eyebrow { display: inline-block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(196, 172, 255, 0.75); margin-bottom: 0.8rem; }
+.lp-eyebrow-center { display: block; text-align: center; }
+.lp-h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 400; line-height: 1.2; text-align: center; margin: 0 auto 2.5rem; max-width: 720px; color: #f9f8fb; }
+.lp-h2 em { font-style: italic; color: #c4acff; }
+
+.lp-cta-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem;
+  padding: 0.95rem 1.6rem;
+  background: linear-gradient(135deg, #c4acff, #8b6bd9);
+  color: #1a1520;
+  font-weight: 600; font-size: 0.98rem;
+  border: 0; border-radius: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 6px 20px rgba(196, 172, 255, 0.25);
+}
+.lp-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(196, 172, 255, 0.35); }
+.lp-cta-full { width: 100%; padding: 1.1rem; font-size: 1.05rem; }
+.lp-cta-big { padding: 1.15rem 2rem; font-size: 1.1rem; }
+.lp-cta-secondary { color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; text-decoration: none; margin-left: 1rem; }
+.lp-cta-secondary:hover { color: #c4acff; }
+
+/* ==================== HERO ==================== */
+.lp-hero { padding: 4rem 1.4rem 5rem; position: relative; overflow: hidden; }
+.lp-hero::before {
+  content: ''; position: absolute; top: -20%; right: -10%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(196, 172, 255, 0.15), transparent 70%);
+  pointer-events: none;
+}
+.lp-hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr 1fr; gap: 3rem; align-items: center; position: relative; z-index: 1; }
+.lp-hero-h1 { font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 300; line-height: 1.15; margin: 0.5rem 0 1.2rem; color: #f9f8fb; }
+.lp-hero-h1 em { font-style: italic; color: rgba(255, 255, 255, 0.75); }
+.lp-hero-h1 strong { font-weight: 500; color: #c4acff; }
+.lp-hero-sub { font-size: 1.1rem; line-height: 1.55; color: rgba(255, 255, 255, 0.72); margin: 0 0 1.8rem; }
+.lp-hero-actions { display: flex; align-items: center; gap: 0.3rem; margin-bottom: 1.6rem; flex-wrap: wrap; }
+.lp-hero-trust { display: flex; align-items: center; gap: 0.7rem; color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; }
+.lp-trust-avatars { display: flex; }
+.lp-trust-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 600; color: #fff;
+  border: 2px solid #0f0b1a; margin-left: -8px;
+}
+.lp-trust-a { background: linear-gradient(135deg, #ff9dc4, #d968aa); margin-left: 0; }
+.lp-trust-b { background: linear-gradient(135deg, #c4acff, #8b6bd9); }
+.lp-trust-c { background: linear-gradient(135deg, #ffb47c, #d97e3d); }
+
+/* Hero mockups */
+.lp-hero-mockups { position: relative; height: 460px; }
+.lp-mockup-mac {
+  position: absolute; top: 30px; right: 0;
+  width: 380px; background: #0d0918; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  transform: rotate(-2deg);
+}
+.lp-mockup-mac-bar { display: flex; gap: 6px; padding: 10px 12px; background: rgba(255, 255, 255, 0.03); }
+.lp-mockup-mac-bar span { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); }
+.lp-mockup-mac-bar span:nth-child(1) { background: #ff5f57; }
+.lp-mockup-mac-bar span:nth-child(2) { background: #febc2e; }
+.lp-mockup-mac-bar span:nth-child(3) { background: #28c840; }
+.lp-mockup-mac-screen { padding: 2rem; display: flex; justify-content: center; }
+
+.lp-mockup-phone {
+  position: absolute; bottom: 0; left: 20px;
+  width: 220px; height: 420px;
+  background: #0d0918; border-radius: 32px;
+  border: 6px solid #1a1520;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  transform: rotate(4deg);
+}
+.lp-mockup-phone-notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 90px; height: 20px; background: #1a1520;
+  border-radius: 0 0 12px 12px; z-index: 2;
+}
+.lp-mockup-phone-screen { padding: 2.5rem 1rem 1rem; height: 100%; display: flex; justify-content: center; align-items: center; }
+
+.lp-mock-card {
+  background: linear-gradient(150deg, #4c3299 0%, #2b1a5c 100%);
+  border-radius: 14px;
+  padding: 1.4rem 1.2rem;
+  display: flex; flex-direction: column;
+  gap: 0.8rem;
+  color: #f9f8fb;
+  aspect-ratio: 0.72;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.lp-mock-card::before {
+  content: ''; position: absolute; top: -30%; right: -20%;
+  width: 150%; height: 100%;
+  background: radial-gradient(circle, rgba(196, 172, 255, 0.25), transparent 60%);
+}
+.lp-mock-card-back {
+  background: linear-gradient(150deg, #99326a 0%, #5c1a3c 100%);
+}
+.lp-mock-tag {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: rgba(196, 172, 255, 0.9);
+  background: rgba(196, 172, 255, 0.1);
+  padding: 0.25rem 0.55rem; border-radius: 0.3rem;
+  align-self: flex-start;
+  z-index: 1;
+}
+.lp-mock-tag-vibe { color: #ff9dc4; background: rgba(255, 157, 196, 0.1); }
+.lp-mock-text { font-size: 0.95rem; line-height: 1.4; margin: auto 0; z-index: 1; font-weight: 300; }
+.lp-mock-text em { font-style: italic; color: #c4acff; }
+.lp-mock-card-back .lp-mock-text em { color: #ff9dc4; }
+.lp-mock-num { font-size: 0.72rem; color: rgba(255, 255, 255, 0.4); align-self: flex-end; z-index: 1; }
+
+/* ==================== PAIN ==================== */
+.lp-pain { padding: 5rem 1.4rem; background: rgba(0, 0, 0, 0.15); }
+.lp-pain-list { list-style: none; padding: 0; margin: 0 auto 2.5rem; max-width: 700px; display: flex; flex-direction: column; gap: 1.2rem; }
+.lp-pain-list li { display: flex; gap: 1.2rem; padding: 1.3rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 0.9rem; }
+.lp-pain-icon { font-size: 1.8rem; flex-shrink: 0; }
+.lp-pain-list strong { display: block; font-size: 1.1rem; color: #f9f8fb; margin-bottom: 0.3rem; }
+.lp-pain-list p { margin: 0; color: rgba(255, 255, 255, 0.65); font-size: 0.95rem; line-height: 1.5; }
+.lp-pain-close { text-align: center; font-size: 1.1rem; color: rgba(255, 255, 255, 0.75); max-width: 600px; margin: 0 auto; }
+.lp-pain-close strong { color: #c4acff; }
+
+/* ==================== SOLUTION ==================== */
+.lp-solution { padding: 5rem 1.4rem; }
+.lp-solution-lede { text-align: center; max-width: 720px; margin: 0 auto 3rem; font-size: 1.05rem; line-height: 1.6; color: rgba(255, 255, 255, 0.7); }
+.lp-solution-pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; max-width: 960px; margin: 0 auto; }
+.lp-pillar { padding: 1.6rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(196, 172, 255, 0.15); border-radius: 1rem; text-align: center; }
+.lp-pillar-icon { font-size: 2.2rem; margin-bottom: 0.9rem; }
+.lp-pillar strong { display: block; font-size: 1.05rem; color: #f9f8fb; margin-bottom: 0.5rem; }
+.lp-pillar p { font-size: 0.88rem; color: rgba(255, 255, 255, 0.62); line-height: 1.45; margin: 0; }
+
+/* ==================== QUIZ ==================== */
+.lp-quiz-section { padding: 5rem 1.4rem; background: linear-gradient(180deg, transparent, rgba(196, 172, 255, 0.04), transparent); }
+.lp-quiz { max-width: 560px; margin: 0 auto; padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(196, 172, 255, 0.2); border-radius: 1.2rem; text-align: center; }
+.lp-quiz-progress { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 2rem; }
+.lp-quiz-progress span { width: 40px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); transition: background 0.2s; }
+.lp-quiz-progress span.is-active { background: #c4acff; }
+.lp-quiz-question { font-size: 1.25rem; color: #f9f8fb; margin: 0 0 1.5rem; font-weight: 400; }
+.lp-quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+.lp-quiz-option {
+  padding: 1rem 1.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.7rem;
+  color: #f9f8fb;
+  font-size: 0.98rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.lp-quiz-option:hover { background: rgba(196, 172, 255, 0.1); border-color: #c4acff; transform: translateY(-1px); }
+
+.lp-quiz-result { max-width: 720px; margin: 0 auto; text-align: center; }
+.lp-quiz-pill { display: inline-block; padding: 0.4rem 1rem; background: rgba(196, 172, 255, 0.15); border-radius: 2rem; color: #c4acff; font-size: 0.82rem; margin-bottom: 1rem; }
+.lp-quiz-result-title { font-size: 2rem; color: #f9f8fb; margin: 0 0 2rem; font-weight: 400; }
+.lp-quiz-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
+.lp-quiz-preview-card {
+  background: linear-gradient(150deg, #4c3299 0%, #2b1a5c 100%);
+  border-radius: 12px;
+  padding: 1.2rem 1rem;
+  display: flex; flex-direction: column;
+  gap: 0.7rem;
+  color: #f9f8fb;
+  aspect-ratio: 0.72;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.lp-quiz-preview-card p { font-size: 0.85rem; line-height: 1.4; margin: auto 0; }
+.lp-quiz-preview-card span:last-child { font-size: 0.7rem; color: rgba(255, 255, 255, 0.5); align-self: flex-end; }
+.lp-quiz-cta-text { font-size: 1.05rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem; }
+.lp-quiz-cta-text strong { color: #f9f8fb; }
+
+/* ==================== HOW ==================== */
+.lp-how { padding: 5rem 1.4rem; }
+.lp-how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6rem; max-width: 960px; margin: 0 auto; }
+.lp-how-step { padding: 1.8rem 1.4rem; background: rgba(255, 255, 255, 0.03); border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.06); }
+.lp-how-num { display: inline-block; font-size: 2rem; color: #c4acff; font-weight: 300; margin-bottom: 0.5rem; font-style: italic; }
+.lp-how-step strong { display: block; font-size: 1.1rem; color: #f9f8fb; margin-bottom: 0.6rem; }
+.lp-how-step p { font-size: 0.92rem; color: rgba(255, 255, 255, 0.65); line-height: 1.5; margin: 0; }
+
+/* ==================== THEMES ==================== */
+.lp-themes { padding: 5rem 1.4rem; background: rgba(0, 0, 0, 0.15); }
+.lp-themes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.9rem; max-width: 1000px; margin: 0 auto 2rem; }
+.lp-theme-card {
+  padding: 1.1rem 1.2rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.8rem;
+  display: flex; flex-direction: column; gap: 0.35rem;
+}
+.lp-theme-card strong { font-size: 1rem; color: #f9f8fb; }
+.lp-theme-card p { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4; margin: 0; flex: 1; }
+.lp-theme-card span { font-size: 0.72rem; color: rgba(196, 172, 255, 0.75); text-transform: uppercase; letter-spacing: 0.06em; }
+.lp-theme-vibe { background: linear-gradient(135deg, rgba(255, 155, 200, 0.06), rgba(200, 100, 150, 0.04)); border-color: rgba(255, 155, 200, 0.15); }
+.lp-theme-vibe span { color: rgba(255, 157, 196, 0.85); }
+.lp-themes-note { text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
+.lp-themes-note strong { color: #c4acff; }
+
+/* ==================== SOCIAL ==================== */
+.lp-social { padding: 5rem 1.4rem; }
+.lp-social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; max-width: 1000px; margin: 0 auto 1.5rem; }
+.lp-testimonial {
+  padding: 1.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(196, 172, 255, 0.15);
+  border-radius: 1rem;
+  margin: 0;
+}
+.lp-testimonial p { font-size: 1rem; line-height: 1.55; color: #f9f8fb; margin: 0 0 1rem; font-style: italic; }
+.lp-testimonial footer { font-size: 0.85rem; color: rgba(196, 172, 255, 0.8); font-style: normal; }
+.lp-tiny-note { text-align: center; font-size: 0.75rem; color: rgba(255, 255, 255, 0.35); }
+
+/* ==================== PRICE ==================== */
+.lp-price { padding: 5rem 1.4rem; background: linear-gradient(180deg, transparent, rgba(196, 172, 255, 0.05)); }
+.lp-price-card {
+  max-width: 540px; margin: 0 auto;
+  padding: 2.5rem 2.2rem;
+  background: linear-gradient(150deg, rgba(196, 172, 255, 0.08), rgba(120, 90, 200, 0.05));
+  border: 1.5px solid rgba(196, 172, 255, 0.3);
+  border-radius: 1.4rem;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.lp-price-badge {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  padding: 0.4rem 1rem;
+  background: linear-gradient(135deg, #c4acff, #8b6bd9);
+  color: #1a1520;
+  font-size: 0.78rem; font-weight: 600;
+  border-radius: 2rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.lp-price-main { text-align: center; margin-bottom: 2rem; }
+.lp-price-old { display: block; color: rgba(255, 255, 255, 0.5); font-size: 0.95rem; margin-bottom: 0.4rem; }
+.lp-price-value { display: flex; align-items: flex-start; justify-content: center; gap: 0.15rem; margin-bottom: 0.5rem; }
+.lp-price-currency { font-size: 1.5rem; color: #c4acff; margin-top: 0.8rem; }
+.lp-price-big { font-size: 4.5rem; font-weight: 300; line-height: 1; color: #f9f8fb; }
+.lp-price-cents { font-size: 1.5rem; color: #f9f8fb; margin-top: 0.8rem; }
+.lp-price-installments { color: rgba(255, 255, 255, 0.65); font-size: 0.95rem; }
+.lp-price-installments strong { color: #c4acff; }
+
+.lp-price-includes { list-style: none; padding: 0; margin: 0 0 2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.lp-price-includes li { color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; padding-left: 0.2rem; }
+.lp-price-includes strong { color: #c4acff; }
+
+.lp-guarantee { display: flex; gap: 1rem; margin-top: 1.8rem; padding: 1.2rem; background: rgba(255, 255, 255, 0.03); border-radius: 0.8rem; border: 1px solid rgba(255, 255, 255, 0.06); }
+.lp-guarantee-seal { font-size: 2rem; flex-shrink: 0; }
+.lp-guarantee strong { display: block; color: #f9f8fb; margin-bottom: 0.3rem; }
+.lp-guarantee p { margin: 0; color: rgba(255, 255, 255, 0.65); font-size: 0.85rem; line-height: 1.5; }
+
+/* ==================== FAQ ==================== */
+.lp-faq { padding: 5rem 1.4rem; }
+.lp-faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.6rem; }
+.lp-faq-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.7rem;
+  overflow: hidden;
+}
+.lp-faq-item summary {
+  padding: 1.1rem 1.3rem;
+  cursor: pointer;
+  color: #f9f8fb;
+  font-size: 1rem;
+  font-weight: 500;
+  list-style: none;
+  position: relative;
+  padding-right: 3rem;
+}
+.lp-faq-item summary::-webkit-details-marker { display: none; }
+.lp-faq-item summary::after {
+  content: '+'; position: absolute; right: 1.3rem; top: 50%; transform: translateY(-50%);
+  font-size: 1.4rem; color: #c4acff; font-weight: 300; transition: transform 0.2s;
+}
+.lp-faq-item[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+.lp-faq-item p { padding: 0 1.3rem 1.2rem; margin: 0; color: rgba(255, 255, 255, 0.7); line-height: 1.55; font-size: 0.95rem; }
+
+/* ==================== FINAL CTA ==================== */
+.lp-final-cta { padding: 5rem 1.4rem 7rem; text-align: center; }
+.lp-final-cta-inner p { color: rgba(255, 255, 255, 0.7); font-size: 1rem; margin: -1.5rem 0 2rem; }
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 900px) {
+  .lp-hero-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .lp-hero-mockups { height: 380px; margin-top: 1rem; }
+  .lp-mockup-mac { width: 300px; right: 10px; }
+  .lp-mockup-phone { width: 170px; height: 330px; left: 10px; }
+  .lp-solution-pillars,
+  .lp-how-steps,
+  .lp-social-grid { grid-template-columns: 1fr; }
+  .lp-quiz-cards { grid-template-columns: 1fr; max-width: 300px; margin-left: auto; margin-right: auto; }
+}
+@media (max-width: 640px) {
+  .lp-hero { padding: 2.5rem 1.2rem 3rem; }
+  .lp-hero-mockups { height: 320px; }
+  .lp-mockup-mac { width: 240px; }
+  .lp-mockup-phone { width: 140px; height: 270px; }
+  .lp-mock-text { font-size: 0.78rem; }
+  .lp-h2 { margin-bottom: 1.8rem; }
+  .lp-pain, .lp-solution, .lp-how, .lp-themes, .lp-social, .lp-price, .lp-faq, .lp-quiz-section { padding: 3.5rem 1.2rem; }
+  .lp-quiz { padding: 2rem 1.3rem; }
+  .lp-price-card { padding: 2rem 1.4rem; }
+  .lp-price-big { font-size: 3.5rem; }
+  .lp-hero-actions { flex-direction: column; align-items: stretch; }
+  .lp-cta-secondary { margin: 0.8rem 0 0; text-align: center; }
+}
+```
+
+---
+
+## Verificação
+
+1. Abre `/` (landing) — vê hero com título "Suas conversas viraram logística" + mockup Mac + Phone com cards renderizados em CSS puro
+2. Rola até "experimente" — clica em opção do quiz → avança até resultado com 3 perguntas de verdade + CTA "Ver o preço"
+3. Rola até preço — vê R$97 riscado + R$47,90 + garantia 7 dias + CTA que abre modal de checkout existente
+4. FAQ — abre e fecha os itens
+5. Mobile — hero vira coluna única, mockups menores, tudo empilhado
+6. Todos os CTAs de compra abrem o `checkoutModal` existente (mesmo fluxo Abacate Pay)

@@ -374,15 +374,79 @@ function Logo({ inverse = false }: { inverse?: boolean }) {
   return <Link href="/" data-testid="link-logo" className={`brand-mark ${inverse ? 'brand-mark-inverse' : ''}`}><span className="brand-symbol"><Feather size={18} strokeWidth={1.6} /></span><span>Perguntas<br /><i>de Conexão</i></span></Link>;
 }
 
+function LandingQuiz({ onFinish }: { onFinish: () => void }) {
+  const [step, setStep] = useState(0);
+  const [theme, setTheme] = useState<'porto' | 'faisca' | 'livro' | ''>('');
+
+  const previews: Record<string, { title: string; questions: string[] }> = {
+    porto: {
+      title: 'Porto Seguro',
+      questions: [
+        'Qual foi a última vez que você se sentiu completamente em casa comigo?',
+        'O que eu faço, sem perceber, que te faz respirar mais fundo?',
+        'Se um dia esta versão nossa acabasse, do que você mais sentiria falta?',
+      ],
+    },
+    faisca: {
+      title: 'Faísca',
+      questions: [
+        'O que em mim ainda te surpreende — que você não esperava?',
+        'Quando foi a última vez que você me olhou e pensou "quero de novo"?',
+        'Qual gesto meu, mesmo bobo, te desarma na hora?',
+      ],
+    },
+    livro: {
+      title: 'Livro Aberto',
+      questions: [
+        'Qual medo você tem sobre nós que ainda não me disse?',
+        'O que você acha que eu deveria saber sobre você e nunca perguntei?',
+        'Existe algo que você mudaria na gente hoje, se pudesse?',
+      ],
+    },
+  };
+
+  if (step === 3) {
+    const preview = previews[theme] || previews.porto;
+    return <div className="lp-quiz-result">
+      <p className="lp-quiz-pill">Seu baralho ideal pra começar:</p>
+      <h3 className="lp-quiz-result-title">{preview.title}</h3>
+      <div className="lp-quiz-cards">
+        {preview.questions.map((question, index) => <div key={question} className="lp-quiz-preview-card">
+          <span className="lp-mock-tag">{preview.title.toLowerCase()}</span>
+          <p>"{question}"</p>
+          <span className="lp-mock-num">{String(index + 1).padStart(2, '0')} / 31</span>
+        </div>)}
+      </div>
+      <p className="lp-quiz-cta-text"><strong>Essas são 3 de 31.</strong> Destrave as outras + os outros 14 baralhos:</p>
+      <button onClick={onFinish} className="lp-cta-primary lp-cta-big" data-testid="button-quiz-cta">Ver o preço <ArrowRight size={18} /></button>
+    </div>;
+  }
+
+  const steps = [
+    { key: 'role', label: 'Vocês estão:', options: [['namorando', 'Namorando'], ['casado', 'Casados'], ['longa', 'Relação longa']] },
+    { key: 'phase', label: 'Como você descreveria a fase de vocês?', options: [['inicio', 'Início, descobrindo'], ['anos', 'Anos juntos, rotina'], ['reconectar', 'Precisamos reconectar']] },
+    { key: 'theme', label: 'O que mais te chama agora?', options: [['porto', 'Aquecer, sem susto'], ['faisca', 'Provocar, apimentar'], ['livro', 'Ir fundo de verdade']] },
+  ] as const;
+  const current = steps[step];
+
+  return <div className="lp-quiz">
+    <div className="lp-quiz-progress">{steps.map((item, index) => <span key={item.key} className={step >= index ? 'is-active' : ''} />)}</div>
+    <p className="lp-quiz-question">{current.label}</p>
+    <div className="lp-quiz-options">
+      {current.options.map(([value, label]) => <button key={value} onClick={() => { if (step === 2) setTheme(value as typeof theme); setStep(step + 1); }} className="lp-quiz-option" data-testid={`button-quiz-${current.key}-${value}`}>{label}</button>)}
+    </div>
+  </div>;
+}
+
 function Shell({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return <div className={`site-shell ${dark ? 'shell-dark' : ''}`}>
     <header className="site-header">
       <Logo inverse={dark} />
-      <nav className={`main-nav ${menuOpen ? 'nav-open' : ''}`}>
+     <nav className={`main-nav ${menuOpen ? 'nav-open' : ''}`}>
         <Link href="/app" data-testid="link-experience">Experiência</Link>
         <a href="#como-funciona" data-testid="link-how-it-works">Como funciona</a>
-        <a href="#pacotes" data-testid="link-packages">Pacotes</a>
+       <a href="#lp-precos" data-testid="link-packages">Pacotes</a>
       </nav>
        <Link href="/login" className="header-cta" data-testid="link-header-cta">Abrir meu baralho <ArrowRight size={16} /></Link>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menu" data-testid="button-menu"><Menu size={22} /></button>
@@ -584,49 +648,27 @@ function Home() {
     }
   };
   const [buyerNameInput, setBuyerNameInput] = useState('');
-  return <Shell>
+   return <Shell dark>
     <StoredAccessGate />
     <Link href="/login" className="home-login-link" data-testid="link-home-login">Já tem baralho? Entrar</Link>
-    <main>
-      <section className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow"><span className="eyebrow-line" /> um baralho para estar perto</p>
-          <h1>Há coisas que só aparecem quando a gente <em>pergunta.</em></h1>
-          <p className="hero-lede">Perguntas de Conexão é um convite para sair do automático. Um baralho digital, feito para abrir espaço para histórias, silêncios e respostas honestas.</p>
-           <div className="hero-actions"><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="button button-primary" data-testid="button-start-demo">Começar a experiência <ArrowRight size={17} /></button><a href="#como-funciona" className="text-link" data-testid="link-learn-more">Entender o ritual <ChevronRight size={16} /></a></div>
-          <div className="hero-note"><span className="tiny-avatar">M</span><span>Uma pergunta por vez.<br /><strong>O resto acontece entre vocês.</strong></span></div>
-        </div>
-        <div className="hero-art">
-          <div className="orbit orbit-one" /><div className="orbit orbit-two" />
-          <div className="card-stack">
-            <div className="deck-card deck-back" /><div className="deck-card deck-middle" />
-            <div className="deck-card deck-front"><span className="card-kicker">Pergunta 01</span><Quote size={29} strokeWidth={1.2} /><p>Que parte de você aparece quando se sente verdadeiramente em casa?</p><span className="card-footer">perguntas de conexão</span></div>
-          </div>
-          <div className="art-caption"><span>feito para duas ou mais pessoas</span><span className="caption-dot" /><span>sem respostas certas</span></div>
-        </div>
-      </section>
-
-      <section className="statement-section">
-        <p className="section-kicker">não é um jogo de perguntas</p>
-        <h2>É um jeito delicado de dizer:<br /><em>“quero conhecer você de novo.”</em></h2>
-        <div className="statement-grid"><p>Entre a pergunta e a resposta existe um pequeno intervalo. É ali que mora a presença — aquela coisa rara que não cabe em notificações, agendas ou conversas apressadas.</p><p>Criamos perguntas que não pedem performance. Só curiosidade. Para casais, famílias e amizades que querem continuar descobrindo.</p></div>
-      </section>
-
-      <section className="ritual-section" id="como-funciona">
-        <div className="ritual-heading"><p className="section-kicker">o ritual</p><h2>Abra espaço.<br /><em>Uma carta por vez.</em></h2></div>
-        <div className="ritual-steps"><div className="ritual-step"><span>01</span><h3>Escolha o clima</h3><p>Presença, memórias ou amanhã. Comece de onde fizer sentido hoje.</p></div><div className="ritual-step"><span>02</span><h3>Leia sem pressa</h3><p>Uma pergunta aparece. Respirem. Alguém começa — e o outro escuta.</p></div><div className="ritual-step"><span>03</span><h3>Deixe acontecer</h3><p>Salve as perguntas que ficaram. Voltem quando quiserem continuar.</p></div></div>
-      </section>
-
-      <section className="packages-section" id="pacotes">
-        <div className="packages-intro"><p className="section-kicker">um acesso, muitas conversas</p><h2>Escolha quem você<br /><em>quer trazer para perto.</em></h2><p>Pagamento único. Acesso imediato ao baralho completo e convites para quem importa.</p></div>
-        <div className="package-list">
-          <article className="package-card package-featured"><div className="package-tag">para dois</div><div className="package-top"><h3>Casal</h3><span className="package-price">R$ 47,90<span>/vitalício</span></span></div><p>Para criar um espaço só de vocês — em qualquer fase da história.</p><ul><li><Check size={15} /> Baralho completo</li><li><Check size={15} /> 1 convite especial</li><li><Check size={15} /> Modo resposta e favoritos</li></ul><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="button button-primary button-full" data-testid="button-buy-couple">Escolher Casal <ArrowRight size={16} /></button></article>
-          {false && <article className="package-card"><div className="package-tag">para a roda toda</div><div className="package-top"><h3>Família & amigos</h3><span className="package-price">R$ 59<span>/único</span></span></div><p>Para reunir as pessoas que fazem uma casa ser casa, mesmo à distância.</p><ul><li><Check size={15} /> Baralho completo</li><li><Check size={15} /> 5 convites especiais</li><li><Check size={15} /> Modo resposta e favoritos</li></ul><button onClick={() => { setSelectedPackage('family'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="button button-outline button-full" data-testid="button-buy-family">Escolher Família <ArrowRight size={16} /></button></article>}
-        </div>
-      </section>
-
-      <section className="quote-section"><Quote size={35} strokeWidth={1} /><blockquote>“A pergunta certa não abre uma conversa.<br /><em>Abre uma pessoa.</em>”</blockquote><span>— uma ideia para levar com vocês</span></section>
-    </main>
+     <main className="lp-main">
+       <section className="lp-hero"><div className="lp-hero-inner"><div className="lp-hero-copy">
+         <span className="lp-eyebrow">baralho digital de perguntas · para casais</span>
+         <h1 className="lp-hero-h1">Suas conversas viraram <em>logística.</em><br /><strong>É hora de voltar a se conhecer.</strong></h1>
+         <p className="lp-hero-sub">300+ perguntas de conexão real. Sem quiz de revista, sem clichê. Uma pergunta por vez — o resto acontece entre vocês.</p>
+         <div className="lp-hero-actions"><button onClick={() => document.getElementById('lp-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-primary" data-testid="button-hero-cta">Ver 3 perguntas grátis <ArrowRight size={18} /></button><a href="#lp-precos" className="lp-cta-secondary">Ir direto pro preço</a></div>
+         <div className="lp-hero-trust"><div className="lp-trust-avatars"><span className="lp-trust-avatar lp-trust-a">M</span><span className="lp-trust-avatar lp-trust-b">L</span><span className="lp-trust-avatar lp-trust-c">R</span></div><span>Já usado por <strong>+300 casais</strong> no Brasil</span></div>
+       </div><div className="lp-hero-mockups" aria-hidden="true"><div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu <em>completamente</em> em casa comigo?"</p><span className="lp-mock-num">03 / 31</span></div></div></div><div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te <em>surpreende?</em>"</p><span className="lp-mock-num">07 / 31</span></div></div></div></div></div></section>
+       <section className="lp-pain"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">quem tá aí sabe</p><h2 className="lp-h2">Você olha pra ele(a) e pensa:<br /><em>"onde a gente se perdeu?"</em></h2><ul className="lp-pain-list"><li><span className="lp-pain-icon">◌</span><div><strong>As conversas viraram logística.</strong><p>"Buscou pão?" "Que horas vem?" "Feriado a gente vai onde?"</p></div></li><li><span className="lp-pain-icon">◌</span><div><strong>Cada um no próprio celular.</strong><p>Sentados no mesmo sofá, quilômetros de distância um do outro.</p></div></li><li><span className="lp-pain-icon">◌</span><div><strong>Você tentou "vamos conversar".</strong><p>Deu silêncio, resposta seca, ou desviou pro Netflix. De novo.</p></div></li></ul><p className="lp-pain-close">Não é falta de amor. É que <strong>ninguém ensinou a fazer as perguntas certas.</strong></p></div></section>
+       <section className="lp-solution"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">a proposta</p><h2 className="lp-h2">Um baralho digital<br /><em>que faz o trabalho pesado.</em></h2><p className="lp-solution-lede">300+ perguntas escritas pra abrir espaço — sem quiz de revista, sem clichê, sem "qual seu animal favorito". Uma pergunta por vez. Você abre, lê em voz alta, escuta. O resto acontece entre vocês.</p><div className="lp-solution-pillars"><div className="lp-pillar"><div className="lp-pillar-icon">◇</div><strong>15 baralhos temáticos</strong><p>De "Porto Seguro" até "Fogo Alto", para cada fase da conversa.</p></div><div className="lp-pillar"><div className="lp-pillar-icon">▣</div><strong>Roda no celular e PC</strong><p>Abre no navegador, sem instalar app, em qualquer aparelho.</p></div><div className="lp-pillar"><div className="lp-pillar-icon">◎</div><strong>Jogue junto de longe</strong><p>Sala online sincronizada para estarem na mesma pergunta.</p></div></div></div></section>
+       <section className="lp-quiz-section" id="lp-quiz"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">experimente</p><h2 className="lp-h2">Ver 3 perguntas de verdade,<br /><em>feitas pra vocês.</em></h2><LandingQuiz onFinish={() => document.getElementById('lp-precos')?.scrollIntoView({ behavior: 'smooth' })} /></div></section>
+       <section className="lp-how" id="como-funciona"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">como funciona</p><h2 className="lp-h2">Três passos, um ritual novo.</h2><div className="lp-how-steps"><div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham juntos o tema da noite</strong><p>Comecem por Porto Seguro para aquecer ou Livro Aberto para ir mais fundo.</p></div><div className="lp-how-step"><span className="lp-how-num">02</span><strong>Uma pergunta por vez</strong><p>Vire a carta, leia em voz alta, escute a resposta. Sem pressa.</p></div><div className="lp-how-step"><span className="lp-how-num">03</span><strong>Salvem os momentos que importam</strong><p>Guarde as respostas que marcaram vocês e volte quando quiser.</p></div></div></div></section>
+       <section className="lp-themes" id="pacotes"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p><h2 className="lp-h2">15 baralhos temáticos,<br /><em>pra cada momento de vocês.</em></h2><div className="lp-themes-grid">{[['Porto Seguro','As conversas que parecem casa.',31],['Livro Aberto','Sem filtro, cara a cara.',31],['Você Não Sabia','Descobertas que ainda cabem entre vocês.',32],['Em Voz Alta','A vida que os dois querem construir.',30],['Lá Atrás','O que formou quem você é hoje.',28],['Modo Leve','Pra rir e não levar tão a sério.',31],['Viagens','Lugares que já foram e ainda vão ser.',30],['Carreira & Dinheiro','Como pensam o lado prático.',30],['Depois da Tempestade','O caminho de volta.',30],['Faísca','O lado mais provocante de vocês.',31],['Luzes Baixas','Quando a noite pede mais coragem. 18+',35],['Fogo Alto','Desejos, curiosidades, limites. 18+',30],['Sem Freio','O mais ousado. Só pra quem topa. 18+',30],['Mesmo Longe','Quando rotina ou distância afastam.',30],['Perto de Novo','Esquentar o espaço entre vocês.',30]].map(([name, description, count], index) => <div key={String(name)} className={`lp-theme-card ${index > 8 ? 'lp-theme-vibe' : ''}`}><strong>{name}</strong><p>{description}</p><span>{count} cartas</span></div>)}</div><p className="lp-themes-note"><strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos — o acesso é vitalício.</p></div></section>
+       <section className="lp-social"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">o que dizem</p><h2 className="lp-h2">Casais que já usaram<br /><em>e não largam mais.</em></h2><div className="lp-social-grid"><blockquote className="lp-testimonial"><p>"Descobri coisas do meu marido em uma noite que 8 anos de casamento não tinham me mostrado."</p><footer>— Marina L. · Belo Horizonte</footer></blockquote><blockquote className="lp-testimonial"><p>"A gente fez a distância desaparecer por 40 minutos. Valeu mais que qualquer presente."</p><footer>— Rafael C. · Curitiba</footer></blockquote><blockquote className="lp-testimonial"><p>"Virou nosso ritual de sexta à noite. Sério."</p><footer>— Julia M. · São Paulo</footer></blockquote></div><p className="lp-tiny-note">Depoimentos de casais em fase de teste.</p></div></section>
+       <section className="lp-price" id="lp-precos"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p><h2 className="lp-h2">Um baralho que dura<br /><em>o quanto vocês quiserem.</em></h2><div className="lp-price-card"><div className="lp-price-badge">Oferta de lançamento</div><div className="lp-price-main"><span className="lp-price-old">De <s>R$ 97,00</s></span><div className="lp-price-value"><span className="lp-price-currency">R$</span><span className="lp-price-big">47</span><span className="lp-price-cents">,90</span></div><span className="lp-price-installments">à vista <strong>ou</strong> 5x de R$ 9,58</span></div><ul className="lp-price-includes"><li>✓ 445+ perguntas nos 15 baralhos temáticos</li><li>✓ Acesso pra <strong>2 pessoas</strong> (você + convite)</li><li>✓ Salas online sincronizadas</li><li>✓ Celular e computador</li><li>✓ Novos baralhos incluídos, pra sempre</li><li>✓ Sem mensalidade. Paga uma vez.</li></ul><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="lp-cta-primary lp-cta-full" data-testid="button-price-cta">Começar agora por R$ 47,90 <ArrowRight size={18} /></button><div className="lp-guarantee"><div className="lp-guarantee-seal">✦</div><div><strong>Garantia incondicional de 7 dias.</strong><p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama.</p></div></div></div></div></section>
+       <section className="lp-faq"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">perguntas frequentes</p><h2 className="lp-h2">Ainda em dúvida?</h2><div className="lp-faq-list">{[['Precisa instalar app?','Não. É um site que roda no navegador — abre no celular ou PC.'],['Funciona pra quem tá namorando há pouco tempo?','Funciona ainda melhor: o baralho dá o empurrão para ir mais fundo em vez de conversa de superfície.'],['É vitalício mesmo?','Sim, sem mensalidade. Paga uma vez e usa o quanto quiser, incluindo baralhos novos.'],['Dá pra usar longe?','Sim. Você cria uma sala, manda o código e joga sincronizado com seu parceiro.'],['Tem 18+?','Sim, há três baralhos separados para acessar quando quiser.'],['Como recebo depois de pagar?','Na hora. O pagamento é via Pix e o app abre automaticamente após a confirmação.']].map(([question, answer]) => <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
+       <section className="lp-final-cta"><div className="lp-container lp-final-cta-inner"><h2 className="lp-h2">O próximo bom papo<br /><em>tá a uma pergunta de distância.</em></h2><p>Começa hoje. R$ 47,90 vitalício, garantia de 7 dias.</p><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="lp-cta-primary lp-cta-big" data-testid="button-final-cta">Quero começar agora <ArrowRight size={20} /></button></div></section>
+     </main>
      {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clique no botão abaixo para revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { const pendingSessionId = safeGetItem('conexao-pending-session'); if (pendingSessionId) window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu baralho</p><h2>{confirmingLong ? <>Quase lá…<br /><em>as cartas estão chegando.</em></> : <>Suas cartas estão<br /><em>entrando no baralho.</em></>}</h2><p>{confirmingLong ? 'Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela.' : 'Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente.'}</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
   </Shell>;
 }
