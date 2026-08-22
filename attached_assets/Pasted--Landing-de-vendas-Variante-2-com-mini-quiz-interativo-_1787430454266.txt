@@ -1,0 +1,371 @@
+# Landing de vendas — Variante 2 (com mini-quiz interativo) em rota separada `/lp2`
+
+**Objetivo:** criar uma SEGUNDA versão da landing, num ângulo diferente da v1 (que já está em `/`): em vez de tudo estático (scroll e lê), essa versão coloca um **mini-quiz de 3 perguntas** antes de mostrar o preço — a pessoa responde "vocês estão namorando/casados", "que fase", "o que mais chama agora" e recebe 3 perguntas de exemplo PERSONALIZADAS pro perfil dela, aí sim vê o preço. Isso cria engajamento antes da oferta, testando se converte melhor que a v1 puramente estática.
+
+A v1 (em `/`) NÃO deve ser alterada. Essa é uma rota nova, isolada, pra comparar.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Transformar `Home` para aceitar uma variante — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar `function Home() {` (linha ~446). Mudar a assinatura para aceitar uma prop `variant`:
+
+```tsx
+function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
+```
+
+Todo o resto do corpo de `Home` (states, `checkout()`, `useEffect`s de polling, etc.) **continua exatamente igual, sem mudar nada** — só a parte de JSX do `return` que hoje renderiza a landing (hero → footer) vai virar condicional.
+
+Achar o `return (...)` de `Home` e localizar onde começa a landing JSX (a `<section className="lp-hero">` ou similar que veio dos prompts anteriores, ou a antiga `<section className="hero">` se ainda não tiver aplicado a v1).
+
+Envolver a landing (tudo que é conteúdo de marketing — do nav/hero até o footer, ANTES do checkout modal) assim:
+
+```tsx
+{variant === 'v1' ? (
+  <LandingV1 onBuy={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} />
+) : (
+  <LandingV2Quiz onBuy={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} />
+)}
+```
+
+Depois disso, ainda dentro do mesmo `return`, o checkout modal (`{checkoutOpen && <div className="modal-backdrop">...`) continua exatamente como está, fora do `if/else` — os dois variants usam o MESMO modal de checkout.
+
+**Extrair a landing atual (v1) pra uma função separada** `LandingV1` (definida no topo do arquivo, fora de `Home`), recebendo `onBuy: () => void` como prop, e trocando todo `onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }}` dentro dela por `onClick={onBuy}`. É literalmente pegar o JSX que já existe (hero, dor, solução, temas, prova social, preço, faq, cta final, footer da v1) e mover pra dentro dessa função nova, sem mudar o conteúdo.
+
+```tsx
+function LandingV1({ onBuy }: { onBuy: () => void }) {
+  return (
+    <>
+      {/* TODO: colar aqui o JSX completo da landing v1 atual (nav até footer),
+          trocando os onClick de compra por onBuy */}
+    </>
+  );
+}
+```
+
+---
+
+## 2. Criar `LandingV2Quiz` — nova função, no mesmo arquivo
+
+Adicionar essa função (no topo do arquivo, junto com `LandingV1`):
+
+```tsx
+function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
+  return (
+    <>
+      <nav className="lp-nav">
+        <div className="lp-nav-inner">
+          <span className="lp-nav-brand">perguntas <Heart size={14} fill="currentColor" /><br />de conexão</span>
+          <div className="lp-nav-links">
+            <a href="#lp2-como-funciona">Como funciona</a>
+            <a href="#lp2-quiz">Experimente</a>
+            <a href="#lp2-faq">FAQ</a>
+          </div>
+          <button onClick={onBuy} className="lp-nav-cta" data-testid="button-nav-cta-v2">
+            Ver 3 perguntas grátis
+          </button>
+        </div>
+      </nav>
+
+      {/* ==================== HERO ==================== */}
+      <section className="lp-hero">
+        <div className="lp-hero-inner">
+          <div className="lp-hero-copy">
+            <span className="lp-eyebrow">descubra em 30 segundos</span>
+            <h1 className="lp-hero-h1">
+              Qual pergunta vai <em>reacender</em><br />a conversa de vocês hoje?
+            </h1>
+            <p className="lp-hero-sub">
+              Responda 3 perguntinhas rápidas e a gente mostra, na hora,
+              3 perguntas reais feitas pro momento de vocês.
+            </p>
+            <button
+              onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })}
+              className="lp-cta-primary"
+              data-testid="button-hero-cta-v2"
+            >
+              Começar agora — é grátis <ArrowRight size={18} />
+            </button>
+            <p className="lp-hero-fineprint">Leva 30 segundos. Sem cadastro.</p>
+          </div>
+          <div className="lp-hero-visual">
+            <div className="lp-hero-mockups">
+              <div className="lp-mockup-mac">
+                <div className="lp-mockup-mac-bar"><span /><span /><span /></div>
+                <div className="lp-mockup-mac-screen">
+                  <div className="lp-mock-card">
+                    <span className="lp-mock-tag">porto seguro</span>
+                    <p className="lp-mock-text">"Qual foi a última vez que você se sentiu completamente em casa comigo?"</p>
+                    <span className="lp-mock-num">1 / 45</span>
+                  </div>
+                </div>
+              </div>
+              <div className="lp-mockup-phone">
+                <div className="lp-mockup-phone-notch" />
+                <div className="lp-mockup-phone-screen">
+                  <div className="lp-mock-card lp-mock-card-sm">
+                    <span className="lp-mock-tag lp-mock-tag-vibe">faísca</span>
+                    <p className="lp-mock-text">"O que em mim ainda te surpreende?"</p>
+                    <span className="lp-mock-num">7 / 31</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== DOR ==================== */}
+      <section className="lp-pain">
+        <div className="lp-container">
+          <p className="lp-eyebrow lp-eyebrow-center">a dor é real</p>
+          <h2 className="lp-h2">Vocês se amam, mas...</h2>
+          <div className="lp-pain-grid">
+            <div className="lp-pain-card">
+              <span className="lp-pain-icon"><Smartphone size={20} /></span>
+              <strong>Cada um no seu celular</strong>
+              <p>Mesmo juntos, cada um no seu mundo.</p>
+            </div>
+            <div className="lp-pain-card">
+              <span className="lp-pain-icon"><Calendar size={20} /></span>
+              <strong>Só falam sobre logística</strong>
+              <p>Agenda, contas, filhos, tarefa de casa.</p>
+            </div>
+            <div className="lp-pain-card">
+              <span className="lp-pain-icon"><MessageCircle size={20} /></span>
+              <strong>"Vamos conversar" que não dá em nada</strong>
+              <p>Tentam, mas vira discussão ou silêncio.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== QUIZ INTERATIVO ==================== */}
+      <section className="lp-quiz-section" id="lp2-quiz">
+        <div className="lp-container">
+          <p className="lp-eyebrow lp-eyebrow-center">experimente agora</p>
+          <h2 className="lp-h2">3 perguntas rápidas.<br /><em>3 perguntas de volta, feitas pra vocês.</em></h2>
+          <LandingQuizWidget onFinish={onBuy} />
+        </div>
+      </section>
+
+      {/* ==================== COMO FUNCIONA ==================== */}
+      <section className="lp-how" id="lp2-como-funciona">
+        <div className="lp-container">
+          <p className="lp-eyebrow lp-eyebrow-center">como funciona depois</p>
+          <h2 className="lp-h2">3 passos simples</h2>
+          <div className="lp-how-steps">
+            <div className="lp-how-step">
+              <span className="lp-how-num">1</span>
+              <strong>Escolham um tema</strong>
+              <p>São 15 baralhos diferentes para cada momento.</p>
+            </div>
+            <ChevronRight size={20} className="lp-how-arrow" />
+            <div className="lp-how-step">
+              <span className="lp-how-num">2</span>
+              <strong>Abram uma carta</strong>
+              <p>Leiam a pergunta em voz alta e deixem ela agir.</p>
+            </div>
+            <ChevronRight size={20} className="lp-how-arrow" />
+            <div className="lp-how-step">
+              <span className="lp-how-num">3</span>
+              <strong>Conversem de verdade</strong>
+              <p>Uma pergunta por vez, o resto acontece entre vocês.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== PREÇO ==================== */}
+      <section className="lp-price" id="lp2-precos">
+        <div className="lp-container">
+          <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
+          <div className="lp-price-bar">
+            <div className="lp-price-bar-value">
+              <span className="lp-price-label">ACESSO VITALÍCIO</span>
+              <div className="lp-price-row">
+                <span className="lp-price-big">R$ 47,90</span>
+                <span className="lp-price-old"><s>R$ 97,00</s></span>
+              </div>
+              <span className="lp-price-installments">ou 5x de R$ 9,58 sem juros</span>
+            </div>
+            <div className="lp-price-bar-includes">
+              <span><Diamond size={15} /> Pagamento único via Pix</span>
+              <span><Users size={15} /> Convide 1 pessoa e joguem juntos</span>
+              <span><ShieldCheck size={15} /> Garantia incondicional de 7 dias</span>
+            </div>
+            <button onClick={onBuy} className="lp-cta-primary lp-price-bar-cta" data-testid="button-price-cta-v2">
+              <Lock size={15} /> Desbloquear todas as perguntas
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== FAQ ==================== */}
+      <section className="lp-faq" id="lp2-faq">
+        <div className="lp-container">
+          <p className="lp-eyebrow lp-eyebrow-center">dúvidas frequentes</p>
+          <h2 className="lp-h2">Perguntas que recebemos sempre</h2>
+          <div className="lp-faq-grid">
+            {[
+              { q: 'Funciona para namorados que estão começando?', a: 'Sim! Temos temas perfeitos para se conhecer desde o início.' },
+              { q: 'Precisa instalar algum aplicativo?', a: 'Não. É 100% online, roda no navegador do celular ou computador.' },
+              { q: 'Funciona à distância?', a: 'Sim! Tem sala online em tempo real para vocês jogarem sincronizados.' },
+              { q: 'Tem conteúdo adulto?', a: 'Sim, temos 6 baralhos 18+ separados.' },
+              { q: 'Quantas perguntas tem?', a: 'Mais de 445 perguntas, em 15 baralhos temáticos.' },
+              { q: 'É vitalício mesmo?', a: 'Sim! Acesso vitalício, sem mensalidade.' },
+            ].map((item, i) => (
+              <details key={i} className="lp-faq-item">
+                <summary><HelpCircle size={16} /> {item.q}</summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== FOOTER ==================== */}
+      <footer className="lp-footer">
+        <div className="lp-container lp-footer-inner">
+          <span className="lp-nav-brand">perguntas <Heart size={12} fill="currentColor" /><br />de conexão</span>
+          <span className="lp-footer-copy">© 2026 Perguntas de Conexão. Todos os direitos reservados.</span>
+        </div>
+      </footer>
+    </>
+  );
+}
+```
+
+## 3. Adicionar `LandingQuizWidget` — mesmo arquivo, junto com `LandingV2Quiz`
+
+```tsx
+function LandingQuizWidget({ onFinish }: { onFinish: () => void }) {
+  const [step, setStep] = useState(0);
+  const [theme, setTheme] = useState<'porto' | 'faisca' | 'livro'>('porto');
+
+  const PREVIEWS: Record<string, { title: string; questions: string[] }> = {
+    porto: {
+      title: 'Porto Seguro',
+      questions: [
+        'Qual foi a última vez que você se sentiu completamente em casa comigo?',
+        'O que eu faço, sem perceber, que te faz respirar mais fundo?',
+        'Se um dia esta versão nossa acabasse, do que você mais sentiria falta?',
+      ],
+    },
+    faisca: {
+      title: 'Faísca',
+      questions: [
+        'O que em mim ainda te surpreende — que você não esperava?',
+        'Quando foi a última vez que você me olhou e pensou "quero de novo"?',
+        'Qual gesto meu, mesmo bobo, te desarma na hora?',
+      ],
+    },
+    livro: {
+      title: 'Livro Aberto',
+      questions: [
+        'Qual medo você tem sobre nós que ainda não me disse?',
+        'O que você acha que eu deveria saber sobre você e nunca perguntei?',
+        'Existe algo que você mudaria na gente hoje, se pudesse?',
+      ],
+    },
+  };
+
+  if (step === 3) {
+    const preview = PREVIEWS[theme];
+    return (
+      <div className="lp-quiz-result">
+        <p className="lp-quiz-pill">Seu baralho ideal pra começar:</p>
+        <h3 className="lp-quiz-result-title">{preview.title}</h3>
+        <div className="lp-quiz-cards">
+          {preview.questions.map((q, i) => (
+            <div key={i} className="lp-quiz-preview-card">
+              <span className="lp-mock-tag">{preview.title.toLowerCase()}</span>
+              <p>"{q}"</p>
+              <span>{String(i + 1).padStart(2, '0')} / 31+</span>
+            </div>
+          ))}
+        </div>
+        <p className="lp-quiz-cta-text">
+          <strong>Essas são só 3 de 445+.</strong> Desbloqueie o baralho completo e os outros 14 temas:
+        </p>
+        <button onClick={onFinish} className="lp-cta-primary lp-cta-big" data-testid="button-quiz-cta-v2">
+          Quero ver o preço <ArrowRight size={18} />
+        </button>
+      </div>
+    );
+  }
+
+  const steps = [
+    { key: 'role', label: 'Vocês estão:', options: ['Namorando', 'Casados', 'Relação longa'] },
+    { key: 'phase', label: 'Como você descreveria a fase de vocês?', options: ['Início, descobrindo', 'Anos juntos, rotina', 'Precisamos reconectar'] },
+    { key: 'theme', label: 'O que mais te chama agora?', options: [{ l: 'Aquecer, sem susto', v: 'porto' }, { l: 'Provocar, apimentar', v: 'faisca' }, { l: 'Ir fundo de verdade', v: 'livro' }] },
+  ];
+  const current = steps[step];
+
+  return (
+    <div className="lp-quiz">
+      <div className="lp-quiz-progress">
+        <span className={step >= 0 ? 'is-active' : ''} />
+        <span className={step >= 1 ? 'is-active' : ''} />
+        <span className={step >= 2 ? 'is-active' : ''} />
+      </div>
+      <p className="lp-quiz-question">{current.label}</p>
+      <div className="lp-quiz-options">
+        {current.options.map((opt) => {
+          const label = typeof opt === 'string' ? opt : opt.l;
+          const value = typeof opt === 'string' ? opt : opt.v;
+          return (
+            <button
+              key={label}
+              onClick={() => {
+                if (current.key === 'theme') setTheme(value as typeof theme);
+                setStep(step + 1);
+              }}
+              className="lp-quiz-option"
+              data-testid={`button-quiz-${current.key}-${label}`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 4. Registrar a rota `/lp2` — mesmo arquivo, na função `Router` (~linha 1797)
+
+Achar:
+```tsx
+function Router() {
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} />...
+```
+
+Adicionar uma rota nova logo depois de `/`:
+```tsx
+<Route path="/" component={Home} />
+<Route path="/lp2"><Home variant="v2" /></Route>
+```
+
+(mantém `path="/"` chamando `Home` sem prop, que por default usa `variant = 'v1'`)
+
+---
+
+## 5. CSS
+
+Nenhum CSS novo — reaproveita 100% as classes `lp-*` já criadas no prompt da landing v1 (`.lp-hero`, `.lp-quiz`, `.lp-quiz-option`, etc.). Não precisa adicionar nada no `index.css` além do que já está lá.
+
+---
+
+## Verificação
+
+1. Abre `/` — landing v1 continua igual, sem mudança nenhuma
+2. Abre `/lp2` — landing nova: hero focado em "descubra em 30 segundos", CTA leva direto pro quiz
+3. Rola até o quiz, responde as 3 perguntas → aparece resultado com tema personalizado + 3 perguntas reais + CTA "quero ver o preço"
+4. Clica no CTA do resultado → abre o MESMO modal de checkout que a v1 usa (Abacate Pay)
+5. Testa o checkout em `/lp2` — mesmo fluxo, mesmo comportamento, só a landing antes é diferente

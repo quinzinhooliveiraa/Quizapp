@@ -439,6 +439,38 @@ function LandingQuiz({ onFinish }: { onFinish: () => void }) {
   </div>;
 }
 
+function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
+  return <>
+    <section className="lp-hero lp2-hero">
+      <div className="lp-hero-inner">
+        <div className="lp-hero-copy">
+          <span className="lp-eyebrow">descubra em 30 segundos</span>
+          <h1 className="lp-hero-h1">Qual pergunta vai <em>reacender</em><br />a conversa de vocês hoje?</h1>
+          <p className="lp-hero-sub">Responda 3 perguntinhas rápidas e receba perguntas reais feitas para o momento de vocês.</p>
+          <button onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-primary" data-testid="button-hero-cta-v2">Começar agora — é grátis <ArrowRight size={18} /></button>
+          <p className="lp-hero-fineprint">Leva 30 segundos. Sem cadastro.</p>
+        </div>
+        <div className="lp-hero-mockups" aria-hidden="true">
+          <div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu completamente em casa comigo?"</p><span className="lp-mock-num">01 / 31</span></div></div></div>
+          <div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te surpreende?"</p><span className="lp-mock-num">07 / 31</span></div></div></div>
+        </div>
+      </div>
+    </section>
+    <section className="lp-pain lp2-pain">
+      <div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">a dor é real</p><h2 className="lp-h2">Vocês se amam, mas...</h2>
+        <div className="lp2-pain-grid"><div><strong>Cada um no seu celular</strong><p>Mesmo juntos, cada um no seu mundo.</p></div><div><strong>Só falam sobre logística</strong><p>Agenda, contas, filhos, tarefa de casa.</p></div><div><strong>“Vamos conversar” não dá em nada</strong><p>Tentam, mas vira discussão ou silêncio.</p></div></div>
+      </div>
+    </section>
+    <section className="lp-quiz-section" id="lp2-quiz">
+      <div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">experimente agora</p><h2 className="lp-h2">3 perguntas rápidas.<br /><em>3 perguntas feitas pra vocês.</em></h2><LandingQuiz onFinish={onBuy} /></div>
+    </section>
+    <section className="lp-how" id="lp2-como-funciona"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">como funciona depois</p><h2 className="lp-h2">Três passos simples.</h2><div className="lp-how-steps"><div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham um tema</strong><p>São 15 baralhos para cada momento.</p></div><div className="lp-how-step"><span className="lp-how-num">02</span><strong>Abram uma carta</strong><p>Leiam em voz alta e deixem ela agir.</p></div><div className="lp-how-step"><span className="lp-how-num">03</span><strong>Conversem de verdade</strong><p>Uma pergunta por vez. O resto acontece entre vocês.</p></div></div></div></section>
+    <section className="lp-price" id="lp2-precos"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p><h2 className="lp-h2">Mais conversa.<br /><em>Menos automático.</em></h2><div className="lp2-price-bar"><div><span className="lp-price-label">ACESSO VITALÍCIO</span><strong>R$ 47,90</strong><small>ou 5x de R$ 9,58 sem juros</small></div><p>445+ perguntas em 15 baralhos, acesso para duas pessoas e novos temas incluídos.</p><button onClick={onBuy} className="lp-cta-primary" data-testid="button-price-cta-v2">Desbloquear todas as perguntas <ArrowRight size={18} /></button></div></div></section>
+    <section className="lp-faq" id="lp2-faq"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">dúvidas frequentes</p><h2 className="lp-h2">Perguntas que recebemos sempre</h2><div className="lp-faq-list">{[['Precisa instalar algum aplicativo?', 'Não. É 100% online, no navegador do celular ou computador.'], ['Funciona à distância?', 'Sim. Vocês podem jogar sincronizados em uma sala online.'], ['É vitalício mesmo?', 'Sim. Acesso vitalício, sem mensalidade.'], ['Quantas perguntas tem?', 'Mais de 445 perguntas em 15 baralhos temáticos.']].map(([question, answer]) => <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
+    <section className="lp-final-cta"><div className="lp-container lp-final-cta-inner"><h2 className="lp-h2">O próximo bom papo<br /><em>começa com uma pergunta.</em></h2><p>Comece hoje por R$ 47,90, com acesso vitalício.</p><button onClick={onBuy} className="lp-cta-primary lp-cta-big" data-testid="button-final-cta-v2">Quero começar agora <ArrowRight size={20} /></button></div></section>
+  </>;
+}
+
 function Shell({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return <div className={`site-shell ${dark ? 'shell-dark' : ''}`}>
@@ -544,7 +576,7 @@ function StoredAccessGate() {
   return <div className="access-gate-overlay" role="status" aria-live="polite"><div className="access-gate"><span className="access-gate-mark"><Feather size={18} /></span><p>Abrindo seu espaço de conexão…</p></div></div>;
 }
 
-function Home() {
+function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<'couple' | 'family'>('couple');
   const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'confirming' | 'error' | 'waiting-manual'>('idle');
@@ -649,10 +681,10 @@ function Home() {
     }
   };
   const [buyerNameInput, setBuyerNameInput] = useState('');
-   return <Shell dark>
+     return <Shell dark>
     <StoredAccessGate />
     <Link href="/login" className="home-login-link" data-testid="link-home-login">Já tem baralho? Entrar</Link>
-     <main className="lp-main">
+      <main className="lp-main">{variant === 'v2' ? <LandingV2Quiz onBuy={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} /> : <>
        <section className="lp-hero"><div className="lp-hero-inner"><div className="lp-hero-copy">
          <span className="lp-eyebrow">baralho digital de perguntas · para casais</span>
          <h1 className="lp-hero-h1">Suas conversas viraram <em>logística.</em><br /><strong>É hora de voltar a se conhecer.</strong></h1>
@@ -669,7 +701,7 @@ function Home() {
        <section className="lp-price" id="lp-precos"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p><h2 className="lp-h2">Um baralho que dura<br /><em>o quanto vocês quiserem.</em></h2><div className="lp-price-card"><div className="lp-price-badge">Oferta de lançamento</div><div className="lp-price-main"><span className="lp-price-old">De <s>R$ 97,00</s></span><div className="lp-price-value"><span className="lp-price-currency">R$</span><span className="lp-price-big">47</span><span className="lp-price-cents">,90</span></div><span className="lp-price-installments">à vista <strong>ou</strong> 5x de R$ 9,58</span></div><ul className="lp-price-includes"><li>✓ 445+ perguntas nos 15 baralhos temáticos</li><li>✓ Acesso pra <strong>2 pessoas</strong> (você + convite)</li><li>✓ Salas online sincronizadas</li><li>✓ Celular e computador</li><li>✓ Novos baralhos incluídos, pra sempre</li><li>✓ Sem mensalidade. Paga uma vez.</li></ul><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="lp-cta-primary lp-cta-full" data-testid="button-price-cta">Começar agora por R$ 47,90 <ArrowRight size={18} /></button><div className="lp-guarantee"><div className="lp-guarantee-seal">✦</div><div><strong>Garantia incondicional de 7 dias.</strong><p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama.</p></div></div></div></div></section>
        <section className="lp-faq"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">perguntas frequentes</p><h2 className="lp-h2">Ainda em dúvida?</h2><div className="lp-faq-list">{[['Precisa instalar app?','Não. É um site que roda no navegador — abre no celular ou PC.'],['Funciona pra quem tá namorando há pouco tempo?','Funciona ainda melhor: o baralho dá o empurrão para ir mais fundo em vez de conversa de superfície.'],['É vitalício mesmo?','Sim, sem mensalidade. Paga uma vez e usa o quanto quiser, incluindo baralhos novos.'],['Dá pra usar longe?','Sim. Você cria uma sala, manda o código e joga sincronizado com seu parceiro.'],['Tem 18+?','Sim, há três baralhos separados para acessar quando quiser.'],['Como recebo depois de pagar?','Na hora. O pagamento é via Pix e o app abre automaticamente após a confirmação.']].map(([question, answer]) => <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
        <section className="lp-final-cta"><div className="lp-container lp-final-cta-inner"><h2 className="lp-h2">O próximo bom papo<br /><em>tá a uma pergunta de distância.</em></h2><p>Começa hoje. R$ 47,90 vitalício, garantia de 7 dias.</p><button onClick={() => { setSelectedPackage('couple'); setCheckoutState('idle'); setCheckoutOpen(true); }} className="lp-cta-primary lp-cta-big" data-testid="button-final-cta">Quero começar agora <ArrowRight size={20} /></button></div></section>
-     </main>
+      </>}</main>
      {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clique no botão abaixo para revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { const pendingSessionId = safeGetItem('conexao-pending-session'); if (pendingSessionId) window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu baralho</p><h2>{confirmingLong ? <>Quase lá…<br /><em>as cartas estão chegando.</em></> : <>Suas cartas estão<br /><em>entrando no baralho.</em></>}</h2><p>{confirmingLong ? 'Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela.' : 'Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente.'}</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
   </Shell>;
 }
@@ -1893,7 +1925,7 @@ function ProtectedExperienceRoute() {
 }
 
  function Router() {
-   return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/onboarding" component={Onboarding} /><Route path="/login" component={Login} /><Route path="/play" component={Play} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+   return <RoutedErrorBoundary><Switch><Route path="/"><Home /></Route><Route path="/lp2"><Home variant="v2" /></Route><Route path="/onboarding" component={Onboarding} /><Route path="/login" component={Login} /><Route path="/play" component={Play} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 function RoutedErrorBoundary({ children }: { children: ReactNode }) { const [location] = useLocation(); return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>; }
 function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>; }
