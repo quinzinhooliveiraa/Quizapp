@@ -7304,34 +7304,59 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .invite-hub-success h3 { font-size: 1.15rem; margin: .5rem 0 1rem; color: #f6f5fa; }
 .invite-hub-success h3 em { color: #c4acff; font-style: normal; font-weight: 500; }
 
-/* Online play is a primary action in both deck entry points. */
+/* Banner slim topo da aba Todos */
 .play-banner-cta {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 1.1rem;
+  gap: 0.7rem;
   width: 100%;
-  padding: 1.1rem 1.4rem;
-  margin: 0 0 1.5rem;
-  background: linear-gradient(115deg, rgba(120, 90, 200, .18), rgba(196, 172, 255, .08) 60%, transparent);
-  border: 1px solid rgba(196, 172, 255, .28);
-  border-radius: 1.1rem;
+  padding: 0.65rem 1rem;
+  margin: 0 0 1.2rem;
+  background: linear-gradient(90deg, rgba(120, 90, 200, 0.14), rgba(196, 172, 255, 0.05));
+  border: 1px solid rgba(196, 172, 255, 0.22);
+  border-radius: 0.7rem;
   color: #f6f5fa;
   cursor: pointer;
   text-align: left;
-  overflow: hidden;
-  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  transition: all 0.15s ease;
 }
-.play-banner-cta:hover { transform: translateY(-1px); border-color: rgba(196, 172, 255, .5); box-shadow: 0 8px 24px rgba(120, 90, 200, .2); }
-.play-banner-glow, .eu-play-hero-glow { position: absolute; pointer-events: none; background: radial-gradient(circle, rgba(196, 172, 255, .28), transparent 70%); }
-.play-banner-glow { top: -50%; right: -20%; width: 200px; height: 200px; }
-.play-banner-icon { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: rgba(196, 172, 255, .2); color: #c4acff; }
-.play-banner-text { position: relative; z-index: 1; display: flex; flex: 1; flex-direction: column; gap: .15rem; }
-.play-banner-kicker { margin: 0 0 .15rem; color: rgba(196, 172, 255, .9); font: .7rem var(--app-font-mono); letter-spacing: .1em; text-transform: uppercase; }
-.play-banner-text strong { font-size: 1.05rem; font-weight: 500; }
-.play-banner-text small { margin-top: .1rem; color: rgba(255,255,255,.6); font-size: .82rem; }
-.play-banner-arrow { position: relative; z-index: 1; flex-shrink: 0; color: #c4acff; transition: transform .15s ease; }
-.play-banner-cta:hover .play-banner-arrow { transform: translateX(4px); }
+.play-banner-cta:hover {
+  border-color: rgba(196, 172, 255, 0.45);
+  background: linear-gradient(90deg, rgba(120, 90, 200, 0.2), rgba(196, 172, 255, 0.08));
+}
+.play-banner-icon {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(196, 172, 255, 0.2);
+  color: #c4acff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.play-banner-inline {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+.play-banner-inline strong {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #f6f5fa;
+  line-height: 1.2;
+}
+.play-banner-inline small {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.2;
+}
+.play-banner-arrow {
+  color: rgba(196, 172, 255, 0.7);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.play-banner-cta:hover .play-banner-arrow { transform: translateX(3px); }
+.eu-play-hero-glow { position: absolute; pointer-events: none; background: radial-gradient(circle, rgba(196, 172, 255, .28), transparent 70%); }
 .eu-play-hero { position: relative; display: block; padding: 1.6rem; margin: 1.5rem 0; background: linear-gradient(135deg, rgba(120, 90, 200, .22), rgba(196, 172, 255, .08)); border: 1px solid rgba(196, 172, 255, .3); border-radius: 1.2rem; color: #f6f5fa; text-decoration: none; overflow: hidden; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
 .eu-play-hero:hover { transform: translateY(-2px); border-color: rgba(196, 172, 255, .5); box-shadow: 0 12px 32px rgba(120, 90, 200, .25); }
 .eu-play-hero-glow { top: -40%; right: -15%; width: 260px; height: 260px; }
@@ -7344,12 +7369,22 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .eu-play-hero:hover .eu-play-hero-cta { background: rgba(196,172,255,.25); }
 .eu-online-card { display: none !important; }
 @media (max-width: 640px) {
-  .play-banner-cta { gap: .8rem; padding: 1rem 1.1rem; }
-  .play-banner-text strong { font-size: .95rem; }
-  .play-banner-text small { font-size: .75rem; }
   .eu-play-hero { padding: 1.3rem; }
   .eu-play-hero-content { gap: .9rem; }
   .eu-play-hero h2 { font-size: 1.25rem; }
+}
+
+@media (min-width: 640px) {
+  /* Desktop: pode ficar numa linha só, colocando o subtitle ao lado */
+  .play-banner-inline {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+  .play-banner-inline small::before {
+    content: "· ";
+    color: rgba(255, 255, 255, 0.3);
+  }
 }
 
 /* Lobby theme picker: show every theme and keep vibes visually distinct. */
