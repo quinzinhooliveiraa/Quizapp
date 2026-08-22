@@ -7443,3 +7443,66 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
     margin-top: 1.05rem;
   }
 }
+
+/* Online play card: keep one contained frame at every viewport size. */
+.eu-play-hero {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.eu-play-hero-content {
+  min-width: 0;
+  align-items: center;
+}
+
+.eu-play-hero-content > div:last-child {
+  min-width: 0;
+}
+
+@media (min-width: 1180px) {
+  .connection-app .eu-home .eu-play-hero {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 699px) {
+  .eu-play-hero {
+    margin: 1rem 0 1.35rem;
+    padding: 1rem;
+    border-radius: .95rem;
+  }
+
+  .eu-play-hero-content {
+    gap: .7rem;
+  }
+
+  .eu-play-hero-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .eu-play-hero h2 {
+    margin: .15rem 0 .35rem;
+    font-size: clamp(1.05rem, 5vw, 1.3rem);
+    line-height: 1.08;
+  }
+
+  .eu-play-hero-note {
+    margin-bottom: .7rem;
+    font-size: .72rem;
+    line-height: 1.35;
+  }
+
+  .eu-play-hero-cta {
+    padding: .45rem .72rem;
+    font-size: .72rem;
+  }
+
+  .eu-play-hero-glow {
+    width: 9rem;
+    height: 9rem;
+    right: -3rem;
+    top: -2.5rem;
+  }
+}
