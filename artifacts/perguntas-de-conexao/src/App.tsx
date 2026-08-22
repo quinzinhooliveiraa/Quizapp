@@ -439,6 +439,75 @@ function LandingQuiz({ onFinish }: { onFinish: () => void }) {
   </div>;
 }
 
+const CAROUSEL_ROUNDS: { theme: string; kind: 'tema' | 'vibe'; text: string }[][] = [
+  [
+    { theme: 'lá atrás', kind: 'tema', text: 'Que lembrança da sua infância ainda molda quem você é hoje?' },
+    { theme: 'faísca', kind: 'vibe', text: 'Qual é uma coisa que te excita em mim e que poucas pessoas sabem?' },
+    { theme: 'em voz alta', kind: 'tema', text: 'Se nada fosse impossível, como você imagina nossa vida daqui a 5 anos?' },
+  ],
+  [
+    { theme: 'porto seguro', kind: 'tema', text: 'Qual foi a última vez que você se sentiu completamente em casa comigo?' },
+    { theme: 'livro aberto', kind: 'tema', text: 'Qual medo você tem sobre nós que ainda não me disse?' },
+    { theme: 'modo leve', kind: 'tema', text: 'Qual foi a coisa mais boba que já rimos juntos até hoje?' },
+  ],
+  [
+    { theme: 'você não sabia', kind: 'tema', text: 'Existe algo que você sempre quis me contar e nunca teve coragem?' },
+    { theme: 'viagens', kind: 'tema', text: 'Qual lugar você ainda sonha em conhecer comigo?' },
+    { theme: 'depois da tempestade', kind: 'tema', text: 'O que você aprendeu sobre nós depois da nossa pior briga?' },
+  ],
+  [
+    { theme: 'carreira & dinheiro', kind: 'tema', text: 'Como você imagina que vamos dividir as contas daqui a 10 anos?' },
+    { theme: 'luzes baixas', kind: 'vibe', text: 'O que você faria se soubesse que eu não ia julgar?' },
+    { theme: 'mesmo longe', kind: 'vibe', text: 'O que mais faz falta em nós quando estamos distantes?' },
+  ],
+  [
+    { theme: 'perto de novo', kind: 'vibe', text: 'Qual gesto meu, mesmo pequeno, ainda te desarma?' },
+    { theme: 'fogo alto', kind: 'vibe', text: 'Existe algum desejo seu que você ainda não teve coragem de dividir comigo?' },
+    { theme: 'em voz alta', kind: 'tema', text: 'Se pudéssemos recomeçar do zero, o que você mudaria em nós?' },
+  ],
+];
+
+function QuestionCarousel() {
+  const [round, setRound] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+
+  const goTo = (next: number) => {
+    if (spinning) return;
+    setSpinning(true);
+    window.setTimeout(() => {
+      setRound(((next % CAROUSEL_ROUNDS.length) + CAROUSEL_ROUNDS.length) % CAROUSEL_ROUNDS.length);
+      setSpinning(false);
+    }, 260);
+  };
+
+  useEffect(() => {
+    const timer = window.setInterval(() => goTo(round + 1), 5000);
+    return () => window.clearInterval(timer);
+  }, [round, spinning]);
+
+  return <div className="lp-carousel">
+    <button type="button" onClick={() => goTo(round - 1)} className="lp-carousel-arrow" aria-label="Perguntas anteriores" data-testid="button-carousel-prev"><ChevronLeft size={20} /></button>
+    <div className={`lp-carousel-track ${spinning ? 'is-spinning' : ''}`}>
+      {CAROUSEL_ROUNDS[round].map((card, index) => <div key={`${round}-${index}`} className={`lp-mock-card lp-carousel-card ${card.kind === 'vibe' ? 'lp-mock-card-back' : ''}`}>
+        <span className={`lp-mock-tag ${card.kind === 'vibe' ? 'lp-mock-tag-vibe' : ''}`}>{card.theme}</span>
+        <p className="lp-mock-text">"{card.text}"</p>
+        <Heart size={15} className="lp-carousel-heart" />
+      </div>)}
+    </div>
+    <button type="button" onClick={() => goTo(round + 1)} className="lp-carousel-arrow" aria-label="Próximas perguntas" data-testid="button-carousel-next"><ChevronRight size={20} /></button>
+  </div>;
+}
+
+function QuestionCarouselSection() {
+  return <section className="lp-carousel-section">
+    <div className="lp-container">
+      <p className="lp-eyebrow lp-eyebrow-center">algumas perguntas que vocês vão encontrar</p>
+      <QuestionCarousel />
+      <p className="lp-solution-note">Mais de 445 perguntas originais esperando por vocês.</p>
+    </div>
+  </section>;
+}
+
 function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
   return <>
     <section className="lp-hero lp2-hero">
@@ -691,7 +760,8 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
          <p className="lp-hero-sub">300+ perguntas de conexão real. Sem quiz de revista, sem clichê. Uma pergunta por vez — o resto acontece entre vocês.</p>
          <div className="lp-hero-actions"><button onClick={() => document.getElementById('lp-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-primary" data-testid="button-hero-cta">Ver 3 perguntas grátis <ArrowRight size={18} /></button><a href="#lp-precos" className="lp-cta-secondary">Ir direto pro preço</a></div>
          <div className="lp-hero-trust"><div className="lp-trust-avatars"><span className="lp-trust-avatar lp-trust-a">M</span><span className="lp-trust-avatar lp-trust-b">L</span><span className="lp-trust-avatar lp-trust-c">R</span></div><span>Já usado por <strong>+300 casais</strong> no Brasil</span></div>
-       </div><div className="lp-hero-mockups" aria-hidden="true"><div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu <em>completamente</em> em casa comigo?"</p><span className="lp-mock-num">03 / 31</span></div></div></div><div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te <em>surpreende?</em>"</p><span className="lp-mock-num">07 / 31</span></div></div></div></div></div></section>
+        </div><div className="lp-hero-mockups" aria-hidden="true"><div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu <em>completamente</em> em casa comigo?"</p><span className="lp-mock-num">03 / 31</span></div></div></div><div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te <em>surpreende?</em>"</p><span className="lp-mock-num">07 / 31</span></div></div></div></div></div></section>
+       <QuestionCarouselSection />
        <section className="lp-pain"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">quem tá aí sabe</p><h2 className="lp-h2">Você olha pra ele(a) e pensa:<br /><em>"onde a gente se perdeu?"</em></h2><ul className="lp-pain-list"><li><span className="lp-pain-icon">◌</span><div><strong>As conversas viraram logística.</strong><p>"Buscou pão?" "Que horas vem?" "Feriado a gente vai onde?"</p></div></li><li><span className="lp-pain-icon">◌</span><div><strong>Cada um no próprio celular.</strong><p>Sentados no mesmo sofá, quilômetros de distância um do outro.</p></div></li><li><span className="lp-pain-icon">◌</span><div><strong>Você tentou "vamos conversar".</strong><p>Deu silêncio, resposta seca, ou desviou pro Netflix. De novo.</p></div></li></ul><p className="lp-pain-close">Não é falta de amor. É que <strong>ninguém ensinou a fazer as perguntas certas.</strong></p></div></section>
        <section className="lp-solution"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">a proposta</p><h2 className="lp-h2">Um baralho digital<br /><em>que faz o trabalho pesado.</em></h2><p className="lp-solution-lede">300+ perguntas escritas pra abrir espaço — sem quiz de revista, sem clichê, sem "qual seu animal favorito". Uma pergunta por vez. Você abre, lê em voz alta, escuta. O resto acontece entre vocês.</p><div className="lp-solution-pillars"><div className="lp-pillar"><div className="lp-pillar-icon">◇</div><strong>15 baralhos temáticos</strong><p>De "Porto Seguro" até "Fogo Alto", para cada fase da conversa.</p></div><div className="lp-pillar"><div className="lp-pillar-icon">▣</div><strong>Roda no celular e PC</strong><p>Abre no navegador, sem instalar app, em qualquer aparelho.</p></div><div className="lp-pillar"><div className="lp-pillar-icon">◎</div><strong>Jogue junto de longe</strong><p>Sala online sincronizada para estarem na mesma pergunta.</p></div></div></div></section>
        <section className="lp-quiz-section" id="lp-quiz"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">experimente</p><h2 className="lp-h2">Ver 3 perguntas de verdade,<br /><em>feitas pra vocês.</em></h2><LandingQuiz onFinish={() => document.getElementById('lp-precos')?.scrollIntoView({ behavior: 'smooth' })} /></div></section>

@@ -1,0 +1,200 @@
+# Carrossel "roleta" de perguntas de exemplo — logo após o hero
+
+**Objetivo:** adicionar uma seção logo depois do hero (`/`) mostrando 3 cartas de pergunta por vez, com uma seta pra avançar manualmente E rotação automática a cada poucos segundos — como uma "roleta" que troca o trio de perguntas, mostrando 5 rodadas diferentes (15 perguntas no total, de temas variados) pra dar uma ideia da variedade do baralho.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Adicionar o componente `QuestionCarousel` — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Adicionar essa função no topo do arquivo, junto com os outros componentes internos (perto de `LandingQuiz`):
+
+```tsx
+const CAROUSEL_ROUNDS: { theme: string; kind: 'tema' | 'vibe'; text: string }[][] = [
+  [
+    { theme: 'lá atrás', kind: 'tema', text: 'Que lembrança da sua infância ainda molda quem você é hoje?' },
+    { theme: 'faísca', kind: 'vibe', text: 'Qual é uma coisa que te excita em mim e que poucas pessoas sabem?' },
+    { theme: 'em voz alta', kind: 'tema', text: 'Se nada fosse impossível, como você imagina nossa vida daqui a 5 anos?' },
+  ],
+  [
+    { theme: 'porto seguro', kind: 'tema', text: 'Qual foi a última vez que você se sentiu completamente em casa comigo?' },
+    { theme: 'livro aberto', kind: 'tema', text: 'Qual medo você tem sobre nós que ainda não me disse?' },
+    { theme: 'modo leve', kind: 'tema', text: 'Qual foi a coisa mais boba que já rimos juntos até hoje?' },
+  ],
+  [
+    { theme: 'você não sabia', kind: 'tema', text: 'Existe algo que você sempre quis me contar e nunca teve coragem?' },
+    { theme: 'viagens', kind: 'tema', text: 'Qual lugar você ainda sonha em conhecer comigo?' },
+    { theme: 'depois da tempestade', kind: 'tema', text: 'O que você aprendeu sobre nós depois da nossa pior briga?' },
+  ],
+  [
+    { theme: 'carreira & dinheiro', kind: 'tema', text: 'Como você imagina que vamos dividir as contas daqui a 10 anos?' },
+    { theme: 'luzes baixas', kind: 'vibe', text: 'O que você faria se soubesse que eu não ia julgar?' },
+    { theme: 'mesmo longe', kind: 'vibe', text: 'O que mais faz falta em nós quando estamos distantes?' },
+  ],
+  [
+    { theme: 'perto de novo', kind: 'vibe', text: 'Qual gesto meu, mesmo pequeno, ainda te desarma?' },
+    { theme: 'fogo alto', kind: 'vibe', text: 'Existe algum desejo seu que você ainda não teve coragem de dividir comigo?' },
+    { theme: 'em voz alta', kind: 'tema', text: 'Se pudéssemos recomeçar do zero, o que você mudaria em nós?' },
+  ],
+];
+
+function QuestionCarousel() {
+  const [round, setRound] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+
+  const goTo = (next: number) => {
+    if (spinning) return;
+    setSpinning(true);
+    setTimeout(() => {
+      setRound(((next % CAROUSEL_ROUNDS.length) + CAROUSEL_ROUNDS.length) % CAROUSEL_ROUNDS.length);
+      setSpinning(false);
+    }, 260);
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => goTo(round + 1), 5000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round, spinning]);
+
+  const cards = CAROUSEL_ROUNDS[round];
+
+  return (
+    <div className="lp-carousel">
+      <button
+        type="button"
+        onClick={() => goTo(round - 1)}
+        className="lp-carousel-arrow lp-carousel-arrow-left"
+        aria-label="Perguntas anteriores"
+        data-testid="button-carousel-prev"
+      >
+        <ChevronLeft size={20} />
+      </button>
+
+      <div className={`lp-carousel-track ${spinning ? 'is-spinning' : ''}`}>
+        {cards.map((card, i) => (
+          <div key={`${round}-${i}`} className={`lp-mock-card lp-carousel-card ${card.kind === 'vibe' ? 'lp-mock-card-back' : ''}`}>
+            <span className={`lp-mock-tag ${card.kind === 'vibe' ? 'lp-mock-tag-vibe' : ''}`}>{card.theme}</span>
+            <p className="lp-mock-text">"{card.text}"</p>
+            <Heart size={15} className="lp-carousel-heart" />
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => goTo(round + 1)}
+        className="lp-carousel-arrow lp-carousel-arrow-right"
+        aria-label="Próximas perguntas"
+        data-testid="button-carousel-next"
+      >
+        <ChevronRight size={20} />
+      </button>
+    </div>
+  );
+}
+```
+
+**Adicionar imports** no topo do arquivo (com os outros de lucide-react), os que ainda não existirem:
+```tsx
+import { ..., ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+```
+
+---
+
+## 2. Inserir a seção logo após o hero — mesmo arquivo
+
+Achar o fechamento da `<section className="lp-hero">` (a landing atual em `/`, dentro de `Home`). Logo DEPOIS dela, ANTES da próxima seção (`lp-pain` ou equivalente), adicionar:
+
+```tsx
+<section className="lp-carousel-section">
+  <div className="lp-container">
+    <p className="lp-eyebrow lp-eyebrow-center">algumas perguntas que vocês vão encontrar</p>
+    <QuestionCarousel />
+    <p className="lp-solution-note">Mais de 445 perguntas originais esperando por vocês.</p>
+  </div>
+</section>
+```
+
+---
+
+## 3. CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.lp-carousel-section { padding: 3rem 1.4rem 4rem; }
+
+.lp-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.lp-carousel-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  flex: 1;
+  perspective: 1000px;
+}
+
+.lp-carousel-card {
+  transition: transform 0.28s ease, opacity 0.28s ease;
+  transform: rotateY(0deg);
+  opacity: 1;
+}
+
+.lp-carousel-track.is-spinning .lp-carousel-card {
+  transform: rotateY(90deg) scale(0.92);
+  opacity: 0;
+}
+
+.lp-carousel-heart {
+  align-self: flex-end;
+  color: rgba(255, 255, 255, 0.35);
+  z-index: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.lp-carousel-heart:hover { color: #ff9dc4; transform: scale(1.15); }
+
+.lp-carousel-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(196, 172, 255, 0.25);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.lp-carousel-arrow:hover {
+  background: rgba(196, 172, 255, 0.14);
+  border-color: rgba(196, 172, 255, 0.5);
+  color: #c4acff;
+}
+
+@media (max-width: 760px) {
+  .lp-carousel { flex-direction: column; gap: 0.8rem; }
+  .lp-carousel-track { grid-template-columns: 1fr; }
+  .lp-carousel-arrow { position: static; }
+}
+```
+
+---
+
+## Verificação
+
+1. Abre `/` — logo depois do hero, aparece "algumas perguntas que vocês vão encontrar" com 3 cartas (temas: Lá Atrás, Faísca, Em Voz Alta)
+2. Depois de ~5 segundos, as 3 cartas trocam sozinhas pro próximo trio (giro suave, tipo carta virando)
+3. Clica na seta direita → avança manualmente pro próximo trio (reseta o timer automático)
+4. Clica na seta esquerda → volta pro trio anterior
+5. Depois de passar pelas 5 rodadas, volta pra primeira (looping infinito)
+6. Mobile: cartas empilham em coluna única, setas continuam visíveis nas laterais
