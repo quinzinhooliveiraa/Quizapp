@@ -146,19 +146,25 @@
 .lp2-price-bar small { color: rgba(255, 255, 255, .55); font-size: .75rem; }
 .lp2-price-bar > p { margin: 0; color: rgba(255, 255, 255, .62); font-size: .85rem; line-height: 1.5; }
 .lp2-price-bar .lp-cta-primary { white-space: nowrap; }
-.lp-carousel-section { padding: 3rem 1.4rem 4rem; }
-.lp-carousel { display: flex; align-items: center; justify-content: center; gap: 1rem; max-width: 900px; margin: 0 auto; }
-.lp-carousel-track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; flex: 1; perspective: 1000px; }
-.lp-carousel-card { min-height: 250px; transition: transform .28s ease, opacity .28s ease; transform: rotateY(0deg); opacity: 1; }
+.lp-carousel-section { padding: 3rem 1.4rem 4.5rem; }
+.lp-carousel-section .lp-solution-note { margin: 1rem 0 0; text-align: center; }
+.lp-carousel { display: flex; align-items: center; justify-content: center; gap: 1rem; max-width: 920px; margin: 0 auto; }
+.lp-carousel-track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .15rem; flex: 1; perspective: 1100px; }
+.lp-carousel-card { position: relative; min-height: 255px; padding: 1.2rem 1.15rem 1rem; overflow: hidden; border: 1px solid rgba(196,172,255,.65); border-radius: 15px; box-shadow: 0 18px 30px rgba(5,2,18,.42), inset 0 0 24px rgba(201,157,255,.1); transition: transform .28s ease, opacity .28s ease, box-shadow .28s ease; transform: rotateY(0deg); opacity: 1; }
+.lp-carousel-card::after { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.1), transparent 28%, transparent 72%, rgba(0,0,0,.12)); content: ""; pointer-events: none; }
+.lp-carousel-card:nth-child(1) { z-index: 1; transform: rotate(-4deg) translateY(5px); }
+.lp-carousel-card:nth-child(2) { z-index: 2; transform: rotate(1deg) translateY(-2px); }
+.lp-carousel-card:nth-child(3) { z-index: 1; transform: rotate(4deg) translateY(5px); }
 .lp-carousel-track.is-spinning .lp-carousel-card { transform: rotateY(90deg) scale(.92); opacity: 0; }
-.lp-carousel-heart { align-self: flex-end; color: rgba(255,255,255,.35); z-index: 1; transition: color .15s ease, transform .15s ease; }
+.lp-carousel-heart { align-self: flex-end; margin-top: auto; color: rgba(255,255,255,.58); z-index: 1; transition: color .15s ease, transform .15s ease; }
 .lp-carousel-heart:hover { color: #ff9dc4; transform: scale(1.15); }
-.lp-carousel-arrow { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; color: rgba(255,255,255,.75); background: rgba(255,255,255,.05); border: 1px solid rgba(196,172,255,.25); border-radius: 50%; cursor: pointer; transition: all .15s ease; }
+.lp-carousel-arrow { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; color: rgba(255,255,255,.75); background: rgba(255,255,255,.05); border: 1px solid rgba(196,172,255,.35); border-radius: 50%; cursor: pointer; transition: all .15s ease; }
 .lp-carousel-arrow:hover { color: #c4acff; background: rgba(196,172,255,.14); border-color: rgba(196,172,255,.5); }
 @media (max-width: 760px) {
   .lp-carousel { flex-direction: column; gap: .8rem; }
   .lp-carousel-track { grid-template-columns: 1fr; width: min(100%, 300px); }
   .lp-carousel-card { min-height: 210px; }
+  .lp-carousel-card:nth-child(1), .lp-carousel-card:nth-child(2), .lp-carousel-card:nth-child(3) { transform: none; }
   .lp2-pain-grid { grid-template-columns: 1fr; }
   .lp2-price-bar { grid-template-columns: 1fr; gap: 1rem; }
   .lp2-price-bar .lp-cta-primary { justify-self: start; white-space: normal; }
