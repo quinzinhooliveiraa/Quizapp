@@ -1,0 +1,215 @@
+# Fix seleção de temas no lobby (mostra TODOS os temas + melhor contraste)
+
+**Bug real encontrado no código:** hoje o lobby de "jogar online" tem `.slice(0, 8)` na lista de temas — só mostra 8 dos 9 temas "tema" E esconde TODOS os 6 "vibes" (Faísca, Luzes Baixas, Fogo Alto, Sem Freio, Mesmo Longe, Perto de Novo). Fix: mostrar todos + separar por categoria + melhorar contraste visual.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+## Fix — `artifacts/perguntas-de-conexao/src/pages/Play.tsx`
+
+### 1. Achar a seção do lobby que mostra os temas (~linha 152)
+
+Está assim (linha longa):
+```tsx
+{isHost ? <div className="theme-choice-grid" data-testid="list-lobby-themes">{themes.filter(theme => theme.kind === 'tema').slice(0, 8).map((theme, index) => <button ...>...</button>)}</div> : <div className="waiting-theme">...</div>}
+```
+
+### 2. Substituir o bloco do host (a parte do `isHost ? ... :`) por (mostra TEMAS agrupados + VIBES separados, sem slice):
+
+```tsx
+{isHost ? (
+  <div className="theme-choice-wrap" data-testid="list-lobby-themes">
+    <div className="theme-group">
+      <p className="theme-group-label">Temas do dia a dia</p>
+      <div className="theme-choice-grid">
+        {themes.filter(theme => theme.kind === 'tema').map((theme) => (
+          <button
+            key={theme.id}
+            className={`theme-choice ${themeId === theme.id ? 'is-selected' : ''}`}
+            onClick={() => chooseTheme(theme.id)}
+            data-testid={`button-lobby-theme-${theme.id}`}
+          >
+            <span className="theme-choice-title">{theme.title}</span>
+            <small>{theme.description}</small>
+            <i>{theme.count} cartas</i>
+            {themeId === theme.id && <div className="theme-choice-check"><Check size={14} /></div>}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {themes.some(t => t.kind === 'vibe') && (
+      <div className="theme-group theme-group-vibes">
+        <p className="theme-group-label">Vibes <span className="theme-group-badge">18+</span></p>
+        <div className="theme-choice-grid">
+          {themes.filter(theme => theme.kind === 'vibe').map((theme) => (
+            <button
+              key={theme.id}
+              className={`theme-choice theme-choice-vibe ${themeId === theme.id ? 'is-selected' : ''}`}
+              onClick={() => chooseTheme(theme.id)}
+              data-testid={`button-lobby-theme-${theme.id}`}
+            >
+              <span className="theme-choice-title">{theme.title}</span>
+              <small>{theme.description}</small>
+              <i>{theme.count} cartas · {theme.audience}</i>
+              {themeId === theme.id && <div className="theme-choice-check"><Check size={14} /></div>}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+) : (
+  <div className="waiting-theme" data-testid="status-waiting-theme">
+    <span><LoaderCircle size={22} className="play-spin" /></span>
+    <p>A escolha do tema está<br /><strong>nas mãos de {players.find(player => player.id === hostId)?.name || 'quem criou a sala'}.</strong></p>
+  </div>
+)}
+```
+
+**Nota:** removi as classes `theme-choice-0`, `theme-choice-1`, etc. (que geravam 5 variações de cor confusas). Agora TODOS os cards de tema têm o mesmo look base + os vibes têm um look distinto (rosa/quente).
+
+## CSS — substituir no `artifacts/perguntas-de-conexao/src/index.css` os estilos antigos de `.theme-choice`
+
+Procurar `.theme-choice` no arquivo e substituir tudo relacionado por:
+
+```css
+.theme-choice-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 0.4rem;
+}
+.theme-choice-wrap::-webkit-scrollbar { width: 6px; }
+.theme-choice-wrap::-webkit-scrollbar-track { background: transparent; }
+.theme-choice-wrap::-webkit-scrollbar-thumb {
+  background: rgba(196, 172, 255, 0.2);
+  border-radius: 3px;
+}
+.theme-choice-wrap::-webkit-scrollbar-thumb:hover { background: rgba(196, 172, 255, 0.4); }
+
+.theme-group { display: flex; flex-direction: column; gap: 0.6rem; }
+.theme-group-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.theme-group-badge {
+  background: rgba(255, 128, 128, 0.15);
+  color: #ff9d9d;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  letter-spacing: 0.05em;
+}
+
+.theme-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.6rem;
+}
+
+.theme-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.85rem 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.7rem;
+  color: #f6f5fa;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 96px;
+}
+.theme-choice:hover {
+  background: rgba(196, 172, 255, 0.07);
+  border-color: rgba(196, 172, 255, 0.3);
+  transform: translateY(-1px);
+}
+.theme-choice.is-selected {
+  background: linear-gradient(135deg, rgba(196, 172, 255, 0.18), rgba(120, 90, 200, 0.12));
+  border-color: #c4acff;
+  box-shadow: 0 0 0 3px rgba(196, 172, 255, 0.12);
+}
+.theme-choice-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f9f8fb;
+  line-height: 1.2;
+}
+.theme-choice small {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.35;
+  flex: 1;
+}
+.theme-choice i {
+  font-style: normal;
+  font-size: 0.68rem;
+  color: rgba(196, 172, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.1rem;
+}
+.theme-choice-check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #c4acff;
+  color: #1a1520;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Vibes têm gradiente rosa/quente para diferenciar */
+.theme-choice-vibe {
+  background: linear-gradient(135deg, rgba(255, 155, 200, 0.06), rgba(200, 100, 150, 0.04));
+  border-color: rgba(255, 155, 200, 0.15);
+}
+.theme-choice-vibe:hover {
+  background: linear-gradient(135deg, rgba(255, 155, 200, 0.12), rgba(200, 100, 150, 0.08));
+  border-color: rgba(255, 155, 200, 0.4);
+}
+.theme-choice-vibe.is-selected {
+  background: linear-gradient(135deg, rgba(255, 155, 200, 0.22), rgba(200, 100, 150, 0.15));
+  border-color: #ff9dc4;
+  box-shadow: 0 0 0 3px rgba(255, 155, 200, 0.15);
+}
+.theme-choice-vibe.is-selected .theme-choice-check {
+  background: #ff9dc4;
+  color: #1a1520;
+}
+.theme-choice-vibe i { color: rgba(255, 157, 196, 0.85); }
+
+@media (max-width: 640px) {
+  .theme-choice-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; }
+  .theme-choice { padding: 0.75rem; min-height: 88px; }
+  .theme-choice-title { font-size: 0.88rem; }
+  .theme-choice small { font-size: 0.72rem; }
+}
+```
+
+**Se existir alguma coisa tipo `.theme-choice-0 { ... }` até `.theme-choice-4 { ... }` no CSS antigo (variações de cor por index), pode DELETAR** — não usamos mais.
+
+## Verificação
+- Cria uma sala em `/play`
+- Na tela do lobby, painel "Escolham um tema":
+  - Aparece "Temas do dia a dia" com **9 cards** (todos os "tema", incluindo "Depois da Tempestade" que faltava)
+  - Aparece "Vibes 18+" com **6 cards** (Faísca, Luzes Baixas, Fogo Alto, Sem Freio, Mesmo Longe, Perto de Novo)
+  - Se muitos temas, tem scroll interno (não estica a página)
+- Cards têm **contraste claro** entre si (todos igual base) e o SELECIONADO destaca com borda roxa + check redondo
+- Vibes têm tint rosa/quente pra diferenciar de tema normal
+- Convidados (não host) veem a mensagem "A escolha do tema está nas mãos de X" (não muda)
