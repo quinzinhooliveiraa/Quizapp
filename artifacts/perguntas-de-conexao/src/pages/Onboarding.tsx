@@ -368,6 +368,26 @@ export default function Onboarding() {
       safeSetItem('conexao-feeling', feeling);
       safeSetItem('conexao-partner-pronoun', pronoun);
 
+      try {
+        const apiBase = apiBaseUrl;
+        const guestToken = safeGetItem('conexao-guest-token');
+        const sessionId = safeGetItem('conexao-session');
+        if (guestToken || sessionId) {
+          fetch(`${apiBase}/api/preferences`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId,
+              guestToken,
+              relationshipType: relationship || undefined,
+              partnerPronoun: pronoun || undefined,
+            }),
+          }).catch(() => { /* local storage continues to work if sync is unavailable */ });
+        }
+      } catch {
+        // Preferences are already stored locally.
+      }
+
       const apiBase = apiBaseUrl;
       const guestToken = safeGetItem('conexao-guest-token');
       const sessionId = safeGetItem('conexao-session');

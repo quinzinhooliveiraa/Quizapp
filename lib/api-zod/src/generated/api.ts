@@ -99,6 +99,41 @@ export const CreateQuestionSessionResponse = zod.object({
 
 
 /**
+ * @summary Get relationship preferences
+ */
+export const GetPreferencesQueryParams = zod.object({
+  "sessionId": zod.coerce.string().optional(),
+  "guestToken": zod.coerce.string().optional()
+})
+
+export const GetPreferencesResponse = zod.object({
+  "relationshipType": zod.string().nullable(),
+  "partnerPronoun": zod.string().nullable()
+})
+
+
+/**
+ * @summary Update relationship preferences
+ */
+export const updatePreferencesBodyRelationshipTypeMax = 80;
+
+export const updatePreferencesBodyPartnerPronounMax = 40;
+
+
+
+export const UpdatePreferencesBody = zod.object({
+  "sessionId": zod.string().optional(),
+  "guestToken": zod.string().optional(),
+  "relationshipType": zod.string().max(updatePreferencesBodyRelationshipTypeMax).optional(),
+  "partnerPronoun": zod.string().max(updatePreferencesBodyPartnerPronounMax).optional()
+})
+
+export const UpdatePreferencesResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary Get a question session
  */
 export const GetQuestionSessionParams = zod.object({

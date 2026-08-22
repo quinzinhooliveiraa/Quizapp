@@ -1,0 +1,269 @@
+# Sincronizar preferências (relacionamento + pronome do parceiro) no servidor
+
+**Objetivo:** hoje `conexao-relationship` e `conexao-partner-pronoun` moram só no localStorage. Se a pessoa abre no celular depois de setar no PC, esqueceu. Vamos migrar pro banco para funcionar em qualquer aparelho.
+
+Escopo: só relacionamento + pronome (o resto do onboarding é ephemeral).
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Adicionar colunas no banco — `lib/db/src/schema/index.ts`
+
+Achar `sessionsTable` (linha 4). Adicionar 2 colunas antes do último `}`:
+
+```ts
+export const sessionsTable = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  buyerName: text("buyer_name").notNull(),
+  buyerEmail: text("buyer_email"),
+  packageId: text("package_id").notNull(),
+  packageName: text("package_name").notNull(),
+  // ... colunas existentes ...
+  accessGranted: boolean("access_granted").notNull().default(false),
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
+  // === ADICIONAR ESTAS DUAS ===
+  relationshipType: text("relationship_type"),
+  partnerPronoun: text("partner_pronoun"),
+});
+```
+
+E na `invitesTable` (linha 17ish), mesma coisa:
+
+```ts
+export const invitesTable = pgTable("invites", {
+  token: text("token").primaryKey(),
+  sessionId: text("session_id").notNull().references(...),
+  guestName: text("guest_name").notNull(),
+  guestEmail: text("guest_email"),
+  isUsed: boolean("is_used").notNull().default(false),
+  // ... colunas existentes ...
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
+  // === ADICIONAR ESTAS DUAS ===
+  relationshipType: text("relationship_type"),
+  partnerPronoun: text("partner_pronoun"),
+});
+```
+
+O `pnpm --filter @workspace/db push --force` roda automático no deploy — não precisa migration manual.
+
+## 2. Criar endpoint de preferências — novo arquivo `artifacts/api-server/src/routes/preferences.ts`
+
+```ts
+import { Router } from "express";
+import { z } from "zod";
+import { db } from "@workspace/db";
+import { sessionsTable, invitesTable } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
+
+const router = Router();
+
+const patchSchema = z.object({
+  sessionId: z.string().optional(),
+  guestToken: z.string().optional(),
+  relationshipType: z.string().max(80).optional(),
+  partnerPronoun: z.string().max(40).optional(),
+});
+
+// GET /api/preferences?sessionId=... | ?guestToken=...
+router.get("/", async (req, res) => {
+  const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  const guestToken = typeof req.query.guestToken === "string" ? req.query.guestToken : undefined;
+
+  if (!sessionId && !guestToken) {
+    return res.status(400).json({ error: "sessionId or guestToken required" });
+  }
+
+  if (sessionId) {
+    const [row] = await db
+      .select({
+        relationshipType: sessionsTable.relationshipType,
+        partnerPronoun: sessionsTable.partnerPronoun,
+      })
+      .from(sessionsTable)
+      .where(eq(sessionsTable.id, sessionId))
+      .limit(1);
+    if (!row) return res.status(404).json({ error: "session not found" });
+    return res.json({
+      relationshipType: row.relationshipType || null,
+      partnerPronoun: row.partnerPronoun || null,
+    });
+  }
+
+  const [row] = await db
+    .select({
+      relationshipType: invitesTable.relationshipType,
+      partnerPronoun: invitesTable.partnerPronoun,
+    })
+    .from(invitesTable)
+    .where(eq(invitesTable.token, guestToken!))
+    .limit(1);
+  if (!row) return res.status(404).json({ error: "invite not found" });
+  return res.json({
+    relationshipType: row.relationshipType || null,
+    partnerPronoun: row.partnerPronoun || null,
+  });
+});
+
+// PATCH /api/preferences  body: { sessionId | guestToken, relationshipType?, partnerPronoun? }
+router.patch("/", async (req, res) => {
+  const parsed = patchSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "invalid body", details: parsed.error.flatten() });
+  const { sessionId, guestToken, relationshipType, partnerPronoun } = parsed.data;
+
+  if (!sessionId && !guestToken) return res.status(400).json({ error: "sessionId or guestToken required" });
+
+  const patch: Record<string, string | null> = {};
+  if (relationshipType !== undefined) patch.relationshipType = relationshipType || null;
+  if (partnerPronoun !== undefined) patch.partnerPronoun = partnerPronoun || null;
+  if (Object.keys(patch).length === 0) return res.json({ ok: true });
+
+  if (sessionId) {
+    await db.update(sessionsTable).set(patch).where(eq(sessionsTable.id, sessionId));
+  } else {
+    await db.update(invitesTable).set(patch).where(eq(invitesTable.token, guestToken!));
+  }
+
+  return res.json({ ok: true });
+});
+
+export const preferencesRouter = router;
+```
+
+## 3. Registrar no router — `artifacts/api-server/src/routes/index.ts`
+
+Adicionar import e uso (com os outros routers):
+```ts
+import { preferencesRouter } from "./preferences.js";
+// ...
+router.use("/preferences", preferencesRouter);
+```
+
+---
+
+## 4. Frontend — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 4.1. Adicionar helper de sync (perto dos outros helpers no topo do arquivo, ou dentro do componente `AppExperienceReference`):
+
+```tsx
+const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
+async function fetchPreferences(sessionId: string | null, guestToken: string | null) {
+  if (!sessionId && !guestToken) return null;
+  const qs = sessionId ? `sessionId=${encodeURIComponent(sessionId)}` : `guestToken=${encodeURIComponent(guestToken!)}`;
+  try {
+    const r = await fetch(`${apiBase}/api/preferences?${qs}`);
+    if (!r.ok) return null;
+    return await r.json() as { relationshipType: string | null; partnerPronoun: string | null };
+  } catch { return null; }
+}
+
+async function patchPreferences(
+  sessionId: string | null,
+  guestToken: string | null,
+  patch: { relationshipType?: string; partnerPronoun?: string },
+) {
+  if (!sessionId && !guestToken) return;
+  try {
+    await fetch(`${apiBase}/api/preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, guestToken, ...patch }),
+    });
+  } catch { /* noop */ }
+}
+```
+
+### 4.2. Hidratar do servidor ao carregar (adicionar useEffect no componente `AppExperienceReference` perto dos outros useEffect):
+
+```tsx
+useEffect(() => {
+  const sid = safeGetItem('conexao-session');
+  const tok = safeGetItem('conexao-guest-token');
+  if (!sid && !tok) return;
+  fetchPreferences(sid, tok).then(prefs => {
+    if (!prefs) return;
+    if (prefs.relationshipType) {
+      safeSetItem('conexao-relationship', prefs.relationshipType);
+      setEditRelationship(prefs.relationshipType);
+    }
+    if (prefs.partnerPronoun) {
+      safeSetItem('conexao-partner-pronoun', prefs.partnerPronoun);
+      setEditPronoun(prefs.partnerPronoun);
+    }
+  });
+}, []);
+```
+
+### 4.3. Trocar os `onClick` do Ajustes pra salvar TAMBÉM no servidor (~linha 1708)
+
+Achar:
+```tsx
+<button ... onClick={() => { setEditRelationship(opt); safeSetItem('conexao-relationship', opt); setExpandedField(null); }} ...>{opt}</button>
+```
+
+Trocar por:
+```tsx
+<button ... onClick={() => {
+  setEditRelationship(opt);
+  safeSetItem('conexao-relationship', opt);
+  patchPreferences(safeGetItem('conexao-session'), safeGetItem('conexao-guest-token'), { relationshipType: opt });
+  setExpandedField(null);
+}} ...>{opt}</button>
+```
+
+Fazer o mesmo pro pronome (mesma seção, `setEditPronoun`):
+```tsx
+<button ... onClick={() => {
+  setEditPronoun(opt);
+  safeSetItem('conexao-partner-pronoun', opt);
+  patchPreferences(safeGetItem('conexao-session'), safeGetItem('conexao-guest-token'), { partnerPronoun: opt });
+  setExpandedField(null);
+}} ...>{opt}</button>
+```
+
+---
+
+## 5. Frontend Onboarding — `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+Achar onde termina o onboarding com sucesso e salva no localStorage (~linha 366-369, tem `safeSetItem('conexao-relationship', relationship)` e `safeSetItem('conexao-partner-pronoun', pronoun)`).
+
+Logo depois desses `safeSetItem`, ADICIONAR fire-and-forget pro servidor:
+
+```tsx
+safeSetItem('conexao-relationship', relationship);
+// ... outros safeSetItem existentes ...
+safeSetItem('conexao-partner-pronoun', pronoun);
+
+// === NOVO: sync no servidor ===
+try {
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+  const sid = safeGetItem('conexao-session');
+  const tok = safeGetItem('conexao-guest-token');
+  if (sid || tok) {
+    fetch(`${apiBase}/api/preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: sid,
+        guestToken: tok,
+        relationshipType: relationship || undefined,
+        partnerPronoun: pronoun || undefined,
+      }),
+    }).catch(() => { /* noop, ok se falhar */ });
+  }
+} catch { /* noop */ }
+```
+
+---
+
+## Verificação
+
+1. **Deploy do backend rola sozinho** (Railway agora reconhece qualquer commit desde o fix do watch)
+2. Backend deploy → confere log tem `Server listening (HTTP + WebSocket)`
+3. Testar rápido no console do browser: `fetch('https://workspaceapi-server-production-0516.up.railway.app/api/preferences?sessionId=SEU_SESSION_ID').then(r=>r.json()).then(console.log)` → tem que retornar `{relationshipType: null, partnerPronoun: null}` (ou os valores se já setados)
+4. **No app**:
+   - Muda relacionamento no Ajustes (celular) → abre PC → aparece o valor certo (não default)
+   - Mesma coisa pro pronome
+   - Novo onboarding → preferências vão pro banco no fim
+5. Pra convidado: mesmo teste, mas usando `guestToken` em vez de `sessionId`

@@ -14,6 +14,8 @@ tags:
     description: Relationship question content
   - name: access
     description: Buyer and guest access
+  - name: preferences
+    description: Relationship preferences
   - name: checkout
     description: External checkout webhook
 paths:
@@ -128,6 +130,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/QuestionSession"
+  /preferences:
+    get:
+      operationId: getPreferences
+      tags: [preferences]
+      summary: Get relationship preferences
+      parameters:
+        - name: sessionId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: guestToken
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Relationship preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Preferences"
+        "400":
+          description: An owner session or guest token is required
+        "404":
+          description: Session or invite not found
+    patch:
+      operationId: updatePreferences
+      tags: [preferences]
+      summary: Update relationship preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesInput"
+      responses:
+        "200":
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "400":
+          description: Invalid preferences
   /access/sessions/{sessionId}:
     get:
       operationId: getQuestionSession
@@ -495,6 +543,34 @@ components:
         onboardingComplete:
           type: boolean
       required: [id, buyerName, packageId, packageName, inviteLimit, invitesUsed, accessGranted, onboardingComplete]
+    Preferences:
+      type: object
+      properties:
+        relationshipType:
+          type: ["string", "null"]
+        partnerPronoun:
+          type: ["string", "null"]
+      required: [relationshipType, partnerPronoun]
+    PreferencesInput:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        guestToken:
+          type: string
+        relationshipType:
+          type: string
+          maxLength: 80
+        partnerPronoun:
+          type: string
+          maxLength: 40
+      minProperties: 1
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
     InviteInput:
       type: object
       properties:

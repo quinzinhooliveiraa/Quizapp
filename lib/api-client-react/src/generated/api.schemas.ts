@@ -95,6 +95,26 @@ export interface QuestionSession {
   onboardingComplete: boolean;
 }
 
+export interface Preferences {
+  /** @nullable */
+  relationshipType: string | null;
+  /** @nullable */
+  partnerPronoun: string | null;
+}
+
+export interface PreferencesInput {
+  sessionId?: string;
+  guestToken?: string;
+  /** @maxLength 80 */
+  relationshipType?: string;
+  /** @maxLength 40 */
+  partnerPronoun?: string;
+}
+
+export interface OkResponse {
+  ok: boolean;
+}
+
 export interface InviteInput {
   /** @minLength 1 */
   guestName: string;
@@ -233,6 +253,11 @@ export type CheckAccessEmail200 = {
   exists: boolean;
   asOwner: boolean;
   asGuest: boolean;
+};
+
+export type GetPreferencesParams = {
+sessionId?: string;
+guestToken?: string;
 };
 
 export type CompleteOwnerOnboarding200 = {

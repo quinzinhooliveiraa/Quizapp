@@ -43,6 +43,42 @@ const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
 const inviteUrlFromToken = (token: string) => `${window.location.origin}/invite/${token}`;
 
+type Preferences = {
+  relationshipType: string | null;
+  partnerPronoun: string | null;
+};
+
+async function fetchPreferences(sessionId: string | null, guestToken: string | null): Promise<Preferences | null> {
+  if (!sessionId && !guestToken) return null;
+  const query = sessionId
+    ? `sessionId=${encodeURIComponent(sessionId)}`
+    : `guestToken=${encodeURIComponent(guestToken!)}`;
+  try {
+    const response = await fetch(`${apiBase}/api/preferences?${query}`);
+    if (!response.ok) return null;
+    return await response.json() as Preferences;
+  } catch {
+    return null;
+  }
+}
+
+async function patchPreferences(
+  sessionId: string | null,
+  guestToken: string | null,
+  patch: { relationshipType?: string; partnerPronoun?: string },
+): Promise<void> {
+  if (!sessionId && !guestToken) return;
+  try {
+    await fetch(`${apiBase}/api/preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, guestToken, ...patch }),
+    });
+  } catch {
+    // Local storage remains the immediate fallback if the server is unavailable.
+  }
+}
+
 const fallbackThemes: QuestionTheme[] = connectionThemes;
 const fallbackQuestions: Question[] = connectionQuestions.map(({ stage: _stage, ...question }) => question);
 
@@ -801,6 +837,19 @@ function AppExperienceReference() {
   const [editRelationship, setEditRelationship] = useState(() => safeGetItem('conexao-relationship') || '');
   const [editPronoun, setEditPronoun] = useState(() => safeGetItem('conexao-partner-pronoun') || '');
   const [expandedField, setExpandedField] = useState<'relationship' | 'pronoun' | null>(null);
+  useEffect(() => {
+    fetchPreferences(sessionId || null, storedGuestToken || null).then(preferences => {
+      if (!preferences) return;
+      if (preferences.relationshipType) {
+        safeSetItem('conexao-relationship', preferences.relationshipType);
+        setEditRelationship(preferences.relationshipType);
+      }
+      if (preferences.partnerPronoun) {
+        safeSetItem('conexao-partner-pronoun', preferences.partnerPronoun);
+        setEditPronoun(preferences.partnerPronoun);
+      }
+    });
+  }, [sessionId, storedGuestToken]);
   useEffect(() => {
     if (settingsOpen) {
       setEditRelationship(safeGetItem('conexao-relationship') || '');
@@ -1702,7 +1751,7 @@ function AppExperienceReference() {
       )}
      {adultThemePrompt && <div className="app-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="adult-theme-title"><div className="app-modal adult-theme-modal"><button className="app-modal-close" onClick={() => setAdultThemePrompt(null)} aria-label="Fechar aviso" data-testid="button-cancel-adult-theme"><X size={18} /></button><div className="adult-theme-mark" role="img" aria-label="Conteúdo para maiores de 18 anos"><Flame size={19} strokeWidth={2.1} aria-hidden="true" /></div><p className="modal-eyebrow">um espaço para dois</p><h2 id="adult-theme-title">{adultThemePrompt.title}<em>.</em></h2><p>Este espaço tem perguntas mais ousadas, pensadas para casais. Quer continuar?</p><button onClick={confirmAdultTheme} className="app-primary-button" data-testid="button-confirm-adult-theme">Quero continuar <ArrowRight size={16} /></button><button onClick={() => setAdultThemePrompt(null)} className="app-secondary-button" data-testid="button-cancel-adult-theme-secondary">Voltar</button></div></div>}
     {welcomeOpen && <div className="app-modal-backdrop"><div className="app-modal welcome-app-modal"><button className="app-modal-close" onClick={() => setWelcomeOpen(false)} aria-label="Fechar apresentação" data-testid="button-close-welcome"><X size={18} /></button><div className="welcome-app-mark"><Feather size={19} /></div><p className="modal-eyebrow">antes da primeira carta</p><h2>Como podemos<br /><em>te chamar?</em></h2><p>É só para deixar este espaço um pouco mais seu. Você pode entrar sem preencher nada.</p><input value={buyerName} onChange={e => setBuyerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && startSession()} placeholder="Seu nome" className="app-text-input" data-testid="input-buyer-name" /><button onClick={startSession} className="app-primary-button" data-testid="button-enter-experience">{createSession.isPending ? 'Abrindo seu espaço…' : 'Entrar na experiência'} <ArrowRight size={16} /></button></div></div>}
-         {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{`${isGuest ? (guestDisplayName || buyerName || 'Visitante') : (buyerName || 'Visitante')} · ${isOwner ? 'Dono' : 'Convidado'}`}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><div className="settings-row settings-row-clickable" onClick={() => setExpandedField(expandedField === 'relationship' ? null : 'relationship')} data-testid="row-relationship"><span>Tipo de relacionamento</span><strong>{editRelationship || 'Não definido'} <ChevronRight size={14} className={`settings-chevron ${expandedField === 'relationship' ? 'is-open' : ''}`} /></strong></div>{expandedField === 'relationship' && <div className="settings-choices-inline">{RELATIONSHIP_OPTIONS.map(opt => <button key={opt} type="button" onClick={() => { setEditRelationship(opt); safeSetItem('conexao-relationship', opt); setExpandedField(null); }} className={`settings-choice ${editRelationship === opt ? 'is-selected' : ''}`} data-testid={`button-relationship-${opt}`}>{opt}</button>)}</div>}<div className="settings-row settings-row-clickable" onClick={() => setExpandedField(expandedField === 'pronoun' ? null : 'pronoun')} data-testid="row-pronoun"><span>Pronome do parceiro</span><strong>{editPronoun || 'Não definido'} <ChevronRight size={14} className={`settings-chevron ${expandedField === 'pronoun' ? 'is-open' : ''}`} /></strong></div>{expandedField === 'pronoun' && <div className="settings-choices-inline">{PRONOUN_OPTIONS.map(opt => <button key={opt} type="button" onClick={() => { setEditPronoun(opt); safeSetItem('conexao-partner-pronoun', opt); setExpandedField(null); }} className={`settings-choice ${editPronoun === opt ? 'is-selected' : ''}`} data-testid={`button-pronoun-${opt}`}>{opt}</button>)}</div>}<button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button><button onClick={() => { setSettingsOpen(false); handleLogout(); }} className="app-secondary-button app-logout-button" data-testid="button-logout">Sair da conta</button></div></div>}
+         {settingsOpen && <div className="app-modal-backdrop"><div className="app-modal settings-app-modal"><button className="app-modal-close" onClick={() => setSettingsOpen(false)} aria-label="Fechar ajustes" data-testid="button-close-settings"><X size={18} /></button><p className="modal-eyebrow">seu espaço</p><h2>Ajustes da<br /><em>experiência.</em></h2><div className="settings-row"><span>Perfil</span><strong data-testid="text-settings-name">{`${isGuest ? (guestDisplayName || buyerName || 'Visitante') : (buyerName || 'Visitante')} · ${isOwner ? 'Dono' : 'Convidado'}`}</strong></div><div className="settings-row"><span>Acesso</span><strong data-testid="text-settings-access">{sessionQuery.data?.accessGranted || accessQuery.data?.hasAccess ? activeAccess?.packageName || 'Ativo' : 'Demonstração'}</strong></div><div className="settings-row"><span>Salvas</span><strong data-testid="text-settings-saved">{saved.length} pergunta{saved.length === 1 ? '' : 's'}</strong></div><div className="settings-row settings-row-clickable" onClick={() => setExpandedField(expandedField === 'relationship' ? null : 'relationship')} data-testid="row-relationship"><span>Tipo de relacionamento</span><strong>{editRelationship || 'Não definido'} <ChevronRight size={14} className={`settings-chevron ${expandedField === 'relationship' ? 'is-open' : ''}`} /></strong></div>{expandedField === 'relationship' && <div className="settings-choices-inline">{RELATIONSHIP_OPTIONS.map(opt => <button key={opt} type="button" onClick={() => { setEditRelationship(opt); safeSetItem('conexao-relationship', opt); patchPreferences(sessionId || null, storedGuestToken || null, { relationshipType: opt }); setExpandedField(null); }} className={`settings-choice ${editRelationship === opt ? 'is-selected' : ''}`} data-testid={`button-relationship-${opt}`}>{opt}</button>)}</div>}<div className="settings-row settings-row-clickable" onClick={() => setExpandedField(expandedField === 'pronoun' ? null : 'pronoun')} data-testid="row-pronoun"><span>Pronome do parceiro</span><strong>{editPronoun || 'Não definido'} <ChevronRight size={14} className={`settings-chevron ${expandedField === 'pronoun' ? 'is-open' : ''}`} /></strong></div>{expandedField === 'pronoun' && <div className="settings-choices-inline">{PRONOUN_OPTIONS.map(opt => <button key={opt} type="button" onClick={() => { setEditPronoun(opt); safeSetItem('conexao-partner-pronoun', opt); patchPreferences(sessionId || null, storedGuestToken || null, { partnerPronoun: opt }); setExpandedField(null); }} className={`settings-choice ${editPronoun === opt ? 'is-selected' : ''}`} data-testid={`button-pronoun-${opt}`}>{opt}</button>)}</div>}<button onClick={() => { setSettingsOpen(false); setWelcomeOpen(true); }} className="app-secondary-button" data-testid="button-edit-name">Editar como te chamar</button><button onClick={() => { setSettingsOpen(false); handleLogout(); }} className="app-secondary-button app-logout-button" data-testid="button-logout">Sair da conta</button></div></div>}
         {inviteOpen && isOwner && <div className="app-modal-backdrop" onClick={() => setInviteOpen(false)}><div className="app-modal invite-app-modal invite-modal-hub" onClick={event => event.stopPropagation()}><button className="app-modal-close" onClick={() => setInviteOpen(false)} aria-label="Fechar convite" data-testid="button-close-invite"><X size={18} /></button><p className="modal-eyebrow">quem joga com você</p><h2>Convidados<br /><em>desse baralho.</em></h2><div className="invite-hub-stats"><div><strong>{invitesList.filter(invite => invite.isUsed).length}</strong><small>entraram</small></div><div><strong>{invitesList.filter(invite => !invite.isUsed).length}</strong><small>aguardando</small></div><div><strong>{Math.max(0, inviteLimit - invitesList.length)}</strong><small>cadeiras livres</small></div></div>{invitesList.length > 0 && <ul className="invite-hub-list" aria-label="Convites">{invitesList.map(invite => { const initial = (invite.guestName || '?').charAt(0).toUpperCase(); return <li key={invite.token} className={`invite-hub-row${invite.isUsed ? ' is-active' : ''}`} data-testid={`companion-${invite.token}`}><div className={`invite-hub-avatar${invite.isUsed ? ' is-active' : ''}`}>{initial}</div><div className="invite-hub-main"><span className="invite-hub-name">{invite.guestName}</span><span className="invite-hub-status">{invite.isUsed && invite.usedAt ? `entrou em ${new Date(invite.usedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}` : 'aguardando aceitar'}</span></div><button type="button" onClick={() => cancelInvite(invite)} className="invite-hub-remove" aria-label={`Desconvidar ${invite.guestName}`} data-testid={`button-cancel-invite-${invite.token}`}><X size={14} /></button></li>; })}</ul>}{canInvite ? inviteResult ? <div className="invite-hub-success"><div className="invite-success-mark"><Check size={21} /></div><p className="modal-eyebrow">convite criado</p><h3>Compartilhe com <em>{inviteResult.guestName}</em></h3><div className="invite-share-block"><button onClick={copyInvite} className="invite-share-button" data-testid="button-copy-invite"><Copy size={18} /> {copiedInvite ? 'Copiado!' : 'Copiar link do convite'}</button><details className="invite-share-details"><summary>Ver o link</summary><input readOnly value={inviteResult.token ? inviteUrlFromToken(inviteResult.token) : ''} className="app-text-input" data-testid="input-invite-url" onFocus={event => event.currentTarget.select()} /></details></div><button onClick={() => { setInviteResult(null); setGuestName(''); setCopiedInvite(false); }} className="app-text-button" data-testid="button-new-invite">Criar outro convite <ArrowRight size={15} /></button></div> : <div className="invite-hub-form"><p className="modal-eyebrow">novo convite</p><label className="invite-hub-label" htmlFor="guest-name-app">Nome de quem vai receber</label><input id="guest-name-app" value={guestName} onChange={event => setGuestName(event.target.value)} className="app-text-input" placeholder="Ex: Ana" data-testid="input-guest-name" /><button onClick={makeInvite} className="app-primary-button" disabled={!guestName.trim() || createInvite.isPending} data-testid="button-create-invite">{createInvite.isPending ? 'Criando convite…' : 'Gerar convite'} <LinkIcon size={16} /></button>{createInvite.isError && <p className="app-form-error" data-testid="status-invite-error">Não foi possível gerar agora. Tente novamente.</p>}</div> : <div className="invite-hub-full"><p><strong>Cadeiras cheias.</strong> Desconvide alguém acima pra liberar espaço.</p></div>}</div></div>}
   </div>;
 }
