@@ -528,12 +528,12 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           <span className="lp-eyebrow">baralho digital de perguntas · para casais</span>
           <h1 className="lp-hero-h1">Descubra perguntas para <span className="lp-hl-salmon">reacender a chama</span> do seu relacionamento e se <span className="lp-hl-lilac">reaproximar</span> do seu parceiro em uma noite</h1>
           <p className="lp-hero-sub">Tenha acesso a perguntas de conexão que abrem conversa de verdade entre você e seu parceiro. <strong>Pare de ter conversas monótonas</strong> e reaproxime-se da pessoa que você ama.</p>
-          <button onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-primary lp-cta-big" data-testid="button-hero-cta-v2">Quero reacender a conexão <ArrowRight size={18} /></button>
         </div>
         <div className="lp-hero-mockups" aria-hidden="true">
           <div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu completamente em casa comigo?"</p><span className="lp-mock-num">01 / 31</span></div></div></div>
           <div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te surpreende?"</p><span className="lp-mock-num">07 / 31</span></div></div></div>
         </div>
+        <button onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-primary lp-cta-big lp2-hero-cta" data-testid="button-hero-cta-v2">Quero reacender a conexão <ArrowRight size={18} /></button>
       </div>
     </section>
     <section className="lp2-story"><div className="lp-container lp2-story-narrow">
