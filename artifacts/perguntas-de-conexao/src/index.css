@@ -7840,3 +7840,48 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
   .lp-guarantee strong { font-size: .78rem; }
   .lp-guarantee p { font-size: .72rem; line-height: 1.35; }
 }
+
+@media (max-width: 640px) {
+  .lp-social {
+    padding: 3.25rem 1rem;
+  }
+  .lp-social .lp-h2 {
+    margin-bottom: 1.7rem;
+  }
+  .lp-social-grid {
+    width: min(100%, 360px);
+    gap: .8rem;
+  }
+  .lp-testimonial {
+    padding: 1.15rem 1rem 1.05rem;
+    border-radius: .85rem;
+  }
+  .lp-testimonial::before {
+    font-size: .72rem;
+    letter-spacing: .12em;
+    margin-bottom: .5rem;
+  }
+  .lp-testimonial p {
+    font-size: .92rem;
+    line-height: 1.45;
+    margin-bottom: .7rem;
+  }
+  .lp-testimonial footer {
+    margin-top: .7rem;
+    gap: .55rem;
+  }
+  .lp-testimonial footer::before {
+    width: 32px;
+    height: 32px;
+    font-size: .7rem;
+  }
+  .lp-testimonial footer::after {
+    font-size: .76rem;
+    line-height: 1.25;
+  }
+  .lp-tiny-note {
+    margin-top: 1.15rem;
+    padding: 0 .5rem;
+    line-height: 1.4;
+  }
+}
