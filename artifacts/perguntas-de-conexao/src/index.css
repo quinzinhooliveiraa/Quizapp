@@ -141,6 +141,26 @@
 .lp2-hero .lp-hero-copy .lp-eyebrow { margin-bottom: .5rem; }
 .lp2-hero .lp-hero-mockups { width: min(100%, 920px); height: 560px; }
 .lp2-hero-cta { margin-top: 0; }
+@media (min-width: 901px) {
+  .lp2-hero .lp-hero-inner {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    align-items: center;
+    gap: 3rem;
+  }
+  .lp2-hero .lp-hero-copy { max-width: none; text-align: left; }
+  .lp2-hero .lp-hero-mockups {
+    width: auto;
+    height: 460px;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .lp2-hero .lp2-hero-cta {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+}
 .lp-hl-salmon { color: #ffc59e; }
 .lp-hl-lilac { color: #c4acff; }
 .lp2-story { padding: 4rem 0 3.5rem; background: #271b47; }
