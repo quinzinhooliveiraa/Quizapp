@@ -378,6 +378,7 @@ function Logo({ inverse = false }: { inverse?: boolean }) {
 function LandingQuiz({ onFinish }: { onFinish: () => void }) {
   const [step, setStep] = useState(0);
   const [theme, setTheme] = useState<'porto' | 'faisca' | 'livro' | ''>('');
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   const previews: Record<string, { title: string; questions: string[] }> = {
     porto: {
@@ -411,12 +412,17 @@ function LandingQuiz({ onFinish }: { onFinish: () => void }) {
     return <div className="lp-quiz-result">
       <p className="lp-quiz-pill">Seu baralho ideal pra começar:</p>
       <h3 className="lp-quiz-result-title">{preview.title}</h3>
-      <div className="lp-quiz-cards">
-        {preview.questions.map((question, index) => <div key={question} className="lp-quiz-preview-card">
+      <div className="lp-quiz-cards" style={{ '--preview-index': previewIndex } as React.CSSProperties}>
+        {preview.questions.map((question, index) => <div key={question} className={`lp-quiz-preview-card ${index === previewIndex ? 'is-active' : ''}`}>
           <span className="lp-mock-tag">{preview.title.toLowerCase()}</span>
           <p>"{question}"</p>
           <span className="lp-mock-num">{String(index + 1).padStart(2, '0')} / 31</span>
         </div>)}
+      </div>
+      <div className="lp-quiz-card-nav" aria-label="Navegar pelas perguntas">
+        <button type="button" onClick={() => setPreviewIndex((previewIndex + preview.questions.length - 1) % preview.questions.length)} aria-label="Pergunta anterior"><ChevronLeft size={18} /></button>
+        <span>{previewIndex + 1} / {preview.questions.length}</span>
+        <button type="button" onClick={() => setPreviewIndex((previewIndex + 1) % preview.questions.length)} aria-label="Próxima pergunta"><ChevronRight size={18} /></button>
       </div>
       <p className="lp-quiz-cta-text"><strong>Essas são 3 de 31.</strong> Destrave as outras + os outros 14 baralhos:</p>
       <button onClick={onFinish} className="lp-cta-primary lp-cta-big" data-testid="button-quiz-cta">Ver o preço <ArrowRight size={18} /></button>
