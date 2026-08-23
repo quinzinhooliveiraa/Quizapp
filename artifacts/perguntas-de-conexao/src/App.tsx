@@ -425,7 +425,7 @@ function LandingQuiz({ onFinish }: { onFinish: () => void }) {
         <button type="button" onClick={() => setPreviewIndex((previewIndex + 1) % preview.questions.length)} aria-label="Próxima pergunta"><ChevronRight size={18} /></button>
       </div>
       <p className="lp-quiz-cta-text"><strong>Essas são 3 de 31.</strong> Destrave as outras + os outros 14 baralhos:</p>
-      <button onClick={onFinish} className="lp-cta-primary lp-cta-big" data-testid="button-quiz-cta">Ver o preço <ArrowRight size={18} /></button>
+       <button onClick={onFinish} className="lp-cta-primary lp-cta-big" data-testid="button-quiz-cta">Quero aprofundar meu relacionamento <ArrowRight size={18} /></button>
     </div>;
   }
 
@@ -528,6 +528,8 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
     ['Perto de Novo', 'Esquentar o espaço entre vocês.', '30 cartas'],
   ];
   return <>
+    <span id="como-funciona" className="lp-anchor-target" aria-hidden="true" />
+    <span id="lp-precos" className="lp-anchor-target" aria-hidden="true" />
     <section className="lp-hero lp2-hero">
       <div className="lp-hero-inner">
         <div className="lp-hero-copy">
@@ -539,7 +541,8 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           <div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu completamente em casa comigo?"</p><span className="lp-mock-num">01 / 31</span></div></div></div>
           <div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te surpreende?"</p><span className="lp-mock-num">07 / 31</span></div></div></div>
         </div>
-        <button onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-primary lp-cta-big lp2-hero-cta" data-testid="button-hero-cta-v2">Quero reacender a conexão <ArrowRight size={18} /></button>
+         <button onClick={onBuy} className="lp-cta-primary lp-cta-big lp2-hero-cta" data-testid="button-hero-cta-v2">Quero reacender a conexão <ArrowRight size={18} /></button>
+         <button type="button" onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-secondary-link" data-testid="link-hero-quiz">Prefere ver um exemplo antes? Responda 3 perguntas rápidas →</button>
       </div>
     </section>
     <section className="lp2-story"><div className="lp-container lp2-story-narrow">
@@ -595,6 +598,7 @@ function Shell({ children, dark = false }: { children: ReactNode; dark?: boolean
         <Link href="/app" data-testid="link-experience">Experiência</Link>
         <a href="#como-funciona" data-testid="link-how-it-works">Como funciona</a>
        <a href="#lp-precos" data-testid="link-packages">Pacotes</a>
+       <a href="mailto:quinzinhooliveiraa@gmail.com?subject=Sugestão%20-%20Perguntas%20de%20Conexão" data-testid="link-feedback">Sugestões</a>
       </nav>
        <Link href="/login" className="header-cta" data-testid="link-header-cta">Abrir meu baralho <ArrowRight size={16} /></Link>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menu" data-testid="button-menu"><Menu size={22} /></button>
@@ -775,7 +779,6 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
   }, []);
 
   const checkout = async () => {
-    if (!buyerNameInput.trim()) return;
     setCheckoutState('sending');
     try {
       const response = await fetch(apiUrl('/api/checkout/create'), {
@@ -783,7 +786,7 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           packageId: selectedPackage,
-          buyerName: buyerNameInput.trim(),
+          buyerName: 'Cliente Perguntas de Conexão',
         }),
       });
       const data = await response.json() as { checkoutUrl?: string; sessionId?: string; billId?: string };
@@ -795,7 +798,7 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
       setCheckoutState('error');
     }
   };
-  const [buyerNameInput, setBuyerNameInput] = useState('');
+  const [buyerNameInput, setBuyerNameInput] = useState('Cliente Perguntas de Conexão');
      return <Shell dark>
     <StoredAccessGate />
     <Link href="/login" className="home-login-link" data-testid="link-home-login">Já tem baralho? Entrar</Link>

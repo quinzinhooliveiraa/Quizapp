@@ -587,10 +587,9 @@ export default function Onboarding() {
             <div className="founder-avatar">Q</div>
             <p className="onboarding-kicker">uma nota para você</p>
             <div className="onboarding-letter">
-              <p>Oi, eu sou a equipe por trás das Perguntas de Conexão.</p>
-              <p>Há algum tempo, percebemos uma coisa: a gente pode amar alguém e ainda assim não saber mais o que perguntar.</p>
+              <p>Percebi uma coisa com o tempo: dá pra amar alguém e, mesmo assim, não saber mais o que perguntar.</p>
               <p>As melhores conversas não acontecem por acaso. Elas começam com uma pergunta que ninguém pensou em fazer.</p>
-              <p>Foi por isso que criamos este espaço — para ajudar você a conhecer essa pessoa de novo.</p>
+              <p>Foi por isso que criei este espaço — pra te ajudar a conhecer essa pessoa de novo.</p>
             </div>
           </div>
         );

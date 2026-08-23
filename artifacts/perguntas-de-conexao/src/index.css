@@ -67,6 +67,70 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* LP1 refinements */
+.lp-cta-secondary-link {
+  display: block;
+  margin-top: .9rem;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.55);
+  font-size: .85rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+.lp-cta-secondary-link:hover { color: #c4acff; }
+.checkout-name-input { display: none; }
+.lp-testimonial-stars {
+  color: #ffc59e;
+  font-size: .85rem;
+  letter-spacing: .15em;
+  margin-bottom: .6rem;
+}
+.lp-testimonial::before {
+  content: '★★★★★';
+  display: block;
+  color: #ffc59e;
+  font-size: .85rem;
+  letter-spacing: .15em;
+  margin-bottom: .6rem;
+}
+.lp-testimonial footer {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin-top: .9rem;
+  font-size: 0;
+  color: transparent;
+}
+.lp-testimonial footer::before {
+  content: 'ML';
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(196,172,255,.28), rgba(255,157,196,.22));
+  border: 1px solid rgba(196,172,255,.35);
+  color: #f9f8fb;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.lp-testimonial:nth-child(2) footer::before { content: 'RC'; }
+.lp-testimonial:nth-child(3) footer::before { content: 'JM'; }
+.lp-testimonial footer::after {
+  content: 'Marina & Léo  ·  Belo Horizonte';
+  color: rgba(255,255,255,.7);
+  font-size: .85rem;
+  white-space: pre;
+}
+.lp-testimonial:nth-child(2) footer::after { content: 'Rafael & Carla  ·  Curitiba'; }
+.lp-testimonial:nth-child(3) footer::after { content: 'Julia & Miguel  ·  São Paulo'; }
+.lp-anchor-target { display: block; height: 0; overflow: hidden; }
+
 /* Admin */
 .admin-page {
   min-height: 100vh;
