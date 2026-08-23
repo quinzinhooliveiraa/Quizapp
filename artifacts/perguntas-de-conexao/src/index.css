@@ -2534,6 +2534,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .app-bottom-nav button.is-active::after { content: ""; position: absolute; top: 1px; right: 18%; left: 18%; height: 1px; border-radius: 999px; background: rgba(255,255,255,.72); filter: blur(.35px); pointer-events: none; }
 .app-bottom-nav button.is-active > * { position: relative; z-index: 1; }
 .app-bottom-nav button:hover { transform: translateY(-1px); }
+.app-nav-feedback { color: rgba(255,255,255,.56); font-size: .72rem; text-decoration: none; transition: color .2s ease; }
+.app-nav-feedback:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .nav-dot { width: .38rem; height: .38rem; border-radius: 50%; background: currentColor; opacity: .7; }
 .nav-dot-vibes { border-radius: .14rem; transform: rotate(45deg); }
 .nav-dot-faíscas { clip-path: polygon(50% 0, 63% 35%, 100% 50%, 63% 65%, 50% 100%, 37% 65%, 0 50%, 37% 35%); }

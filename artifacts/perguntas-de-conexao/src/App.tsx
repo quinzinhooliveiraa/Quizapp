@@ -598,7 +598,6 @@ function Shell({ children, dark = false }: { children: ReactNode; dark?: boolean
         <Link href="/app" data-testid="link-experience">Experiência</Link>
         <a href="#como-funciona" data-testid="link-how-it-works">Como funciona</a>
        <a href="#lp-precos" data-testid="link-packages">Pacotes</a>
-       <a href="mailto:quinzinhooliveiraa@gmail.com?subject=Sugestão%20-%20Perguntas%20de%20Conexão" data-testid="link-feedback">Sugestões</a>
       </nav>
        <Link href="/login" className="header-cta" data-testid="link-header-cta">Abrir meu baralho <ArrowRight size={16} /></Link>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menu" data-testid="button-menu"><Menu size={22} /></button>
@@ -1848,7 +1847,7 @@ function AppExperienceReference() {
            <button type="button" className="app-nav-toggle" onClick={toggleNavCollapsed} aria-label={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} aria-pressed={navCollapsed} title={navCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'} data-testid="button-toggle-nav"><span className="nav-toggle-icon">{navCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}</span></button>
           <p className="app-nav-label">Navegação</p>
          {navItems.map(item => { const Icon = item.icon; return <button key={item.id} className={activeNav === item.id ? 'is-active' : ''} onClick={() => openDeckTab(item.id)} data-testid={`button-nav-${item.id}`}><Icon size={17} strokeWidth={1.8} /><span className="nav-item-label">{item.label}</span><span className={`nav-dot nav-dot-${item.id}`} /></button>; })}
-          <div className="app-nav-footer"><span className="app-nav-status"><span /> pronto para a próxima conversa</span><span className="app-nav-version">PC · 01</span></div>
+           <div className="app-nav-footer"><span className="app-nav-status"><span /> pronto para a próxima conversa</span><a className="app-nav-feedback" href="mailto:quinzinhooliveiraa@gmail.com?subject=Sugestão%20-%20Perguntas%20de%20Conexão" data-testid="link-feedback">Sugestões</a><span className="app-nav-version">PC · 01</span></div>
       </nav>
     </main>
     <InstallAppPrompt />
