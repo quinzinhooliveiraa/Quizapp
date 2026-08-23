@@ -1,0 +1,300 @@
+# LP1 nova — headline de promessa direta + storytelling + reordenação completa
+
+**Contexto:** este prompt substitui o conteúdo do componente `LandingV2Quiz` (que vai virar a LP1, em `/`) com a copy final aprovada, incluindo uma seção de storytelling nova e a ordem de seções combinada: hero → storytelling → proposta → quiz → baralhos (16) → como funciona → depoimentos → preço → FAQ → CTA final.
+
+**Pré-requisito:** aplicar ANTES o prompt `swap-lp1-lp2-e-copy-dor-promessa-prazo-replit.md` (troca de rotas). Se esse já foi aplicado, ignore a seção 1 dele e aplique só o conteúdo abaixo — ele já contempla a troca de rotas e substitui por completo o que aquele prompt tinha colocado no `LandingV2Quiz`.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Trocar as rotas (se ainda não fez isso) — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Achar a função `Router`:
+
+```tsx
+return <RoutedErrorBoundary><Switch><Route path="/"><Home /></Route><Route path="/lp2"><Home variant="v2" /></Route>...
+```
+
+Trocar só as duas primeiras rotas:
+
+```tsx
+return <RoutedErrorBoundary><Switch><Route path="/"><Home variant="v2" /></Route><Route path="/lp2"><Home /></Route>...
+```
+
+(resto do Switch continua igual)
+
+---
+
+## 2. Substituir TODO o componente `LandingV2Quiz` — mesmo arquivo
+
+Achar `function LandingV2Quiz({ onBuy }: { onBuy: () => void }) { ... }` e substituir o corpo inteiro por:
+
+```tsx
+function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
+  return <>
+    {/* 1. HERO */}
+    <section className="lp-hero lp2-hero">
+      <div className="lp-hero-inner">
+        <div className="lp-hero-copy">
+          <span className="lp-eyebrow">baralho digital de perguntas · para casais</span>
+          <h1 className="lp-hero-h1">Descubra perguntas para <span className="lp-hl-salmon">reacender a chama</span> do seu relacionamento e se <span className="lp-hl-lilac">reaproximar</span> do seu parceiro em uma noite</h1>
+          <p className="lp-hero-sub">Tenha acesso a perguntas de conexão que abrem conversa de verdade entre você e seu parceiro. <strong>Pare de ter conversas monótonas</strong> e reaproxime-se da pessoa que você ama.</p>
+          <button onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-primary lp-cta-big" data-testid="button-hero-cta-v2">Quero reacender a conexão <ArrowRight size={18} /></button>
+        </div>
+        <div className="lp-hero-mockups" aria-hidden="true">
+          <div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu completamente em casa comigo?"</p><span className="lp-mock-num">01 / 31</span></div></div></div>
+          <div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te surpreende?"</p><span className="lp-mock-num">07 / 31</span></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    {/* 2. STORYTELLING */}
+    <section className="lp2-story">
+      <div className="lp-container lp2-story-narrow">
+        <p className="lp-eyebrow">a real sobre o que acontece</p>
+        <div className="lp2-story-body">
+          <p className="lp2-story-lead">Ninguém acorda um dia e decide se afastar da pessoa que ama.</p>
+          <p>Acontece devagar. Um mês corrido no trabalho. Uma briga que ficou sem resolver. Uma semana em que vocês mal se cruzaram. E, sem perceber, vocês trocaram as conversas que faziam vocês <strong>se conhecerem</strong> por conversas que só existem porque viraram rotina.</p>
+          <p>"Foi na academia?" "Que horas você chega?" "Tô indo trabalhar."</p>
+          <p>Até que chega uma fase em que vocês percebem que não sobrou tempo pra vocês mesmos. Sobra pro trabalho, pro celular, pra todo mundo — menos pros dois. E quando finalmente sobra, cada um vai pro próprio mundo: no mesmo sofá ou a quilômetros de distância. Não tem briga. Não tem grito. Só um silêncio que ninguém tem coragem de nomear.</p>
+          <div className="lp2-story-pull">"Eu amo essa pessoa. Então por que a gente não tem mais nada pra conversar?"</div>
+          <p>E quando você finalmente cria coragem e diz <strong>"vamos conversar"</strong>, sabe o que costuma acontecer? <strong>Você não tem assunto.</strong> A outra pessoa trava, responde seco — e vocês voltam ao silêncio. Só que agora a sensação fica pior do que antes.</p>
+          <p>O problema não é falta de amor. <strong>O problema é a pergunta.</strong></p>
+          <p>"Vamos conversar" não é uma pergunta — é uma cobrança. Ela pede que o outro traga alguma coisa sem dizer o quê. Já <em>"você se arrepende de algo sobre a nossa história até aqui?"</em> é diferente. Ela é específica. Ela já chega com o assunto pronto, então ninguém precisa inventar por onde começar. E ela abre uma porta que os dois queriam abrir há meses, sem saber como.</p>
+          <p>É exatamente isso que a gente construiu.</p>
+        </div>
+      </div>
+    </section>
+
+    {/* 3. PROPOSTA */}
+    <section className="lp-solution lp2-proposta">
+      <div className="lp-container">
+        <p className="lp-eyebrow lp-eyebrow-center">a proposta</p>
+        <h2 className="lp-h2">São perguntas simples que vocês podem<br />incluir na rotina <em>começando hoje.</em></h2>
+        <p className="lp-solution-lede">445+ perguntas escritas pra abrir espaço — sem clichê, sem "qual seu animal favorito". Vocês abrem uma carta, leem em voz alta e escutam. Separem 10 minutos. O resto acontece entre vocês.</p>
+        <div className="lp-solution-pillars">
+          <div className="lp-pillar"><div className="lp-pillar-icon">◇</div><strong>10 minutos por noite</strong><p>Não exige terapia, retiro nem fim de semana livre. Só uma carta por vez.</p></div>
+          <div className="lp-pillar"><div className="lp-pillar-icon">▣</div><strong>Celular ou computador</strong><p>Abre no navegador, sem instalar nada, em qualquer aparelho.</p></div>
+          <div className="lp-pillar"><div className="lp-pillar-icon">◎</div><strong>Não precisam estar juntos</strong><p>Namoro à distância, viagem a trabalho ou cada um no seu quarto: a sala online deixa vocês na mesma pergunta, ao mesmo tempo.</p></div>
+        </div>
+      </div>
+    </section>
+
+    {/* 4. QUIZ */}
+    <section className="lp-quiz-section" id="lp2-quiz">
+      <div className="lp-container">
+        <p className="lp-eyebrow lp-eyebrow-center">experimente agora, de graça</p>
+        <h2 className="lp-h2">Responda 3 perguntinhas e receba<br /><em>3 perguntas feitas pro momento de vocês.</em></h2>
+        <p className="lp-solution-lede lp2-quiz-lede">Leva menos de 1 minuto. A gente monta na hora um mini-baralho com a cara da fase que vocês estão vivendo.</p>
+        <LandingQuiz onFinish={onBuy} />
+      </div>
+    </section>
+
+    {/* 5. BARALHOS (16) */}
+    <section className="lp-themes lp2-themes" id="lp2-pacotes">
+      <div className="lp-container">
+        <p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p>
+        <h2 className="lp-h2">16 baralhos temáticos,<br /><em>pra cada momento de vocês.</em></h2>
+        <div className="lp-themes-grid">
+          {[
+            ['Porto Seguro', 'As conversas que parecem casa.', '31 cartas'],
+            ['Livro Aberto', 'Sem filtro, cara a cara.', '31 cartas'],
+            ['Você Não Sabia', 'Descobertas que ainda cabem entre vocês.', '32 cartas'],
+            ['Em Voz Alta', 'A vida que os dois querem construir.', '30 cartas'],
+            ['Lá Atrás', 'O que formou quem você é hoje.', '28 cartas'],
+            ['Modo Leve', 'Pra rir e não levar tão a sério.', '31 cartas'],
+            ['Viagens', 'Lugares que já foram e ainda vão ser.', '30 cartas'],
+            ['Carreira & Dinheiro', 'Como pensam o lado prático.', '30 cartas'],
+            ['Depois da Tempestade', 'O caminho de volta.', '30 cartas'],
+            ['Faísca', 'O lado mais provocante de vocês.', '31 cartas'],
+            ['Luzes Baixas', 'Quando a noite pede mais coragem. 18+', '35 cartas'],
+            ['Fogo Alto', 'Desejos, curiosidades, limites. 18+', '30 cartas'],
+            ['Sem Freio', 'O mais ousado. Só pra quem topa. 18+', '30 cartas'],
+            ['Mesmo Longe', 'Quando rotina ou distância afastam.', '30 cartas'],
+            ['Perto de Novo', 'Esquentar o espaço entre vocês.', '30 cartas'],
+          ].map(([name, description, count], index) => (
+            <div key={String(name)} className={`lp-theme-card ${index > 8 ? 'lp-theme-vibe' : ''}`}>
+              <strong>{name}</strong><p>{description}</p><span>{count}</span>
+            </div>
+          ))}
+          <div className="lp-theme-card lp-theme-bonus">
+            <span className="lp-theme-bonus-badge">bônus</span>
+            <strong>Baralho do Dia</strong>
+            <p>Um baralho montado na hora, de acordo com o que vocês estão sentindo hoje.</p>
+            <span>todo dia um novo</span>
+          </div>
+        </div>
+        <p className="lp-themes-note"><strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos — o acesso é vitalício.</p>
+      </div>
+    </section>
+
+    {/* 6. COMO FUNCIONA */}
+    <section className="lp-how" id="lp2-como-funciona">
+      <div className="lp-container">
+        <p className="lp-eyebrow lp-eyebrow-center">como funciona</p>
+        <h2 className="lp-h2">Três passos. <em>Um ritual novo.</em></h2>
+        <div className="lp-how-steps">
+          <div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham um baralho</strong><p>15 temas fixos + o bônus do dia, montado pelo que vocês estão sentindo.</p></div>
+          <div className="lp-how-step"><span className="lp-how-num">02</span><strong>Abram uma carta</strong><p>Leiam em voz alta, sem pressa, e deixem a pergunta agir.</p></div>
+          <div className="lp-how-step"><span className="lp-how-num">03</span><strong>Conversem de verdade</strong><p>Uma pergunta por vez. O resto acontece entre vocês.</p></div>
+        </div>
+      </div>
+    </section>
+
+    {/* 7. DEPOIMENTOS */}
+    <section className="lp-social">
+      <div className="lp-container">
+        <p className="lp-eyebrow lp-eyebrow-center">o que dizem</p>
+        <h2 className="lp-h2">Casais que já usaram<br /><em>e não largam mais.</em></h2>
+        <div className="lp-social-grid">
+          <blockquote className="lp-testimonial"><p>"Descobri coisas do meu marido em uma noite que 8 anos de casamento não tinham me mostrado."</p><footer>— Marina L. · Belo Horizonte</footer></blockquote>
+          <blockquote className="lp-testimonial"><p>"A gente fez a distância desaparecer por 40 minutos. Valeu mais que qualquer presente."</p><footer>— Rafael C. · Curitiba</footer></blockquote>
+          <blockquote className="lp-testimonial"><p>"Virou nosso ritual de sexta à noite. Sério."</p><footer>— Julia M. · São Paulo</footer></blockquote>
+        </div>
+        <p className="lp-tiny-note">Depoimentos de casais em fase de teste.</p>
+      </div>
+    </section>
+
+    {/* 8. PREÇO */}
+    <section className="lp-price" id="lp2-precos">
+      <div className="lp-container">
+        <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
+        <h2 className="lp-h2">A próxima boa conversa<br /><em>pode ser hoje à noite.</em></h2>
+        <div className="lp-price-card">
+          <div className="lp-price-badge">Oferta de lançamento</div>
+          <div className="lp-price-main">
+            <span className="lp-price-old">De <s>R$ 97,00</s></span>
+            <div className="lp-price-value"><span className="lp-price-currency">R$</span><span className="lp-price-big">47</span><span className="lp-price-cents">,90</span></div>
+            <span className="lp-price-installments">à vista <strong>ou</strong> 5x de R$ 9,58</span>
+          </div>
+          <ul className="lp-price-includes">
+            <li>✓ 445+ perguntas em 16 baralhos temáticos</li>
+            <li>✓ Baralho personalizado do dia, sempre novo</li>
+            <li>✓ Acesso pra <strong>2 pessoas</strong> (você + convite)</li>
+            <li>✓ Salas online sincronizadas, mesmo à distância</li>
+            <li>✓ Novos baralhos incluídos, pra sempre</li>
+            <li>✓ Sem mensalidade. Paga uma vez.</li>
+          </ul>
+          <button onClick={onBuy} className="lp-cta-primary lp-cta-full" data-testid="button-price-cta-v2">Começar agora por R$ 47,90 <ArrowRight size={18} /></button>
+          <div className="lp-guarantee">
+            <div className="lp-guarantee-seal">✦</div>
+            <div><strong>Garantia incondicional de 7 dias.</strong><p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama, sem perguntas.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* 9. FAQ */}
+    <section className="lp-faq" id="lp2-faq">
+      <div className="lp-container">
+        <p className="lp-eyebrow lp-eyebrow-center">dúvidas frequentes</p>
+        <h2 className="lp-h2">Ainda em dúvida?</h2>
+        <div className="lp-faq-list">
+          {[
+            ['Precisa instalar algum aplicativo?', 'Não. É 100% online, roda no navegador do celular ou do computador.'],
+            ['E se meu parceiro achar estranho?', 'É o mais comum. Por isso os baralhos começam leves — você escolhe o clima. Ninguém é obrigado a abrir nada antes de querer.'],
+            ['Funciona à distância?', 'Sim. Vocês criam uma sala online e jogam sincronizados, cada um no seu aparelho.'],
+            ['É vitalício mesmo?', 'Sim. Paga uma vez, usa pra sempre — incluindo os baralhos novos que entram depois.'],
+            ['Como recebo depois de pagar?', 'Na hora. O pagamento é via Pix e o acesso abre automaticamente após a confirmação.'],
+          ].map(([question, answer]) => (
+            <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* 10. CTA FINAL */}
+    <section className="lp-final-cta">
+      <div className="lp-container lp-final-cta-inner">
+        <h2 className="lp-h2">Vocês não precisam se afastar mais.<br /><em>Só de uma pergunta pra recomeçar.</em></h2>
+        <p>Comece hoje por R$ 47,90, com acesso vitalício e 7 dias de garantia.</p>
+        <button onClick={onBuy} className="lp-cta-primary lp-cta-big" data-testid="button-final-cta-v2">Quero começar agora <ArrowRight size={20} /></button>
+      </div>
+    </section>
+  </>;
+}
+```
+
+---
+
+## 3. CSS novo — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.lp-hl-salmon { color: #ffc59e; }
+.lp-hl-lilac { color: #c4acff; }
+
+.lp2-story { padding: 4rem 0 3.5rem; background: #271b47; }
+.lp2-story-narrow { max-width: 660px; }
+.lp2-story-body p { font-size: 1.04rem; color: rgba(249,248,251,0.78); margin: 0 0 1.15rem; }
+.lp2-story-body p.lp2-story-lead { font-size: 1.15rem; color: #f9f8fb; }
+.lp2-story-body strong { color: #f9f8fb; font-weight: 700; }
+.lp2-story-body em { font-family: "Instrument Serif", Georgia, serif; font-style: italic; color: #c4acff; font-size: 1.08em; }
+.lp2-story-pull {
+  border-left: 3px solid #c4acff;
+  padding: 0.4rem 0 0.4rem 1.2rem;
+  margin: 1.8rem 0;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-style: italic;
+  font-size: 1.28rem;
+  line-height: 1.4;
+  color: #f9f8fb;
+}
+
+.lp2-quiz-lede { text-align: center; max-width: 480px; margin: 0 auto 1.6rem; color: rgba(255,255,255,0.65); font-size: 0.95rem; }
+
+.lp-theme-bonus {
+  position: relative;
+  border-color: rgba(255, 197, 158, 0.5) !important;
+  background: linear-gradient(135deg, rgba(255, 197, 158, 0.1), rgba(196, 172, 255, 0.06)) !important;
+}
+.lp-theme-bonus-badge {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #ffc59e;
+  color: #302254;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .lp2-story-pull { font-size: 1.1rem; }
+}
+```
+
+---
+
+## 4. Atualizar o Painel Admin — `artifacts/perguntas-de-conexao/src/pages/Admin.tsx`
+
+Se ainda não fez essa troca, achar:
+
+```tsx
+const LANDINGS: LandingEntry[] = [
+  { id: 'v1', label: 'Landing V1 — Estática', path: '/', description: 'Hero + dor + solução + temas + prova social + preço + FAQ, tudo em scroll.' },
+  { id: 'v2', label: 'Landing V2 — Quiz interativo', path: '/lp2', description: 'Mesma base, mas com mini-quiz de 3 perguntas antes de mostrar o preço.' },
+];
+```
+
+Substituir por:
+
+```tsx
+const LANDINGS: LandingEntry[] = [
+  { id: 'v1', label: 'LP1 — Storytelling + Quiz', path: '/', description: 'Headline de promessa direta, storytelling da dor, quiz de 3 perguntas e 16 baralhos (15 + bônus do dia).' },
+  { id: 'v2', label: 'LP2 — Estática (variedade de baralhos)', path: '/lp2', description: 'Hero + dor + solução + 15 temas + prova social + preço + FAQ, tudo em scroll, sem quiz.' },
+];
+```
+
+---
+
+## Verificação
+
+1. Abrir `/` → hero com "Descubra perguntas para reacender a chama..." e os dois botões de mockup (Mac + celular) → logo abaixo, a seção de storytelling completa (com a citação em destaque "Eu amo essa pessoa...") → depois "a proposta" com os 3 pilares → depois o quiz de 3 perguntas → depois a grade de 16 baralhos (com o "Baralho do Dia" e badge de bônus) → como funciona → depoimentos → preço → FAQ (com a pergunta nova "E se meu parceiro achar estranho?") → CTA final.
+2. Abrir `/lp2` → landing estática de antes, sem quiz, sem storytelling.
+3. Testar o checkout (Pix) nos dois — continua abrindo o mesmo modal de pagamento.
+4. Mobile: a seção de storytelling não deve ficar larga demais (testar em ~375px de largura) — o texto deve quebrar confortavelmente dentro do `.lp2-story-narrow`.
+5. No `/admin`, textos atualizados refletindo o conteúdo real de cada landing.

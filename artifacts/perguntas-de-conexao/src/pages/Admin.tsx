@@ -13,15 +13,15 @@ type LandingEntry = {
 const LANDINGS: LandingEntry[] = [
   {
     id: "v1",
-    label: "Landing V1 — Estática",
+    label: "LP1 — Storytelling + Quiz",
     path: "/",
-    description: "Hero, dor, solução, temas, prova social, preço e FAQ em uma experiência contínua.",
+    description: "Headline de promessa direta, storytelling da dor, quiz de 3 perguntas e 16 baralhos (15 + bônus do dia).",
   },
   {
     id: "v2",
-    label: "Landing V2 — Quiz interativo",
+    label: "LP2 — Estática (variedade de baralhos)",
     path: "/lp2",
-    description: "A mesma base com um mini-quiz de três perguntas antes de mostrar o preço.",
+    description: "Hero + dor + solução + 15 temas + prova social + preço + FAQ, tudo em scroll, sem quiz.",
   },
 ];
 
