@@ -31,7 +31,7 @@ import Play from '@/pages/Play';
 import Admin from '@/pages/Admin';
 import { apiBaseUrl } from '@/config';
 import heroMockupMac from '@assets/lp-hero-mockup-mac.png';
-import heroMockupPhone from '@assets/lp-hero-mockup-phone.png';
+import heroMockupPhone from '@assets/lp-hero-mockup-phone-no-bg.png';
 
 const queryClient = new QueryClient({
   defaultOptions: {
