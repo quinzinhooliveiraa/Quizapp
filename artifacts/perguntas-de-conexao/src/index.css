@@ -2442,7 +2442,7 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .question-card-top strong i { color: rgba(255,255,255,.57); font-style: normal; }
 .question-card-copy { position: relative; z-index: 2; margin: auto 0 4.9rem; }
 .question-kicker { display: block; margin-bottom: 1.25rem; color: rgba(255,255,255,.62); font: .66rem var(--app-font-mono); letter-spacing: .12em; }
-.question-card-copy p { max-width: 20rem; margin: 0; color: #fff; font-size: clamp(1.8rem, 8vw, 2.55rem); font-weight: 500; line-height: 1.22; letter-spacing: 0; word-spacing: .2em; }
+.question-card-copy p { max-width: 20rem; margin: 0; color: #fff; font-size: clamp(1.8rem, 8vw, 2.55rem); font-weight: 500; line-height: 1.18; letter-spacing: 0; word-spacing: .14em; }
 .question-card-actions { position: absolute; right: 0; bottom: 1.45rem; left: 0; z-index: 3; display: flex; justify-content: center; gap: 1.05rem; }
 .question-card-actions button {
   width: 4rem;
