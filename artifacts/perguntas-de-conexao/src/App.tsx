@@ -520,7 +520,7 @@ type LandingTestimonial = {
 const landingTestimonials: LandingTestimonial[] = [
   {
     quote: 'No nosso aniversário de um ano, viajamos para uma cabana no interior. A gente chegou a passar 20 minutos em uma única pergunta, porque sempre acabava percebendo o quanto ainda não sabíamos um sobre o outro. Foi uma conversa simples, mas alguma coisa mudou naquele momento.',
-    name: 'Cody',
+    name: 'Caio',
     detail: '1 ano juntos',
   },
   {
