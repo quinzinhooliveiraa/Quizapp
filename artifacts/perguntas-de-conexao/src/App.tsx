@@ -525,43 +525,57 @@ const landingTestimonials: LandingTestimonial[] = [
   },
   {
     quote: 'Estamos casados há 23 anos e achei que já conhecíamos praticamente tudo um sobre o outro. Algumas perguntas passamos rapidamente, mas outras fizeram a gente conversar sobre coisas que nunca tínhamos compartilhado antes. No final, os dois ganham. Toda vez.',
+    name: 'Marina',
     detail: '23 anos de casamento',
   },
   {
     quote: 'Pouco antes de eu me mudar para outra cidade, levamos o baralho para um jantar. Uma pergunta abriu uma conversa que nós dois estávamos evitando. Passamos mais de uma hora falando abertamente sobre o que sentíamos — e no fim daquela conversa eu pedi ela em namoro.',
+    name: 'Rafael',
     detail: 'Começo de relacionamento',
   },
   {
     quote: 'Eu e meu parceiro já tínhamos conversas bem profundas. Duas rodadas depois, estávamos compartilhando coisas que nunca tínhamos contado para ninguém. Mesmo depois de tanto tempo conversando, ainda existiam partes nossas que o outro nunca tinha visto.',
+    name: 'Julia',
     detail: '1 ano de relacionamento',
   },
   {
     quote: 'Tivemos momentos leves, perguntas que fizeram a gente rir e outras que nos tiraram da zona de conforto. E acho que é justamente por isso que funcionou tão bem: descobrimos coisas que estavam ali, mas que nunca tínhamos parado para perguntar.',
+    name: 'Camila',
     detail: 'Uma noite diferente',
   },
   {
     quote: 'Nós nos conhecemos há 26 anos e hoje vivemos um relacionamento à distância. Nossas chamadas começaram a ficar sem assunto, então começamos a escolher perguntas antes de desligar. Virou um ritual e uma forma muito especial de diminuir a distância.',
+    name: 'Fernanda',
     detail: '26 anos de história',
   },
   {
     quote: 'Na primeira vez que jogamos, chegamos à terceira rodada e já estávamos chorando. Não parece que você está jogando um jogo. Parece que alguém finalmente te deu uma razão para parar tudo e perguntar: “Me conta uma coisa que eu ainda não sei sobre você.”',
+    name: 'Lucas',
     detail: 'Uma reconexão',
   },
 ];
 
 function TestimonialCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const activeTestimonial = landingTestimonials[activeIndex];
 
   useEffect(() => {
+    if (!autoPlayEnabled) return;
     const interval = window.setInterval(() => {
       setActiveIndex(current => (current + 1) % landingTestimonials.length);
     }, 7000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [autoPlayEnabled]);
 
   const move = (direction: -1 | 1) => {
+    setAutoPlayEnabled(false);
     setActiveIndex(current => (current + direction + landingTestimonials.length) % landingTestimonials.length);
+  };
+
+  const selectTestimonial = (index: number) => {
+    setAutoPlayEnabled(false);
+    setActiveIndex(index);
   };
 
   return <section className="lp-social">
@@ -571,6 +585,7 @@ function TestimonialCarousel() {
       <div className="lp-testimonial-carousel" aria-roledescription="carrossel" aria-label="Depoimentos de casais">
         <button type="button" className="lp-testimonial-arrow" onClick={() => move(-1)} aria-label="Depoimento anterior" data-testid="button-testimonial-previous"><ChevronLeft size={20} /></button>
         <blockquote className="lp-testimonial lp-testimonial-active" aria-live="polite">
+          <div className="lp-testimonial-stars" aria-label="5 de 5 estrelas">★★★★★</div>
           <p>“{activeTestimonial.quote}”</p>
           <footer>{activeTestimonial.name && <>— {activeTestimonial.name} </>}<span>{activeTestimonial.detail}</span></footer>
         </blockquote>
@@ -581,7 +596,7 @@ function TestimonialCarousel() {
           key={`${testimonial.name ?? 'depoimento'}-${testimonial.detail}`}
           type="button"
           className={`lp-testimonial-dot ${index === activeIndex ? 'is-active' : ''}`}
-          onClick={() => setActiveIndex(index)}
+          onClick={() => selectTestimonial(index)}
           role="tab"
           aria-selected={index === activeIndex}
           aria-label={`Ver depoimento ${index + 1}`}

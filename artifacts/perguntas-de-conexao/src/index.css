@@ -391,6 +391,12 @@
   font-size: clamp(1rem, 1.5vw, 1.18rem);
   line-height: 1.65;
 }
+.lp-testimonial-active .lp-testimonial-stars {
+  margin-bottom: .8rem;
+  color: #ffc59e;
+  font-size: .85rem;
+  letter-spacing: .16em;
+}
 .lp-testimonial-active footer {
   display: flex;
   align-items: center;
@@ -459,9 +465,10 @@
     line-height: 1.55;
   }
   .lp-testimonial-arrow {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2rem;
+    height: 2rem;
   }
+  .lp-testimonial-arrow svg { width: 17px; height: 17px; }
 }
 @media (min-width: 701px) { .home-login-link { display: none; } }
 
