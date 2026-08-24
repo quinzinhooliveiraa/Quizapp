@@ -30,6 +30,8 @@ import Login from '@/pages/Login';
 import Play from '@/pages/Play';
 import Admin from '@/pages/Admin';
 import { apiBaseUrl } from '@/config';
+import heroMockupMac from '@assets/lp-hero-mockup-mac.png';
+import heroMockupPhone from '@assets/lp-hero-mockup-phone.png';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -537,9 +539,9 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           <h1 className="lp-hero-h1">Descubra perguntas para <span className="lp-hl-salmon">reacender a chama</span> do seu relacionamento e se <span className="lp-hl-lilac">reaproximar</span> do seu parceiro em uma noite</h1>
           <p className="lp-hero-sub">Tenha acesso a perguntas de conexão que abrem conversa de verdade entre você e seu parceiro. <strong>Pare de ter conversas monótonas</strong> e reaproxime-se da pessoa que você ama.</p>
         </div>
-        <div className="lp-hero-mockups" aria-hidden="true">
-          <div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu completamente em casa comigo?"</p><span className="lp-mock-num">01 / 31</span></div></div></div>
-          <div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te surpreende?"</p><span className="lp-mock-num">07 / 31</span></div></div></div>
+        <div className="lp-hero-mockups lp-hero-mockups-photo" aria-hidden="true">
+          <img src={heroMockupMac} alt="" className="lp-mockup-photo lp-mockup-photo-mac" />
+          <img src={heroMockupPhone} alt="" className="lp-mockup-photo lp-mockup-photo-phone" />
         </div>
          <button onClick={onBuy} className="lp-cta-primary lp-cta-big lp2-hero-cta" data-testid="button-hero-cta-v2">Quero reacender a conexão <ArrowRight size={18} /></button>
          <button type="button" onClick={() => document.getElementById('lp2-quiz')?.scrollIntoView({ behavior: 'smooth' })} className="lp-cta-secondary-link" data-testid="link-hero-quiz">Prefere ver um exemplo antes? Responda 3 perguntas rápidas →</button>

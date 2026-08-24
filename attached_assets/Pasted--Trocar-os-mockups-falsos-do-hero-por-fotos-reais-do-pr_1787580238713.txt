@@ -1,0 +1,100 @@
+# Trocar os mockups falsos do hero por fotos reais do produto
+
+**Objetivo:** trocar os mockups desenhados em CSS (que hoje mostram um "computador" e um "celular" falsos, com cartas de exemplo dentro) pelas duas fotos reais que você anexou nesta mensagem — um mockup de laptop mostrando a tela de Temas e um mockup de iPhone mostrando uma pergunta aberta.
+
+**IMPORTANTE: anexe as duas imagens (a do laptop e a do celular) junto com este prompt quando colar aqui no chat.** O Replit Agent salva imagens anexadas automaticamente na pasta `attached_assets/`.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET** (isso aqui é instrução pro código, as imagens sim devem virar asset, como sempre acontece quando anexadas).
+
+---
+
+## 1. Renomear as imagens anexadas (opcional, mas ajuda a manter o código legível)
+
+Depois que o Replit salvar as duas imagens em `attached_assets/` (com nome tipo `Captura_de_Tela...png` ou parecido), copie/renomeie os dois arquivos pra:
+
+- `attached_assets/lp-hero-mockup-mac.png` (a foto do laptop com a tela "Escolha um assunto pra começar")
+- `attached_assets/lp-hero-mockup-phone.png` (a foto do iPhone com a pergunta "Que sonho profissional você gostaria da gente construir lado a lado?")
+
+Se preferir não renomear, tudo bem — só ajuste os imports do passo 2 pro nome real que o arquivo recebeu.
+
+---
+
+## 2. Importar as imagens — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Adicionar no topo do arquivo, junto com os outros imports (o projeto já usa o alias `@assets` pra essa pasta, confirmar em outros arquivos se houver exemplo):
+
+```tsx
+import heroMockupMac from '@assets/lp-hero-mockup-mac.png';
+import heroMockupPhone from '@assets/lp-hero-mockup-phone.png';
+```
+
+---
+
+## 3. Substituir o bloco de mockups do hero da LP1 — mesmo arquivo
+
+Achar, dentro de `LandingV2Quiz`, este trecho:
+
+```tsx
+<div className="lp-hero-mockups" aria-hidden="true">
+          <div className="lp-mockup-mac"><div className="lp-mockup-mac-bar"><span /><span /><span /></div><div className="lp-mockup-mac-screen"><div className="lp-mock-card lp-mock-card-front"><span className="lp-mock-tag">porto seguro</span><p className="lp-mock-text">"Qual foi a última vez que você se sentiu completamente em casa comigo?"</p><span className="lp-mock-num">01 / 31</span></div></div></div>
+          <div className="lp-mockup-phone"><div className="lp-mockup-phone-notch" /><div className="lp-mockup-phone-screen"><div className="lp-mock-card lp-mock-card-back"><span className="lp-mock-tag lp-mock-tag-vibe">faísca</span><p className="lp-mock-text">"O que em mim ainda te surpreende?"</p><span className="lp-mock-num">07 / 31</span></div></div></div>
+        </div>
+```
+
+Substituir por (agora usa as fotos reais em vez do desenho falso):
+
+```tsx
+<div className="lp-hero-mockups lp-hero-mockups-photo" aria-hidden="true">
+          <img src={heroMockupMac} alt="" className="lp-mockup-photo lp-mockup-photo-mac" />
+          <img src={heroMockupPhone} alt="" className="lp-mockup-photo lp-mockup-photo-phone" />
+        </div>
+```
+
+---
+
+## 4. CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.lp-hero-mockups-photo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lp-mockup-photo {
+  display: block;
+  height: auto;
+}
+.lp-mockup-photo-mac {
+  width: min(92%, 640px);
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.45));
+}
+.lp-mockup-photo-phone {
+  position: absolute;
+  right: 4%;
+  bottom: -8%;
+  width: min(38%, 240px);
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
+}
+
+@media (max-width: 880px) {
+  .lp-mockup-photo-mac { width: 88%; }
+  .lp-mockup-photo-phone { width: 34%; right: 2%; bottom: -6%; }
+}
+@media (max-width: 640px) {
+  .lp-hero-mockups-photo { padding: 1rem 0; }
+  .lp-mockup-photo-mac { width: 100%; }
+  .lp-mockup-photo-phone { width: 42%; right: 0; bottom: -10%; }
+}
+```
+
+**Ajuste fino:** os valores de `width`/`position` acima são um ponto de partida — o layout exato (laptop grande com o celular sobrepondo o canto inferior direito) deve ser conferido visualmente depois de aplicar, e ajustado se as duas imagens não estiverem com boas proporções entre si (elas têm dimensões bem diferentes: uma é bem mais larga que alta, a outra é bem mais alta que larga).
+
+---
+
+## Verificação
+
+1. Abrir `/` (LP1) → o hero mostra as duas fotos reais (laptop + celular) no lugar do mockup desenhado em CSS.
+2. As imagens carregam rápido e não distorcem (proporção mantida).
+3. Testar em mobile — o layout não deve quebrar nem cortar as imagens de forma estranha.
+4. Conferir se o restante da página (rolagem, outras seções) não foi afetado — essa mudança é só na seção do hero.

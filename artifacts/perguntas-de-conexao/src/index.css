@@ -316,6 +316,38 @@
 @media (max-width: 900px) { .lp-hero-inner { grid-template-columns: 1fr; gap: 2rem; }.lp-hero-mockups { height: 380px; }.lp-mockup-mac { width: 300px; right: 10px; }.lp-mockup-phone { width: 170px; height: 330px; left: 10px; }.lp-solution-pillars,.lp-how-steps,.lp-social-grid { grid-template-columns: 1fr; }.lp-quiz-cards { grid-template-columns: 1fr; max-width: 300px; margin-left: auto; margin-right: auto; } }
 @media (max-width: 640px) { .lp-hero { padding: 2.5rem 1.2rem 3rem; }.lp-hero-mockups { height: 320px; }.lp-mockup-mac { width: 240px; }.lp-mockup-phone { width: 140px; height: 270px; }.lp-mock-text { font-size: .78rem; }.lp-pain,.lp-solution,.lp-how,.lp-themes,.lp-social,.lp-price,.lp-faq,.lp-quiz-section { padding: 3.5rem 1.2rem; }.lp-quiz { padding: 2rem 1.3rem; }.lp-price-card { padding: 2rem 1.4rem; }.lp-price-big { font-size: 3.5rem; }.lp-hero-actions { flex-direction: column; align-items: stretch; }.lp-cta-secondary { margin: .8rem 0 0; text-align: center; }.lp-quiz-cards { gap: .7rem; } }
 @media (max-width: 640px) { .lp2-hero .lp-hero-mockups { height: 420px; } }
+
+/* LP1 hero product photography */
+.lp-hero-mockups-photo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lp-mockup-photo {
+  display: block;
+  height: auto;
+}
+.lp-mockup-photo-mac {
+  width: min(92%, 640px);
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .45));
+}
+.lp-mockup-photo-phone {
+  position: absolute;
+  right: 4%;
+  bottom: -8%;
+  width: min(38%, 240px);
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, .5));
+}
+@media (max-width: 880px) {
+  .lp-mockup-photo-mac { width: 88%; }
+  .lp-mockup-photo-phone { width: 34%; right: 2%; bottom: -6%; }
+}
+@media (max-width: 640px) {
+  .lp-hero-mockups-photo { padding: 1rem 0; }
+  .lp-mockup-photo-mac { width: 100%; }
+  .lp-mockup-photo-phone { width: 42%; right: 0; bottom: -10%; }
+}
 @media (min-width: 701px) { .home-login-link { display: none; } }
 
 /* LIGHT MODE */
