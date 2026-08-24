@@ -553,7 +553,7 @@ Eu nem gosto de chamar isso de jogo.
 Porque, no final, os dois ganham.
 
 Toda vez.`,
-    name: 'Marina',
+    name: 'Lucas',
     detail: '23 anos de casamento',
   },
   {
@@ -668,7 +668,7 @@ Parece que alguém finalmente te deu uma razão para parar tudo, sentar ao lado 
 "Me conta uma coisa que eu ainda não sei sobre você."
 
 Foi uma das melhores compras que já fizemos para o nosso relacionamento.`,
-    name: 'Lucas',
+    name: 'Marina',
     detail: 'Uma reconexão',
   },
 ];
