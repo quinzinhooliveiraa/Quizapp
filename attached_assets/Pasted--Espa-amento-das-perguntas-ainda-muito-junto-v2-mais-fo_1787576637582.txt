@@ -1,0 +1,61 @@
+# Espaçamento das perguntas — ainda muito junto (v2, mais forte)
+
+**Isso substitui o prompt anterior** (`espacamento-texto-perguntas-replit.md`). Se você já aplicou aquele e o print continua mostrando as palavras quase grudadas, o ajuste foi fraco demais — esse aqui vai mais forte. Aplicar este por cima (os valores abaixo já são os finais, não precisa somar com o prompt anterior).
+
+**Problema confirmado por print:** o texto da pergunta dentro do app está com as palavras quase coladas umas nas outras, dificultando a leitura.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Texto principal da pergunta — `artifacts/perguntas-de-conexao/src/index.css`
+
+Achar a regra `.question-text p` (se você já aplicou o prompt anterior, ela deve estar assim; se não, procure pelo `letter-spacing: -.045em` original):
+
+```css
+.question-text p { font-family: var(--app-font-serif); font-size: clamp(31px, 3.2vw, 47px); line-height: 1.18; letter-spacing: -.01em; word-spacing: .03em; margin: 0; }
+```
+
+(ou, se ainda não tiver aplicado nada, a original era: `.question-text p { font-family: var(--app-font-serif); font-size: clamp(31px, 3.2vw, 47px); line-height: .96; letter-spacing: -.045em; margin: 0; }`)
+
+Substituir (não importa qual das duas acima você tem hoje) por esta versão final, bem mais espaçada:
+
+```css
+.question-text p { font-family: var(--app-font-serif); font-size: clamp(31px, 3.2vw, 47px); line-height: 1.3; letter-spacing: 0; word-spacing: .14em; margin: 0; }
+```
+
+**O que mudou nessa v2:** `letter-spacing` foi pra `0` (nada de aperto entre letras — a fonte serifada grande já é elegante sem precisar espremer), `word-spacing` subiu bastante, de `.03em` pra `.14em` (esse é o ajuste que realmente separa uma palavra da outra visualmente, que era o problema principal do print), e `line-height` foi pra `1.3` (mais respiro vertical entre as linhas quando a pergunta quebra em várias linhas).
+
+---
+
+## 2. Variante "stories" — mesmo arquivo
+
+Achar:
+
+```css
+.experience-page-stories .question-text p {
+  font-size: clamp(34px, 4vw, 47px);
+}
+```
+
+Se essa regra já tiver `line-height`/`letter-spacing`/`word-spacing` de uma aplicação anterior, atualizar pros mesmos valores do passo 1. Se não tiver nada além do `font-size`, deixar como está — ela já herda os valores da regra base `.question-text p` automaticamente.
+
+---
+
+## 3. Testar visualmente antes de considerar concluído
+
+Esse é um ajuste de "olho" — os valores acima (`word-spacing: .14em`, `letter-spacing: 0`, `line-height: 1.3`) são um ponto de partida forte, mas o Replit Agent deve abrir a tela da pergunta depois de aplicar e comparar com o print de referência abaixo, ajustando pra cima ou pra baixo se ainda estiver com aparência apertada:
+
+> Print de referência do problema: pergunta "Em que momento recente você se sentiu cuidado por mim sem eu dizer nada?" aparecendo com as palavras quase sem espaço entre si.
+
+Se depois de aplicar `word-spacing: .14em` ainda estiver visualmente apertado, pode subir pra `.18em` ou `.2em` — o importante é que cada palavra fique claramente separada da vizinha ao olhar rápido pra carta.
+
+---
+
+## Verificação
+
+1. Abrir uma pergunta com texto longo (tipo a do print: "Em que momento recente você se sentiu cuidado por mim sem eu dizer nada?") no app (`/app` ou `/play`).
+2. Cada palavra deve estar visivelmente separada da vizinha — não mais parecendo um bloco de texto grudado.
+3. Testar em pelo menos 2-3 perguntas diferentes de tamanhos variados (curta, média, longa) pra garantir que o espaçamento fica bom em todos os casos, não só nesse exemplo.
+4. Testar no celular e no PC.
+5. Comparar com o print antes/depois — a diferença deve ser bem perceptível, não sutil.
