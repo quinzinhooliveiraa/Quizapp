@@ -396,6 +396,7 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
+  white-space: pre-line;
 }
 .lp-testimonial-active .lp-testimonial-quote.is-expanded {
   display: block;
