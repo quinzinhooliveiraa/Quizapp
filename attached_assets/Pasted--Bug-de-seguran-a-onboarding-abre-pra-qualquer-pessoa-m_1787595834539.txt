@@ -1,0 +1,91 @@
+# Bug de segurança: /onboarding abre pra qualquer pessoa, mesmo sem ter pagado ou sido convidada
+
+**Problema confirmado:** hoje, qualquer pessoa que acesse a URL `/onboarding` diretamente (sem ter comprado nem sido convidada) consegue passar por toda a tela de onboarding — nome, pronome, tipo de relacionamento, data, etc. — como se já tivesse acesso. Ela só é barrada no último passo, quando tenta efetivamente abrir o baralho (aí sim é mandada pra seção de preços). Isso não devia acontecer: só quem pagou (tem `conexao-session` guardado) ou foi convidado (tem `conexao-guest-token` guardado) deveria conseguir nem começar essa tela.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Bloquear a entrada em `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx`
+
+Achar, dentro de `export default function Onboarding()`, este trecho (logo depois de `storedGuestToken` ser calculado):
+
+```tsx
+  const storedSessionId = safeGetItem('conexao-session')?.trim() || '';
+  const storedGuestToken = safeGetItem('conexao-guest-token')?.trim() || '';
+  const sessionQuery = useGetQuestionSession(storedSessionId, {
+    query: { enabled: !!storedSessionId, queryKey: getGetQuestionSessionQueryKey(storedSessionId) },
+  });
+  const guestQuery = useGetInvite(storedGuestToken, {
+    query: { enabled: !!storedGuestToken, queryKey: getGetInviteQueryKey(storedGuestToken) },
+  });
+  const queryClient = useQueryClient();
+  const currentRole = storedGuestToken ? 'guest' : 'owner';
+  const serverOnboardingComplete = currentRole === 'guest'
+    ? Boolean((guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete)
+    : Boolean((sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete);
+
+  useEffect(() => {
+    if (serverOnboardingComplete) {
+      navigate('/app', { replace: true });
+    }
+  }, [serverOnboardingComplete, navigate]);
+```
+
+Adicionar logo abaixo desse bloco (antes do próximo `useEffect` de `prefersReducedMotion`) um novo guard que redireciona quem não tem sessão nem convite guardado:
+
+```tsx
+  useEffect(() => {
+    if (!storedSessionId && !storedGuestToken) {
+      navigate('/', { replace: true });
+    }
+  }, [storedSessionId, storedGuestToken, navigate]);
+
+  if (!storedSessionId && !storedGuestToken) {
+    return null;
+  }
+```
+
+**Por que os dois (`useEffect` + `return null`):** o `useEffect` faz o redirecionamento de verdade; o `return null` evita que a tela de onboarding pisque na tela por uma fração de segundo antes do redirecionamento acontecer.
+
+---
+
+## 2. Ajustar o comportamento do app instalado (PWA) sem acesso — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Hoje existe uma regra especial: se a pessoa abriu o app **instalado** (ícone na tela inicial, não pelo navegador) e não tem nem sessão nem convite guardado, ela é mandada pra `/onboarding` em vez da tela de vendas — pensada assim porque o app instalado abre "sem barra de navegador". Só que com o bloqueio do passo 1, isso agora ia cair direto num redirecionamento de volta pra `/`, criando um loop.
+
+Achar este trecho, dentro de `function Home`:
+
+```tsx
+  useEffect(() => {
+    if (!isStandaloneApp()) return;
+    // If access is stored, StoredAccessGate handles redirecting to /app.
+    if (safeGetItem('conexao-session') || safeGetItem('conexao-guest-token')) return;
+    // An installed app without access should continue through onboarding, not sales.
+    navigate('/onboarding', { replace: true });
+  }, [navigate]);
+```
+
+Substituir por (agora vai direto pra seção de preços dentro da própria Home, já que o onboarding não é mais acessível sem acesso):
+
+```tsx
+  useEffect(() => {
+    if (!isStandaloneApp()) return;
+    // If access is stored, StoredAccessGate handles redirecting to /app.
+    if (safeGetItem('conexao-session') || safeGetItem('conexao-guest-token')) return;
+    // An installed app without access sees the sales page (onboarding now requires access).
+    if (window.location.pathname !== '/') {
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
+```
+
+---
+
+## Verificação
+
+1. **Sem sessão nem convite (o bug relatado):** limpar o localStorage do navegador (ou abrir em aba anônima) e acessar `SEU-DOMINIO/onboarding` diretamente → deve redirecionar imediatamente pra `/` (a landing page), sem mostrar nenhum passo do onboarding.
+2. **Fluxo normal de quem pagou:** fazer uma compra de teste → depois da confirmação do pagamento, deve continuar caindo em `/onboarding` normalmente e completar os passos sem problema (porque `conexao-session` já está salvo antes do redirecionamento).
+3. **Fluxo de convidado:** abrir um link de convite (`/invite/:token`) e clicar em "Aceitar convite" → deve continuar caindo em `/onboarding` normalmente (porque `conexao-guest-token` é salvo antes do redirecionamento).
+4. **App instalado (PWA) sem acesso:** se possível testar, abrir o app pelo ícone instalado sem ter comprado → deve cair na tela de vendas (landing), não mais no onboarding.
+5. Conferir que ninguém fica preso num loop de redirecionamento (tela piscando entre `/` e `/onboarding`).

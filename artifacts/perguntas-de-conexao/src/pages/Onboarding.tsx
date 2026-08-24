@@ -322,6 +322,16 @@ export default function Onboarding() {
   }, [serverOnboardingComplete, navigate]);
 
   useEffect(() => {
+    if (!storedSessionId && !storedGuestToken) {
+      navigate('/', { replace: true });
+    }
+  }, [storedSessionId, storedGuestToken, navigate]);
+
+  if (!storedSessionId && !storedGuestToken) {
+    return null;
+  }
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
     updateMotionPreference();

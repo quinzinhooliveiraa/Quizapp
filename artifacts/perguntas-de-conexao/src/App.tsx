@@ -938,8 +938,10 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
     if (!isStandaloneApp()) return;
     // If access is stored, StoredAccessGate handles redirecting to /app.
     if (safeGetItem('conexao-session') || safeGetItem('conexao-guest-token')) return;
-    // An installed app without access should continue through onboarding, not sales.
-    navigate('/onboarding', { replace: true });
+    // An installed app without access sees the sales page; onboarding now requires access.
+    if (window.location.pathname !== '/') {
+      navigate('/', { replace: true });
+    }
   }, [navigate]);
 
   useEffect(() => {
