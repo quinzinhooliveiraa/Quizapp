@@ -22,7 +22,7 @@ import {
   type InviteListItem,
 } from '@workspace/api-client-react';
 import { questions as connectionQuestions, themes as connectionThemes } from '@workspace/connection-content';
- import { ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Heart, House, Layers3, LayoutTemplate, Link as LinkIcon, Menu, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Upload, UserPlus, UserRound, Users, WandSparkles, Wifi, X } from 'lucide-react';
+ import { ArrowRight, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Copy, Download, Feather, Flame, Heart, HeartHandshake, House, Layers3, LayoutTemplate, Link as LinkIcon, Menu, MonitorSmartphone, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Quote, RotateCw, Send, Settings2, Shuffle, Sparkles, Star, Timer, Upload, UserPlus, UserRound, Users, WandSparkles, Wifi, X } from 'lucide-react';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import NotFound from '@/pages/not-found';
 import Onboarding from '@/pages/Onboarding';
@@ -566,9 +566,9 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
       <h2 className="lp-h2">São perguntas simples que vocês podem<br /><em>incluir na rotina começando hoje.</em></h2>
       <p className="lp-solution-lede">445+ perguntas escritas pra abrir espaço — sem clichê, sem "qual seu animal favorito". Vocês abrem uma carta, leem em voz alta e escutam. Separem 10 minutos. O resto acontece entre vocês.</p>
       <div className="lp-solution-pillars">
-        <div className="lp-pillar"><div className="lp-pillar-icon">◇</div><strong>10 minutos por noite</strong><p>Não exige terapia, retiro nem fim de semana livre. Só uma carta por vez.</p></div>
-        <div className="lp-pillar"><div className="lp-pillar-icon">▣</div><strong>Celular ou computador</strong><p>Abre no navegador, sem instalar nada, em qualquer aparelho.</p></div>
-        <div className="lp-pillar"><div className="lp-pillar-icon">◎</div><strong>Não precisam estar juntos</strong><p>Namoro à distância, viagem a trabalho ou cada um no seu quarto: a sala online deixa vocês na mesma pergunta, ao mesmo tempo.</p></div>
+        <div className="lp-pillar"><div className="lp-pillar-icon"><Timer aria-hidden="true" size={30} strokeWidth={1.6} /></div><strong>10 minutos por noite</strong><p>Não exige terapia, retiro nem fim de semana livre. Só uma carta por vez.</p></div>
+        <div className="lp-pillar"><div className="lp-pillar-icon"><MonitorSmartphone aria-hidden="true" size={30} strokeWidth={1.6} /></div><strong>Celular ou computador</strong><p>Abre no navegador, sem instalar nada, em qualquer aparelho.</p></div>
+        <div className="lp-pillar"><div className="lp-pillar-icon"><HeartHandshake aria-hidden="true" size={30} strokeWidth={1.6} /></div><strong>Não precisam estar juntos</strong><p>Namoro à distância, viagem a trabalho ou cada um no seu quarto: a sala online deixa vocês na mesma pergunta, ao mesmo tempo.</p></div>
       </div>
     </div></section>
     <section className="lp-quiz-section" id="lp2-quiz"><div className="lp-container">
