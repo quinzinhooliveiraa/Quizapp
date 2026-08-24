@@ -525,14 +525,14 @@ A gente chegava a passar 20 minutos em uma única pergunta, porque sempre acabav
 
 Até que apareceu uma pergunta: "Quando foi o momento em que você percebeu que estava apaixonado por mim?"
 
-A resposta dele me pegou completamente de surpresa. Ele disse que foi quando eu falei que amava as cicatrizes dele — as de fora e as de dentro.
+A resposta dele me pegou completamente de surpresa. Ele disse que foi quando eu falei que amava as cicatrizes dele, as de fora e as de dentro.
 
 Nós dois ficamos emocionados.
 
 Foi uma conversa simples, mas alguma coisa mudou naquele momento.
 
 A gente continua usando até hoje. E já sei que vai estar com a gente no próximo aniversário também.`,
-    name: 'Cody',
+    name: 'Caio',
     detail: '1 ano juntos',
   },
   {
@@ -719,7 +719,7 @@ function TestimonialCarousel() {
           >
             {isExpanded ? 'Ver menos' : 'Ver mais'}
           </button>
-          <footer>{activeTestimonial.name && <>— {activeTestimonial.name} </>}<span>{activeTestimonial.detail}</span></footer>
+          <footer>{activeTestimonial.name && <>{activeTestimonial.name} </>}<span>{activeTestimonial.detail}</span></footer>
         </blockquote>
         <button type="button" className="lp-testimonial-arrow" onClick={() => move(1)} aria-label="Próximo depoimento" data-testid="button-testimonial-next"><ChevronRight size={20} /></button>
       </div>
