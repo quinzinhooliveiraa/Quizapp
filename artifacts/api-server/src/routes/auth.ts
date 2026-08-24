@@ -27,21 +27,33 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
   }
 
   const cooldownAgo = new Date(Date.now() - REQUEST_COOLDOWN_SECONDS * 1000);
-  const [recent] = await db.select({ createdAt: authCodesTable.createdAt })
+  const [recent] = await db
+    .select({ createdAt: authCodesTable.createdAt })
     .from(authCodesTable)
-    .where(and(eq(authCodesTable.email, email), gt(authCodesTable.createdAt, cooldownAgo)))
+    .where(
+      and(
+        eq(authCodesTable.email, email),
+        gt(authCodesTable.createdAt, cooldownAgo),
+      ),
+    )
     .orderBy(desc(authCodesTable.createdAt))
     .limit(1);
 
   if (recent) {
-    res.status(429).json({ error: "Aguarde um instante antes de pedir outro código" });
+    res
+      .status(429)
+      .json({ error: "Aguarde um instante antes de pedir outro código" });
     return;
   }
 
-  await db.delete(authCodesTable).where(and(
-    eq(authCodesTable.email, email),
-    lt(authCodesTable.expiresAt, new Date()),
-  ));
+  await db
+    .delete(authCodesTable)
+    .where(
+      and(
+        eq(authCodesTable.email, email),
+        lt(authCodesTable.expiresAt, new Date()),
+      ),
+    );
 
   const adminEmails = (process.env.ADMIN_EMAILS || "")
     .split(",")
@@ -49,12 +61,19 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
     .filter(Boolean);
   const isAdmin = adminEmails.includes(email);
 
-  let [existingSession] = await db.select({ id: sessionsTable.id })
+  let [existingSession] = await db
+    .select({ id: sessionsTable.id })
     .from(sessionsTable)
-    .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+    .where(
+      and(
+        eq(sessionsTable.buyerEmail, email),
+        eq(sessionsTable.accessGranted, true),
+      ),
+    )
     .limit(1);
 
-  const existingInvites = await db.select({ token: invitesTable.token })
+  const existingInvites = await db
+    .select({ token: invitesTable.token })
     .from(invitesTable)
     .where(eq(invitesTable.guestEmail, email))
     .limit(1);
@@ -84,7 +103,10 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
 
   // Non-admin accounts that do not exist receive a clear error.
   if (!existingSession && !hasInvite) {
-    res.status(404).json({ error: "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho." });
+    res.status(404).json({
+      error:
+        "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho.",
+    });
     return;
   }
 
@@ -103,7 +125,9 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
 
   if (!result.ok) {
     req.log.error({ error: result.error }, "Failed to send email login code");
-    res.status(500).json({ error: "O código não foi enviado. Tente daqui a pouco." });
+    res
+      .status(500)
+      .json({ error: "O código não foi enviado. Tente daqui a pouco." });
     return;
   }
 
@@ -115,30 +139,38 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
   const code = String(req.body?.code || "").trim();
 
   if (!EMAIL_PATTERN.test(email) || !/^\d{6}$/.test(code)) {
-    res.status(400).json({ error: "Email e código de 6 dígitos são obrigatórios" });
+    res
+      .status(400)
+      .json({ error: "Email e código de 6 dígitos são obrigatórios" });
     return;
   }
 
   const now = new Date();
-  const [authCode] = await db.select()
+  const [authCode] = await db
+    .select()
     .from(authCodesTable)
-    .where(and(
-      eq(authCodesTable.email, email),
-      eq(authCodesTable.code, code),
-      isNull(authCodesTable.usedAt),
-      gt(authCodesTable.expiresAt, now),
-    ))
+    .where(
+      and(
+        eq(authCodesTable.email, email),
+        eq(authCodesTable.code, code),
+        isNull(authCodesTable.usedAt),
+        gt(authCodesTable.expiresAt, now),
+      ),
+    )
     .orderBy(desc(authCodesTable.createdAt))
     .limit(1);
 
   if (!authCode) {
-    await db.update(authCodesTable)
+    await db
+      .update(authCodesTable)
       .set({ attempts: sql`${authCodesTable.attempts} + 1` })
-      .where(and(
-        eq(authCodesTable.email, email),
-        isNull(authCodesTable.usedAt),
-        gt(authCodesTable.expiresAt, now),
-      ));
+      .where(
+        and(
+          eq(authCodesTable.email, email),
+          isNull(authCodesTable.usedAt),
+          gt(authCodesTable.expiresAt, now),
+        ),
+      );
     res.status(401).json({ error: "Código inválido ou expirado" });
     return;
   }
@@ -148,12 +180,12 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
     return;
   }
 
-  const [usedCode] = await db.update(authCodesTable)
+  const [usedCode] = await db
+    .update(authCodesTable)
     .set({ usedAt: now })
-    .where(and(
-      eq(authCodesTable.id, authCode.id),
-      isNull(authCodesTable.usedAt),
-    ))
+    .where(
+      and(eq(authCodesTable.id, authCode.id), isNull(authCodesTable.usedAt)),
+    )
     .returning({ id: authCodesTable.id });
 
   if (!usedCode) {
@@ -161,41 +193,51 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
     return;
   }
 
-  const sessions = await db.select({
-    id: sessionsTable.id,
-    buyerName: sessionsTable.buyerName,
-    packageName: sessionsTable.packageName,
-    createdAt: sessionsTable.createdAt,
-    onboardingComplete: sessionsTable.onboardingComplete,
-  })
+  const sessions = await db
+    .select({
+      id: sessionsTable.id,
+      buyerName: sessionsTable.buyerName,
+      packageName: sessionsTable.packageName,
+      createdAt: sessionsTable.createdAt,
+      onboardingComplete: sessionsTable.onboardingComplete,
+    })
     .from(sessionsTable)
-    .where(and(eq(sessionsTable.buyerEmail, email), eq(sessionsTable.accessGranted, true)))
+    .where(
+      and(
+        eq(sessionsTable.buyerEmail, email),
+        eq(sessionsTable.accessGranted, true),
+      ),
+    )
     .orderBy(desc(sessionsTable.createdAt));
 
-  const invites = await db.select({
-    token: invitesTable.token,
-    guestName: invitesTable.guestName,
-    sessionId: invitesTable.sessionId,
-    createdAt: invitesTable.createdAt,
-    onboardingComplete: invitesTable.onboardingComplete,
-  })
+  const invites = await db
+    .select({
+      token: invitesTable.token,
+      guestName: invitesTable.guestName,
+      sessionId: invitesTable.sessionId,
+      createdAt: invitesTable.createdAt,
+      onboardingComplete: invitesTable.onboardingComplete,
+    })
     .from(invitesTable)
     .where(eq(invitesTable.guestEmail, email))
     .orderBy(desc(invitesTable.createdAt));
 
-  const inviteEntries = await Promise.all(invites.map(async (invite) => {
-    const [owner] = await db.select({ buyerName: sessionsTable.buyerName })
-      .from(sessionsTable)
-      .where(eq(sessionsTable.id, invite.sessionId))
-      .limit(1);
-    return {
-      token: invite.token,
-      guestName: invite.guestName,
-      ownerName: owner?.buyerName || "alguém",
-      createdAt: invite.createdAt,
-      onboardingComplete: invite.onboardingComplete,
-    };
-  }));
+  const inviteEntries = await Promise.all(
+    invites.map(async (invite) => {
+      const [owner] = await db
+        .select({ buyerName: sessionsTable.buyerName })
+        .from(sessionsTable)
+        .where(eq(sessionsTable.id, invite.sessionId))
+        .limit(1);
+      return {
+        token: invite.token,
+        guestName: invite.guestName,
+        ownerName: owner?.buyerName || "alguém",
+        createdAt: invite.createdAt,
+        onboardingComplete: invite.onboardingComplete,
+      };
+    }),
+  );
 
   if (sessions.length === 0 && inviteEntries.length === 0) {
     res.status(404).json({ error: "Nenhum acesso encontrado para este email" });

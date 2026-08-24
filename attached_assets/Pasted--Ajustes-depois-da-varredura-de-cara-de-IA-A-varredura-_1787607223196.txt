@@ -1,0 +1,98 @@
+# Ajustes depois da varredura de "cara de IA"
+
+A varredura rodou e a maior parte ficou boa. Mas achei **3 coisas pra corrigir** — uma delas é uma piora de verdade.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. As descrições das landing pages no painel admin ficaram inúteis (piorou)
+
+**Arquivo:** `artifacts/perguntas-de-conexao/src/pages/Admin.tsx`
+
+Essas descrições são pro **dono do painel** (eu) diferenciar rapidamente as duas landing pages num teste A/B — não são texto de marketing pro cliente final. A revisão trocou descrições específicas por descrições genéricas, e agora as duas dizem quase a mesma coisa: a da LP1 ficou "Duas versões da página de entrada para compartilhar e revisar" (que nem descreve a LP1 — descreve as duas!) e a da LP2 virou uma frase genérica. Perdi a informação de qual é qual.
+
+Achar:
+
+```tsx
+const LANDINGS: LandingEntry[] = [
+  {
+    id: "v1",
+    label: "LP1 — Storytelling + Quiz",
+    path: "/",
+        description: "Duas versões da página de entrada para compartilhar e revisar.",
+  },
+  {
+    id: "v2",
+    label: "LP2 — Estática (variedade de baralhos)",
+    path: "/lp2",
+        description: "Página em scroll com os temas, avaliações, preço e dúvidas frequentes.",
+  },
+];
+```
+
+Substituir por (volta a descrever o que cada uma realmente tem de diferente, com a indentação certa):
+
+```tsx
+const LANDINGS: LandingEntry[] = [
+  {
+    id: "v1",
+    label: "LP1 — Storytelling + Quiz",
+    path: "/",
+    description: "Headline de promessa direta, storytelling da dor, quiz de 3 perguntas e 16 baralhos.",
+  },
+  {
+    id: "v2",
+    label: "LP2 — Estática (variedade de baralhos)",
+    path: "/lp2",
+    description: "Hero + dor + solução + temas + prova social + preço + FAQ, tudo em scroll, sem quiz.",
+  },
+];
+```
+
+---
+
+## 2. A mensagem de erro de conexão ficou estranha
+
+Em `artifacts/perguntas-de-conexao/src/pages/Login.tsx`, a mensagem de erro virou:
+
+```
+'A página não conseguiu falar com o servidor. Confira sua internet e tente de novo.'
+```
+
+"A página não conseguiu falar com o servidor" soa esquisito em português — página não fala. Trocar **todas as ocorrências** dessa string (são 3 no arquivo) por:
+
+```
+'Não deu para conectar. Confira sua internet e tente de novo.'
+```
+
+---
+
+## 3. Corrigir a indentação que ficou torta
+
+A revisão deixou várias linhas com espaços a mais no começo, desalinhadas das linhas vizinhas. Exemplo em `Onboarding.tsx`:
+
+```tsx
+              <p className="onboarding-kicker">saia do automático</p>
+              <h1>Troque o<br /><em>“como foi seu dia?”</em><br />por algo que fica.</h1>
+               <p>Um baralho para vocês se ouvirem de outro jeito.</p>
+```
+
+(repare que a última linha tem 1 espaço a mais que as de cima)
+
+Isso não quebra nada — em JSX, espaço extra no começo da linha é ignorado — mas deixa o arquivo bagunçado e difícil de ler depois. Rodar o Prettier pra normalizar tudo (o projeto já tem Prettier instalado como dependência):
+
+```bash
+npx prettier --write "artifacts/perguntas-de-conexao/src/**/*.tsx" "artifacts/api-server/src/**/*.ts"
+```
+
+Se o Prettier reformatar demais outros arquivos que não têm nada a ver com essa mudança, tudo bem também — o importante é o código ficar consistente. Mas se preferir ser conservador, corrigir manualmente só as linhas que ficaram com espaço a mais nos arquivos que a varredura mexeu (`Onboarding.tsx`, `App.tsx`, `Login.tsx`, `Admin.tsx`).
+
+---
+
+## Verificação
+
+1. Abrir `/admin` → as duas landing pages têm descrições diferentes e específicas de novo, dá pra saber qual é qual só de bater o olho.
+2. Abrir `/login`, desligar a internet e tentar entrar → a mensagem de erro diz "Não deu para conectar. Confira sua internet e tente de novo."
+3. Conferir que a indentação dos arquivos ficou consistente (nenhuma linha com espaço a mais em relação às vizinhas).
+4. Rodar o app e passar pelo onboarding inteiro pra confirmar que nenhum texto quebrou ou sumiu depois do Prettier.

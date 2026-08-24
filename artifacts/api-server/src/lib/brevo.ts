@@ -38,7 +38,10 @@ export async function sendEmailViaBrevo(
 
     if (!response.ok) {
       const body = await response.text();
-      return { ok: false, error: `brevo ${response.status}: ${body.slice(0, 500)}` };
+      return {
+        ok: false,
+        error: `brevo ${response.status}: ${body.slice(0, 500)}`,
+      };
     }
 
     return { ok: true };

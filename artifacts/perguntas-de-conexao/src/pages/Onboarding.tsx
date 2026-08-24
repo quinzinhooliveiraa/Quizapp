@@ -1,81 +1,99 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Check, Feather, Sparkles } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Check, Feather, Sparkles } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import {
   getGetInviteQueryKey,
   getGetQuestionSessionQueryKey,
   useGetInvite,
   useGetQuestionSession,
-} from '@workspace/api-client-react';
-import { apiBaseUrl } from '@/config';
+} from "@workspace/api-client-react";
+import { apiBaseUrl } from "@/config";
 
 type StepId =
-  | 'intro'
-  | 'welcome-role'
-  | 'guest-entry'
-  | 'relationship'
-  | 'note'
-  | 'name'
-  | 'email'
-  | 'date'
-  | 'days'
-  | 'curiosity'
-  | 'surprise'
-  | 'feeling'
-  | 'insight'
-  | 'preparing'
-  | 'deck';
+  | "intro"
+  | "welcome-role"
+  | "guest-entry"
+  | "relationship"
+  | "note"
+  | "name"
+  | "email"
+  | "date"
+  | "days"
+  | "curiosity"
+  | "surprise"
+  | "feeling"
+  | "insight"
+  | "preparing"
+  | "deck";
 
 type Step = { id: StepId; progress: number };
 
 const steps: Step[] = [
-  { id: 'intro', progress: 0.05 },
-  { id: 'welcome-role', progress: 0.1 },
-  { id: 'guest-entry', progress: 0.15 },
-  { id: 'relationship', progress: 0.18 },
-  { id: 'note', progress: 0.24 },
-  { id: 'name', progress: 0.3 },
-  { id: 'email', progress: 0.34 },
-  { id: 'date', progress: 0.38 },
-  { id: 'days', progress: 0.47 },
-  { id: 'curiosity', progress: 0.58 },
-  { id: 'surprise', progress: 0.68 },
-  { id: 'feeling', progress: 0.77 },
-  { id: 'insight', progress: 0.85 },
-  { id: 'preparing', progress: 0.93 },
-  { id: 'deck', progress: 1 },
+  { id: "intro", progress: 0.05 },
+  { id: "welcome-role", progress: 0.1 },
+  { id: "guest-entry", progress: 0.15 },
+  { id: "relationship", progress: 0.18 },
+  { id: "note", progress: 0.24 },
+  { id: "name", progress: 0.3 },
+  { id: "email", progress: 0.34 },
+  { id: "date", progress: 0.38 },
+  { id: "days", progress: 0.47 },
+  { id: "curiosity", progress: 0.58 },
+  { id: "surprise", progress: 0.68 },
+  { id: "feeling", progress: 0.77 },
+  { id: "insight", progress: 0.85 },
+  { id: "preparing", progress: 0.93 },
+  { id: "deck", progress: 1 },
 ];
 
-type OnboardingRole = '' | 'owner' | 'guest';
+type OnboardingRole = "" | "owner" | "guest";
 
 const curiosityOptions = [
-  'Como ela realmente é',
-  'O que ela ainda não disse',
-  'Se estamos na mesma página',
-  'O que nunca é conversado',
-  'Sinceramente, tudo',
+  "Como ela realmente é",
+  "O que ela ainda não disse",
+  "Se estamos na mesma página",
+  "O que nunca é conversado",
+  "Sinceramente, tudo",
 ];
 
 const relationshipOptions = [
-  'Meu namorado ou minha namorada',
-  'Meu esposo ou minha esposa',
-  'Alguém com quem estou saindo',
-  'Namoro à distância',
+  "Meu namorado ou minha namorada",
+  "Meu esposo ou minha esposa",
+  "Alguém com quem estou saindo",
+  "Namoro à distância",
 ];
-const surpriseOptions = ['Nesta semana', 'Faz um tempo', 'Sinceramente, não lembro', 'Já passou da hora'];
+const surpriseOptions = [
+  "Nesta semana",
+  "Faz um tempo",
+  "Sinceramente, não lembro",
+  "Já passou da hora",
+];
 const feelingOptions = [
-  'Mais perto do que de costume',
-  'Leve e divertido',
-  'Honesto, mesmo que seja difícil',
-  'Um pouco perigoso',
+  "Mais perto do que de costume",
+  "Leve e divertido",
+  "Honesto, mesmo que seja difícil",
+  "Um pouco perigoso",
 ];
-const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const monthNames = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
 
-const welcomeDeckStorageKey = 'conexao-personalized-decks';
-const welcomeDeckIdStorageKey = 'conexao-welcome-deck-id';
-const welcomeDeckDoneStorageKey = 'conexao-welcome-deck-done';
-const openWelcomeDeckStorageKey = 'conexao-open-welcome-deck';
+const welcomeDeckStorageKey = "conexao-personalized-decks";
+const welcomeDeckIdStorageKey = "conexao-welcome-deck-id";
+const welcomeDeckDoneStorageKey = "conexao-welcome-deck-done";
+const openWelcomeDeckStorageKey = "conexao-open-welcome-deck";
 
 function safeGetItem(key: string): string | null {
   try {
@@ -104,13 +122,15 @@ function safeRemoveItem(key: string): void {
 function removeWelcomeDeck() {
   const welcomeDeckId = safeGetItem(welcomeDeckIdStorageKey);
   try {
-    const stored = JSON.parse(safeGetItem(welcomeDeckStorageKey) || '[]');
+    const stored = JSON.parse(safeGetItem(welcomeDeckStorageKey) || "[]");
     const decks = Array.isArray(stored)
       ? stored.filter((deck: unknown) => {
-        if (!deck || typeof deck !== 'object') return false;
-        const item = deck as { id?: unknown; label?: unknown };
-        return item.id !== welcomeDeckId && item.label !== 'Seu primeiro baralho';
-      })
+          if (!deck || typeof deck !== "object") return false;
+          const item = deck as { id?: unknown; label?: unknown };
+          return (
+            item.id !== welcomeDeckId && item.label !== "Seu primeiro baralho"
+          );
+        })
       : [];
     safeSetItem(welcomeDeckStorageKey, JSON.stringify(decks));
   } catch {
@@ -125,32 +145,39 @@ function daysBetween(dateString: string) {
   const start = new Date(`${dateString}T12:00:00`);
   if (Number.isNaN(start.getTime())) return 249;
   const now = new Date();
-  const difference = Math.max(1, Math.floor((now.getTime() - start.getTime()) / 86_400_000));
+  const difference = Math.max(
+    1,
+    Math.floor((now.getTime() - start.getTime()) / 86_400_000),
+  );
   return difference;
 }
 
 function dateParts(dateString: string) {
-  const [year, month, day] = dateString.split('-').map(Number);
-  if (![year, month, day].every(Number.isFinite)) return { day: 6, month: 12, year: 2025 };
+  const [year, month, day] = dateString.split("-").map(Number);
+  if (![year, month, day].every(Number.isFinite))
+    return { day: 6, month: 12, year: 2025 };
   return { day, month, year };
 }
 
 function readOnboardingRole(): OnboardingRole {
-  const role = safeGetItem('conexao-role');
-  return role === 'owner' || role === 'guest' ? role : '';
+  const role = safeGetItem("conexao-role");
+  return role === "owner" || role === "guest" ? role : "";
 }
 
 function getInitialOnboardingStep() {
-  const availableSteps = safeGetItem('conexao-guest-token')
-    ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry')
-    : steps.filter(step => step.id !== 'email');
-  const saved = Number(safeGetItem('conexao-onboarding-step'));
-  if (!Number.isInteger(saved) || saved < 0 || saved >= availableSteps.length) return 0;
+  const availableSteps = safeGetItem("conexao-guest-token")
+    ? steps.filter(
+        (step) => step.id !== "welcome-role" && step.id !== "guest-entry",
+      )
+    : steps.filter((step) => step.id !== "email");
+  const saved = Number(safeGetItem("conexao-onboarding-step"));
+  if (!Number.isInteger(saved) || saved < 0 || saved >= availableSteps.length)
+    return 0;
 
   // Fase 1B stored the old linear step index. Keep an unfinished owner flow
   // in the same place after the two new entry screens were inserted.
   if (!readOnboardingRole() && saved > 0) {
-    safeSetItem('conexao-role', 'owner');
+    safeSetItem("conexao-role", "owner");
     return Math.min(saved + 2, availableSteps.length - 1);
   }
   return saved;
@@ -162,9 +189,11 @@ function extractInviteToken(value: string) {
 
   try {
     const url = new URL(input, window.location.origin);
-    const pathParts = url.pathname.split('/').filter(Boolean);
-    const inviteIndex = pathParts.findLastIndex(part => part.toLowerCase() === 'invite');
-    const linkedToken = inviteIndex >= 0 ? pathParts[inviteIndex + 1] : '';
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    const inviteIndex = pathParts.findLastIndex(
+      (part) => part.toLowerCase() === "invite",
+    );
+    const linkedToken = inviteIndex >= 0 ? pathParts[inviteIndex + 1] : "";
     if (linkedToken) return decodeURIComponent(linkedToken);
   } catch {
     // Fall through to the lightweight path and token checks below.
@@ -194,23 +223,28 @@ function StepHeader({
   return (
     <div className="onboarding-top">
       <button
-        className={`onboarding-back ${showBack ? '' : 'is-hidden'}`}
+        className={`onboarding-back ${showBack ? "" : "is-hidden"}`}
         onClick={onBack}
         aria-label="Voltar"
         data-testid="button-onboarding-back"
       >
         <ArrowLeft size={19} strokeWidth={1.6} />
       </button>
-      <div className="onboarding-progress" aria-label={`Progresso: ${Math.round(step.progress * 100)}%`}>
+      <div
+        className="onboarding-progress"
+        aria-label={`Progresso: ${Math.round(step.progress * 100)}%`}
+      >
         <span style={{ width: `${step.progress * 100}%` }} />
       </div>
-      <span className="onboarding-progress-value">{Math.round(step.progress * 100)}%</span>
+      <span className="onboarding-progress-value">
+        {Math.round(step.progress * 100)}%
+      </span>
     </div>
   );
 }
 
 function ContinueButton({
-  children = 'Continuar',
+  children = "Continuar",
   onClick,
   disabled = false,
   light = false,
@@ -222,7 +256,7 @@ function ContinueButton({
 }) {
   return (
     <button
-      className={`onboarding-continue ${light ? 'onboarding-continue-light' : ''}`}
+      className={`onboarding-continue ${light ? "onboarding-continue-light" : ""}`}
       onClick={onClick}
       disabled={disabled}
       data-testid="button-onboarding-continue"
@@ -248,18 +282,20 @@ function Choice({
 }) {
   return (
     <button
-      className={`onboarding-choice ${selected ? 'is-selected' : ''}`}
+      className={`onboarding-choice ${selected ? "is-selected" : ""}`}
       onClick={onClick}
-      data-testid={`choice-${label.toLowerCase().replaceAll(' ', '-')}`}
+      data-testid={`choice-${label.toLowerCase().replaceAll(" ", "-")}`}
     >
       <span className="onboarding-choice-copy">
         <span>{label}</span>
         {description && <small>{description}</small>}
       </span>
       {multi ? (
-        <span className="onboarding-checkbox">{selected ? <Check size={15} strokeWidth={2.5} /> : null}</span>
+        <span className="onboarding-checkbox">
+          {selected ? <Check size={15} strokeWidth={2.5} /> : null}
+        </span>
       ) : (
-        <span className={`onboarding-radio ${selected ? 'is-selected' : ''}`} />
+        <span className={`onboarding-radio ${selected ? "is-selected" : ""}`} />
       )}
     </button>
   );
@@ -269,61 +305,94 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [stepIndex, setStepIndex] = useState(getInitialOnboardingStep);
-  const isInvitedGuest = !!safeGetItem('conexao-guest-token');
+  const isInvitedGuest = !!safeGetItem("conexao-guest-token");
   const activeSteps = useMemo(
-    () => isInvitedGuest
-      ? steps.filter(step => step.id !== 'welcome-role' && step.id !== 'guest-entry')
-      : steps.filter(step => step.id !== 'email'),
+    () =>
+      isInvitedGuest
+        ? steps.filter(
+            (step) => step.id !== "welcome-role" && step.id !== "guest-entry",
+          )
+        : steps.filter((step) => step.id !== "email"),
     [isInvitedGuest],
   );
   const [role, setRole] = useState<OnboardingRole>(readOnboardingRole);
-  const [name, setName] = useState(() => safeGetItem('conexao-onboarding-name') || safeGetItem('conexao-guest-name') || safeGetItem('conexao-name') || '');
-  const [pronoun, setPronoun] = useState(() => safeGetItem('conexao-onboarding-pronoun') || '');
-  const [relationship, setRelationship] = useState(() => safeGetItem('conexao-onboarding-relationship') || '');
-  const [date, setDate] = useState(() => safeGetItem('conexao-onboarding-date') || '2025-12-06');
+  const [name, setName] = useState(
+    () =>
+      safeGetItem("conexao-onboarding-name") ||
+      safeGetItem("conexao-guest-name") ||
+      safeGetItem("conexao-name") ||
+      "",
+  );
+  const [pronoun, setPronoun] = useState(
+    () => safeGetItem("conexao-onboarding-pronoun") || "",
+  );
+  const [relationship, setRelationship] = useState(
+    () => safeGetItem("conexao-onboarding-relationship") || "",
+  );
+  const [date, setDate] = useState(
+    () => safeGetItem("conexao-onboarding-date") || "2025-12-06",
+  );
   const [curiosity, setCuriosity] = useState<string[]>(() => {
     try {
-      return JSON.parse(safeGetItem('conexao-onboarding-curiosity') || '[]');
+      return JSON.parse(safeGetItem("conexao-onboarding-curiosity") || "[]");
     } catch {
       return [];
     }
   });
-  const [guestEmail, setGuestEmail] = useState(() => safeGetItem('conexao-guest-email') || '');
-  const [guestEmailError, setGuestEmailError] = useState('');
+  const [guestEmail, setGuestEmail] = useState(
+    () => safeGetItem("conexao-guest-email") || "",
+  );
+  const [guestEmailError, setGuestEmailError] = useState("");
   const [guestEmailChecking, setGuestEmailChecking] = useState(false);
-  const [surprise, setSurprise] = useState('');
-  const [feeling, setFeeling] = useState(() => safeGetItem('conexao-onboarding-feeling') || '');
-  const [guestInviteLink, setGuestInviteLink] = useState('');
-  const [guestInviteError, setGuestInviteError] = useState('');
+  const [surprise, setSurprise] = useState("");
+  const [feeling, setFeeling] = useState(
+    () => safeGetItem("conexao-onboarding-feeling") || "",
+  );
+  const [guestInviteLink, setGuestInviteLink] = useState("");
+  const [guestInviteError, setGuestInviteError] = useState("");
   const [animatedDays, setAnimatedDays] = useState(0);
 
   const step = activeSteps[stepIndex];
   const parts = useMemo(() => dateParts(date), [date]);
   const sharedDays = useMemo(() => daysBetween(date), [date]);
-  const partnerPronoun = pronoun === 'Ele' ? 'ele' : pronoun === 'Ela' ? 'ela' : 'essa pessoa';
-  const storedSessionId = safeGetItem('conexao-session')?.trim() || '';
-  const storedGuestToken = safeGetItem('conexao-guest-token')?.trim() || '';
+  const partnerPronoun =
+    pronoun === "Ele" ? "ele" : pronoun === "Ela" ? "ela" : "essa pessoa";
+  const storedSessionId = safeGetItem("conexao-session")?.trim() || "";
+  const storedGuestToken = safeGetItem("conexao-guest-token")?.trim() || "";
   const sessionQuery = useGetQuestionSession(storedSessionId, {
-    query: { enabled: !!storedSessionId, queryKey: getGetQuestionSessionQueryKey(storedSessionId) },
+    query: {
+      enabled: !!storedSessionId,
+      queryKey: getGetQuestionSessionQueryKey(storedSessionId),
+    },
   });
   const guestQuery = useGetInvite(storedGuestToken, {
-    query: { enabled: !!storedGuestToken, queryKey: getGetInviteQueryKey(storedGuestToken) },
+    query: {
+      enabled: !!storedGuestToken,
+      queryKey: getGetInviteQueryKey(storedGuestToken),
+    },
   });
   const queryClient = useQueryClient();
-  const currentRole = storedGuestToken ? 'guest' : 'owner';
-  const serverOnboardingComplete = currentRole === 'guest'
-    ? Boolean((guestQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete)
-    : Boolean((sessionQuery.data as { onboardingComplete?: boolean } | undefined)?.onboardingComplete);
+  const currentRole = storedGuestToken ? "guest" : "owner";
+  const serverOnboardingComplete =
+    currentRole === "guest"
+      ? Boolean(
+          (guestQuery.data as { onboardingComplete?: boolean } | undefined)
+            ?.onboardingComplete,
+        )
+      : Boolean(
+          (sessionQuery.data as { onboardingComplete?: boolean } | undefined)
+            ?.onboardingComplete,
+        );
 
   useEffect(() => {
     if (serverOnboardingComplete) {
-      navigate('/app', { replace: true });
+      navigate("/app", { replace: true });
     }
   }, [serverOnboardingComplete, navigate]);
 
   useEffect(() => {
     if (!storedSessionId && !storedGuestToken) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
   }, [storedSessionId, storedGuestToken, navigate]);
 
@@ -332,15 +401,17 @@ export default function Onboarding() {
   }
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotionPreference = () =>
+      setPrefersReducedMotion(mediaQuery.matches);
     updateMotionPreference();
-    mediaQuery.addEventListener?.('change', updateMotionPreference);
-    return () => mediaQuery.removeEventListener?.('change', updateMotionPreference);
+    mediaQuery.addEventListener?.("change", updateMotionPreference);
+    return () =>
+      mediaQuery.removeEventListener?.("change", updateMotionPreference);
   }, []);
 
   useEffect(() => {
-    if (step.id !== 'days') return undefined;
+    if (step.id !== "days") return undefined;
     if (prefersReducedMotion) {
       setAnimatedDays(sharedDays);
       return undefined;
@@ -361,46 +432,49 @@ export default function Onboarding() {
   }, [prefersReducedMotion, sharedDays, step.id]);
 
   useEffect(() => {
-    safeSetItem('conexao-onboarding-step', String(stepIndex));
-    safeSetItem('conexao-onboarding-name', name);
-    safeSetItem('conexao-onboarding-pronoun', pronoun);
-    safeSetItem('conexao-onboarding-relationship', relationship);
-    safeSetItem('conexao-onboarding-date', date);
-    safeSetItem('conexao-onboarding-curiosity', JSON.stringify(curiosity));
-    safeSetItem('conexao-onboarding-feeling', feeling);
-    if (role) safeSetItem('conexao-role', role);
-    if (guestEmail.trim()) safeSetItem('conexao-guest-email', guestEmail.trim());
+    safeSetItem("conexao-onboarding-step", String(stepIndex));
+    safeSetItem("conexao-onboarding-name", name);
+    safeSetItem("conexao-onboarding-pronoun", pronoun);
+    safeSetItem("conexao-onboarding-relationship", relationship);
+    safeSetItem("conexao-onboarding-date", date);
+    safeSetItem("conexao-onboarding-curiosity", JSON.stringify(curiosity));
+    safeSetItem("conexao-onboarding-feeling", feeling);
+    if (role) safeSetItem("conexao-role", role);
+    if (guestEmail.trim())
+      safeSetItem("conexao-guest-email", guestEmail.trim());
 
-    if (step.id === 'preparing') {
-      safeSetItem('conexao-name', name.trim());
-      safeSetItem('conexao-relationship', relationship);
-      safeSetItem('conexao-curiosity', JSON.stringify(curiosity));
-      safeSetItem('conexao-feeling', feeling);
-      safeSetItem('conexao-partner-pronoun', pronoun);
+    if (step.id === "preparing") {
+      safeSetItem("conexao-name", name.trim());
+      safeSetItem("conexao-relationship", relationship);
+      safeSetItem("conexao-curiosity", JSON.stringify(curiosity));
+      safeSetItem("conexao-feeling", feeling);
+      safeSetItem("conexao-partner-pronoun", pronoun);
 
       try {
         const apiBase = apiBaseUrl;
-        const guestToken = safeGetItem('conexao-guest-token');
-        const sessionId = safeGetItem('conexao-session');
+        const guestToken = safeGetItem("conexao-guest-token");
+        const sessionId = safeGetItem("conexao-session");
         if (guestToken || sessionId) {
           fetch(`${apiBase}/api/preferences`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               sessionId,
               guestToken,
               relationshipType: relationship || undefined,
               partnerPronoun: pronoun || undefined,
             }),
-          }).catch(() => { /* local storage continues to work if sync is unavailable */ });
+          }).catch(() => {
+            /* local storage continues to work if sync is unavailable */
+          });
         }
       } catch {
         // Preferences are already stored locally.
       }
 
       const apiBase = apiBaseUrl;
-      const guestToken = safeGetItem('conexao-guest-token');
-      const sessionId = safeGetItem('conexao-session');
+      const guestToken = safeGetItem("conexao-guest-token");
+      const sessionId = safeGetItem("conexao-session");
       const completeUrl = guestToken
         ? `${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/complete-onboarding`
         : sessionId
@@ -408,42 +482,77 @@ export default function Onboarding() {
           : null;
 
       if (completeUrl) {
-        fetch(completeUrl, { method: 'POST' })
+        fetch(completeUrl, { method: "POST" })
           .then(() => {
-            if (guestToken) queryClient.invalidateQueries({ queryKey: getGetInviteQueryKey(guestToken) });
-            if (sessionId) queryClient.invalidateQueries({ queryKey: getGetQuestionSessionQueryKey(sessionId) });
+            if (guestToken)
+              queryClient.invalidateQueries({
+                queryKey: getGetInviteQueryKey(guestToken),
+              });
+            if (sessionId)
+              queryClient.invalidateQueries({
+                queryKey: getGetQuestionSessionQueryKey(sessionId),
+              });
           })
-          .catch(() => { /* não bloqueia a conclusão do onboarding */ });
+          .catch(() => {
+            /* não bloqueia a conclusão do onboarding */
+          });
       }
 
       const trimmedEmail = guestEmail.trim().toLowerCase();
-      if (guestToken && trimmedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-        fetch(`${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/claim-email`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: trimmedEmail }),
-        }).catch(() => { /* não bloqueia a conclusão do onboarding */ });
+      if (
+        guestToken &&
+        trimmedEmail &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+      ) {
+        fetch(
+          `${apiBase}/api/access/invites/${encodeURIComponent(guestToken)}/claim-email`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: trimmedEmail }),
+          },
+        ).catch(() => {
+          /* não bloqueia a conclusão do onboarding */
+        });
       }
     }
-  }, [step.id, stepIndex, name, pronoun, relationship, date, curiosity, feeling, role, guestEmail]);
+  }, [
+    step.id,
+    stepIndex,
+    name,
+    pronoun,
+    relationship,
+    date,
+    curiosity,
+    feeling,
+    role,
+    guestEmail,
+  ]);
 
   const goNext = async () => {
-    if (step.id === 'email' && guestEmail.trim()) {
+    if (step.id === "email" && guestEmail.trim()) {
       const trimmed = guestEmail.trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-        setGuestEmailError('Digite um email válido.');
+        setGuestEmailError("Digite um email válido.");
         return;
       }
       setGuestEmailChecking(true);
-      setGuestEmailError('');
+      setGuestEmailError("");
       try {
-      const apiBase = apiBaseUrl;
-        const response = await fetch(`${apiBase}/api/access/check-email?email=${encodeURIComponent(trimmed)}`);
-        const data = await response.json() as { exists?: boolean; asOwner?: boolean };
+        const apiBase = apiBaseUrl;
+        const response = await fetch(
+          `${apiBase}/api/access/check-email?email=${encodeURIComponent(trimmed)}`,
+        );
+        const data = (await response.json()) as {
+          exists?: boolean;
+          asOwner?: boolean;
+        };
         if (data.exists) {
-          setGuestEmailError(data.asOwner
-            ? 'Este email já é o email do dono deste baralho. Use o SEU email pessoal.'
-            : 'Este email já tem acesso a outro convite. Use outro.');
+          setGuestEmailError(
+            data.asOwner
+              ? "Este email já é o email do dono deste baralho. Use o SEU email pessoal."
+              : "Este email já tem acesso a outro convite. Use outro.",
+          );
           setGuestEmailChecking(false);
           return;
         }
@@ -456,51 +565,59 @@ export default function Onboarding() {
   };
   const goBack = () => setStepIndex((current) => Math.max(current - 1, 0));
   const reset = () => {
-    safeRemoveItem('conexao-onboarding-step');
-    safeRemoveItem('conexao-onboarding-name');
-    safeRemoveItem('conexao-onboarding-pronoun');
-    safeRemoveItem('conexao-onboarding-relationship');
-    safeRemoveItem('conexao-onboarding-date');
-    safeRemoveItem('conexao-onboarding-curiosity');
-    safeRemoveItem('conexao-onboarding-feeling');
-    safeRemoveItem('conexao-guest-email');
-    safeRemoveItem('conexao-onboarding-complete');
-    safeRemoveItem('conexao-role');
-    safeRemoveItem('conexao-name');
-    safeRemoveItem('conexao-relationship');
-    safeRemoveItem('conexao-curiosity');
-    safeRemoveItem('conexao-feeling');
-    safeRemoveItem('conexao-partner-pronoun');
+    safeRemoveItem("conexao-onboarding-step");
+    safeRemoveItem("conexao-onboarding-name");
+    safeRemoveItem("conexao-onboarding-pronoun");
+    safeRemoveItem("conexao-onboarding-relationship");
+    safeRemoveItem("conexao-onboarding-date");
+    safeRemoveItem("conexao-onboarding-curiosity");
+    safeRemoveItem("conexao-onboarding-feeling");
+    safeRemoveItem("conexao-guest-email");
+    safeRemoveItem("conexao-onboarding-complete");
+    safeRemoveItem("conexao-role");
+    safeRemoveItem("conexao-name");
+    safeRemoveItem("conexao-relationship");
+    safeRemoveItem("conexao-curiosity");
+    safeRemoveItem("conexao-feeling");
+    safeRemoveItem("conexao-partner-pronoun");
     removeWelcomeDeck();
     const apiBase = apiBaseUrl;
-    const sid = safeGetItem('conexao-session');
-    const tok = safeGetItem('conexao-guest-token');
+    const sid = safeGetItem("conexao-session");
+    const tok = safeGetItem("conexao-guest-token");
     const resetUrl = tok
       ? `${apiBase}/api/access/invites/${encodeURIComponent(tok)}/reset-onboarding`
       : sid
         ? `${apiBase}/api/access/sessions/${encodeURIComponent(sid)}/reset-onboarding`
         : null;
-    if (resetUrl) fetch(resetUrl, { method: 'POST' }).catch(() => { /* noop */ });
+    if (resetUrl)
+      fetch(resetUrl, { method: "POST" }).catch(() => {
+        /* noop */
+      });
     setStepIndex(0);
-    setName('');
-    setPronoun('');
-    setRelationship('');
-    setDate('2025-12-06');
+    setName("");
+    setPronoun("");
+    setRelationship("");
+    setDate("2025-12-06");
     setCuriosity([]);
-    setGuestEmail('');
-    setSurprise('');
-    setFeeling('');
-    setRole('');
-    setGuestInviteLink('');
-    setGuestInviteError('');
+    setGuestEmail("");
+    setSurprise("");
+    setFeeling("");
+    setRole("");
+    setGuestInviteLink("");
+    setGuestInviteError("");
   };
 
   const renderStep = () => {
     switch (step.id) {
-      case 'intro':
+      case "intro":
         return (
           <div className="onboarding-content onboarding-intro">
-            <div className="onboarding-logo"><span><Feather size={18} /></span> Perguntas <em>de Conexão</em></div>
+            <div className="onboarding-logo">
+              <span>
+                <Feather size={18} />
+              </span>{" "}
+              Perguntas <em>de Conexão</em>
+            </div>
             <div className="onboarding-deck-art" aria-hidden="true">
               <div className="onboarding-glow" />
               <div className="mini-card mini-card-back" />
@@ -512,57 +629,76 @@ export default function Onboarding() {
             </div>
             <div className="onboarding-intro-copy">
               <p className="onboarding-kicker">saia do automático</p>
-              <h1>Troque o<br /><em>“como foi seu dia?”</em><br />por algo que fica.</h1>
-               <p>Um baralho para vocês se ouvirem de outro jeito.</p>
+              <h1>
+                Troque o<br />
+                <em>“como foi seu dia?”</em>
+                <br />
+                por algo que fica.
+              </h1>
+              <p>Um baralho para vocês se ouvirem de outro jeito.</p>
             </div>
             <ContinueButton onClick={goNext}>Começar</ContinueButton>
-             <p className="onboarding-login-note">Já tem um baralho? <Link href="/login">Abrir meu acesso</Link></p>
+            <p className="onboarding-login-note">
+              Já tem um baralho? <Link href="/login">Abrir meu acesso</Link>
+            </p>
           </div>
         );
-      case 'welcome-role':
+      case "welcome-role":
         return (
           <div className="onboarding-content onboarding-choice-screen onboarding-role-screen">
             <div>
               <p className="onboarding-kicker">pra começar</p>
-              <h1>Você está começando<br /><em>o seu baralho</em> ou foi convidado?</h1>
-               <p className="onboarding-subtitle">Nos dois casos, vocês acabam respondendo perguntas juntos.</p>
+              <h1>
+                Você está começando
+                <br />
+                <em>o seu baralho</em> ou foi convidado?
+              </h1>
+              <p className="onboarding-subtitle">
+                Nos dois casos, vocês acabam respondendo perguntas juntos.
+              </p>
             </div>
             <div className="onboarding-choice-list">
               <Choice
                 label="Tenho meu próprio baralho"
-                 description="Comprei um baralho e quero deixá-lo com a nossa cara."
-                selected={role === 'owner'}
+                description="Comprei um baralho e quero deixá-lo com a nossa cara."
+                selected={role === "owner"}
                 onClick={() => {
-                  setRole('owner');
-                  safeSetItem('conexao-role', 'owner');
+                  setRole("owner");
+                  safeSetItem("conexao-role", "owner");
                 }}
               />
               <Choice
                 label="Fui convidado por alguém"
-                 description="Recebi um link e quero entrar na nossa conversa."
-                selected={role === 'guest'}
+                description="Recebi um link e quero entrar na nossa conversa."
+                selected={role === "guest"}
                 onClick={() => {
-                  setRole('guest');
-                  safeSetItem('conexao-role', 'guest');
+                  setRole("guest");
+                  safeSetItem("conexao-role", "guest");
                 }}
               />
             </div>
           </div>
         );
-      case 'guest-entry':
+      case "guest-entry":
         return (
           <div className="onboarding-content onboarding-choice-screen onboarding-guest-screen">
             <div>
               <p className="onboarding-kicker">seu convite</p>
-              <h1>Cole o link que<br /><em>você recebeu.</em></h1>
-                <p className="onboarding-subtitle">Com ele, você entra no baralho que a outra pessoa preparou.</p>
+              <h1>
+                Cole o link que
+                <br />
+                <em>você recebeu.</em>
+              </h1>
+              <p className="onboarding-subtitle">
+                Com ele, você entra no baralho que a outra pessoa preparou.
+              </p>
             </div>
             <div className="onboarding-guest-form">
               <input
                 value={guestInviteLink}
                 onChange={(event) => {
                   setGuestInviteLink(event.target.value);
-                  if (guestInviteError) setGuestInviteError('');
+                  if (guestInviteError) setGuestInviteError("");
                 }}
                 autoFocus
                 placeholder="https://.../invite/..."
@@ -572,58 +708,136 @@ export default function Onboarding() {
                 aria-label="Link do convite"
                 data-testid="input-guest-invite-link"
               />
-              {guestInviteError && <p className="onboarding-form-error" role="alert" data-testid="status-guest-invite-error">{guestInviteError}</p>}
-              <p className="onboarding-bottom-note">Não tem o link? Peça pra quem te convidou reenviar.</p>
+              {guestInviteError && (
+                <p
+                  className="onboarding-form-error"
+                  role="alert"
+                  data-testid="status-guest-invite-error"
+                >
+                  {guestInviteError}
+                </p>
+              )}
+              <p className="onboarding-bottom-note">
+                Não tem o link? Peça pra quem te convidou reenviar.
+              </p>
             </div>
           </div>
         );
-      case 'relationship':
+      case "relationship":
         return (
           <div className="onboarding-content onboarding-choice-screen">
             <div>
-               <p className="onboarding-kicker">vamos deixar com a cara de vocês</p>
-              <h1>Com quem você<br /><em>quer jogar?</em></h1>
-                <p className="onboarding-subtitle">Isso ajuda a escolher perguntas que façam sentido para vocês.</p>
+              <p className="onboarding-kicker">
+                vamos deixar com a cara de vocês
+              </p>
+              <h1>
+                Com quem você
+                <br />
+                <em>quer jogar?</em>
+              </h1>
+              <p className="onboarding-subtitle">
+                Isso ajuda a escolher perguntas que façam sentido para vocês.
+              </p>
             </div>
             <div className="onboarding-choice-list">
-              {relationshipOptions.map((option) => <Choice key={option} label={option} selected={relationship === option} onClick={() => setRelationship(option)} />)}
+              {relationshipOptions.map((option) => (
+                <Choice
+                  key={option}
+                  label={option}
+                  selected={relationship === option}
+                  onClick={() => setRelationship(option)}
+                />
+              ))}
             </div>
-                <div className="onboarding-bottom-note">Se mudar de ideia, você pode ajustar depois.</div>
+            <div className="onboarding-bottom-note">
+              Se mudar de ideia, você pode ajustar depois.
+            </div>
           </div>
         );
-      case 'note':
+      case "note":
         return (
           <div className="onboarding-content onboarding-note-screen">
             <div className="founder-avatar">Q</div>
             <p className="onboarding-kicker">uma nota para você</p>
             <div className="onboarding-letter">
-              <p>Percebi uma coisa com o tempo: dá pra amar alguém e, mesmo assim, não saber mais o que perguntar.</p>
-              <p>As melhores conversas não acontecem por acaso. Elas começam com uma pergunta que ninguém pensou em fazer.</p>
-              <p>Foi por isso que criei este espaço — pra te ajudar a conhecer essa pessoa de novo.</p>
+              <p>
+                Percebi uma coisa com o tempo: dá pra amar alguém e, mesmo
+                assim, não saber mais o que perguntar.
+              </p>
+              <p>
+                As melhores conversas não acontecem por acaso. Elas começam com
+                uma pergunta que ninguém pensou em fazer.
+              </p>
+              <p>
+                Foi por isso que criei este espaço — pra te ajudar a conhecer
+                essa pessoa de novo.
+              </p>
             </div>
           </div>
         );
-      case 'name':
+      case "name":
         return (
           <div className="onboarding-content onboarding-name-screen">
             <div>
-               <p className="onboarding-kicker">um baralho só seu</p>
-              <h1>Como devo<br /><em>te chamar?</em></h1>
-               <p className="onboarding-subtitle">É assim que você vai aparecer no baralho.</p>
+              <p className="onboarding-kicker">um baralho só seu</p>
+              <h1>
+                Como devo
+                <br />
+                <em>te chamar?</em>
+              </h1>
+              <p className="onboarding-subtitle">
+                É assim que você vai aparecer no baralho.
+              </p>
             </div>
             <div className="onboarding-name-form">
-              <input value={name} onChange={(event) => setName(event.target.value)} autoFocus placeholder="Seu nome" data-testid="input-onboarding-name" />
-              <div className="name-suggestions"><button type="button" className={pronoun === 'Ela' ? 'is-selected' : ''} onClick={() => setPronoun('Ela')}>Ela</button><button type="button" className={pronoun === 'Ele' ? 'is-selected' : ''} onClick={() => setPronoun('Ele')}>Ele</button><button type="button" className={pronoun === 'Prefiro não dizer' ? 'is-selected' : ''} onClick={() => setPronoun('Prefiro não dizer')}>Prefiro não dizer</button></div>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                autoFocus
+                placeholder="Seu nome"
+                data-testid="input-onboarding-name"
+              />
+              <div className="name-suggestions">
+                <button
+                  type="button"
+                  className={pronoun === "Ela" ? "is-selected" : ""}
+                  onClick={() => setPronoun("Ela")}
+                >
+                  Ela
+                </button>
+                <button
+                  type="button"
+                  className={pronoun === "Ele" ? "is-selected" : ""}
+                  onClick={() => setPronoun("Ele")}
+                >
+                  Ele
+                </button>
+                <button
+                  type="button"
+                  className={
+                    pronoun === "Prefiro não dizer" ? "is-selected" : ""
+                  }
+                  onClick={() => setPronoun("Prefiro não dizer")}
+                >
+                  Prefiro não dizer
+                </button>
+              </div>
             </div>
           </div>
         );
-      case 'email':
+      case "email":
         return (
           <div className="onboarding-content onboarding-name-screen">
             <div>
-               <p className="onboarding-kicker">para continuar encontrando o baralho</p>
-              <h1>Qual seu <em>email?</em></h1>
-               <p className="onboarding-subtitle">Se trocar de celular, é por ele que você volta para o baralho.</p>
+              <p className="onboarding-kicker">
+                para continuar encontrando o baralho
+              </p>
+              <h1>
+                Qual seu <em>email?</em>
+              </h1>
+              <p className="onboarding-subtitle">
+                Se trocar de celular, é por ele que você volta para o baralho.
+              </p>
             </div>
             <div className="onboarding-name-form">
               <input
@@ -631,23 +845,40 @@ export default function Onboarding() {
                 inputMode="email"
                 autoComplete="email"
                 value={guestEmail}
-                 onChange={(event) => { setGuestEmail(event.target.value); setGuestEmailError(''); }}
+                onChange={(event) => {
+                  setGuestEmail(event.target.value);
+                  setGuestEmailError("");
+                }}
                 autoFocus
                 placeholder="seu@email.com"
                 data-testid="input-onboarding-guest-email"
               />
-               {guestEmailError && <p className="onboarding-input-error" data-testid="text-email-error">{guestEmailError}</p>}
+              {guestEmailError && (
+                <p
+                  className="onboarding-input-error"
+                  data-testid="text-email-error"
+                >
+                  {guestEmailError}
+                </p>
+              )}
             </div>
           </div>
         );
-      case 'date':
+      case "date":
         return (
           <div className="onboarding-content onboarding-date-screen">
             <div>
-                <p className="onboarding-kicker">vamos marcar o começo</p>
-              <h1>Quando a história<br /><em>de vocês começou?</em></h1>
+              <p className="onboarding-kicker">vamos marcar o começo</p>
+              <h1>
+                Quando a história
+                <br />
+                <em>de vocês começou?</em>
+              </h1>
             </div>
-            <div className="date-native" aria-label="Escolha a data em que a história começou">
+            <div
+              className="date-native"
+              aria-label="Escolha a data em que a história começou"
+            >
               <div className="date-native-display">
                 {parts.day} de {monthNames[parts.month - 1]} de {parts.year}
               </div>
@@ -655,7 +886,9 @@ export default function Onboarding() {
                 type="date"
                 className="date-native-input"
                 value={date}
-                onChange={event => { if (event.target.value) setDate(event.target.value); }}
+                onChange={(event) => {
+                  if (event.target.value) setDate(event.target.value);
+                }}
                 max={new Date().toISOString().slice(0, 10)}
                 data-testid="input-onboarding-date"
                 aria-label="Data em que a história começou"
@@ -663,93 +896,209 @@ export default function Onboarding() {
             </div>
           </div>
         );
-      case 'days':
+      case "days":
         return (
           <div className="onboarding-content onboarding-days-screen">
             <div className="plant-illustration" aria-hidden="true">
               <span className="plant-ground" />
               {[0.46, 0.65, 0.82, 1, 1.18].map((scale, index) => {
-                const leafProgress = Math.max(0, Math.min(1, (animatedDays / Math.max(sharedDays, 1)) * 5 - index));
-                return <i key={scale} style={{ opacity: 0.16 + leafProgress * 0.84, transform: `scale(${scale * (0.42 + leafProgress * 0.58)}) rotate(-12deg)` }} />;
+                const leafProgress = Math.max(
+                  0,
+                  Math.min(
+                    1,
+                    (animatedDays / Math.max(sharedDays, 1)) * 5 - index,
+                  ),
+                );
+                return (
+                  <i
+                    key={scale}
+                    style={{
+                      opacity: 0.16 + leafProgress * 0.84,
+                      transform: `scale(${scale * (0.42 + leafProgress * 0.58)}) rotate(-12deg)`,
+                    }}
+                  />
+                );
               })}
             </div>
-            <h1>Vocês já compartilharam<br /><strong>{animatedDays}</strong> dias</h1>
-              <p>E ainda tem pergunta que vocês nunca fizeram.</p>
+            <h1>
+              Vocês já compartilharam
+              <br />
+              <strong>{animatedDays}</strong> dias
+            </h1>
+            <p>E ainda tem pergunta que vocês nunca fizeram.</p>
           </div>
         );
-      case 'curiosity':
+      case "curiosity":
         return (
           <div className="onboarding-content onboarding-question-screen">
             <div>
-                <p className="onboarding-kicker">vamos ao que você quer saber</p>
-              <h1>O que você quer<br /><em>descobrir sobre {partnerPronoun}?</em></h1>
-               <p className="onboarding-subtitle">Escolha quantos quiser.</p>
+              <p className="onboarding-kicker">vamos ao que você quer saber</p>
+              <h1>
+                O que você quer
+                <br />
+                <em>descobrir sobre {partnerPronoun}?</em>
+              </h1>
+              <p className="onboarding-subtitle">Escolha quantos quiser.</p>
             </div>
             <div className="onboarding-choice-list">
-              {curiosityOptions.map((option) => <Choice key={option} label={option} multi selected={curiosity.includes(option)} onClick={() => setCuriosity((current) => current.includes(option) ? current.filter((item) => item !== option) : [...current, option])} />)}
+              {curiosityOptions.map((option) => (
+                <Choice
+                  key={option}
+                  label={option}
+                  multi
+                  selected={curiosity.includes(option)}
+                  onClick={() =>
+                    setCuriosity((current) =>
+                      current.includes(option)
+                        ? current.filter((item) => item !== option)
+                        : [...current, option],
+                    )
+                  }
+                />
+              ))}
             </div>
           </div>
         );
-      case 'surprise':
+      case "surprise":
         return (
           <div className="onboarding-content onboarding-question-screen">
             <div>
-               <p className="onboarding-kicker">uma lembrança sincera</p>
-              <h1>Quando foi a última vez<br />que {partnerPronoun} te surpreendeu<br /><em>com uma resposta?</em></h1>
+              <p className="onboarding-kicker">uma lembrança sincera</p>
+              <h1>
+                Quando foi a última vez
+                <br />
+                que {partnerPronoun} te surpreendeu
+                <br />
+                <em>com uma resposta?</em>
+              </h1>
             </div>
             <div className="onboarding-choice-list">
-              {surpriseOptions.map((option) => <Choice key={option} label={option} selected={surprise === option} onClick={() => setSurprise(option)} />)}
+              {surpriseOptions.map((option) => (
+                <Choice
+                  key={option}
+                  label={option}
+                  selected={surprise === option}
+                  onClick={() => setSurprise(option)}
+                />
+              ))}
             </div>
           </div>
         );
-      case 'feeling':
+      case "feeling":
         return (
           <div className="onboarding-content onboarding-question-screen">
             <div>
-               <p className="onboarding-kicker">o jeito de chegar muda tudo</p>
-              <h1>Como você quer<br /><em>se sentir hoje à noite?</em></h1>
-               <p className="onboarding-subtitle">Escolha o que está mais presente hoje.</p>
+              <p className="onboarding-kicker">o jeito de chegar muda tudo</p>
+              <h1>
+                Como você quer
+                <br />
+                <em>se sentir hoje à noite?</em>
+              </h1>
+              <p className="onboarding-subtitle">
+                Escolha o que está mais presente hoje.
+              </p>
             </div>
-            <div className="feeling-construction" aria-hidden="true"><span /><span /><span /><i /><i /><i /></div>
+            <div className="feeling-construction" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <i />
+              <i />
+              <i />
+            </div>
             <div className="onboarding-choice-list">
-              {feelingOptions.map((option) => <Choice key={option} label={option} selected={feeling === option} onClick={() => setFeeling(option)} />)}
+              {feelingOptions.map((option) => (
+                <Choice
+                  key={option}
+                  label={option}
+                  selected={feeling === option}
+                  onClick={() => setFeeling(option)}
+                />
+              ))}
             </div>
           </div>
         );
-      case 'insight':
+      case "insight":
         return (
           <div className="onboarding-content onboarding-insight-screen">
-            <div className="insight-sparkle"><Sparkles size={42} strokeWidth={1.2} /></div>
-            <h1>Percebe o que acabou<br /><em>de acontecer, {name || 'você'}?</em></h1>
-              <p>Você já escolheu por onde começar. Agora é só deixar a pergunta abrir a conversa.</p>
+            <div className="insight-sparkle">
+              <Sparkles size={42} strokeWidth={1.2} />
+            </div>
+            <h1>
+              Percebe o que acabou
+              <br />
+              <em>de acontecer, {name || "você"}?</em>
+            </h1>
+            <p>
+              Você já escolheu por onde começar. Agora é só deixar a pergunta
+              abrir a conversa.
+            </p>
           </div>
         );
-      case 'preparing':
+      case "preparing":
         return (
           <div className="onboarding-content onboarding-preparing-screen">
-            <div className="preparing-deck"><div /><div /><div><span>Cartas de {name || 'vocês'}</span><small>perguntas escolhidas para vocês</small></div></div>
-             <h1>Seu baralho está<br /><em>ganhando forma...</em></h1>
-             <p>Escolhendo perguntas a partir do que você contou...</p>
-            <div className="preparing-incoming-cards" aria-hidden="true"><i /><i /><i /></div>
+            <div className="preparing-deck">
+              <div />
+              <div />
+              <div>
+                <span>Cartas de {name || "vocês"}</span>
+                <small>perguntas escolhidas para vocês</small>
+              </div>
+            </div>
+            <h1>
+              Seu baralho está
+              <br />
+              <em>ganhando forma...</em>
+            </h1>
+            <p>Escolhendo perguntas a partir do que você contou...</p>
+            <div className="preparing-incoming-cards" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </div>
           </div>
         );
-      case 'deck':
+      case "deck":
         return (
           <div className="onboarding-content onboarding-deck-ready">
-            <div className="deck-ready-icon"><Check size={27} /></div>
-              <p className="onboarding-kicker">as cartas de vocês estão prontas</p>
-            <h1>Agora é só<br /><em>começar a conversa.</em></h1>
-              <p>As perguntas não trazem resposta pronta. Elas dão um ponto de partida para vocês se ouvirem.</p>
-             <ContinueButton onClick={() => {
-               const hasAccess = safeGetItem('conexao-session') || safeGetItem('conexao-guest-token');
-               if (hasAccess) {
-                 safeSetItem(openWelcomeDeckStorageKey, 'true');
-                 navigate('/app');
-               } else {
-                 navigate('/#pacotes');
-               }
-             }} light>{safeGetItem('conexao-session') || safeGetItem('conexao-guest-token') ? 'Abrir meu baralho' : 'Escolher meu baralho'}</ContinueButton>
-             <button onClick={reset} className="onboarding-restart">Responder de novo</button>
+            <div className="deck-ready-icon">
+              <Check size={27} />
+            </div>
+            <p className="onboarding-kicker">
+              as cartas de vocês estão prontas
+            </p>
+            <h1>
+              Agora é só
+              <br />
+              <em>começar a conversa.</em>
+            </h1>
+            <p>
+              As perguntas não trazem resposta pronta. Elas dão um ponto de
+              partida para vocês se ouvirem.
+            </p>
+            <ContinueButton
+              onClick={() => {
+                const hasAccess =
+                  safeGetItem("conexao-session") ||
+                  safeGetItem("conexao-guest-token");
+                if (hasAccess) {
+                  safeSetItem(openWelcomeDeckStorageKey, "true");
+                  navigate("/app");
+                } else {
+                  navigate("/#pacotes");
+                }
+              }}
+              light
+            >
+              {safeGetItem("conexao-session") ||
+              safeGetItem("conexao-guest-token")
+                ? "Abrir meu baralho"
+                : "Escolher meu baralho"}
+            </ContinueButton>
+            <button onClick={reset} className="onboarding-restart">
+              Responder de novo
+            </button>
           </div>
         );
       default:
@@ -758,7 +1107,7 @@ export default function Onboarding() {
   };
 
   useEffect(() => {
-    if (step.id === 'preparing') {
+    if (step.id === "preparing") {
       const timeout = window.setTimeout(goNext, 1800);
       return () => window.clearTimeout(timeout);
     }
@@ -766,22 +1115,28 @@ export default function Onboarding() {
   }, [step.id]);
 
   const continueOnboarding = () => {
-    if (step.id === 'welcome-role') {
-      if (role === 'owner') {
-        setStepIndex(activeSteps.findIndex(item => item.id === 'relationship'));
-      } else if (role === 'guest') {
-        setStepIndex(activeSteps.findIndex(item => item.id === 'guest-entry'));
+    if (step.id === "welcome-role") {
+      if (role === "owner") {
+        setStepIndex(
+          activeSteps.findIndex((item) => item.id === "relationship"),
+        );
+      } else if (role === "guest") {
+        setStepIndex(
+          activeSteps.findIndex((item) => item.id === "guest-entry"),
+        );
       }
       return;
     }
 
-    if (step.id === 'guest-entry') {
+    if (step.id === "guest-entry") {
       const token = extractInviteToken(guestInviteLink);
       if (!token) {
-        setGuestInviteError('Esse link não parece certo — confere e cola de novo');
+        setGuestInviteError(
+          "Esse link não parece certo — confere e cola de novo",
+        );
         return;
       }
-      safeSetItem('conexao-role', 'guest');
+      safeSetItem("conexao-role", "guest");
       navigate(`/invite/${encodeURIComponent(token)}`);
       return;
     }
@@ -789,50 +1144,96 @@ export default function Onboarding() {
     goNext();
   };
 
-  const canContinue = step.id === 'welcome-role'
-    ? !!role
-    : step.id === 'guest-entry'
-      ? true
-      : step.id === 'name'
-        ? name.trim().length > 0
-        : step.id === 'email'
-          ? guestEmail.trim().length > 0
-          : step.id === 'relationship'
-            ? !!relationship
-            : step.id === 'curiosity'
-              ? curiosity.length > 0
-              : step.id === 'surprise'
-                ? !!surprise
-                : step.id === 'feeling'
-                  ? !!feeling
-                  : true;
-  const noButton = ['intro', 'note', 'days', 'insight', 'preparing', 'deck'].includes(step.id);
-  const onboardingStage = stepIndex <= activeSteps.findIndex(item => item.id === 'guest-entry')
-    ? 0
-    : stepIndex <= activeSteps.findIndex(item => item.id === 'feeling')
-      ? 1
-      : 2;
+  const canContinue =
+    step.id === "welcome-role"
+      ? !!role
+      : step.id === "guest-entry"
+        ? true
+        : step.id === "name"
+          ? name.trim().length > 0
+          : step.id === "email"
+            ? guestEmail.trim().length > 0
+            : step.id === "relationship"
+              ? !!relationship
+              : step.id === "curiosity"
+                ? curiosity.length > 0
+                : step.id === "surprise"
+                  ? !!surprise
+                  : step.id === "feeling"
+                    ? !!feeling
+                    : true;
+  const noButton = [
+    "intro",
+    "note",
+    "days",
+    "insight",
+    "preparing",
+    "deck",
+  ].includes(step.id);
+  const onboardingStage =
+    stepIndex <= activeSteps.findIndex((item) => item.id === "guest-entry")
+      ? 0
+      : stepIndex <= activeSteps.findIndex((item) => item.id === "feeling")
+        ? 1
+        : 2;
 
   return (
     <main className="onboarding-shell">
       <aside className="onboarding-desktop-rail" aria-hidden="true">
-        <div className="onboarding-rail-brand"><span><Feather size={16} /></span><strong>Perguntas<br /><em>de Conexão</em></strong></div>
+        <div className="onboarding-rail-brand">
+          <span>
+            <Feather size={16} />
+          </span>
+          <strong>
+            Perguntas
+            <br />
+            <em>de Conexão</em>
+          </strong>
+        </div>
         <div className="onboarding-rail-intro">
           <span className="onboarding-rail-kicker">primeiro acesso</span>
-           <p>Um lugar para ouvir de novo quem está perto.</p>
+          <p>Um lugar para ouvir de novo quem está perto.</p>
         </div>
         <div className="onboarding-rail-steps">
-           <div className={`onboarding-rail-step ${onboardingStage === 0 ? 'is-current' : ''} ${onboardingStage > 0 ? 'is-complete' : ''}`}><span>01</span><strong>Seu começo</strong></div>
-           <div className={`onboarding-rail-step ${onboardingStage === 1 ? 'is-current' : ''} ${onboardingStage > 1 ? 'is-complete' : ''}`}><span>02</span><strong>O que importa</strong></div>
-           <div className={`onboarding-rail-step ${onboardingStage === 2 ? 'is-current' : ''}`}><span>03</span><strong>Seu baralho</strong></div>
+          <div
+            className={`onboarding-rail-step ${onboardingStage === 0 ? "is-current" : ""} ${onboardingStage > 0 ? "is-complete" : ""}`}
+          >
+            <span>01</span>
+            <strong>Seu começo</strong>
+          </div>
+          <div
+            className={`onboarding-rail-step ${onboardingStage === 1 ? "is-current" : ""} ${onboardingStage > 1 ? "is-complete" : ""}`}
+          >
+            <span>02</span>
+            <strong>O que importa</strong>
+          </div>
+          <div
+            className={`onboarding-rail-step ${onboardingStage === 2 ? "is-current" : ""}`}
+          >
+            <span>03</span>
+            <strong>Seu baralho</strong>
+          </div>
         </div>
-            <span className="onboarding-rail-foot">para conversas que não ficam pela metade</span>
+        <span className="onboarding-rail-foot">
+          para conversas que não ficam pela metade
+        </span>
       </aside>
       <div className="onboarding-frame">
-        <StepHeader step={step} onBack={goBack} showBack={stepIndex > 0 && step.id !== 'preparing'} />
+        <StepHeader
+          step={step}
+          onBack={goBack}
+          showBack={stepIndex > 0 && step.id !== "preparing"}
+        />
         {renderStep()}
-        {!noButton && <ContinueButton onClick={continueOnboarding} disabled={!canContinue || guestEmailChecking} />}
-        {['note', 'days', 'insight'].includes(step.id) && <ContinueButton onClick={goNext} />}
+        {!noButton && (
+          <ContinueButton
+            onClick={continueOnboarding}
+            disabled={!canContinue || guestEmailChecking}
+          />
+        )}
+        {["note", "days", "insight"].includes(step.id) && (
+          <ContinueButton onClick={goNext} />
+        )}
       </div>
     </main>
   );
