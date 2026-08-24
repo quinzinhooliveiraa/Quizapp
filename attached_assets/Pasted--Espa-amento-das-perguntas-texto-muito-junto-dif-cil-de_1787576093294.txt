@@ -1,0 +1,75 @@
+# Espaçamento das perguntas — texto muito junto, difícil de ler
+
+**Problema:** o texto das perguntas dentro do app (a carta que a pessoa lê) está com `letter-spacing` negativo (letras espremidas umas nas outras) e `line-height` menor que uma linha inteira (as linhas quase se tocam quando a pergunta quebra em duas linhas). Isso deixa a leitura mais difícil, especialmente pra quem tem dislexia ou outras condições neurodivergentes.
+
+**Objetivo:** soltar um pouco o espaçamento entre letras e entre linhas SEM perder o estilo visual (a fonte serifada grande continua a mesma, só respira mais).
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Texto principal da pergunta — `artifacts/perguntas-de-conexao/src/index.css`
+
+Achar:
+
+```css
+.question-text p { font-family: var(--app-font-serif); font-size: clamp(31px, 3.2vw, 47px); line-height: .96; letter-spacing: -.045em; margin: 0; }
+```
+
+Substituir por:
+
+```css
+.question-text p { font-family: var(--app-font-serif); font-size: clamp(31px, 3.2vw, 47px); line-height: 1.18; letter-spacing: -.01em; word-spacing: .03em; margin: 0; }
+```
+
+**O que muda:** `line-height` de `.96` pra `1.18` (linhas com mais respiro entre si quando a pergunta quebra em duas ou três linhas), `letter-spacing` de `-.045em` (bem apertado) pra `-.01em` (quase neutro, só tira o excesso de espaço que fonte grande costuma ter, sem espremer), e adiciona um `word-spacing` pequeno pra separar melhor as palavras.
+
+---
+
+## 2. Mesma correção na variante "stories" (contação de histórias) — mesmo arquivo
+
+Achar:
+
+```css
+.experience-page-stories .question-text p {
+  font-size: clamp(34px, 4vw, 47px);
+}
+```
+
+Substituir por (herda o novo `line-height`/`letter-spacing`/`word-spacing` da regra acima automaticamente — só precisa confirmar que não há nenhuma sobrescrita neste bloco. Se não houver, não precisa mudar nada aqui. Se por acaso já existir uma sobrescrita de `line-height` ou `letter-spacing` dentro deste bloco específico, aplicar os mesmos valores do passo 1):
+
+```css
+.experience-page-stories .question-text p {
+  font-size: clamp(34px, 4vw, 47px);
+  line-height: 1.18;
+  letter-spacing: -.01em;
+  word-spacing: .03em;
+}
+```
+
+---
+
+## 3. Conferir se existe uma sobrescrita mobile — mesmo arquivo
+
+Achar, dentro do bloco `@media (max-width: 700px)`:
+
+```css
+.question-text p { font-size: 38px; }
+```
+
+Deixar como está (só ajusta o tamanho da fonte no celular) — o `line-height`/`letter-spacing`/`word-spacing` da regra base do passo 1 já se aplicam aqui também, porque essa linha só sobrescreve `font-size`.
+
+---
+
+## 4. Verificar se existe o mesmo padrão apertado em outros textos grandes
+
+Fazer uma busca rápida por `letter-spacing: -.0` no arquivo `index.css` (várias classes usam negative letter-spacing pra títulos grandes, tipo `.hero h1`, `.invite-entry-card h1`, `.checkout-modal h2` etc. — isso é normal e intencional pra títulos curtos de 1 linha, NÃO precisa mudar). O problema específico é só em textos que quebram em várias linhas e são lidos com atenção — ou seja, **só mexer em `.question-text p`** (passo 1) e sua variante stories (passo 2). Não mexer nos títulos de seção, nem nos textos dos cards de mockup das landing pages (`.lp-mock-text`), a não ser que o usuário peça depois.
+
+---
+
+## Verificação
+
+1. Abrir uma pergunta qualquer no app (`/app` ou `/play`) → o texto da pergunta deve estar visivelmente mais espaçado, com as linhas não quase se tocando quando quebra em 2-3 linhas.
+2. Testar no celular e no PC — o tamanho da fonte continua responsivo (não muda), só o espaçamento.
+3. Testar na variante "stories" (contação de histórias, se acessível pelo fluxo do app) — mesmo espaçamento aplicado.
+4. Comparar visualmente antes/depois — o estilo geral (fonte serifada grande, itálico quando tiver) continua o mesmo, só ficou mais fácil de ler.
