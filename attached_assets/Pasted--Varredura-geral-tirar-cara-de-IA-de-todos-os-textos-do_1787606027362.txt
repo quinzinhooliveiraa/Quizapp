@@ -1,0 +1,62 @@
+# Varredura geral: tirar "cara de IA" de todos os textos do app
+
+**Objetivo:** revisar TODOS os textos visíveis pro usuário (landing pages, onboarding, app, emails, modais, mensagens de erro) procurando frases que soam genéricas/geradas por IA, e reescrever pra soar como uma pessoa real escreveu — direto, específico, sem clichê corporativo.
+
+**Isso é uma revisão de leitura + reescrita pontual, não uma reestruturação.** Não mude layout, não mude fluxo, não mude o que os botões fazem — só o texto em si, onde ele soar artificial.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## O que procurar (sinais de "cara de IA")
+
+Ao ler cada tela, sinalize e reescreva qualquer trecho que se encaixe em:
+
+1. **Abertura de "equipe" ou "nós" genérico** — ex: "Oi, eu sou a equipe por trás de...", "nós acreditamos que...". Prefira primeira pessoa direta ou corte a auto-apresentação.
+2. **Palavras de "jornada corporativa"** — "jornada", "experiência única", "conectar pessoas", "transformar sua vida", "desbloqueie seu potencial". Trocar por linguagem concreta do que a pessoa realmente vai fazer.
+3. **Listas de 3 genéricas demais** — quando os 3 itens soam intercambiáveis ou preenchidos só pra completar a lista (padrão clássico de texto gerado).
+4. **Frases de fechamento motivacionais vazias** — "e é isso que faz toda a diferença", "porque você merece", "cada momento importa". Cortar ou trocar por algo específico do produto.
+5. **Excesso de travessão (—) separando ideias que poderiam ser frases curtas.** Um travessão ocasional é estilo; três por parágrafo é padrão de texto gerado.
+6. **Adjetivos vagos empilhados** — "incrível", "poderoso", "transformador", "único" sem nada concreto atrás. Trocar por um detalhe real (número, exemplo, ação).
+7. **Perguntas retóricas repetidas como recurso de abertura** — "Já se perguntou...?", "E se você pudesse...?" usadas em mais de um lugar do app.
+8. **Textos que poderiam estar em qualquer produto** — se ao ler o texto você não consegue dizer que é sobre *Perguntas de Conexão* especificamente (menciona baralho, carta, conversa, casal), provavelmente é genérico demais.
+
+## Onde procurar
+
+Percorrer, nessa ordem, e listar (comentário no início do arquivo ou só corrigir direto) qualquer trecho encontrado:
+
+1. `artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx` — já corrigimos a tela "nota" (`case 'note'`), mas revisar as outras telas também: `relationship`, `name`, `email`, `date`, e as que vierem depois no fluxo.
+2. `artifacts/perguntas-de-conexao/src/App.tsx` — textos das duas landing pages (`LandingV2Quiz` e a landing estática dentro de `Home`), modais (`welcomeOpen`, `checkoutOpen`, convites), telas de erro/vazio.
+3. `artifacts/perguntas-de-conexao/src/pages/Admin.tsx` — textos do painel (menos crítico, mas revisar mesmo assim).
+4. Templates de email no backend, se existirem — procurar em `artifacts/api-server/src/` por strings de assunto/corpo de email (Brevo).
+5. Mensagens de erro genéricas tipo "Algo deu errado, tente novamente" — se aparecerem, trocar por uma explicação específica do que falhou, quando for viável sem mudar lógica.
+
+## Como reescrever
+
+- Mantenha o tom já estabelecido da marca: íntimo, direto, sem gritar em CAIXA ALTA, sem emoji em excesso.
+- Prefira frases curtas e concretas a frases longas e "bonitas".
+- Quando cortar um trecho, não precisa substituir por outro do mesmo tamanho — cortar é válido se o texto ficar melhor mais curto.
+- Não invente números, estatísticas ou afirmações que não sejam verdade sobre o produto.
+
+## Formato de entrega
+
+Para cada arquivo que teve texto alterado, no final do trabalho, listar num comentário (fora do código, na resposta do Replit Agent) um resumo tipo:
+
+```
+Onboarding.tsx:
+- tela 'relationship': "..." → "..."
+- tela 'date': cortei a frase final que não agregava
+
+App.tsx:
+- modal de convite: "..." → "..."
+```
+
+Isso ajuda a revisar rápido o que mudou sem precisar reler o arquivo inteiro.
+
+---
+
+## Verificação
+
+1. Ler o app inteiro do zero (onboarding → app → landing) como se fosse a primeira vez, procurando qualquer frase que pareça "traduzida de um texto genérico de IA".
+2. Nenhum texto novo introduzido deve inventar fatos sobre o produto.
+3. Nenhuma mudança de layout, fluxo ou funcionalidade — só texto.

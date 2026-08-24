@@ -603,7 +603,7 @@ Em uma das perguntas, tivemos que simplesmente ficar olhando um para o outro em 
 
 E foi estranho perceber que, mesmo depois de tanto tempo conversando, ainda existiam partes nossas que o outro nunca tinha visto.
 
-Se você sente que quer conhecer seu parceiro em um nível ainda mais profundo, vale muito a pena.`,
+    Se vocês querem sair das conversas de sempre, vale testar. Em duas rodadas, já apareceu assunto que nunca tinha vindo à tona.`,
     name: 'Julia',
     detail: '1 ano de relacionamento',
   },
@@ -612,7 +612,7 @@ Se você sente que quer conhecer seu parceiro em um nível ainda mais profundo, 
 
 Tivemos momentos muito leves, perguntas que fizeram a gente rir e outras que foram simplesmente muito fofas.
 
-Mas também tiveram algumas que nos tiraram da zona de conforto.
+    Mas também apareceram algumas que fizeram a gente sair do roteiro.
 
 Perguntas que fizeram a gente falar sobre coisas que talvez não trouxéssemos naturalmente para uma conversa.
 
@@ -622,7 +622,7 @@ Não é só sobre passar uma noite fazendo perguntas.
 
 É sobre descobrir coisas que estavam ali, mas que vocês nunca tinham parado para perguntar.
 
-Foi uma experiência muito especial para nós.`,
+    Foi uma noite que a gente repetiu depois.`,
     name: 'Camila',
     detail: 'Uma noite diferente',
   },
@@ -704,7 +704,7 @@ function TestimonialCarousel() {
   return <section className="lp-social">
     <div className="lp-container">
       <p className="lp-eyebrow lp-eyebrow-center">o que dizem</p>
-      <h2 className="lp-h2">Casais que já usaram<br /><em>e não largam mais.</em></h2>
+      <h2 className="lp-h2">Casais que já usaram<br /><em>e voltaram para mais uma.</em></h2>
       <div className="lp-testimonial-carousel" aria-roledescription="carrossel" aria-label="Depoimentos de casais">
         <button type="button" className="lp-testimonial-arrow" onClick={() => move(-1)} aria-label="Depoimento anterior" data-testid="button-testimonial-previous"><ChevronLeft size={20} /></button>
         <blockquote className="lp-testimonial lp-testimonial-active" aria-live="polite">
@@ -736,7 +736,7 @@ function TestimonialCarousel() {
           data-testid={`button-testimonial-dot-${index + 1}`}
         />)}
       </div>
-      <p className="lp-tiny-note">Histórias de casais que encontraram uma nova pergunta para começar.</p>
+      <p className="lp-tiny-note">Histórias de casais que começaram uma conversa por aqui.</p>
     </div>
   </section>;
 }
@@ -794,7 +794,7 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
     <section className="lp-solution lp2-proposta"><div className="lp-container">
       <p className="lp-eyebrow lp-eyebrow-center">a proposta</p>
       <h2 className="lp-h2">São perguntas simples que vocês podem<br /><em>incluir na rotina começando hoje.</em></h2>
-      <p className="lp-solution-lede">445+ perguntas escritas pra abrir espaço — sem clichê, sem "qual seu animal favorito". Vocês abrem uma carta, leem em voz alta e escutam. Separem 10 minutos. O resto acontece entre vocês.</p>
+      <p className="lp-solution-lede">445+ perguntas escritas pra tirar a conversa do automático — sem clichê, sem "qual seu animal favorito". Vocês abrem uma carta, leem em voz alta e escutam. Separem 10 minutos e vejam onde a conversa vai.</p>
       <div className="lp-solution-pillars">
         <div className="lp-pillar"><div className="lp-pillar-icon"><Timer aria-hidden="true" size={30} strokeWidth={1.6} /></div><strong>10 minutos por noite</strong><p>Não exige terapia, retiro nem fim de semana livre. Só uma carta por vez.</p></div>
         <div className="lp-pillar"><div className="lp-pillar-icon"><MonitorSmartphone aria-hidden="true" size={30} strokeWidth={1.6} /></div><strong>Celular ou computador</strong><p>Abre no navegador, sem instalar nada, em qualquer aparelho.</p></div>
@@ -809,11 +809,11 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
     </div></section>
     <section className="lp-themes lp2-themes" id="lp2-pacotes"><div className="lp-container">
       <p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p>
-      <h2 className="lp-h2">16 baralhos temáticos,<br /><em>pra cada momento de vocês.</em></h2>
+      <h2 className="lp-h2">16 baralhos temáticos,<br /><em>para escolher o assunto da noite.</em></h2>
       <div className="lp-themes-grid">{themes.map(([name, description, count], index) => <div key={name} className={`lp-theme-card ${index > 8 ? 'lp-theme-vibe' : ''}`}><strong>{name}</strong><p>{description}</p><span>{count}</span></div>)}<div className="lp-theme-card lp-theme-bonus"><span className="lp-theme-bonus-badge">bônus</span><strong>Baralho do Dia</strong><p>Um baralho montado na hora, de acordo com o que vocês estão sentindo hoje.</p><span>todo dia um novo</span></div></div>
-      <p className="lp-themes-note"><strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos — o acesso é vitalício.</p>
+      <p className="lp-themes-note"><strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos. O acesso é vitalício.</p>
     </div></section>
-    <section className="lp-how" id="lp2-como-funciona"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">como funciona</p><h2 className="lp-h2">Três passos. <em>Um ritual novo.</em></h2><div className="lp-how-steps"><div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham um baralho</strong><p>15 temas fixos + o bônus do dia, montado pelo que vocês estão sentindo.</p></div><div className="lp-how-step"><span className="lp-how-num">02</span><strong>Abram uma carta</strong><p>Leiam em voz alta, sem pressa, e deixem a pergunta agir.</p></div><div className="lp-how-step"><span className="lp-how-num">03</span><strong>Conversem de verdade</strong><p>Uma pergunta por vez. O resto acontece entre vocês.</p></div></div></div></section>
+    <section className="lp-how" id="lp2-como-funciona"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">como funciona</p><h2 className="lp-h2">Três passos. <em>Uma conversa que começa.</em></h2><div className="lp-how-steps"><div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham um baralho</strong><p>15 temas fixos + o bônus do dia, montado pelo que vocês estão sentindo.</p></div><div className="lp-how-step"><span className="lp-how-num">02</span><strong>Abram uma carta</strong><p>Leiam em voz alta, sem pressa, e vejam o que a pergunta traz.</p></div><div className="lp-how-step"><span className="lp-how-num">03</span><strong>Conversem de verdade</strong><p>Uma pergunta por vez. Vocês decidem até onde ir.</p></div></div></div></section>
      <TestimonialCarousel />
     <section className="lp-price" id="lp2-precos"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p><h2 className="lp-h2">A próxima boa conversa<br /><em>pode ser hoje à noite.</em></h2><div className="lp-price-card"><div className="lp-price-badge">Oferta de lançamento</div><div className="lp-price-main"><span className="lp-price-old">De <s>R$ 97,00</s></span><div className="lp-price-value"><span className="lp-price-currency">R$</span><span className="lp-price-big">47</span><span className="lp-price-cents">,90</span></div><span className="lp-price-installments">à vista <strong>ou</strong> 5x de R$ 9,58</span></div><ul className="lp-price-includes"><li>✓ 445+ perguntas em 16 baralhos temáticos</li><li>✓ Baralho personalizado do dia, sempre novo</li><li>✓ Acesso pra <strong>2 pessoas</strong> (você + convite)</li><li>✓ Salas online sincronizadas, mesmo à distância</li><li>✓ Novos baralhos incluídos, pra sempre</li><li>✓ Sem mensalidade. Paga uma vez.</li></ul><button onClick={onBuy} className="lp-cta-primary lp-cta-full" data-testid="button-price-cta-v2">Começar agora por R$ 47,90 <ArrowRight size={18} /></button><div className="lp-guarantee"><div className="lp-guarantee-seal">✦</div><div><strong>Garantia incondicional de 7 dias.</strong><p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama, sem perguntas.</p></div></div></div></div></section>
     <section className="lp-faq" id="lp2-faq"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">dúvidas frequentes</p><h2 className="lp-h2">Ainda em dúvida?</h2><div className="lp-faq-list">{[['Precisa instalar algum aplicativo?', 'Não. É 100% online, roda no navegador do celular ou do computador.'], ['E se meu parceiro achar estranho?', 'É o mais comum. Por isso os baralhos começam leves — você escolhe o clima. Ninguém é obrigado a abrir nada antes de querer.'], ['Funciona à distância?', 'Sim. Vocês criam uma sala online e jogam sincronizados, cada um no seu aparelho.'], ['É vitalício mesmo?', 'Sim. Paga uma vez, usa pra sempre — incluindo os baralhos novos que entram depois.'], ['Como recebo depois de pagar?', 'Na hora. O pagamento é via Pix e o acesso abre automaticamente após a confirmação.']].map(([question, answer]) => <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
@@ -1057,7 +1057,7 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
        <QuestionCarouselSection />
        <section className="lp-pain"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">quem tá aí sabe</p><h2 className="lp-h2">Você olha pra ele(a) e pensa:<br /><em>"onde a gente se perdeu?"</em></h2><ul className="lp-pain-list"><li><span className="lp-pain-icon">◌</span><div><strong>As conversas viraram logística.</strong><p>"Buscou pão?" "Que horas vem?" "Feriado a gente vai onde?"</p></div></li><li><span className="lp-pain-icon">◌</span><div><strong>Cada um no próprio celular.</strong><p>Sentados no mesmo sofá, quilômetros de distância um do outro.</p></div></li><li><span className="lp-pain-icon">◌</span><div><strong>Você tentou "vamos conversar".</strong><p>Deu silêncio, resposta seca, ou desviou pro Netflix. De novo.</p></div></li></ul><p className="lp-pain-close">Não é falta de amor. É que <strong>ninguém ensinou a fazer as perguntas certas.</strong></p></div></section>
        <section className="lp-solution"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">a proposta</p><h2 className="lp-h2">Um baralho digital<br /><em>que faz o trabalho pesado.</em></h2><p className="lp-solution-lede">300+ perguntas escritas pra abrir espaço — sem quiz de revista, sem clichê, sem "qual seu animal favorito". Uma pergunta por vez. Você abre, lê em voz alta, escuta. O resto acontece entre vocês.</p><div className="lp-solution-pillars"><div className="lp-pillar"><div className="lp-pillar-icon">◇</div><strong>15 baralhos temáticos</strong><p>De "Porto Seguro" até "Fogo Alto", para cada fase da conversa.</p></div><div className="lp-pillar"><div className="lp-pillar-icon">▣</div><strong>Roda no celular e PC</strong><p>Abre no navegador, sem instalar app, em qualquer aparelho.</p></div><div className="lp-pillar"><div className="lp-pillar-icon">◎</div><strong>Jogue junto de longe</strong><p>Sala online sincronizada para estarem na mesma pergunta.</p></div></div></div></section>
-       <section className="lp-quiz-section" id="lp-quiz"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">experimente</p><h2 className="lp-h2">Ver 3 perguntas de verdade,<br /><em>feitas pra vocês.</em></h2><LandingQuiz onFinish={() => void checkout('couple')} /></div></section>
+      <section className="lp-quiz-section" id="lp-quiz"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">teste rápido</p><h2 className="lp-h2">Veja 3 perguntas de verdade,<br /><em>feitas pra vocês.</em></h2><LandingQuiz onFinish={() => void checkout('couple')} /></div></section>
        <section className="lp-how" id="como-funciona"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">como funciona</p><h2 className="lp-h2">Três passos, um ritual novo.</h2><div className="lp-how-steps"><div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham juntos o tema da noite</strong><p>Comecem por Porto Seguro para aquecer ou Livro Aberto para ir mais fundo.</p></div><div className="lp-how-step"><span className="lp-how-num">02</span><strong>Uma pergunta por vez</strong><p>Vire a carta, leia em voz alta, escute a resposta. Sem pressa.</p></div><div className="lp-how-step"><span className="lp-how-num">03</span><strong>Salvem os momentos que importam</strong><p>Guarde as respostas que marcaram vocês e volte quando quiser.</p></div></div></div></section>
        <section className="lp-themes" id="pacotes"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p><h2 className="lp-h2">15 baralhos temáticos,<br /><em>pra cada momento de vocês.</em></h2><div className="lp-themes-grid">{[['Porto Seguro','As conversas que parecem casa.',31],['Livro Aberto','Sem filtro, cara a cara.',31],['Você Não Sabia','Descobertas que ainda cabem entre vocês.',32],['Em Voz Alta','A vida que os dois querem construir.',30],['Lá Atrás','O que formou quem você é hoje.',28],['Modo Leve','Pra rir e não levar tão a sério.',31],['Viagens','Lugares que já foram e ainda vão ser.',30],['Carreira & Dinheiro','Como pensam o lado prático.',30],['Depois da Tempestade','O caminho de volta.',30],['Faísca','O lado mais provocante de vocês.',31],['Luzes Baixas','Quando a noite pede mais coragem. 18+',35],['Fogo Alto','Desejos, curiosidades, limites. 18+',30],['Sem Freio','O mais ousado. Só pra quem topa. 18+',30],['Mesmo Longe','Quando rotina ou distância afastam.',30],['Perto de Novo','Esquentar o espaço entre vocês.',30]].map(([name, description, count], index) => <div key={String(name)} className={`lp-theme-card ${index > 8 ? 'lp-theme-vibe' : ''}`}><strong>{name}</strong><p>{description}</p><span>{count} cartas</span></div>)}</div><p className="lp-themes-note"><strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos — o acesso é vitalício.</p></div></section>
        <TestimonialCarousel />
@@ -2021,7 +2021,7 @@ function AppExperienceReference() {
             <div className="carousel-dots" aria-label="Posição do objetivo">{visibleThemes.map((theme, index) => <button key={theme.id} className={index === themeIndex ? 'is-active' : ''} onClick={() => moveThemeIndex(index)} aria-label={`Selecionar ${theme.title}`} data-testid={`button-theme-dot-${theme.id}`} />)}</div>
           </div>
           {themesError && <div className="app-inline-error" data-testid="status-themes-error"><span>Reconectando…</span><button onClick={() => queryClientRef.invalidateQueries({ queryKey: getListQuestionThemesQueryKey() })} data-testid="button-retry-themes">Tentar agora <RotateCw size={13} /></button></div>}
-          <p className="deck-note"><Sparkles size={14} /> Uma pergunta por vez. O resto acontece entre vocês.</p>
+          <p className="deck-note"><Sparkles size={14} /> Uma pergunta por vez. Vocês decidem até onde ir.</p>
          </section>}
       </> : <>
         <header className="question-header" data-testid="header-question">
@@ -2239,7 +2239,7 @@ function AppExperienceReference() {
             </div>
             <p className="modal-eyebrow">um momento só</p>
             <h2>Preparando seu <em>baralho…</em></h2>
-            <p>Escolhendo perguntas que combinam com vocês agora.</p>
+            <p>Separando perguntas para o momento de vocês.</p>
             <div className="preparing-dots" aria-hidden="true"><span /><span /><span /></div>
           </div>
         </div>

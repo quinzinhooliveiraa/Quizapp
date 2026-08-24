@@ -103,7 +103,7 @@ router.post("/auth/request-code", async (req, res): Promise<void> => {
 
   if (!result.ok) {
     req.log.error({ error: result.error }, "Failed to send email login code");
-    res.status(500).json({ error: "Não conseguimos enviar o código agora. Tente novamente." });
+    res.status(500).json({ error: "O código não foi enviado. Tente daqui a pouco." });
     return;
   }
 

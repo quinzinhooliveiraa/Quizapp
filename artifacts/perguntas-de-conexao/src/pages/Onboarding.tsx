@@ -513,7 +513,7 @@ export default function Onboarding() {
             <div className="onboarding-intro-copy">
               <p className="onboarding-kicker">saia do automático</p>
               <h1>Troque o<br /><em>“como foi seu dia?”</em><br />por algo que fica.</h1>
-              <p>Um baralho feito para duas pessoas se encontrarem de verdade.</p>
+               <p>Um baralho para vocês se ouvirem de outro jeito.</p>
             </div>
             <ContinueButton onClick={goNext}>Começar</ContinueButton>
              <p className="onboarding-login-note">Já tem um baralho? <Link href="/login">Abrir meu acesso</Link></p>
@@ -525,12 +525,12 @@ export default function Onboarding() {
             <div>
               <p className="onboarding-kicker">pra começar</p>
               <h1>Você está começando<br /><em>o seu baralho</em> ou foi convidado?</h1>
-              <p className="onboarding-subtitle">As duas coisas levam ao mesmo lugar — só o caminho muda.</p>
+               <p className="onboarding-subtitle">Nos dois casos, vocês acabam respondendo perguntas juntos.</p>
             </div>
             <div className="onboarding-choice-list">
               <Choice
                 label="Tenho meu próprio baralho"
-                description="Comprei e quero personalizar minha experiência."
+                 description="Comprei um baralho e quero deixá-lo com a nossa cara."
                 selected={role === 'owner'}
                 onClick={() => {
                   setRole('owner');
@@ -539,7 +539,7 @@ export default function Onboarding() {
               />
               <Choice
                 label="Fui convidado por alguém"
-                description="Recebi um link e quero entrar no baralho."
+                 description="Recebi um link e quero entrar na nossa conversa."
                 selected={role === 'guest'}
                 onClick={() => {
                   setRole('guest');
@@ -555,7 +555,7 @@ export default function Onboarding() {
             <div>
               <p className="onboarding-kicker">seu convite</p>
               <h1>Cole o link que<br /><em>você recebeu.</em></h1>
-              <p className="onboarding-subtitle">Ele leva você direto para o baralho de quem te convidou.</p>
+                <p className="onboarding-subtitle">Com ele, você entra no baralho que a outra pessoa preparou.</p>
             </div>
             <div className="onboarding-guest-form">
               <input
@@ -581,14 +581,14 @@ export default function Onboarding() {
         return (
           <div className="onboarding-content onboarding-choice-screen">
             <div>
-              <p className="onboarding-kicker">vamos personalizar</p>
+               <p className="onboarding-kicker">vamos deixar com a cara de vocês</p>
               <h1>Com quem você<br /><em>quer jogar?</em></h1>
-              <p className="onboarding-subtitle">A gente adapta a experiência a partir daqui.</p>
+                <p className="onboarding-subtitle">Isso ajuda a escolher perguntas que façam sentido para vocês.</p>
             </div>
             <div className="onboarding-choice-list">
               {relationshipOptions.map((option) => <Choice key={option} label={option} selected={relationship === option} onClick={() => setRelationship(option)} />)}
             </div>
-            <div className="onboarding-bottom-note">Você pode mudar isso depois.</div>
+                <div className="onboarding-bottom-note">Se mudar de ideia, você pode ajustar depois.</div>
           </div>
         );
       case 'note':
@@ -607,9 +607,9 @@ export default function Onboarding() {
         return (
           <div className="onboarding-content onboarding-name-screen">
             <div>
-              <p className="onboarding-kicker">seu baralho é pessoal</p>
+               <p className="onboarding-kicker">um baralho só seu</p>
               <h1>Como devo<br /><em>te chamar?</em></h1>
-              <p className="onboarding-subtitle">Esse nome aparece no seu baralho.</p>
+               <p className="onboarding-subtitle">É assim que você vai aparecer no baralho.</p>
             </div>
             <div className="onboarding-name-form">
               <input value={name} onChange={(event) => setName(event.target.value)} autoFocus placeholder="Seu nome" data-testid="input-onboarding-name" />
@@ -621,9 +621,9 @@ export default function Onboarding() {
         return (
           <div className="onboarding-content onboarding-name-screen">
             <div>
-              <p className="onboarding-kicker">pra você não perder</p>
+               <p className="onboarding-kicker">para continuar encontrando o baralho</p>
               <h1>Qual seu <em>email?</em></h1>
-              <p className="onboarding-subtitle">Se você mudar de aparelho ou limpar o app, é com ele que você volta pro baralho.</p>
+               <p className="onboarding-subtitle">Se trocar de celular, é por ele que você volta para o baralho.</p>
             </div>
             <div className="onboarding-name-form">
               <input
@@ -644,7 +644,7 @@ export default function Onboarding() {
         return (
           <div className="onboarding-content onboarding-date-screen">
             <div>
-              <p className="onboarding-kicker">uma história tem um começo</p>
+                <p className="onboarding-kicker">vamos marcar o começo</p>
               <h1>Quando a história<br /><em>de vocês começou?</em></h1>
             </div>
             <div className="date-native" aria-label="Escolha a data em que a história começou">
@@ -674,16 +674,16 @@ export default function Onboarding() {
               })}
             </div>
             <h1>Vocês já compartilharam<br /><strong>{animatedDays}</strong> dias</h1>
-            <p>Ainda é cedo. Tem muita coisa que vocês ainda não perguntaram.</p>
+              <p>E ainda tem pergunta que vocês nunca fizeram.</p>
           </div>
         );
       case 'curiosity':
         return (
           <div className="onboarding-content onboarding-question-screen">
             <div>
-              <p className="onboarding-kicker">vamos chegar ao que importa</p>
+                <p className="onboarding-kicker">vamos ao que você quer saber</p>
               <h1>O que você quer<br /><em>descobrir sobre {partnerPronoun}?</em></h1>
-              <p className="onboarding-subtitle">Selecione quantos quiser.</p>
+               <p className="onboarding-subtitle">Escolha quantos quiser.</p>
             </div>
             <div className="onboarding-choice-list">
               {curiosityOptions.map((option) => <Choice key={option} label={option} multi selected={curiosity.includes(option)} onClick={() => setCuriosity((current) => current.includes(option) ? current.filter((item) => item !== option) : [...current, option])} />)}
@@ -694,7 +694,7 @@ export default function Onboarding() {
         return (
           <div className="onboarding-content onboarding-question-screen">
             <div>
-              <p className="onboarding-kicker">uma pergunta honesta</p>
+               <p className="onboarding-kicker">uma lembrança sincera</p>
               <h1>Quando foi a última vez<br />que {partnerPronoun} te surpreendeu<br /><em>com uma resposta?</em></h1>
             </div>
             <div className="onboarding-choice-list">
@@ -706,9 +706,9 @@ export default function Onboarding() {
         return (
           <div className="onboarding-content onboarding-question-screen">
             <div>
-              <p className="onboarding-kicker">a intenção muda a conversa</p>
+               <p className="onboarding-kicker">o jeito de chegar muda tudo</p>
               <h1>Como você quer<br /><em>se sentir hoje à noite?</em></h1>
-              <p className="onboarding-subtitle">Escolha o que está mais alto agora.</p>
+               <p className="onboarding-subtitle">Escolha o que está mais presente hoje.</p>
             </div>
             <div className="feeling-construction" aria-hidden="true"><span /><span /><span /><i /><i /><i /></div>
             <div className="onboarding-choice-list">
@@ -721,15 +721,15 @@ export default function Onboarding() {
           <div className="onboarding-content onboarding-insight-screen">
             <div className="insight-sparkle"><Sparkles size={42} strokeWidth={1.2} /></div>
             <h1>Percebe o que acabou<br /><em>de acontecer, {name || 'você'}?</em></h1>
-            <p>Você ficou curioso sobre essa pessoa de propósito. Essa é a parte que a maioria pula. Hoje, você recebe as perguntas para acompanhar essa curiosidade.</p>
+              <p>Você já escolheu por onde começar. Agora é só deixar a pergunta abrir a conversa.</p>
           </div>
         );
       case 'preparing':
         return (
           <div className="onboarding-content onboarding-preparing-screen">
-            <div className="preparing-deck"><div /><div /><div><span>{name || 'Seu'}'s cartas</span><small>perguntas escolhidas para vocês</small></div></div>
-            <h1>Preparando seu<br /><em>baralho...</em></h1>
-            <p>Escolhendo perguntas a partir da energia que você trouxe...</p>
+            <div className="preparing-deck"><div /><div /><div><span>Cartas de {name || 'vocês'}</span><small>perguntas escolhidas para vocês</small></div></div>
+             <h1>Seu baralho está<br /><em>ganhando forma...</em></h1>
+             <p>Escolhendo perguntas a partir do que você contou...</p>
             <div className="preparing-incoming-cards" aria-hidden="true"><i /><i /><i /></div>
           </div>
         );
@@ -737,9 +737,9 @@ export default function Onboarding() {
         return (
           <div className="onboarding-content onboarding-deck-ready">
             <div className="deck-ready-icon"><Check size={27} /></div>
-            <p className="onboarding-kicker">seu baralho está pronto</p>
+              <p className="onboarding-kicker">as cartas de vocês estão prontas</p>
             <h1>Agora é só<br /><em>começar a conversa.</em></h1>
-            <p>As perguntas certas não entregam respostas prontas. Elas abrem espaço para vocês se encontrarem.</p>
+              <p>As perguntas não trazem resposta pronta. Elas dão um ponto de partida para vocês se ouvirem.</p>
              <ContinueButton onClick={() => {
                const hasAccess = safeGetItem('conexao-session') || safeGetItem('conexao-guest-token');
                if (hasAccess) {
@@ -749,7 +749,7 @@ export default function Onboarding() {
                  navigate('/#pacotes');
                }
              }} light>{safeGetItem('conexao-session') || safeGetItem('conexao-guest-token') ? 'Abrir meu baralho' : 'Escolher meu baralho'}</ContinueButton>
-            <button onClick={reset} className="onboarding-restart">Refazer o quiz</button>
+             <button onClick={reset} className="onboarding-restart">Responder de novo</button>
           </div>
         );
       default:
@@ -819,14 +819,14 @@ export default function Onboarding() {
         <div className="onboarding-rail-brand"><span><Feather size={16} /></span><strong>Perguntas<br /><em>de Conexão</em></strong></div>
         <div className="onboarding-rail-intro">
           <span className="onboarding-rail-kicker">primeiro acesso</span>
-          <p>Um espaço para voltar a ouvir quem está perto.</p>
+           <p>Um lugar para ouvir de novo quem está perto.</p>
         </div>
         <div className="onboarding-rail-steps">
            <div className={`onboarding-rail-step ${onboardingStage === 0 ? 'is-current' : ''} ${onboardingStage > 0 ? 'is-complete' : ''}`}><span>01</span><strong>Seu começo</strong></div>
            <div className={`onboarding-rail-step ${onboardingStage === 1 ? 'is-current' : ''} ${onboardingStage > 1 ? 'is-complete' : ''}`}><span>02</span><strong>O que importa</strong></div>
            <div className={`onboarding-rail-step ${onboardingStage === 2 ? 'is-current' : ''}`}><span>03</span><strong>Seu baralho</strong></div>
         </div>
-        <span className="onboarding-rail-foot">feito para conversas que ficam</span>
+            <span className="onboarding-rail-foot">para conversas que não ficam pela metade</span>
       </aside>
       <div className="onboarding-frame">
         <StepHeader step={step} onBack={goBack} showBack={stepIndex > 0 && step.id !== 'preparing'} />

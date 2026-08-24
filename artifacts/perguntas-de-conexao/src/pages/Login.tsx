@@ -81,13 +81,13 @@ export default function Login() {
         return;
       }
       if (!response.ok) {
-        setError('Não foi possível enviar o código agora. Tente novamente.');
+        setError('O código não foi enviado. Tente daqui a pouco.');
         setLoading(false);
         return;
       }
-       setError('Não foi possível enviar o código agora. Tente novamente.');
+       setError('O código não foi enviado. Tente daqui a pouco.');
     } catch {
-      setError('Sem conexão. Tente novamente.');
+      setError('A página não conseguiu falar com o servidor. Confira sua internet e tente de novo.');
     }
     setLoading(false);
   }
@@ -111,7 +111,7 @@ export default function Login() {
         setError('Não foi possível reenviar agora. Tente daqui a pouco.');
       }
     } catch {
-      setError('Sem conexão. Tente novamente.');
+      setError('A página não conseguiu falar com o servidor. Confira sua internet e tente de novo.');
     }
     setLoading(false);
   }
@@ -146,7 +146,7 @@ export default function Login() {
         return;
       }
       if (!response.ok) {
-        setError('Algo deu errado. Tente novamente.');
+        setError('Não conseguimos confirmar esse código agora. Tente de novo.');
         setLoading(false);
         return;
       }
@@ -170,7 +170,7 @@ export default function Login() {
       setInvites(allInvites);
       setStage('picker');
     } catch {
-      setError('Sem conexão. Tente novamente.');
+      setError('A página não conseguiu falar com o servidor. Confira sua internet e tente de novo.');
     }
     setLoading(false);
   }

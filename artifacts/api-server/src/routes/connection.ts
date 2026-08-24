@@ -330,7 +330,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     await db.delete(sessionsTable).where(eq(sessionsTable.id, sessionId));
     req.log.error({ err: error, sessionId }, "Failed to create Abacate Pay checkout");
     res.status(502).json({
-      error: "Não foi possível iniciar o pagamento. Tenta de novo em instantes.",
+      error: "O pagamento não abriu. Tenta de novo em instantes.",
     });
   }
 });

@@ -17,13 +17,13 @@ const LANDINGS: LandingEntry[] = [
     id: "v1",
     label: "LP1 — Storytelling + Quiz",
     path: "/",
-    description: "Headline de promessa direta, storytelling da dor, quiz de 3 perguntas e 16 baralhos (15 + bônus do dia).",
+        description: "Duas versões da página de entrada para compartilhar e revisar.",
   },
   {
     id: "v2",
     label: "LP2 — Estática (variedade de baralhos)",
     path: "/lp2",
-    description: "Hero + dor + solução + 15 temas + prova social + preço + FAQ, tudo em scroll, sem quiz.",
+        description: "Página em scroll com os temas, avaliações, preço e dúvidas frequentes.",
   },
 ];
 
@@ -95,7 +95,7 @@ export default function Admin() {
         <div className="admin-status-mark admin-status-mark-alert"><ShieldAlert size={26} /></div>
         <p className="admin-eyebrow">área protegida</p>
         <h1>Acesso restrito</h1>
-        <p>Esta área é reservada para a conta administradora. Entre com sua conta para continuar.</p>
+        <p>Esta área é só para a conta administradora. Entre com essa conta para continuar.</p>
         <Link href="/login" className="button button-primary">Ir para o login</Link>
       </main>
     );
@@ -112,7 +112,7 @@ export default function Admin() {
             <h1>Painel Admin</h1>
           </div>
         </div>
-        <p className="admin-header-copy">Links das landing pages ativas, prontos para compartilhar ou revisar.</p>
+        <p className="admin-header-copy">Links das páginas ativas para compartilhar ou revisar.</p>
       </header>
 
       <section className="admin-section" aria-labelledby="landing-pages-title">

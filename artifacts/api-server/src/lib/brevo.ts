@@ -53,12 +53,12 @@ export function buildLoginCodeEmail(code: string) {
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #17121b;">
       <p style="font-size: 14px; color: #6b6070; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Perguntas de Conexão</p>
       <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 24px;">Seu código de acesso</h1>
-      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Use o código abaixo para entrar no seu baralho. Ele expira em 15 minutos.</p>
+       <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Digite este código para abrir seu baralho. Ele deixa de funcionar em 15 minutos.</p>
       <div style="background: #f4f0f8; border-radius: 12px; padding: 24px; text-align: center; letter-spacing: 0.5em; font-size: 32px; font-weight: 600; color: #17121b; margin: 0 0 20px;">${code}</div>
       <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0;">Se você não solicitou este código, pode ignorar este email.</p>
     </div>
   `;
-  const textContent = `Perguntas de Conexão\n\nSeu código de acesso: ${code}\n\nEle expira em 15 minutos.\n\nSe você não solicitou este código, pode ignorar este email.`;
+  const textContent = `Perguntas de Conexão\n\nSeu código para abrir o baralho: ${code}\n\nEle deixa de funcionar em 15 minutos.\n\nSe você não pediu este código, pode ignorar este email.`;
 
   return { subject, htmlContent, textContent };
 }
