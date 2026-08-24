@@ -456,8 +456,132 @@ paths:
                 $ref: "#/components/schemas/AbacatePayWebhookResult"
         "401":
           description: Invalid webhook signature
+  /suggestions:
+    post:
+      operationId: createSuggestion
+      tags: [feedback]
+      summary: Submit a suggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestionInput"
+      responses:
+        "201":
+          description: Suggestion received
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Suggestion"
+        "400":
+          description: Invalid suggestion
+  /reviews:
+    post:
+      operationId: createReview
+      tags: [feedback]
+      summary: Submit a review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "201":
+          description: Review received
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid review
+  /admin/suggestions:
+    get:
+      operationId: listAdminSuggestions
+      tags: [feedback]
+      summary: List submitted suggestions for an administrator
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submitted suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Suggestion"
+                required: [suggestions]
+        "403":
+          description: Access denied
+  /admin/reviews:
+    get:
+      operationId: listAdminReviews
+      tags: [feedback]
+      summary: List submitted reviews for an administrator
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submitted reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Review"
+                required: [reviews]
+        "403":
+          description: Access denied
 components:
   schemas:
+    Suggestion:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: ["string", "null"] }
+        message: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, message, createdAt]
+    SuggestionInput:
+      type: object
+      properties:
+        email: { type: string, maxLength: 200 }
+        message: { type: string, minLength: 1, maxLength: 2000 }
+      required: [message]
+    Review:
+      type: object
+      properties:
+        id: { type: string }
+        displayName: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        rating: { type: number, minimum: 1, maximum: 5 }
+        message: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, displayName, email, rating, message, createdAt]
+    ReviewInput:
+      type: object
+      properties:
+        displayName: { type: string, maxLength: 80 }
+        email: { type: string, maxLength: 200 }
+        rating: { type: number, minimum: 1, maximum: 5 }
+        message: { type: string, minLength: 1, maxLength: 2000 }
+      required: [rating, message]
     HealthStatus:
       type: object
       properties:

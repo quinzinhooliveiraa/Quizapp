@@ -343,3 +343,99 @@ export const ReceiveAbacatePayWebhookResponse = zod.object({
 })
 
 
+/**
+ * @summary Submit a suggestion
+ */
+export const createSuggestionBodyEmailMax = 200;
+
+export const createSuggestionBodyMessageMax = 2000;
+
+
+
+export const CreateSuggestionBody = zod.object({
+  "email": zod.string().max(createSuggestionBodyEmailMax).optional(),
+  "message": zod.string().min(1).max(createSuggestionBodyMessageMax)
+})
+
+export const CreateSuggestionResponse = zod.object({
+  "id": zod.string(),
+  "email": zod.string().nullable(),
+  "message": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Submit a review
+ */
+export const createReviewBodyDisplayNameMax = 80;
+
+export const createReviewBodyEmailMax = 200;
+
+export const createReviewBodyRatingMax = 5;
+
+export const createReviewBodyMessageMax = 2000;
+
+
+
+export const CreateReviewBody = zod.object({
+  "displayName": zod.string().max(createReviewBodyDisplayNameMax).optional(),
+  "email": zod.string().max(createReviewBodyEmailMax).optional(),
+  "rating": zod.number().min(1).max(createReviewBodyRatingMax),
+  "message": zod.string().min(1).max(createReviewBodyMessageMax)
+})
+
+export const createReviewResponseRatingMax = 5;
+
+
+
+export const CreateReviewResponse = zod.object({
+  "id": zod.string(),
+  "displayName": zod.string().nullable(),
+  "email": zod.string().nullable(),
+  "rating": zod.number().min(1).max(createReviewResponseRatingMax),
+  "message": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List submitted suggestions for an administrator
+ */
+export const ListAdminSuggestionsQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const ListAdminSuggestionsResponse = zod.object({
+  "suggestions": zod.array(zod.object({
+  "id": zod.string(),
+  "email": zod.string().nullable(),
+  "message": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary List submitted reviews for an administrator
+ */
+export const ListAdminReviewsQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const listAdminReviewsResponseReviewsItemRatingMax = 5;
+
+
+
+export const ListAdminReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
+  "id": zod.string(),
+  "displayName": zod.string().nullable(),
+  "email": zod.string().nullable(),
+  "rating": zod.number().min(1).max(listAdminReviewsResponseReviewsItemRatingMax),
+  "message": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+

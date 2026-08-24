@@ -5,6 +5,56 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+export interface Suggestion {
+  id: string;
+  /** @nullable */
+  email: string | null;
+  message: string;
+  createdAt: string;
+}
+
+export interface SuggestionInput {
+  /** @maxLength 200 */
+  email?: string;
+  /**
+     * @minLength 1
+     * @maxLength 2000
+     */
+  message: string;
+}
+
+export interface Review {
+  id: string;
+  /** @nullable */
+  displayName: string | null;
+  /** @nullable */
+  email: string | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  message: string;
+  createdAt: string;
+}
+
+export interface ReviewInput {
+  /** @maxLength 80 */
+  displayName?: string;
+  /** @maxLength 200 */
+  email?: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /**
+     * @minLength 1
+     * @maxLength 2000
+     */
+  message: string;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -278,5 +328,21 @@ export type ResetGuestOnboarding200 = {
 
 export type CancelInvite200 = {
   ok: boolean;
+};
+
+export type ListAdminSuggestionsParams = {
+sessionId: string;
+};
+
+export type ListAdminSuggestions200 = {
+  suggestions: Suggestion[];
+};
+
+export type ListAdminReviewsParams = {
+sessionId: string;
+};
+
+export type ListAdminReviews200 = {
+  reviews: Review[];
 };
 

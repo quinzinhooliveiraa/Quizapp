@@ -5,6 +5,7 @@ import authRouter from "./auth";
 import momentsRouter from "./moments";
 import preferencesRouter from "./preferences";
 import adminRouter from "./admin";
+import feedbackRouter from "./feedback";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(authRouter);
 router.use(momentsRouter);
 router.use(preferencesRouter);
 router.use(adminRouter);
+router.use(feedbackRouter);
 
 export default router;

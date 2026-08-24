@@ -2722,6 +2722,8 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .app-bottom-nav button.is-active > * { position: relative; z-index: 1; }
 .app-bottom-nav button:hover { transform: translateY(-1px); }
 .app-nav-feedback { color: rgba(255,255,255,.56); font-size: .72rem; text-decoration: none; transition: color .2s ease; }
+.app-nav-feedback-group { display: flex; gap: .5rem; }
+.app-nav-feedback-group .app-nav-feedback { border: 0; padding: 0; background: transparent; cursor: pointer; font: inherit; }
 .app-nav-feedback:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .nav-dot { width: .38rem; height: .38rem; border-radius: 50%; background: currentColor; opacity: .7; }
 .nav-dot-vibes { border-radius: .14rem; transform: rotate(45deg); }
@@ -2776,6 +2778,13 @@ h1 em, h2 em, blockquote em { color: var(--salmon); font-weight: 400; }
 .adult-theme-mark { width: 3rem; height: 3rem; display: grid; place-items: center; margin-bottom: 1.3rem; border: 1px solid rgba(242,215,166,.45); border-radius: 50%; color: #f2d7a6; background: rgba(242,215,166,.1); }
 .adult-theme-modal .app-secondary-button { margin-top: .6rem; }
 .app-text-input { width: 100%; height: 3.35rem; padding: 0 1rem; border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; outline: none; color: #fff; background: rgba(255,255,255,.06); font: inherit; }
+.app-textarea { width: 100%; min-height: 7rem; padding: 1rem; border: 1px solid rgba(255,255,255,.14); border-radius: .9rem; outline: none; color: #fff; background: rgba(255,255,255,.06); font: inherit; resize: vertical; margin: .25rem 0 .75rem; }
+.app-textarea:focus { border-color: #a98dff; box-shadow: 0 0 0 3px rgba(145,111,239,.14); }
+.app-textarea::placeholder { color: rgba(255,255,255,.35); }
+.review-stars { display: flex; gap: .4rem; margin: 1rem 0 1.2rem; }
+.review-star-button { border: 0; padding: 0; color: rgba(255,255,255,.3); background: transparent; cursor: pointer; transition: color .12s ease, transform .12s ease; }
+.review-star-button:hover { transform: scale(1.08); }
+.review-star-button.is-filled { color: #ffc59e; }
 .app-text-input:focus { border-color: #a98dff; box-shadow: 0 0 0 3px rgba(145,111,239,.14); }
 .app-text-input::placeholder { color: rgba(255,255,255,.35); }
 .app-primary-button, .app-secondary-button { width: 100%; min-height: 3.35rem; display: flex; align-items: center; justify-content: center; gap: .45rem; margin-top: .75rem; border: 0; border-radius: .9rem; color: #fff; background: linear-gradient(110deg, #9b7df6, #7356dc); font-weight: 600; }

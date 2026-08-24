@@ -1,0 +1,83 @@
+import { Router, type IRouter } from "express";
+import crypto from "node:crypto";
+import { desc, eq } from "drizzle-orm";
+import { db, reviewsTable, sessionsTable, suggestionsTable } from "@workspace/db";
+
+const router: IRouter = Router();
+
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function isAdminSession(sessionId?: string): Promise<boolean> {
+  if (!sessionId) return false;
+  const [row] = await db
+    .select({ buyerEmail: sessionsTable.buyerEmail })
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, sessionId))
+    .limit(1);
+  const email = row?.buyerEmail?.trim().toLowerCase();
+  return Boolean(email && getAdminEmails().includes(email));
+}
+
+router.post("/suggestions", async (req, res): Promise<void> => {
+  const body = req.body as { email?: string; message?: string };
+  const message = body.message?.trim().slice(0, 2000) || "";
+  if (!message) {
+    res.status(400).json({ error: "Escreva sua sugestão antes de enviar." });
+    return;
+  }
+  const [suggestion] = await db.insert(suggestionsTable).values({
+    id: crypto.randomUUID(),
+    email: body.email?.trim().slice(0, 200) || null,
+    message,
+  }).returning();
+  res.status(201).json(suggestion);
+});
+
+router.get("/admin/suggestions", async (req, res): Promise<void> => {
+  const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  const rows = await db.select().from(suggestionsTable).orderBy(desc(suggestionsTable.createdAt)).limit(300);
+  res.json({ suggestions: rows });
+});
+
+router.post("/reviews", async (req, res): Promise<void> => {
+  const body = req.body as { displayName?: string; email?: string; rating?: number; message?: string };
+  const rating = Number(body.rating);
+  const message = body.message?.trim().slice(0, 2000) || "";
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    res.status(400).json({ error: "Escolha uma nota de 1 a 5." });
+    return;
+  }
+  if (!message) {
+    res.status(400).json({ error: "Escreva sua avaliação antes de enviar." });
+    return;
+  }
+  const [review] = await db.insert(reviewsTable).values({
+    id: crypto.randomUUID(),
+    displayName: body.displayName?.trim().slice(0, 80) || null,
+    email: body.email?.trim().slice(0, 200) || null,
+    rating,
+    message,
+  }).returning();
+  res.status(201).json(review);
+});
+
+router.get("/admin/reviews", async (req, res): Promise<void> => {
+  const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  const rows = await db.select().from(reviewsTable).orderBy(desc(reviewsTable.createdAt)).limit(300);
+  res.json({ reviews: rows });
+});
+
+export default router;

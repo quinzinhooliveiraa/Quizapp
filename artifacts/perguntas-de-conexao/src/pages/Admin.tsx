@@ -9,6 +9,8 @@ type LandingEntry = {
   path: string;
   description: string;
 };
+type SuggestionEntry = { id: string; email: string | null; message: string; createdAt: string };
+type ReviewEntry = { id: string; displayName: string | null; email: string | null; rating: number; message: string; createdAt: string };
 
 const LANDINGS: LandingEntry[] = [
   {
@@ -36,6 +38,8 @@ function safeGetItem(key: string): string | null {
 export default function Admin() {
   const [status, setStatus] = useState<"checking" | "denied" | "ok">("checking");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<SuggestionEntry[]>([]);
+  const [reviews, setReviews] = useState<ReviewEntry[]>([]);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
@@ -47,7 +51,19 @@ export default function Admin() {
 
     fetch(`${apiBaseUrl}/api/admin/check?sessionId=${encodeURIComponent(sessionId)}`)
       .then((response) => (response.ok ? response.json() : { isAdmin: false }))
-      .then((data: { isAdmin?: boolean }) => setStatus(data.isAdmin ? "ok" : "denied"))
+      .then((data: { isAdmin?: boolean }) => {
+        setStatus(data.isAdmin ? "ok" : "denied");
+        if (data.isAdmin) {
+          fetch(`${apiBaseUrl}/api/admin/suggestions?sessionId=${encodeURIComponent(sessionId)}`)
+            .then((response) => response.ok ? response.json() : { suggestions: [] })
+            .then((data: { suggestions?: SuggestionEntry[] }) => setSuggestions(data.suggestions || []))
+            .catch(() => setSuggestions([]));
+          fetch(`${apiBaseUrl}/api/admin/reviews?sessionId=${encodeURIComponent(sessionId)}`)
+            .then((response) => response.ok ? response.json() : { reviews: [] })
+            .then((data: { reviews?: ReviewEntry[] }) => setReviews(data.reviews || []))
+            .catch(() => setReviews([]));
+        }
+      })
       .catch(() => setStatus("denied"));
   }, []);
 
@@ -128,6 +144,16 @@ export default function Admin() {
           ))}
         </div>
         <p className="admin-footnote">O endereço acima acompanha automaticamente o domínio atual deste navegador.</p>
+      </section>
+
+      <section className="admin-section" aria-labelledby="reviews-title">
+        <div className="admin-section-heading"><div><p className="admin-eyebrow">prova social</p><h2 id="reviews-title">Avaliações</h2></div><span className="admin-count">{reviews.length}</span></div>
+        {reviews.length === 0 ? <p className="admin-footnote">Nenhuma avaliação ainda.</p> : <div className="admin-feedback-list">{reviews.map((entry) => <article key={entry.id} className="admin-feedback-card" data-testid={`card-review-${entry.id}`}><div className="admin-feedback-top"><span className="admin-feedback-stars">{"★".repeat(entry.rating)}{"☆".repeat(5 - entry.rating)}</span><span className="admin-feedback-date">{new Date(entry.createdAt).toLocaleDateString("pt-BR")}</span></div><p className="admin-feedback-message">{entry.message}</p><p className="admin-feedback-meta">{entry.displayName || "Sem nome"}{entry.email ? ` · ${entry.email}` : ""}</p></article>)}</div>}
+      </section>
+
+      <section className="admin-section" aria-labelledby="suggestions-title">
+        <div className="admin-section-heading"><div><p className="admin-eyebrow">ideias</p><h2 id="suggestions-title">Sugestões</h2></div><span className="admin-count">{suggestions.length}</span></div>
+        {suggestions.length === 0 ? <p className="admin-footnote">Nenhuma sugestão ainda.</p> : <div className="admin-feedback-list">{suggestions.map((entry) => <article key={entry.id} className="admin-feedback-card" data-testid={`card-suggestion-${entry.id}`}><div className="admin-feedback-top"><span /><span className="admin-feedback-date">{new Date(entry.createdAt).toLocaleDateString("pt-BR")}</span></div><p className="admin-feedback-message">{entry.message}</p><p className="admin-feedback-meta">{entry.email || "Sem email"}</p></article>)}</div>}
       </section>
     </main>
   );

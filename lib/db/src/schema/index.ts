@@ -58,10 +58,28 @@ export const savedMomentsTable = pgTable("saved_moments", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const suggestionsTable = pgTable("suggestions", {
+  id: text("id").primaryKey(),
+  email: text("email"),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const reviewsTable = pgTable("reviews", {
+  id: text("id").primaryKey(),
+  displayName: text("display_name"),
+  email: text("email"),
+  rating: integer("rating").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const insertSessionSchema = createInsertSchema(sessionsTable);
 export const insertInviteSchema = createInsertSchema(invitesTable);
 export const insertAuthCodeSchema = createInsertSchema(authCodesTable);
 export const insertSavedMomentSchema = createInsertSchema(savedMomentsTable);
+export const insertSuggestionSchema = createInsertSchema(suggestionsTable);
+export const insertReviewSchema = createInsertSchema(reviewsTable);
 
 export type Session = typeof sessionsTable.$inferSelect;
 export type NewSession = typeof sessionsTable.$inferInsert;
@@ -70,3 +88,8 @@ export type NewInvite = typeof invitesTable.$inferInsert;
 export type AuthCode = typeof authCodesTable.$inferSelect;
 export type NewAuthCode = typeof authCodesTable.$inferInsert;
 export type SavedMoment = typeof savedMomentsTable.$inferSelect;
+export type NewSavedMoment = typeof savedMomentsTable.$inferInsert;
+export type Suggestion = typeof suggestionsTable.$inferSelect;
+export type NewSuggestion = typeof suggestionsTable.$inferInsert;
+export type Review = typeof reviewsTable.$inferSelect;
+export type NewReview = typeof reviewsTable.$inferInsert;

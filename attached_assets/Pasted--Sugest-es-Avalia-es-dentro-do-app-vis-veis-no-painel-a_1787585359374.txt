@@ -1,0 +1,517 @@
+# Sugestões + Avaliações dentro do app, visíveis no painel admin
+
+**Objetivo:** trocar o link "Sugestões" (que hoje só abre o email) por um formulário de verdade dentro do app, que salva no banco — com campo de email pra você poder responder depois. Além disso, criar um segundo formulário de "Avaliação" onde a pessoa dá uma nota (1 a 5 estrelas) e escreve um depoimento — isso vira a base real pra você escolher, mais pra frente, quais depoimentos verdadeiros usar nas landing pages (com permissão da pessoa, é claro). No painel admin, duas novas seções mostram tudo que chegou.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Banco de dados — novas tabelas — `lib/db/src/schema/index.ts`
+
+Adicionar, junto com as outras tabelas (`export const savedMomentsTable = ...`):
+
+```ts
+export const suggestionsTable = pgTable("suggestions", {
+  id: text("id").primaryKey(),
+  email: text("email"),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const reviewsTable = pgTable("reviews", {
+  id: text("id").primaryKey(),
+  displayName: text("display_name"),
+  email: text("email"),
+  rating: integer("rating").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+Achar, logo abaixo, o bloco de schemas de insert e tipos:
+
+```ts
+export const insertSessionSchema = createInsertSchema(sessionsTable);
+export const insertInviteSchema = createInsertSchema(invitesTable);
+export const insertAuthCodeSchema = createInsertSchema(authCodesTable);
+export const insertSavedMomentSchema = createInsertSchema(savedMomentsTable);
+```
+
+Adicionar:
+
+```ts
+export const insertSuggestionSchema = createInsertSchema(suggestionsTable);
+export const insertReviewSchema = createInsertSchema(reviewsTable);
+```
+
+E, junto com os `export type`s existentes (`export type SavedMoment = ...`), adicionar:
+
+```ts
+export type Suggestion = typeof suggestionsTable.$inferSelect;
+export type NewSuggestion = typeof suggestionsTable.$inferInsert;
+export type Review = typeof reviewsTable.$inferSelect;
+export type NewReview = typeof reviewsTable.$inferInsert;
+```
+
+Isso já fica disponível via `@workspace/db` automaticamente, porque `src/index.ts` do pacote já faz `export * from "./schema"`.
+
+---
+
+## 2. Backend — novo arquivo de rotas — `artifacts/api-server/src/routes/feedback.ts`
+
+Criar esse arquivo novo:
+
+```ts
+import { Router, type IRouter } from "express";
+import crypto from "node:crypto";
+import { desc, eq } from "drizzle-orm";
+import { db, sessionsTable, suggestionsTable, reviewsTable } from "@workspace/db";
+
+const router: IRouter = Router();
+
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function isAdminSession(sessionId?: string): Promise<boolean> {
+  if (!sessionId) return false;
+  const [row] = await db
+    .select({ buyerEmail: sessionsTable.buyerEmail })
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, sessionId))
+    .limit(1);
+  const email = row?.buyerEmail?.trim().toLowerCase();
+  return Boolean(email && getAdminEmails().includes(email));
+}
+
+// --- Sugestões ---
+
+router.post("/suggestions", async (req, res): Promise<void> => {
+  const body = req.body as { email?: string; message?: string };
+  const message = body.message?.trim().slice(0, 2000) || "";
+  if (!message) {
+    res.status(400).json({ error: "Escreva sua sugestão antes de enviar." });
+    return;
+  }
+  const id = crypto.randomUUID();
+  await db.insert(suggestionsTable).values({
+    id,
+    email: body.email?.trim().slice(0, 200) || null,
+    message,
+  });
+  res.status(201).json({ id, ok: true });
+});
+
+router.get("/admin/suggestions", async (req, res): Promise<void> => {
+  const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  const rows = await db
+    .select()
+    .from(suggestionsTable)
+    .orderBy(desc(suggestionsTable.createdAt))
+    .limit(300);
+  res.json({ suggestions: rows });
+});
+
+// --- Avaliações ---
+
+router.post("/reviews", async (req, res): Promise<void> => {
+  const body = req.body as { displayName?: string; email?: string; rating?: number; message?: string };
+  const rating = Number(body.rating);
+  const message = body.message?.trim().slice(0, 2000) || "";
+  if (!rating || rating < 1 || rating > 5) {
+    res.status(400).json({ error: "Escolha uma nota de 1 a 5." });
+    return;
+  }
+  if (!message) {
+    res.status(400).json({ error: "Escreva sua avaliação antes de enviar." });
+    return;
+  }
+  const id = crypto.randomUUID();
+  await db.insert(reviewsTable).values({
+    id,
+    displayName: body.displayName?.trim().slice(0, 80) || null,
+    email: body.email?.trim().slice(0, 200) || null,
+    rating,
+    message,
+  });
+  res.status(201).json({ id, ok: true });
+});
+
+router.get("/admin/reviews", async (req, res): Promise<void> => {
+  const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  const rows = await db
+    .select()
+    .from(reviewsTable)
+    .orderBy(desc(reviewsTable.createdAt))
+    .limit(300);
+  res.json({ reviews: rows });
+});
+
+export default router;
+```
+
+Registrar em `artifacts/api-server/src/routes/index.ts`. Achar:
+
+```ts
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import connectionRouter from "./connection";
+import authRouter from "./auth";
+import momentsRouter from "./moments";
+import preferencesRouter from "./preferences";
+import adminRouter from "./admin";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(connectionRouter);
+router.use(authRouter);
+router.use(momentsRouter);
+router.use(preferencesRouter);
+router.use(adminRouter);
+
+export default router;
+```
+
+Substituir por:
+
+```ts
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import connectionRouter from "./connection";
+import authRouter from "./auth";
+import momentsRouter from "./moments";
+import preferencesRouter from "./preferences";
+import adminRouter from "./admin";
+import feedbackRouter from "./feedback";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(connectionRouter);
+router.use(authRouter);
+router.use(momentsRouter);
+router.use(preferencesRouter);
+router.use(adminRouter);
+router.use(feedbackRouter);
+
+export default router;
+```
+
+---
+
+## 3. Frontend — trocar o link "Sugestões" por um botão que abre um formulário — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 3.1. Estados novos
+
+Dentro de `function AppExperienceReference() { ... }`, perto dos outros `useState` de modais (por exemplo perto de `settingsOpen`), adicionar:
+
+```tsx
+const [suggestionOpen, setSuggestionOpen] = useState(false);
+const [suggestionEmail, setSuggestionEmail] = useState('');
+const [suggestionMessage, setSuggestionMessage] = useState('');
+const [suggestionStatus, setSuggestionStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+const [reviewOpen, setReviewOpen] = useState(false);
+const [reviewRating, setReviewRating] = useState(0);
+const [reviewName, setReviewName] = useState('');
+const [reviewEmail, setReviewEmail] = useState('');
+const [reviewMessage, setReviewMessage] = useState('');
+const [reviewStatus, setReviewStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+const sendSuggestion = async () => {
+  if (!suggestionMessage.trim()) return;
+  setSuggestionStatus('sending');
+  try {
+    const response = await fetch(apiUrl('/api/suggestions'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: suggestionEmail.trim() || undefined, message: suggestionMessage.trim() }),
+    });
+    if (!response.ok) throw new Error('failed');
+    setSuggestionStatus('sent');
+    setSuggestionMessage('');
+  } catch {
+    setSuggestionStatus('error');
+  }
+};
+
+const sendReview = async () => {
+  if (!reviewRating || !reviewMessage.trim()) return;
+  setReviewStatus('sending');
+  try {
+    const response = await fetch(apiUrl('/api/reviews'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rating: reviewRating,
+        message: reviewMessage.trim(),
+        displayName: reviewName.trim() || undefined,
+        email: reviewEmail.trim() || undefined,
+      }),
+    });
+    if (!response.ok) throw new Error('failed');
+    setReviewStatus('sent');
+    setReviewMessage('');
+  } catch {
+    setReviewStatus('error');
+  }
+};
+```
+
+**Nota:** se `apiUrl` não for o helper usado nesse componente pra montar a URL da API (confira como as outras chamadas fetch desse mesmo componente montam a URL, por exemplo a chamada de `/api/admin/check` já existente), use o mesmo padrão em vez de `apiUrl(...)`.
+
+### 3.2. Trocar o link do rodapé do menu
+
+Achar:
+
+```tsx
+<div className="app-nav-footer"><span className="app-nav-status"><span /> pronto para a próxima conversa</span><a className="app-nav-feedback" href="mailto:quinzinhooliveiraa@gmail.com?subject=Sugestão%20-%20Perguntas%20de%20Conexão" data-testid="link-feedback">Sugestões</a><span className="app-nav-version">PC · 01</span></div>
+```
+
+Substituir por:
+
+```tsx
+<div className="app-nav-footer"><span className="app-nav-status"><span /> pronto para a próxima conversa</span><div className="app-nav-feedback-group"><button type="button" className="app-nav-feedback" onClick={() => setSuggestionOpen(true)} data-testid="button-open-suggestion">Sugestões</button><button type="button" className="app-nav-feedback" onClick={() => setReviewOpen(true)} data-testid="button-open-review">Avaliar</button></div><span className="app-nav-version">PC · 01</span></div>
+```
+
+### 3.3. Adicionar os dois modais
+
+Achar o fechamento do modal de settings (o `</div></div>}` logo depois do botão "Sair da conta", que fecha o bloco `{settingsOpen && <div className="app-modal-backdrop">...}`). Logo DEPOIS desse bloco, adicionar os dois modais novos:
+
+```tsx
+{suggestionOpen && <div className="app-modal-backdrop"><div className="app-modal"><button className="app-modal-close" onClick={() => { setSuggestionOpen(false); setSuggestionStatus('idle'); }} aria-label="Fechar sugestões" data-testid="button-close-suggestion"><X size={18} /></button>
+  {suggestionStatus === 'sent' ? <>
+    <p className="modal-eyebrow">obrigado</p>
+    <h2>Sua sugestão<br /><em>chegou até nós.</em></h2>
+    <p>Lemos todas, prometido.</p>
+    <button onClick={() => { setSuggestionOpen(false); setSuggestionStatus('idle'); }} className="app-primary-button" data-testid="button-close-suggestion-sent">Fechar</button>
+  </> : <>
+    <p className="modal-eyebrow">ideias e sugestões</p>
+    <h2>O que podemos<br /><em>melhorar?</em></h2>
+    <p>Conta pra gente o que faltou, o que travou, ou o que você adoraria ver aqui.</p>
+    <textarea value={suggestionMessage} onChange={e => setSuggestionMessage(e.target.value)} placeholder="Sua sugestão" className="app-textarea" rows={4} data-testid="input-suggestion-message" />
+    <input type="email" value={suggestionEmail} onChange={e => setSuggestionEmail(e.target.value)} placeholder="Seu email (opcional, pra gente poder responder)" className="app-text-input" data-testid="input-suggestion-email" />
+    {suggestionStatus === 'error' && <p className="checkout-error">Não deu pra enviar agora. Tenta de novo em instantes.</p>}
+    <button onClick={() => void sendSuggestion()} disabled={suggestionStatus === 'sending' || !suggestionMessage.trim()} className="app-primary-button" data-testid="button-send-suggestion">{suggestionStatus === 'sending' ? 'Enviando…' : 'Enviar sugestão'}</button>
+  </>}
+</div></div>}
+
+{reviewOpen && <div className="app-modal-backdrop"><div className="app-modal"><button className="app-modal-close" onClick={() => { setReviewOpen(false); setReviewStatus('idle'); }} aria-label="Fechar avaliação" data-testid="button-close-review"><X size={18} /></button>
+  {reviewStatus === 'sent' ? <>
+    <p className="modal-eyebrow">muito obrigado</p>
+    <h2>Sua avaliação<br /><em>significa muito.</em></h2>
+    <p>Pode ser que a gente entre em contato pra pedir permissão de usar seu depoimento na página de vendas.</p>
+    <button onClick={() => { setReviewOpen(false); setReviewStatus('idle'); }} className="app-primary-button" data-testid="button-close-review-sent">Fechar</button>
+  </> : <>
+    <p className="modal-eyebrow">sua opinião</p>
+    <h2>Como está sendo<br /><em>sua experiência?</em></h2>
+    <div className="review-stars" role="radiogroup" aria-label="Nota de 1 a 5">
+      {[1, 2, 3, 4, 5].map(value => (
+        <button key={value} type="button" role="radio" aria-checked={reviewRating === value} onClick={() => setReviewRating(value)} className={`review-star-button ${value <= reviewRating ? 'is-filled' : ''}`} data-testid={`button-review-star-${value}`}>
+          <Star size={26} fill={value <= reviewRating ? 'currentColor' : 'none'} />
+        </button>
+      ))}
+    </div>
+    <textarea value={reviewMessage} onChange={e => setReviewMessage(e.target.value)} placeholder="Conta como foi usar o Perguntas de Conexão" className="app-textarea" rows={4} data-testid="input-review-message" />
+    <input value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="Seu nome (opcional)" className="app-text-input" data-testid="input-review-name" />
+    <input type="email" value={reviewEmail} onChange={e => setReviewEmail(e.target.value)} placeholder="Seu email (opcional)" className="app-text-input" data-testid="input-review-email" />
+    {reviewStatus === 'error' && <p className="checkout-error">Não deu pra enviar agora. Tenta de novo em instantes.</p>}
+    <button onClick={() => void sendReview()} disabled={reviewStatus === 'sending' || !reviewRating || !reviewMessage.trim()} className="app-primary-button" data-testid="button-send-review">{reviewStatus === 'sending' ? 'Enviando…' : 'Enviar avaliação'}</button>
+  </>}
+</div></div>}
+```
+
+**Confirmar import do `Star`** no topo do arquivo — já deve existir (é usado no botão de favoritar pergunta). Se `X` e `ChevronRight` já estão importados também (já são usados no mesmo componente), não precisa adicionar nada nos imports.
+
+---
+
+## 4. CSS — no final de `artifacts/perguntas-de-conexao/src/index.css`
+
+```css
+.app-nav-feedback-group { display: flex; gap: .5rem; }
+.review-stars { display: flex; gap: .4rem; margin: 1rem 0 1.2rem; }
+.review-star-button {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: rgba(255,255,255,.3); transition: color .12s ease, transform .12s ease;
+}
+.review-star-button:hover { transform: scale(1.08); }
+.review-star-button.is-filled { color: var(--salmon, #ffc59e); }
+.app-textarea {
+  width: 100%; background: transparent; border: 1px solid #cdb8ad; border-radius: 6px;
+  padding: 12px; outline: none; font: 13px var(--app-font-sans); color: var(--ink);
+  margin: 4px 0 12px; resize: vertical;
+}
+.app-textarea:focus { border-color: var(--salmon); }
+```
+
+---
+
+## 5. Painel Admin — duas novas seções — `artifacts/perguntas-de-conexao/src/pages/Admin.tsx`
+
+### 5.1. Novo estado e busca de dados
+
+Achar:
+
+```tsx
+export default function Admin() {
+  const [status, setStatus] = useState<"checking" | "denied" | "ok">("checking");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  useEffect(() => {
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId) {
+      setStatus("denied");
+      return;
+    }
+
+    fetch(`${apiBaseUrl}/api/admin/check?sessionId=${encodeURIComponent(sessionId)}`)
+      .then((response) => (response.ok ? response.json() : { isAdmin: false }))
+      .then((data: { isAdmin?: boolean }) => setStatus(data.isAdmin ? "ok" : "denied"))
+      .catch(() => setStatus("denied"));
+  }, []);
+```
+
+Substituir por (adiciona os tipos, estados e a busca das sugestões/avaliações assim que o acesso é confirmado):
+
+```tsx
+type SuggestionEntry = { id: string; email: string | null; message: string; createdAt: string };
+type ReviewEntry = { id: string; displayName: string | null; email: string | null; rating: number; message: string; createdAt: string };
+
+export default function Admin() {
+  const [status, setStatus] = useState<"checking" | "denied" | "ok">("checking");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<SuggestionEntry[]>([]);
+  const [reviews, setReviews] = useState<ReviewEntry[]>([]);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  useEffect(() => {
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId) {
+      setStatus("denied");
+      return;
+    }
+
+    fetch(`${apiBaseUrl}/api/admin/check?sessionId=${encodeURIComponent(sessionId)}`)
+      .then((response) => (response.ok ? response.json() : { isAdmin: false }))
+      .then((data: { isAdmin?: boolean }) => {
+        setStatus(data.isAdmin ? "ok" : "denied");
+        if (data.isAdmin) {
+          fetch(`${apiBaseUrl}/api/admin/suggestions?sessionId=${encodeURIComponent(sessionId)}`)
+            .then((r) => (r.ok ? r.json() : { suggestions: [] }))
+            .then((d: { suggestions?: SuggestionEntry[] }) => setSuggestions(d.suggestions || []))
+            .catch(() => setSuggestions([]));
+          fetch(`${apiBaseUrl}/api/admin/reviews?sessionId=${encodeURIComponent(sessionId)}`)
+            .then((r) => (r.ok ? r.json() : { reviews: [] }))
+            .then((d: { reviews?: ReviewEntry[] }) => setReviews(d.reviews || []))
+            .catch(() => setReviews([]));
+        }
+      })
+      .catch(() => setStatus("denied"));
+  }, []);
+```
+
+### 5.2. Duas seções novas no JSX
+
+Achar o fechamento da seção de landing pages:
+
+```tsx
+        <p className="admin-footnote">O endereço acima acompanha automaticamente o domínio atual deste navegador.</p>
+      </section>
+    </main>
+  );
+}
+```
+
+Substituir por (adiciona as duas seções novas antes de fechar `<main>`):
+
+```tsx
+        <p className="admin-footnote">O endereço acima acompanha automaticamente o domínio atual deste navegador.</p>
+      </section>
+
+      <section className="admin-section" aria-labelledby="reviews-title">
+        <div className="admin-section-heading">
+          <div>
+            <p className="admin-eyebrow">prova social</p>
+            <h2 id="reviews-title">Avaliações</h2>
+          </div>
+          <span className="admin-count">{reviews.length}</span>
+        </div>
+        {reviews.length === 0 ? <p className="admin-footnote">Nenhuma avaliação ainda.</p> : (
+          <div className="admin-feedback-list">
+            {reviews.map((entry) => (
+              <article key={entry.id} className="admin-feedback-card" data-testid={`card-review-${entry.id}`}>
+                <div className="admin-feedback-top">
+                  <span className="admin-feedback-stars">{"★".repeat(entry.rating)}{"☆".repeat(5 - entry.rating)}</span>
+                  <span className="admin-feedback-date">{new Date(entry.createdAt).toLocaleDateString("pt-BR")}</span>
+                </div>
+                <p className="admin-feedback-message">{entry.message}</p>
+                <p className="admin-feedback-meta">{entry.displayName || "Sem nome"} {entry.email ? `· ${entry.email}` : ""}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="admin-section" aria-labelledby="suggestions-title">
+        <div className="admin-section-heading">
+          <div>
+            <p className="admin-eyebrow">ideias</p>
+            <h2 id="suggestions-title">Sugestões</h2>
+          </div>
+          <span className="admin-count">{suggestions.length}</span>
+        </div>
+        {suggestions.length === 0 ? <p className="admin-footnote">Nenhuma sugestão ainda.</p> : (
+          <div className="admin-feedback-list">
+            {suggestions.map((entry) => (
+              <article key={entry.id} className="admin-feedback-card" data-testid={`card-suggestion-${entry.id}`}>
+                <div className="admin-feedback-top">
+                  <span className="admin-feedback-date">{new Date(entry.createdAt).toLocaleDateString("pt-BR")}</span>
+                </div>
+                <p className="admin-feedback-message">{entry.message}</p>
+                <p className="admin-feedback-meta">{entry.email || "Sem email"}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+```
+
+### 5.3. CSS do painel — no final de `index.css`
+
+```css
+.admin-feedback-list { display: flex; flex-direction: column; gap: 10px; }
+.admin-feedback-card {
+  border: 1px solid #d8c4b9; border-radius: 8px; padding: 14px 16px; background: #fffaf5;
+}
+.admin-feedback-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.admin-feedback-stars { color: var(--salmon, #d98a4a); letter-spacing: 2px; }
+.admin-feedback-date { font-size: 11px; color: #a3897f; }
+.admin-feedback-message { margin: 0 0 6px; font-size: 13px; line-height: 1.5; color: var(--ink); }
+.admin-feedback-meta { margin: 0; font-size: 11px; color: #a3897f; }
+```
+
+---
+
+## Verificação
+
+1. Dentro do app (`/app`), clicar em "Sugestões" no menu lateral → abre modal, escrever algo, enviar → mensagem de agradecimento aparece.
+2. Clicar em "Avaliar" → escolher uma nota de estrelas, escrever um texto, enviar → mensagem de agradecimento aparece (mencionando que pode ser usado como depoimento, com permissão).
+3. Entrar em `/admin` com a conta admin → aparecem as duas novas seções, "Avaliações" e "Sugestões", com o que foi enviado no passo 1 e 2.
+4. Entrar em `/admin` com outra conta → continua vendo só a tela de "Acesso restrito", sem essas seções.
+5. Testar submeter sem preencher nada → botão continua desabilitado até ter nota/mensagem preenchida.
