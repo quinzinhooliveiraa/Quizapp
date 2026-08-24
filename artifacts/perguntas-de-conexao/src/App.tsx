@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/reac
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { SplashScreen } from '@/components/splash-screen';
 import {
   useListQuestionThemes,
   getListQuestionThemesQueryKey,
@@ -2337,5 +2338,5 @@ function ProtectedExperienceRoute() {
    return <RoutedErrorBoundary><Switch><Route path="/"><Home variant="v2" /></Route><Route path="/lp2"><Home /></Route><Route path="/onboarding" component={Onboarding} /><Route path="/login" component={Login} /><Route path="/play" component={Play} /><Route path="/app" component={ProtectedExperienceRoute} /><Route path="/invite/:token" component={InvitePage} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 function RoutedErrorBoundary({ children }: { children: ReactNode }) { const [location] = useLocation(); return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>; }
-function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>; }
+function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /><SplashScreen /></TooltipProvider></QueryClientProvider>; }
 export default App;
