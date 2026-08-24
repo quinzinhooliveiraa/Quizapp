@@ -348,6 +348,14 @@
   .lp-mockup-photo-mac { width: 100%; }
   .lp-mockup-photo-phone { width: 34%; right: 0; bottom: 1%; }
 }
+
+/* Keep the benefit icons centered inside their cards. */
+.lp-solution-pillars .lp-pillar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
 @media (min-width: 701px) { .home-login-link { display: none; } }
 
 /* LIGHT MODE */
