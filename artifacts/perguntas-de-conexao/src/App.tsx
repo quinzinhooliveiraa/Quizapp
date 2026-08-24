@@ -558,23 +558,27 @@ const landingTestimonials: LandingTestimonial[] = [
 function TestimonialCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const activeTestimonial = landingTestimonials[activeIndex];
 
   useEffect(() => {
     if (!autoPlayEnabled) return;
     const interval = window.setInterval(() => {
       setActiveIndex(current => (current + 1) % landingTestimonials.length);
+      setIsExpanded(false);
     }, 7000);
     return () => window.clearInterval(interval);
   }, [autoPlayEnabled]);
 
   const move = (direction: -1 | 1) => {
     setAutoPlayEnabled(false);
+    setIsExpanded(false);
     setActiveIndex(current => (current + direction + landingTestimonials.length) % landingTestimonials.length);
   };
 
   const selectTestimonial = (index: number) => {
     setAutoPlayEnabled(false);
+    setIsExpanded(false);
     setActiveIndex(index);
   };
 
@@ -586,7 +590,17 @@ function TestimonialCarousel() {
         <button type="button" className="lp-testimonial-arrow" onClick={() => move(-1)} aria-label="Depoimento anterior" data-testid="button-testimonial-previous"><ChevronLeft size={20} /></button>
         <blockquote className="lp-testimonial lp-testimonial-active" aria-live="polite">
           <div className="lp-testimonial-stars" aria-label="5 de 5 estrelas">★★★★★</div>
-          <p>“{activeTestimonial.quote}”</p>
+          <p id="active-testimonial-quote" className={`lp-testimonial-quote ${isExpanded ? 'is-expanded' : ''}`}>“{activeTestimonial.quote}”</p>
+          <button
+            type="button"
+            className="lp-testimonial-more"
+            onClick={() => { setAutoPlayEnabled(false); setIsExpanded(current => !current); }}
+            aria-expanded={isExpanded}
+            aria-controls="active-testimonial-quote"
+            data-testid="button-testimonial-more"
+          >
+            {isExpanded ? 'Ver menos' : 'Ver mais'}
+          </button>
           <footer>{activeTestimonial.name && <>— {activeTestimonial.name} </>}<span>{activeTestimonial.detail}</span></footer>
         </blockquote>
         <button type="button" className="lp-testimonial-arrow" onClick={() => move(1)} aria-label="Próximo depoimento" data-testid="button-testimonial-next"><ChevronRight size={20} /></button>

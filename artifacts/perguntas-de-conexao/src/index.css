@@ -391,6 +391,30 @@
   font-size: clamp(1rem, 1.5vw, 1.18rem);
   line-height: 1.65;
 }
+.lp-testimonial-active .lp-testimonial-quote {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.lp-testimonial-active .lp-testimonial-quote.is-expanded {
+  display: block;
+  overflow: visible;
+}
+.lp-testimonial-more {
+  align-self: flex-start;
+  margin: -.45rem 0 1.1rem;
+  padding: 0;
+  color: #c4acff;
+  background: transparent;
+  border: 0;
+  font-size: .82rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.lp-testimonial-more:hover { color: #f9f8fb; }
 .lp-testimonial-active .lp-testimonial-stars {
   margin-bottom: .8rem;
   color: #ffc59e;
