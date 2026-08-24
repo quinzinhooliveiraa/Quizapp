@@ -511,6 +511,88 @@ function QuestionCarouselSection() {
   </section>;
 }
 
+const landingTestimonials = [
+  {
+    quote: 'No nosso aniversário de um ano, viajamos para uma cabana no interior. A gente chegou a passar 20 minutos em uma única pergunta, porque sempre acabava percebendo o quanto ainda não sabíamos um sobre o outro. Foi uma conversa simples, mas alguma coisa mudou naquele momento.',
+    name: 'Cody',
+    detail: '1 ano juntos',
+  },
+  {
+    quote: 'Estamos casados há 23 anos e achei que já conhecíamos praticamente tudo um sobre o outro. Algumas perguntas passamos rapidamente, mas outras fizeram a gente conversar sobre coisas que nunca tínhamos compartilhado antes. No final, os dois ganham. Toda vez.',
+    name: 'Um casal',
+    detail: '23 anos de casamento',
+  },
+  {
+    quote: 'Pouco antes de eu me mudar para outra cidade, levamos o baralho para um jantar. Uma pergunta abriu uma conversa que nós dois estávamos evitando. Passamos mais de uma hora falando abertamente sobre o que sentíamos — e no fim daquela conversa eu pedi ela em namoro.',
+    name: 'Um casal',
+    detail: 'Começo de relacionamento',
+  },
+  {
+    quote: 'Eu e meu parceiro já tínhamos conversas bem profundas. Duas rodadas depois, estávamos compartilhando coisas que nunca tínhamos contado para ninguém. Mesmo depois de tanto tempo conversando, ainda existiam partes nossas que o outro nunca tinha visto.',
+    name: 'Um casal',
+    detail: '1 ano de relacionamento',
+  },
+  {
+    quote: 'Tivemos momentos leves, perguntas que fizeram a gente rir e outras que nos tiraram da zona de conforto. E acho que é justamente por isso que funcionou tão bem: descobrimos coisas que estavam ali, mas que nunca tínhamos parado para perguntar.',
+    name: 'Um casal',
+    detail: 'Uma noite diferente',
+  },
+  {
+    quote: 'Nós nos conhecemos há 26 anos e hoje vivemos um relacionamento à distância. Nossas chamadas começaram a ficar sem assunto, então começamos a escolher perguntas antes de desligar. Virou um ritual e uma forma muito especial de diminuir a distância.',
+    name: 'Um casal',
+    detail: '26 anos de história',
+  },
+  {
+    quote: 'Na primeira vez que jogamos, chegamos à terceira rodada e já estávamos chorando. Não parece que você está jogando um jogo. Parece que alguém finalmente te deu uma razão para parar tudo e perguntar: “Me conta uma coisa que eu ainda não sei sobre você.”',
+    name: 'Um casal',
+    detail: 'Uma reconexão',
+  },
+];
+
+function TestimonialCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeTestimonial = landingTestimonials[activeIndex];
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveIndex(current => (current + 1) % landingTestimonials.length);
+    }, 7000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const move = (direction: -1 | 1) => {
+    setActiveIndex(current => (current + direction + landingTestimonials.length) % landingTestimonials.length);
+  };
+
+  return <section className="lp-social">
+    <div className="lp-container">
+      <p className="lp-eyebrow lp-eyebrow-center">o que dizem</p>
+      <h2 className="lp-h2">Casais que já usaram<br /><em>e não largam mais.</em></h2>
+      <div className="lp-testimonial-carousel" aria-roledescription="carrossel" aria-label="Depoimentos de casais">
+        <button type="button" className="lp-testimonial-arrow" onClick={() => move(-1)} aria-label="Depoimento anterior" data-testid="button-testimonial-previous"><ChevronLeft size={20} /></button>
+        <blockquote className="lp-testimonial lp-testimonial-active" aria-live="polite">
+          <p>“{activeTestimonial.quote}”</p>
+          <footer>— {activeTestimonial.name} <span>{activeTestimonial.detail}</span></footer>
+        </blockquote>
+        <button type="button" className="lp-testimonial-arrow" onClick={() => move(1)} aria-label="Próximo depoimento" data-testid="button-testimonial-next"><ChevronRight size={20} /></button>
+      </div>
+      <div className="lp-testimonial-dots" role="tablist" aria-label="Escolher depoimento">
+        {landingTestimonials.map((testimonial, index) => <button
+          key={`${testimonial.name}-${testimonial.detail}`}
+          type="button"
+          className={`lp-testimonial-dot ${index === activeIndex ? 'is-active' : ''}`}
+          onClick={() => setActiveIndex(index)}
+          role="tab"
+          aria-selected={index === activeIndex}
+          aria-label={`Ver depoimento ${index + 1}`}
+          data-testid={`button-testimonial-dot-${index + 1}`}
+        />)}
+      </div>
+      <p className="lp-tiny-note">Histórias de casais que encontraram uma nova pergunta para começar.</p>
+    </div>
+  </section>;
+}
+
 function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
   const themes = [
     ['Porto Seguro', 'As conversas que parecem casa.', '31 cartas'],
@@ -584,7 +666,7 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
       <p className="lp-themes-note"><strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos — o acesso é vitalício.</p>
     </div></section>
     <section className="lp-how" id="lp2-como-funciona"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">como funciona</p><h2 className="lp-h2">Três passos. <em>Um ritual novo.</em></h2><div className="lp-how-steps"><div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham um baralho</strong><p>15 temas fixos + o bônus do dia, montado pelo que vocês estão sentindo.</p></div><div className="lp-how-step"><span className="lp-how-num">02</span><strong>Abram uma carta</strong><p>Leiam em voz alta, sem pressa, e deixem a pergunta agir.</p></div><div className="lp-how-step"><span className="lp-how-num">03</span><strong>Conversem de verdade</strong><p>Uma pergunta por vez. O resto acontece entre vocês.</p></div></div></div></section>
-    <section className="lp-social"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">o que dizem</p><h2 className="lp-h2">Casais que já usaram<br /><em>e não largam mais.</em></h2><div className="lp-social-grid"><blockquote className="lp-testimonial"><p>"Descobri coisas do meu marido em uma noite que 8 anos de casamento não tinham me mostrado."</p><footer>— Marina L. · Belo Horizonte</footer></blockquote><blockquote className="lp-testimonial"><p>"A gente fez a distância desaparecer por 40 minutos. Valeu mais que qualquer presente."</p><footer>— Rafael C. · Curitiba</footer></blockquote><blockquote className="lp-testimonial"><p>"Virou nosso ritual de sexta à noite. Sério."</p><footer>— Julia M. · São Paulo</footer></blockquote></div><p className="lp-tiny-note">Depoimentos de casais em fase de teste.</p></div></section>
+     <TestimonialCarousel />
     <section className="lp-price" id="lp2-precos"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p><h2 className="lp-h2">A próxima boa conversa<br /><em>pode ser hoje à noite.</em></h2><div className="lp-price-card"><div className="lp-price-badge">Oferta de lançamento</div><div className="lp-price-main"><span className="lp-price-old">De <s>R$ 97,00</s></span><div className="lp-price-value"><span className="lp-price-currency">R$</span><span className="lp-price-big">47</span><span className="lp-price-cents">,90</span></div><span className="lp-price-installments">à vista <strong>ou</strong> 5x de R$ 9,58</span></div><ul className="lp-price-includes"><li>✓ 445+ perguntas em 16 baralhos temáticos</li><li>✓ Baralho personalizado do dia, sempre novo</li><li>✓ Acesso pra <strong>2 pessoas</strong> (você + convite)</li><li>✓ Salas online sincronizadas, mesmo à distância</li><li>✓ Novos baralhos incluídos, pra sempre</li><li>✓ Sem mensalidade. Paga uma vez.</li></ul><button onClick={onBuy} className="lp-cta-primary lp-cta-full" data-testid="button-price-cta-v2">Começar agora por R$ 47,90 <ArrowRight size={18} /></button><div className="lp-guarantee"><div className="lp-guarantee-seal">✦</div><div><strong>Garantia incondicional de 7 dias.</strong><p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama, sem perguntas.</p></div></div></div></div></section>
     <section className="lp-faq" id="lp2-faq"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">dúvidas frequentes</p><h2 className="lp-h2">Ainda em dúvida?</h2><div className="lp-faq-list">{[['Precisa instalar algum aplicativo?', 'Não. É 100% online, roda no navegador do celular ou do computador.'], ['E se meu parceiro achar estranho?', 'É o mais comum. Por isso os baralhos começam leves — você escolhe o clima. Ninguém é obrigado a abrir nada antes de querer.'], ['Funciona à distância?', 'Sim. Vocês criam uma sala online e jogam sincronizados, cada um no seu aparelho.'], ['É vitalício mesmo?', 'Sim. Paga uma vez, usa pra sempre — incluindo os baralhos novos que entram depois.'], ['Como recebo depois de pagar?', 'Na hora. O pagamento é via Pix e o acesso abre automaticamente após a confirmação.']].map(([question, answer]) => <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
     <section className="lp-final-cta"><div className="lp-container lp-final-cta-inner"><h2 className="lp-h2">Vocês não precisam se afastar mais.<br /><em>Só de uma pergunta pra recomeçar.</em></h2><p>Comece hoje por R$ 47,90, com acesso vitalício e 7 dias de garantia.</p><button onClick={onBuy} className="lp-cta-primary lp-cta-big" data-testid="button-final-cta-v2">Quero começar agora <ArrowRight size={20} /></button></div></section>
@@ -828,7 +910,7 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
        <section className="lp-quiz-section" id="lp-quiz"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">experimente</p><h2 className="lp-h2">Ver 3 perguntas de verdade,<br /><em>feitas pra vocês.</em></h2><LandingQuiz onFinish={() => void checkout('couple')} /></div></section>
        <section className="lp-how" id="como-funciona"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">como funciona</p><h2 className="lp-h2">Três passos, um ritual novo.</h2><div className="lp-how-steps"><div className="lp-how-step"><span className="lp-how-num">01</span><strong>Escolham juntos o tema da noite</strong><p>Comecem por Porto Seguro para aquecer ou Livro Aberto para ir mais fundo.</p></div><div className="lp-how-step"><span className="lp-how-num">02</span><strong>Uma pergunta por vez</strong><p>Vire a carta, leia em voz alta, escute a resposta. Sem pressa.</p></div><div className="lp-how-step"><span className="lp-how-num">03</span><strong>Salvem os momentos que importam</strong><p>Guarde as respostas que marcaram vocês e volte quando quiser.</p></div></div></div></section>
        <section className="lp-themes" id="pacotes"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p><h2 className="lp-h2">15 baralhos temáticos,<br /><em>pra cada momento de vocês.</em></h2><div className="lp-themes-grid">{[['Porto Seguro','As conversas que parecem casa.',31],['Livro Aberto','Sem filtro, cara a cara.',31],['Você Não Sabia','Descobertas que ainda cabem entre vocês.',32],['Em Voz Alta','A vida que os dois querem construir.',30],['Lá Atrás','O que formou quem você é hoje.',28],['Modo Leve','Pra rir e não levar tão a sério.',31],['Viagens','Lugares que já foram e ainda vão ser.',30],['Carreira & Dinheiro','Como pensam o lado prático.',30],['Depois da Tempestade','O caminho de volta.',30],['Faísca','O lado mais provocante de vocês.',31],['Luzes Baixas','Quando a noite pede mais coragem. 18+',35],['Fogo Alto','Desejos, curiosidades, limites. 18+',30],['Sem Freio','O mais ousado. Só pra quem topa. 18+',30],['Mesmo Longe','Quando rotina ou distância afastam.',30],['Perto de Novo','Esquentar o espaço entre vocês.',30]].map(([name, description, count], index) => <div key={String(name)} className={`lp-theme-card ${index > 8 ? 'lp-theme-vibe' : ''}`}><strong>{name}</strong><p>{description}</p><span>{count} cartas</span></div>)}</div><p className="lp-themes-note"><strong>445+ perguntas no total.</strong> Novos baralhos entram de tempos em tempos — o acesso é vitalício.</p></div></section>
-       <section className="lp-social"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">o que dizem</p><h2 className="lp-h2">Casais que já usaram<br /><em>e não largam mais.</em></h2><div className="lp-social-grid"><blockquote className="lp-testimonial"><p>"Descobri coisas do meu marido em uma noite que 8 anos de casamento não tinham me mostrado."</p><footer>— Marina L. · Belo Horizonte</footer></blockquote><blockquote className="lp-testimonial"><p>"A gente fez a distância desaparecer por 40 minutos. Valeu mais que qualquer presente."</p><footer>— Rafael C. · Curitiba</footer></blockquote><blockquote className="lp-testimonial"><p>"Virou nosso ritual de sexta à noite. Sério."</p><footer>— Julia M. · São Paulo</footer></blockquote></div><p className="lp-tiny-note">Depoimentos de casais em fase de teste.</p></div></section>
+       <TestimonialCarousel />
        <section className="lp-price" id="lp-precos"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p><h2 className="lp-h2">Um baralho que dura<br /><em>o quanto vocês quiserem.</em></h2><div className="lp-price-card"><div className="lp-price-badge">Oferta de lançamento</div><div className="lp-price-main"><span className="lp-price-old">De <s>R$ 97,00</s></span><div className="lp-price-value"><span className="lp-price-currency">R$</span><span className="lp-price-big">47</span><span className="lp-price-cents">,90</span></div><span className="lp-price-installments">à vista <strong>ou</strong> 5x de R$ 9,58</span></div><ul className="lp-price-includes"><li>✓ 445+ perguntas nos 15 baralhos temáticos</li><li>✓ Acesso pra <strong>2 pessoas</strong> (você + convite)</li><li>✓ Salas online sincronizadas</li><li>✓ Celular e computador</li><li>✓ Novos baralhos incluídos, pra sempre</li><li>✓ Sem mensalidade. Paga uma vez.</li></ul><button onClick={() => void checkout('couple')} className="lp-cta-primary lp-cta-full" data-testid="button-price-cta">Começar agora por R$ 47,90 <ArrowRight size={18} /></button><div className="lp-guarantee"><div className="lp-guarantee-seal">✦</div><div><strong>Garantia incondicional de 7 dias.</strong><p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama.</p></div></div></div></div></section>
        <section className="lp-faq"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">perguntas frequentes</p><h2 className="lp-h2">Ainda em dúvida?</h2><div className="lp-faq-list">{[['Precisa instalar app?','Não. É um site que roda no navegador — abre no celular ou PC.'],['Funciona pra quem tá namorando há pouco tempo?','Funciona ainda melhor: o baralho dá o empurrão para ir mais fundo em vez de conversa de superfície.'],['É vitalício mesmo?','Sim, sem mensalidade. Paga uma vez e usa o quanto quiser, incluindo baralhos novos.'],['Dá pra usar longe?','Sim. Você cria uma sala, manda o código e joga sincronizado com seu parceiro.'],['Tem 18+?','Sim, há três baralhos separados para acessar quando quiser.'],['Como recebo depois de pagar?','Na hora. O pagamento é via Pix e o app abre automaticamente após a confirmação.']].map(([question, answer]) => <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
        <section className="lp-final-cta"><div className="lp-container lp-final-cta-inner"><h2 className="lp-h2">O próximo bom papo<br /><em>tá a uma pergunta de distância.</em></h2><p>Começa hoje. R$ 47,90 vitalício, garantia de 7 dias.</p><button onClick={() => void checkout('couple')} className="lp-cta-primary lp-cta-big" data-testid="button-final-cta">Quero começar agora <ArrowRight size={20} /></button></div></section>
