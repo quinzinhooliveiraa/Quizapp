@@ -511,7 +511,13 @@ function QuestionCarouselSection() {
   </section>;
 }
 
-const landingTestimonials = [
+type LandingTestimonial = {
+  quote: string;
+  name?: string;
+  detail: string;
+};
+
+const landingTestimonials: LandingTestimonial[] = [
   {
     quote: 'No nosso aniversário de um ano, viajamos para uma cabana no interior. A gente chegou a passar 20 minutos em uma única pergunta, porque sempre acabava percebendo o quanto ainda não sabíamos um sobre o outro. Foi uma conversa simples, mas alguma coisa mudou naquele momento.',
     name: 'Cody',
@@ -519,32 +525,26 @@ const landingTestimonials = [
   },
   {
     quote: 'Estamos casados há 23 anos e achei que já conhecíamos praticamente tudo um sobre o outro. Algumas perguntas passamos rapidamente, mas outras fizeram a gente conversar sobre coisas que nunca tínhamos compartilhado antes. No final, os dois ganham. Toda vez.',
-    name: 'Um casal',
     detail: '23 anos de casamento',
   },
   {
     quote: 'Pouco antes de eu me mudar para outra cidade, levamos o baralho para um jantar. Uma pergunta abriu uma conversa que nós dois estávamos evitando. Passamos mais de uma hora falando abertamente sobre o que sentíamos — e no fim daquela conversa eu pedi ela em namoro.',
-    name: 'Um casal',
     detail: 'Começo de relacionamento',
   },
   {
     quote: 'Eu e meu parceiro já tínhamos conversas bem profundas. Duas rodadas depois, estávamos compartilhando coisas que nunca tínhamos contado para ninguém. Mesmo depois de tanto tempo conversando, ainda existiam partes nossas que o outro nunca tinha visto.',
-    name: 'Um casal',
     detail: '1 ano de relacionamento',
   },
   {
     quote: 'Tivemos momentos leves, perguntas que fizeram a gente rir e outras que nos tiraram da zona de conforto. E acho que é justamente por isso que funcionou tão bem: descobrimos coisas que estavam ali, mas que nunca tínhamos parado para perguntar.',
-    name: 'Um casal',
     detail: 'Uma noite diferente',
   },
   {
     quote: 'Nós nos conhecemos há 26 anos e hoje vivemos um relacionamento à distância. Nossas chamadas começaram a ficar sem assunto, então começamos a escolher perguntas antes de desligar. Virou um ritual e uma forma muito especial de diminuir a distância.',
-    name: 'Um casal',
     detail: '26 anos de história',
   },
   {
     quote: 'Na primeira vez que jogamos, chegamos à terceira rodada e já estávamos chorando. Não parece que você está jogando um jogo. Parece que alguém finalmente te deu uma razão para parar tudo e perguntar: “Me conta uma coisa que eu ainda não sei sobre você.”',
-    name: 'Um casal',
     detail: 'Uma reconexão',
   },
 ];
@@ -572,13 +572,13 @@ function TestimonialCarousel() {
         <button type="button" className="lp-testimonial-arrow" onClick={() => move(-1)} aria-label="Depoimento anterior" data-testid="button-testimonial-previous"><ChevronLeft size={20} /></button>
         <blockquote className="lp-testimonial lp-testimonial-active" aria-live="polite">
           <p>“{activeTestimonial.quote}”</p>
-          <footer>— {activeTestimonial.name} <span>{activeTestimonial.detail}</span></footer>
+          <footer>{activeTestimonial.name && <>— {activeTestimonial.name} </>}<span>{activeTestimonial.detail}</span></footer>
         </blockquote>
         <button type="button" className="lp-testimonial-arrow" onClick={() => move(1)} aria-label="Próximo depoimento" data-testid="button-testimonial-next"><ChevronRight size={20} /></button>
       </div>
       <div className="lp-testimonial-dots" role="tablist" aria-label="Escolher depoimento">
         {landingTestimonials.map((testimonial, index) => <button
-          key={`${testimonial.name}-${testimonial.detail}`}
+          key={`${testimonial.name ?? 'depoimento'}-${testimonial.detail}`}
           type="button"
           className={`lp-testimonial-dot ${index === activeIndex ? 'is-active' : ''}`}
           onClick={() => setActiveIndex(index)}
