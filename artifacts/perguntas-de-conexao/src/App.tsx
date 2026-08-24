@@ -699,6 +699,7 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
   const [selectedPackage, setSelectedPackage] = useState<'couple' | 'family'>('couple');
   const [checkoutState, setCheckoutState] = useState<'idle' | 'sending' | 'confirming' | 'error' | 'waiting-manual'>('idle');
   const [confirmingLong, setConfirmingLong] = useState(false);
+  const [sendingLong, setSendingLong] = useState(false);
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -716,6 +717,16 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
     }
 
     const timer = window.setTimeout(() => setConfirmingLong(true), 15000);
+    return () => window.clearTimeout(timer);
+  }, [checkoutState]);
+
+  useEffect(() => {
+    if (checkoutState !== 'sending') {
+      setSendingLong(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setSendingLong(true), 4000);
     return () => window.clearTimeout(timer);
   }, [checkoutState]);
 
@@ -778,6 +789,7 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
   }, []);
 
   const checkout = async (packageId: 'couple' | 'family' = selectedPackage) => {
+    setCheckoutOpen(true);
     setCheckoutState('sending');
     try {
       const response = await fetch(apiUrl('/api/checkout/create'), {
@@ -820,8 +832,8 @@ function Home({ variant = 'v1' }: { variant?: 'v1' | 'v2' }) {
        <section className="lp-faq"><div className="lp-container"><p className="lp-eyebrow lp-eyebrow-center">perguntas frequentes</p><h2 className="lp-h2">Ainda em dúvida?</h2><div className="lp-faq-list">{[['Precisa instalar app?','Não. É um site que roda no navegador — abre no celular ou PC.'],['Funciona pra quem tá namorando há pouco tempo?','Funciona ainda melhor: o baralho dá o empurrão para ir mais fundo em vez de conversa de superfície.'],['É vitalício mesmo?','Sim, sem mensalidade. Paga uma vez e usa o quanto quiser, incluindo baralhos novos.'],['Dá pra usar longe?','Sim. Você cria uma sala, manda o código e joga sincronizado com seu parceiro.'],['Tem 18+?','Sim, há três baralhos separados para acessar quando quiser.'],['Como recebo depois de pagar?','Na hora. O pagamento é via Pix e o app abre automaticamente após a confirmação.']].map(([question, answer]) => <details key={question} className="lp-faq-item"><summary>{question}</summary><p>{answer}</p></details>)}</div></div></section>
        <section className="lp-final-cta"><div className="lp-container lp-final-cta-inner"><h2 className="lp-h2">O próximo bom papo<br /><em>tá a uma pergunta de distância.</em></h2><p>Começa hoje. R$ 47,90 vitalício, garantia de 7 dias.</p><button onClick={() => void checkout('couple')} className="lp-cta-primary lp-cta-big" data-testid="button-final-cta">Quero começar agora <ArrowRight size={20} /></button></div></section>
       </>}</main>
-     {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clique no botão abaixo para revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { const pendingSessionId = safeGetItem('conexao-pending-session'); if (pendingSessionId) window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu baralho</p><h2>{confirmingLong ? <>Quase lá…<br /><em>as cartas estão chegando.</em></> : <>Suas cartas estão<br /><em>entrando no baralho.</em></>}</h2><p>{confirmingLong ? 'Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela.' : 'Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente.'}</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
-  </Shell>;
+      {checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clique no botão abaixo para revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { const pendingSessionId = safeGetItem('conexao-pending-session'); if (pendingSessionId) window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu baralho</p><h2>{confirmingLong ? <>Quase lá…<br /><em>as cartas estão chegando.</em></> : <>Suas cartas estão<br /><em>entrando no baralho.</em></>}</h2><p>{confirmingLong ? 'Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela.' : 'Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente.'}</p></div> : checkoutState === 'sending' ? <div className="checkout-confirming" role="status" aria-live="polite"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu pagamento</p><h2>{sendingLong ? <>Só mais um instante…<br /><em>o link tá quase pronto.</em></> : <>Gerando seu link<br /><em>de pagamento seguro.</em></>}</h2><p>{sendingLong ? 'Tá demorando um pouco mais que o normal — não feche esta tela.' : 'Você vai pra tela da Abacate Pay assim que estiver pronto.'}</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={!buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">Continuar para pagamento <ArrowRight size={16} /></button></>}</div></div>}
+   </Shell>;
 }
 
 function AccessPill({ access }: { access: any }) {

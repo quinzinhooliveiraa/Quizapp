@@ -1,0 +1,93 @@
+# Loading no checkout usando a animação do baralho (não um spinner novo)
+
+**Isso substitui o prompt anterior** (`loading-checkout-replit.md` que eu mandei antes, com um spinner girando). Se você já aplicou aquele, sem problema — esse prompt aqui troca pro visual certo. Se ainda não aplicou o anterior, ignore ele e aplique só este.
+
+**Problema:** ao clicar em "Continuar para pagamento", a chamada pra Abacate Pay pode levar alguns segundos, e hoje não tem nenhum feedback visual claro — parece que travou.
+
+**Solução:** reaproveitar a mesma animação que já existe pra tela de "preparando seu baralho" (o baralho de cartas girando, que hoje só aparece DEPOIS de voltar do pagamento) — só que com um texto adaptado, já que nesse momento a gente está gerando o link de pagamento, não confirmando que ele foi pago.
+
+**IMPORTANTE: aplicar direto nos arquivos. NÃO SALVE COMO ASSET.**
+
+---
+
+## 1. Achar o bloco do modal de checkout — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Procurar por `checkoutState === 'waiting-manual'` — é o início de uma cadeia de `? :` (ternário) que decide o que mostrar dentro do modal. Hoje a cadeia é:
+
+```
+checkoutState === 'waiting-manual' ? <tela de "pagamento recebido?">
+  : checkoutState === 'confirming' ? <tela do baralho girando, "preparando seu baralho">
+  : <tela padrão com nome + botão "Continuar para pagamento">
+```
+
+Vamos adicionar mais um degrau nessa cadeia: `checkoutState === 'sending'` também ganha a tela do baralho girando, só que com texto diferente.
+
+Achar exatamente este trecho (é longo, uma linha só no arquivo — procure pelo texto `data-testid="button-close-checkout"`):
+
+```tsx
+{checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clique no botão abaixo para revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { const pendingSessionId = safeGetItem('conexao-pending-session'); if (pendingSessionId) window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu baralho</p><h2>{confirmingLong ? <>Quase lá…<br /><em>as cartas estão chegando.</em></> : <>Suas cartas estão<br /><em>entrando no baralho.</em></>}</h2><p>{confirmingLong ? 'Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela.' : 'Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente.'}</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">{checkoutState === 'sending' ? 'Abrindo pagamento…' : 'Continuar para pagamento'} <ArrowRight size={16} /></button></>}</div></div>}
+```
+
+Substituir por (acrescenta o degrau `sending` reaproveitando a animação do baralho, com texto próprio):
+
+```tsx
+{checkoutOpen && <div className="modal-backdrop"><div className="checkout-modal"><button className="modal-close" onClick={() => setCheckoutOpen(false)} data-testid="button-close-checkout"><X size={18} /></button>{checkoutState === 'waiting-manual' ? <div className="checkout-confirming"><div className="success-seal"><Check size={22} /></div><p className="section-kicker">pagamento recebido?</p><h2>Estamos verificando<br /><em>com a Abacate Pay.</em></h2><p>Se você já pagou, clique no botão abaixo para revalidar. Se ainda não pagou, feche esta tela e conclua o pagamento.</p><button onClick={() => { const pendingSessionId = safeGetItem('conexao-pending-session'); if (pendingSessionId) window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`; }} className="button button-primary button-full">Já paguei — verificar de novo <ArrowRight size={16} /></button></div> : checkoutState === 'confirming' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu baralho</p><h2>{confirmingLong ? <>Quase lá…<br /><em>as cartas estão chegando.</em></> : <>Suas cartas estão<br /><em>entrando no baralho.</em></>}</h2><p>{confirmingLong ? 'Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela.' : 'Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente.'}</p></div> : checkoutState === 'sending' ? <div className="checkout-confirming"><div className="confirming-deck" aria-hidden="true"><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /><span className="conf-card" /></div><p className="conf-kicker">preparando seu pagamento</p><h2>{sendingLong ? <>Só mais um instante…<br /><em>o link tá quase pronto.</em></> : <>Gerando seu link<br /><em>de pagamento seguro.</em></>}</h2><p>{sendingLong ? 'Tá demorando um pouco mais que o normal — não feche esta tela.' : 'Você vai pra tela da Abacate Pay assim que estiver pronto.'}</p></div> : <><p className="section-kicker">acesso vitalício</p><h2>Seu baralho começa<br /><em>com uma pergunta.</em></h2><p>Você vai para a tela segura da Abacate Pay para pagar via Pix. O acesso só libera depois da confirmação.</p><input type="text" placeholder="Seu nome" value={buyerNameInput} onChange={event => setBuyerNameInput(event.target.value)} className="checkout-name-input" data-testid="input-checkout-name" />{checkoutState === 'error' && <p className="checkout-error">Não deu para iniciar ou confirmar o pagamento agora. Tente novamente em instantes.</p>}<button onClick={() => void checkout()} disabled={checkoutState === 'sending' || !buyerNameInput.trim()} className="button button-primary button-full" data-testid="button-confirm-checkout">Continuar para pagamento <ArrowRight size={16} /></button></>}</div></div>}
+```
+
+**O que mudou, resumindo:**
+- Novo degrau `checkoutState === 'sending' ? ... :` reaproveitando exatamente as mesmas classes CSS da tela de "preparando seu baralho" (`checkout-confirming`, `confirming-deck`, `conf-card`, `conf-kicker`) — zero CSS novo necessário.
+- Texto adaptado pro contexto certo ("preparando seu pagamento" / "gerando seu link de pagamento seguro"), pra não confundir com a etapa de confirmação que vem depois.
+- O botão "Continuar para pagamento" na tela padrão não precisa mais mudar de texto quando `sending`, porque agora a tela inteira troca pra a animação do baralho assim que o clique acontece — o botão nem fica visível nesse momento.
+
+---
+
+## 2. Estado de "demorando mais que o normal" — dentro do componente `Home`
+
+Achar, perto dos outros `useState` do `Home`:
+
+```tsx
+const [confirmingLong, setConfirmingLong] = useState(false);
+```
+
+Adicionar logo abaixo:
+
+```tsx
+const [sendingLong, setSendingLong] = useState(false);
+```
+
+Achar o `useEffect` que cuida do `confirmingLong`:
+
+```tsx
+useEffect(() => {
+    if (checkoutState !== 'confirming') {
+      setConfirmingLong(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setConfirmingLong(true), 15000);
+    return () => window.clearTimeout(timer);
+  }, [checkoutState]);
+```
+
+Adicionar logo abaixo um equivalente pro `sending` (limite mais curto — é só a criação da cobrança Pix, não a confirmação do pagamento):
+
+```tsx
+useEffect(() => {
+    if (checkoutState !== 'sending') {
+      setSendingLong(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setSendingLong(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, [checkoutState]);
+```
+
+---
+
+## Verificação
+
+1. Clicar em "Continuar para pagamento" → a tela do modal troca imediatamente pra animação do baralho girando, com "preparando seu pagamento" e "Gerando seu link de pagamento seguro."
+2. Se demorar mais de 4 segundos, o texto muda pra "Só mais um instante… o link tá quase pronto." — mesma lógica que já existe na tela de confirmação pós-pagamento.
+3. Assim que o link é gerado, redireciona normalmente pra Abacate Pay (comportamento não muda, só o visual da espera).
+4. Testar com internet lenta (Slow 3G no DevTools) pra confirmar que a animação aparece direitinho e não trava a tela.
