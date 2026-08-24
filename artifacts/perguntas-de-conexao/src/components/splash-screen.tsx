@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import splashGlow from '@assets/logo-glow.png';
-import splashSharp from '@assets/logo-nitida.png';
+import pwaEntryLogo from '@assets/pwa-entry-logo.png';
 
 export function SplashScreen() {
   const [visible, setVisible] = useState(true);
@@ -24,9 +23,9 @@ export function SplashScreen() {
   return (
     <div className={`app-splash${fading ? ' app-splash-fade' : ''}`} aria-hidden="true">
       <div className="app-splash-stage">
-        <img src={splashGlow} alt="" className="app-splash-glow" />
+        <img src={pwaEntryLogo} alt="" className="app-splash-glow" />
         <img
-          src={splashSharp}
+          src={pwaEntryLogo}
           alt=""
           className={`app-splash-sharp${focused ? ' app-splash-sharp-focused' : ''}`}
         />
