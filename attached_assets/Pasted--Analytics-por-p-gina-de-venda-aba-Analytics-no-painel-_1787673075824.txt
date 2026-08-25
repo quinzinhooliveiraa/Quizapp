@@ -1,0 +1,175 @@
+# Analytics por página de venda (aba Analytics no painel admin)
+
+## Contexto
+
+Este é o **segundo de três prompts** pra evoluir o painel admin (o primeiro
+criou a estrutura de abas + a aba Compradores — já deve estar aplicado).
+Agora vamos adicionar rastreamento simples e leve, sem depender de Google
+Analytics, pra responder: quantas pessoas veem cada página de venda (LP1 e
+LP2), quantas clicam pra comprar, quanto tempo ficam na página, e em que
+seção elas costumam sair. Isso monta um funil completo, porque a parte de
+"quantas realmente compraram" já existe hoje (é a tabela `sessions`).
+
+## Passo 1 — Banco de dados
+
+### 1a. Nova coluna em `sessionsTable`
+
+Em `lib/db/src/schema/index.ts`, adicione um campo novo em `sessionsTable`:
+
+```ts
+sourceLp: text("source_lp"), // ex: "v1", "v2" — de qual landing page veio o checkout
+```
+
+Rode a migração do jeito que o projeto já usa pra aplicar mudanças de schema
+(provavelmente `drizzle-kit push` ou equivalente — confira o `package.json`
+pra ver o comando certo).
+
+### 1b. Nova tabela `pageEventsTable`
+
+Também em `lib/db/src/schema/index.ts`:
+
+```ts
+export const pageEventsTable = pgTable("page_events", {
+  id: text("id").primaryKey(),
+  lpId: text("lp_id").notNull(), // "v1" | "v2"
+  visitorKey: text("visitor_key").notNull(), // id anônimo gerado no navegador
+  eventType: text("event_type").notNull(), // "view" | "cta_click" | "exit"
+  timeOnPageMs: integer("time_on_page_ms"), // só em "exit"
+  lastSection: text("last_section"), // última seção vista antes de sair, só em "exit"
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+Exporte também `insertPageEventSchema` e os tipos `PageEvent`/`NewPageEvent`,
+seguindo o mesmo padrão das outras tabelas do arquivo. Rode a migração.
+
+## Passo 2 — Backend
+
+### 2a. Endpoint público de tracking
+
+Crie `POST /api/track/page-event` (rota pública, sem checagem de admin — é
+chamada pelo navegador de quem visita o site). Corpo esperado:
+
+```ts
+{ lpId: string; visitorKey: string; eventType: "view" | "cta_click" | "exit"; timeOnPageMs?: number; lastSection?: string }
+```
+
+- Valide que `lpId` é `"v1"` ou `"v2"`, e que `eventType` é um dos três
+  valores válidos. Se não for, `400`.
+- Insere na `pageEventsTable`. Responda `204` sem corpo (o navegador não
+  precisa de resposta).
+- Sem autenticação, mas coloque um rate limit simples (se o projeto já tiver
+  algum middleware de rate limit em uso em outra rota pública, reaproveite o
+  mesmo padrão; senão pode pular essa parte).
+
+### 2b. Guardar `sourceLp` no checkout
+
+Na rota que cria a sessão de checkout (em
+`artifacts/api-server/src/routes/connection.ts`, onde hoje insere em
+`sessionsTable` com `accessGranted: false` antes de chamar
+`createAbacateCheckout`), aceite um campo `sourceLp` no corpo da requisição e
+salve na coluna nova `sourceLp` ao inserir a sessão. Se não vier, salva
+`null` (não quebra nada, só fica sem essa informação).
+
+### 2c. Endpoint de analytics pro admin
+
+Crie `GET /api/admin/analytics`, protegido com o mesmo `isAdminSession` já
+usado nas outras rotas admin. Recebe `sessionId` na query. Retorna, pra cada
+`lpId` (`v1` e `v2`), um objeto assim:
+
+```ts
+{
+  lpId: "v1",
+  views: number,          // count de eventType="view" nos últimos 30 dias
+  ctaClicks: number,      // count de eventType="cta_click" nos últimos 30 dias
+  checkoutsStarted: number,   // count de sessionsTable com sourceLp = lpId
+  purchasesConfirmed: number, // idem, mas accessGranted = true
+  avgTimeOnPageSeconds: number | null, // média de timeOnPageMs (eventos "exit") / 1000, arredondado
+  topExitSections: Array<{ section: string; count: number }>, // top 5 lastSection mais frequentes nos "exit", ordenado desc
+}
+```
+
+Pode fazer isso com queries separadas por `lpId` (não precisa otimizar
+demais, é painel interno de baixo tráfego). "Últimos 30 dias" filtra por
+`createdAt >= now() - 30 dias` nos eventos de `pageEventsTable` (checkouts e
+compras não precisam desse filtro, pode ser o total histórico).
+
+## Passo 3 — Frontend: instrumentar as landing pages
+
+Nas duas landing pages (a `v1` — home com quiz — e a `v2` — estática, sem
+quiz), adicione:
+
+- **Um id de visitante anônimo**: ao montar a página, gera um id aleatório
+  (ex: `crypto.randomUUID()`) e salva em `sessionStorage` sob uma chave tipo
+  `pdc-visitor-key`, reaproveitando se já existir (assim uma sessão de
+  navegação conta como 1 visitante, mesmo passando por várias seções/reloads
+  na mesma aba).
+- **Evento "view"** disparado uma vez, ao montar a página (envia via `fetch`
+  normal, `POST /api/track/page-event`, com `lpId` correspondente — `"v1"` ou
+  `"v2"`).
+- **Evento "cta_click"** disparado quando a pessoa clica no botão principal de
+  compra/checkout daquela página (o botão que leva pra criação da sessão de
+  pagamento). Não precisa instrumentar todo botão da página, só o(s)
+  botão(ões) que de fato iniciam a compra.
+- **Marcação de seções**: em cada bloco/seção principal da página (hero, dor,
+  como funciona, preços, FAQ, etc — os blocos que já têm `id` de âncora tipo
+  `id="lp2-quiz"`, `id="lp2-precos"` etc.), adicione um `data-section-name`
+  com um nome curto e legível (ex: `"hero"`, `"precos"`, `"faq"`) se ainda não
+  tiver um jeito de identificar a seção.
+- **Rastreio de última seção vista**: use um `IntersectionObserver` simples
+  observando os elementos com `data-section-name`, guardando em uma
+  ref/variável qual foi a última seção que ficou visível (a mais recente
+  vista, não precisa ser scroll depth em %, só "até onde a pessoa chegou").
+- **Evento "exit"**: ao sair da página (`visibilitychange` com
+  `document.visibilityState === "hidden"`, ou `pagehide` — use os dois, o que
+  disparar primeiro, e evite disparar duas vezes), envia via
+  `navigator.sendBeacon` (não `fetch`, porque a página já pode estar
+  fechando) pra `/api/track/page-event` com `eventType: "exit"`,
+  `timeOnPageMs` (calculado a partir de um timestamp guardado no mount), e
+  `lastSection` (a última seção vista pelo observer). `sendBeacon` só aceita
+  `Blob`/`string` no corpo — monte um `Blob` com `JSON.stringify(...)` e tipo
+  `application/json`.
+- **Passar `sourceLp` no checkout**: quando o botão de comprar chama a rota
+  que cria a sessão (`POST` de criação de checkout), inclua `sourceLp: "v1"`
+  (ou `"v2"`) no corpo da requisição.
+
+Se as duas landing pages compartilharem lógica (hooks, componentes), pode
+extrair um hook tipo `useLpTracking(lpId: string)` reutilizável em vez de
+duplicar o código nas duas.
+
+## Passo 4 — Frontend: aba "Analytics" no admin
+
+No `Admin.tsx` (já reorganizado em abas pelo prompt anterior), adicione uma
+nova aba **Analytics**, depois de "Páginas". Ao abrir a aba, busca
+`GET /api/admin/analytics?sessionId=...` e mostra, um card por LP (v1 e v2):
+
+- Nome da LP (reaproveita o `label` que já existe no array `LANDINGS`)
+- Visualizações (30 dias)
+- Cliques em comprar (30 dias)
+- Checkouts iniciados (total)
+- Compras confirmadas (total)
+- Taxa de conversão: `compras confirmadas / visualizações`, em %, com 1 casa
+  decimal — se `views` for 0, mostra "—" em vez de dividir por zero
+- Tempo médio na página (formata segundos em "Xmin Ys" se passar de 60s)
+- Onde as pessoas mais saem: lista das top seções de saída com a contagem
+  (ex: "faq — 12 saídas", "precos — 9 saídas")
+
+Mesma identidade visual das outras abas (`admin-section`, cards no mesmo
+estilo).
+
+## O que NÃO fazer
+
+- Não instale Google Analytics nem Meta Pixel aqui — isso é outra frente,
+  separada, ainda pendente no roadmap.
+- Não crie heatmap de scroll em porcentagem nem replay de sessão — é fora do
+  escopo, o pedido é saber onde a pessoa geralmente para/sai.
+- Não mexa na aba Compradores nem no webhook de pagamento.
+
+## Depois de aplicar
+
+Roda o formatador (`prettier --write` ou o que o projeto usa) nos arquivos
+tocados. Depois de aplicado, preciso que você visite as duas landing pages
+publicadas, role até o fim, feche a aba, e confira no painel admin (aba
+Analytics) se os números de visualização e tempo na página aparecem — é o
+jeito mais simples de confirmar que o tracking está funcionando de ponta a
+ponta.

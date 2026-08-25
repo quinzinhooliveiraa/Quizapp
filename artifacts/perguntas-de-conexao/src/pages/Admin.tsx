@@ -45,6 +45,15 @@ type BuyersResponse = {
   total?: number;
   totalWithAccess?: number;
 };
+type AnalyticsEntry = {
+  lpId: string;
+  views: number;
+  ctaClicks: number;
+  checkoutsStarted: number;
+  purchasesConfirmed: number;
+  avgTimeOnPageSeconds: number | null;
+  topExitSections: Array<{ section: string; count: number }>;
+};
 
 const LANDINGS: LandingEntry[] = [
   {
@@ -66,6 +75,7 @@ const LANDINGS: LandingEntry[] = [
 const TABS = [
   { id: "buyers", label: "Compradores" },
   { id: "pages", label: "Páginas" },
+  { id: "analytics", label: "Analytics" },
   { id: "feedback", label: "Feedback" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
@@ -80,6 +90,82 @@ function safeGetItem(key: string): string | null {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("pt-BR");
+}
+
+function formatDuration(seconds: number | null) {
+  if (seconds == null) return "—";
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)}min ${seconds % 60}s`;
+}
+
+function AnalyticsTab({ analytics }: { analytics: AnalyticsEntry[] }) {
+  return (
+    <section className="admin-section" aria-labelledby="analytics-title">
+      <div className="admin-section-heading">
+        <div>
+          <p className="admin-eyebrow">últimos 30 dias</p>
+          <h2 id="analytics-title">Analytics por página</h2>
+        </div>
+      </div>
+      <div className="admin-analytics-grid">
+        {LANDINGS.map((landing) => {
+          const data = analytics.find((item) => item.lpId === landing.id);
+          const conversion =
+            data && data.views > 0
+              ? `${((data.purchasesConfirmed / data.views) * 100).toFixed(1)}%`
+              : "—";
+          return (
+            <article className="admin-analytics-card" key={landing.id}>
+              <div className="admin-analytics-card-heading">
+                <div>
+                  <p className="admin-eyebrow">{landing.id}</p>
+                  <h3>{landing.label}</h3>
+                </div>
+                <span className="admin-conversion">{conversion}</span>
+              </div>
+              <div className="admin-metric-grid">
+                <div>
+                  <span>Visualizações</span>
+                  <strong>{data?.views || 0}</strong>
+                </div>
+                <div>
+                  <span>Cliques em comprar</span>
+                  <strong>{data?.ctaClicks || 0}</strong>
+                </div>
+                <div>
+                  <span>Checkouts iniciados</span>
+                  <strong>{data?.checkoutsStarted || 0}</strong>
+                </div>
+                <div>
+                  <span>Compras confirmadas</span>
+                  <strong>{data?.purchasesConfirmed || 0}</strong>
+                </div>
+                <div>
+                  <span>Tempo médio</span>
+                  <strong>
+                    {formatDuration(data?.avgTimeOnPageSeconds ?? null)}
+                  </strong>
+                </div>
+              </div>
+              <div className="admin-exit-sections">
+                <span>Onde as pessoas saem</span>
+                {data?.topExitSections.length ? (
+                  data.topExitSections.map((exit) => (
+                    <p key={exit.section}>
+                      <strong>{exit.section}</strong> — {exit.count}{" "}
+                      {exit.count === 1 ? "saída" : "saídas"}
+                    </p>
+                  ))
+                ) : (
+                  <p>Nenhum dado de saída ainda.</p>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 function BuyersTab({
@@ -314,6 +400,7 @@ export default function Admin() {
   const [buyers, setBuyers] = useState<BuyerEntry[]>([]);
   const [buyerTotal, setBuyerTotal] = useState(0);
   const [buyerTotalWithAccess, setBuyerTotalWithAccess] = useState(0);
+  const [analytics, setAnalytics] = useState<AnalyticsEntry[]>([]);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
@@ -349,13 +436,20 @@ export default function Admin() {
               ? (response.json() as Promise<{ reviews?: ReviewEntry[] }>)
               : Promise.resolve({} as { reviews?: ReviewEntry[] }),
           ),
+          fetch(`${apiBaseUrl}/api/admin/analytics?${query}`).then(
+            (response) =>
+              response.ok
+                ? (response.json() as Promise<{ analytics?: AnalyticsEntry[] }>)
+                : Promise.resolve({} as { analytics?: AnalyticsEntry[] }),
+          ),
         ])
-          .then(([buyerData, suggestionData, reviewData]) => {
+          .then(([buyerData, suggestionData, reviewData, analyticsData]) => {
             setBuyers(buyerData.buyers || []);
             setBuyerTotal(buyerData.total || 0);
             setBuyerTotalWithAccess(buyerData.totalWithAccess || 0);
             setSuggestions(suggestionData.suggestions || []);
             setReviews(reviewData.reviews || []);
+            setAnalytics(analyticsData.analytics || []);
           })
           .catch(() => {
             setBuyers([]);
@@ -418,6 +512,7 @@ export default function Admin() {
     ),
     pages: <PagesTab origin={origin} copiedId={copiedId} copyLink={copyLink} />,
     feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
+    analytics: <AnalyticsTab analytics={analytics} />,
   };
 
   return (

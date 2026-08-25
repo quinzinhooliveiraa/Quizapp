@@ -255,12 +255,76 @@ export const CheckoutCreateInputPackageId = {
   couple: 'couple',
 } as const;
 
+export type CheckoutCreateInputSourceLp = typeof CheckoutCreateInputSourceLp[keyof typeof CheckoutCreateInputSourceLp];
+
+
+export const CheckoutCreateInputSourceLp = {
+  v1: 'v1',
+  v2: 'v2',
+} as const;
+
 export interface CheckoutCreateInput {
   packageId: CheckoutCreateInputPackageId;
   /** @minLength 1 */
   buyerName: string;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
+  sourceLp?: CheckoutCreateInputSourceLp;
+}
+
+export type PageEventInputLpId = typeof PageEventInputLpId[keyof typeof PageEventInputLpId];
+
+
+export const PageEventInputLpId = {
+  v1: 'v1',
+  v2: 'v2',
+} as const;
+
+export type PageEventInputEventType = typeof PageEventInputEventType[keyof typeof PageEventInputEventType];
+
+
+export const PageEventInputEventType = {
+  view: 'view',
+  cta_click: 'cta_click',
+  exit: 'exit',
+} as const;
+
+export interface PageEventInput {
+  lpId: PageEventInputLpId;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  visitorKey: string;
+  eventType: PageEventInputEventType;
+  /** @minimum 0 */
+  timeOnPageMs?: number;
+  /** @maxLength 80 */
+  lastSection?: string;
+}
+
+export type LandingAnalyticsLpId = typeof LandingAnalyticsLpId[keyof typeof LandingAnalyticsLpId];
+
+
+export const LandingAnalyticsLpId = {
+  v1: 'v1',
+  v2: 'v2',
+} as const;
+
+export type LandingAnalyticsTopExitSectionsItem = {
+  section: string;
+  count: number;
+};
+
+export interface LandingAnalytics {
+  lpId: LandingAnalyticsLpId;
+  views: number;
+  ctaClicks: number;
+  checkoutsStarted: number;
+  purchasesConfirmed: number;
+  /** @nullable */
+  avgTimeOnPageSeconds: number | null;
+  topExitSections: LandingAnalyticsTopExitSectionsItem[];
 }
 
 export interface CheckoutCreateResponse {
@@ -340,6 +404,14 @@ export type ResetGuestOnboarding200 = {
 
 export type CancelInvite200 = {
   ok: boolean;
+};
+
+export type GetAdminAnalyticsParams = {
+sessionId: string;
+};
+
+export type GetAdminAnalytics200 = {
+  analytics: LandingAnalytics[];
 };
 
 export type ListAdminSuggestionsParams = {

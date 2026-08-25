@@ -31,6 +31,8 @@ import type {
   CheckoutWebhook,
   CompleteGuestOnboarding200,
   CompleteOwnerOnboarding200,
+  GetAdminAnalytics200,
+  GetAdminAnalyticsParams,
   GetPreferencesParams,
   GuestAccess,
   HealthStatus,
@@ -46,6 +48,7 @@ import type {
   ListAdminSuggestionsParams,
   ListQuestionsParams,
   OkResponse,
+  PageEventInput,
   Preferences,
   PreferencesInput,
   Question,
@@ -1657,6 +1660,161 @@ export const useReceiveAbacatePayWebhook = <TError = ErrorType<void>,
       > => {
       return useMutation(getReceiveAbacatePayWebhookMutationOptions(options));
     }
+
+export const getTrackPageEventUrl = () => {
+
+
+
+
+  return `/api/track/page-event`
+}
+
+/**
+ * @summary Record an anonymous landing page event
+ */
+export const trackPageEvent = async (pageEventInput: PageEventInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getTrackPageEventUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pageEventInput)
+  }
+);}
+
+
+
+
+
+export const getTrackPageEventMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackPageEvent>>, TError,{data: BodyType<PageEventInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof trackPageEvent>>, TError,{data: BodyType<PageEventInput>}, TContext> => {
+
+const mutationKey = ['trackPageEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof trackPageEvent>>, {data: BodyType<PageEventInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  trackPageEvent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TrackPageEventMutationResult = NonNullable<Awaited<ReturnType<typeof trackPageEvent>>>
+    export type TrackPageEventMutationBody = BodyType<PageEventInput>
+    export type TrackPageEventMutationError = ErrorType<void>
+
+    /**
+ * @summary Record an anonymous landing page event
+ */
+export const useTrackPageEvent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackPageEvent>>, TError,{data: BodyType<PageEventInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof trackPageEvent>>,
+        TError,
+        {data: BodyType<PageEventInput>},
+        TContext
+      > => {
+      return useMutation(getTrackPageEventMutationOptions(options));
+    }
+
+export const getGetAdminAnalyticsUrl = (params: GetAdminAnalyticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/analytics?${stringifiedParams}` : `/api/admin/analytics`
+}
+
+/**
+ * @summary Get landing page analytics
+ */
+export const getAdminAnalytics = async (params: GetAdminAnalyticsParams, options?: Parameters<typeof customFetch>[1]): Promise<GetAdminAnalytics200> => {
+
+  return customFetch<GetAdminAnalytics200>(getGetAdminAnalyticsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminAnalyticsQueryKey = (params?: GetAdminAnalyticsParams,) => {
+    return [
+    `/api/admin/analytics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminAnalytics>>, TError = ErrorType<void>>(params: GetAdminAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminAnalyticsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminAnalytics>>> = ({ signal }) => getAdminAnalytics(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminAnalytics>>>
+export type GetAdminAnalyticsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get landing page analytics
+ */
+
+export function useGetAdminAnalytics<TData = Awaited<ReturnType<typeof getAdminAnalytics>>, TError = ErrorType<void>>(
+ params: GetAdminAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminAnalyticsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getCreateSuggestionUrl = () => {
 

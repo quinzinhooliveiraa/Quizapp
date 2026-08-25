@@ -523,6 +523,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       buyerEmail: parsed.data.buyerEmail,
       packageId: parsed.data.packageId,
       packageName: config.name,
+      sourceLp: parsed.data.sourceLp || null,
       inviteLimit: config.limit,
       invitesUsed: 0,
       accessGranted: false,

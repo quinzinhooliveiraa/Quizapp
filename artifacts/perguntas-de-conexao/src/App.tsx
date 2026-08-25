@@ -1184,7 +1184,7 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
         aria-hidden="true"
       />
       <span id="lp-precos" className="lp-anchor-target" aria-hidden="true" />
-      <section className="lp-hero lp2-hero">
+      <section className="lp-hero lp2-hero" data-section-name="hero">
         <div className="lp-hero-inner">
           <div className="lp-hero-copy">
             <span className="lp-eyebrow">
@@ -1240,7 +1240,7 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           </button>
         </div>
       </section>
-      <section className="lp2-story">
+      <section className="lp2-story" data-section-name="historia">
         <div className="lp-container lp2-story-narrow">
           <p className="lp-eyebrow">a real sobre o que acontece</p>
           <div className="lp2-story-body">
@@ -1294,7 +1294,10 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           </div>
         </div>
       </section>
-      <section className="lp-solution lp2-proposta">
+      <section
+        className="lp-solution lp2-proposta"
+        data-section-name="proposta"
+      >
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">a proposta</p>
           <h2 className="lp-h2">
@@ -1347,7 +1350,11 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           </div>
         </div>
       </section>
-      <section className="lp-quiz-section" id="lp2-quiz">
+      <section
+        className="lp-quiz-section"
+        id="lp2-quiz"
+        data-section-name="quiz"
+      >
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">
             experimente agora, de graça
@@ -1364,7 +1371,11 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           <LandingQuiz onFinish={onBuy} />
         </div>
       </section>
-      <section className="lp-themes lp2-themes" id="lp2-pacotes">
+      <section
+        className="lp-themes lp2-themes"
+        id="lp2-pacotes"
+        data-section-name="pacotes"
+      >
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p>
           <h2 className="lp-h2">
@@ -1399,7 +1410,11 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           </p>
         </div>
       </section>
-      <section className="lp-how" id="lp2-como-funciona">
+      <section
+        className="lp-how"
+        id="lp2-como-funciona"
+        data-section-name="como-funciona"
+      >
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">como funciona</p>
           <h2 className="lp-h2">
@@ -1430,7 +1445,7 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
         </div>
       </section>
       <TestimonialCarousel />
-      <section className="lp-price" id="lp2-precos">
+      <section className="lp-price" id="lp2-precos" data-section-name="precos">
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
           <h2 className="lp-h2">
@@ -1483,7 +1498,7 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           </div>
         </div>
       </section>
-      <section className="lp-faq" id="lp2-faq">
+      <section className="lp-faq" id="lp2-faq" data-section-name="faq">
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">dúvidas frequentes</p>
           <h2 className="lp-h2">Ainda em dúvida?</h2>
@@ -1518,7 +1533,7 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
           </div>
         </div>
       </section>
-      <section className="lp-final-cta">
+      <section className="lp-final-cta" data-section-name="final">
         <div className="lp-container lp-final-cta-inner">
           <h2 className="lp-h2">
             Vocês não precisam se afastar mais.
@@ -1767,7 +1782,96 @@ function StoredAccessGate() {
   );
 }
 
+function useLpTracking(lpId: "v1" | "v2") {
+  const visitorKeyRef = useRef<string>("");
+  const startedAtRef = useRef(0);
+  const lastSectionRef = useRef("hero");
+  const exitSentRef = useRef(false);
+
+  useEffect(() => {
+    const storageKey = "pdc-visitor-key";
+    let visitorKey = "";
+    try {
+      visitorKey = sessionStorage.getItem(storageKey) || "";
+      if (!visitorKey) {
+        visitorKey =
+          typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        sessionStorage.setItem(storageKey, visitorKey);
+      }
+    } catch {
+      visitorKey = `anonymous-${Date.now()}`;
+    }
+    visitorKeyRef.current = visitorKey;
+    startedAtRef.current = Date.now();
+    const track = (eventType: "view" | "cta_click" | "exit", extra = {}) => {
+      const payload = JSON.stringify({ lpId, visitorKey, eventType, ...extra });
+      if (eventType === "exit") {
+        navigator.sendBeacon(
+          apiUrl("/api/track/page-event"),
+          new Blob([payload], { type: "application/json" }),
+        );
+      } else {
+        void fetch(apiUrl("/api/track/page-event"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+          keepalive: true,
+        }).catch(() => undefined);
+      }
+    };
+    track("view");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const section = entry.target.getAttribute("data-section-name");
+            if (section) lastSectionRef.current = section;
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    document
+      .querySelectorAll("[data-section-name]")
+      .forEach((element) => observer.observe(element));
+    const sendExit = () => {
+      if (exitSentRef.current) return;
+      exitSentRef.current = true;
+      track("exit", {
+        timeOnPageMs: Date.now() - startedAtRef.current,
+        lastSection: lastSectionRef.current,
+      });
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") sendExit();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", sendExit);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", sendExit);
+    };
+  }, [lpId]);
+
+  return () => {
+    void fetch(apiUrl("/api/track/page-event"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lpId,
+        visitorKey: visitorKeyRef.current,
+        eventType: "cta_click",
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+  };
+}
+
 function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
+  const trackCtaClick = useLpTracking(variant);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
     "couple",
@@ -1880,6 +1984,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
         body: JSON.stringify({
           packageId,
           buyerName: "Cliente Perguntas de Conexão",
+          sourceLp: variant,
         }),
       });
       const data = (await response.json()) as {
@@ -1896,6 +2001,10 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       setCheckoutState("error");
     }
   };
+  const startCheckout = (packageId: "couple" | "family" = selectedPackage) => {
+    trackCtaClick();
+    void checkout(packageId);
+  };
   return (
     <Shell dark>
       <StoredAccessGate />
@@ -1908,14 +2017,10 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       </Link>
       <main className="lp-main">
         {variant === "v2" ? (
-          <LandingV2Quiz
-            onBuy={() => {
-              void checkout("couple");
-            }}
-          />
+          <LandingV2Quiz onBuy={() => startCheckout("couple")} />
         ) : (
           <>
-            <section className="lp-hero">
+            <section className="lp-hero" data-section-name="hero">
               <div className="lp-hero-inner">
                 <div className="lp-hero-copy">
                   <span className="lp-eyebrow">
@@ -1932,7 +2037,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   </p>
                   <div className="lp-hero-actions">
                     <button
-                      onClick={() => void checkout("couple")}
+                      onClick={() => startCheckout("couple")}
                       className="lp-cta-primary"
                       data-testid="button-hero-cta"
                     >
@@ -1940,7 +2045,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => void checkout("couple")}
+                      onClick={() => startCheckout("couple")}
                       className="lp-cta-secondary lp-cta-secondary-button"
                     >
                       Quero comprar direto
@@ -1993,7 +2098,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
               </div>
             </section>
             <QuestionCarouselSection />
-            <section className="lp-pain">
+            <section className="lp-pain" data-section-name="dor">
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">quem tá aí sabe</p>
                 <h2 className="lp-h2">
@@ -2039,7 +2144,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 </p>
               </div>
             </section>
-            <section className="lp-solution">
+            <section className="lp-solution" data-section-name="proposta">
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">a proposta</p>
                 <h2 className="lp-h2">
@@ -2079,7 +2184,11 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 </div>
               </div>
             </section>
-            <section className="lp-quiz-section" id="lp-quiz">
+            <section
+              className="lp-quiz-section"
+              id="lp-quiz"
+              data-section-name="quiz"
+            >
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">teste rápido</p>
                 <h2 className="lp-h2">
@@ -2087,10 +2196,14 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   <br />
                   <em>feitas pra vocês.</em>
                 </h2>
-                <LandingQuiz onFinish={() => void checkout("couple")} />
+                <LandingQuiz onFinish={() => startCheckout("couple")} />
               </div>
             </section>
-            <section className="lp-how" id="como-funciona">
+            <section
+              className="lp-how"
+              id="como-funciona"
+              data-section-name="como-funciona"
+            >
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">como funciona</p>
                 <h2 className="lp-h2">Três passos, um ritual novo.</h2>
@@ -2122,7 +2235,11 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 </div>
               </div>
             </section>
-            <section className="lp-themes" id="pacotes">
+            <section
+              className="lp-themes"
+              id="pacotes"
+              data-section-name="pacotes"
+            >
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p>
                 <h2 className="lp-h2">
@@ -2173,7 +2290,11 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
               </div>
             </section>
             <TestimonialCarousel />
-            <section className="lp-price" id="lp-precos">
+            <section
+              className="lp-price"
+              id="lp-precos"
+              data-section-name="precos"
+            >
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
                 <h2 className="lp-h2">
@@ -2207,7 +2328,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     <li>✓ Sem mensalidade. Paga uma vez.</li>
                   </ul>
                   <button
-                    onClick={() => void checkout("couple")}
+                    onClick={() => startCheckout("couple")}
                     className="lp-cta-primary lp-cta-full"
                     data-testid="button-price-cta"
                   >
@@ -2226,7 +2347,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 </div>
               </div>
             </section>
-            <section className="lp-faq">
+            <section className="lp-faq" data-section-name="faq">
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">
                   perguntas frequentes
@@ -2267,7 +2388,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 </div>
               </div>
             </section>
-            <section className="lp-final-cta">
+            <section className="lp-final-cta" data-section-name="final">
               <div className="lp-container lp-final-cta-inner">
                 <h2 className="lp-h2">
                   O próximo bom papo
@@ -2276,7 +2397,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 </h2>
                 <p>Começa hoje. R$ 47,90 vitalício, garantia de 7 dias.</p>
                 <button
-                  onClick={() => void checkout("couple")}
+                  onClick={() => startCheckout("couple")}
                   className="lp-cta-primary lp-cta-big"
                   data-testid="button-final-cta"
                 >

@@ -1,5 +1,11 @@
 import { createInsertSchema } from "drizzle-zod";
-import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 export const sessionsTable = pgTable("sessions", {
   id: text("id").primaryKey(),
@@ -7,13 +13,16 @@ export const sessionsTable = pgTable("sessions", {
   buyerEmail: text("buyer_email"),
   packageId: text("package_id").notNull(),
   packageName: text("package_name").notNull(),
+  sourceLp: text("source_lp"),
   inviteLimit: integer("invite_limit").notNull(),
   invitesUsed: integer("invites_used").notNull().default(0),
   accessGranted: boolean("access_granted").notNull().default(false),
   onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   relationshipType: text("relationship_type"),
   partnerPronoun: text("partner_pronoun"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const invitesTable = pgTable("invites", {
@@ -28,12 +37,16 @@ export const invitesTable = pgTable("invites", {
   onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   relationshipType: text("relationship_type"),
   partnerPronoun: text("partner_pronoun"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const processedEventsTable = pgTable("processed_events", {
   id: text("id").primaryKey(),
-  processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
+  processedAt: timestamp("processed_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const authCodesTable = pgTable("auth_codes", {
@@ -43,7 +56,9 @@ export const authCodesTable = pgTable("auth_codes", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   usedAt: timestamp("used_at", { withTimezone: true }),
   attempts: integer("attempts").notNull().default(0),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const savedMomentsTable = pgTable("saved_moments", {
@@ -55,14 +70,18 @@ export const savedMomentsTable = pgTable("saved_moments", {
   fromPlayerName: text("from_player_name").notNull(),
   answerText: text("answer_text").notNull(),
   roomCode: text("room_code"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const suggestionsTable = pgTable("suggestions", {
   id: text("id").primaryKey(),
   email: text("email"),
   message: text("message").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const reviewsTable = pgTable("reviews", {
@@ -71,7 +90,21 @@ export const reviewsTable = pgTable("reviews", {
   email: text("email"),
   rating: integer("rating").notNull(),
   message: text("message").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const pageEventsTable = pgTable("page_events", {
+  id: text("id").primaryKey(),
+  lpId: text("lp_id").notNull(),
+  visitorKey: text("visitor_key").notNull(),
+  eventType: text("event_type").notNull(),
+  timeOnPageMs: integer("time_on_page_ms"),
+  lastSection: text("last_section"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const insertSessionSchema = createInsertSchema(sessionsTable);
@@ -80,6 +113,7 @@ export const insertAuthCodeSchema = createInsertSchema(authCodesTable);
 export const insertSavedMomentSchema = createInsertSchema(savedMomentsTable);
 export const insertSuggestionSchema = createInsertSchema(suggestionsTable);
 export const insertReviewSchema = createInsertSchema(reviewsTable);
+export const insertPageEventSchema = createInsertSchema(pageEventsTable);
 
 export type Session = typeof sessionsTable.$inferSelect;
 export type NewSession = typeof sessionsTable.$inferInsert;
@@ -93,3 +127,5 @@ export type Suggestion = typeof suggestionsTable.$inferSelect;
 export type NewSuggestion = typeof suggestionsTable.$inferInsert;
 export type Review = typeof reviewsTable.$inferSelect;
 export type NewReview = typeof reviewsTable.$inferInsert;
+export type PageEvent = typeof pageEventsTable.$inferSelect;
+export type NewPageEvent = typeof pageEventsTable.$inferInsert;

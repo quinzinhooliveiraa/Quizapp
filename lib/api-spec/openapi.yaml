@@ -456,6 +456,47 @@ paths:
                 $ref: "#/components/schemas/AbacatePayWebhookResult"
         "401":
           description: Invalid webhook signature
+  /track/page-event:
+    post:
+      operationId: trackPageEvent
+      tags: [tracking]
+      summary: Record an anonymous landing page event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageEventInput"
+      responses:
+        "204":
+          description: Event recorded
+        "400":
+          description: Invalid event
+  /admin/analytics:
+    get:
+      operationId: getAdminAnalytics
+      tags: [admin]
+      summary: Get landing page analytics
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Analytics for each landing page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  analytics:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LandingAnalytics"
+                required: [analytics]
+        "403":
+          description: Access denied
   /suggestions:
     post:
       operationId: createSuggestion
@@ -863,7 +904,46 @@ components:
         buyerEmail:
           type: string
           pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+        sourceLp:
+          type: string
+          enum: [v1, v2]
       required: [packageId, buyerName]
+    PageEventInput:
+      type: object
+      properties:
+        lpId: { type: string, enum: [v1, v2] }
+        visitorKey: { type: string, minLength: 1, maxLength: 120 }
+        eventType: { type: string, enum: [view, cta_click, exit] }
+        timeOnPageMs: { type: number, minimum: 0 }
+        lastSection: { type: string, maxLength: 80 }
+      required: [lpId, visitorKey, eventType]
+    LandingAnalytics:
+      type: object
+      properties:
+        lpId: { type: string, enum: [v1, v2] }
+        views: { type: number }
+        ctaClicks: { type: number }
+        checkoutsStarted: { type: number }
+        purchasesConfirmed: { type: number }
+        avgTimeOnPageSeconds: { type: ["number", "null"] }
+        topExitSections:
+          type: array
+          items:
+            type: object
+            properties:
+              section: { type: string }
+              count: { type: number }
+            required: [section, count]
+      required:
+        [
+          lpId,
+          views,
+          ctaClicks,
+          checkoutsStarted,
+          purchasesConfirmed,
+          avgTimeOnPageSeconds,
+          topExitSections,
+        ]
     CheckoutCreateResponse:
       type: object
       properties:

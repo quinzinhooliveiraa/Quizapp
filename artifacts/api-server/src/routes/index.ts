@@ -6,6 +6,7 @@ import momentsRouter from "./moments";
 import preferencesRouter from "./preferences";
 import adminRouter from "./admin";
 import feedbackRouter from "./feedback";
+import trackingRouter from "./tracking";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(momentsRouter);
 router.use(preferencesRouter);
 router.use(adminRouter);
 router.use(feedbackRouter);
+router.use(trackingRouter);
 
 export default router;

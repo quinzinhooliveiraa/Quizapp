@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CheckoutCreateInputPackageId } from './checkoutCreateInputPackageId';
+import type { CheckoutCreateInputSourceLp } from './checkoutCreateInputSourceLp';
 
 export interface CheckoutCreateInput {
   packageId: CheckoutCreateInputPackageId;
@@ -13,4 +14,5 @@ export interface CheckoutCreateInput {
   buyerName: string;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
+  sourceLp?: CheckoutCreateInputSourceLp;
 }

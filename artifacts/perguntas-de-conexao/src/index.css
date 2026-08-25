@@ -273,6 +273,72 @@
 .admin-tab-content {
   min-height: 300px;
 }
+.admin-analytics-grid {
+  display: grid;
+  gap: 1rem;
+}
+.admin-analytics-card {
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(196, 172, 255, 0.18);
+  border-radius: 0.9rem;
+}
+.admin-analytics-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.admin-analytics-card-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.admin-conversion {
+  padding: 0.4rem 0.65rem;
+  color: #302254;
+  background: #ffc59e;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.admin-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.7rem;
+}
+.admin-metric-grid > div {
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 0.65rem;
+}
+.admin-metric-grid span,
+.admin-exit-sections > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.68rem;
+}
+.admin-metric-grid strong {
+  color: #f9f8fb;
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+.admin-exit-sections {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-exit-sections p {
+  display: inline-block;
+  margin: 0 1rem 0 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.78rem;
+}
+.admin-exit-sections p strong {
+  color: #c4acff;
+}
 .admin-buyers-table-wrap {
   overflow-x: auto;
   background: rgba(255, 255, 255, 0.035);
@@ -781,6 +847,9 @@
   .admin-tabs {
     margin-left: -0.3rem;
     margin-right: -0.3rem;
+  }
+  .admin-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .admin-tab {
     padding-left: 0.35rem;

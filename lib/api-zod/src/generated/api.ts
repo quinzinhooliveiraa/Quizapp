@@ -312,7 +312,8 @@ export const createCheckoutBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+
 export const CreateCheckoutBody = zod.object({
   "packageId": zod.enum(['couple']),
   "buyerName": zod.string().min(1),
-  "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional()
+  "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
+  "sourceLp": zod.enum(['v1', 'v2']).optional()
 })
 
 export const CreateCheckoutResponse = zod.object({
@@ -340,6 +341,51 @@ export const ReceiveAbacatePayWebhookBody = zod.object({
 export const ReceiveAbacatePayWebhookResponse = zod.object({
   "accepted": zod.boolean(),
   "message": zod.string()
+})
+
+
+/**
+ * @summary Record an anonymous landing page event
+ */
+export const trackPageEventBodyVisitorKeyMax = 120;
+
+export const trackPageEventBodyTimeOnPageMsMin = 0;
+
+export const trackPageEventBodyLastSectionMax = 80;
+
+
+
+export const TrackPageEventBody = zod.object({
+  "lpId": zod.enum(['v1', 'v2']),
+  "visitorKey": zod.string().min(1).max(trackPageEventBodyVisitorKeyMax),
+  "eventType": zod.enum(['view', 'cta_click', 'exit']),
+  "timeOnPageMs": zod.number().min(trackPageEventBodyTimeOnPageMsMin).optional(),
+  "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional()
+})
+
+export const TrackPageEventResponse = zod.void()
+
+
+/**
+ * @summary Get landing page analytics
+ */
+export const GetAdminAnalyticsQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const GetAdminAnalyticsResponse = zod.object({
+  "analytics": zod.array(zod.object({
+  "lpId": zod.enum(['v1', 'v2']),
+  "views": zod.number(),
+  "ctaClicks": zod.number(),
+  "checkoutsStarted": zod.number(),
+  "purchasesConfirmed": zod.number(),
+  "avgTimeOnPageSeconds": zod.number().nullable(),
+  "topExitSections": zod.array(zod.object({
+  "section": zod.string(),
+  "count": zod.number()
+}))
+}))
 })
 
 
