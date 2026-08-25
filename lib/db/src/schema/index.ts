@@ -107,6 +107,16 @@ export const pageEventsTable = pgTable("page_events", {
     .defaultNow(),
 });
 
+export const pushSubscriptionsTable = pgTable("push_subscriptions", {
+  id: text("id").primaryKey(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const insertSessionSchema = createInsertSchema(sessionsTable);
 export const insertInviteSchema = createInsertSchema(invitesTable);
 export const insertAuthCodeSchema = createInsertSchema(authCodesTable);
@@ -114,6 +124,9 @@ export const insertSavedMomentSchema = createInsertSchema(savedMomentsTable);
 export const insertSuggestionSchema = createInsertSchema(suggestionsTable);
 export const insertReviewSchema = createInsertSchema(reviewsTable);
 export const insertPageEventSchema = createInsertSchema(pageEventsTable);
+export const insertPushSubscriptionSchema = createInsertSchema(
+  pushSubscriptionsTable,
+);
 
 export type Session = typeof sessionsTable.$inferSelect;
 export type NewSession = typeof sessionsTable.$inferInsert;
@@ -129,3 +142,5 @@ export type Review = typeof reviewsTable.$inferSelect;
 export type NewReview = typeof reviewsTable.$inferInsert;
 export type PageEvent = typeof pageEventsTable.$inferSelect;
 export type NewPageEvent = typeof pageEventsTable.$inferInsert;
+export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptionsTable.$inferInsert;

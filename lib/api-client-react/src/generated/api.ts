@@ -34,6 +34,7 @@ import type {
   GetAdminAnalytics200,
   GetAdminAnalyticsParams,
   GetPreferencesParams,
+  GetPushVapidPublicKey200,
   GuestAccess,
   HealthStatus,
   Invite,
@@ -59,8 +60,10 @@ import type {
   Review,
   ReviewInput,
   SessionInput,
+  SubscribeAdminPushBody,
   Suggestion,
   SuggestionInput,
+  UnsubscribeAdminPushBody,
   WebhookResult
 } from './api.schemas';
 
@@ -2209,4 +2212,223 @@ export function useListAdminBuyers<TData = Awaited<ReturnType<typeof listAdminBu
 
 
 
+
+export const getGetPushVapidPublicKeyUrl = () => {
+
+
+
+
+  return `/api/push/vapid-public-key`
+}
+
+/**
+ * @summary Return the public key used by Web Push
+ */
+export const getPushVapidPublicKey = async ( options?: Parameters<typeof customFetch>[1]): Promise<GetPushVapidPublicKey200> => {
+
+  return customFetch<GetPushVapidPublicKey200>(getGetPushVapidPublicKeyUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPushVapidPublicKeyQueryKey = () => {
+    return [
+    `/api/push/vapid-public-key`
+    ] as const;
+    }
+
+
+export const getGetPushVapidPublicKeyQueryOptions = <TData = Awaited<ReturnType<typeof getPushVapidPublicKey>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPushVapidPublicKey>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPushVapidPublicKeyQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPushVapidPublicKey>>> = ({ signal }) => getPushVapidPublicKey({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPushVapidPublicKey>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPushVapidPublicKeyQueryResult = NonNullable<Awaited<ReturnType<typeof getPushVapidPublicKey>>>
+export type GetPushVapidPublicKeyQueryError = ErrorType<void>
+
+
+/**
+ * @summary Return the public key used by Web Push
+ */
+
+export function useGetPushVapidPublicKey<TData = Awaited<ReturnType<typeof getPushVapidPublicKey>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPushVapidPublicKey>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPushVapidPublicKeyQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSubscribeAdminPushUrl = () => {
+
+
+
+
+  return `/api/admin/push-subscribe`
+}
+
+/**
+ * @summary Register an administrator device for push notifications
+ */
+export const subscribeAdminPush = async (subscribeAdminPushBody: SubscribeAdminPushBody, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getSubscribeAdminPushUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(subscribeAdminPushBody)
+  }
+);}
+
+
+
+
+
+export const getSubscribeAdminPushMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeAdminPush>>, TError,{data: BodyType<SubscribeAdminPushBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof subscribeAdminPush>>, TError,{data: BodyType<SubscribeAdminPushBody>}, TContext> => {
+
+const mutationKey = ['subscribeAdminPush'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof subscribeAdminPush>>, {data: BodyType<SubscribeAdminPushBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  subscribeAdminPush(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubscribeAdminPushMutationResult = NonNullable<Awaited<ReturnType<typeof subscribeAdminPush>>>
+    export type SubscribeAdminPushMutationBody = BodyType<SubscribeAdminPushBody>
+    export type SubscribeAdminPushMutationError = ErrorType<void>
+
+    /**
+ * @summary Register an administrator device for push notifications
+ */
+export const useSubscribeAdminPush = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeAdminPush>>, TError,{data: BodyType<SubscribeAdminPushBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof subscribeAdminPush>>,
+        TError,
+        {data: BodyType<SubscribeAdminPushBody>},
+        TContext
+      > => {
+      return useMutation(getSubscribeAdminPushMutationOptions(options));
+    }
+
+export const getUnsubscribeAdminPushUrl = () => {
+
+
+
+
+  return `/api/admin/push-unsubscribe`
+}
+
+/**
+ * @summary Remove an administrator device from push notifications
+ */
+export const unsubscribeAdminPush = async (unsubscribeAdminPushBody: UnsubscribeAdminPushBody, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getUnsubscribeAdminPushUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(unsubscribeAdminPushBody)
+  }
+);}
+
+
+
+
+
+export const getUnsubscribeAdminPushMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeAdminPush>>, TError,{data: BodyType<UnsubscribeAdminPushBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unsubscribeAdminPush>>, TError,{data: BodyType<UnsubscribeAdminPushBody>}, TContext> => {
+
+const mutationKey = ['unsubscribeAdminPush'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unsubscribeAdminPush>>, {data: BodyType<UnsubscribeAdminPushBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  unsubscribeAdminPush(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnsubscribeAdminPushMutationResult = NonNullable<Awaited<ReturnType<typeof unsubscribeAdminPush>>>
+    export type UnsubscribeAdminPushMutationBody = BodyType<UnsubscribeAdminPushBody>
+    export type UnsubscribeAdminPushMutationError = ErrorType<void>
+
+    /**
+ * @summary Remove an administrator device from push notifications
+ */
+export const useUnsubscribeAdminPush = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsubscribeAdminPush>>, TError,{data: BodyType<UnsubscribeAdminPushBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unsubscribeAdminPush>>,
+        TError,
+        {data: BodyType<UnsubscribeAdminPushBody>},
+        TContext
+      > => {
+      return useMutation(getUnsubscribeAdminPushMutationOptions(options));
+    }
 

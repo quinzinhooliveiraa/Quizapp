@@ -440,3 +440,27 @@ export type ListAdminBuyers200 = {
   totalWithAccess: number;
 };
 
+export type GetPushVapidPublicKey200 = {
+  publicKey: string;
+};
+
+export type SubscribeAdminPushBodySubscriptionKeys = {
+  p256dh: string;
+  auth: string;
+};
+
+export type SubscribeAdminPushBodySubscription = {
+  endpoint: string;
+  keys: SubscribeAdminPushBodySubscriptionKeys;
+};
+
+export type SubscribeAdminPushBody = {
+  sessionId: string;
+  subscription: SubscribeAdminPushBodySubscription;
+};
+
+export type UnsubscribeAdminPushBody = {
+  sessionId: string;
+  endpoint: string;
+};
+

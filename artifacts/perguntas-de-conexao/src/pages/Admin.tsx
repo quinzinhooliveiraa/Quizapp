@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowLeft,
+  Bell,
   Check,
   Copy,
   ExternalLink,
@@ -76,9 +77,119 @@ const TABS = [
   { id: "buyers", label: "Compradores" },
   { id: "pages", label: "Páginas" },
   { id: "analytics", label: "Analytics" },
+  { id: "notifications", label: "Notificações" },
   { id: "feedback", label: "Feedback" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+function NotificationsTab({ sessionId }: { sessionId: string }) {
+  const [state, setState] = useState<
+    "idle" | "loading" | "enabled" | "denied" | "unsupported" | "error"
+  >("idle");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!("Notification" in window) || !("PushManager" in window)) {
+      setState("unsupported");
+      return;
+    }
+    navigator.serviceWorker.ready
+      .then((registration) => registration.pushManager.getSubscription())
+      .then((subscription) => {
+        if (subscription) setState("enabled");
+      })
+      .catch(() => {});
+  }, []);
+
+  const activate = async () => {
+    setState("loading");
+    setMessage("");
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setState("denied");
+        setMessage(
+          "Permita notificações nas configurações do navegador ou do app para receber avisos de novas compras.",
+        );
+        return;
+      }
+      const keyResponse = await fetch(
+        `${apiBaseUrl}/api/push/vapid-public-key`,
+      );
+      if (!keyResponse.ok) throw new Error("public-key");
+      const { publicKey } = (await keyResponse.json()) as { publicKey: string };
+      const registration = await navigator.serviceWorker.ready;
+      const subscription =
+        (await registration.pushManager.getSubscription()) ||
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        }));
+      const response = await fetch(`${apiBaseUrl}/api/admin/push-subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, subscription }),
+      });
+      if (!response.ok) throw new Error("subscribe");
+      setState("enabled");
+    } catch {
+      setState("error");
+      setMessage(
+        "Não foi possível ativar agora. Tente novamente em instantes.",
+      );
+    }
+  };
+
+  return (
+    <section className="admin-section" aria-labelledby="notifications-title">
+      <div className="admin-section-heading">
+        <div>
+          <p className="admin-eyebrow">avisos em tempo real</p>
+          <h2 id="notifications-title">Notificações</h2>
+        </div>
+        <div className="admin-notification-icon">
+          <Bell size={18} />
+        </div>
+      </div>
+      <p className="admin-notification-copy">
+        Receba um aviso no seu celular sempre que alguém comprar.
+      </p>
+      <p className="admin-notification-note">
+        No iPhone, isso só funciona se você tiver adicionado este app à tela de
+        início (compartilhar → Adicionar à Tela de Início) e abrir por lá, não
+        pelo Safari normal. No Android funciona direto pelo Chrome.
+      </p>
+      {state === "unsupported" ? (
+        <p className="admin-notification-status">
+          Seu navegador não suporta notificações push.
+        </p>
+      ) : state === "enabled" ? (
+        <p className="admin-notification-status is-enabled">
+          Notificações ativadas neste aparelho ✓
+        </p>
+      ) : (
+        <button
+          type="button"
+          className="button button-primary admin-notification-button"
+          onClick={activate}
+          disabled={state === "loading"}
+        >
+          {state === "loading"
+            ? "Ativando…"
+            : "Ativar notificações neste aparelho"}
+        </button>
+      )}
+      {message && <p className="admin-notification-message">{message}</p>}
+    </section>
+  );
+}
 
 function safeGetItem(key: string): string | null {
   try {
@@ -401,6 +512,7 @@ export default function Admin() {
   const [buyerTotal, setBuyerTotal] = useState(0);
   const [buyerTotalWithAccess, setBuyerTotalWithAccess] = useState(0);
   const [analytics, setAnalytics] = useState<AnalyticsEntry[]>([]);
+  const sessionId = safeGetItem("conexao-session")?.trim() || "";
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
@@ -513,6 +625,7 @@ export default function Admin() {
     pages: <PagesTab origin={origin} copiedId={copiedId} copyLink={copyLink} />,
     feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
     analytics: <AnalyticsTab analytics={analytics} />,
+    notifications: <NotificationsTab sessionId={sessionId} />,
   };
 
   return (

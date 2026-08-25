@@ -617,6 +617,77 @@ paths:
                 required: [buyers, total, totalWithAccess]
         "403":
           description: Access denied
+  /push/vapid-public-key:
+    get:
+      operationId: getPushVapidPublicKey
+      tags: [admin]
+      summary: Return the public key used by Web Push
+      responses:
+        "200":
+          description: VAPID public key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publicKey: { type: string }
+                required: [publicKey]
+        "503":
+          description: Push notifications are not configured
+  /admin/push-subscribe:
+    post:
+      operationId: subscribeAdminPush
+      tags: [admin]
+      summary: Register an administrator device for push notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId: { type: string }
+                subscription:
+                  type: object
+                  properties:
+                    endpoint: { type: string }
+                    keys:
+                      type: object
+                      properties:
+                        p256dh: { type: string }
+                        auth: { type: string }
+                      required: [p256dh, auth]
+                  required: [endpoint, keys]
+              required: [sessionId, subscription]
+      responses:
+        "201":
+          description: Subscription registered
+        "400":
+          description: Invalid subscription
+        "403":
+          description: Access denied
+  /admin/push-unsubscribe:
+    post:
+      operationId: unsubscribeAdminPush
+      tags: [admin]
+      summary: Remove an administrator device from push notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId: { type: string }
+                endpoint: { type: string }
+              required: [sessionId, endpoint]
+      responses:
+        "200":
+          description: Subscription removed
+        "400":
+          description: Invalid endpoint
+        "403":
+          description: Access denied
 components:
   schemas:
     Suggestion:

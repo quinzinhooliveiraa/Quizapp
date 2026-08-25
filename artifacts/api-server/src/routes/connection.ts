@@ -38,6 +38,7 @@ import {
   fetchAbacateCheckoutStatus,
   verifyAbacateSignature,
 } from "../lib/abacatepay";
+import { sendPurchaseNotification } from "../lib/push";
 
 type Theme = {
   id: string;
@@ -610,10 +611,28 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
       if (!processedEvent) return "duplicate" as const;
 
       if (typeof sessionId === "string") {
-        await tx
+        const [updated] = await tx
           .update(sessionsTable)
           .set({ accessGranted: true })
-          .where(eq(sessionsTable.id, sessionId));
+          .where(
+            and(
+              eq(sessionsTable.id, sessionId),
+              eq(sessionsTable.accessGranted, false),
+            ),
+          )
+          .returning({
+            buyerName: sessionsTable.buyerName,
+            packageName: sessionsTable.packageName,
+            accessGranted: sessionsTable.accessGranted,
+          });
+        if (updated?.accessGranted) {
+          void sendPurchaseNotification({
+            buyerName: updated.buyerName,
+            packageName: updated.packageName,
+          }).catch((error) =>
+            req.log.error({ err: error }, "Purchase push notification failed"),
+          );
+        }
       }
       return "processed" as const;
     });
@@ -627,10 +646,28 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
       return;
     }
   } else if (typeof sessionId === "string") {
-    await db
+    const [updated] = await db
       .update(sessionsTable)
       .set({ accessGranted: true })
-      .where(eq(sessionsTable.id, sessionId));
+      .where(
+        and(
+          eq(sessionsTable.id, sessionId),
+          eq(sessionsTable.accessGranted, false),
+        ),
+      )
+      .returning({
+        buyerName: sessionsTable.buyerName,
+        packageName: sessionsTable.packageName,
+        accessGranted: sessionsTable.accessGranted,
+      });
+    if (updated?.accessGranted) {
+      void sendPurchaseNotification({
+        buyerName: updated.buyerName,
+        packageName: updated.packageName,
+      }).catch((error) =>
+        req.log.error({ err: error }, "Purchase push notification failed"),
+      );
+    }
   }
 
   res.json(
@@ -666,11 +703,29 @@ router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
         checkout?.status === "PAID" &&
         checkout.metadata?.sessionId === session.id
       ) {
-        await db
+        const [updated] = await db
           .update(sessionsTable)
           .set({ accessGranted: true })
-          .where(eq(sessionsTable.id, session.id));
-        session.accessGranted = true;
+          .where(
+            and(
+              eq(sessionsTable.id, session.id),
+              eq(sessionsTable.accessGranted, false),
+            ),
+          )
+          .returning({
+            buyerName: sessionsTable.buyerName,
+            packageName: sessionsTable.packageName,
+            accessGranted: sessionsTable.accessGranted,
+          });
+        if (updated) session.accessGranted = true;
+        if (updated?.accessGranted) {
+          void sendPurchaseNotification({
+            buyerName: updated.buyerName,
+            packageName: updated.packageName,
+          }).catch((error) =>
+            req.log.error({ err: error }, "Purchase push notification failed"),
+          );
+        }
       }
     }
   }

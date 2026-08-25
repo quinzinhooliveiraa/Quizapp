@@ -273,6 +273,46 @@
 .admin-tab-content {
   min-height: 300px;
 }
+.admin-notification-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #c4acff;
+  background: rgba(196, 172, 255, 0.1);
+  border-radius: 0.7rem;
+}
+.admin-notification-copy {
+  margin: 0 0 1rem;
+  color: #f9f8fb;
+  font-size: 1.05rem;
+}
+.admin-notification-note {
+  max-width: 680px;
+  margin: 0 0 1.4rem;
+  padding: 1rem 1.1rem;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.admin-notification-button {
+  width: auto;
+}
+.admin-notification-status,
+.admin-notification-message {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.84rem;
+}
+.admin-notification-status.is-enabled {
+  color: #b9f0cf;
+}
+.admin-notification-message {
+  margin-top: 1rem;
+}
 .admin-analytics-grid {
   display: grid;
   gap: 1rem;

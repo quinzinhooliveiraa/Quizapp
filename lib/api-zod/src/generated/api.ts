@@ -508,3 +508,39 @@ export const ListAdminBuyersResponse = zod.object({
 })
 
 
+/**
+ * @summary Return the public key used by Web Push
+ */
+export const GetPushVapidPublicKeyResponse = zod.object({
+  "publicKey": zod.string()
+})
+
+
+/**
+ * @summary Register an administrator device for push notifications
+ */
+export const SubscribeAdminPushBody = zod.object({
+  "sessionId": zod.string(),
+  "subscription": zod.object({
+  "endpoint": zod.string(),
+  "keys": zod.object({
+  "p256dh": zod.string(),
+  "auth": zod.string()
+})
+})
+})
+
+export const SubscribeAdminPushResponse = zod.void()
+
+
+/**
+ * @summary Remove an administrator device from push notifications
+ */
+export const UnsubscribeAdminPushBody = zod.object({
+  "sessionId": zod.string(),
+  "endpoint": zod.string()
+})
+
+export const UnsubscribeAdminPushResponse = zod.unknown()
+
+
