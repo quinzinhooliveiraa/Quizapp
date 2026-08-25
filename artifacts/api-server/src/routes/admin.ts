@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import crypto from "node:crypto";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import {
   db,
   pageEventsTable,
@@ -101,21 +101,27 @@ router.get("/admin/session-recording", async (req, res): Promise<void> => {
     typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
   const buyerId =
     typeof req.query.buyerId === "string" ? req.query.buyerId : undefined;
+  const requestedVisitorKey =
+    typeof req.query.visitorKey === "string"
+      ? req.query.visitorKey.trim()
+      : undefined;
   if (!(await isAdminSession(sessionId))) {
     res.status(403).json({ error: "Acesso negado" });
     return;
   }
-  if (!buyerId?.trim()) {
-    res.status(400).json({ error: "Comprador inválido" });
+  if (!buyerId?.trim() && !requestedVisitorKey) {
+    res.status(400).json({ error: "Comprador ou visitante inválido" });
     return;
   }
 
-  const [buyer] = await db
-    .select({ visitorKey: sessionsTable.visitorKey })
-    .from(sessionsTable)
-    .where(eq(sessionsTable.id, buyerId))
-    .limit(1);
-  const visitorKey = buyer?.visitorKey?.trim();
+  const [buyer] = buyerId?.trim()
+    ? await db
+        .select({ visitorKey: sessionsTable.visitorKey })
+        .from(sessionsTable)
+        .where(eq(sessionsTable.id, buyerId))
+        .limit(1)
+    : [];
+  const visitorKey = buyer?.visitorKey?.trim() || requestedVisitorKey;
   if (!visitorKey) {
     res.json({ available: false, reason: "sem-rastreio" });
     return;
@@ -147,6 +153,115 @@ router.get("/admin/session-recording", async (req, res): Promise<void> => {
     available: true,
     url: `https://clarity.microsoft.com/player/y7zh9f1ygk/${encodeURIComponent(event.clarityUserId)}/${encodeURIComponent(event.claritySessionId)}`,
     visitorKey,
+  });
+});
+
+router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  const lpId = typeof req.query.lpId === "string" ? req.query.lpId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  if (lpId !== "v1" && lpId !== "v2") {
+    res.status(400).json({ error: "Landing page inválida" });
+    return;
+  }
+
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const events = await db
+    .select({
+      visitorKey: pageEventsTable.visitorKey,
+      eventType: pageEventsTable.eventType,
+      timeOnPageMs: pageEventsTable.timeOnPageMs,
+      lastSection: pageEventsTable.lastSection,
+      createdAt: pageEventsTable.createdAt,
+      clarityUserId: pageEventsTable.clarityUserId,
+      claritySessionId: pageEventsTable.claritySessionId,
+    })
+    .from(pageEventsTable)
+    .where(
+      and(
+        eq(pageEventsTable.lpId, lpId),
+        isNotNull(pageEventsTable.visitorKey),
+        inArray(pageEventsTable.eventType, ["view", "exit"]),
+        // Keep this query bounded to the same reporting window as analytics.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        gte(pageEventsTable.createdAt, since),
+      ),
+    )
+    .orderBy(desc(pageEventsTable.createdAt))
+    .limit(5000);
+
+  const grouped = new Map<
+    string,
+    {
+      firstSeenAt: Date;
+      timeOnPageMs: number | null;
+      lastSection: string | null;
+      hasRecording: boolean;
+    }
+  >();
+  for (const event of events) {
+    const current = grouped.get(event.visitorKey) || {
+      firstSeenAt: event.createdAt,
+      timeOnPageMs: null,
+      lastSection: null,
+      hasRecording: false,
+    };
+    if (event.eventType === "view" && event.createdAt < current.firstSeenAt) {
+      current.firstSeenAt = event.createdAt;
+    }
+    if (event.eventType === "exit" && current.timeOnPageMs === null) {
+      current.timeOnPageMs = event.timeOnPageMs;
+      current.lastSection = event.lastSection;
+    }
+    if (event.clarityUserId && event.claritySessionId) {
+      current.hasRecording = true;
+    }
+    grouped.set(event.visitorKey, current);
+  }
+
+  const visitorKeys = [...grouped.keys()].slice(0, 200);
+  const linkedSessions =
+    visitorKeys.length > 0
+      ? await db
+          .select({
+            visitorKey: sessionsTable.visitorKey,
+            buyerName: sessionsTable.buyerName,
+            packageName: sessionsTable.packageName,
+            accessGranted: sessionsTable.accessGranted,
+          })
+          .from(sessionsTable)
+          .where(inArray(sessionsTable.visitorKey, visitorKeys))
+      : [];
+  const sessionByVisitorKey = new Map(
+    linkedSessions.map((session) => [session.visitorKey, session]),
+  );
+
+  res.json({
+    sessions: visitorKeys.map((visitorKey) => {
+      const groupedSession = grouped.get(visitorKey)!;
+      const buyer = sessionByVisitorKey.get(visitorKey);
+      return {
+        visitorKey,
+        firstSeenAt: groupedSession.firstSeenAt.toISOString(),
+        timeOnPageSeconds:
+          groupedSession.timeOnPageMs == null
+            ? null
+            : Math.round(groupedSession.timeOnPageMs / 1000),
+        lastSection: groupedSession.lastSection,
+        status: buyer
+          ? buyer.accessGranted
+            ? "comprou"
+            : "aguardando_pagamento"
+          : "so_visitou",
+        buyerName: buyer?.buyerName || null,
+        packageName: buyer?.packageName || null,
+        hasRecording: groupedSession.hasRecording,
+      };
+    }),
   });
 });
 

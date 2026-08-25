@@ -5,9 +5,8 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { LandingSession } from './landingSession';
 
-export type GetAdminSessionRecordingParams = {
-sessionId: string;
-buyerId?: string;
-visitorKey?: string;
+export type ListAdminLpSessions200 = {
+  sessions: LandingSession[];
 };

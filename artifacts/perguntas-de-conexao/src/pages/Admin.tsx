@@ -47,6 +47,16 @@ type RecordingLookup = {
   visitorKey?: string;
   reason?: "sem-rastreio" | "sem-gravacao";
 };
+type LpSession = {
+  visitorKey: string;
+  firstSeenAt: string;
+  timeOnPageSeconds: number | null;
+  lastSection: string | null;
+  status: "comprou" | "aguardando_pagamento" | "so_visitou";
+  buyerName: string | null;
+  packageName: string | null;
+  hasRecording: boolean;
+};
 type BuyersResponse = {
   buyers?: BuyerEntry[];
   total?: number;
@@ -61,6 +71,7 @@ type AnalyticsEntry = {
   avgTimeOnPageSeconds: number | null;
   topExitSections: Array<{ section: string; count: number }>;
 };
+type LpSessionsResponse = { sessions?: LpSession[] };
 
 const LANDINGS: LandingEntry[] = [
   {
@@ -215,7 +226,172 @@ function formatDuration(seconds: number | null) {
   return `${Math.floor(seconds / 60)}min ${seconds % 60}s`;
 }
 
-function AnalyticsTab({ analytics }: { analytics: AnalyticsEntry[] }) {
+function shortVisitorKey(visitorKey: string) {
+  return `${visitorKey.slice(0, 8)}…`;
+}
+
+function LpSessionsList({
+  lpId,
+  sessions,
+  sessionId,
+}: {
+  lpId: string;
+  sessions: LpSession[];
+  sessionId: string;
+}) {
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Record<string, RecordingLookup>>({});
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const openRecording = async (visitorKey: string) => {
+    setLoadingKey(visitorKey);
+    try {
+      const query = `sessionId=${encodeURIComponent(sessionId)}&visitorKey=${encodeURIComponent(visitorKey)}`;
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/session-recording?${query}`,
+      );
+      const result = (await response.json()) as RecordingLookup;
+      if (!response.ok) throw new Error("recording-lookup");
+      setMessages((current) => ({ ...current, [visitorKey]: result }));
+      if (result.available && result.url) {
+        window.open(result.url, "_blank", "noopener,noreferrer");
+      }
+    } catch {
+      setMessages((current) => ({
+        ...current,
+        [visitorKey]: { available: false, reason: "sem-gravacao", visitorKey },
+      }));
+    } finally {
+      setLoadingKey(null);
+    }
+  };
+
+  const copyKey = async (visitorKey: string) => {
+    try {
+      await navigator.clipboard.writeText(visitorKey);
+      setCopiedKey(visitorKey);
+      window.setTimeout(
+        () =>
+          setCopiedKey((current) => (current === visitorKey ? null : current)),
+        1800,
+      );
+    } catch {
+      setCopiedKey(null);
+    }
+  };
+
+  const statusLabels = {
+    comprou: "Comprou",
+    aguardando_pagamento: "Aguardando pagamento",
+    so_visitou: "Só visitou",
+  } as const;
+
+  return (
+    <div className="admin-lp-sessions">
+      <div className="admin-lp-sessions-heading">
+        <span>Sessões desta página</span>
+        <strong>{sessions.length}</strong>
+      </div>
+      {sessions.length === 0 ? (
+        <p className="admin-footnote">
+          Nenhuma sessão registrada ainda nesta página.
+        </p>
+      ) : (
+        <div className="admin-lp-sessions-table-wrap">
+          <table className="admin-lp-sessions-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Visitante</th>
+                <th>Entrou</th>
+                <th>Tempo</th>
+                <th>Gravação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((session) => {
+                const message = messages[session.visitorKey];
+                return (
+                  <tr key={session.visitorKey}>
+                    <td>
+                      <span
+                        className={`admin-session-status is-${session.status}`}
+                      >
+                        {statusLabels[session.status]}
+                      </span>
+                    </td>
+                    <td>
+                      <strong>
+                        {session.buyerName ||
+                          shortVisitorKey(session.visitorKey)}
+                      </strong>
+                      {session.packageName && (
+                        <small>{session.packageName}</small>
+                      )}
+                    </td>
+                    <td>
+                      {new Date(session.firstSeenAt).toLocaleString("pt-BR")}
+                    </td>
+                    <td>{formatDuration(session.timeOnPageSeconds)}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="admin-recording-button"
+                        onClick={() => void openRecording(session.visitorKey)}
+                        disabled={loadingKey === session.visitorKey}
+                      >
+                        {loadingKey === session.visitorKey
+                          ? "Buscando…"
+                          : "Ver gravação"}
+                      </button>
+                      {message?.reason === "sem-rastreio" && (
+                        <span className="admin-recording-message">
+                          Sem rastreamento disponível para esta sessão.
+                        </span>
+                      )}
+                      {message?.reason === "sem-gravacao" && (
+                        <span className="admin-recording-message">
+                          Não achamos a gravação. Busque no Clarity por{" "}
+                          <code>
+                            {message.visitorKey || session.visitorKey}
+                          </code>
+                          .
+                          <button
+                            type="button"
+                            className="admin-copy-key-button"
+                            onClick={() =>
+                              void copyKey(
+                                message.visitorKey || session.visitorKey,
+                              )
+                            }
+                          >
+                            {copiedKey === session.visitorKey
+                              ? "Copiado"
+                              : "Copiar identificador"}
+                          </button>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnalyticsTab({
+  analytics,
+  lpSessions,
+  sessionId,
+}: {
+  analytics: AnalyticsEntry[];
+  lpSessions: Record<string, LpSession[]>;
+  sessionId: string;
+}) {
   return (
     <section className="admin-section" aria-labelledby="analytics-title">
       <div className="admin-section-heading">
@@ -277,6 +453,11 @@ function AnalyticsTab({ analytics }: { analytics: AnalyticsEntry[] }) {
                   <p>Nenhum dado de saída ainda.</p>
                 )}
               </div>
+              <LpSessionsList
+                lpId={landing.id}
+                sessions={lpSessions[landing.id] || []}
+                sessionId={sessionId}
+              />
             </article>
           );
         })}
@@ -285,15 +466,7 @@ function AnalyticsTab({ analytics }: { analytics: AnalyticsEntry[] }) {
   );
 }
 
-function BuyersTab({
-  buyers,
-  total,
-  totalWithAccess,
-}: {
-  buyers: BuyerEntry[];
-  total: number;
-  totalWithAccess: number;
-}) {
+function BuyersTab({ buyers, total }: { buyers: BuyerEntry[]; total: number }) {
   const [loadingBuyerId, setLoadingBuyerId] = useState<string | null>(null);
   const [recordingMessages, setRecordingMessages] = useState<
     Record<string, RecordingLookup>
@@ -351,7 +524,7 @@ function BuyersTab({
           <h2 id="buyers-title">Compradores</h2>
         </div>
         <span className="admin-count">
-          {total} cadastros · {totalWithAccess} com acesso liberado
+          {total} {total === 1 ? "comprador" : "compradores"}
         </span>
       </div>
       {buyers.length === 0 ? (
@@ -364,7 +537,6 @@ function BuyersTab({
                 <th>Nome</th>
                 <th>Email</th>
                 <th>Pacote</th>
-                <th>Status</th>
                 <th>Data</th>
                 <th>Convites</th>
                 <th>Clarity</th>
@@ -376,17 +548,6 @@ function BuyersTab({
                   <td>{buyer.buyerName || "Sem nome"}</td>
                   <td>{buyer.buyerEmail || "Sem email"}</td>
                   <td>{buyer.packageName}</td>
-                  <td>
-                    <span
-                      className={`admin-access-badge ${
-                        buyer.accessGranted ? "is-granted" : "is-pending"
-                      }`}
-                    >
-                      {buyer.accessGranted
-                        ? "Acesso liberado"
-                        : "Aguardando pagamento"}
-                    </span>
-                  </td>
                   <td>{formatDate(buyer.createdAt)}</td>
                   <td>
                     {buyer.invitesUsed}/{buyer.inviteLimit}
@@ -610,8 +771,8 @@ export default function Admin() {
   const [reviews, setReviews] = useState<ReviewEntry[]>([]);
   const [buyers, setBuyers] = useState<BuyerEntry[]>([]);
   const [buyerTotal, setBuyerTotal] = useState(0);
-  const [buyerTotalWithAccess, setBuyerTotalWithAccess] = useState(0);
   const [analytics, setAnalytics] = useState<AnalyticsEntry[]>([]);
+  const [lpSessions, setLpSessions] = useState<Record<string, LpSession[]>>({});
   const sessionId = safeGetItem("conexao-session")?.trim() || "";
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -654,15 +815,39 @@ export default function Admin() {
                 ? (response.json() as Promise<{ analytics?: AnalyticsEntry[] }>)
                 : Promise.resolve({} as { analytics?: AnalyticsEntry[] }),
           ),
+          ...LANDINGS.map((landing) =>
+            fetch(
+              `${apiBaseUrl}/api/admin/lp-sessions?${query}&lpId=${landing.id}`,
+            ).then((response) =>
+              response.ok
+                ? (response.json() as Promise<LpSessionsResponse>)
+                : Promise.resolve({} as LpSessionsResponse),
+            ),
+          ),
         ])
-          .then(([buyerData, suggestionData, reviewData, analyticsData]) => {
-            setBuyers(buyerData.buyers || []);
-            setBuyerTotal(buyerData.total || 0);
-            setBuyerTotalWithAccess(buyerData.totalWithAccess || 0);
-            setSuggestions(suggestionData.suggestions || []);
-            setReviews(reviewData.reviews || []);
-            setAnalytics(analyticsData.analytics || []);
-          })
+          .then(
+            ([
+              buyerData,
+              suggestionData,
+              reviewData,
+              analyticsData,
+              ...sessionData
+            ]) => {
+              setBuyers(buyerData.buyers || []);
+              setBuyerTotal(buyerData.total || 0);
+              setSuggestions(suggestionData.suggestions || []);
+              setReviews(reviewData.reviews || []);
+              setAnalytics(analyticsData.analytics || []);
+              setLpSessions(
+                Object.fromEntries(
+                  LANDINGS.map((landing, index) => [
+                    landing.id,
+                    sessionData[index]?.sessions || [],
+                  ]),
+                ),
+              );
+            },
+          )
           .catch(() => {
             setBuyers([]);
             setSuggestions([]);
@@ -715,16 +900,16 @@ export default function Admin() {
   }
 
   const tabContent = {
-    buyers: (
-      <BuyersTab
-        buyers={buyers}
-        total={buyerTotal}
-        totalWithAccess={buyerTotalWithAccess}
-      />
-    ),
+    buyers: <BuyersTab buyers={buyers} total={buyerTotal} />,
     pages: <PagesTab origin={origin} copiedId={copiedId} copyLink={copyLink} />,
     feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
-    analytics: <AnalyticsTab analytics={analytics} />,
+    analytics: (
+      <AnalyticsTab
+        analytics={analytics}
+        lpSessions={lpSessions}
+        sessionId={sessionId}
+      />
+    ),
     notifications: <NotificationsTab sessionId={sessionId} />,
   };
 

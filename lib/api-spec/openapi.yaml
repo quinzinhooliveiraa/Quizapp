@@ -629,7 +629,11 @@ paths:
           schema: { type: string }
         - name: buyerId
           in: query
-          required: true
+          required: false
+          schema: { type: string }
+        - name: visitorKey
+          in: query
+          required: false
           schema: { type: string }
       responses:
         "200":
@@ -638,6 +642,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SessionRecordingLookup"
+        "403":
+          description: Access denied
+  /admin/lp-sessions:
+    get:
+      operationId: listAdminLpSessions
+      tags: [admin]
+      summary: List recent sessions for a landing page
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: lpId
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [v1, v2]
+      responses:
+        "200":
+          description: Recent landing page sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LandingSession"
+                required: [sessions]
         "403":
           description: Access denied
   /push/vapid-public-key:
@@ -766,6 +801,30 @@ components:
           invitesUsed,
           inviteLimit,
           createdAt,
+        ]
+    LandingSession:
+      type: object
+      properties:
+        visitorKey: { type: string }
+        firstSeenAt: { type: string, format: date-time }
+        timeOnPageSeconds: { type: ["number", "null"] }
+        lastSection: { type: ["string", "null"] }
+        status:
+          type: string
+          enum: [comprou, aguardando_pagamento, so_visitou]
+        buyerName: { type: ["string", "null"] }
+        packageName: { type: ["string", "null"] }
+        hasRecording: { type: boolean }
+      required:
+        [
+          visitorKey,
+          firstSeenAt,
+          timeOnPageSeconds,
+          lastSection,
+          status,
+          buyerName,
+          packageName,
+          hasRecording,
         ]
     HealthStatus:
       type: object

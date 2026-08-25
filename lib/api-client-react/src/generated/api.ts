@@ -44,6 +44,8 @@ import type {
   InviteListItem,
   ListAdminBuyers200,
   ListAdminBuyersParams,
+  ListAdminLpSessions200,
+  ListAdminLpSessionsParams,
   ListAdminReviews200,
   ListAdminReviewsParams,
   ListAdminSuggestions200,
@@ -2287,6 +2289,90 @@ export function useGetAdminSessionRecording<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAdminSessionRecordingQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminLpSessionsUrl = (params: ListAdminLpSessionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/lp-sessions?${stringifiedParams}` : `/api/admin/lp-sessions`
+}
+
+/**
+ * @summary List recent sessions for a landing page
+ */
+export const listAdminLpSessions = async (params: ListAdminLpSessionsParams, options?: Parameters<typeof customFetch>[1]): Promise<ListAdminLpSessions200> => {
+
+  return customFetch<ListAdminLpSessions200>(getListAdminLpSessionsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminLpSessionsQueryKey = (params?: ListAdminLpSessionsParams,) => {
+    return [
+    `/api/admin/lp-sessions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminLpSessionsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminLpSessions>>, TError = ErrorType<void>>(params: ListAdminLpSessionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminLpSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminLpSessionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminLpSessions>>> = ({ signal }) => listAdminLpSessions(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminLpSessions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminLpSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminLpSessions>>>
+export type ListAdminLpSessionsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List recent sessions for a landing page
+ */
+
+export function useListAdminLpSessions<TData = Awaited<ReturnType<typeof listAdminLpSessions>>, TError = ErrorType<void>>(
+ params: ListAdminLpSessionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminLpSessions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminLpSessionsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

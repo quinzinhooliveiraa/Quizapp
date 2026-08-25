@@ -1,0 +1,141 @@
+# Reestruturar: Compradores só com pagamento confirmado + sessões dentro de cada LP
+
+## Contexto
+
+Este é o **quinto prompt** da série do painel admin. Os anteriores (1-abas e
+compradores, 2-analytics por LP, 3-notificação push, 4-clarity e gravações)
+já devem estar aplicados. Depois de ver como ficou, o usuário quer reorganizar
+o que já existe — não é feature nova do zero, é mudar onde cada informação
+aparece, pra não ficar tudo misturado num "monte solto".
+
+**Antes de mexer em qualquer coisa, leia o estado atual de `Admin.tsx` e das
+rotas `admin/*` em `artifacts/api-server/src/routes/` pra entender exatamente
+o que os prompts 1-4 já deixaram implementado.** As instruções abaixo
+descrevem o resultado final desejado, não um diff linha a linha — adapte ao
+que já existe.
+
+## O que muda
+
+### 1. Aba Compradores — só quem pagou de verdade
+
+Hoje (depois do prompt 1) a aba Compradores provavelmente lista toda sessão
+criada, com um badge "Acesso liberado" ou "Aguardando pagamento". Isso muda:
+
+- O endpoint `GET /api/admin/buyers` passa a filtrar
+  `WHERE accessGranted = true` na query — só retorna quem de fato pagou.
+- Remove o badge de status (não faz mais sentido, já que só tem um status
+  possível aqui agora).
+- Atualiza o texto do topo da aba: em vez de "X cadastros · Y com acesso
+  liberado", mostra só "X compradores".
+- Pode manter o botão "Ver gravação" (do prompt 4) em cada linha, normalmente
+  — isso não muda.
+
+**As sessões que começaram checkout e não terminaram (não têm mais lugar
+nessa aba) — elas vão aparecer na lista de sessões por LP, descrita abaixo.**
+Não precisa de um endpoint separado só pra "abandonados"; a lista por LP já
+cobre isso.
+
+### 2. Aba Analytics — cada LP com sua própria lista de sessões
+
+Dentro da aba Analytics (criada no prompt 2), que hoje mostra um card por LP
+com números agregados (visualizações, cliques, tempo médio, taxa de
+conversão, top seções de saída), adicione **abaixo de cada card**, uma lista
+de sessões individuais daquela LP especificamente. Se a aba Analytics hoje
+mistura os dados das duas LPs numa vista só, separe em sub-abas ou blocos bem
+distintos — um pra LP1, outro pra LP2, sem misturar.
+
+#### Backend — novo endpoint
+
+`GET /api/admin/lp-sessions?sessionId=<admin>&lpId=<v1|v2>`, protegido com
+`isAdminSession` (mesmo padrão de sempre).
+
+Monta a lista assim:
+
+1. Busca em `pageEventsTable` os eventos `"view"` com aquele `lpId`, dos
+   últimos 30 dias, agrupando por `visitorKey` (cada `visitorKey` = uma
+   sessão de visita).
+2. Pra cada `visitorKey`, busca também (se existir) o evento `"exit"`
+   correspondente, pra pegar `timeOnPageMs` e `lastSection`.
+3. Pra cada `visitorKey`, busca também (se existir) uma linha em
+   `sessionsTable` com esse mesmo `visitorKey` (coluna criada no prompt 4),
+   pra saber: `buyerName`, `packageName`, `accessGranted`.
+4. Classifica cada sessão num status:
+   - `"comprou"` — existe linha em `sessionsTable` com `accessGranted: true`
+   - `"aguardando_pagamento"` — existe linha em `sessionsTable` mas
+     `accessGranted: false` (começou checkout, não terminou)
+   - `"so_visitou"` — não existe linha em `sessionsTable` pra esse
+     `visitorKey` (viu a página, não clicou pra comprar, ou clicou mas nem
+     chegou a criar a sessão)
+5. Retorna um array ordenado por mais recente primeiro:
+
+```ts
+{
+  sessions: Array<{
+    visitorKey: string;
+    firstSeenAt: string; // do evento "view"
+    timeOnPageSeconds: number | null; // do evento "exit", se existir
+    lastSection: string | null;
+    status: "comprou" | "aguardando_pagamento" | "so_visitou";
+    buyerName: string | null;
+    packageName: string | null;
+    hasRecording: boolean; // se tem clarityUserId + claritySessionId salvos
+  }>
+}
+```
+
+Limite a 200 sessões mais recentes por enquanto (sem paginação por ora).
+
+#### Reaproveitar o endpoint de gravação do prompt 4
+
+O endpoint `GET /api/admin/session-recording` criado no prompt 4 hoje deve
+receber um `buyerId`. Generalize ele pra aceitar também `visitorKey`
+diretamente (opcional: `buyerId` OU `visitorKey`, pelo menos um dos dois
+precisa vir), já que agora a lista de sessões por LP também vai precisar
+puxar gravação, e nem toda sessão dessa lista tem um `buyerId` (quem só
+visitou ou abandonou o checkout não necessariamente tem uma linha completa
+em `sessionsTable` associável do mesmo jeito — usa o `visitorKey` direto
+nesse caso).
+
+#### Frontend
+
+Pra cada LP (dentro da sua sub-aba/bloco separado), abaixo dos números
+agregados, uma tabela/lista com uma linha por sessão:
+
+- Status em badge: 🟢 "Comprou" / 🟡 "Aguardando pagamento" / ⚪ "Só visitou"
+- Nome do comprador (se tiver — `buyerName`), senão mostra o `visitorKey`
+  abreviado (primeiros 8 caracteres, tipo `a1b2c3d4…`) só pra diferenciar
+  visualmente uma sessão da outra
+- Quando entrou (`firstSeenAt`, formatado em pt-BR)
+- Tempo na página (formata segundos, "—" se não tiver)
+- Botão "Ver gravação" (mesmo comportamento do prompt 4: chama o endpoint de
+  gravação passando `visitorKey`, abre em nova aba se disponível, senão
+  mostra a mensagem de fallback com o `visitorKey` pra busca manual)
+
+Se a lista estiver vazia, mostra "Nenhuma sessão registrada ainda nesta
+página" no mesmo estilo das outras seções vazias do admin.
+
+### 3. Notificação push — confirmar, não mexer
+
+O prompt 3 já faz a notificação disparar só quando `accessGranted` vira
+`true` de verdade (evento de pagamento confirmado no webhook da Abacate Pay),
+não em checkout iniciado. **Isso já está correto e não precisa de nenhuma
+mudança neste prompt** — só deixando registrado aqui pra não confundir com o
+resto da reorganização.
+
+## O que NÃO fazer
+
+- Não crie uma aba nova "Sessões" separada da Analytics — a lista de sessões
+  fica dentro da aba Analytics, dentro do bloco de cada LP, não solta em
+  outro lugar.
+- Não misture sessões de LP1 e LP2 na mesma lista/tabela — cada LP mostra só
+  as suas.
+- Não apague dados de `sessionsTable` nem `pageEventsTable` — é só mudança de
+  como os dados existentes são exibidos e filtrados.
+
+## Depois de aplicar
+
+Formata os arquivos tocados. Confere ao vivo: entra na aba Compradores e
+confirma que só aparece quem tem acesso liberado de verdade; entra na aba
+Analytics, escolhe LP1, confirma que a lista de sessões mostra só visitas
+daquela LP (não da LP2), com os três status possíveis aparecendo
+corretamente conforme o que cada visitante fez.

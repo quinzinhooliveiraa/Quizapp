@@ -522,7 +522,8 @@ export const ListAdminBuyersResponse = zod.object({
  */
 export const GetAdminSessionRecordingQueryParams = zod.object({
   "sessionId": zod.coerce.string(),
-  "buyerId": zod.coerce.string()
+  "buyerId": zod.coerce.string().optional(),
+  "visitorKey": zod.coerce.string().optional()
 })
 
 export const GetAdminSessionRecordingResponse = zod.object({
@@ -530,6 +531,28 @@ export const GetAdminSessionRecordingResponse = zod.object({
   "url": zod.string().optional(),
   "visitorKey": zod.string().optional(),
   "reason": zod.enum(['sem-rastreio', 'sem-gravacao']).optional()
+})
+
+
+/**
+ * @summary List recent sessions for a landing page
+ */
+export const ListAdminLpSessionsQueryParams = zod.object({
+  "sessionId": zod.coerce.string(),
+  "lpId": zod.enum(['v1', 'v2'])
+})
+
+export const ListAdminLpSessionsResponse = zod.object({
+  "sessions": zod.array(zod.object({
+  "visitorKey": zod.string(),
+  "firstSeenAt": zod.coerce.date(),
+  "timeOnPageSeconds": zod.number().nullable(),
+  "lastSection": zod.string().nullable(),
+  "status": zod.enum(['comprou', 'aguardando_pagamento', 'so_visitou']),
+  "buyerName": zod.string().nullable(),
+  "packageName": zod.string().nullable(),
+  "hasRecording": zod.boolean()
+}))
 })
 
 

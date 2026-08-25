@@ -67,6 +67,30 @@ export interface Buyer {
   createdAt: string;
 }
 
+export type LandingSessionStatus = typeof LandingSessionStatus[keyof typeof LandingSessionStatus];
+
+
+export const LandingSessionStatus = {
+  comprou: 'comprou',
+  aguardando_pagamento: 'aguardando_pagamento',
+  so_visitou: 'so_visitou',
+} as const;
+
+export interface LandingSession {
+  visitorKey: string;
+  firstSeenAt: string;
+  /** @nullable */
+  timeOnPageSeconds: number | null;
+  /** @nullable */
+  lastSection: string | null;
+  status: LandingSessionStatus;
+  /** @nullable */
+  buyerName: string | null;
+  /** @nullable */
+  packageName: string | null;
+  hasRecording: boolean;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -466,7 +490,25 @@ export type ListAdminBuyers200 = {
 
 export type GetAdminSessionRecordingParams = {
 sessionId: string;
-buyerId: string;
+buyerId?: string;
+visitorKey?: string;
+};
+
+export type ListAdminLpSessionsParams = {
+sessionId: string;
+lpId: ListAdminLpSessionsLpId;
+};
+
+export type ListAdminLpSessionsLpId = typeof ListAdminLpSessionsLpId[keyof typeof ListAdminLpSessionsLpId];
+
+
+export const ListAdminLpSessionsLpId = {
+  v1: 'v1',
+  v2: 'v2',
+} as const;
+
+export type ListAdminLpSessions200 = {
+  sessions: LandingSession[];
 };
 
 export type GetPushVapidPublicKey200 = {

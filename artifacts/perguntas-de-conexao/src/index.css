@@ -391,6 +391,78 @@
   border-collapse: collapse;
   font-size: 0.8rem;
 }
+.admin-lp-sessions {
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-lp-sessions-heading {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin-lp-sessions-heading strong {
+  color: #c4acff;
+}
+.admin-lp-sessions-table-wrap {
+  overflow-x: auto;
+}
+.admin-lp-sessions-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+.admin-lp-sessions-table th {
+  padding: 0.55rem 0.6rem;
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.admin-lp-sessions-table td {
+  padding: 0.7rem 0.6rem;
+  color: rgba(255, 255, 255, 0.62);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: top;
+  white-space: nowrap;
+}
+.admin-lp-sessions-table td:nth-child(2) strong,
+.admin-lp-sessions-table td:nth-child(2) small {
+  display: block;
+}
+.admin-lp-sessions-table td:nth-child(2) strong {
+  color: #f9f8fb;
+}
+.admin-lp-sessions-table td:nth-child(2) small {
+  margin-top: 0.2rem;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.68rem;
+}
+.admin-session-status {
+  display: inline-block;
+  padding: 0.3rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+.admin-session-status.is-comprou {
+  color: #b9f0cf;
+  background: rgba(86, 204, 133, 0.12);
+}
+.admin-session-status.is-aguardando_pagamento {
+  color: #f7d891;
+  background: rgba(240, 183, 64, 0.13);
+}
+.admin-session-status.is-so_visitou {
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.09);
+}
 .admin-buyers-table th {
   padding: 0.8rem 0.9rem;
   color: rgba(255, 255, 255, 0.4);

@@ -114,7 +114,10 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
     return;
   }
   const [totalResult, accessResult] = await Promise.all([
-    db.select({ value: count() }).from(sessionsTable),
+    db
+      .select({ value: count() })
+      .from(sessionsTable)
+      .where(eq(sessionsTable.accessGranted, true)),
     db
       .select({ value: count() })
       .from(sessionsTable)
@@ -132,6 +135,7 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
       createdAt: sessionsTable.createdAt,
     })
     .from(sessionsTable)
+    .where(eq(sessionsTable.accessGranted, true))
     .orderBy(desc(sessionsTable.createdAt))
     .limit(500);
   res.json({
