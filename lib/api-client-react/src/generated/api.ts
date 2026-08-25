@@ -33,6 +33,7 @@ import type {
   CompleteOwnerOnboarding200,
   GetAdminAnalytics200,
   GetAdminAnalyticsParams,
+  GetAdminSessionRecordingParams,
   GetPreferencesParams,
   GetPushVapidPublicKey200,
   GuestAccess,
@@ -60,6 +61,7 @@ import type {
   Review,
   ReviewInput,
   SessionInput,
+  SessionRecordingLookup,
   SubscribeAdminPushBody,
   Suggestion,
   SuggestionInput,
@@ -2201,6 +2203,90 @@ export function useListAdminBuyers<TData = Awaited<ReturnType<typeof listAdminBu
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListAdminBuyersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminSessionRecordingUrl = (params: GetAdminSessionRecordingParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/session-recording?${stringifiedParams}` : `/api/admin/session-recording`
+}
+
+/**
+ * @summary Find a Clarity session recording for a buyer
+ */
+export const getAdminSessionRecording = async (params: GetAdminSessionRecordingParams, options?: Parameters<typeof customFetch>[1]): Promise<SessionRecordingLookup> => {
+
+  return customFetch<SessionRecordingLookup>(getGetAdminSessionRecordingUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminSessionRecordingQueryKey = (params?: GetAdminSessionRecordingParams,) => {
+    return [
+    `/api/admin/session-recording`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminSessionRecordingQueryOptions = <TData = Awaited<ReturnType<typeof getAdminSessionRecording>>, TError = ErrorType<void>>(params: GetAdminSessionRecordingParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminSessionRecording>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminSessionRecordingQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSessionRecording>>> = ({ signal }) => getAdminSessionRecording(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminSessionRecording>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminSessionRecordingQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminSessionRecording>>>
+export type GetAdminSessionRecordingQueryError = ErrorType<void>
+
+
+/**
+ * @summary Find a Clarity session recording for a buyer
+ */
+
+export function useGetAdminSessionRecording<TData = Awaited<ReturnType<typeof getAdminSessionRecording>>, TError = ErrorType<void>>(
+ params: GetAdminSessionRecordingParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminSessionRecording>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminSessionRecordingQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

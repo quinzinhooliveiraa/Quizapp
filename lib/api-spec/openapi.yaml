@@ -617,6 +617,29 @@ paths:
                 required: [buyers, total, totalWithAccess]
         "403":
           description: Access denied
+  /admin/session-recording:
+    get:
+      operationId: getAdminSessionRecording
+      tags: [admin]
+      summary: Find a Clarity session recording for a buyer
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: buyerId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Recording lookup result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionRecordingLookup"
+        "403":
+          description: Access denied
   /push/vapid-public-key:
     get:
       operationId: getPushVapidPublicKey
@@ -978,6 +1001,10 @@ components:
         sourceLp:
           type: string
           enum: [v1, v2]
+        visitorKey:
+          type: string
+          minLength: 1
+          maxLength: 120
       required: [packageId, buyerName]
     PageEventInput:
       type: object
@@ -987,7 +1014,19 @@ components:
         eventType: { type: string, enum: [view, cta_click, exit] }
         timeOnPageMs: { type: number, minimum: 0 }
         lastSection: { type: string, maxLength: 80 }
+        clarityUserId: { type: string, maxLength: 200 }
+        claritySessionId: { type: string, maxLength: 200 }
       required: [lpId, visitorKey, eventType]
+    SessionRecordingLookup:
+      type: object
+      properties:
+        available: { type: boolean }
+        url: { type: string }
+        visitorKey: { type: string }
+        reason:
+          type: string
+          enum: [sem-rastreio, sem-gravacao]
+      required: [available]
     LandingAnalytics:
       type: object
       properties:

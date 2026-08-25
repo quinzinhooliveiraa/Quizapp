@@ -107,6 +107,12 @@ const apiUrl = (path: string) => `${apiBase}${path}`;
 const inviteUrlFromToken = (token: string) =>
   `${window.location.origin}/invite/${token}`;
 
+declare global {
+  interface Window {
+    clarity?: (...args: unknown[]) => void;
+  }
+}
+
 type Preferences = {
   relationshipType: string | null;
   partnerPronoun: string | null;
@@ -1784,6 +1790,8 @@ function StoredAccessGate() {
 
 function useLpTracking(lpId: "v1" | "v2") {
   const visitorKeyRef = useRef<string>("");
+  const clarityUserIdRef = useRef("");
+  const claritySessionIdRef = useRef("");
   const startedAtRef = useRef(0);
   const lastSectionRef = useRef("hero");
   const exitSentRef = useRef(false);
@@ -1805,8 +1813,44 @@ function useLpTracking(lpId: "v1" | "v2") {
     }
     visitorKeyRef.current = visitorKey;
     startedAtRef.current = Date.now();
+    const clarityScriptId = "microsoft-clarity-script";
+    if (!document.getElementById(clarityScriptId)) {
+      window.clarity =
+        window.clarity ||
+        ((...args: unknown[]) => {
+          (window.clarity as unknown as { q?: unknown[] }).q =
+            (window.clarity as unknown as { q?: unknown[] }).q || [];
+          (window.clarity as unknown as { q: unknown[] }).q.push(args);
+        });
+      const script = document.createElement("script");
+      script.id = clarityScriptId;
+      script.async = true;
+      script.src = "https://www.clarity.ms/tag/y7zh9f1ygk";
+      document.head.appendChild(script);
+    }
+    window.clarity?.("identify", visitorKey);
+    const readClarityIds = () => {
+      const cookies = Object.fromEntries(
+        document.cookie
+          .split(";")
+          .map((cookie) => cookie.trim().split("="))
+          .filter(([key, value]) => key && value)
+          .map(([key, value]) => [key, decodeURIComponent(value)]),
+      );
+      const userId = cookies._clck?.split("|")[0] || "";
+      const sessionId = cookies._clsk?.split("|")[0] || "";
+      if (userId) clarityUserIdRef.current = userId;
+      if (sessionId) claritySessionIdRef.current = sessionId;
+    };
     const track = (eventType: "view" | "cta_click" | "exit", extra = {}) => {
-      const payload = JSON.stringify({ lpId, visitorKey, eventType, ...extra });
+      const payload = JSON.stringify({
+        lpId,
+        visitorKey,
+        eventType,
+        clarityUserId: clarityUserIdRef.current || undefined,
+        claritySessionId: claritySessionIdRef.current || undefined,
+        ...extra,
+      });
       if (eventType === "exit") {
         navigator.sendBeacon(
           apiUrl("/api/track/page-event"),
@@ -1821,7 +1865,24 @@ function useLpTracking(lpId: "v1" | "v2") {
         }).catch(() => undefined);
       }
     };
-    track("view");
+    readClarityIds();
+    let viewSent = false;
+    const sendView = () => {
+      if (viewSent) return;
+      viewSent = true;
+      track("view");
+    };
+    const clarityPoll = window.setInterval(() => {
+      readClarityIds();
+      if (clarityUserIdRef.current && claritySessionIdRef.current) {
+        sendView();
+        window.clearInterval(clarityPoll);
+      }
+    }, 500);
+    const viewFallback = window.setTimeout(() => {
+      sendView();
+      window.clearInterval(clarityPoll);
+    }, 2500);
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -1839,6 +1900,7 @@ function useLpTracking(lpId: "v1" | "v2") {
     const sendExit = () => {
       if (exitSentRef.current) return;
       exitSentRef.current = true;
+      sendView();
       track("exit", {
         timeOnPageMs: Date.now() - startedAtRef.current,
         lastSection: lastSectionRef.current,
@@ -1851,6 +1913,8 @@ function useLpTracking(lpId: "v1" | "v2") {
     window.addEventListener("pagehide", sendExit);
     return () => {
       observer.disconnect();
+      window.clearInterval(clarityPoll);
+      window.clearTimeout(viewFallback);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", sendExit);
     };
@@ -1864,6 +1928,8 @@ function useLpTracking(lpId: "v1" | "v2") {
         lpId,
         visitorKey: visitorKeyRef.current,
         eventType: "cta_click",
+        clarityUserId: clarityUserIdRef.current || undefined,
+        claritySessionId: claritySessionIdRef.current || undefined,
       }),
       keepalive: true,
     }).catch(() => undefined);
@@ -1985,6 +2051,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           packageId,
           buyerName: "Cliente Perguntas de Conexão",
           sourceLp: variant,
+          visitorKey: safeGetItem("pdc-visitor-key") || undefined,
         }),
       });
       const data = (await response.json()) as {

@@ -41,6 +41,12 @@ type BuyerEntry = {
   inviteLimit: number;
   createdAt: string;
 };
+type RecordingLookup = {
+  available?: boolean;
+  url?: string;
+  visitorKey?: string;
+  reason?: "sem-rastreio" | "sem-gravacao";
+};
 type BuyersResponse = {
   buyers?: BuyerEntry[];
   total?: number;
@@ -288,6 +294,55 @@ function BuyersTab({
   total: number;
   totalWithAccess: number;
 }) {
+  const [loadingBuyerId, setLoadingBuyerId] = useState<string | null>(null);
+  const [recordingMessages, setRecordingMessages] = useState<
+    Record<string, RecordingLookup>
+  >({});
+  const [copiedVisitorKey, setCopiedVisitorKey] = useState<string | null>(null);
+
+  const openRecording = async (buyerId: string) => {
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId) return;
+    setLoadingBuyerId(buyerId);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/session-recording?sessionId=${encodeURIComponent(sessionId)}&buyerId=${encodeURIComponent(buyerId)}`,
+      );
+      const result = (await response.json()) as RecordingLookup;
+      if (!response.ok) throw new Error("recording-lookup");
+      setRecordingMessages((current) => ({ ...current, [buyerId]: result }));
+      if (result.available && result.url) {
+        window.open(result.url, "_blank", "noopener,noreferrer");
+      }
+    } catch {
+      setRecordingMessages((current) => ({
+        ...current,
+        [buyerId]: {
+          available: false,
+          reason: "sem-gravacao",
+        },
+      }));
+    } finally {
+      setLoadingBuyerId(null);
+    }
+  };
+
+  const copyVisitorKey = async (buyerId: string, visitorKey: string) => {
+    try {
+      await navigator.clipboard.writeText(visitorKey);
+      setCopiedVisitorKey(buyerId);
+      window.setTimeout(
+        () =>
+          setCopiedVisitorKey((current) =>
+            current === buyerId ? null : current,
+          ),
+        1800,
+      );
+    } catch {
+      setCopiedVisitorKey(null);
+    }
+  };
+
   return (
     <section className="admin-section" aria-labelledby="buyers-title">
       <div className="admin-section-heading">
@@ -312,6 +367,7 @@ function BuyersTab({
                 <th>Status</th>
                 <th>Data</th>
                 <th>Convites</th>
+                <th>Clarity</th>
               </tr>
             </thead>
             <tbody>
@@ -335,12 +391,56 @@ function BuyersTab({
                   <td>
                     {buyer.invitesUsed}/{buyer.inviteLimit}
                   </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="admin-recording-button"
+                      onClick={() => void openRecording(buyer.id)}
+                      disabled={loadingBuyerId === buyer.id}
+                    >
+                      {loadingBuyerId === buyer.id
+                        ? "Buscando…"
+                        : "Ver gravação"}
+                    </button>
+                    {recordingMessages[buyer.id]?.reason === "sem-rastreio" && (
+                      <span className="admin-recording-message">
+                        Essa compra foi feita antes do rastreio, ou por convite
+                        — sem gravação disponível.
+                      </span>
+                    )}
+                    {recordingMessages[buyer.id]?.reason === "sem-gravacao" && (
+                      <span className="admin-recording-message">
+                        Não achamos a gravação automática. Busque no Clarity
+                        pelo identificador{" "}
+                        <code>{recordingMessages[buyer.id]?.visitorKey}</code>.
+                        {recordingMessages[buyer.id]?.visitorKey && (
+                          <button
+                            type="button"
+                            className="admin-copy-key-button"
+                            onClick={() =>
+                              void copyVisitorKey(
+                                buyer.id,
+                                recordingMessages[buyer.id]!.visitorKey!,
+                              )
+                            }
+                          >
+                            {copiedVisitorKey === buyer.id
+                              ? "Copiado"
+                              : "Copiar identificador"}
+                          </button>
+                        )}
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+      <p className="admin-footnote">
+        Gravações no Clarity ficam disponíveis por até 30 dias.
+      </p>
     </section>
   );
 }

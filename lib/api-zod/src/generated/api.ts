@@ -307,13 +307,16 @@ export const ReceiveCheckoutWebhookResponse = zod.object({
  */
 
 export const createCheckoutBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+export const createCheckoutBodyVisitorKeyMax = 120;
+
 
 
 export const CreateCheckoutBody = zod.object({
   "packageId": zod.enum(['couple']),
   "buyerName": zod.string().min(1),
   "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
-  "sourceLp": zod.enum(['v1', 'v2']).optional()
+  "sourceLp": zod.enum(['v1', 'v2']).optional(),
+  "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional()
 })
 
 export const CreateCheckoutResponse = zod.object({
@@ -353,6 +356,10 @@ export const trackPageEventBodyTimeOnPageMsMin = 0;
 
 export const trackPageEventBodyLastSectionMax = 80;
 
+export const trackPageEventBodyClarityUserIdMax = 200;
+
+export const trackPageEventBodyClaritySessionIdMax = 200;
+
 
 
 export const TrackPageEventBody = zod.object({
@@ -360,7 +367,9 @@ export const TrackPageEventBody = zod.object({
   "visitorKey": zod.string().min(1).max(trackPageEventBodyVisitorKeyMax),
   "eventType": zod.enum(['view', 'cta_click', 'exit']),
   "timeOnPageMs": zod.number().min(trackPageEventBodyTimeOnPageMsMin).optional(),
-  "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional()
+  "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional(),
+  "clarityUserId": zod.string().max(trackPageEventBodyClarityUserIdMax).optional(),
+  "claritySessionId": zod.string().max(trackPageEventBodyClaritySessionIdMax).optional()
 })
 
 export const TrackPageEventResponse = zod.void()
@@ -505,6 +514,22 @@ export const ListAdminBuyersResponse = zod.object({
 })),
   "total": zod.number(),
   "totalWithAccess": zod.number()
+})
+
+
+/**
+ * @summary Find a Clarity session recording for a buyer
+ */
+export const GetAdminSessionRecordingQueryParams = zod.object({
+  "sessionId": zod.coerce.string(),
+  "buyerId": zod.coerce.string()
+})
+
+export const GetAdminSessionRecordingResponse = zod.object({
+  "available": zod.boolean(),
+  "url": zod.string().optional(),
+  "visitorKey": zod.string().optional(),
+  "reason": zod.enum(['sem-rastreio', 'sem-gravacao']).optional()
 })
 
 

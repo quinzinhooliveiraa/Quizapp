@@ -15,4 +15,9 @@ export interface CheckoutCreateInput {
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
   sourceLp?: CheckoutCreateInputSourceLp;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  visitorKey?: string;
 }

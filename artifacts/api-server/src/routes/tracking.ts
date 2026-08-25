@@ -15,6 +15,8 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     eventType?: string;
     timeOnPageMs?: number;
     lastSection?: string;
+    clarityUserId?: string;
+    claritySessionId?: string;
   };
   if (
     !LP_IDS.includes(body.lpId as (typeof LP_IDS)[number]) ||
@@ -37,6 +39,8 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
         ? Math.max(0, Math.min(Math.round(body.timeOnPageMs), 86400000))
         : null,
     lastSection: body.lastSection?.trim().slice(0, 80) || null,
+    clarityUserId: body.clarityUserId?.trim().slice(0, 200) || null,
+    claritySessionId: body.claritySessionId?.trim().slice(0, 200) || null,
   });
   res.status(204).end();
 });

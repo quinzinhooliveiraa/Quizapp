@@ -20,4 +20,8 @@ export interface PageEventInput {
   timeOnPageMs?: number;
   /** @maxLength 80 */
   lastSection?: string;
+  /** @maxLength 200 */
+  clarityUserId?: string;
+  /** @maxLength 200 */
+  claritySessionId?: string;
 }

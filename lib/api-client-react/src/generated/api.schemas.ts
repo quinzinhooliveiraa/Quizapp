@@ -270,6 +270,11 @@ export interface CheckoutCreateInput {
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
   sourceLp?: CheckoutCreateInputSourceLp;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  visitorKey?: string;
 }
 
 export type PageEventInputLpId = typeof PageEventInputLpId[keyof typeof PageEventInputLpId];
@@ -301,6 +306,25 @@ export interface PageEventInput {
   timeOnPageMs?: number;
   /** @maxLength 80 */
   lastSection?: string;
+  /** @maxLength 200 */
+  clarityUserId?: string;
+  /** @maxLength 200 */
+  claritySessionId?: string;
+}
+
+export type SessionRecordingLookupReason = typeof SessionRecordingLookupReason[keyof typeof SessionRecordingLookupReason];
+
+
+export const SessionRecordingLookupReason = {
+  'sem-rastreio': 'sem-rastreio',
+  'sem-gravacao': 'sem-gravacao',
+} as const;
+
+export interface SessionRecordingLookup {
+  available: boolean;
+  url?: string;
+  visitorKey?: string;
+  reason?: SessionRecordingLookupReason;
 }
 
 export type LandingAnalyticsLpId = typeof LandingAnalyticsLpId[keyof typeof LandingAnalyticsLpId];
@@ -438,6 +462,11 @@ export type ListAdminBuyers200 = {
   buyers: Buyer[];
   total: number;
   totalWithAccess: number;
+};
+
+export type GetAdminSessionRecordingParams = {
+sessionId: string;
+buyerId: string;
 };
 
 export type GetPushVapidPublicKey200 = {

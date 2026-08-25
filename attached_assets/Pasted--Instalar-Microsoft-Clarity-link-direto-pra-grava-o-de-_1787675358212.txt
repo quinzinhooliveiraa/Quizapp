@@ -1,0 +1,158 @@
+# Instalar Microsoft Clarity + link direto pra gravação de cada comprador
+
+## Contexto
+
+Este é o **quarto prompt** da série do painel admin (depois de: 1-abas e
+compradores, 2-analytics por LP, 3-notificação push — os três já devem estar
+aplicados). Agora vamos instalar o **Microsoft Clarity** (heatmap + gravação
+de sessão, ferramenta pronta e gratuita, conta já criada pelo usuário) e
+ligar isso com o que já existe: quando o admin olhar a lista de Compradores,
+vai poder clicar num comprador específico e abrir a gravação de tela daquela
+pessoa navegando no site, direto no Clarity.
+
+**Project ID do Clarity:** `y7zh9f1ygk` (não é segredo, é um id público, pode
+ficar direto no código).
+
+**Aviso importante pro Replit Agent respeitar**: o link direto pra gravação
+específica (`https://clarity.microsoft.com/player/{projectId}/{userId}/{sessionId}`)
+**não é uma API oficial documentada pela Microsoft** — é um padrão de URL que
+a comunidade descobriu que funciona. Ou seja: implemente com um fallback
+decente (se não tiver os dados pra montar o link, ou se o link não abrir nada
+válido, mostra uma alternativa — ver Passo 5), porque a Microsoft pode mudar
+isso sem aviso no futuro.
+
+## Passo 1 — Instalar o script do Clarity
+
+No arquivo `index.html` (ou onde for o `<head>` principal servido pra todas
+as rotas do app — é uma SPA, então um único `index.html` cobre tudo), cole
+antes do fechamento de `</head>`:
+
+```html
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "y7zh9f1ygk");
+</script>
+```
+
+## Passo 2 — Carimbar o visitante no Clarity
+
+No hook de tracking das landing pages (`useLpTracking` ou como você chamou
+no prompt 2 — o que já gera/reaproveita o `visitorKey` em `sessionStorage` e
+dispara o evento "view"), logo depois de gerar/recuperar o `visitorKey`,
+chame o Clarity:
+
+```ts
+if (typeof window !== "undefined" && (window as any).clarity) {
+  (window as any).clarity("identify", visitorKey);
+}
+```
+
+Isso já é suficiente pra Clarity guardar o `visitorKey` como identificador
+customizado da sessão, buscável no painel deles.
+
+### 2a. Capturar os IDs internos do Clarity (pro link direto)
+
+A função `identify` do Clarity aceita um callback opcional que devolve os IDs
+internos da sessão. Ajuste a chamada assim:
+
+```ts
+if (typeof window !== "undefined" && (window as any).clarity) {
+  (window as any).clarity(
+    "identify",
+    visitorKey,
+    undefined,
+    undefined,
+    undefined,
+  );
+  // o callback chega via window.clarity("event", ...) OU via o retorno de
+  // uma promise, dependendo da versão do tag — teste no console do
+  // navegador (`window.clarity` já carregado) qual formato retorna
+  // {id, session, page, userHint} nesse projeto, e ajusta o código pra
+  // capturar `session` (id da sessão) e `id`/`userHint` (id do usuário).
+}
+```
+
+Guarde os valores capturados (`clarityUserId`, `claritySessionId`) em
+variáveis locais no hook. Se a captura falhar ou vier vazia (pode acontecer,
+a API tem atraso pra inicializar), não trave o resto do tracking — só envia
+sem esses campos.
+
+### 2b. Mandar esses IDs junto do evento "view"
+
+No `POST /api/track/page-event` que já existe (prompt 2), envie também
+(quando disponíveis) `clarityUserId` e `claritySessionId` junto do evento
+`"view"`.
+
+**Backend**: adicione duas colunas nullable em `pageEventsTable`
+(`lib/db/src/schema/index.ts`): `clarityUserId: text("clarity_user_id")` e
+`claritySessionId: text("clarity_session_id")`. Rode a migração. Ajuste o
+handler de `POST /api/track/page-event` pra aceitar e salvar esses dois
+campos quando vierem no corpo.
+
+## Passo 3 — Ligar o comprador ao visitorKey
+
+Hoje, na criação da sessão de checkout (mesma rota que já recebe `sourceLp`,
+do prompt 2), o frontend também tem o `visitorKey` disponível em
+`sessionStorage`. Envie ele também no corpo da requisição de criação de
+checkout, como `visitorKey`.
+
+**Backend**: adicione a coluna `visitorKey: text("visitor_key")` (nullable)
+em `sessionsTable`. Rode a migração. Salve o valor recebido ao criar a
+sessão.
+
+## Passo 4 — Endpoint de lookup da gravação
+
+Crie `GET /api/admin/session-recording?sessionId=<admin-sessionId>&buyerId=<id-do-comprador>`,
+protegido com `isAdminSession` (mesmo padrão de sempre). Ele:
+
+1. Busca o `visitorKey` do comprador (`buyerId`) em `sessionsTable`.
+2. Se não tiver `visitorKey`, retorna `{ available: false, reason: "sem-rastreio" }`.
+3. Se tiver, busca em `pageEventsTable` o evento mais recente com
+   `eventType = "view"` e `visitorKey` igual, que tenha `clarityUserId` e
+   `claritySessionId` preenchidos.
+4. Se não achar nenhum, retorna `{ available: false, reason: "sem-gravacao" }`.
+5. Se achar, monta a URL:
+   `https://clarity.microsoft.com/player/y7zh9f1ygk/{clarityUserId}/{claritySessionId}`
+   e retorna `{ available: true, url: "...", visitorKey: "..." }`.
+
+## Passo 5 — Botão "Ver gravação" na aba Compradores
+
+Na aba **Compradores** do admin (criada no prompt 1), em cada linha da
+lista, adicione um botão/link "Ver gravação".
+
+- Ao clicar, chama `GET /api/admin/session-recording?...` pra aquele
+  comprador.
+- Se `available: true`, abre a URL numa nova aba (`target="_blank"`).
+- Se `available: false` com `reason: "sem-rastreio"`, mostra (num tooltip ou
+  toast simples) "Essa compra foi feita antes do rastreio, ou por convite —
+  sem gravação disponível."
+- Se `reason: "sem-gravacao"`, mostra "Não achamos a gravação automática.
+  Você pode buscar manualmente no Clarity pelo identificador
+  `{visitorKey}`." — e inclui um botão pra copiar esse `visitorKey` pra área
+  de transferência, já que a busca manual no painel do Clarity precisa dele.
+- Lembre o usuário (pode ser um texto pequeno fixo na aba, não por linha):
+  "Gravações no Clarity ficam disponíveis por até 30 dias." (plano
+  gratuito).
+
+## O que NÃO fazer
+
+- Não mude a lógica de analytics por LP feita no prompt 2 (views, cta_click,
+  exit) — isso continua funcionando em paralelo, é rastreio nosso, separado
+  do Clarity.
+- Não tente embutir o player do Clarity dentro do próprio admin via iframe —
+  o Clarity não permite isso (precisa abrir o painel deles, autenticado).
+- Não use o script do Clarity dentro da área logada do app (onboarding,
+  jogo, etc) — só nas landing pages de venda (`/` e `/lp2`), que é o que
+  interessa rastrear agora.
+
+## Depois de aplicar
+
+Formata os arquivos tocados. Pra eu confirmar que ficou de pé: visite a LP1
+ou LP2 como se fosse um visitante comum, complete uma compra de teste (ou
+simule), e depois no admin, na aba Compradores, tenta clicar em "Ver
+gravação" nesse registro — como o Clarity pode levar alguns minutos pra
+processar a sessão, se não aparecer nada na hora, espera um pouco e tenta de
+novo antes de considerar que quebrou.

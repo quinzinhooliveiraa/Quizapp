@@ -415,6 +415,41 @@
   color: #f9f8fb;
   font-weight: 600;
 }
+.admin-recording-button,
+.admin-copy-key-button {
+  border: 0;
+  color: #c4acff;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.admin-recording-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+.admin-recording-message {
+  display: block;
+  min-width: 250px;
+  max-width: 340px;
+  margin-top: 0.45rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  white-space: normal;
+}
+.admin-recording-message code {
+  color: #f9f8fb;
+  overflow-wrap: anywhere;
+}
+.admin-copy-key-button {
+  display: block;
+  margin-top: 0.25rem;
+  padding: 0;
+}
 .admin-access-badge {
   display: inline-block;
   padding: 0.32rem 0.55rem;
