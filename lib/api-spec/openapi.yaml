@@ -617,6 +617,27 @@ paths:
                 required: [buyers, total, totalWithAccess]
         "403":
           description: Access denied
+  /admin/buyers/{buyerId}:
+    delete:
+      operationId: deleteAdminBuyer
+      tags: [admin]
+      summary: Delete a buyer registration
+      parameters:
+        - name: buyerId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Buyer deleted
+        "403":
+          description: Access denied
+        "404":
+          description: Buyer not found
   /admin/session-recording:
     get:
       operationId: getAdminSessionRecording

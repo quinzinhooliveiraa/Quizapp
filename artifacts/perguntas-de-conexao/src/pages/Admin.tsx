@@ -5,9 +5,11 @@ import {
   Bell,
   Check,
   Copy,
+  ChevronDown,
   ExternalLink,
   LayoutTemplate,
   ShieldAlert,
+  Trash2,
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
 
@@ -93,7 +95,6 @@ const LANDINGS: LandingEntry[] = [
 const TABS = [
   { id: "buyers", label: "Compradores" },
   { id: "pages", label: "Páginas" },
-  { id: "analytics", label: "Analytics" },
   { id: "notifications", label: "Notificações" },
   { id: "feedback", label: "Feedback" },
 ] as const;
@@ -383,95 +384,93 @@ function LpSessionsList({
   );
 }
 
-function AnalyticsTab({
+function AnalyticsPanel({
+  landing,
   analytics,
-  lpSessions,
+  sessions,
   sessionId,
+  loading,
 }: {
-  analytics: AnalyticsEntry[];
-  lpSessions: Record<string, LpSession[]>;
+  landing: LandingEntry;
+  analytics: AnalyticsEntry | undefined;
+  sessions: LpSession[];
   sessionId: string;
+  loading: boolean;
 }) {
+  if (loading) {
+    return <p className="admin-footnote">Carregando analytics desta página…</p>;
+  }
+
+  const conversion =
+    analytics && analytics.views > 0
+      ? `${((analytics.purchasesConfirmed / analytics.views) * 100).toFixed(1)}%`
+      : "—";
+
   return (
-    <section className="admin-section" aria-labelledby="analytics-title">
-      <div className="admin-section-heading">
+    <div className="admin-analytics-panel">
+      <div className="admin-analytics-card-heading">
         <div>
           <p className="admin-eyebrow">últimos 30 dias</p>
-          <h2 id="analytics-title">Analytics por página</h2>
+          <h3>{landing.label}</h3>
+        </div>
+        <span className="admin-conversion">{conversion}</span>
+      </div>
+      <div className="admin-metric-grid">
+        <div>
+          <span>Visualizações</span>
+          <strong>{analytics?.views || 0}</strong>
+        </div>
+        <div>
+          <span>Cliques em comprar</span>
+          <strong>{analytics?.ctaClicks || 0}</strong>
+        </div>
+        <div>
+          <span>Checkouts iniciados</span>
+          <strong>{analytics?.checkoutsStarted || 0}</strong>
+        </div>
+        <div>
+          <span>Compras confirmadas</span>
+          <strong>{analytics?.purchasesConfirmed || 0}</strong>
+        </div>
+        <div>
+          <span>Tempo médio</span>
+          <strong>
+            {formatDuration(analytics?.avgTimeOnPageSeconds ?? null)}
+          </strong>
         </div>
       </div>
-      <div className="admin-analytics-grid">
-        {LANDINGS.map((landing) => {
-          const data = analytics.find((item) => item.lpId === landing.id);
-          const conversion =
-            data && data.views > 0
-              ? `${((data.purchasesConfirmed / data.views) * 100).toFixed(1)}%`
-              : "—";
-          return (
-            <article className="admin-analytics-card" key={landing.id}>
-              <div className="admin-analytics-card-heading">
-                <div>
-                  <p className="admin-eyebrow">{landing.id}</p>
-                  <h3>{landing.label}</h3>
-                </div>
-                <span className="admin-conversion">{conversion}</span>
-              </div>
-              <div className="admin-metric-grid">
-                <div>
-                  <span>Visualizações</span>
-                  <strong>{data?.views || 0}</strong>
-                </div>
-                <div>
-                  <span>Cliques em comprar</span>
-                  <strong>{data?.ctaClicks || 0}</strong>
-                </div>
-                <div>
-                  <span>Checkouts iniciados</span>
-                  <strong>{data?.checkoutsStarted || 0}</strong>
-                </div>
-                <div>
-                  <span>Compras confirmadas</span>
-                  <strong>{data?.purchasesConfirmed || 0}</strong>
-                </div>
-                <div>
-                  <span>Tempo médio</span>
-                  <strong>
-                    {formatDuration(data?.avgTimeOnPageSeconds ?? null)}
-                  </strong>
-                </div>
-              </div>
-              <div className="admin-exit-sections">
-                <span>Onde as pessoas saem</span>
-                {data?.topExitSections.length ? (
-                  data.topExitSections.map((exit) => (
-                    <p key={exit.section}>
-                      <strong>{exit.section}</strong> — {exit.count}{" "}
-                      {exit.count === 1 ? "saída" : "saídas"}
-                    </p>
-                  ))
-                ) : (
-                  <p>Nenhum dado de saída ainda.</p>
-                )}
-              </div>
-              <LpSessionsList
-                lpId={landing.id}
-                sessions={lpSessions[landing.id] || []}
-                sessionId={sessionId}
-              />
-            </article>
-          );
-        })}
+      <div className="admin-exit-sections">
+        <span>Onde as pessoas saem</span>
+        {analytics?.topExitSections.length ? (
+          analytics.topExitSections.map((exit) => (
+            <p key={exit.section}>
+              <strong>{exit.section}</strong> — {exit.count}{" "}
+              {exit.count === 1 ? "saída" : "saídas"}
+            </p>
+          ))
+        ) : (
+          <p>Nenhum dado de saída ainda.</p>
+        )}
       </div>
-    </section>
+      <LpSessionsList
+        lpId={landing.id}
+        sessions={sessions}
+        sessionId={sessionId}
+      />
+    </div>
   );
 }
 
-function BuyersTab({ buyers, total }: { buyers: BuyerEntry[]; total: number }) {
+function BuyersTab({ buyers }: { buyers: BuyerEntry[] }) {
+  const [visibleBuyers, setVisibleBuyers] = useState(buyers);
   const [loadingBuyerId, setLoadingBuyerId] = useState<string | null>(null);
+  const [deletingBuyerId, setDeletingBuyerId] = useState<string | null>(null);
+  const [deleteMessage, setDeleteMessage] = useState("");
   const [recordingMessages, setRecordingMessages] = useState<
     Record<string, RecordingLookup>
   >({});
   const [copiedVisitorKey, setCopiedVisitorKey] = useState<string | null>(null);
+  useEffect(() => setVisibleBuyers(buyers), [buyers]);
 
   const openRecording = async (buyerId: string) => {
     const sessionId = safeGetItem("conexao-session")?.trim();
@@ -490,13 +489,40 @@ function BuyersTab({ buyers, total }: { buyers: BuyerEntry[]; total: number }) {
     } catch {
       setRecordingMessages((current) => ({
         ...current,
-        [buyerId]: {
-          available: false,
-          reason: "sem-gravacao",
-        },
+        [buyerId]: { available: false, reason: "sem-gravacao" },
       }));
     } finally {
       setLoadingBuyerId(null);
+    }
+  };
+
+  const deleteBuyer = async (buyer: BuyerEntry) => {
+    if (
+      !window.confirm(
+        `Apagar o cadastro de ${buyer.buyerName || "Sem nome"}? Essa ação não pode ser desfeita.`,
+      )
+    ) {
+      return;
+    }
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId) return;
+    setDeletingBuyerId(buyer.id);
+    setDeleteMessage("");
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/buyers/${encodeURIComponent(buyer.id)}?sessionId=${encodeURIComponent(sessionId)}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) throw new Error("delete-buyer");
+      setVisibleBuyers((current) =>
+        current.filter((item) => item.id !== buyer.id),
+      );
+    } catch {
+      setDeleteMessage(
+        "Não foi possível apagar este comprador. Tente novamente.",
+      );
+    } finally {
+      setDeletingBuyerId(null);
     }
   };
 
@@ -524,10 +550,14 @@ function BuyersTab({ buyers, total }: { buyers: BuyerEntry[]; total: number }) {
           <h2 id="buyers-title">Compradores</h2>
         </div>
         <span className="admin-count">
-          {total} {total === 1 ? "comprador" : "compradores"}
+          {visibleBuyers.length}{" "}
+          {visibleBuyers.length === 1 ? "comprador" : "compradores"}
         </span>
       </div>
-      {buyers.length === 0 ? (
+      {deleteMessage && (
+        <p className="admin-notification-message">{deleteMessage}</p>
+      )}
+      {visibleBuyers.length === 0 ? (
         <p className="admin-footnote">Nenhum cadastro ainda.</p>
       ) : (
         <div className="admin-buyers-table-wrap">
@@ -540,10 +570,11 @@ function BuyersTab({ buyers, total }: { buyers: BuyerEntry[]; total: number }) {
                 <th>Data</th>
                 <th>Convites</th>
                 <th>Clarity</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {buyers.map((buyer) => (
+              {visibleBuyers.map((buyer) => (
                 <tr key={buyer.id} data-testid={`row-buyer-${buyer.id}`}>
                   <td>{buyer.buyerName || "Sem nome"}</td>
                   <td>{buyer.buyerEmail || "Sem email"}</td>
@@ -593,6 +624,17 @@ function BuyersTab({ buyers, total }: { buyers: BuyerEntry[]; total: number }) {
                       </span>
                     )}
                   </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="admin-delete-button"
+                      aria-label={`Apagar cadastro de ${buyer.buyerName || "Sem nome"}`}
+                      onClick={() => void deleteBuyer(buyer)}
+                      disabled={deletingBuyerId === buyer.id}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -600,7 +642,8 @@ function BuyersTab({ buyers, total }: { buyers: BuyerEntry[]; total: number }) {
         </div>
       )}
       <p className="admin-footnote">
-        Gravações no Clarity ficam disponíveis por até 30 dias.
+        Gravações no Clarity ficam disponíveis por até 30 dias. Apagar o
+        cadastro não estorna nem cancela o pagamento na Abacate Pay.
       </p>
     </section>
   );
@@ -610,11 +653,56 @@ function PagesTab({
   origin,
   copiedId,
   copyLink,
+  sessionId,
 }: {
   origin: string;
   copiedId: string | null;
   copyLink: (entry: LandingEntry) => void;
+  sessionId: string;
 }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [analytics, setAnalytics] = useState<AnalyticsEntry[]>([]);
+  const [lpSessions, setLpSessions] = useState<Record<string, LpSession[]>>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+
+  const toggleLanding = async (landing: LandingEntry) => {
+    const isOpen = expanded[landing.id];
+    setExpanded((current) => ({ ...current, [landing.id]: !isOpen }));
+    if (isOpen || analytics.some((item) => item.lpId === landing.id)) return;
+
+    setLoading((current) => ({ ...current, [landing.id]: true }));
+    try {
+      const query = `sessionId=${encodeURIComponent(sessionId)}`;
+      const [analyticsResponse, sessionsResponse] = await Promise.all([
+        fetch(`${apiBaseUrl}/api/admin/analytics?${query}`),
+        fetch(
+          `${apiBaseUrl}/api/admin/lp-sessions?${query}&lpId=${landing.id}`,
+        ),
+      ]);
+      if (!analyticsResponse.ok || !sessionsResponse.ok)
+        throw new Error("analytics");
+      const analyticsData = (await analyticsResponse.json()) as {
+        analytics?: AnalyticsEntry[];
+      };
+      const sessionsData =
+        (await sessionsResponse.json()) as LpSessionsResponse;
+      setAnalytics((current) => [
+        ...current.filter((item) => item.lpId !== landing.id),
+        ...(analyticsData.analytics || []).filter(
+          (item) => item.lpId === landing.id,
+        ),
+      ]);
+      setLpSessions((current) => ({
+        ...current,
+        [landing.id]: sessionsData.sessions || [],
+      }));
+    } catch {
+      setLpSessions((current) => ({ ...current, [landing.id]: [] }));
+    } finally {
+      setLoading((current) => ({ ...current, [landing.id]: false }));
+    }
+  };
+
   return (
     <section className="admin-section" aria-labelledby="landing-pages-title">
       <div className="admin-section-heading">
@@ -628,20 +716,28 @@ function PagesTab({
         {LANDINGS.map((entry) => (
           <article
             key={entry.id}
-            className="admin-landing-card"
+            className={`admin-landing-card ${expanded[entry.id] ? "is-expanded" : ""}`}
             data-testid={`card-landing-${entry.id}`}
           >
-            <div className="admin-landing-icon">
-              <LayoutTemplate size={18} />
-            </div>
-            <div className="admin-landing-info">
-              <strong>{entry.label}</strong>
-              <p>{entry.description}</p>
-              <code className="admin-landing-url">
-                {origin}
-                {entry.path}
-              </code>
-            </div>
+            <button
+              type="button"
+              className="admin-landing-card-body"
+              onClick={() => void toggleLanding(entry)}
+              aria-expanded={Boolean(expanded[entry.id])}
+            >
+              <div className="admin-landing-icon">
+                <LayoutTemplate size={18} />
+              </div>
+              <div className="admin-landing-info">
+                <strong>{entry.label}</strong>
+                <p>{entry.description}</p>
+                <code className="admin-landing-url">
+                  {origin}
+                  {entry.path}
+                </code>
+              </div>
+              <ChevronDown className="admin-landing-chevron" size={18} />
+            </button>
             <div className="admin-landing-actions">
               <a
                 href={`${origin}${entry.path}`}
@@ -667,6 +763,15 @@ function PagesTab({
                 )}
               </button>
             </div>
+            {expanded[entry.id] && (
+              <AnalyticsPanel
+                landing={entry}
+                analytics={analytics.find((item) => item.lpId === entry.id)}
+                sessions={lpSessions[entry.id] || []}
+                sessionId={sessionId}
+                loading={Boolean(loading[entry.id])}
+              />
+            )}
           </article>
         ))}
       </div>
@@ -809,45 +914,13 @@ export default function Admin() {
               ? (response.json() as Promise<{ reviews?: ReviewEntry[] }>)
               : Promise.resolve({} as { reviews?: ReviewEntry[] }),
           ),
-          fetch(`${apiBaseUrl}/api/admin/analytics?${query}`).then(
-            (response) =>
-              response.ok
-                ? (response.json() as Promise<{ analytics?: AnalyticsEntry[] }>)
-                : Promise.resolve({} as { analytics?: AnalyticsEntry[] }),
-          ),
-          ...LANDINGS.map((landing) =>
-            fetch(
-              `${apiBaseUrl}/api/admin/lp-sessions?${query}&lpId=${landing.id}`,
-            ).then((response) =>
-              response.ok
-                ? (response.json() as Promise<LpSessionsResponse>)
-                : Promise.resolve({} as LpSessionsResponse),
-            ),
-          ),
         ])
-          .then(
-            ([
-              buyerData,
-              suggestionData,
-              reviewData,
-              analyticsData,
-              ...sessionData
-            ]) => {
-              setBuyers(buyerData.buyers || []);
-              setBuyerTotal(buyerData.total || 0);
-              setSuggestions(suggestionData.suggestions || []);
-              setReviews(reviewData.reviews || []);
-              setAnalytics(analyticsData.analytics || []);
-              setLpSessions(
-                Object.fromEntries(
-                  LANDINGS.map((landing, index) => [
-                    landing.id,
-                    sessionData[index]?.sessions || [],
-                  ]),
-                ),
-              );
-            },
-          )
+          .then(([buyerData, suggestionData, reviewData]) => {
+            setBuyers(buyerData.buyers || []);
+            setBuyerTotal(buyerData.total || 0);
+            setSuggestions(suggestionData.suggestions || []);
+            setReviews(reviewData.reviews || []);
+          })
           .catch(() => {
             setBuyers([]);
             setSuggestions([]);
@@ -900,16 +973,16 @@ export default function Admin() {
   }
 
   const tabContent = {
-    buyers: <BuyersTab buyers={buyers} total={buyerTotal} />,
-    pages: <PagesTab origin={origin} copiedId={copiedId} copyLink={copyLink} />,
-    feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
-    analytics: (
-      <AnalyticsTab
-        analytics={analytics}
-        lpSessions={lpSessions}
+    buyers: <BuyersTab buyers={buyers} />,
+    pages: (
+      <PagesTab
+        origin={origin}
+        copiedId={copiedId}
+        copyLink={copyLink}
         sessionId={sessionId}
       />
     ),
+    feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
     notifications: <NotificationsTab sessionId={sessionId} />,
   };
 

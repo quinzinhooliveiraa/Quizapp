@@ -25,6 +25,7 @@ export * from './checkoutWebhookEventType';
 export * from './checkoutWebhookPackageId';
 export * from './completeGuestOnboarding200';
 export * from './completeOwnerOnboarding200';
+export * from './deleteAdminBuyerParams';
 export * from './getAdminAnalytics200';
 export * from './getAdminAnalyticsParams';
 export * from './getAdminSessionRecordingParams';

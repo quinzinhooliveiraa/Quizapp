@@ -518,6 +518,20 @@ export const ListAdminBuyersResponse = zod.object({
 
 
 /**
+ * @summary Delete a buyer registration
+ */
+export const DeleteAdminBuyerParams = zod.object({
+  "buyerId": zod.coerce.string()
+})
+
+export const DeleteAdminBuyerQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const DeleteAdminBuyerResponse = zod.void()
+
+
+/**
  * @summary Find a Clarity session recording for a buyer
  */
 export const GetAdminSessionRecordingQueryParams = zod.object({

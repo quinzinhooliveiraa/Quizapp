@@ -565,7 +565,10 @@
   gap: 0.8rem;
 }
 .admin-landing-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
   padding: 1.15rem 1.25rem;
@@ -576,6 +579,59 @@
     border-color 0.18s ease,
     transform 0.18s ease,
     background 0.18s ease;
+}
+.admin-landing-card-body {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  gap: 1rem;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.admin-landing-card-body:focus-visible {
+  outline: 2px solid #c4acff;
+  outline-offset: 0.25rem;
+}
+.admin-landing-chevron {
+  flex: 0 0 auto;
+  margin: 0.25rem 0.25rem 0 0;
+  color: rgba(255, 255, 255, 0.45);
+  transition: transform 0.2s ease;
+}
+.admin-landing-card.is-expanded .admin-landing-chevron {
+  transform: rotate(180deg);
+}
+.admin-analytics-panel {
+  flex: 0 0 100%;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.admin-delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  color: rgba(255, 255, 255, 0.45);
+  background: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+.admin-delete-button:hover {
+  color: #ff9f9f;
+  background: rgba(255, 120, 120, 0.1);
+}
+.admin-delete-button:disabled {
+  cursor: wait;
+  opacity: 0.5;
 }
 .admin-landing-card:hover {
   background: rgba(196, 172, 255, 0.06);

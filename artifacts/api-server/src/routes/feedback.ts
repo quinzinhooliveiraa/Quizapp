@@ -145,4 +145,31 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
   });
 });
 
+router.delete("/admin/buyers/:buyerId", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+
+  const buyerId = req.params.buyerId?.trim();
+  if (!buyerId) {
+    res.status(400).json({ error: "Comprador inválido" });
+    return;
+  }
+
+  const deleted = await db
+    .delete(sessionsTable)
+    .where(eq(sessionsTable.id, buyerId))
+    .returning({ id: sessionsTable.id });
+
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "Comprador não encontrado" });
+    return;
+  }
+
+  res.status(204).end();
+});
+
 export default router;

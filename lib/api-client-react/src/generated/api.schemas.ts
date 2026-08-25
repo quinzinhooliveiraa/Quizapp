@@ -488,6 +488,10 @@ export type ListAdminBuyers200 = {
   totalWithAccess: number;
 };
 
+export type DeleteAdminBuyerParams = {
+sessionId: string;
+};
+
 export type GetAdminSessionRecordingParams = {
 sessionId: string;
 buyerId?: string;

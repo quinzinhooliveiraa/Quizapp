@@ -1,0 +1,117 @@
+# Páginas com analytics expansível + apagar comprador
+
+## Contexto
+
+Sexto prompt da série (1 a 5 já devem estar aplicados). Dois ajustes, depois
+de ver o resultado ao vivo:
+
+1. A aba **Analytics** deixa de existir como aba separada. O conteúdo dela
+   (números agregados de cada LP + a lista de sessões daquela LP, feita no
+   prompt 5) passa a viver **dentro da aba Páginas**, dentro de cada card de
+   landing page, num painel que expande/recolhe ao clicar no card.
+2. Na aba **Compradores**, adiciona um jeito de apagar um comprador da lista.
+
+Leia o estado atual do `Admin.tsx` e das rotas admin antes de mexer — as
+instruções abaixo descrevem o resultado final, adapte ao que já existe.
+
+## 1. Páginas com analytics expansível
+
+### Menu de abas
+
+Remove "Analytics" do array/lista de abas do admin. Sobra: Compradores,
+Páginas, Feedback, Notificações (as que já existem, tirando só a Analytics).
+
+### Comportamento do card de cada LP
+
+Hoje, cada card de landing page (na aba Páginas) tem: nome, descrição, URL,
+um botão de abrir em nova aba (ícone de link externo) e um botão de copiar
+link. **Esses dois botões continuam com o comportamento de sempre** — abrir a
+página de verdade / copiar o link — não mude isso.
+
+O que muda: **clicar no corpo do card** (fora dos dois botões de ação) alterna
+um painel expansível abaixo daquele card específico, mostrando o analytics
+daquela LP. Cada card expande/recolhe de forma independente (pode ter mais de
+um aberto ao mesmo tempo, não precisa ser tipo "accordion exclusivo"). Use uma
+seta ou ícone (chevron) no card indicando que é clicável/expansível, e que
+gira ou muda quando está aberto, pra ficar claro que é uma ação de
+expandir/recolher.
+
+**Comece recolhido por padrão** (senão a aba fica poluída com dado de duas
+LPs abertas de cara — foi exatamente o problema que motivou tirar a aba
+separada).
+
+### Conteúdo do painel expandido
+
+Quando expandir o card da LP (ex: LP1), busca (se ainda não tiver buscado
+antes — pode cachear em estado local, não precisa rebuscar toda vez que
+expande de novo) e mostra:
+
+- Os números agregados que já existem hoje na aba Analytics antiga pra
+  aquela LP especificamente: visualizações (30 dias), cliques em comprar (30
+  dias), checkouts iniciados, compras confirmadas, tempo médio na página,
+  taxa de conversão, top seções de saída.
+- Logo abaixo, a lista de sessões individuais daquela LP (do prompt 5):
+  status (comprou / aguardando pagamento / só visitou), quando entrou, tempo
+  na página, botão "Ver gravação".
+
+Reaproveite os mesmos endpoints já existentes
+(`GET /api/admin/analytics?sessionId=&lpId=` e
+`GET /api/admin/lp-sessions?sessionId=&lpId=`) — se hoje o
+`/api/admin/analytics` retorna os dados das duas LPs juntas numa resposta só,
+tudo bem, só filtra no frontend pelo `lpId` do card que expandiu; não precisa
+mudar o endpoint se já funciona assim.
+
+## 2. Apagar comprador
+
+### Backend
+
+Crie `DELETE /api/admin/buyers/:buyerId`, protegido com `isAdminSession`
+(recebe `sessionId` do admin via query string, mesmo padrão de sempre — não
+confundir com `:buyerId`, que é o id do registro a apagar, na URL).
+
+- Apaga a linha correspondente em `sessionsTable` (`where id = buyerId`).
+- Como `invitesTable` já tem `onDelete: "cascade"` referenciando
+  `sessionsTable`, os convites ligados a essa sessão somem juntos
+  automaticamente — não precisa apagar manualmente.
+- **Não mexe em `savedMomentsTable`** (momentos salvos por essa
+  pessoa/convidados) — essa tabela não tem cascade configurado hoje, então
+  registros órfãos podem sobrar lá; isso é aceitável por enquanto, não faz
+  parte deste prompt resolver.
+- Se o id não existir, retorna `404`. Se apagar com sucesso, `204`.
+
+### Frontend
+
+Na aba Compradores, cada linha ganha um botão de apagar (ícone de lixeira).
+
+- Ao clicar, mostra uma confirmação antes de apagar de verdade — pode ser um
+  `window.confirm("Apagar o cadastro de {nome}? Essa ação não pode ser
+  desfeita.")` simples, ou um modalzinho no mesmo estilo visual do resto do
+  admin, o que for mais rápido de implementar mantendo consistência.
+- Confirmado, chama `DELETE /api/admin/buyers/:buyerId?sessionId=...` e, se
+  der certo, remove a linha da lista na tela sem precisar recarregar a
+  página inteira.
+- Se der erro, mostra uma mensagem simples de erro (mesmo padrão de erro já
+  usado em outras partes do admin) e mantém a linha na lista.
+
+**Importante deixar claro pro usuário (fora do código, é só um aviso meu pra
+você mesmo, Quinzinho):** apagar aqui só remove o cadastro dentro do app —
+não estorna nem cancela o pagamento na Abacate Pay. Se for apagar alguém que
+pagou, o dinheiro da venda continua processado normalmente lá.
+
+## O que NÃO fazer
+
+- Não apague nem recrie a rota `GET /api/admin/analytics` nem
+  `GET /api/admin/lp-sessions` do zero — só reaproveita, ajustando o
+  frontend pra consumir dentro do card em vez de numa aba separada.
+- Não mexe nos botões de abrir/copiar link dos cards — só adiciona o clique
+  de expandir em cima disso, sem quebrar o que já funciona.
+- Não implemente exclusão em massa (apagar vários de uma vez) — só um por
+  vez, por enquanto.
+
+## Depois de aplicar
+
+Formata os arquivos tocados. Confere ao vivo: na aba Páginas, clica no card
+da LP1, confirma que expande mostrando os números e a lista de sessões
+daquela LP (e que a LP2 continua fechada até você clicar nela também); testa
+apagar um comprador de teste e confirma que ele some da lista sem precisar
+recarregar a página.

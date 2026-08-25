@@ -31,6 +31,7 @@ import type {
   CheckoutWebhook,
   CompleteGuestOnboarding200,
   CompleteOwnerOnboarding200,
+  DeleteAdminBuyerParams,
   GetAdminAnalytics200,
   GetAdminAnalyticsParams,
   GetAdminSessionRecordingParams,
@@ -2216,6 +2217,86 @@ export function useListAdminBuyers<TData = Awaited<ReturnType<typeof listAdminBu
 
 
 
+
+export const getDeleteAdminBuyerUrl = (buyerId: string,
+    params: DeleteAdminBuyerParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/buyers/${buyerId}?${stringifiedParams}` : `/api/admin/buyers/${buyerId}`
+}
+
+/**
+ * @summary Delete a buyer registration
+ */
+export const deleteAdminBuyer = async (buyerId: string,
+    params: DeleteAdminBuyerParams, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteAdminBuyerUrl(buyerId,params),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminBuyerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminBuyer>>, TError,{buyerId: string;params: DeleteAdminBuyerParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminBuyer>>, TError,{buyerId: string;params: DeleteAdminBuyerParams}, TContext> => {
+
+const mutationKey = ['deleteAdminBuyer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminBuyer>>, {buyerId: string;params: DeleteAdminBuyerParams}> = (props) => {
+          const {buyerId,params} = props ?? {};
+
+          return  deleteAdminBuyer(buyerId,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminBuyerMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminBuyer>>>
+
+    export type DeleteAdminBuyerMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a buyer registration
+ */
+export const useDeleteAdminBuyer = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminBuyer>>, TError,{buyerId: string;params: DeleteAdminBuyerParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminBuyer>>,
+        TError,
+        {buyerId: string;params: DeleteAdminBuyerParams},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminBuyerMutationOptions(options));
+    }
 
 export const getGetAdminSessionRecordingUrl = (params: GetAdminSessionRecordingParams,) => {
   const normalizedParams = new URLSearchParams();
