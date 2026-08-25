@@ -1,0 +1,175 @@
+# Notificação push no celular quando alguém compra
+
+## Contexto
+
+Este é o **terceiro e último** de três prompts pra evoluir o painel admin (os
+dois anteriores já devem estar aplicados: abas + Compradores, e Analytics por
+LP). Agora: quando alguém completa uma compra (o webhook da Abacate Pay marca
+`accessGranted: true`), o admin recebe uma notificação push no celular, via
+o Service Worker que o app (PWA) já tem instalado (`main.tsx` já registra um
+Service Worker, e existem ícones/manifest em `public/`).
+
+**Aviso importante que já expliquei pro usuário, mas reforço aqui pro
+Replit Agent também respeitar**: notificação push via PWA só funciona no
+iPhone se o app tiver sido adicionado à tela de início (iOS 16.4+) — dentro
+do Safari normal (aba do navegador) não funciona em iOS. No Android funciona
+mesmo sem instalar, com o site aberto no Chrome. Isso não muda a
+implementação, só é bom deixar um aviso visível na interface (ver Passo 4).
+
+## Passo 1 — Gerar as chaves VAPID
+
+Web Push exige um par de chaves VAPID (identifica o servidor que envia as
+notificações). Rode no terminal do Replit:
+
+```
+npx web-push generate-vapid-keys
+```
+
+Isso imprime uma Public Key e uma Private Key. Guarde os dois valores — vão
+virar variáveis de ambiente (não hardcode no código):
+
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_SUBJECT` — use `mailto:perguntasdeconexao@gmail.com`
+
+Adicione as 3 no Secrets do Replit **e** depois, quando eu (o usuário)
+confirmar que está funcionando localmente, elas também precisam ir pro
+Railway, no serviço `api-server` — mas isso eu faço depois, não é parte
+deste prompt.
+
+Instale a dependência no `api-server`: `web-push` (pacote npm).
+
+## Passo 2 — Banco de dados
+
+Nova tabela em `lib/db/src/schema/index.ts`:
+
+```ts
+export const pushSubscriptionsTable = pgTable("push_subscriptions", {
+  id: text("id").primaryKey(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+Exporte o schema de insert e os tipos, seguindo o padrão do arquivo. Rode a
+migração.
+
+## Passo 3 — Backend
+
+### 3a. Endpoint pra registrar inscrição
+
+`POST /api/admin/push-subscribe`, protegido com `isAdminSession` (mesmo
+padrão das outras rotas admin — recebe `sessionId` no corpo ou query, valida
+antes de aceitar). Corpo:
+
+```ts
+{ sessionId: string; subscription: { endpoint: string; keys: { p256dh: string; auth: string } } }
+```
+
+Insere (ou ignora se `endpoint` já existir — `onConflictDoNothing` no
+`endpoint`) em `pushSubscriptionsTable`. Responda `201`.
+
+### 3b. Endpoint pra cancelar inscrição
+
+`POST /api/admin/push-unsubscribe`, mesma proteção, recebe `{ endpoint }` e
+remove a linha correspondente.
+
+### 3c. Disparar notificação na compra confirmada
+
+Crie uma função `sendPurchaseNotification(session: { buyerName, packageName })`
+num arquivo tipo `artifacts/api-server/src/lib/push.ts`, usando o pacote
+`web-push` configurado com as 3 variáveis VAPID. Ela deve:
+
+- Buscar todas as linhas de `pushSubscriptionsTable`.
+- Pra cada uma, chamar `webpush.sendNotification(subscription, payload)` com
+  `payload = JSON.stringify({ title: "Nova venda! 🎉", body: "{buyerName} comprou {packageName}" })`.
+- Se o envio falhar com erro 410 (Gone) ou 404 — a inscrição expirou/foi
+  removida do navegador — apague essa linha da tabela (limpeza automática).
+  Outros erros só loga, não precisa travar nada.
+- Não deixe erro de push derrubar o webhook: chame essa função de forma que
+  falha nela nunca impeça a resposta ao webhook da Abacate Pay (ex: não usa
+  `await` bloqueante que jogue erro pra cima, ou envolve em `try/catch` que só
+  loga).
+
+Encontre **todos** os lugares em
+`artifacts/api-server/src/routes/connection.ts` onde o código faz
+`.set({ accessGranted: true })` (são pelo menos dois pontos hoje, ligados ao
+processamento do webhook da Abacate Pay) e, logo depois de cada um confirmar
+a atualização, chame `sendPurchaseNotification` com os dados da sessão
+(nome do comprador e nome do pacote). Cuidado pra não disparar notificação
+duplicada quando o mesmo evento já foi processado antes (o código já tem uma
+tabela `processedEventsTable` pra idempotência — só dispare a notificação no
+caminho que efetivamente é a primeira vez que aquela sessão passa a ter
+acesso, não em toda checagem de status).
+
+## Passo 4 — Service Worker
+
+Encontre o arquivo do Service Worker do projeto (procure onde `main.tsx`
+registra o SW — provavelmente `public/sw.js` ou similar). Adicione:
+
+```js
+self.addEventListener("push", (event) => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || "Perguntas de Conexão";
+  const options = {
+    body: data.body || "",
+    icon: "/icons/icon-192.png", // ajuste pro ícone que já existe em public/icons
+    badge: "/icons/icon-192.png",
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow("/admin"));
+});
+```
+
+Confira os caminhos reais dos ícones em `public/icons/` antes de colar (usa o
+que já existir, não invente arquivo novo).
+
+## Passo 5 — Frontend: aba "Notificações" no admin
+
+Nova aba no `Admin.tsx`, depois de "Analytics". Conteúdo:
+
+- Um texto curto explicando o que é: "Receba um aviso no seu celular sempre
+  que alguém comprar."
+- **Aviso visível** (ex: um bloco de texto menor, tom neutro, não alarmante):
+  "No iPhone, isso só funciona se você tiver adicionado este app à tela de
+  início (compartilhar → Adicionar à Tela de Início) e abrir por lá, não pelo
+  Safari normal. No Android funciona direto pelo Chrome."
+- Um botão "Ativar notificações neste aparelho":
+  - Ao clicar, pede permissão de notificação (`Notification.requestPermission()`).
+  - Se negada, mostra mensagem explicando que precisa permitir nas
+    configurações do navegador/app.
+  - Se aceita, pega o Service Worker já registrado
+    (`navigator.serviceWorker.ready`), chama
+    `registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: <VAPID_PUBLIC_KEY convertido pra Uint8Array> })`.
+  - Envia a subscription resultante pro backend
+    (`POST /api/admin/push-subscribe`).
+  - Mostra estado "Notificações ativadas neste aparelho ✅" depois de
+    confirmado.
+- O `VAPID_PUBLIC_KEY` precisa estar disponível no frontend — exponha via uma
+  rota pública simples tipo `GET /api/push/vapid-public-key` (não precisa
+  proteger, chave pública não é segredo) em vez de colocar a chave direto no
+  bundle do frontend como variável de build.
+- Se o navegador não suportar Push API (`"PushManager" in window` é `false`),
+  esconde o botão e mostra "Seu navegador não suporta notificações push."
+
+## O que NÃO fazer
+
+- Não mude nada nas abas Compradores, Páginas ou Analytics.
+- Não implemente notificação por email aqui — é só push.
+- Não bloqueie a resposta do webhook da Abacate Pay esperando o envio da
+  notificação terminar — o pagamento tem que ser confirmado rápido pro
+  comprador, a notificação é um "extra" que pode rodar em paralelo/depois.
+
+## Depois de aplicar
+
+Roda o formatador nos arquivos tocados. Depois, preciso que você (o usuário)
+teste na prática: abra o admin pelo celular (idealmente já como PWA instalado
+se for iPhone), vá na aba Notificações, clique em ativar, aceite a permissão,
+e depois faça (ou peça pra eu simular) uma compra de teste pra confirmar que
+a notificação chega.
