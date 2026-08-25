@@ -1,0 +1,91 @@
+# Reorganizar o Painel Admin em abas + nova aba de Compradores
+
+## Contexto
+
+O painel admin (`artifacts/perguntas-de-conexao/src/pages/Admin.tsx`) hoje é uma
+página única com 3 seções empilhadas (Landing pages, Avaliações, Sugestões).
+Vamos reorganizar em abas, e adicionar uma aba nova: **Compradores** — a lista
+de quem já se cadastrou/comprou, usando dados que já existem no banco (não
+precisa criar tabela nova pra isso).
+
+Este é o **primeiro de três prompts** que vou te mandar pra evoluir o admin.
+Este aqui é só estrutura + lista de compradores. Depois vêm analytics por
+página de venda, e por último a notificação push. Faça só o que está descrito
+abaixo.
+
+## O que fazer
+
+### 1. Backend — novo endpoint de compradores
+
+Crie `GET /api/admin/buyers` em
+`artifacts/api-server/src/routes/connection.ts` (ou em outro arquivo de rotas
+admin já existente, se fizer mais sentido pro projeto — mas siga o padrão que
+já existe em `artifacts/api-server/src/routes/feedback.ts`, que tem a função
+`isAdminSession(sessionId)` fazendo a checagem de admin. Reaproveite essa
+função ou duplique o mesmo padrão, não invente uma checagem nova).
+
+- Recebe `sessionId` via query string, valida com `isAdminSession`. Se não for
+  admin, `403`.
+- Busca em `sessionsTable`, ordenado por `createdAt` decrescente (mais recente
+  primeiro), limitado a 500 registros.
+- Retorna os campos: `id`, `buyerName`, `buyerEmail`, `packageName`,
+  `accessGranted`, `invitesUsed`, `inviteLimit`, `createdAt`.
+- Resposta: `{ buyers: [...], total: number, totalWithAccess: number }` — onde
+  `totalWithAccess` é a contagem de quem tem `accessGranted: true` (ou seja,
+  compradores de fato, não só quem começou o checkout e não terminou).
+
+### 2. Frontend — reestruturar Admin.tsx em abas
+
+Transforme a página numa navegação por abas (pode usar um componente de tabs
+simples com `useState` pra controlar a aba ativa — não precisa de biblioteca
+nova se o projeto não tiver uma já instalada pra isso; senão, uma UI leve
+feita à mão com botões estilizados como abas está ótimo).
+
+Abas, nesta ordem:
+
+1. **Compradores** (nova, fica como aba padrão/inicial — é o que ele mais
+   quer ver primeiro)
+2. **Páginas** (a seção "Landing pages" que já existe, só movida pra dentro
+   da aba)
+3. **Feedback** (junta "Avaliações" e "Sugestões" que já existem, pode ser
+   duas sub-seções dentro da mesma aba, como já é hoje visualmente)
+
+Deixe espaço/preparo pro próximo prompt adicionar uma 4ª aba "Analytics" e um
+5º "Notificações" depois — não precisa criar essas abas vazias agora, só não
+estruture o código de um jeito que dificulte adicionar novas abas depois
+(idealmente um array de abas tipo `{ id, label, content }` e não um bloco de
+JSX gigante com `if`s).
+
+### 3. Conteúdo da aba Compradores
+
+- No mount da aba (ou da página, tanto faz), busca
+  `GET /api/admin/buyers?sessionId=...` (mesmo `sessionId` do localStorage já
+  usado nas outras chamadas admin).
+- Mostra no topo: total de sessões criadas e total com acesso liberado (ex:
+  "47 cadastros · 31 com acesso liberado").
+- Lista/tabela com uma linha por comprador, mostrando: nome, email, pacote
+  (`packageName`), status (badge verde "Acesso liberado" se `accessGranted`,
+  badge âmbar "Aguardando pagamento" se não), data de criação formatada em
+  pt-BR (`toLocaleDateString`), e convites usados (`invitesUsed`/`inviteLimit`,
+  só mostra se `inviteLimit > 0`... na real, mostra sempre, é informação
+  útil).
+- Sem paginação por enquanto (o limite de 500 no backend já resolve por um
+  bom tempo). Se a lista estiver vazia, mostra "Nenhum cadastro ainda" no
+  mesmo estilo das outras seções vazias que já existem na página.
+- Mantenha a identidade visual atual (mesmas classes `admin-*` já usadas —
+  pode criar classes novas seguindo o mesmo padrão de nome, tipo
+  `admin-buyers-table`, mas sem reinventar o visual geral da página).
+
+## O que NÃO fazer
+
+- Não mexer em `abacatepay.ts`, no webhook, nem em nenhuma rota de checkout.
+- Não mudar a lógica de autenticação/admin — só reaproveitar o que já existe.
+- Não criar tabela nova no banco — este prompt usa só o que já existe em
+  `sessionsTable`.
+- Não implementar analytics de clique/tempo de página nem notificação push
+  ainda — isso vem nos próximos dois prompts.
+
+## Depois de aplicar
+
+Roda `prettier --write` (ou o formatador que o projeto já usa) nos arquivos
+que você tocou, pra manter a indentação igual ao resto do projeto.

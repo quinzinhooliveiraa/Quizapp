@@ -38,6 +38,8 @@ import type {
   InviteAccepted,
   InviteInput,
   InviteListItem,
+  ListAdminBuyers200,
+  ListAdminBuyersParams,
   ListAdminReviews200,
   ListAdminReviewsParams,
   ListAdminSuggestions200,
@@ -1954,6 +1956,90 @@ export function useListAdminReviews<TData = Awaited<ReturnType<typeof listAdminR
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListAdminReviewsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminBuyersUrl = (params: ListAdminBuyersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/buyers?${stringifiedParams}` : `/api/admin/buyers`
+}
+
+/**
+ * @summary List registered buyers for an administrator
+ */
+export const listAdminBuyers = async (params: ListAdminBuyersParams, options?: Parameters<typeof customFetch>[1]): Promise<ListAdminBuyers200> => {
+
+  return customFetch<ListAdminBuyers200>(getListAdminBuyersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminBuyersQueryKey = (params?: ListAdminBuyersParams,) => {
+    return [
+    `/api/admin/buyers`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminBuyersQueryOptions = <TData = Awaited<ReturnType<typeof listAdminBuyers>>, TError = ErrorType<void>>(params: ListAdminBuyersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminBuyers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminBuyersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminBuyers>>> = ({ signal }) => listAdminBuyers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminBuyers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminBuyersQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminBuyers>>>
+export type ListAdminBuyersQueryError = ErrorType<void>
+
+
+/**
+ * @summary List registered buyers for an administrator
+ */
+
+export function useListAdminBuyers<TData = Awaited<ReturnType<typeof listAdminBuyers>>, TError = ErrorType<void>>(
+ params: ListAdminBuyersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminBuyers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminBuyersQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -55,6 +55,18 @@ export interface ReviewInput {
   message: string;
 }
 
+export interface Buyer {
+  id: string;
+  buyerName: string;
+  /** @nullable */
+  buyerEmail: string | null;
+  packageName: string;
+  accessGranted: boolean;
+  invitesUsed: number;
+  inviteLimit: number;
+  createdAt: string;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -344,5 +356,15 @@ sessionId: string;
 
 export type ListAdminReviews200 = {
   reviews: Review[];
+};
+
+export type ListAdminBuyersParams = {
+sessionId: string;
+};
+
+export type ListAdminBuyers200 = {
+  buyers: Buyer[];
+  total: number;
+  totalWithAccess: number;
 };
 

@@ -439,3 +439,26 @@ export const ListAdminReviewsResponse = zod.object({
 })
 
 
+/**
+ * @summary List registered buyers for an administrator
+ */
+export const ListAdminBuyersQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const ListAdminBuyersResponse = zod.object({
+  "buyers": zod.array(zod.object({
+  "id": zod.string(),
+  "buyerName": zod.string(),
+  "buyerEmail": zod.string().nullable(),
+  "packageName": zod.string(),
+  "accessGranted": zod.boolean(),
+  "invitesUsed": zod.number(),
+  "inviteLimit": zod.number(),
+  "createdAt": zod.coerce.date()
+})),
+  "total": zod.number(),
+  "totalWithAccess": zod.number()
+})
+
+

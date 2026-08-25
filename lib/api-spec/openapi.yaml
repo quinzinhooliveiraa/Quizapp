@@ -548,6 +548,34 @@ paths:
                 required: [reviews]
         "403":
           description: Access denied
+  /admin/buyers:
+    get:
+      operationId: listAdminBuyers
+      tags: [feedback]
+      summary: List registered buyers for an administrator
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Registered buyers and totals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  buyers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Buyer"
+                  total: { type: number }
+                  totalWithAccess: { type: number }
+                required: [buyers, total, totalWithAccess]
+        "403":
+          description: Access denied
 components:
   schemas:
     Suggestion:
@@ -582,6 +610,28 @@ components:
         rating: { type: number, minimum: 1, maximum: 5 }
         message: { type: string, minLength: 1, maxLength: 2000 }
       required: [rating, message]
+    Buyer:
+      type: object
+      properties:
+        id: { type: string }
+        buyerName: { type: string }
+        buyerEmail: { type: ["string", "null"] }
+        packageName: { type: string }
+        accessGranted: { type: boolean }
+        invitesUsed: { type: number }
+        inviteLimit: { type: number }
+        createdAt: { type: string, format: date-time }
+      required:
+        [
+          id,
+          buyerName,
+          buyerEmail,
+          packageName,
+          accessGranted,
+          invitesUsed,
+          inviteLimit,
+          createdAt,
+        ]
     HealthStatus:
       type: object
       properties:
@@ -636,7 +686,8 @@ components:
           type: number
         invitesLimit:
           type: number
-      required: [role, hasAccess, canInvite, packageName, invitesUsed, invitesLimit]
+      required:
+        [role, hasAccess, canInvite, packageName, invitesUsed, invitesLimit]
     SessionInput:
       type: object
       properties:
@@ -666,7 +717,17 @@ components:
           type: boolean
         onboardingComplete:
           type: boolean
-      required: [id, buyerName, packageId, packageName, inviteLimit, invitesUsed, accessGranted, onboardingComplete]
+      required:
+        [
+          id,
+          buyerName,
+          packageId,
+          packageName,
+          inviteLimit,
+          invitesUsed,
+          accessGranted,
+          onboardingComplete,
+        ]
     Preferences:
       type: object
       properties:
@@ -750,7 +811,16 @@ components:
           type: string
         onboardingComplete:
           type: boolean
-      required: [role, hasAccess, canInvite, guestName, packageName, ownerName, onboardingComplete]
+      required:
+        [
+          role,
+          hasAccess,
+          canInvite,
+          guestName,
+          packageName,
+          ownerName,
+          onboardingComplete,
+        ]
     CheckoutWebhook:
       type: object
       properties:
@@ -769,7 +839,8 @@ components:
           enum: [couple, family]
         paymentReference:
           type: string
-      required: [eventId, eventType, buyerEmail, buyerName, packageId, paymentReference]
+      required:
+        [eventId, eventType, buyerEmail, buyerName, packageId, paymentReference]
     WebhookResult:
       type: object
       properties:
@@ -834,4 +905,3 @@ components:
         message:
           type: string
       required: [accepted, message]
-
