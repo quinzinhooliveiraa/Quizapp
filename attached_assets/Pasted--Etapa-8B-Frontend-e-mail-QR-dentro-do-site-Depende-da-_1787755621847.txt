@@ -1,0 +1,52 @@
+# Etapa 8B — Frontend: e-mail + QR dentro do site
+
+Depende da etapa 8A estar aplicada. Depois desta etapa o checkout nativo já
+funciona de verdade — é a que muda o número.
+
+## 1. Pedir o e-mail antes de gerar a cobrança
+
+No modal de checkout, antes de criar a cobrança: **um campo só, e-mail.**
+Nada de nome, CPF ou telefone.
+
+- Label: `Pra onde mandamos seu acesso?`
+- Placeholder: `seu@email.com`
+- Abaixo: `Usamos só pra liberar seu acesso e mandar o recibo.`
+- Erro de formato: `Confira o e-mail — parece que falta alguma coisa.`
+
+Salve em `sessionsTable.buyerEmail` ao criar a sessão.
+
+## 2. Trocar o redirecionamento pela tela do QR
+
+Hoje o código faz `window.location.href = data.checkoutUrl`. Quando o modo for
+nativo, em vez disso mostre no próprio modal:
+
+1. **QR code** — `<img src={"data:image/png;base64," + brCodeBase64} alt="QR Code do Pix" />`
+2. **Botão "Copiar código Pix"** — usa `brCode`, com feedback `Código copiado`.
+   **Isso não é opcional:** no celular a pessoa não consegue escanear um QR da
+   própria tela — o copia-e-cola é o caminho principal, não o alternativo. Em
+   tela estreita, deixe o botão de copiar em destaque igual ou maior que o QR.
+3. **Uma linha abaixo:** `Assim que o Pix cair, seu baralho abre sozinho nesta
+   tela. Costuma levar poucos segundos.`
+
+## 3. Polling
+
+Enquanto a tela do QR estiver aberta, consulte o status a cada 4 segundos (a
+rota de consulta da sessão já existe). Quando `accessGranted` virar `true`, siga
+para a tela de sucesso que já existe.
+
+Pare aos 15 minutos e mostre `A cobrança expirou.` com um botão
+`Gerar um novo código`. **Limpe o intervalo no unmount do componente.**
+
+## 4. Ligar/desligar por variável
+
+Coloque o modo novo atrás de `VITE_CHECKOUT_NATIVE=true`. Se der problema em
+produção, dá pra voltar ao fluxo antigo sem deploy.
+
+## Não fazer nesta etapa
+Não mexa no recap da oferta, garantia ou depoimentos na tela de pagamento —
+isso é a etapa 8C. Aqui é o mínimo que faz funcionar.
+
+## Testar
+No celular: clicar em comprar, preencher o e-mail, ver o QR e o botão de copiar,
+usar `simulate-payment` e confirmar que a tela vira sucesso sozinha e a
+notificação chega. Rode o formatador.

@@ -108,8 +108,30 @@ const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
 const inviteUrlFromToken = (token: string) =>
   `${window.location.origin}/invite/${token}`;
-const nativeCheckoutEnabled =
-  import.meta.env.VITE_CHECKOUT_NATIVE === "true";
+const nativeCheckoutEnabled = import.meta.env.VITE_CHECKOUT_NATIVE === "true";
+
+async function copyPixCode(value: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    // Try the legacy clipboard API below for browsers without clipboard permission.
+  }
+
+  const textArea = document.createElement("textarea");
+  textArea.value = value;
+  textArea.setAttribute("readonly", "");
+  textArea.style.position = "fixed";
+  textArea.style.opacity = "0";
+  document.body.appendChild(textArea);
+  textArea.select();
+  textArea.setSelectionRange(0, textArea.value.length);
+  const copied = document.execCommand("copy");
+  textArea.remove();
+  return copied;
+}
 
 type NativeCheckoutData = {
   sessionId: string;
@@ -1986,7 +2008,8 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       queryKey: getListPublicReviewsQueryKey(),
     },
   });
-  const checkoutReviews: CheckoutReview[] = checkoutReviewsQuery.data?.reviews ?? [];
+  const checkoutReviews: CheckoutReview[] =
+    checkoutReviewsQuery.data?.reviews ?? [];
 
   useEffect(() => {
     if (!isStandaloneApp()) return;
@@ -2199,13 +2222,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const startCheckout = (packageId: "couple" | "family" = selectedPackage) => {
     trackCtaClick();
     setSelectedPackage(packageId);
-    if (nativeCheckoutEnabled) {
-      setEmailError("");
-      setCheckoutState("email");
-      setCheckoutOpen(true);
-      return;
-    }
-    void checkout(packageId);
+    setEmailError("");
+    setCheckoutState("email");
+    setCheckoutOpen(true);
   };
   return (
     <Shell dark>
@@ -2648,11 +2667,14 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   <em>seu acesso?</em>
                 </h2>
                 <p className="checkout-email-intro">
-                  Só precisamos do seu e-mail para liberar seu acesso e mandar
-                  o recibo.
+                  Só precisamos do seu e-mail para liberar seu acesso e mandar o
+                  recibo.
                 </p>
-                <label className="checkout-field-label" htmlFor="checkout-email">
-                  Seu e-mail
+                <label
+                  className="checkout-field-label"
+                  htmlFor="checkout-email"
+                >
+                  Pra onde mandamos seu acesso?
                 </label>
                 <input
                   id="checkout-email"
@@ -2716,11 +2738,11 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   className="checkout-copy-button"
                   type="button"
                   onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(nativeCheckout.brCode);
+                    const copied = await copyPixCode(nativeCheckout.brCode);
+                    if (copied) {
                       setCopiedCode(true);
                       window.setTimeout(() => setCopiedCode(false), 2200);
-                    } catch {
+                    } else {
                       setCopiedCode(false);
                     }
                   }}
@@ -2743,14 +2765,21 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 </div>
                 {checkoutReviews.length > 0 && (
                   <div className="checkout-reviews">
-                    <p className="checkout-reviews-title">quem já abriu essa conversa</p>
+                    <p className="checkout-reviews-title">
+                      quem já abriu essa conversa
+                    </p>
                     {checkoutReviews.map((review) => (
                       <blockquote key={review.id}>
-                        <div className="checkout-review-stars" aria-label={`${review.rating} de 5 estrelas`}>
+                        <div
+                          className="checkout-review-stars"
+                          aria-label={`${review.rating} de 5 estrelas`}
+                        >
                           {"★".repeat(Math.min(5, Math.max(0, review.rating)))}
                         </div>
                         <p>“{review.message}”</p>
-                        {review.displayName && <cite>{review.displayName}</cite>}
+                        {review.displayName && (
+                          <cite>{review.displayName}</cite>
+                        )}
                       </blockquote>
                     ))}
                   </div>

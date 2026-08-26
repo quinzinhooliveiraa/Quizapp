@@ -6502,7 +6502,9 @@ blockquote em {
   font-size: 16px;
   outline: none;
   padding: 14px 15px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .checkout-email-input:focus {
   border-color: var(--wine);
@@ -6586,12 +6588,32 @@ blockquote em {
   gap: 8px;
   justify-content: center;
   margin-top: 13px;
+  min-height: 48px;
   padding: 11px 17px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+  width: min(100%, 300px);
 }
 .checkout-copy-button:hover {
   background: #f4e9e0;
   border-color: var(--wine);
+}
+
+@media (max-width: 520px) {
+  .checkout-native-payment .checkout-copy-button {
+    background: var(--wine);
+    border-color: var(--wine);
+    color: var(--paper);
+    font-size: 13px;
+    min-height: 54px;
+    width: 100%;
+  }
+
+  .checkout-native-payment .checkout-copy-button:hover {
+    background: #5b243a;
+    border-color: #5b243a;
+  }
 }
 .checkout-native-next {
   color: #856f75;
