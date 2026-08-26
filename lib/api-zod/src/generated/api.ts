@@ -365,8 +365,6 @@ export const trackPageEventBodyClarityUserIdMax = 200;
 
 export const trackPageEventBodyClaritySessionIdMax = 200;
 
-export const trackPageEventBodyCtaSourceMax = 40;
-
 
 
 export const TrackPageEventBody = zod.object({
@@ -377,7 +375,7 @@ export const TrackPageEventBody = zod.object({
   "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional(),
   "clarityUserId": zod.string().max(trackPageEventBodyClarityUserIdMax).optional(),
   "claritySessionId": zod.string().max(trackPageEventBodyClaritySessionIdMax).optional(),
-  "ctaSource": zod.string().max(trackPageEventBodyCtaSourceMax).optional()
+  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar']).optional()
 })
 
 export const TrackPageEventResponse = zod.void()

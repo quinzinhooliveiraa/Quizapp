@@ -7,4 +7,4 @@ When Orval generates a request-body schema whose name matches a generated TypeSc
 
 **Why:** TypeScript reports duplicate exported members during the workspace composite build, even though the generated files themselves are valid.
 
-**How to apply:** After codegen, check the package entrypoint because Orval may append a type star-export; replace it with a namespace export if a new body operation creates a collision.
+**How to apply:** Keep the namespace export and run a small post-codegen cleanup when Orval appends the conflicting type star-export, so future codegen runs remain typecheck-safe.

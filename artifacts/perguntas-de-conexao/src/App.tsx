@@ -646,9 +646,7 @@ const LANDING_QUIZ_STEPS = [
 ] as const;
 
 type LandingQuizAnswerKey = (typeof LANDING_QUIZ_STEPS)[number]["key"];
-type LandingQuizAnswers = Partial<
-  Record<LandingQuizAnswerKey, string>
->;
+type LandingQuizAnswers = Partial<Record<LandingQuizAnswerKey, string>>;
 
 function LandingQuizQuestion({
   step,
@@ -1306,6 +1304,25 @@ function LandingV2Quiz({
               <strong>Pare de ter conversas monótonas</strong> e reaproxime-se
               da pessoa que você ama.
             </p>
+            <div className="lp-hero-actions lp2-hero-quiz">
+              <p className="lp-hero-quiz-context">
+                Responda 3 perguntas e receba 3 perguntas feitas pro momento de
+                vocês. Leva 1 minuto, é grátis.
+              </p>
+              <LandingQuizQuestion
+                step={0}
+                onAnswer={(_, value) => onHeroQuizAnswer(value)}
+                testIdPrefix="button-hero-quiz-v2"
+              />
+              <button
+                type="button"
+                onClick={onHeroBuy}
+                className="lp-cta-secondary-link"
+                data-testid="link-hero-buy-v2"
+              >
+                Já sei o que quero — comprar agora →
+              </button>
+            </div>
           </div>
           <div
             className="lp-hero-mockups lp-hero-mockups-photo"
@@ -1321,25 +1338,6 @@ function LandingV2Quiz({
               alt=""
               className="lp-mockup-photo lp-mockup-photo-phone"
             />
-          </div>
-          <div className="lp-hero-actions lp2-hero-quiz">
-            <p className="lp-hero-quiz-context">
-              Responda 3 perguntas e receba 3 perguntas feitas pro momento de
-              vocês. Leva 1 minuto, é grátis.
-            </p>
-            <LandingQuizQuestion
-              step={0}
-              onAnswer={(_, value) => onHeroQuizAnswer(value)}
-              testIdPrefix="button-hero-quiz-v2"
-            />
-            <button
-              type="button"
-              onClick={onHeroBuy}
-              className="lp-cta-secondary-link"
-              data-testid="link-hero-buy-v2"
-            >
-              Já sei o que quero — comprar agora →
-            </button>
           </div>
         </div>
       </section>
@@ -2035,7 +2033,7 @@ function useLpTracking(lpId: "v1" | "v2") {
         lpId,
         visitorKey: visitorKeyRef.current,
         eventType: "cta_click",
-         ctaSource,
+        ctaSource,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
       }),
@@ -2322,15 +2320,13 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       setCheckoutState("error");
     }
   };
-  const advanceLandingQuiz = (
-    key: LandingQuizAnswerKey,
-    value: string,
-  ) => {
+  const advanceLandingQuiz = (key: LandingQuizAnswerKey, value: string) => {
     setLandingQuizAnswers((current) => ({ ...current, [key]: value }));
     setLandingQuizStep((current) => Math.min(current + 1, 3));
   };
   const handleHeroQuizAnswer = (value: string, quizId: string) => {
-    advanceLandingQuiz("role", value);
+    setLandingQuizAnswers((current) => ({ ...current, role: value }));
+    setLandingQuizStep((current) => Math.max(current, 1));
     trackCtaClick("hero_quiz");
     const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
       .matches
@@ -2405,28 +2401,28 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     <strong>É hora de voltar a se conhecer.</strong>
                   </h1>
                   <p className="lp-hero-sub">
-                      459 perguntas de conexão real. Sem quiz de revista, sem
+                    459 perguntas de conexão real. Sem quiz de revista, sem
                     clichê. Uma pergunta por vez — o resto acontece entre vocês.
                   </p>
-                    <div className="lp-hero-actions lp-hero-quiz">
-                      <p className="lp-hero-quiz-context">
-                        Responda 3 perguntas e receba 3 perguntas feitas pro
-                        momento de vocês. Leva 1 minuto, é grátis.
-                      </p>
-                      <LandingQuizQuestion
-                        step={0}
-                        onAnswer={(_, value) =>
-                          handleHeroQuizAnswer(value, "lp-quiz")
-                        }
-                        testIdPrefix="button-hero-quiz"
-                      />
+                  <div className="lp-hero-actions lp-hero-quiz">
+                    <p className="lp-hero-quiz-context">
+                      Responda 3 perguntas e receba 3 perguntas feitas pro
+                      momento de vocês. Leva 1 minuto, é grátis.
+                    </p>
+                    <LandingQuizQuestion
+                      step={0}
+                      onAnswer={(_, value) =>
+                        handleHeroQuizAnswer(value, "lp-quiz")
+                      }
+                      testIdPrefix="button-hero-quiz"
+                    />
                     <button
                       type="button"
-                        onClick={() => startCheckout("couple", "hero_comprar")}
-                        className="lp-cta-secondary-link"
-                        data-testid="link-hero-buy"
+                      onClick={() => startCheckout("couple", "hero_comprar")}
+                      className="lp-cta-secondary-link"
+                      data-testid="link-hero-buy"
                     >
-                        Já sei o que quero — comprar agora →
+                      Já sei o que quero — comprar agora →
                     </button>
                   </div>
                   <div className="lp-hero-trust">
@@ -2531,10 +2527,10 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   <em>que faz o trabalho pesado.</em>
                 </h2>
                 <p className="lp-solution-lede">
-                   459 perguntas escritas pra abrir espaço — sem quiz de
-                  revista, sem clichê, sem "qual seu animal favorito". Uma
-                  pergunta por vez. Você abre, lê em voz alta, escuta. O resto
-                  acontece entre vocês.
+                  459 perguntas escritas pra abrir espaço — sem quiz de revista,
+                  sem clichê, sem "qual seu animal favorito". Uma pergunta por
+                  vez. Você abre, lê em voz alta, escuta. O resto acontece entre
+                  vocês.
                 </p>
                 <div className="lp-solution-pillars">
                   <div className="lp-pillar">
@@ -7326,10 +7322,10 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/">
-          <Home variant="v2" />
+          <Home />
         </Route>
         <Route path="/lp2">
-          <Home />
+          <Home variant="v2" />
         </Route>
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/login" component={Login} />

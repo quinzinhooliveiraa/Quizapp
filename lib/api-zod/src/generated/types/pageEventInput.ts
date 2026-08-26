@@ -5,6 +5,7 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { PageEventInputCtaSource } from './pageEventInputCtaSource';
 import type { PageEventInputEventType } from './pageEventInputEventType';
 import type { PageEventInputLpId } from './pageEventInputLpId';
 
@@ -24,6 +25,5 @@ export interface PageEventInput {
   clarityUserId?: string;
   /** @maxLength 200 */
   claritySessionId?: string;
-  /** @maxLength 40 */
-  ctaSource?: string;
+  ctaSource?: PageEventInputCtaSource;
 }

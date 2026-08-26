@@ -1,0 +1,87 @@
+Cola isso inteiro no Replit Agent:
+
+---
+
+# O hero vira o quiz (substitui o prompt 7)
+
+> **Este prompt substitui o `7-primeiro-botao-vai-pro-quiz-replit.md`.** Não aplique os dois. Este vai mais fundo e resolve o mesmo problema melhor.
+
+## Por que estamos mexendo nisto — os dados
+
+Análise de 41 gravações do Microsoft Clarity (25–26/08):
+
+- **54% das sessões têm exatamente UM clique.** 22 de 41 pessoas tocaram numa coisa só no site inteiro.
+- **A mediana até clicar no botão de compra é 9 segundos.** Sete de onze clicaram em 13s ou menos.
+- **Profundidade média de rolagem: 37%.** Nenhuma das sessões analisadas chegou na seção de preço, na garantia ou no FAQ.
+- **Zero vendas** em 41 sessões.
+
+O que acontece hoje: a pessoa chega do TikTok, o único elemento clicável e chamativo acima da dobra é um botão que gera cobrança e a manda para fora do site. Ela clica em 9 segundos por curiosidade — antes de ler qualquer coisa — e encara um QR code de Pix de uma empresa que nunca ouviu falar. Sai.
+
+**O site gasta o único clique que a pessoa vai dar, e gasta no pior lugar.**
+
+E tem uma prova de que o argumento de venda não é o problema: das gravações, duas pessoas acharam o quiz (que fica no meio da página) e **fizeram do começo ao fim, sem pular nada**. Uma delas leu a página por dois minutos antes de tocar em qualquer coisa. As duas clicaram para comprar depois. As duas sumiram no redirecionamento.
+
+O quiz retém. O checkout expulsa. O problema é a ordem.
+
+## A ideia: o quiz É a VSL
+
+Uma VSL não converte por ser vídeo — converte por ser **linear**. A pessoa não consegue pular para o preço; para chegar na oferta, tem que passar pelo argumento na ordem que você escolheu.
+
+O `LandingQuiz` já faz exatamente isso, e já está pronto e funcionando. Só está no lugar errado da página.
+
+## O que fazer
+
+Arquivo: `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 1. LP1 (`/`) — o hero passa a conter a primeira pergunta
+
+No `<section className="lp-hero">` (por volta da linha 2090), dentro de `.lp-hero-actions`, hoje existem **dois botões que chamam `startCheckout("couple")`**: "Quero começar agora" e "Quero comprar direto".
+
+Substituir esse bloco por:
+
+- **O primeiro passo do quiz, renderizado inline no hero.** Ou seja: o rótulo "Vocês estão:" e as três opções (Namorando / Casados / Relação longa) aparecem direto no hero, sem nenhum botão de "começar" antes.
+- Quando a pessoa escolher uma opção, a página **rola suavemente até a seção completa do quiz** (id `lp-quiz`), já com essa primeira resposta preenchida, e o quiz continua da segunda pergunta.
+- Acima das opções, uma linha curta de contexto: `Responda 3 perguntas e receba 3 perguntas feitas pro momento de vocês. Leva 1 minuto, é grátis.`
+
+**Como implementar sem duplicar código:** o `LandingQuiz` hoje controla `step` e `theme` internamente. Extraia esse estado para o componente pai (ou aceite props `initialStep` e `initialAnswers`), de modo que a mesma lógica sirva para os dois lugares. **Não crie um segundo quiz copiando o código** — se as perguntas mudarem depois, vão divergir.
+
+Se `prefers-reduced-motion` estiver ativo, use `behavior: "auto"` na rolagem.
+
+### 2. LP1 — o caminho para quem já está decidido
+
+Logo abaixo das opções, um **link de texto discreto** (não botão):
+
+`Já sei o que quero — comprar agora →`
+
+Esse sim chama `startCheckout("couple")` direto. É barato e protege quem chegou decidido (ex: alguém voltando pela segunda vez).
+
+### 3. LP2 (`/lp2`) — mesma mudança
+
+O hero da LP2 (por volta da linha 1193) tem um botão principal e, abaixo dele, o link "Prefere ver um exemplo antes? Responda 3 perguntas rápidas →".
+
+Inverter a hierarquia da mesma forma: a primeira pergunta do quiz sobe para o hero, e o "comprar agora" vira o link discreto. A seção do quiz na LP2 tem id `lp2-quiz`.
+
+### 4. Corrigir dois números errados no hero da LP1
+
+- **`300+ perguntas de conexão real`** → o número real é **459**. Conferi em `lib/connection-content/src/index.ts`: são 15 baralhos somando 459 perguntas. Trocar para `459 perguntas de conexão real`.
+- **`Já usado por +300 casais no Brasil`** → trocar para **`Já usado por 50 casais no Brasil`**. O número real é 50, confirmado pelo dono do produto. Manter o bloco `.lp-hero-trust` e os avatares como estão — só corrigir o número e tirar o sinal de `+`.
+
+  **Não arredonde, não escreva "dezenas" nem "+50".** O número exato é o que dá credibilidade: 50 é específico e verificável, "+300" era redondo e não batia com a realidade.
+
+### 5. Rastrear a mudança
+
+No hook de tracking (`useLpTracking`, do prompt 2), registre qual caminho a pessoa tomou no hero, com um `eventType: "cta_click"` e um campo distinguindo: `"hero_quiz"` (escolheu uma opção do quiz) ou `"hero_comprar"` (clicou no link direto). Se o backend ainda não aceita o campo, adicione a coluna nullable `ctaSource: text("cta_source")` em `pageEventsTable` e rode a migração.
+
+Sem isso não dá para comparar antes e depois.
+
+## O que NÃO fazer
+
+- **Não mexa no `LandingQuiz` em si.** Ele funciona: nas gravações, todo mundo que começou terminou. Só reaproveite o estado dele.
+- **Não remova a seção completa do quiz** do meio da página — ela continua sendo para onde o hero rola.
+- Não mexa nos CTAs da seção de preço nem do rodapé. Quem rolou até lá já sabe o que quer; ali o botão de compra continua direto.
+- Não implemente o checkout nativo aqui — isso é o prompt 8, separado.
+- Não invente prova social para substituir o "+300 casais".
+
+## Depois de aplicar
+
+Rode o formatador nos arquivos tocados. Depois teste ao vivo, no celular: entre na página como visitante, confirme que a primeira pergunta aparece sem precisar rolar, escolha uma opção, e confirme que a página rola até o quiz e continua da segunda pergunta (sem repetir a primeira). Confirme também que o link "comprar agora" ainda abre o checkout normalmente.

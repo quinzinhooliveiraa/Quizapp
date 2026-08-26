@@ -1116,7 +1116,9 @@ components:
         lastSection: { type: string, maxLength: 80 }
         clarityUserId: { type: string, maxLength: 200 }
         claritySessionId: { type: string, maxLength: 200 }
-        ctaSource: { type: string, maxLength: 40 }
+        ctaSource:
+          type: string
+          enum: [hero_quiz, hero_comprar]
       required: [lpId, visitorKey, eventType]
     SessionRecordingLookup:
       type: object

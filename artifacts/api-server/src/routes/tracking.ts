@@ -7,6 +7,7 @@ import { isAdminSession } from "./feedback";
 const router: IRouter = Router();
 const LP_IDS = ["v1", "v2"] as const;
 const EVENT_TYPES = ["view", "cta_click", "exit"] as const;
+const CTA_SOURCES = ["hero_quiz", "hero_comprar"] as const;
 
 router.post("/track/page-event", async (req, res): Promise<void> => {
   const body = req.body as {
@@ -25,6 +26,13 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     !body.visitorKey?.trim()
   ) {
     res.status(400).json({ error: "Evento de página inválido" });
+    return;
+  }
+  if (
+    body.ctaSource &&
+    !CTA_SOURCES.includes(body.ctaSource as (typeof CTA_SOURCES)[number])
+  ) {
+    res.status(400).json({ error: "Origem de CTA inválida" });
     return;
   }
   const lpId = body.lpId as (typeof LP_IDS)[number];

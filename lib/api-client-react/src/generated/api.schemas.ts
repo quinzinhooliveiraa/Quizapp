@@ -327,6 +327,14 @@ export const PageEventInputEventType = {
   exit: 'exit',
 } as const;
 
+export type PageEventInputCtaSource = typeof PageEventInputCtaSource[keyof typeof PageEventInputCtaSource];
+
+
+export const PageEventInputCtaSource = {
+  hero_quiz: 'hero_quiz',
+  hero_comprar: 'hero_comprar',
+} as const;
+
 export interface PageEventInput {
   lpId: PageEventInputLpId;
   /**
@@ -343,8 +351,7 @@ export interface PageEventInput {
   clarityUserId?: string;
   /** @maxLength 200 */
   claritySessionId?: string;
-  /** @maxLength 40 */
-  ctaSource?: string;
+  ctaSource?: PageEventInputCtaSource;
 }
 
 export type SessionRecordingLookupReason = typeof SessionRecordingLookupReason[keyof typeof SessionRecordingLookupReason];
