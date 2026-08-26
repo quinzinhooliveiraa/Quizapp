@@ -78,17 +78,17 @@ type LpSessionsResponse = { sessions?: LpSession[] };
 const LANDINGS: LandingEntry[] = [
   {
     id: "v1",
-    label: "LP1 — Storytelling + Quiz",
-    path: "/",
+    label: "Alternativa — Suas conversas viraram logística",
+    path: "/lp2",
     description:
-      "Headline de promessa direta, storytelling da dor, quiz de 3 perguntas e 16 baralhos.",
+      "A alternativa com storytelling da dor, quiz de 3 perguntas e os baralhos temáticos.",
   },
   {
     id: "v2",
-    label: "LP2 — Estática (variedade de baralhos)",
-    path: "/lp2",
+    label: "Principal — Reacender a chama (com mockups)",
+    path: "/",
     description:
-      "Hero + dor + solução + temas + prova social + preço + FAQ, tudo em scroll.",
+      "A página principal com o hero de mockups e a experiência guiada de perguntas.",
   },
 ];
 

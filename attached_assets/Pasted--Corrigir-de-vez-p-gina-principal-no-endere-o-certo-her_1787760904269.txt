@@ -1,0 +1,93 @@
+# Corrigir de vez: página principal no endereço certo + hero + nomes claros
+
+Este prompt substitui o `11-fix-hero-lp2.md`. Não aplique o 11.
+
+## O contexto (leia, porque a confusão v1/v2 já causou bug)
+
+Existem duas landing pages, e os nomes internos "v1/v2" estão confundindo todo
+mundo. Vou me referir a elas pelo headline, que é inequívoco:
+
+- **PÁGINA A — "Descubra perguntas para reacender a chama"**
+  (tem o mockup do laptop + celular "Escolha um assunto"). Renderizada por
+  `<Home variant="v2" />`. **Esta é a página principal** — a bem construída, a
+  que recebe o tráfego do TikTok, a que deve ficar no endereço raiz.
+
+- **PÁGINA B — "Suas conversas viraram logística"**
+  (dois celulares com cartas). Renderizada por `<Home />` (variant v1 default).
+  É a alternativa/secundária.
+
+Hoje, no `Router()` do `App.tsx`, está **invertido** — um ajuste anterior trocou
+as rotas por engano:
+
+```
+<Route path="/">     → <Home />              // Página B (logística) — ERRADO
+<Route path="/lp2">  → <Home variant="v2" /> // Página A (principal) — ERRADO
+```
+
+O tráfego todo vai para `perguntasdeconexao.com.br` (`/`), então a página
+principal PRECISA estar em `/`.
+
+## O que fazer
+
+### 1. Colocar a página principal no endereço raiz
+
+Trocar as rotas para:
+
+```
+<Route path="/">     → <Home variant="v2" />  // Página A (principal, mockups)
+<Route path="/lp2">  → <Home />               // Página B (alternativa)
+```
+
+### 2. Consertar o hero da Página A (o layout do quiz quebrou)
+
+No hero da Página A ("Descubra perguntas para reacender a chama"), o primeiro
+passo do quiz ficou desalinhado: o rótulo "Vocês estão:" aparece no meio das
+opções, e as três opções (Namorando / Casados / Relação longa) estão empilhadas
+em coluna em vez de lado a lado.
+
+O hero da Página B ("Suas conversas viraram logística") ficou com o layout
+CERTO: rótulo em cima, três opções em linha, link discreto embaixo. **Use o
+markup e as classes CSS do hero da Página B como referência** e aplique a mesma
+estrutura no hero da Página A:
+
+```
+Responda 3 perguntas e receba...        (linha de contexto)
+Vocês estão:                            (rótulo, UMA vez, acima de tudo)
+[ Namorando ] [ Casados ] [ Relação longa ]   (as 3 opções em linha)
+Já sei o que quero — comprar agora →    (link discreto)
+```
+
+Ao escolher uma opção, a página rola para a seção do quiz da Página A. Confira
+qual é o id da seção do quiz nessa página (provavelmente `lp2-quiz`) e use o id
+correto no scroll — não copie o id da outra página.
+
+### 3. Renomear as duas no painel admin (parar com v1/v2)
+
+No `Admin.tsx`, no array `LANDINGS`, trocar os `label` e conferir os `path` para
+ficar assim (nomes humanos, e os caminhos batendo com as rotas novas do passo 1):
+
+- Entrada da Página A: `label: "Principal — Reacender a chama (com mockups)"`,
+  `path: "/"`, descrição livre que descreva o hero com mockups.
+- Entrada da Página B: `label: "Alternativa — Suas conversas viraram logística"`,
+  `path: "/lp2"`, descrição livre.
+
+Mantenha os `id` internos como estão (não precisa mexer no `variant` nem no
+`useLpTracking`) — só os rótulos e caminhos que o admin exibe. O importante é que
+o painel mostre nomes claros e cada um aponte para o endereço certo.
+
+## O que NÃO fazer
+
+- Não mude o conteúdo, cores ou textos de nenhuma das duas páginas — só a rota,
+  o layout do bloco de quiz da Página A, e os rótulos do admin.
+- Não crie um quiz novo — reaproveite o bloco que já existe.
+- Não mexa no hero da Página B, ele está certo.
+
+## Testar
+
+- Abrir `perguntasdeconexao.com.br/` e confirmar que aparece "Descubra perguntas
+  para reacender a chama" (a dos mockups), com o quiz no hero alinhado igual ao
+  da outra página.
+- Abrir `/lp2` e confirmar que aparece "Suas conversas viraram logística".
+- No painel admin, confirmar que os dois nomes fazem sentido e cada link abre a
+  página certa.
+- Rodar o formatador.

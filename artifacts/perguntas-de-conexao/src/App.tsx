@@ -7322,10 +7322,10 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/">
-          <Home />
+          <Home variant="v2" />
         </Route>
         <Route path="/lp2">
-          <Home variant="v2" />
+          <Home />
         </Route>
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/login" component={Login} />
