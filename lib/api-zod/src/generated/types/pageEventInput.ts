@@ -24,4 +24,6 @@ export interface PageEventInput {
   clarityUserId?: string;
   /** @maxLength 200 */
   claritySessionId?: string;
+  /** @maxLength 40 */
+  ctaSource?: string;
 }

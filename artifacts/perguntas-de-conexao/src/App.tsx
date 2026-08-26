@@ -615,9 +615,83 @@ function Logo({ inverse = false }: { inverse?: boolean }) {
   );
 }
 
-function LandingQuiz({ onFinish }: { onFinish: () => void }) {
-  const [step, setStep] = useState(0);
-  const [theme, setTheme] = useState<"porto" | "faisca" | "livro" | "">("");
+const LANDING_QUIZ_STEPS = [
+  {
+    key: "role",
+    label: "Vocês estão:",
+    options: [
+      ["namorando", "Namorando"],
+      ["casado", "Casados"],
+      ["longa", "Relação longa"],
+    ],
+  },
+  {
+    key: "phase",
+    label: "Como você descreveria a fase de vocês?",
+    options: [
+      ["inicio", "Início, descobrindo"],
+      ["anos", "Anos juntos, rotina"],
+      ["reconectar", "Precisamos reconectar"],
+    ],
+  },
+  {
+    key: "theme",
+    label: "O que mais te chama agora?",
+    options: [
+      ["porto", "Aquecer, sem susto"],
+      ["faisca", "Provocar, apimentar"],
+      ["livro", "Ir fundo de verdade"],
+    ],
+  },
+] as const;
+
+type LandingQuizAnswerKey = (typeof LANDING_QUIZ_STEPS)[number]["key"];
+type LandingQuizAnswers = Partial<
+  Record<LandingQuizAnswerKey, string>
+>;
+
+function LandingQuizQuestion({
+  step,
+  onAnswer,
+  testIdPrefix = "button-quiz",
+}: {
+  step: 0 | 1 | 2;
+  onAnswer: (key: LandingQuizAnswerKey, value: string) => void;
+  testIdPrefix?: string;
+}) {
+  const current = LANDING_QUIZ_STEPS[step];
+
+  return (
+    <>
+      <p className="lp-quiz-question">{current.label}</p>
+      <div className="lp-quiz-options">
+        {current.options.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onAnswer(current.key, value)}
+            className="lp-quiz-option"
+            data-testid={`${testIdPrefix}-${current.key}-${value}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function LandingQuiz({
+  onFinish,
+  step,
+  answers,
+  onAnswer,
+}: {
+  onFinish: () => void;
+  step: number;
+  answers: LandingQuizAnswers;
+  onAnswer: (key: LandingQuizAnswerKey, value: string) => void;
+}) {
   const [previewIndex, setPreviewIndex] = useState(0);
 
   const previews: Record<string, { title: string; questions: string[] }> = {
@@ -648,7 +722,7 @@ function LandingQuiz({ onFinish }: { onFinish: () => void }) {
   };
 
   if (step === 3) {
-    const preview = previews[theme] || previews.porto;
+    const preview = previews[answers.theme || "porto"] || previews.porto;
     return (
       <div className="lp-quiz-result">
         <p className="lp-quiz-pill">Seu baralho ideal pra começar:</p>
@@ -711,60 +785,17 @@ function LandingQuiz({ onFinish }: { onFinish: () => void }) {
     );
   }
 
-  const steps = [
-    {
-      key: "role",
-      label: "Vocês estão:",
-      options: [
-        ["namorando", "Namorando"],
-        ["casado", "Casados"],
-        ["longa", "Relação longa"],
-      ],
-    },
-    {
-      key: "phase",
-      label: "Como você descreveria a fase de vocês?",
-      options: [
-        ["inicio", "Início, descobrindo"],
-        ["anos", "Anos juntos, rotina"],
-        ["reconectar", "Precisamos reconectar"],
-      ],
-    },
-    {
-      key: "theme",
-      label: "O que mais te chama agora?",
-      options: [
-        ["porto", "Aquecer, sem susto"],
-        ["faisca", "Provocar, apimentar"],
-        ["livro", "Ir fundo de verdade"],
-      ],
-    },
-  ] as const;
-  const current = steps[step];
-
   return (
     <div className="lp-quiz">
       <div className="lp-quiz-progress">
-        {steps.map((item, index) => (
+        {LANDING_QUIZ_STEPS.map((item, index) => (
           <span key={item.key} className={step >= index ? "is-active" : ""} />
         ))}
       </div>
-      <p className="lp-quiz-question">{current.label}</p>
-      <div className="lp-quiz-options">
-        {current.options.map(([value, label]) => (
-          <button
-            key={value}
-            onClick={() => {
-              if (step === 2) setTheme(value as typeof theme);
-              setStep(step + 1);
-            }}
-            className="lp-quiz-option"
-            data-testid={`button-quiz-${current.key}-${value}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <LandingQuizQuestion
+        step={step as 0 | 1 | 2}
+        onAnswer={(key, value) => onAnswer(key, value)}
+      />
     </div>
   );
 }
@@ -1216,7 +1247,21 @@ function TestimonialCarousel() {
   );
 }
 
-function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
+function LandingV2Quiz({
+  onBuy,
+  onHeroBuy,
+  quizStep,
+  quizAnswers,
+  onQuizAnswer,
+  onHeroQuizAnswer,
+}: {
+  onBuy: () => void;
+  onHeroBuy: () => void;
+  quizStep: number;
+  quizAnswers: LandingQuizAnswers;
+  onQuizAnswer: (key: LandingQuizAnswerKey, value: string) => void;
+  onHeroQuizAnswer: (value: string) => void;
+}) {
   const themes = [
     ["Porto Seguro", "As conversas que parecem casa.", "31 cartas"],
     ["Livro Aberto", "Sem filtro, cara a cara.", "31 cartas"],
@@ -1277,25 +1322,25 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
               className="lp-mockup-photo lp-mockup-photo-phone"
             />
           </div>
-          <button
-            onClick={onBuy}
-            className="lp-cta-primary lp-cta-big lp2-hero-cta"
-            data-testid="button-hero-cta-v2"
-          >
-            Quero reacender a conexão <ArrowRight size={18} />
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              document
-                .getElementById("lp2-quiz")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-            className="lp-cta-secondary-link"
-            data-testid="link-hero-quiz"
-          >
-            Prefere ver um exemplo antes? Responda 3 perguntas rápidas →
-          </button>
+          <div className="lp-hero-actions lp2-hero-quiz">
+            <p className="lp-hero-quiz-context">
+              Responda 3 perguntas e receba 3 perguntas feitas pro momento de
+              vocês. Leva 1 minuto, é grátis.
+            </p>
+            <LandingQuizQuestion
+              step={0}
+              onAnswer={(_, value) => onHeroQuizAnswer(value)}
+              testIdPrefix="button-hero-quiz-v2"
+            />
+            <button
+              type="button"
+              onClick={onHeroBuy}
+              className="lp-cta-secondary-link"
+              data-testid="link-hero-buy-v2"
+            >
+              Já sei o que quero — comprar agora →
+            </button>
+          </div>
         </div>
       </section>
       <section className="lp2-story" data-section-name="historia">
@@ -1426,7 +1471,12 @@ function LandingV2Quiz({ onBuy }: { onBuy: () => void }) {
             Leva menos de 1 minuto. A gente monta na hora um mini-baralho com a
             cara da fase que vocês estão vivendo.
           </p>
-          <LandingQuiz onFinish={onBuy} />
+          <LandingQuiz
+            onFinish={onBuy}
+            step={quizStep}
+            answers={quizAnswers}
+            onAnswer={onQuizAnswer}
+          />
         </div>
       </section>
       <section
@@ -1840,6 +1890,8 @@ function StoredAccessGate() {
   );
 }
 
+type LandingCtaSource = "hero_quiz" | "hero_comprar";
+
 function useLpTracking(lpId: "v1" | "v2") {
   const visitorKeyRef = useRef<string>("");
   const clarityUserIdRef = useRef("");
@@ -1894,7 +1946,10 @@ function useLpTracking(lpId: "v1" | "v2") {
       if (userId) clarityUserIdRef.current = userId;
       if (sessionId) claritySessionIdRef.current = sessionId;
     };
-    const track = (eventType: "view" | "cta_click" | "exit", extra = {}) => {
+    const track = (
+      eventType: "view" | "cta_click" | "exit",
+      extra: Record<string, unknown> = {},
+    ) => {
       const payload = JSON.stringify({
         lpId,
         visitorKey,
@@ -1972,7 +2027,7 @@ function useLpTracking(lpId: "v1" | "v2") {
     };
   }, [lpId]);
 
-  return () => {
+  return (ctaSource?: LandingCtaSource) => {
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1980,6 +2035,7 @@ function useLpTracking(lpId: "v1" | "v2") {
         lpId,
         visitorKey: visitorKeyRef.current,
         eventType: "cta_click",
+         ctaSource,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
       }),
@@ -1990,6 +2046,9 @@ function useLpTracking(lpId: "v1" | "v2") {
 
 function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const trackCtaClick = useLpTracking(variant);
+  const [landingQuizStep, setLandingQuizStep] = useState(0);
+  const [landingQuizAnswers, setLandingQuizAnswers] =
+    useState<LandingQuizAnswers>({});
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
     "couple",
@@ -2263,8 +2322,29 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       setCheckoutState("error");
     }
   };
-  const startCheckout = (packageId: "couple" | "family" = selectedPackage) => {
-    trackCtaClick();
+  const advanceLandingQuiz = (
+    key: LandingQuizAnswerKey,
+    value: string,
+  ) => {
+    setLandingQuizAnswers((current) => ({ ...current, [key]: value }));
+    setLandingQuizStep((current) => Math.min(current + 1, 3));
+  };
+  const handleHeroQuizAnswer = (value: string, quizId: string) => {
+    advanceLandingQuiz("role", value);
+    trackCtaClick("hero_quiz");
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches
+      ? "auto"
+      : "smooth";
+    window.requestAnimationFrame(() => {
+      document.getElementById(quizId)?.scrollIntoView({ behavior });
+    });
+  };
+  const startCheckout = (
+    packageId: "couple" | "family" = selectedPackage,
+    ctaSource?: LandingCtaSource,
+  ) => {
+    trackCtaClick(ctaSource);
     setSelectedPackage(packageId);
     setEmailError("");
     setCheckoutState("email");
@@ -2301,7 +2381,16 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       </Link>
       <main className="lp-main">
         {variant === "v2" ? (
-          <LandingV2Quiz onBuy={() => startCheckout("couple")} />
+          <LandingV2Quiz
+            onBuy={() => startCheckout("couple")}
+            onHeroBuy={() => startCheckout("couple", "hero_comprar")}
+            quizStep={landingQuizStep}
+            quizAnswers={landingQuizAnswers}
+            onQuizAnswer={advanceLandingQuiz}
+            onHeroQuizAnswer={(value) =>
+              handleHeroQuizAnswer(value, "lp2-quiz")
+            }
+          />
         ) : (
           <>
             <section className="lp-hero" data-section-name="hero">
@@ -2316,23 +2405,28 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     <strong>É hora de voltar a se conhecer.</strong>
                   </h1>
                   <p className="lp-hero-sub">
-                    300+ perguntas de conexão real. Sem quiz de revista, sem
+                      459 perguntas de conexão real. Sem quiz de revista, sem
                     clichê. Uma pergunta por vez — o resto acontece entre vocês.
                   </p>
-                  <div className="lp-hero-actions">
-                    <button
-                      onClick={() => startCheckout("couple")}
-                      className="lp-cta-primary"
-                      data-testid="button-hero-cta"
-                    >
-                      Quero começar agora <ArrowRight size={18} />
-                    </button>
+                    <div className="lp-hero-actions lp-hero-quiz">
+                      <p className="lp-hero-quiz-context">
+                        Responda 3 perguntas e receba 3 perguntas feitas pro
+                        momento de vocês. Leva 1 minuto, é grátis.
+                      </p>
+                      <LandingQuizQuestion
+                        step={0}
+                        onAnswer={(_, value) =>
+                          handleHeroQuizAnswer(value, "lp-quiz")
+                        }
+                        testIdPrefix="button-hero-quiz"
+                      />
                     <button
                       type="button"
-                      onClick={() => startCheckout("couple")}
-                      className="lp-cta-secondary lp-cta-secondary-button"
+                        onClick={() => startCheckout("couple", "hero_comprar")}
+                        className="lp-cta-secondary-link"
+                        data-testid="link-hero-buy"
                     >
-                      Quero comprar direto
+                        Já sei o que quero — comprar agora →
                     </button>
                   </div>
                   <div className="lp-hero-trust">
@@ -2342,7 +2436,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                       <span className="lp-trust-avatar lp-trust-c">R</span>
                     </div>
                     <span>
-                      Já usado por <strong>+300 casais</strong> no Brasil
+                      Já usado por <strong>50 casais</strong> no Brasil
                     </span>
                   </div>
                 </div>
@@ -2437,7 +2531,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   <em>que faz o trabalho pesado.</em>
                 </h2>
                 <p className="lp-solution-lede">
-                  300+ perguntas escritas pra abrir espaço — sem quiz de
+                   459 perguntas escritas pra abrir espaço — sem quiz de
                   revista, sem clichê, sem "qual seu animal favorito". Uma
                   pergunta por vez. Você abre, lê em voz alta, escuta. O resto
                   acontece entre vocês.
@@ -2480,7 +2574,12 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   <br />
                   <em>feitas pra vocês.</em>
                 </h2>
-                <LandingQuiz onFinish={() => startCheckout("couple")} />
+                <LandingQuiz
+                  onFinish={() => startCheckout("couple")}
+                  step={landingQuizStep}
+                  answers={landingQuizAnswers}
+                  onAnswer={advanceLandingQuiz}
+                />
               </div>
             </section>
             <section

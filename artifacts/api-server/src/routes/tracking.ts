@@ -17,6 +17,7 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     lastSection?: string;
     clarityUserId?: string;
     claritySessionId?: string;
+    ctaSource?: string;
   };
   if (
     !LP_IDS.includes(body.lpId as (typeof LP_IDS)[number]) ||
@@ -41,6 +42,7 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     lastSection: body.lastSection?.trim().slice(0, 80) || null,
     clarityUserId: body.clarityUserId?.trim().slice(0, 200) || null,
     claritySessionId: body.claritySessionId?.trim().slice(0, 200) || null,
+    ctaSource: body.ctaSource?.trim().slice(0, 40) || null,
   });
   res.status(204).end();
 });

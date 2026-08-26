@@ -104,6 +104,7 @@ export const pageEventsTable = pgTable("page_events", {
   eventType: text("event_type").notNull(),
   clarityUserId: text("clarity_user_id"),
   claritySessionId: text("clarity_session_id"),
+  ctaSource: text("cta_source"),
   timeOnPageMs: integer("time_on_page_ms"),
   lastSection: text("last_section"),
   createdAt: timestamp("created_at", { withTimezone: true })

@@ -1187,6 +1187,35 @@
   margin-bottom: 1.6rem;
   flex-wrap: wrap;
 }
+.lp-hero-quiz {
+  display: block;
+  max-width: 520px;
+}
+.lp-hero-quiz-context {
+  margin: 0 0 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.lp-hero-quiz .lp-quiz-question {
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+}
+.lp-hero-quiz .lp-quiz-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.lp-hero-quiz .lp-quiz-option {
+  padding: 0.75rem 0.55rem;
+  font-size: 0.82rem;
+}
+.lp-hero-quiz .lp-cta-secondary-link {
+  margin-top: 0.85rem;
+}
+.lp2-hero-quiz {
+  width: min(100%, 520px);
+}
 .lp-hero-trust {
   display: flex;
   align-items: center;
@@ -1820,6 +1849,12 @@
   .lp-hero-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+  .lp-hero-quiz {
+    align-self: stretch;
+  }
+  .lp-hero-quiz .lp-quiz-options {
+    grid-template-columns: 1fr;
   }
   .lp-cta-secondary {
     margin: 0.8rem 0 0;
