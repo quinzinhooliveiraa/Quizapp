@@ -739,6 +739,7 @@
 .lp2-hero .lp-hero-mockups {
   width: min(100%, 920px);
   height: 560px;
+  margin-inline: auto;
 }
 .lp2-hero-cta {
   margin-top: 0;
@@ -759,6 +760,8 @@
     height: 460px;
     grid-column: 2;
     grid-row: 1 / span 2;
+    justify-self: end;
+    margin-inline: 0;
   }
   .lp2-hero .lp2-hero-cta {
     grid-column: 1;
