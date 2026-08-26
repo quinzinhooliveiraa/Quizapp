@@ -2008,8 +2008,11 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       queryKey: getListPublicReviewsQueryKey(),
     },
   });
-  const checkoutReviews: CheckoutReview[] =
-    checkoutReviewsQuery.data?.reviews ?? [];
+  const checkoutReviews: CheckoutReview[] = (
+    checkoutReviewsQuery.data?.reviews ?? []
+  )
+    .filter((review) => Boolean(review.displayName?.trim()))
+    .slice(0, 2);
 
   useEffect(() => {
     if (!isStandaloneApp()) return;
@@ -2720,8 +2723,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   mensalidade
                 </p>
                 <div className="checkout-native-price">
-                  <span>um pagamento único</span>
-                  <strong>R$ 47,90</strong>
+                  <strong>R$ 47,90, uma vez só</strong>
                 </div>
                 <div className="checkout-qr-wrap">
                   <img
@@ -2770,16 +2772,21 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     </p>
                     {checkoutReviews.map((review) => (
                       <blockquote key={review.id}>
-                        <div
-                          className="checkout-review-stars"
-                          aria-label={`${review.rating} de 5 estrelas`}
-                        >
-                          {"★".repeat(Math.min(5, Math.max(0, review.rating)))}
+                        <div className="checkout-review-meta">
+                          <div
+                            className="checkout-review-stars"
+                            aria-label={`${review.rating} de 5 estrelas`}
+                          >
+                            {"★".repeat(
+                              Math.min(5, Math.max(0, review.rating)),
+                            )}
+                          </div>
+                          <span className="checkout-review-rating">
+                            {review.rating}/5
+                          </span>
                         </div>
                         <p>“{review.message}”</p>
-                        {review.displayName && (
-                          <cite>{review.displayName}</cite>
-                        )}
+                        <cite>{review.displayName!.trim()}</cite>
                       </blockquote>
                     ))}
                   </div>

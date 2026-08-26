@@ -6544,14 +6544,10 @@ blockquote em {
   justify-content: center;
   margin-bottom: 15px;
 }
-.checkout-native-price span {
-  color: #9b8588;
-  font-size: 11px;
-}
 .checkout-native-price strong {
   color: var(--wine);
   font-family: var(--app-font-serif);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 400;
 }
 .checkout-qr-wrap {
@@ -6669,6 +6665,15 @@ blockquote em {
   color: #b97852;
   font-size: 11px;
   letter-spacing: 0.12em;
+}
+.checkout-review-meta {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+.checkout-review-rating {
+  color: #9b8588;
+  font-size: 10px;
 }
 .checkout-reviews blockquote p {
   color: #6f5059;
