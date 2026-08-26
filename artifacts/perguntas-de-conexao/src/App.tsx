@@ -1320,25 +1320,30 @@ function LandingV2Quiz({
               className="lp-mockup-photo lp-mockup-photo-phone"
             />
           </div>
-          <div className="lp-hero-actions lp2-hero-quiz">
-            <p className="lp-hero-quiz-context">
-              Responda 3 perguntas e receba 3 perguntas feitas pro momento de
-              vocês. Leva 1 minuto, é grátis.
-            </p>
-            <LandingQuizQuestion
-              step={0}
-              onAnswer={(_, value) => onHeroQuizAnswer(value)}
-              testIdPrefix="button-hero-quiz-v2"
-            />
-            <button
-              type="button"
-              onClick={onHeroBuy}
-              className="lp-cta-secondary-link"
-              data-testid="link-hero-buy-v2"
-            >
-              Já sei o que quero — comprar agora →
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() =>
+              document
+                .getElementById("lp2-quiz")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            className="lp-cta-primary lp-cta-big lp2-hero-cta"
+            data-testid="button-hero-cta-v2"
+          >
+            Quero reacender a conexão <ArrowRight size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              document
+                .getElementById("lp2-quiz")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
+            className="lp-cta-secondary-link"
+            data-testid="link-hero-quiz"
+          >
+            Prefere ver um exemplo antes? Responda 3 perguntas rápidas →
+          </button>
         </div>
       </section>
       <section className="lp2-story" data-section-name="historia">
