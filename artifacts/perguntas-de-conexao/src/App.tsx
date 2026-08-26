@@ -92,8 +92,8 @@ import Login from "@/pages/Login";
 import Play from "@/pages/Play";
 import Admin from "@/pages/Admin";
 import { apiBaseUrl } from "@/config";
-import heroMockupMac from "@assets/lp-hero-mockup-mac.png";
-import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.png";
+import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
+import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -1313,11 +1313,18 @@ function LandingV2Quiz({
               src={heroMockupMac}
               alt=""
               className="lp-mockup-photo lp-mockup-photo-mac"
+              width={1400}
+              height={933}
+              fetchPriority="high"
+              loading="eager"
             />
             <img
               src={heroMockupPhone}
               alt=""
               className="lp-mockup-photo lp-mockup-photo-phone"
+              width={360}
+              height={778}
+              loading="eager"
             />
           </div>
           <button
@@ -7347,15 +7354,21 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
 }
+function RouteAwareSplash() {
+  const [location] = useLocation();
+  const isLandingPage = location === "/" || location === "/lp2";
+
+  return isLandingPage ? null : <SplashScreen />;
+}
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
+          <RouteAwareSplash />
         </WouterRouter>
         <Toaster />
-        <SplashScreen />
       </TooltipProvider>
     </QueryClientProvider>
   );

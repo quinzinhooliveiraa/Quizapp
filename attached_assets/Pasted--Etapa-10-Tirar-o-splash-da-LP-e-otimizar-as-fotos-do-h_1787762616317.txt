@@ -1,0 +1,69 @@
+# Etapa 10 — Tirar o splash da LP e otimizar as fotos do hero
+
+## Por que
+LCP da landing = **4,2 segundos** (Clarity classifica como "ruim"). Numa das
+gravações, a pessoa mais interessada de todas terminou os 3 minutos de visita
+encarando a tela de splash carregando entre páginas. Numa visita mediana de 17
+segundos, quatro segundos de tela escura é um quarto do tempo total.
+
+Duas coisas independentes atacam isso.
+
+---
+
+## 1. O splash não roda nas landing pages
+
+O `SplashScreen` é importado em `App.tsx` (linha 18) e renderizado no wrapper
+principal (linha 7258). Ele faz sentido dentro do app (`/app`, `/play`,
+`/onboarding`) — mas na LP de vendas é peso morto: quem chega do TikTok tem
+paciência de 6 segundos, e a animação da logo come parte disso sem entregar
+nada.
+
+**O que fazer:** condicionar `<SplashScreen />` a NÃO rodar quando a rota atual
+for `/` ou `/lp2`. Nas outras rotas continua rodando como hoje.
+
+Use `useLocation()` do `wouter` (já usado no projeto) pra ler a rota e pular o
+splash quando estiver numa das duas. Sem flash de conteúdo, sem redirect — só
+não montar.
+
+---
+
+## 2. As fotos do hero pesam demais
+
+Os dois `import heroMockup*` (linhas 95-96 do `App.tsx`) trazem PNGs. PNG de
+mockup grande é sempre pesado.
+
+**O que fazer:**
+
+- **Converter os dois arquivos** (`lp-hero-mockup-mac.png` e
+  `lp-hero-mockup-phone-no-bg.png`, em `attached_assets/`) para **WebP**, com
+  qualidade 80. Manter o PNG original no repositório como fallback (o `<img>`
+  fica igual — só troca o `src` importado pro WebP; navegador atual todo
+  suporta WebP).
+- **Dimensionar pro tamanho de exibição real.** Se o mockup do Mac aparece no
+  máximo com ~700px de largura em desktop e menos no celular, o arquivo não
+  precisa ter 1600px de largura. Redimensione para 2× o tamanho de exibição
+  máximo (retina) e não mais que isso.
+- **Marcar a imagem principal como prioritária:** no `<img>` do
+  `heroMockupMac`, adicionar `fetchpriority="high"` e `loading="eager"`. No
+  `heroMockupPhone`, `loading="eager"` só. As outras imagens da página
+  (baralhos, ícones etc) mantêm o `loading="lazy"` padrão.
+- **Dimensões explícitas:** adicionar `width` e `height` nos `<img>` do hero,
+  mesmo que o CSS redimensione — isso reserva o espaço e reduz o CLS
+  (deslocamento de layout) que o Clarity também está reclamando.
+
+## O que NÃO fazer
+
+- Não instale nenhuma biblioteca nova (nada de sharp, next/image, plugin de
+  build). É conversão de arquivo e ajustes de `<img>`, só.
+- Não mexa nas fotos de outras seções da página. Só as duas do hero.
+- Não remova o `SplashScreen` do código — só condicione ele a não rodar em `/`
+  e `/lp2`.
+
+## Testar
+
+Abrir a LP no celular com throttling 3G (Chrome DevTools → Network → Fast 3G) e
+comparar antes/depois: o texto do hero deve aparecer antes de 2 segundos, não
+depois de 4. E no console, `PerformanceObserver` de LCP deve reportar valor
+menor que hoje.
+
+Rodar o formatador nos arquivos tocados.
