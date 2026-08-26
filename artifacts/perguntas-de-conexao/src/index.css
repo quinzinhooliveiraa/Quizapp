@@ -763,7 +763,7 @@
     justify-self: end;
     margin-inline: 0;
   }
-  .lp2-hero .lp2-hero-cta {
+  .lp2-hero .lp2-hero-quiz {
     grid-column: 1;
     grid-row: 2;
     justify-self: start;

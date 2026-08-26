@@ -1304,25 +1304,6 @@ function LandingV2Quiz({
               <strong>Pare de ter conversas monótonas</strong> e reaproxime-se
               da pessoa que você ama.
             </p>
-            <div className="lp-hero-actions lp2-hero-quiz">
-              <p className="lp-hero-quiz-context">
-                Responda 3 perguntas e receba 3 perguntas feitas pro momento de
-                vocês. Leva 1 minuto, é grátis.
-              </p>
-              <LandingQuizQuestion
-                step={0}
-                onAnswer={(_, value) => onHeroQuizAnswer(value)}
-                testIdPrefix="button-hero-quiz-v2"
-              />
-              <button
-                type="button"
-                onClick={onHeroBuy}
-                className="lp-cta-secondary-link"
-                data-testid="link-hero-buy-v2"
-              >
-                Já sei o que quero — comprar agora →
-              </button>
-            </div>
           </div>
           <div
             className="lp-hero-mockups lp-hero-mockups-photo"
@@ -1338,6 +1319,25 @@ function LandingV2Quiz({
               alt=""
               className="lp-mockup-photo lp-mockup-photo-phone"
             />
+          </div>
+          <div className="lp-hero-actions lp2-hero-quiz">
+            <p className="lp-hero-quiz-context">
+              Responda 3 perguntas e receba 3 perguntas feitas pro momento de
+              vocês. Leva 1 minuto, é grátis.
+            </p>
+            <LandingQuizQuestion
+              step={0}
+              onAnswer={(_, value) => onHeroQuizAnswer(value)}
+              testIdPrefix="button-hero-quiz-v2"
+            />
+            <button
+              type="button"
+              onClick={onHeroBuy}
+              className="lp-cta-secondary-link"
+              data-testid="link-hero-buy-v2"
+            >
+              Já sei o que quero — comprar agora →
+            </button>
           </div>
         </div>
       </section>
