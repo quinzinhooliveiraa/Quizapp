@@ -6596,6 +6596,24 @@ blockquote em {
   border-color: var(--wine);
 }
 
+.checkout-secondary-action {
+  background: transparent;
+  border: 0;
+  color: #9b8588;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  margin-top: 16px;
+  padding: 6px 8px;
+  text-decoration: underline;
+  text-decoration-color: #c9a291;
+  text-underline-offset: 3px;
+}
+
+.checkout-secondary-action:hover {
+  color: var(--wine);
+}
+
 @media (max-width: 520px) {
   .checkout-native-payment .checkout-copy-button {
     background: var(--wine);

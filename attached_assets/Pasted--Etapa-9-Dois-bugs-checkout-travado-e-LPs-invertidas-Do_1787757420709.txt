@@ -1,0 +1,97 @@
+# Etapa 9 — Dois bugs: checkout travado e LPs invertidas
+
+Dois problemas independentes, ambos pequenos.
+
+---
+
+## BUG 1 — Quem tem cobrança pendente fica preso numa tela sem saída
+
+### Como reproduzir
+1. Clicar em comprar (gera cobrança, salva `conexao-pending-session` e
+   `conexao-pending-bill` no localStorage)
+2. Não pagar. Fechar a aba.
+3. Voltar ao site depois e clicar em comprar de novo
+
+**O que acontece:** em vez do formulário de e-mail, aparece a tela
+*"Quase lá… as cartas estão chegando — Tá demorando um pouco mais que o normal,
+é a confirmação da Abacate Pay chegando. Não feche esta tela."* E fica ali,
+esperando pra sempre um pagamento que nunca vai acontecer. Não existe caminho de
+volta — só limpando os dados do navegador, coisa que nenhum usuário sabe fazer.
+
+**Por que é grave:** quem tem cobrança pendente guardada é exatamente quem já
+tentou comprar. São os visitantes mais quentes do funil, e hoje eles são os
+únicos que ficam impedidos de comprar.
+
+### O que fazer
+
+**1. Sempre oferecer saída na tela de espera.** Na tela de "aguardando
+confirmação" (`checkoutState === "confirming"` e a de `waiting-manual`),
+adicionar sempre um link/botão discreto abaixo do texto:
+
+`Ainda não paguei — gerar um novo código`
+
+Ao clicar: limpar `conexao-pending-session` e `conexao-pending-bill` do
+localStorage e voltar ao início do checkout (o formulário de e-mail).
+
+**2. Não retomar cobrança velha.** Ao carregar a página, se a cobrança pendente
+guardada tiver **mais de 30 minutos**, descartar as chaves do localStorage
+silenciosamente em vez de tentar retomá-la. Guarde o timestamp junto quando
+salvar (ex: `conexao-pending-at`), ou use o `startedAt` que já existe no estado
+do checkout nativo.
+
+**3. Limitar a espera automática.** Se o polling do estado "confirming" passar de
+**3 minutos** sem confirmação, pare e mostre a mesma saída do item 1, com o
+texto: `Não recebemos a confirmação do pagamento. Se você já pagou, aguarde mais
+um pouco ou fale com a gente. Se ainda não pagou, gere um novo código.`
+
+---
+
+## BUG 2 — As rotas das landing pages estão invertidas
+
+### O problema
+
+Em `Router()` (fim do `App.tsx`):
+
+```
+<Route path="/">     → <Home variant="v2" />
+<Route path="/lp2">  → <Home />              // default = "v1"
+```
+
+Ou seja: **`/` renderiza a variante v2 e `/lp2` renderiza a v1.**
+
+Mas o array `LANDINGS` no `Admin.tsx` diz `v1 → /` e `v2 → /lp2`. Resultado: no
+painel, os dados de quem visitou `/` aparecem sob a LP2 e vice-versa.
+
+### O que fazer
+
+**Manter o que cada rota renderiza hoje. Não troque o `variant`** — isso mudaria
+a página que os visitantes veem no meio de um teste que está rodando, e a gente
+perderia a comparação.
+
+Em vez disso, **corrija o rótulo** para bater com a realidade, em dois lugares:
+
+**1. No `Admin.tsx`, no array `LANDINGS`:** trocar os caminhos, de modo que a
+entrada de id `"v1"` aponte para `/lp2` e a de id `"v2"` aponte para `/`. Ajuste
+também os `label` e `description` de cada uma para descrever o que realmente
+está em cada caminho (a que tem o hero "Descubra perguntas para reacender a
+chama" com o link "Prefere ver um exemplo antes?" é a `v2`, servida em `/`).
+
+**2. Confira o `useLpTracking(variant)`** — ele usa o `variant` do componente,
+que está correto em relação ao que renderiza. Depois de corrigir o `LANDINGS`,
+os dois passam a concordar. Não mexa no hook.
+
+### Aviso sobre os dados já coletados
+
+Os eventos gravados até agora estão com os rótulos trocados em relação ao que o
+painel mostrava. **Não tente migrar nem reescrever esses registros** — o volume é
+pequeno (poucos dias) e reescrever histórico causa mais confusão do que resolve.
+A partir da correção os números ficam certos.
+
+---
+
+## Depois de aplicar
+
+Rode o formatador. Teste o bug 1 assim: clicar em comprar, fechar o modal sem
+pagar, recarregar a página, clicar em comprar de novo — tem que abrir o
+formulário de e-mail normalmente, não a tela de espera. E no painel admin,
+confirmar que o card de cada LP abre com o link certo.

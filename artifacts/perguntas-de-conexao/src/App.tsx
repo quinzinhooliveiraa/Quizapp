@@ -109,6 +109,9 @@ const apiUrl = (path: string) => `${apiBase}${path}`;
 const inviteUrlFromToken = (token: string) =>
   `${window.location.origin}/invite/${token}`;
 const nativeCheckoutEnabled = import.meta.env.VITE_CHECKOUT_NATIVE === "true";
+const PENDING_CHECKOUT_MAX_AGE_MS = 30 * 60 * 1000;
+const HOSTED_CHECKOUT_MAX_WAIT_MS = 3 * 60 * 1000;
+const HOSTED_CHECKOUT_POLL_INTERVAL_MS = 2000;
 
 async function copyPixCode(value: string): Promise<boolean> {
   try {
@@ -500,6 +503,13 @@ function safeRemoveItem(key: string): void {
   } catch {
     // Storage may be unavailable in embedded or private browsers.
   }
+}
+
+function clearPendingCheckoutStorage(): void {
+  safeRemoveItem("conexao-pending-pix");
+  safeRemoveItem("conexao-pending-session");
+  safeRemoveItem("conexao-pending-bill");
+  safeRemoveItem("conexao-pending-at");
 }
 
 function localDateKey() {
@@ -2057,13 +2067,19 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           parsed.chargeId &&
           parsed.startedAt
         ) {
-          setNativeCheckout(parsed);
-          setCheckoutState("native-payment");
-          setCheckoutOpen(true);
-          return;
+          if (
+            nativeCheckoutEnabled &&
+            Date.now() - parsed.startedAt < PENDING_CHECKOUT_MAX_AGE_MS
+          ) {
+            setNativeCheckout(parsed);
+            setCheckoutState("native-payment");
+            setCheckoutOpen(true);
+            return;
+          }
+          clearPendingCheckoutStorage();
         }
       } catch {
-        safeRemoveItem("conexao-pending-pix");
+        clearPendingCheckoutStorage();
       }
     }
 
@@ -2073,22 +2089,40 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     const sessionId = sessionIdFromUrl || pendingSession;
     const checkoutCancelled = params.get("checkout") === "cancelado";
     if (checkoutCancelled) {
+      clearPendingCheckoutStorage();
       setCheckoutState("error");
       setCheckoutOpen(true);
       return;
     }
     if (!sessionId) return;
 
+    if (!sessionIdFromUrl) {
+      const pendingAt = Number(safeGetItem("conexao-pending-at"));
+      if (
+        !Number.isFinite(pendingAt) ||
+        pendingAt <= 0 ||
+        Date.now() - pendingAt >= PENDING_CHECKOUT_MAX_AGE_MS
+      ) {
+        clearPendingCheckoutStorage();
+        return;
+      }
+    }
+
     const billId = safeGetItem("conexao-pending-bill");
+    const startedAt = sessionIdFromUrl
+      ? Date.now()
+      : Number(safeGetItem("conexao-pending-at"));
     setCheckoutState("confirming");
     setCheckoutOpen(true);
-    let attempts = 0;
     let timeoutId: number | null = null;
     let cancelled = false;
 
     const checkPayment = async () => {
-      attempts += 1;
       if (cancelled) return;
+      if (Date.now() - startedAt >= HOSTED_CHECKOUT_MAX_WAIT_MS) {
+        setCheckoutState("waiting-manual");
+        return;
+      }
       try {
         const sessionUrl = billId
           ? `/api/access/sessions/${encodeURIComponent(sessionId)}?bill=${encodeURIComponent(billId)}`
@@ -2103,6 +2137,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
             safeSetItem("conexao-role", "owner");
             safeRemoveItem("conexao-pending-session");
             safeRemoveItem("conexao-pending-bill");
+            safeRemoveItem("conexao-pending-at");
             window.location.href = "/onboarding";
             return;
           }
@@ -2112,8 +2147,11 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       }
 
       if (cancelled) return;
-      if (attempts < 30) {
-        timeoutId = window.setTimeout(checkPayment, 2000);
+      if (Date.now() - startedAt < HOSTED_CHECKOUT_MAX_WAIT_MS) {
+        timeoutId = window.setTimeout(
+          checkPayment,
+          HOSTED_CHECKOUT_POLL_INTERVAL_MS,
+        );
       } else {
         setCheckoutState("waiting-manual");
       }
@@ -2150,6 +2188,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           safeSetItem("conexao-role", "owner");
           safeRemoveItem("conexao-pending-session");
           safeRemoveItem("conexao-pending-pix");
+          safeRemoveItem("conexao-pending-at");
           window.location.href = "/onboarding";
         }
       } catch {
@@ -2203,13 +2242,15 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       }
       if (data.sessionId)
         safeSetItem("conexao-pending-session", data.sessionId);
+      const checkoutStartedAt = Date.now();
+      safeSetItem("conexao-pending-at", String(checkoutStartedAt));
       if (nativeCheckoutEnabled) {
         const pix: NativeCheckoutData = {
           sessionId: data.sessionId,
           brCode: data.brCode!,
           brCodeBase64: data.brCodeBase64!,
           chargeId: data.chargeId!,
-          startedAt: Date.now(),
+          startedAt: checkoutStartedAt,
         };
         setNativeCheckout(pix);
         safeSetItem("conexao-pending-pix", JSON.stringify(pix));
@@ -2228,6 +2269,25 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     setEmailError("");
     setCheckoutState("email");
     setCheckoutOpen(true);
+  };
+  const restartCheckout = () => {
+    clearPendingCheckoutStorage();
+    setNativeCheckout(null);
+    setCopiedCode(false);
+    setEmailError("");
+    setCheckoutState("email");
+    setCheckoutOpen(true);
+  };
+  const closeCheckout = () => {
+    if (
+      checkoutState === "native-payment" ||
+      checkoutState === "confirming" ||
+      checkoutState === "waiting-manual"
+    ) {
+      clearPendingCheckoutStorage();
+      setNativeCheckout(null);
+    }
+    setCheckoutOpen(false);
   };
   return (
     <Shell dark>
@@ -2641,7 +2701,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           >
             <button
               className="modal-close"
-              onClick={() => setCheckoutOpen(false)}
+              onClick={closeCheckout}
               data-testid="button-close-checkout"
             >
               <X size={18} />
@@ -2829,8 +2889,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   <em>com a Abacate Pay.</em>
                 </h2>
                 <p>
-                  Se você já pagou, clique no botão abaixo para revalidar. Se
-                  ainda não pagou, feche esta tela e conclua o pagamento.
+                  Não recebemos a confirmação do pagamento. Se você já pagou,
+                  aguarde mais um pouco ou fale com a gente. Se ainda não pagou,
+                  gere um novo código.
                 </p>
                 <button
                   onClick={() => {
@@ -2843,6 +2904,13 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   className="button button-primary button-full"
                 >
                   Já paguei — verificar de novo <ArrowRight size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="checkout-secondary-action"
+                  onClick={restartCheckout}
+                >
+                  Ainda não paguei — gerar um novo código
                 </button>
               </div>
             ) : checkoutState === "confirming" ? (
@@ -2874,6 +2942,13 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     ? "Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela."
                     : "Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente."}
                 </p>
+                <button
+                  type="button"
+                  className="checkout-secondary-action"
+                  onClick={restartCheckout}
+                >
+                  Ainda não paguei — gerar um novo código
+                </button>
               </div>
             ) : checkoutState === "sending" ? (
               <div

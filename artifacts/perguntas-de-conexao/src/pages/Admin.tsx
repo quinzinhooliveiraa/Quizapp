@@ -79,14 +79,14 @@ const LANDINGS: LandingEntry[] = [
   {
     id: "v1",
     label: "LP1 — Storytelling + Quiz",
-    path: "/",
+    path: "/lp2",
     description:
       "Headline de promessa direta, storytelling da dor, quiz de 3 perguntas e 16 baralhos.",
   },
   {
     id: "v2",
     label: "LP2 — Estática (variedade de baralhos)",
-    path: "/lp2",
+    path: "/",
     description:
       "Hero + dor + solução + temas + prova social + preço + FAQ, tudo em scroll, sem quiz.",
   },
