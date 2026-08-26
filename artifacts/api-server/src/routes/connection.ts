@@ -550,7 +550,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     return;
   }
 
-  const mode = parsed.data.mode ?? "hosted";
+  const mode = parsed.data.mode ?? "native";
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
 
   const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;

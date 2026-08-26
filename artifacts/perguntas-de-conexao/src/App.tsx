@@ -108,7 +108,7 @@ const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
 const inviteUrlFromToken = (token: string) =>
   `${window.location.origin}/invite/${token}`;
-const nativeCheckoutEnabled = import.meta.env.VITE_CHECKOUT_NATIVE === "true";
+const nativeCheckoutEnabled = true;
 const PENDING_CHECKOUT_MAX_AGE_MS = 30 * 60 * 1000;
 const HOSTED_CHECKOUT_MAX_WAIT_MS = 3 * 60 * 1000;
 const HOSTED_CHECKOUT_POLL_INTERVAL_MS = 2000;
@@ -3075,11 +3075,11 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     <>
                       Só mais um instante…
                       <br />
-                      <em>o link tá quase pronto.</em>
+                      <em>seu Pix tá quase pronto.</em>
                     </>
                   ) : (
                     <>
-                      Gerando seu link
+                      Gerando seu Pix
                       <br />
                       <em>de pagamento seguro.</em>
                     </>
@@ -3088,7 +3088,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 <p>
                   {sendingLong
                     ? "Tá demorando um pouco mais que o normal — não feche esta tela."
-                    : "Você vai pra tela da Abacate Pay assim que estiver pronto."}
+                    : "O código Pix vai aparecer aqui, sem sair deste site."}
                 </p>
               </div>
             ) : (
