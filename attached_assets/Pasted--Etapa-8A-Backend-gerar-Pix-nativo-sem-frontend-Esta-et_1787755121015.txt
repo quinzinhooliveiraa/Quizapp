@@ -1,0 +1,62 @@
+# Etapa 8A — Backend: gerar Pix nativo (sem frontend)
+
+Esta etapa não muda nada para o usuário final. Só ensina a API a gerar cobrança
+Pix própria, para as etapas seguintes usarem.
+
+## Documentação
+`https://docs.abacatepay.com/llms.txt` — confira os campos exatos antes de codar.
+
+- `POST /transparents/create` → obrigatórios: `method: "PIX"` e `data.amount`
+  (em centavos: R$ 47,90 = `4790`). Resposta traz `brCode` (copia-e-cola) e
+  `brCodeBase64` (PNG do QR em base64).
+- `GET /transparents/check` → status por id
+- `POST /transparents/simulate-payment` → simula pagamento em modo dev
+- Webhook: evento `transparent.completed`
+
+## 1. `artifacts/api-server/src/lib/abacatepay.ts`
+
+Crie `createAbacatePixCharge(...)` chamando `POST /transparents/create`,
+devolvendo `{ id, brCode, brCodeBase64 }`.
+
+**⚠️ CRÍTICO — não envie o objeto `customer`.** Mande só `method`, `data.amount`,
+e opcionalmente `description` e `metadata.externalId`. A doc diz: *"upon
+providing any customer information all fields name, cellphone, email and taxId
+are mandatory"* — ou seja, mandar um campo de cliente obriga a mandar CPF, que é
+exatamente a fricção que queremos eliminar.
+
+Crie também `fetchAbacatePixStatus(id)` chamando `GET /transparents/check`,
+com o mesmo cache curto (5s) que `fetchAbacateCheckoutStatus` já usa.
+
+**Não apague `createAbacateCheckout`** — é o plano B.
+
+## 2. Banco
+
+Em `lib/db/src/schema/index.ts`, coluna nullable em `sessionsTable`:
+`abacateChargeId: text("abacate_charge_id")`. Rode a migração.
+
+## 3. `artifacts/api-server/src/routes/connection.ts`
+
+A rota que cria a sessão de checkout aceita um campo novo no corpo:
+`mode: "native" | "hosted"`, **default `"hosted"`** (não quebra nada hoje).
+
+- `"hosted"` → comportamento atual, devolve `checkoutUrl`
+- `"native"` → chama `createAbacatePixCharge`, salva o `abacateChargeId` na
+  sessão, devolve `{ sessionId, brCode, brCodeBase64, chargeId }`
+
+## 4. Webhook
+
+No handler `POST /checkout/abacatepay-webhook`, trate também o evento
+`transparent.completed`. Ache a sessão pelo `chargeId` (confira na doc qual
+identificador vem no payload) e faça o mesmo que o fluxo atual: `accessGranted:
+true`, respeitando a idempotência do `processedEventsTable`, e disparar a push.
+
+Se a lógica de liberar acesso está inline, extraia para uma função e chame dos
+dois lugares. Não duplique.
+
+## Não fazer nesta etapa
+Nada de frontend. Nada de modal, QR na tela ou formulário. Isso é a etapa 8B.
+
+## Testar
+Chame a rota com `mode: "native"` (curl ou o painel do Replit) e confirme que
+volta `brCode` e `brCodeBase64`. Depois use `simulate-payment` e confirme que o
+webhook libera o acesso. Rode o formatador nos arquivos tocados.

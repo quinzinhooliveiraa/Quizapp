@@ -1,0 +1,188 @@
+# Checkout nativo: pagar sem sair do site
+
+## Contexto — por que estamos mexendo nisto
+
+Hoje o checkout faz `window.location.href = data.checkoutUrl` e manda a pessoa
+para o site da Abacate Pay. E o que ela encontra lá é pior do que a gente
+imaginava — eu abri a página e conferi:
+
+**O checkout hospedado da Abacate pede QUATRO campos antes de mostrar o QR code:**
+
+1. Nome completo
+2. **CPF / CNPJ**
+3. Email
+4. Telefone
+
+Só depois de preencher tudo e clicar em "Continuar" é que o Pix aparece. Ou
+seja, o caminho real é: clique → 4 campos com CPF → Continuar → QR code →
+trocar para o app do banco → pagar. Seis passos para um produto de R$ 47,90 que
+a pessoa conheceu 30 segundos antes no TikTok.
+
+**Dados de 25–26/08:** 41 sessões gravadas, 20+ cobranças geradas, zero pagas.
+Duas pessoas chegaram a preencher nome, e-mail (e portanto CPF, porque o
+formulário não passa sem) — e mesmo assim não pagaram. Elas travaram no último
+centímetro.
+
+### A descoberta que resolve isso — e que dispensa trocar de gateway
+
+A documentação oficial da API de "Criar QRCode PIX" diz, textualmente:
+
+> *"The customer object is not mandatory, but upon providing any customer
+> information all fields `name`, `cellphone`, `email` and `taxId` are mandatory."*
+
+Traduzindo: **dá para criar a cobrança Pix mandando só o valor.** Sem nome, sem
+CPF, sem telefone. O CPF só é obrigatório na página hospedada deles, não na API.
+
+É tudo-ou-nada: se mandar *qualquer* dado do cliente, é obrigado a mandar os
+quatro. Então a regra deste prompt é simples e importante:
+
+**NÃO envie o objeto `customer` para a Abacate. Capture o e-mail no nosso
+próprio formulário e guarde no nosso próprio banco.**
+
+Assim a pessoa preenche um campo em vez de quatro, ninguém pede documento a
+ela, e o e-mail fica onde a gente consegue usar.
+
+## Documentação — leia antes de codar
+
+`https://docs.abacatepay.com` (e `https://docs.abacatepay.com/llms.txt` para a
+versão completa em texto).
+
+O que eu confirmei, mas **confira os campos exatos na doc antes de implementar**,
+porque eu li só o resumo:
+
+- **`POST /transparents/create`** — cria a cobrança Pix. Campos obrigatórios:
+  `method: "PIX"` e `data.amount` (**em centavos** — R$ 47,90 = `4790`).
+  A resposta traz:
+  - `brCode` — a string de copia-e-cola
+  - `brCodeBase64` — imagem PNG do QR code em base64
+- **`GET /transparents/check`** — consulta o status de pagamento por ID
+- **`POST /transparents/simulate-payment`** — simula pagamento no modo dev
+  (use isso para testar sem gastar dinheiro de verdade)
+- **Webhook:** o evento é `transparent.completed`. O webhook atual do projeto
+  foi criado para o fluxo de checkout hospedado — **confira no painel da Abacate
+  se o webhook existente já escuta esse evento novo; se não, adicione.** A
+  assinatura HMAC continua com o mesmo `secret`.
+
+## O que fazer
+
+### 1. Backend — nova função de cobrança transparente
+
+Em `artifacts/api-server/src/lib/abacatepay.ts`, ao lado da
+`createAbacateCheckout` que já existe, crie `createAbacatePixCharge(...)` que
+chama `POST /transparents/create` e devolve `{ id, brCode, brCodeBase64 }`.
+
+**⚠️ CRÍTICO: não envie o objeto `customer` no corpo da requisição.** Mande
+apenas `method: "PIX"` e `data.amount` (em centavos), mais `description` e
+`metadata.externalId` se forem úteis. Se você mandar qualquer campo de cliente,
+a API passa a exigir nome + telefone + e-mail + **CPF** — que é exatamente a
+fricção que este prompt existe para eliminar. O e-mail do comprador fica no
+NOSSO banco (`sessionsTable.buyerEmail`), não na Abacate.
+
+Crie também `fetchAbacatePixStatus(id)` chamando `GET /transparents/check` —
+pode seguir o mesmo padrão de cache curto (5s) que a `fetchAbacateCheckoutStatus`
+já usa, para não martelar a API deles no polling.
+
+**Não apague `createAbacateCheckout`.** Mantenha as duas: se o checkout nativo
+der problema em produção, precisamos poder voltar pro fluxo antigo trocando uma
+flag.
+
+### 2. Backend — a rota de criação passa a aceitar os dois modos
+
+Na rota que hoje cria a sessão de checkout (em
+`artifacts/api-server/src/routes/connection.ts`), aceite um campo novo no corpo:
+`mode: "native" | "hosted"` (default `"hosted"`, para não quebrar nada).
+
+- `"hosted"` → comportamento atual, devolve `checkoutUrl`
+- `"native"` → chama `createAbacatePixCharge` e devolve
+  `{ sessionId, brCode, brCodeBase64, chargeId }`
+
+Guarde o `chargeId` na `sessionsTable` (adicione uma coluna nullable
+`abacateChargeId: text("abacate_charge_id")` se ainda não houver algo
+equivalente), para conseguir consultar o status depois.
+
+### 3. Backend — webhook do evento novo
+
+No handler `POST /checkout/abacatepay-webhook` que já existe, trate também o
+evento `transparent.completed` além do que ele já trata hoje. Encontre a sessão
+pelo `chargeId` (ou pelo campo de metadata que a Abacate devolver — confira na
+doc qual identificador vem no payload) e faça a mesma coisa que o fluxo atual
+faz: marcar `accessGranted: true`, respeitando a idempotência que já existe via
+`processedEventsTable`, e disparar a notificação push.
+
+**Não duplique lógica.** Se o caminho de liberar acesso já está numa função,
+reaproveite; se está inline, extraia para uma função e chame dos dois lugares.
+
+### 4. Frontend — capturar o e-mail ANTES de gerar a cobrança
+
+Este é o passo que mais vale dinheiro e o mais simples de todos. E agora é
+também o único dado que a gente pede — em vez dos quatro campos com CPF que a
+página da Abacate pedia.
+
+Antes de criar a cobrança, o modal pede **só o e-mail** (um campo, nada mais —
+nome, telefone e CPF não são necessários e cada campo a mais derruba conversão).
+
+- Label: `Pra onde mandamos seu acesso?`
+- Placeholder: `seu@email.com`
+- Texto pequeno: `Usamos só pra liberar seu acesso e mandar o recibo.`
+- Validação simples de formato. Se inválido, mensagem: `Confira o e-mail — parece que falta alguma coisa.`
+
+Salve esse e-mail em `sessionsTable.buyerEmail` no momento da criação da sessão.
+Hoje ele fica `N/A` em todas as cobranças, o que impossibilita qualquer
+recuperação de abandono.
+
+### 5. Frontend — a tela de pagamento também vende
+
+Substitua o redirecionamento por uma tela dentro do próprio app. Ela mostra, em
+ordem, de cima pra baixo:
+
+1. **O que a pessoa está levando** — recap curto: `459 perguntas · 15 baralhos ·
+   acesso vitalício, sem mensalidade`
+2. **O valor** — `R$ 47,90, uma vez só`
+3. **O QR code**, renderizado de `brCodeBase64`
+   (`<img src={"data:image/png;base64," + brCodeBase64} alt="QR Code do Pix" />`)
+4. **Botão de copiar o código** — usa `brCode`, com feedback visual ao copiar
+   (`Código copiado`). Muita gente paga pelo celular e não consegue escanear o
+   próprio QR na mesma tela — o copia-e-cola é essencial, não opcional.
+5. **O que acontece a seguir** — `Assim que o Pix cair, seu baralho abre sozinho
+   nesta tela. Costuma levar poucos segundos.` Isso mata o susto de "paguei, e
+   agora?".
+6. **A garantia, em destaque** — a de 7 dias já existe no texto da landing
+   (`lp-guarantee`), mas está enterrada no meio da página. Aqui ela precisa
+   aparecer, porque é neste momento que a pessoa está com medo.
+7. **Um ou dois depoimentos reais** — puxe da tabela `reviewsTable`, que já
+   existe e já alimenta o painel admin. **Se não houver avaliação nenhuma no
+   banco, não mostre a seção** — não invente depoimento, não use placeholder,
+   não escreva exemplo. Seção vazia é melhor que depoimento falso.
+
+### 6. Frontend — polling do status
+
+Enquanto a tela do QR estiver aberta, consulte o status a cada 4 segundos
+(`GET` na rota que consulta a sessão, que já existe e já sabe checar o status na
+Abacate). Assim que `accessGranted` virar `true`, siga para a tela de sucesso
+que já existe hoje.
+
+Pare o polling depois de 15 minutos de tela aberta e mostre: `A cobrança expirou.
+Gerar um novo código` com um botão que refaz o processo. E **limpe o intervalo no
+unmount do componente** — senão fica rodando em segundo plano.
+
+### 7. Ativar por variável de ambiente
+
+Coloque o modo novo atrás de uma env var no frontend, tipo
+`VITE_CHECKOUT_NATIVE=true`. Assim, se algo der errado em produção, dá pra
+voltar ao fluxo antigo sem precisar de deploy de código.
+
+## O que NÃO fazer
+
+- Não remova o fluxo hospedado antigo — ele é o plano B.
+- Não peça nome, CPF ou telefone. Só e-mail.
+- Não invente depoimentos, nem crie depoimentos de exemplo "só pra ver como
+  fica". Se a tabela estiver vazia, a seção não aparece.
+- Não implemente order bump, upsell ou contador de escassez. Isso é otimização
+  de quem já converte, e hoje a conversão é zero.
+
+## Depois de aplicar
+
+Formata os arquivos tocados. Testa usando `POST /transparents/simulate-payment`
+no modo dev — dá pra validar o fluxo inteiro (QR aparece, polling detecta,
+acesso libera, push chega) sem gastar dinheiro real. Só depois disso, uma compra
+real de teste.

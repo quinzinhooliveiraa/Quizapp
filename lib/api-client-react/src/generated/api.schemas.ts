@@ -279,6 +279,14 @@ export const CheckoutCreateInputPackageId = {
   couple: 'couple',
 } as const;
 
+export type CheckoutCreateInputMode = typeof CheckoutCreateInputMode[keyof typeof CheckoutCreateInputMode];
+
+
+export const CheckoutCreateInputMode = {
+  native: 'native',
+  hosted: 'hosted',
+} as const;
+
 export type CheckoutCreateInputSourceLp = typeof CheckoutCreateInputSourceLp[keyof typeof CheckoutCreateInputSourceLp];
 
 
@@ -291,6 +299,7 @@ export interface CheckoutCreateInput {
   packageId: CheckoutCreateInputPackageId;
   /** @minLength 1 */
   buyerName: string;
+  mode?: CheckoutCreateInputMode;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
   sourceLp?: CheckoutCreateInputSourceLp;
@@ -377,12 +386,16 @@ export interface LandingAnalytics {
 
 export interface CheckoutCreateResponse {
   sessionId: string;
-  checkoutUrl: string;
-  billId: string;
+  checkoutUrl?: string;
+  billId?: string;
+  brCode?: string;
+  brCodeBase64?: string;
+  chargeId?: string;
 }
 
 export type AbacatePayWebhookDataMetadata = {
   sessionId?: string;
+  externalId?: string;
   [key: string]: unknown;
  };
 
@@ -460,6 +473,10 @@ sessionId: string;
 
 export type GetAdminAnalytics200 = {
   analytics: LandingAnalytics[];
+};
+
+export type ListPublicReviews200 = {
+  reviews: Review[];
 };
 
 export type ListAdminSuggestionsParams = {

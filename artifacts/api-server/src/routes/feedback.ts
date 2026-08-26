@@ -91,6 +91,21 @@ router.post("/reviews", async (req, res): Promise<void> => {
   res.status(201).json(review);
 });
 
+router.get("/reviews", async (_req, res): Promise<void> => {
+  const reviews = await db
+    .select({
+      id: reviewsTable.id,
+      displayName: reviewsTable.displayName,
+      rating: reviewsTable.rating,
+      message: reviewsTable.message,
+      createdAt: reviewsTable.createdAt,
+    })
+    .from(reviewsTable)
+    .orderBy(desc(reviewsTable.createdAt))
+    .limit(2);
+  res.json({ reviews });
+});
+
 router.get("/admin/reviews", async (req, res): Promise<void> => {
   const sessionId =
     typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;

@@ -8,6 +8,9 @@
 
 export interface CheckoutCreateResponse {
   sessionId: string;
-  checkoutUrl: string;
-  billId: string;
+  checkoutUrl?: string;
+  billId?: string;
+  brCode?: string;
+  brCodeBase64?: string;
+  chargeId?: string;
 }

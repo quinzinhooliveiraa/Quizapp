@@ -26,3 +26,4 @@ to = "/index.html"
 [services.env]
 PORT = "20280"
 BASE_PATH = "/"
+VITE_CHECKOUT_NATIVE = "true"

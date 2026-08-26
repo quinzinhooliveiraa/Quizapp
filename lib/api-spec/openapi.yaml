@@ -518,6 +518,23 @@ paths:
         "400":
           description: Invalid suggestion
   /reviews:
+    get:
+      operationId: listPublicReviews
+      tags: [feedback]
+      summary: List a small set of published reviews for checkout reassurance
+      responses:
+        "200":
+          description: Published reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Review"
+                required: [reviews]
     post:
       operationId: createReview
       tags: [feedback]
@@ -1075,6 +1092,9 @@ components:
         buyerName:
           type: string
           minLength: 1
+        mode:
+          type: string
+          enum: [native, hosted]
         buyerEmail:
           type: string
           pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
@@ -1143,7 +1163,13 @@ components:
           type: string
         billId:
           type: string
-      required: [sessionId, checkoutUrl, billId]
+        brCode:
+          type: string
+        brCodeBase64:
+          type: string
+        chargeId:
+          type: string
+      required: [sessionId]
     AbacatePayWebhook:
       type: object
       additionalProperties: true
@@ -1165,6 +1191,8 @@ components:
               additionalProperties: true
               properties:
                 sessionId:
+                  type: string
+                externalId:
                   type: string
       required: [event, data]
     AbacatePayWebhookResult:

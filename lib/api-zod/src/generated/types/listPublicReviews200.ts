@@ -5,9 +5,8 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { Review } from './review';
 
-export type AbacatePayWebhookDataMetadata = {
-  sessionId?: string;
-  externalId?: string;
-  [key: string]: unknown;
- };
+export type ListPublicReviews200 = {
+  reviews: Review[];
+};

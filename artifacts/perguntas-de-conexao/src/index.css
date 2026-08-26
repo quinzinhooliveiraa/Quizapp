@@ -6468,6 +6468,198 @@ blockquote em {
   border-radius: 7px;
   box-shadow: 0 30px 60px #1c0d1438;
 }
+.checkout-modal:has(.checkout-native-payment) {
+  width: min(100%, 480px);
+  max-height: min(92vh, 760px);
+  overflow-y: auto;
+  padding-bottom: 32px;
+}
+.checkout-email-form {
+  display: flex;
+  flex-direction: column;
+}
+.checkout-email-intro {
+  color: #856f75;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: -5px 0 25px;
+}
+.checkout-field-label {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.checkout-email-input {
+  width: 100%;
+  border: 1px solid #d4bdb3;
+  border-radius: 4px;
+  background: #fffaf5;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+  padding: 14px 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.checkout-email-input:focus {
+  border-color: var(--wine);
+  box-shadow: 0 0 0 3px rgba(112, 47, 68, 0.12);
+}
+.checkout-email-note {
+  color: #9b8588;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 9px 0 22px;
+}
+.checkout-email-error {
+  color: #a2384b;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: -10px 0 17px;
+}
+.checkout-native-payment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.checkout-native-payment h2 {
+  margin-bottom: 14px;
+}
+.checkout-native-recap {
+  color: #856f75;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 15px;
+}
+.checkout-native-price {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+.checkout-native-price span {
+  color: #9b8588;
+  font-size: 11px;
+}
+.checkout-native-price strong {
+  color: var(--wine);
+  font-family: var(--app-font-serif);
+  font-size: 22px;
+  font-weight: 400;
+}
+.checkout-qr-wrap {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #eaded6;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 9px;
+}
+.checkout-qr-wrap img {
+  display: block;
+  height: 190px;
+  image-rendering: auto;
+  width: 190px;
+}
+.checkout-qr-wrap p {
+  color: #9b8588;
+  font-size: 10px;
+  margin: 7px 0 0;
+}
+.checkout-copy-button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid #b9988d;
+  border-radius: 4px;
+  color: var(--wine);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 13px;
+  padding: 11px 17px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.checkout-copy-button:hover {
+  background: #f4e9e0;
+  border-color: var(--wine);
+}
+.checkout-native-next {
+  color: #856f75;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 18px auto 0;
+  max-width: 320px;
+}
+.checkout-guarantee {
+  align-items: flex-start;
+  background: #f4e9e0;
+  border: 1px solid #ead4ca;
+  border-radius: 5px;
+  color: #6f5059;
+  display: flex;
+  font-size: 11px;
+  gap: 9px;
+  line-height: 1.45;
+  margin-top: 17px;
+  padding: 11px 13px;
+  text-align: left;
+  width: 100%;
+}
+.checkout-guarantee svg {
+  color: var(--wine);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.checkout-guarantee strong {
+  color: var(--wine);
+}
+.checkout-reviews {
+  border-top: 1px solid #eaded6;
+  margin-top: 21px;
+  padding-top: 18px;
+  text-align: left;
+  width: 100%;
+}
+.checkout-reviews-title {
+  color: #9b8588;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+.checkout-reviews blockquote {
+  background: #fffaf5;
+  border-left: 2px solid #c9a291;
+  margin: 0 0 9px;
+  padding: 9px 12px;
+}
+.checkout-review-stars {
+  color: #b97852;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.checkout-reviews blockquote p {
+  color: #6f5059;
+  font-family: var(--app-font-serif);
+  font-size: 14px;
+  line-height: 1.35;
+  margin: 4px 0;
+}
+.checkout-reviews cite {
+  color: #9b8588;
+  font-size: 10px;
+  font-style: normal;
+}
 .checkout-modal h2,
 .welcome-modal h2,
 .invite-modal h2 {

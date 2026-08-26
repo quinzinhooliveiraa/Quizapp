@@ -314,6 +314,7 @@ export const createCheckoutBodyVisitorKeyMax = 120;
 export const CreateCheckoutBody = zod.object({
   "packageId": zod.enum(['couple']),
   "buyerName": zod.string().min(1),
+  "mode": zod.enum(['native', 'hosted']).optional(),
   "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
   "sourceLp": zod.enum(['v1', 'v2']).optional(),
   "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional()
@@ -321,8 +322,11 @@ export const CreateCheckoutBody = zod.object({
 
 export const CreateCheckoutResponse = zod.object({
   "sessionId": zod.string(),
-  "checkoutUrl": zod.string(),
-  "billId": zod.string()
+  "checkoutUrl": zod.string().optional(),
+  "billId": zod.string().optional(),
+  "brCode": zod.string().optional(),
+  "brCodeBase64": zod.string().optional(),
+  "chargeId": zod.string().optional()
 })
 
 
@@ -336,7 +340,8 @@ export const ReceiveAbacatePayWebhookBody = zod.object({
   "id": zod.string().optional(),
   "externalId": zod.string().optional(),
   "metadata": zod.object({
-  "sessionId": zod.string().optional()
+  "sessionId": zod.string().optional(),
+  "externalId": zod.string().optional()
 }).optional()
 })
 })
@@ -417,6 +422,25 @@ export const CreateSuggestionResponse = zod.object({
   "email": zod.string().nullable(),
   "message": zod.string(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List a small set of published reviews for checkout reassurance
+ */
+export const listPublicReviewsResponseReviewsItemRatingMax = 5;
+
+
+
+export const ListPublicReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
+  "id": zod.string(),
+  "displayName": zod.string().nullable(),
+  "email": zod.string().nullable(),
+  "rating": zod.number().min(1).max(listPublicReviewsResponseReviewsItemRatingMax),
+  "message": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
 })
 
 

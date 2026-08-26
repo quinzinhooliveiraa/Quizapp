@@ -51,6 +51,7 @@ import type {
   ListAdminReviewsParams,
   ListAdminSuggestions200,
   ListAdminSuggestionsParams,
+  ListPublicReviews200,
   ListQuestionsParams,
   OkResponse,
   PageEventInput,
@@ -1894,6 +1895,83 @@ export const useCreateSuggestion = <TError = ErrorType<void>,
       > => {
       return useMutation(getCreateSuggestionMutationOptions(options));
     }
+
+export const getListPublicReviewsUrl = () => {
+
+
+
+
+  return `/api/reviews`
+}
+
+/**
+ * @summary List a small set of published reviews for checkout reassurance
+ */
+export const listPublicReviews = async ( options?: Parameters<typeof customFetch>[1]): Promise<ListPublicReviews200> => {
+
+  return customFetch<ListPublicReviews200>(getListPublicReviewsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPublicReviewsQueryKey = () => {
+    return [
+    `/api/reviews`
+    ] as const;
+    }
+
+
+export const getListPublicReviewsQueryOptions = <TData = Awaited<ReturnType<typeof listPublicReviews>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPublicReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPublicReviewsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPublicReviews>>> = ({ signal }) => listPublicReviews({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPublicReviews>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPublicReviewsQueryResult = NonNullable<Awaited<ReturnType<typeof listPublicReviews>>>
+export type ListPublicReviewsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List a small set of published reviews for checkout reassurance
+ */
+
+export function useListPublicReviews<TData = Awaited<ReturnType<typeof listPublicReviews>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPublicReviews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPublicReviewsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getCreateReviewUrl = () => {
 
