@@ -13,13 +13,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
+import {
+  EXPERIMENT_LANDING_PAGES as LANDINGS,
+  type LandingPage as LandingEntry,
+} from "@/lib/landing-pages";
 
-type LandingEntry = {
-  id: string;
-  label: string;
-  path: string;
-  description: string;
-};
 type SuggestionEntry = {
   id: string;
   email: string | null;
@@ -89,6 +87,7 @@ type ExperimentVariantEntry = {
 type ExperimentEntry = {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
   objective: string;
   status: ExperimentStatus;
@@ -98,8 +97,7 @@ type ExperimentEntry = {
 };
 type ExperimentDraftVariant = {
   key: string;
-  name: string;
-  path: string;
+  landingId: string;
   weight: string;
   status: ExperimentVariantStatus;
 };
@@ -113,30 +111,6 @@ type ExperimentAnalyticsVariant = {
   checkoutsStarted: number;
   purchasesConfirmed: number;
 };
-
-const LANDINGS: LandingEntry[] = [
-  {
-    id: "v1",
-    label: "Alternativa — Suas conversas viraram logística",
-    path: "/lp2",
-    description:
-      "A alternativa com storytelling da dor, quiz de 3 perguntas e os baralhos temáticos.",
-  },
-  {
-    id: "v2",
-    label: "Principal — Reacender a chama (com mockups)",
-    path: "/",
-    description:
-      "A página principal com o hero de mockups e a experiência guiada de perguntas.",
-  },
-  {
-    id: "lp3",
-    label: "LP3 — Quiz + narrativa",
-    path: "/lp3",
-    description:
-      "Landing baseada em quiz, narrativa personalizada e recomendação de baralho.",
-  },
-];
 
 const TABS = [
   { id: "buyers", label: "Compradores" },
@@ -458,7 +432,7 @@ function AnalyticsPanel({
       <div className="admin-analytics-card-heading">
         <div>
           <p className="admin-eyebrow">últimos 30 dias</p>
-          <h3>{landing.label}</h3>
+          <h3>{landing.name}</h3>
         </div>
         <span className="admin-conversion">{conversion}</span>
       </div>
@@ -776,7 +750,7 @@ function PagesTab({
                 <LayoutTemplate size={18} />
               </div>
               <div className="admin-landing-info">
-                <strong>{entry.label}</strong>
+                <strong>{entry.name}</strong>
                 <p>{entry.description}</p>
                 <code className="admin-landing-url">
                   {origin}
@@ -792,7 +766,7 @@ function PagesTab({
                 rel="noopener noreferrer"
                 className="admin-icon-button"
                 data-testid={`link-open-landing-${entry.id}`}
-                aria-label={`Abrir ${entry.label}`}
+                aria-label={`Abrir ${entry.name}`}
               >
                 <ExternalLink size={16} />
               </a>
@@ -801,7 +775,7 @@ function PagesTab({
                 onClick={() => copyLink(entry)}
                 className="admin-icon-button"
                 data-testid={`button-copy-landing-${entry.id}`}
-                aria-label={`Copiar link de ${entry.label}`}
+                aria-label={`Copiar link de ${entry.name}`}
               >
                 {copiedId === entry.id ? (
                   <Check size={16} />
@@ -924,15 +898,13 @@ function createInitialExperimentVariants(): ExperimentDraftVariant[] {
   return [
     {
       key: "variant-a",
-      name: "LP1",
-      path: "/",
+      landingId: "v2",
       weight: "50",
       status: "active",
     },
     {
       key: "variant-b",
-      name: "LP3",
-      path: "/lp3",
+      landingId: "lp3",
       weight: "50",
       status: "active",
     },
@@ -1010,6 +982,14 @@ function ExperimentAnalytics({
                 <b>{variant.purchasesConfirmed}</b>
                 <small>compras</small>
               </span>
+              <span>
+                <b>
+                  {variant.visitors > 0
+                    ? `${Math.round((variant.purchasesConfirmed / variant.visitors) * 100)}%`
+                    : "—"}
+                </b>
+                <small>conversão</small>
+              </span>
             </div>
           ))}
         </div>
@@ -1023,6 +1003,9 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [copiedExperimentId, setCopiedExperimentId] = useState<string | null>(
+    null,
+  );
   const [message, setMessage] = useState("");
   const [draft, setDraft] = useState({
     name: "",
@@ -1081,12 +1064,12 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
       draft.variants.length < 2 ||
       draft.variants.some(
         (variant) =>
-          !variant.name.trim() ||
-          !variant.path.trim() ||
-          !variant.path.trim().startsWith("/") ||
+          !variant.landingId ||
           !Number.isInteger(Number(variant.weight)) ||
           Number(variant.weight) < 0,
       ) ||
+      new Set(draft.variants.map((variant) => variant.landingId)).size !==
+        draft.variants.length ||
       totalWeight !== 100
     ) {
       setMessage(
@@ -1107,8 +1090,12 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
             description: draft.description.trim() || undefined,
             objective: draft.objective.trim(),
             variants: draft.variants.map((variant) => ({
-              name: variant.name.trim(),
-              path: variant.path.trim(),
+              name:
+                LANDINGS.find((landing) => landing.id === variant.landingId)
+                  ?.name || variant.landingId,
+              path:
+                LANDINGS.find((landing) => landing.id === variant.landingId)
+                  ?.path || "/",
               weight: Number(variant.weight),
               status: variant.status,
             })),
@@ -1135,6 +1122,24 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const copyExperimentLink = async (experiment: ExperimentEntry) => {
+    const link = `${window.location.origin}/e/${encodeURIComponent(experiment.slug)}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedExperimentId(experiment.id);
+      window.setTimeout(
+        () =>
+          setCopiedExperimentId((current) =>
+            current === experiment.id ? null : current,
+          ),
+        1800,
+      );
+    } catch {
+      setCopiedExperimentId(null);
+      setMessage("Não foi possível copiar o link.");
     }
   };
 
@@ -1192,8 +1197,9 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
           </div>
         </div>
         <p className="admin-experiment-note">
-          Crie configurações para testes futuros. Todo experimento nasce como
-          rascunho e não distribui tráfego até você ativá-lo explicitamente.
+          Crie um link exclusivo para comparar landing pages existentes. Todo
+          experimento nasce como rascunho e não distribui tráfego até você
+          ativá-lo explicitamente.
         </p>
         {message && <p className="admin-notification-message">{message}</p>}
         <form className="admin-experiment-form" onSubmit={createExperiment}>
@@ -1253,7 +1259,7 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
           <div className="admin-experiment-variants-heading">
             <div>
               <span>Variantes</span>
-              <small>Caminho e percentual de distribuição</small>
+              <small>Landing page e percentual de distribuição</small>
             </div>
             <button
               type="button"
@@ -1265,8 +1271,13 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                     ...current.variants,
                     {
                       key: `variant-${Date.now()}`,
-                      name: "",
-                      path: "/",
+                      landingId:
+                        LANDINGS.find(
+                          (landing) =>
+                            !current.variants.some(
+                              (variant) => variant.landingId === landing.id,
+                            ),
+                        )?.id || LANDINGS[0].id,
                       weight: "0",
                       status: "active",
                     },
@@ -1284,28 +1295,24 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                   {String.fromCharCode(65 + index)}
                 </span>
                 <label>
-                  <span>Nome</span>
-                  <input
-                    value={variant.name}
+                  <span>Página</span>
+                  <select
+                    value={variant.landingId}
                     onChange={(event) =>
-                      updateVariant(variant.key, "name", event.target.value)
+                      updateVariant(
+                        variant.key,
+                        "landingId",
+                        event.target.value,
+                      )
                     }
-                    placeholder="LP1"
-                    maxLength={120}
                     required
-                  />
-                </label>
-                <label>
-                  <span>Path</span>
-                  <input
-                    value={variant.path}
-                    onChange={(event) =>
-                      updateVariant(variant.key, "path", event.target.value)
-                    }
-                    placeholder="/lp3"
-                    maxLength={500}
-                    required
-                  />
+                  >
+                    {LANDINGS.map((landing) => (
+                      <option key={landing.id} value={landing.id}>
+                        {landing.name}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   <span>Percentual</span>
@@ -1419,13 +1426,40 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                   {experiment.variants.map((variant) => (
                     <div key={variant.id}>
                       <strong>{variant.name}</strong>
-                      <code>{variant.path}</code>
+                      <code>
+                        {LANDINGS.find((landing) => landing.path === variant.path)
+                          ?.name || variant.path}
+                      </code>
                       <span>{variant.weight}%</span>
                       <small>
                         {variant.status === "active" ? "Ativa" : "Pausada"}
                       </small>
                     </div>
                   ))}
+                </div>
+                <div className="admin-experiment-link">
+                  <div>
+                    <span>Link exclusivo</span>
+                    <code>
+                      {window.location.origin}/e/
+                      {encodeURIComponent(experiment.slug)}
+                    </code>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-experiment-action-button"
+                    onClick={() => void copyExperimentLink(experiment)}
+                  >
+                    {copiedExperimentId === experiment.id ? (
+                      <>
+                        <Check size={14} /> Copiado
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} /> Copiar link
+                      </>
+                    )}
+                  </button>
                 </div>
                 <ExperimentAnalytics
                   experimentId={experiment.id}

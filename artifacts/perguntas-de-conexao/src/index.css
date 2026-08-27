@@ -380,10 +380,7 @@
 }
 .admin-experiment-variant-row {
   display: grid;
-  grid-template-columns: auto minmax(120px, 1fr) minmax(
-      160px,
-      1.4fr
-    ) 100px 120px auto;
+  grid-template-columns: auto minmax(180px, 1.6fr) 100px 120px auto;
   align-items: end;
   gap: 0.65rem;
   padding: 0.75rem;
@@ -509,6 +506,43 @@
   color: rgba(255, 255, 255, 0.4);
   text-align: right;
 }
+.admin-experiment-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0.85rem;
+  background: rgba(196, 172, 255, 0.06);
+  border: 1px solid rgba(196, 172, 255, 0.18);
+  border-radius: 0.55rem;
+}
+.admin-experiment-link > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.admin-experiment-link span {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-experiment-link code {
+  overflow: hidden;
+  color: #c4acff;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-experiment-link button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.35rem;
+}
 .admin-experiment-analytics {
   margin-top: 1rem;
   padding-top: 0.9rem;
@@ -536,7 +570,7 @@
 }
 .admin-experiment-analytics-row {
   display: grid;
-  grid-template-columns: minmax(120px, 1.5fr) repeat(4, minmax(58px, 0.65fr));
+  grid-template-columns: minmax(120px, 1.5fr) repeat(5, minmax(58px, 0.65fr));
   align-items: center;
   gap: 0.6rem;
   padding: 0.55rem 0.65rem;
@@ -590,6 +624,44 @@
 .admin-experiment-action-button.is-danger {
   color: #ffc59e;
   border-color: rgba(255, 197, 158, 0.35);
+}
+.experiment-link-state {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 2rem 1.4rem;
+  color: #f9f8fb;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(196, 172, 255, 0.13), transparent 34rem),
+    #100b18;
+  text-align: center;
+}
+.experiment-link-state-mark {
+  display: grid;
+  width: 3.2rem;
+  height: 3.2rem;
+  place-items: center;
+  color: #c4acff;
+  background: rgba(196, 172, 255, 0.1);
+  border: 1px solid rgba(196, 172, 255, 0.25);
+  border-radius: 1rem;
+}
+.experiment-link-state h1 {
+  max-width: 520px;
+  margin: 0;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+  font-weight: 400;
+}
+.experiment-link-state > p:not(.lp-eyebrow) {
+  max-width: 440px;
+  margin: 0 0 0.8rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 .admin-notification-icon {
   display: flex;
@@ -1382,9 +1454,9 @@
     grid-column: auto;
   }
   .admin-experiment-variant-row {
-    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) 92px auto;
+    grid-template-columns: auto minmax(0, 1fr) 92px auto;
   }
-  .admin-experiment-variant-row label:nth-of-type(4) {
+  .admin-experiment-variant-row label:nth-of-type(3) {
     grid-column: 2 / span 2;
   }
   .admin-experiment-analytics-heading {
@@ -1393,10 +1465,14 @@
     gap: 0.2rem;
   }
   .admin-experiment-analytics-row {
-    grid-template-columns: minmax(100px, 1.3fr) repeat(4, minmax(48px, 0.7fr));
+    grid-template-columns: minmax(100px, 1.3fr) repeat(5, minmax(48px, 0.7fr));
     gap: 0.35rem;
     padding-left: 0.45rem;
     padding-right: 0.45rem;
+  }
+  .admin-experiment-link {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .admin-tab {
     padding-left: 0.35rem;

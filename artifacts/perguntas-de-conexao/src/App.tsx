@@ -40,6 +40,7 @@ import {
   questions as connectionQuestions,
   themes as connectionThemes,
 } from "@workspace/connection-content";
+import { getLandingPageByPath } from "@/lib/landing-pages";
 import {
   ArrowRight,
   Bookmark,
@@ -51,6 +52,7 @@ import {
   Download,
   Feather,
   Flame,
+  FlaskConical,
   Heart,
   HeartHandshake,
   House,
@@ -122,7 +124,9 @@ type StoredExperimentAssignment = {
 
 function getStoredExperimentAssignment(): StoredExperimentAssignment | undefined {
   try {
-    const raw = sessionStorage.getItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY);
+    const raw =
+      sessionStorage.getItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY) ||
+      localStorage.getItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY);
     if (!raw) return undefined;
     const parsed = JSON.parse(raw) as Partial<StoredExperimentAssignment>;
     if (!parsed.experimentId || !parsed.experimentVariantId) return undefined;
@@ -133,6 +137,16 @@ function getStoredExperimentAssignment(): StoredExperimentAssignment | undefined
   } catch {
     return undefined;
   }
+}
+
+function storeExperimentAssignment(assignment: StoredExperimentAssignment) {
+  const raw = JSON.stringify(assignment);
+  try {
+    sessionStorage.setItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY, raw);
+  } catch {
+    // Keep the durable copy below when session storage is unavailable.
+  }
+  safeSetItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY, raw);
 }
 
 async function copyPixCode(value: string): Promise<boolean> {
@@ -537,6 +551,23 @@ function getStoredVisitorKey(): string {
   } catch {
     return "";
   }
+}
+
+function getOrCreateVisitorKey(): string {
+  const existing = getStoredVisitorKey();
+  if (existing) return existing;
+
+  const visitorKey =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  try {
+    sessionStorage.setItem("pdc-visitor-key", visitorKey);
+  } catch {
+    // The durable copy below is enough for returning visitors.
+  }
+  safeSetItem("pdc-visitor-key", visitorKey);
+  return visitorKey;
 }
 
 function clearPendingCheckoutStorage(): void {
@@ -1952,20 +1983,7 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
   const exitSentRef = useRef(false);
 
   useEffect(() => {
-    const storageKey = "pdc-visitor-key";
-    let visitorKey = "";
-    try {
-      visitorKey = sessionStorage.getItem(storageKey) || "";
-      if (!visitorKey) {
-        visitorKey =
-          typeof crypto.randomUUID === "function"
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        sessionStorage.setItem(storageKey, visitorKey);
-      }
-    } catch {
-      visitorKey = `anonymous-${Date.now()}`;
-    }
+    const visitorKey = getOrCreateVisitorKey();
     visitorKeyRef.current = visitorKey;
     startedAtRef.current = Date.now();
     const clarityScriptId = "microsoft-clarity-script";
@@ -3276,6 +3294,83 @@ function TrackedLp3() {
       }}
     />
   );
+}
+
+function ExperimentUnavailable() {
+  return (
+    <main className="experiment-link-state" role="status">
+      <div className="experiment-link-state-mark">
+        <FlaskConical size={22} />
+      </div>
+      <p className="lp-eyebrow">link de experimento</p>
+      <h1>Este experimento não está disponível.</h1>
+      <p>
+        O link pode estar em rascunho, pausado ou já ter sido encerrado. Tente
+        novamente mais tarde.
+      </p>
+      <Link href="/" className="button button-primary">
+        Conhecer o projeto
+      </Link>
+    </main>
+  );
+}
+
+function ExperimentLinkRoute() {
+  const { experimentSlug = "" } = useParams<{ experimentSlug: string }>();
+  const [state, setState] = useState<
+    "loading" | "ready" | "unavailable" | "error"
+  >("loading");
+  const [landingPage, setLandingPage] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    const visitorKey = getOrCreateVisitorKey();
+    const encodedSlug = encodeURIComponent(experimentSlug);
+    fetch(
+      apiUrl(
+        `/api/experiments/link/${encodedSlug}?visitorKey=${encodeURIComponent(visitorKey)}`,
+      ),
+    )
+      .then(async (response) => {
+        const data = (await response.json()) as StoredExperimentAssignment & {
+          landingPage?: string;
+        };
+        const landing = data.landingPage
+          ? getLandingPageByPath(data.landingPage)
+          : undefined;
+        if (!response.ok || !landing) {
+          throw new Error(response.status === 404 ? "unavailable" : "error");
+        }
+        return { assignment: data, landing };
+      })
+      .then(({ assignment, landing }) => {
+        if (!mounted) return;
+        storeExperimentAssignment(assignment);
+        setLandingPage(landing.path);
+        setState("ready");
+      })
+      .catch((error: unknown) => {
+        if (!mounted) return;
+        setState(error instanceof Error && error.message === "unavailable" ? "unavailable" : "error");
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [experimentSlug]);
+
+  if (state === "loading") {
+    return (
+      <main className="experiment-link-state" role="status" aria-live="polite">
+        <div className="experiment-link-state-mark">
+          <FlaskConical size={22} />
+        </div>
+        <p>Preparando seu experimento…</p>
+      </main>
+    );
+  }
+  if (state !== "ready") return <ExperimentUnavailable />;
+  if (landingPage === "/lp3") return <TrackedLp3 />;
+  return <Home variant={landingPage === "/" ? "v2" : "v1"} />;
 }
 
 function AccessPill({ access }: { access: any }) {
@@ -7492,6 +7587,7 @@ function Router() {
         <Route path="/lp3">
           <TrackedLp3 />
         </Route>
+        <Route path="/e/:experimentSlug" component={ExperimentLinkRoute} />
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/login" component={Login} />
         <Route path="/play" component={Play} />
@@ -7510,7 +7606,10 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 function RouteAwareSplash() {
   const [location] = useLocation();
   const isLandingPage =
-    location === "/" || location === "/lp2" || location === "/lp3";
+    location === "/" ||
+    location === "/lp2" ||
+    location === "/lp3" ||
+    location.startsWith("/e/");
 
   return isLandingPage ? null : <SplashScreen />;
 }
