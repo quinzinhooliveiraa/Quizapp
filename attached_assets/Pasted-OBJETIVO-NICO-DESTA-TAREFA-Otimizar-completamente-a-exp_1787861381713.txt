@@ -1,0 +1,364 @@
+OBJETIVO ÚNICO DESTA TAREFA:
+Otimizar completamente a experiência MOBILE da LP3 (/lp3), sem alterar a lógica, conteúdo, tracking, checkout, onboarding, router, experimentos ou outras LPs.
+
+A LP3 já teve o branding corrigido em uma etapa anterior.
+AGORA o foco é exclusivamente RESPONSIVIDADE E UX MOBILE.
+
+NÃO implementar nenhuma funcionalidade nova.
+
+NÃO alterar:
+- LP principal "/"
+- LP "/lp2"
+- onboarding
+- checkout
+- tracking
+- Clarity
+- experimentos
+- router
+- auto-optimization
+- backend
+- banco de dados.
+
+ANTES DE ALTERAR:
+Inspecione o componente atual:
+artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+
+e os estilos específicos:
+artifacts/perguntas-de-conexao/src/index.css
+
+Entenda todas as telas/estados existentes da LP3 antes de modificar.
+
+TELAS A SEREM VALIDAS:
+
+- intro
+- question
+- result
+- story
+- practice
+- recommend
+- offer
+
+OBJETIVO PRINCIPAL:
+
+A experiência deve parecer uma aplicação premium feita especificamente para celular.
+
+O usuário NÃO deve precisar ficar rolando a página verticalmente para conseguir responder uma pergunta ou encontrar o CTA principal, salvo quando o conteúdo realmente exigir isso.
+
+1. VIEWPORT MOBILE
+
+O layout deve funcionar corretamente em:
+
+- 320px
+- 360px
+- 375px
+- 390px
+- 393px
+- 414px
+- 430px
+
+Prioridade especial:
+
+375x667
+390x844
+
+Esses tamanhos devem ser tratados como dispositivos reais, não apenas como uma página desktop reduzida.
+
+2. ZERO OVERFLOW HORIZONTAL
+
+Garanta:
+
+- nenhum elemento ultrapassando a viewport;
+- nenhum card cortado involuntariamente;
+- nenhum botão saindo da tela;
+- nenhum texto criando largura excessiva;
+- nenhuma imagem maior que o container;
+- nenhum elemento causando scroll horizontal.
+
+Pode utilizar:
+
+width: 100%;
+max-width: 100%;
+min-width: 0;
+overflow-wrap;
+box-sizing: border-box;
+
+quando necessário.
+
+Não use overflow-x:hidden apenas para esconder problemas de layout.
+Corrija a causa.
+
+3. TELA DE PERGUNTAS
+
+Essa é uma das partes mais importantes.
+
+Quando uma pergunta aparecer:
+
+- pergunta;
+- opções;
+- indicador de progresso;
+- CTA;
+
+devem ocupar a viewport de forma equilibrada.
+
+Evitar:
+
+- títulos enormes;
+- opções gigantes;
+- espaços vazios excessivos;
+- CTA muito abaixo;
+- necessidade de scroll para responder.
+
+A pergunta deve ter uma hierarquia clara.
+
+As opções devem ser fáceis de tocar com o polegar.
+
+Área de toque mínima recomendada: aproximadamente 44px.
+
+4. TIPOGRAFIA MOBILE
+
+Use tamanhos responsivos.
+
+Pode utilizar clamp(), por exemplo, quando fizer sentido.
+
+Não simplesmente reduza tudo.
+
+A hierarquia deve permanecer:
+
+pergunta > opções > texto auxiliar.
+
+Evitar:
+
+- quebra estranha de palavras;
+- títulos ocupando quase toda a tela;
+- textos muito pequenos;
+- linhas excessivamente longas.
+
+5. ESPAÇAMENTO
+
+Reduza inteligentemente os espaçamentos no mobile.
+
+Não simplesmente aplique:
+
+padding: 40px;
+
+em todos os lados.
+
+O objetivo é aproveitar a altura disponível.
+
+Priorizar visualmente:
+
+HEADER
+↓
+PROGRESSO
+↓
+PERGUNTA
+↓
+OPÇÕES
+↓
+CTA
+
+6. BOTÕES
+
+Os CTAs devem:
+
+- ocupar largura adequada;
+- não ultrapassar a tela;
+- ter altura confortável para toque;
+- possuir padding consistente;
+- permanecer visualmente alinhados;
+- não quebrar em duas linhas sem necessidade.
+
+Evitar botões excessivamente estreitos.
+
+7. CARDS
+
+Todos os cards da LP3 devem:
+
+- respeitar largura da viewport;
+- possuir padding interno adequado;
+- não cortar conteúdo;
+- não gerar overflow;
+- manter hierarquia visual.
+
+8. RESULTADO
+
+A tela de resultado precisa ser confortável no celular.
+
+O diagnóstico pode ocupar mais de uma tela quando necessário, mas deve haver uma hierarquia muito clara.
+
+Não transformar tudo em um bloco gigantesco.
+
+Priorizar:
+
+"o que apareceu nas suas respostas"
+↓
+explicação
+↓
+próximo passo
+
+9. STORY
+
+A história precisa ser legível no celular.
+
+Não altere ainda o conteúdo/storytelling.
+
+Apenas otimize:
+
+- largura;
+- tipografia;
+- line-height;
+- espaçamento;
+- cards;
+- imagens, caso existam.
+
+A implementação de múltiplas histórias será feita posteriormente.
+
+10. PRACTICE / CARTA
+
+A carta/pergunta prática deve parecer uma carta real do produto.
+
+No mobile:
+
+- centralizar corretamente;
+- não ultrapassar viewport;
+- manter proporção;
+- manter padding;
+- manter legibilidade.
+
+11. RECOMMEND / CATÁLOGO DE BARALHOS
+
+Aqui existe uma necessidade específica:
+
+O catálogo deve poder ser explorado horizontalmente com o dedo.
+
+Implementar uma experiência de carrossel horizontal natural.
+
+Exemplo conceitual:
+
+[ Baralho 1 ] [ Baralho 2 ] [ Baralho 3 ] →
+
+O usuário deve conseguir arrastar lateralmente.
+
+IMPORTANTE:
+
+Não criar scrollbar visual feia.
+
+Não permitir que o restante da página fique horizontalmente scrollável.
+
+Somente o container do catálogo deve possuir scroll horizontal.
+
+Os cards devem ter largura adequada para que o usuário perceba que existem outros cards disponíveis.
+
+12. OFERTA
+
+A tela de oferta deve funcionar perfeitamente em mobile.
+
+Priorizar:
+
+- produto;
+- benefício;
+- preço;
+- confiança;
+- CTA.
+
+Nada deve ultrapassar a tela.
+
+13. SAFE AREAS
+
+Considere dispositivos com:
+
+- notch;
+- Dynamic Island;
+- barra inferior do iPhone.
+
+Não colocar elementos importantes colados nas extremidades.
+
+14. ALTURA DA VIEWPORT
+
+Não assumir que:
+
+100vh = altura real disponível.
+
+Quando apropriado, considerar:
+
+100dvh
+
+para evitar problemas em navegadores mobile.
+
+Use isso apenas onde fizer sentido e sem causar problemas em desktop.
+
+15. NÃO ALTERAR DESKTOP DESNECESSARIAMENTE
+
+Os estilos mobile devem ser isolados em media queries/breakpoints sempre que possível.
+
+Não reescreva o layout desktop.
+
+16. NÃO FAZER "GAMBIARRA"
+
+Não resolver problemas simplesmente com:
+
+- overflow:hidden;
+- posições absolutas excessivas;
+- valores negativos;
+- transformações para empurrar elementos;
+- alturas fixas enormes;
+- esconder conteúdo.
+
+Queremos layout responsivo real.
+
+17. ACESSIBILIDADE BÁSICA
+
+Garantir:
+
+- áreas de toque adequadas;
+- contraste suficiente;
+- foco visível;
+- botões semanticamente corretos;
+- texto legível.
+
+VALIDAÇÃO OBRIGATÓRIA:
+
+Depois da implementação:
+
+1. Rode typecheck.
+2. Rode build.
+3. Teste /lp3.
+4. Teste especificamente:
+   - 375x667
+   - 390x844
+   - 430px de largura.
+5. Passe por TODAS as telas:
+   intro
+   question
+   result
+   story
+   practice
+   recommend
+   offer
+6. Confirme que nenhuma tela possui overflow horizontal.
+7. Confirme que nenhum botão está cortado.
+8. Confirme que nenhuma pergunta importante exige scroll desnecessário.
+9. Confirme que o carrossel de baralhos funciona por toque.
+10. Confirme que o fluxo da LP3 continua funcionando exatamente como antes.
+
+IMPORTANTE:
+
+NÃO altere conteúdo, copy ou lógica de negócio nesta tarefa.
+
+NÃO implemente storytelling personalizado ainda.
+
+NÃO implemente checkout ainda.
+
+NÃO faça melhorias adicionais além do escopo.
+
+NO FINAL, INFORME:
+
+- arquivos alterados;
+- principais problemas encontrados;
+- principais correções;
+- telas testadas;
+- tamanhos de viewport testados;
+- resultado do typecheck;
+- resultado do build;
+- confirmação de ausência de overflow horizontal;
+- qualquer problema que permaneça.
