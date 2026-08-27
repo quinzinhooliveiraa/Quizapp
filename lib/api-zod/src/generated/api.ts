@@ -557,6 +557,52 @@ export const GetExperimentAssignmentResponse = zod.object({
 
 
 /**
+ * @summary Resolve the current active experiment for a visitor
+ */
+export const getActiveExperimentAssignmentQueryVisitorKeyMax = 120;
+
+
+
+export const GetActiveExperimentAssignmentQueryParams = zod.object({
+  "visitorKey": zod.coerce.string().min(1).max(getActiveExperimentAssignmentQueryVisitorKeyMax)
+})
+
+export const GetActiveExperimentAssignmentResponse = zod.object({
+  "experimentId": zod.string(),
+  "experimentVariantId": zod.string(),
+  "visitorKey": zod.string(),
+  "landingPage": zod.string(),
+  "assignedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get conversion metrics grouped by experiment variant
+ */
+export const GetAdminExperimentAnalyticsParams = zod.object({
+  "experimentId": zod.coerce.string()
+})
+
+export const GetAdminExperimentAnalyticsQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const GetAdminExperimentAnalyticsResponse = zod.object({
+  "experimentId": zod.string(),
+  "variants": zod.array(zod.object({
+  "variantId": zod.string(),
+  "name": zod.string(),
+  "path": zod.string(),
+  "weight": zod.number(),
+  "visitors": zod.number(),
+  "ctaClicks": zod.number(),
+  "checkoutsStarted": zod.number(),
+  "purchasesConfirmed": zod.number()
+}))
+})
+
+
+/**
  * @summary Submit a suggestion
  */
 export const createSuggestionBodyEmailMax = 200;

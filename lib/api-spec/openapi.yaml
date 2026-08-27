@@ -596,6 +596,53 @@ paths:
                 $ref: "#/components/schemas/ExperimentAssignment"
         "404":
           description: No active experiment found
+  /experiments/assignment:
+    get:
+      operationId: getActiveExperimentAssignment
+      tags: [experiments]
+      summary: Resolve the current active experiment for a visitor
+      parameters:
+        - name: visitorKey
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+      responses:
+        "200":
+          description: Persistent assignment for the current active experiment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperimentAssignment"
+        "404":
+          description: No active experiment found
+  /admin/experiments/{experimentId}/analytics:
+    get:
+      operationId: getAdminExperimentAnalytics
+      tags: [admin]
+      summary: Get conversion metrics grouped by experiment variant
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Experiment metrics grouped by variant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminExperimentAnalyticsResponse"
+        "403":
+          description: Access denied
+        "404":
+          description: Experiment not found
   /suggestions:
     post:
       operationId: createSuggestion
@@ -1331,6 +1378,37 @@ components:
         assignedAt: { type: string, format: date-time }
       required:
         [experimentId, experimentVariantId, visitorKey, landingPage, assignedAt]
+    AdminExperimentAnalyticsVariant:
+      type: object
+      properties:
+        variantId: { type: string }
+        name: { type: string }
+        path: { type: string }
+        weight: { type: number }
+        visitors: { type: number }
+        ctaClicks: { type: number }
+        checkoutsStarted: { type: number }
+        purchasesConfirmed: { type: number }
+      required:
+        [
+          variantId,
+          name,
+          path,
+          weight,
+          visitors,
+          ctaClicks,
+          checkoutsStarted,
+          purchasesConfirmed,
+        ]
+    AdminExperimentAnalyticsResponse:
+      type: object
+      properties:
+        experimentId: { type: string }
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminExperimentAnalyticsVariant"
+      required: [experimentId, variants]
     SessionRecordingLookup:
       type: object
       properties:

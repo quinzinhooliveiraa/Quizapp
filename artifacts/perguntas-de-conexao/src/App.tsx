@@ -113,6 +113,27 @@ const nativeCheckoutEnabled = true;
 const PENDING_CHECKOUT_MAX_AGE_MS = 30 * 60 * 1000;
 const HOSTED_CHECKOUT_MAX_WAIT_MS = 3 * 60 * 1000;
 const HOSTED_CHECKOUT_POLL_INTERVAL_MS = 2000;
+const EXPERIMENT_ASSIGNMENT_STORAGE_KEY = "pdc-experiment-assignment";
+
+type StoredExperimentAssignment = {
+  experimentId: string;
+  experimentVariantId: string;
+};
+
+function getStoredExperimentAssignment(): StoredExperimentAssignment | undefined {
+  try {
+    const raw = sessionStorage.getItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as Partial<StoredExperimentAssignment>;
+    if (!parsed.experimentId || !parsed.experimentVariantId) return undefined;
+    return {
+      experimentId: parsed.experimentId,
+      experimentVariantId: parsed.experimentVariantId,
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 async function copyPixCode(value: string): Promise<boolean> {
   try {
@@ -1980,10 +2001,13 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
       eventType: "view" | "cta_click" | "exit",
       extra: Record<string, unknown> = {},
     ) => {
+      const assignment = getStoredExperimentAssignment();
       const payload = JSON.stringify({
         lpId,
         visitorKey,
         eventType,
+        experimentId: assignment?.experimentId,
+        experimentVariantId: assignment?.experimentVariantId,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
         ...extra,
@@ -2058,6 +2082,7 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
   }, [lpId]);
 
   return (ctaSource?: LandingCtaSource) => {
+    const assignment = getStoredExperimentAssignment();
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2065,6 +2090,8 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
         lpId,
         visitorKey: visitorKeyRef.current,
         eventType: "cta_click",
+        experimentId: assignment?.experimentId,
+        experimentVariantId: assignment?.experimentVariantId,
         ctaSource,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
@@ -2340,6 +2367,15 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           buyerEmail: normalizedEmail || undefined,
           sourceLp: checkoutSourceLp,
           visitorKey: getStoredVisitorKey() || undefined,
+          ...(() => {
+            const assignment = getStoredExperimentAssignment();
+            return assignment
+              ? {
+                  experimentId: assignment.experimentId,
+                  experimentVariantId: assignment.experimentVariantId,
+                }
+              : {};
+          })(),
         }),
       });
       const data = (await response.json()) as {

@@ -475,6 +475,22 @@ export interface ExperimentAssignment {
   assignedAt: string;
 }
 
+export interface AdminExperimentAnalyticsVariant {
+  variantId: string;
+  name: string;
+  path: string;
+  weight: number;
+  visitors: number;
+  ctaClicks: number;
+  checkoutsStarted: number;
+  purchasesConfirmed: number;
+}
+
+export interface AdminExperimentAnalyticsResponse {
+  experimentId: string;
+  variants: AdminExperimentAnalyticsVariant[];
+}
+
 export type SessionRecordingLookupReason = typeof SessionRecordingLookupReason[keyof typeof SessionRecordingLookupReason];
 
 
@@ -620,6 +636,18 @@ export type GetExperimentAssignmentParams = {
  * @maxLength 120
  */
 visitorKey: string;
+};
+
+export type GetActiveExperimentAssignmentParams = {
+/**
+ * @minLength 1
+ * @maxLength 120
+ */
+visitorKey: string;
+};
+
+export type GetAdminExperimentAnalyticsParams = {
+sessionId: string;
 };
 
 export type ListPublicReviews200 = {

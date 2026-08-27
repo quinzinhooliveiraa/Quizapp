@@ -1,13 +1,24 @@
 import crypto from "node:crypto";
 import { Router, type IRouter } from "express";
-import { asc, desc, eq } from "drizzle-orm";
-import { db, experimentVariantsTable, experimentsTable } from "@workspace/db";
+import { and, asc, count, desc, eq, sql } from "drizzle-orm";
+import {
+  db,
+  experimentVariantsTable,
+  experimentsTable,
+  pageEventsTable,
+  sessionsTable,
+} from "@workspace/db";
 import {
   CreateAdminExperimentBody,
   CreateAdminExperimentResponse,
   GetExperimentAssignmentParams,
   GetExperimentAssignmentQueryParams,
   GetExperimentAssignmentResponse,
+  GetActiveExperimentAssignmentQueryParams,
+  GetActiveExperimentAssignmentResponse,
+  GetAdminExperimentAnalyticsParams,
+  GetAdminExperimentAnalyticsQueryParams,
+  GetAdminExperimentAnalyticsResponse,
   ListAdminExperimentsQueryParams,
   ListAdminExperimentsResponse,
   UpdateAdminExperimentStatusBody,
@@ -15,7 +26,10 @@ import {
   UpdateAdminExperimentStatusQueryParams,
   UpdateAdminExperimentStatusResponse,
 } from "@workspace/api-zod";
-import { getOrCreateExperimentAssignment } from "../lib/experiments";
+import {
+  getOrCreateExperimentAssignment,
+  resolveActiveExperimentAssignment,
+} from "../lib/experiments";
 import { isAdminSession } from "./feedback";
 
 const router: IRouter = Router();
@@ -101,7 +115,10 @@ router.post("/admin/experiments", async (req, res): Promise<void> => {
       (variant) =>
         !variant.name ||
         !variant.path.startsWith("/") ||
-        !Number.isInteger(variant.weight),
+        variant.path.startsWith("//") ||
+        !Number.isInteger(variant.weight) ||
+        variant.weight < 0 ||
+        variant.weight > 100,
     ) ||
     variants.reduce((total, variant) => total + variant.weight, 0) !== 100
   ) {
@@ -216,6 +233,113 @@ router.get(
       return;
     }
     res.json(GetExperimentAssignmentResponse.parse(assignment));
+  },
+);
+
+router.get("/experiments/assignment", async (req, res): Promise<void> => {
+  const query = GetActiveExperimentAssignmentQueryParams.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: "Identificação do visitante inválida" });
+    return;
+  }
+
+  const assignment = await resolveActiveExperimentAssignment(
+    query.data.visitorKey,
+  );
+  if (!assignment) {
+    res.status(404).json({ error: "Nenhum experimento ativo encontrado" });
+    return;
+  }
+  res.json(GetActiveExperimentAssignmentResponse.parse(assignment));
+});
+
+router.get(
+  "/admin/experiments/:experimentId/analytics",
+  async (req, res): Promise<void> => {
+    const params = GetAdminExperimentAnalyticsParams.safeParse(req.params);
+    const query = GetAdminExperimentAnalyticsQueryParams.safeParse(req.query);
+    if (
+      !params.success ||
+      !query.success ||
+      !(await isAdminSession(query.data.sessionId))
+    ) {
+      res.status(403).json({ error: "Acesso negado" });
+      return;
+    }
+
+    const experiment = await getExperimentWithVariants(
+      params.data.experimentId,
+    );
+    if (!experiment) {
+      res.status(404).json({ error: "Experimento não encontrado" });
+      return;
+    }
+
+    const variants = await Promise.all(
+      experiment.variants.map(async (variant) => {
+        const [visitors, ctaClicks, checkouts, purchases] = await Promise.all([
+          db
+            .select({
+              value: sql<number>`count(distinct ${pageEventsTable.visitorKey})`,
+            })
+            .from(pageEventsTable)
+            .where(
+              and(
+                eq(pageEventsTable.experimentId, experiment.id),
+                eq(pageEventsTable.experimentVariantId, variant.id),
+                eq(pageEventsTable.eventType, "view"),
+              ),
+            ),
+          db
+            .select({ value: count() })
+            .from(pageEventsTable)
+            .where(
+              and(
+                eq(pageEventsTable.experimentId, experiment.id),
+                eq(pageEventsTable.experimentVariantId, variant.id),
+                eq(pageEventsTable.eventType, "cta_click"),
+              ),
+            ),
+          db
+            .select({ value: count() })
+            .from(sessionsTable)
+            .where(
+              and(
+                eq(sessionsTable.experimentId, experiment.id),
+                eq(sessionsTable.experimentVariantId, variant.id),
+              ),
+            ),
+          db
+            .select({ value: count() })
+            .from(sessionsTable)
+            .where(
+              and(
+                eq(sessionsTable.experimentId, experiment.id),
+                eq(sessionsTable.experimentVariantId, variant.id),
+                eq(sessionsTable.accessGranted, true),
+              ),
+            ),
+        ]);
+
+        return {
+          variantId: variant.id,
+          name: variant.name,
+          path: variant.path,
+          weight: variant.weight,
+          visitors: Number(visitors[0]?.value || 0),
+          ctaClicks: Number(ctaClicks[0]?.value || 0),
+          checkoutsStarted: Number(checkouts[0]?.value || 0),
+          purchasesConfirmed: Number(purchases[0]?.value || 0),
+        };
+      }),
+    );
+
+    res.json(
+      GetAdminExperimentAnalyticsResponse.parse({
+        experimentId: experiment.id,
+        variants,
+      }),
+    );
   },
 );
 

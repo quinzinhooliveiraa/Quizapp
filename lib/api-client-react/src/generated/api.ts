@@ -23,6 +23,7 @@ import type {
   AbacatePayWebhook,
   AbacatePayWebhookResult,
   AccessState,
+  AdminExperimentAnalyticsResponse,
   AdminExperimentsResponse,
   CancelInvite200,
   CheckAccessEmail200,
@@ -37,8 +38,10 @@ import type {
   ExperimentAssignment,
   ExperimentInput,
   ExperimentStatusUpdate,
+  GetActiveExperimentAssignmentParams,
   GetAdminAnalytics200,
   GetAdminAnalyticsParams,
+  GetAdminExperimentAnalyticsParams,
   GetAdminSessionRecordingParams,
   GetExperimentAssignmentParams,
   GetPreferencesParams,
@@ -2146,6 +2149,179 @@ export function useGetExperimentAssignment<TData = Awaited<ReturnType<typeof get
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetExperimentAssignmentQueryOptions(experimentId,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetActiveExperimentAssignmentUrl = (params: GetActiveExperimentAssignmentParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/experiments/assignment?${stringifiedParams}` : `/api/experiments/assignment`
+}
+
+/**
+ * @summary Resolve the current active experiment for a visitor
+ */
+export const getActiveExperimentAssignment = async (params: GetActiveExperimentAssignmentParams, options?: Parameters<typeof customFetch>[1]): Promise<ExperimentAssignment> => {
+
+  return customFetch<ExperimentAssignment>(getGetActiveExperimentAssignmentUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetActiveExperimentAssignmentQueryKey = (params?: GetActiveExperimentAssignmentParams,) => {
+    return [
+    `/api/experiments/assignment`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetActiveExperimentAssignmentQueryOptions = <TData = Awaited<ReturnType<typeof getActiveExperimentAssignment>>, TError = ErrorType<void>>(params: GetActiveExperimentAssignmentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getActiveExperimentAssignment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetActiveExperimentAssignmentQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getActiveExperimentAssignment>>> = ({ signal }) => getActiveExperimentAssignment(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getActiveExperimentAssignment>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetActiveExperimentAssignmentQueryResult = NonNullable<Awaited<ReturnType<typeof getActiveExperimentAssignment>>>
+export type GetActiveExperimentAssignmentQueryError = ErrorType<void>
+
+
+/**
+ * @summary Resolve the current active experiment for a visitor
+ */
+
+export function useGetActiveExperimentAssignment<TData = Awaited<ReturnType<typeof getActiveExperimentAssignment>>, TError = ErrorType<void>>(
+ params: GetActiveExperimentAssignmentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getActiveExperimentAssignment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetActiveExperimentAssignmentQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminExperimentAnalyticsUrl = (experimentId: string,
+    params: GetAdminExperimentAnalyticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/experiments/${experimentId}/analytics?${stringifiedParams}` : `/api/admin/experiments/${experimentId}/analytics`
+}
+
+/**
+ * @summary Get conversion metrics grouped by experiment variant
+ */
+export const getAdminExperimentAnalytics = async (experimentId: string,
+    params: GetAdminExperimentAnalyticsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminExperimentAnalyticsResponse> => {
+
+  return customFetch<AdminExperimentAnalyticsResponse>(getGetAdminExperimentAnalyticsUrl(experimentId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminExperimentAnalyticsQueryKey = (experimentId: string,
+    params?: GetAdminExperimentAnalyticsParams,) => {
+    return [
+    `/api/admin/experiments/${experimentId}/analytics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminExperimentAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminExperimentAnalytics>>, TError = ErrorType<void>>(experimentId: string,
+    params: GetAdminExperimentAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminExperimentAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminExperimentAnalyticsQueryKey(experimentId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminExperimentAnalytics>>> = ({ signal }) => getAdminExperimentAnalytics(experimentId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: experimentId !== null && experimentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminExperimentAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminExperimentAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminExperimentAnalytics>>>
+export type GetAdminExperimentAnalyticsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get conversion metrics grouped by experiment variant
+ */
+
+export function useGetAdminExperimentAnalytics<TData = Awaited<ReturnType<typeof getAdminExperimentAnalytics>>, TError = ErrorType<void>>(
+ experimentId: string,
+    params: GetAdminExperimentAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminExperimentAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminExperimentAnalyticsQueryOptions(experimentId,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

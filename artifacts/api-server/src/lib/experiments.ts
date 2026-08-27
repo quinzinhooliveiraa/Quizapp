@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import {
   db,
   experimentAssignmentsTable,
@@ -95,4 +95,56 @@ export async function getOrCreateExperimentAssignment(
     .limit(1);
 
   return assignment;
+}
+
+/**
+ * Returns the most recently configured assignment for a visitor, but only
+ * while its experiment is active. This is intentionally separate from the
+ * router entry point: callers that are not part of the future router can
+ * enrich tracking without creating a new assignment.
+ */
+export async function getActiveAssignmentForVisitor(visitorKey: string) {
+  const [assignment] = await db
+    .select({
+      id: experimentAssignmentsTable.id,
+      experimentId: experimentAssignmentsTable.experimentId,
+      experimentVariantId: experimentAssignmentsTable.experimentVariantId,
+      visitorKey: experimentAssignmentsTable.visitorKey,
+      landingPage: experimentAssignmentsTable.landingPage,
+      assignedAt: experimentAssignmentsTable.assignedAt,
+    })
+    .from(experimentAssignmentsTable)
+    .innerJoin(
+      experimentsTable,
+      eq(experimentsTable.id, experimentAssignmentsTable.experimentId),
+    )
+    .where(
+      and(
+        eq(experimentAssignmentsTable.visitorKey, visitorKey),
+        eq(experimentsTable.status, ACTIVE_STATUS),
+      ),
+    )
+    .orderBy(desc(experimentAssignmentsTable.assignedAt))
+    .limit(1);
+
+  return assignment;
+}
+
+/**
+ * Future router entry point. It chooses the newest active experiment and
+ * creates (or reuses) one deterministic assignment for the visitor.
+ *
+ * No current landing page calls this function. Keeping the activation point
+ * explicit prevents a draft or an accidental database row from changing `/`.
+ */
+export async function resolveActiveExperimentAssignment(visitorKey: string) {
+  const [experiment] = await db
+    .select({ id: experimentsTable.id })
+    .from(experimentsTable)
+    .where(eq(experimentsTable.status, ACTIVE_STATUS))
+    .orderBy(desc(experimentsTable.createdAt))
+    .limit(1);
+
+  if (!experiment) return undefined;
+  return getOrCreateExperimentAssignment(experiment.id, visitorKey);
 }

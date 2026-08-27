@@ -509,6 +509,74 @@
   color: rgba(255, 255, 255, 0.4);
   text-align: right;
 }
+.admin-experiment-analytics {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-experiment-analytics-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+}
+.admin-experiment-analytics-heading span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.admin-experiment-analytics-heading small {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.68rem;
+}
+.admin-experiment-analytics-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+.admin-experiment-analytics-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.5fr) repeat(4, minmax(58px, 0.65fr));
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  background: rgba(196, 172, 255, 0.045);
+  border-radius: 0.45rem;
+  font-size: 0.72rem;
+}
+.admin-experiment-analytics-row > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.admin-experiment-analytics-row strong {
+  overflow: hidden;
+  color: #f9f8fb;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-experiment-analytics-row code {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-experiment-analytics-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  color: rgba(255, 255, 255, 0.42);
+  text-align: right;
+}
+.admin-experiment-analytics-row b {
+  color: #c4acff;
+  font-size: 0.82rem;
+}
+.admin-experiment-analytics-row small {
+  font-size: 0.62rem;
+}
 .admin-experiment-card-footer {
   align-items: center;
   margin-top: 1rem;
@@ -1306,6 +1374,29 @@
   }
   .admin-metric-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-experiment-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-experiment-description {
+    grid-column: auto;
+  }
+  .admin-experiment-variant-row {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) 92px auto;
+  }
+  .admin-experiment-variant-row label:nth-of-type(4) {
+    grid-column: 2 / span 2;
+  }
+  .admin-experiment-analytics-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .admin-experiment-analytics-row {
+    grid-template-columns: minmax(100px, 1.3fr) repeat(4, minmax(48px, 0.7fr));
+    gap: 0.35rem;
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
   }
   .admin-tab {
     padding-left: 0.35rem;

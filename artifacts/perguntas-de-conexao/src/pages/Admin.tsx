@@ -103,6 +103,16 @@ type ExperimentDraftVariant = {
   weight: string;
   status: ExperimentVariantStatus;
 };
+type ExperimentAnalyticsVariant = {
+  variantId: string;
+  name: string;
+  path: string;
+  weight: number;
+  visitors: number;
+  ctaClicks: number;
+  checkoutsStarted: number;
+  purchasesConfirmed: number;
+};
 
 const LANDINGS: LandingEntry[] = [
   {
@@ -929,6 +939,85 @@ function createInitialExperimentVariants(): ExperimentDraftVariant[] {
   ];
 }
 
+function ExperimentAnalytics({
+  experimentId,
+  sessionId,
+}: {
+  experimentId: string;
+  sessionId: string;
+}) {
+  const [variants, setVariants] = useState<ExperimentAnalyticsVariant[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch(
+      `${apiBaseUrl}/api/admin/experiments/${encodeURIComponent(experimentId)}/analytics?sessionId=${encodeURIComponent(sessionId)}`,
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error("analytics");
+        return (await response.json()) as {
+          variants?: ExperimentAnalyticsVariant[];
+        };
+      })
+      .then((data) => {
+        if (mounted) setVariants(data.variants || []);
+      })
+      .catch(() => {
+        if (mounted) setVariants([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [experimentId, sessionId]);
+
+  return (
+    <div className="admin-experiment-analytics">
+      <div className="admin-experiment-analytics-heading">
+        <span>Métricas por variante</span>
+        <small>visitantes · CTA · checkout · compra</small>
+      </div>
+      {loading ? (
+        <p className="admin-footnote">Carregando métricas…</p>
+      ) : variants.length === 0 ? (
+        <p className="admin-footnote">
+          As métricas aparecerão quando o experimento tiver atribuições.
+        </p>
+      ) : (
+        <div className="admin-experiment-analytics-grid">
+          {variants.map((variant) => (
+            <div key={variant.variantId} className="admin-experiment-analytics-row">
+              <div>
+                <strong>{variant.name}</strong>
+                <code>{variant.path}</code>
+              </div>
+              <span>
+                <b>{variant.visitors}</b>
+                <small>visitantes</small>
+              </span>
+              <span>
+                <b>{variant.ctaClicks}</b>
+                <small>CTA</small>
+              </span>
+              <span>
+                <b>{variant.checkoutsStarted}</b>
+                <small>checkout</small>
+              </span>
+              <span>
+                <b>{variant.purchasesConfirmed}</b>
+                <small>compras</small>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ExperimentsTab({ sessionId }: { sessionId: string }) {
   const [experiments, setExperiments] = useState<ExperimentEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1338,6 +1427,10 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                     </div>
                   ))}
                 </div>
+                <ExperimentAnalytics
+                  experimentId={experiment.id}
+                  sessionId={sessionId}
+                />
                 <div className="admin-experiment-card-footer">
                   <small>Criado em {formatDate(experiment.createdAt)}</small>
                   <div>

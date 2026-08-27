@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { and, asc, count, desc, eq, gte, sql } from "drizzle-orm";
 import { db, pageEventsTable, sessionsTable } from "@workspace/db";
 import { isAdminSession } from "./feedback";
+import { getActiveAssignmentForVisitor } from "../lib/experiments";
 
 const router: IRouter = Router();
 const LP_IDS = ["v1", "v2", "lp3"] as const;
@@ -41,14 +42,21 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Associação de experimento inválida" });
     return;
   }
+  const assignment =
+    body.experimentId && body.experimentVariantId
+      ? undefined
+      : await getActiveAssignmentForVisitor(body.visitorKey.trim());
+  const experimentId = body.experimentId?.trim() || assignment?.experimentId;
+  const experimentVariantId =
+    body.experimentVariantId?.trim() || assignment?.experimentVariantId;
   const lpId = body.lpId as (typeof LP_IDS)[number];
   const eventType = body.eventType as (typeof EVENT_TYPES)[number];
   await db.insert(pageEventsTable).values({
     id: crypto.randomUUID(),
     lpId,
     visitorKey: body.visitorKey.trim().slice(0, 120),
-    experimentId: body.experimentId?.trim().slice(0, 120) || null,
-    experimentVariantId: body.experimentVariantId?.trim().slice(0, 120) || null,
+    experimentId: experimentId?.slice(0, 120) || null,
+    experimentVariantId: experimentVariantId?.slice(0, 120) || null,
     eventType,
     timeOnPageMs:
       typeof body.timeOnPageMs === "number" &&

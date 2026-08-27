@@ -1,0 +1,370 @@
+TAREFA — CRIAR SISTEMA GENÉRICO DE EXPERIMENTOS A/B
+SEM ATIVAR NENHUM EXPERIMENTO
+
+IMPORTANTE:
+
+A LP1, LP2, LP3, tracking, Clarity, Admin e checkout já existem.
+
+NÃO quero modificar visualmente nenhuma landing page.
+
+NÃO quero alterar a distribuição atual de tráfego.
+
+NÃO quero que o domínio principal passe a enviar usuários para LP3 agora.
+
+O objetivo desta etapa é SOMENTE construir a infraestrutura do sistema de experimentos, deixando-a DESATIVADA.
+
+==================================================
+OBJETIVO
+==================================================
+
+Criar no sistema existente um mecanismo genérico para futuramente testar diferentes LPs.
+
+Exemplo futuro:
+
+LP1 vs LP3
+
+Mas a arquitetura deve permitir posteriormente:
+
+LP1 vs LP3 vs LP4
+
+ou
+
+LP3-A vs LP3-B
+
+sem precisar reconstruir o sistema.
+
+==================================================
+REGRA MAIS IMPORTANTE
+==================================================
+
+O experimento deve nascer DESATIVADO.
+
+Enquanto estiver desativado:
+
+/
+
+deve continuar funcionando EXATAMENTE como funciona hoje.
+
+Não alterar o comportamento atual do link principal.
+
+Não redirecionar visitantes para /lp3.
+
+Não modificar LP1.
+
+Não modificar LP2.
+
+Não modificar LP3.
+
+Não alterar tracking existente.
+
+==================================================
+ADMIN
+==================================================
+
+Adicionar uma nova seção/aba no Admin chamada:
+
+"Experimentos"
+
+A interface deve permitir:
+
+1. Criar experimento.
+
+Campos:
+
+- Nome
+- Descrição opcional
+- Objetivo
+- Variantes
+- Percentual de cada variante
+- Status
+
+Exemplo:
+
+Nome:
+LP1 vs LP3 — Agosto 2026
+
+Objetivo:
+Compra
+
+Variantes:
+
+LP1 — 50%
+LP3 — 50%
+
+Status:
+Desativado
+
+==================================================
+VARIANTES
+==================================================
+
+A variante deve possuir:
+
+- id interno
+- nome
+- landing page/path
+- percentual de distribuição
+- status
+
+Exemplo:
+
+variant A:
+name = "LP1"
+path = "/"
+weight = 50
+
+variant B:
+name = "LP3"
+path = "/lp3"
+weight = 50
+
+Validar que a soma dos pesos seja exatamente 100%.
+
+==================================================
+STATUS
+==================================================
+
+O experimento deve possuir pelo menos:
+
+draft
+active
+paused
+completed
+
+Porém:
+
+NOVOS EXPERIMENTOS DEVEM SER CRIADOS COMO "draft".
+
+Nenhum experimento deve ser ativado automaticamente.
+
+==================================================
+ROUTER
+==================================================
+
+Criar a infraestrutura para um router de experimentos.
+
+PORÉM:
+
+O router NÃO deve ser ativado no domínio principal nesta etapa.
+
+Não alterar:
+
+/
+ 
+para começar a distribuir LP1/LP3.
+
+O comportamento atual deve permanecer intacto enquanto não existir um experimento explicitamente ativo.
+
+==================================================
+DISTRIBUIÇÃO FUTURA
+==================================================
+
+Quando futuramente um experimento estiver ativo, o router deverá:
+
+1. identificar o visitante;
+2. selecionar uma variante de acordo com os pesos;
+3. persistir a variante selecionada para aquele visitante;
+4. garantir que o mesmo visitante continue vendo a mesma variante durante o experimento;
+5. registrar qual variante foi atribuída;
+6. enviar essa informação para o tracking existente.
+
+IMPORTANTE:
+
+Não utilizar Math.random() em cada carregamento.
+
+A atribuição deve ser persistente.
+
+==================================================
+TRACKING
+==================================================
+
+Reutilizar o sistema de tracking existente.
+
+Não criar um segundo sistema de analytics.
+
+Quando um experimento estiver ativo, registrar:
+
+experimentId
+experimentVariantId
+visitorKey
+landingPage
+timestamp
+
+Os eventos existentes de:
+
+view
+cta_click
+checkout
+purchase
+
+devem poder ser associados ao experimento e à variante.
+
+NÃO quebrar o tracking atual de v1, v2 ou lp3.
+
+==================================================
+CONVERSÃO
+==================================================
+
+O sistema deve permitir futuramente comparar:
+
+visitantes
+→ CTA
+→ checkout
+→ compra
+
+por variante.
+
+Exemplo:
+
+LP1
+1000 visitantes
+50 checkouts
+10 compras
+
+LP3
+1000 visitantes
+80 checkouts
+18 compras
+
+Não implementar otimização automática nesta etapa.
+
+==================================================
+OTIMIZAÇÃO AUTOMÁTICA
+==================================================
+
+NÃO IMPLEMENTAR AINDA.
+
+Somente deixar a arquitetura preparada para futuramente suportar:
+
+- mínimo de visitantes;
+- mínimo de compras;
+- diferença mínima entre variantes;
+- período mínimo;
+- ativação da variante vencedora.
+
+Mas nenhum algoritmo deve alterar pesos automaticamente agora.
+
+==================================================
+KILL SWITCH
+==================================================
+
+O Admin deve permitir:
+
+DESATIVAR EXPERIMENTO
+
+Quando um experimento for desativado:
+
+- o router deixa de distribuir tráfego;
+- o domínio volta ao comportamento normal;
+- nenhuma nova atribuição é feita.
+
+IMPORTANTE:
+
+Deve existir uma forma clara de desligar o experimento imediatamente.
+
+==================================================
+PRESERVAÇÃO
+==================================================
+
+NÃO modificar visualmente:
+
+LP1
+LP2
+LP3
+Onboarding
+Checkout
+Admin existente além da nova seção
+App principal
+Clarity
+
+Não refatorar código existente sem necessidade.
+
+Reutilizar as estruturas existentes de:
+
+tracking
+visitorKey
+sourceLp
+analytics
+Admin
+
+Sempre que possível.
+
+==================================================
+BANCO / API
+==================================================
+
+Antes de implementar:
+
+1. audite o schema atual;
+2. identifique onde experimentos podem ser armazenados;
+3. identifique os endpoints administrativos existentes;
+4. reutilize estruturas existentes quando apropriado.
+
+Se for necessário criar tabelas novas, mantenha-as isoladas.
+
+Sugestão conceitual:
+
+experiments
+experiment_variants
+experiment_assignments
+
+Mas NÃO crie essas tabelas se já existir estrutura equivalente.
+
+==================================================
+VALIDAÇÃO
+==================================================
+
+Executar:
+
+- typecheck
+- build frontend
+- build backend
+- git diff --check
+
+Também verificar:
+
+1. / continua igual ao comportamento atual.
+2. /lp2 continua funcionando.
+3. /lp3 continua funcionando.
+4. onboarding continua funcionando.
+5. checkout continua funcionando.
+6. tracking atual continua funcionando.
+7. Admin continua funcionando.
+8. Novo sistema de Experimentos aparece no Admin.
+9. Novo experimento nasce DESATIVADO.
+10. Nenhum visitante é enviado para LP3 automaticamente.
+11. Não existe alteração de distribuição enquanto o experimento estiver desativado.
+
+==================================================
+ANTES DE ALTERAR
+==================================================
+
+Primeiro faça uma auditoria curta e informe:
+
+- onde está o sistema atual de tracking;
+- onde está o Admin;
+- onde estão os dados de sessões/visitantes;
+- onde está sourceLp;
+- quais arquivos serão alterados;
+- quais tabelas/APIs serão necessárias;
+- como o router será ativado futuramente.
+
+Depois implemente somente o necessário.
+
+==================================================
+RESULTADO FINAL
+==================================================
+
+Ao terminar, informe:
+
+1. arquivos alterados;
+2. tabelas criadas ou reutilizadas;
+3. endpoints criados ou reutilizados;
+4. como o experimento é configurado;
+5. como o router será ativado futuramente;
+6. como o kill switch funciona;
+7. como a atribuição persistente funciona;
+8. testes executados;
+9. confirmar explicitamente:
+
+"LP3 NÃO está recebendo tráfego do domínio principal porque nenhum experimento foi ativado."

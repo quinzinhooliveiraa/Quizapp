@@ -41,6 +41,7 @@ import {
   verifyAbacateSignature,
 } from "../lib/abacatepay";
 import { sendPurchaseNotification } from "../lib/push";
+import { getActiveAssignmentForVisitor } from "../lib/experiments";
 
 type Theme = {
   id: string;
@@ -552,6 +553,18 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
 
   const mode = parsed.data.mode ?? "native";
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
+  if (
+    Boolean(parsed.data.experimentId) !==
+    Boolean(parsed.data.experimentVariantId)
+  ) {
+    res.status(400).json({ error: "Associação de experimento inválida" });
+    return;
+  }
+  const visitorKey = parsed.data.visitorKey?.trim().slice(0, 120) || null;
+  const assignment =
+    visitorKey && !parsed.data.experimentId && !parsed.data.experimentVariantId
+      ? await getActiveAssignmentForVisitor(visitorKey)
+      : undefined;
 
   const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;
   if (mode === "hosted" && !productId) {
@@ -570,10 +583,15 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       packageId: parsed.data.packageId,
       packageName: config.name,
       sourceLp: parsed.data.sourceLp || null,
-      visitorKey: parsed.data.visitorKey?.trim().slice(0, 120) || null,
-      experimentId: parsed.data.experimentId?.trim().slice(0, 120) || null,
+       visitorKey,
+       experimentId:
+         parsed.data.experimentId?.trim().slice(0, 120) ||
+         assignment?.experimentId ||
+         null,
       experimentVariantId:
-        parsed.data.experimentVariantId?.trim().slice(0, 120) || null,
+         parsed.data.experimentVariantId?.trim().slice(0, 120) ||
+         assignment?.experimentVariantId ||
+         null,
       inviteLimit: config.limit,
       invitesUsed: 0,
       accessGranted: false,
