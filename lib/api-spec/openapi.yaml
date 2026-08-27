@@ -697,7 +697,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [v1, v2]
+            enum: [v1, v2, lp3]
       responses:
         "200":
           description: Recent landing page sessions
@@ -1100,7 +1100,7 @@ components:
           pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
         sourceLp:
           type: string
-          enum: [v1, v2]
+          enum: [v1, v2, lp3]
         visitorKey:
           type: string
           minLength: 1
@@ -1109,7 +1109,7 @@ components:
     PageEventInput:
       type: object
       properties:
-        lpId: { type: string, enum: [v1, v2] }
+        lpId: { type: string, enum: [v1, v2, lp3] }
         visitorKey: { type: string, minLength: 1, maxLength: 120 }
         eventType: { type: string, enum: [view, cta_click, exit] }
         timeOnPageMs: { type: number, minimum: 0 }
@@ -1133,7 +1133,7 @@ components:
     LandingAnalytics:
       type: object
       properties:
-        lpId: { type: string, enum: [v1, v2] }
+        lpId: { type: string, enum: [v1, v2, lp3] }
         views: { type: number }
         ctaClicks: { type: number }
         checkoutsStarted: { type: number }

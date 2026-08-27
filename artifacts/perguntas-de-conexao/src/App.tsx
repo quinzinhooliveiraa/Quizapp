@@ -1903,7 +1903,7 @@ function StoredAccessGate() {
 
 type LandingCtaSource = "hero_quiz" | "hero_comprar";
 
-function useLpTracking(lpId: "v1" | "v2") {
+function useLpTracking(lpId: "v1" | "v2" | "lp3") {
   const visitorKeyRef = useRef<string>("");
   const clarityUserIdRef = useRef("");
   const claritySessionIdRef = useRef("");
@@ -3130,6 +3130,19 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
         </div>
       )}
     </Shell>
+  );
+}
+
+function TrackedLp3() {
+  const trackCtaClick = useLpTracking("lp3");
+
+  return (
+    <Lp3
+      onCtaClick={() => trackCtaClick()}
+      onCheckout={() => {
+        window.location.href = "/?comprar=1&source=lp3";
+      }}
+    />
   );
 }
 
@@ -7345,11 +7358,7 @@ function Router() {
           <Home />
         </Route>
         <Route path="/lp3">
-          <Lp3
-            onCheckout={() => {
-              window.location.href = "/?comprar=1&source=lp3";
-            }}
-          />
+          <TrackedLp3 />
         </Route>
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/login" component={Login} />

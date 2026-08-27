@@ -5,7 +5,7 @@ import { db, pageEventsTable, sessionsTable } from "@workspace/db";
 import { isAdminSession } from "./feedback";
 
 const router: IRouter = Router();
-const LP_IDS = ["v1", "v2"] as const;
+const LP_IDS = ["v1", "v2", "lp3"] as const;
 const EVENT_TYPES = ["view", "cta_click", "exit"] as const;
 const CTA_SOURCES = ["hero_quiz", "hero_comprar"] as const;
 

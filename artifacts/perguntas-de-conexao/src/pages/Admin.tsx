@@ -90,6 +90,13 @@ const LANDINGS: LandingEntry[] = [
     description:
       "A página principal com o hero de mockups e a experiência guiada de perguntas.",
   },
+  {
+    id: "lp3",
+    label: "LP3 — Quiz + narrativa",
+    path: "/lp3",
+    description:
+      "Landing baseada em quiz, narrativa personalizada e recomendação de baralho.",
+  },
 ];
 
 const TABS = [

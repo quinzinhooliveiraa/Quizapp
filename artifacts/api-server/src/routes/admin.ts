@@ -164,7 +164,7 @@ router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
     res.status(403).json({ error: "Acesso negado" });
     return;
   }
-  if (lpId !== "v1" && lpId !== "v2") {
+  if (lpId !== "v1" && lpId !== "v2" && lpId !== "lp3") {
     res.status(400).json({ error: "Landing page inválida" });
     return;
   }

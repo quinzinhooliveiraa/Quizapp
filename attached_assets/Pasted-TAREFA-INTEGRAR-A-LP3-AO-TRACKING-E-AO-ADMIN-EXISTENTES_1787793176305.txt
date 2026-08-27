@@ -1,0 +1,447 @@
+TAREFA: INTEGRAR A LP3 AO TRACKING E AO ADMIN EXISTENTES
+
+IMPORTANTE:
+Esta tarefa é EXCLUSIVAMENTE para fazer a LP3 aparecer e ser mensurada no sistema de tracking/analytics/Admin que já existe.
+
+NÃO recrie o sistema.
+NÃO refatore a arquitetura.
+NÃO altere visualmente LP1, LP2, onboarding ou app.
+NÃO implemente A/B testing.
+NÃO implemente Router 50/50.
+NÃO implemente otimização automática.
+NÃO altere o checkout transparente.
+NÃO apague nem reverta código existente.
+
+Antes de editar:
+1. Leia o código atual.
+2. Identifique exatamente como v1 e v2 fazem tracking.
+3. Identifique como o Admin busca analytics e sessões.
+4. Identifique como o Clarity é inicializado.
+5. Identifique quais alterações locais/commitadas já existem para LP3.
+6. Reutilize a infraestrutura existente sempre que possível.
+
+OBJETIVO FINAL:
+
+A LP3 deve funcionar no mesmo sistema de observabilidade das outras LPs:
+
+LP3
+→ tracking existente
+→ Microsoft Clarity
+→ page_events
+→ /api/admin/analytics
+→ /api/admin/lp-sessions
+→ gravações do Clarity
+→ painel Admin
+
+==================================================
+1. LP3 NO TRACKING
+==================================================
+
+Arquivo provável:
+artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+
+Faça a LP3 utilizar o MESMO mecanismo de tracking já utilizado por v1/v2.
+
+Não crie um segundo sistema de tracking.
+
+Se existir um hook compartilhado como:
+
+useLpTracking(lpId)
+
+ou equivalente, reutilize-o.
+
+A LP3 deve possuir:
+
+lpId = "lp3"
+
+O tracking deve registrar pelo menos:
+
+- view
+- cta_click
+- exit
+
+E, se a infraestrutura existente já possuir eventos adicionais úteis, preserve-os sem criar uma arquitetura paralela.
+
+IMPORTANTE:
+Os eventos específicos da experiência LP3 podem continuar existindo no frontend, mas os eventos importantes para analytics precisam chegar ao backend através do mecanismo existente.
+
+==================================================
+2. MICROSOFT CLARITY
+==================================================
+
+A LP3 deve inicializar o MESMO Clarity usado pelas outras landing pages.
+
+Não crie outro projeto Clarity.
+Não altere o ID existente.
+Não duplique o script.
+
+A LP3 precisa:
+
+- gerar/recuperar o mesmo visitorKey usado pelo sistema;
+- identificar o visitante no Clarity;
+- capturar clarityUserId;
+- capturar claritySessionId;
+- enviar esses identificadores ao backend da mesma maneira que v1/v2.
+
+Objetivo:
+
+Quando eu entrar no Admin → LP3 → Sessões → Ver gravação,
+
+deve ser possível encontrar a gravação correspondente no Clarity quando ela existir.
+
+==================================================
+3. BACKEND DE TRACKING
+==================================================
+
+Arquivo:
+
+artifacts/api-server/src/routes/tracking.ts
+
+Atualmente o sistema reconhece v1/v2.
+
+Adicione "lp3" de forma explícita aos IDs válidos.
+
+Exemplo conceitual:
+
+lpId: "v1" | "v2" | "lp3"
+
+NÃO altere o comportamento de v1 ou v2.
+
+O endpoint existente:
+
+POST /api/track/page-event
+
+deve aceitar eventos da LP3 usando a mesma estrutura existente.
+
+Preserve a validação atual.
+
+Não crie:
+
+POST /api/track/lp3
+
+ou qualquer endpoint paralelo.
+
+==================================================
+4. BANCO / PAGE_EVENTS
+==================================================
+
+Se o schema atual possui enum/restrição que impede lp3 em page_events, faça apenas a alteração mínima necessária para permitir:
+
+lp3
+
+Não crie uma tabela nova de tracking.
+
+A LP3 deve utilizar a mesma tabela:
+
+page_events
+
+e os mesmos campos usados por v1/v2.
+
+Se houver metadata específica já suportada pelo schema, ela pode ser preservada.
+
+Não altere a estrutura existente desnecessariamente.
+
+==================================================
+5. OPENAPI / CLIENTES
+==================================================
+
+Se:
+
+lib/api-spec/openapi.yaml
+
+possui enum de LPs que atualmente aceita somente:
+
+v1
+v2
+
+adicione:
+
+lp3
+
+Depois regenere os clientes gerados somente se o projeto exigir isso pelo workflow existente.
+
+Não edite manualmente arquivos generated se houver comando oficial de geração.
+
+==================================================
+6. ADMIN — ADICIONAR LP3
+==================================================
+
+Arquivo:
+
+artifacts/perguntas-de-conexao/src/pages/Admin.tsx
+
+Existe atualmente uma lista semelhante a:
+
+LANDINGS = [
+  v1,
+  v2
+]
+
+Adicione uma terceira entrada:
+
+id: "lp3"
+label: algo como:
+"LP3 — Quiz + narrativa"
+
+path:
+"/lp3"
+
+description:
+uma descrição curta e fiel à LP3 atual.
+
+Exemplo:
+
+{
+  id: "lp3",
+  label: "LP3 — Quiz + narrativa",
+  path: "/lp3",
+  description:
+    "Landing baseada em quiz, narrativa personalizada e recomendação de baralho."
+}
+
+IMPORTANTE:
+Não alterar a apresentação das entradas v1/v2.
+
+A LP3 deve usar exatamente o mesmo componente de analytics/sessões já utilizado pelas outras landing pages.
+
+==================================================
+7. ADMIN — ANALYTICS
+==================================================
+
+O endpoint:
+
+GET /api/admin/analytics
+
+deve retornar dados para:
+
+lp3
+
+usando exatamente as mesmas métricas existentes:
+
+- views
+- ctaClicks
+- checkoutsStarted
+- purchasesConfirmed
+- avgTimeOnPageSeconds
+- topExitSections
+
+Não crie métricas paralelas.
+
+Se o backend possui filtros ou enums que excluem lp3, adicione lp3 de maneira mínima.
+
+O cálculo de v1/v2 deve permanecer exatamente igual.
+
+==================================================
+8. ADMIN — SESSÕES
+==================================================
+
+O endpoint:
+
+GET /api/admin/lp-sessions
+
+deve conseguir retornar sessões da LP3.
+
+A sessão deve mostrar, quando disponível:
+
+- visitorKey
+- firstSeenAt
+- timeOnPageSeconds
+- lastSection
+- status
+- buyerName
+- packageName
+- hasRecording
+
+Use a mesma lógica existente.
+
+Não crie uma estrutura separada para LP3.
+
+==================================================
+9. ADMIN — GRAVAÇÃO CLARITY
+==================================================
+
+O botão:
+
+"Ver gravação"
+
+da LP3 deve utilizar exatamente o endpoint existente:
+
+GET /api/admin/session-recording
+
+Não crie outro endpoint.
+
+A lógica de busca por:
+
+visitorKey
+clarityUserId
+claritySessionId
+
+deve continuar centralizada no mecanismo atual.
+
+Se a sessão LP3 possuir rastreamento Clarity válido, o Admin deve conseguir abrir a gravação da mesma forma que v1/v2.
+
+==================================================
+10. ATRIBUIÇÃO DE CHECKOUT
+==================================================
+
+NÃO altere novamente o checkout.
+
+A integração anterior já fez:
+
+source=lp3
+
+ser convertido para:
+
+sourceLp: "lp3"
+
+Preserve isso.
+
+A tarefa atual é apenas garantir que o Admin/analytics consiga visualizar essa origem.
+
+Não mexer na implementação de pagamento.
+
+==================================================
+11. NÃO MEXER NESTES FLUXOS
+==================================================
+
+Não alterar comportamento ou layout de:
+
+- LP1/v1
+- LP2/v2
+- /
+- /lp2
+- /onboarding
+- /app
+- /play
+- /login
+
+Não refatorar:
+
+Home
+LandingV2Quiz
+LandingQuizQuestion
+AppExperience
+ProtectedExperienceRoute
+fluxo de checkout
+
+a menos que seja absolutamente necessário para conectar LP3 ao tracking existente.
+
+Se for necessário alterar algum arquivo compartilhado, faça somente a menor alteração possível.
+
+==================================================
+12. NÃO IMPLEMENTAR AGORA
+==================================================
+
+NÃO implementar nesta tarefa:
+
+- Router 50/50
+- A/B testing
+- feature flags
+- distribuição automática
+- otimização automática
+- bandit
+- percentual dinâmico
+- LP3 → LP1 redirect
+- checkout transparente
+- novos eventos complexos
+- nova tabela de analytics
+- novo sistema de Clarity
+- novo sistema de sessões
+
+Isso será feito em etapas posteriores.
+
+==================================================
+13. VALIDAÇÃO OBRIGATÓRIA
+==================================================
+
+Depois da implementação:
+
+1. Rode typecheck.
+2. Rode build do frontend.
+3. Rode build do backend.
+4. Rode git diff --check.
+5. Verifique que / responde normalmente.
+6. Verifique que /lp2 responde normalmente.
+7. Verifique que /lp3 responde normalmente.
+8. Verifique que /onboarding continua funcionando.
+9. Verifique que /admin continua funcionando.
+
+Depois faça uma validação específica:
+
+- abrir /lp3;
+- confirmar que um visitorKey é criado/recuperado;
+- confirmar que o Clarity é inicializado;
+- confirmar que um evento view chega ao backend;
+- confirmar que um cta_click chega ao backend;
+- confirmar que a sessão aparece como lp3;
+- confirmar que o Admin lista LP3;
+- confirmar que analytics da LP3 aparecem;
+- confirmar que uma sessão LP3 pode tentar abrir "Ver gravação".
+
+==================================================
+14. REGRA DE SEGURANÇA
+==================================================
+
+Antes de finalizar, execute:
+
+git diff --stat
+git diff --check
+git status
+
+Me mostre exatamente:
+
+1. arquivos alterados;
+2. resumo de cada alteração;
+3. o que foi preservado;
+4. resultado dos testes;
+5. se LP1 e LP2 permaneceram intactas.
+
+Se encontrar código local não commitado que não seja necessário para esta tarefa, NÃO apague, NÃO reverta e NÃO faça reset.
+
+Não use:
+
+git reset --hard
+git checkout .
+git restore .
+git clean
+
+Não sobrescreva trabalho existente.
+
+==================================================
+RESULTADO ESPERADO
+==================================================
+
+Quando terminar, quero conseguir abrir:
+
+/admin
+
+e visualizar três landing pages:
+
+v1 — LP1
+v2 — LP2
+lp3 — LP3
+
+E para LP3 quero ver:
+
+Visualizações
+Cliques em comprar
+Checkouts iniciados
+Compras confirmadas
+Tempo médio
+Onde as pessoas saem
+Sessões
+Status das sessões
+Visitante
+Gravação do Clarity
+
+Tudo utilizando a infraestrutura que já existe.
+
+IMPORTANTE:
+Se alguma parte não puder ser implementada sem uma alteração estrutural maior, NÃO invente uma solução.
+
+Pare e me diga exatamente:
+- qual parte falta;
+- por que falta;
+- quais arquivos seriam necessários.
+
+O objetivo desta tarefa é uma integração pequena, isolada e segura da LP3 ao sistema existente — não uma reconstrução da arquitetura.

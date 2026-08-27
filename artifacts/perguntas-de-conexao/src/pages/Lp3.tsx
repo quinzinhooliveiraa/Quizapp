@@ -9,6 +9,7 @@ import {
 
 type Lp3Props = {
   onCheckout?: () => void;
+  onCtaClick?: () => void;
   onBack?: () => void;
 };
 
@@ -160,13 +161,18 @@ function getStoredState(): { screen: Screen; currentQuestion: number; answers: A
 
 function getVisitorId(): string {
   if (typeof window === "undefined") return "server";
-  const existing = window.localStorage.getItem("lp3_visitor_id");
-  if (existing) return existing;
-  const next = typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `lp3-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  window.localStorage.setItem("lp3_visitor_id", next);
-  return next;
+  try {
+    const storageKey = "pdc-visitor-key";
+    const existing = window.sessionStorage.getItem(storageKey);
+    if (existing) return existing;
+    const next = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.sessionStorage.setItem(storageKey, next);
+    return next;
+  } catch {
+    return `anonymous-${Date.now()}`;
+  }
 }
 
 function trackLp3(eventName: string, detail: Record<string, unknown> = {}) {
@@ -196,7 +202,7 @@ function findTheme(themeId: string): ConnectionTheme {
   return libraryThemes.find((theme) => theme.id === themeId) ?? libraryThemes[0];
 }
 
-export default function Lp3({ onCheckout, onBack }: Lp3Props) {
+export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const stored = useMemo(getStoredState, []);
   const [screen, setScreen] = useState<Screen>(stored.screen);
   const [currentQuestion, setCurrentQuestion] = useState(stored.currentQuestion);
@@ -341,6 +347,7 @@ export default function Lp3({ onCheckout, onBack }: Lp3Props) {
 
   const checkout = () => {
     trackLp3("checkout_intent", { source: "lp3_offer" });
+    onCtaClick?.();
     setLiveNote("Vamos continuar essa conversa.");
     onCheckout?.();
   };
@@ -570,7 +577,7 @@ export default function Lp3({ onCheckout, onBack }: Lp3Props) {
   }[screen]();
 
   return (
-    <main className="lp3-shell">
+    <main className="lp3-shell" data-section-name={screen}>
       <div className="lp3-orbit" aria-hidden="true" />
       <header className="lp3-topbar">
         <div className="lp3-wordmark" data-testid="text-lp3-wordmark">
