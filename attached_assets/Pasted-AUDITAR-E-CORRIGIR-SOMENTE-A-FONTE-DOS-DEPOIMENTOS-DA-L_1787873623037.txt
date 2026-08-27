@@ -1,0 +1,172 @@
+AUDITAR E CORRIGIR SOMENTE A FONTE DOS DEPOIMENTOS DA LP3.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.
+
+CONTEXTO:
+A LP3 atualmente possui uma referência/componente chamado Lp3Testimonials.
+
+Queremos que a LP3 NÃO mantenha uma coleção própria e duplicada de depoimentos.
+
+A fonte oficial deve ser exatamente a mesma fonte de depoimentos utilizada pela LP PRINCIPAL (/).
+
+==================================================
+OBJETIVO
+==================================================
+
+1. Descobrir no código qual é a fonte REAL dos depoimentos exibidos na LP principal (/).
+
+2. Identificar:
+- arquivo;
+- componente;
+- constante;
+- array;
+- hook;
+- função;
+- ou qualquer outra estrutura que contenha os depoimentos oficiais da LP principal.
+
+3. Verificar como a LP principal consome essa fonte.
+
+4. Fazer a LP3 consumir ESSA MESMA FONTE.
+
+A LP3 não deve duplicar os textos dos depoimentos.
+
+==================================================
+REGRA FUNDAMENTAL
+==================================================
+
+A fonte de verdade dos depoimentos deve existir em UM ÚNICO LUGAR.
+
+Arquitetura desejada:
+
+FONTE OFICIAL DE DEPOIMENTOS
+        ↓
+   ┌────┴────┐
+   ↓         ↓
+  LP1       LP3
+
+Se a fonte atual estiver dentro de um componente específico da LP1 e não puder ser reutilizada diretamente, extraí-la para um módulo compartilhado.
+
+Exemplo:
+
+src/lib/testimonials.ts
+
+ou localização equivalente já adotada pelo projeto.
+
+Depois:
+
+LP1 → importa a fonte compartilhada
+LP3 → importa a mesma fonte compartilhada
+
+NÃO criar uma segunda lista.
+
+==================================================
+LP3
+==================================================
+
+Se `Lp3Testimonials` atualmente contém uma lista própria de depoimentos:
+
+- remover a duplicação;
+- transformar o componente em consumidor da fonte oficial;
+- ou remover o componente caso ele deixe de ser necessário.
+
+Não alterar visualmente os depoimentos nesta tarefa.
+
+Não reescrever textos.
+
+Não criar depoimentos.
+
+Não inventar nomes.
+
+Não inventar avaliações.
+
+Não alterar conteúdo.
+
+==================================================
+POSICIONAMENTO NA JORNADA
+==================================================
+
+NÃO alterar nesta tarefa a estrutura da LP3.
+
+O componente de depoimentos deve permanecer no ponto atualmente definido da jornada.
+
+Apenas corrigir a FONTE dos dados.
+
+A posição estratégica será refinada posteriormente.
+
+==================================================
+PERSONALIZAÇÃO
+==================================================
+
+NÃO implementar seleção inteligente por narrativa agora.
+
+Por enquanto:
+
+LP3 deve consumir os mesmos depoimentos oficiais da LP principal.
+
+Se já existir alguma lógica de seleção, preservá-la somente se ela operar sobre a fonte compartilhada.
+
+Não criar nova lógica de personalização.
+
+==================================================
+COMPATIBILIDADE
+==================================================
+
+Não alterar:
+
+- perguntas da LP3;
+- narrativa;
+- storytelling;
+- branding;
+- tracking;
+- Clarity;
+- router;
+- experimentos;
+- Auto Optimization;
+- Admin;
+- checkout;
+- onboarding;
+- LP1 visualmente;
+- LP2;
+- banco de dados.
+
+==================================================
+VALIDAÇÃO OBRIGATÓRIA
+==================================================
+
+Antes de editar:
+
+1. localizar a fonte real dos depoimentos da LP principal;
+2. informar no relatório qual arquivo/componente é essa fonte;
+3. verificar se LP1 realmente utiliza essa fonte.
+
+Depois da edição:
+
+- verificar que LP1 continua consumindo os mesmos depoimentos;
+- verificar que LP3 consome a mesma fonte;
+- verificar que não existe uma segunda lista duplicada de depoimentos;
+- typecheck;
+- build.
+
+Não alterar nenhuma outra parte do produto.
+
+==================================================
+RELATÓRIO FINAL
+==================================================
+
+Informar:
+
+1. Onde estavam originalmente os depoimentos da LP1.
+2. Qual é a fonte oficial.
+3. Onde estava a fonte duplicada da LP3.
+4. O que foi alterado.
+5. Quais arquivos foram modificados.
+6. Confirmar que LP1 continua igual.
+7. Confirmar que LP3 agora usa a mesma fonte.
+8. Resultado do typecheck.
+9. Resultado do build.
+
+SE NÃO ENCONTRAR UMA FONTE REAL DE DEPOIMENTOS NA LP1:
+
+NÃO INVENTAR.
+
+Parar a implementação e informar exatamente onde procurou e o que encontrou.
