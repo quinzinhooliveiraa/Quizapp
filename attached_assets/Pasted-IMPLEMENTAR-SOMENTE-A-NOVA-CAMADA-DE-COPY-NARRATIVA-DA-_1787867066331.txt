@@ -1,0 +1,776 @@
+IMPLEMENTAR SOMENTE A NOVA CAMADA DE COPY NARRATIVA DA LP3.
+
+IMPORTANTE:
+A COPY ABAIXO É A COPY OFICIAL.
+NÃO REESCREVER.
+NÃO RESUMIR.
+NÃO "MELHORAR" COM IA.
+NÃO INVENTAR OUTRAS HISTÓRIAS.
+
+O objetivo é apenas implementar tecnicamente essa lógica na LP3 existente.
+
+NÃO ALTERAR:
+- LP1
+- LP2
+- Router
+- Experimentos
+- Auto Optimization
+- Admin
+- Tracking
+- Clarity
+- Checkout
+- Onboarding
+- banco
+- perguntas da LP3
+- branding já corrigido
+
+==================================================
+ARQUIVO ATUAL
+==================================================
+
+A LP3 está em:
+
+artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+
+Atualmente existem:
+
+quizQuestions
+resultProfiles
+chooseResult()
+stories
+renderResult()
+renderStory()
+
+A implementação atual de chooseResult() e stories é simplista.
+
+SUBSTITUIR SOMENTE A LÓGICA DE RESULTADO/NARRATIVA.
+
+==================================================
+OBJETIVO
+==================================================
+
+Transformar as 5 respostas da LP3 em uma narrativa personalizada.
+
+Fluxo:
+
+5 respostas
+↓
+análise dos sinais
+↓
+seleção do arquétipo narrativo
+↓
+"O que apareceu nas suas respostas?"
+↓
+"A história de vocês"
+↓
+pergunta prática
+
+A narrativa deve parecer escrita especificamente para aquela pessoa.
+
+==================================================
+AS 5 PERGUNTAS EXISTENTES
+==================================================
+
+NÃO ALTERAR.
+
+1. Há quanto tempo vocês estão juntos?
+
+Opções:
+- Ainda estamos nos conhecendo
+- Menos de 1 ano
+- 1–3 anos
+- 3–10 anos
+- Mais de 10 anos
+
+2. Quando vocês finalmente têm um tempo só para vocês, o que costuma acontecer?
+
+Opções:
+- Cada um acaba no celular
+- A gente fala principalmente da rotina
+- Assistimos alguma coisa
+- Conversamos bastante
+- Tentamos fazer algo diferente
+- Depende muito do dia
+
+3. Quando foi a última vez que uma conversa entre vocês fez você descobrir algo que não sabia sobre ele(a)?
+
+Opções:
+- Hoje
+- Nos últimos dias
+- Nas últimas semanas
+- Há alguns meses
+- Nem lembro
+
+4. Existe alguma coisa que você gostaria de conversar com ele(a), mas nunca encontrou o momento certo?
+
+Opções:
+- Sim
+- Algumas coisas
+- Talvez
+- Acho que não
+
+5. Se você pudesse mudar uma coisa nas conversas de vocês hoje, o que seria?
+
+Opções:
+- Ter conversas mais profundas
+- Conhecer melhor um ao outro
+- Sair da rotina
+- Voltar a sentir mais proximidade
+- Reacender a intimidade
+- Conversar sobre coisas difíceis
+- Ter mais assunto mesmo à distância
+
+==================================================
+ARQUÉTIPOS NARRATIVOS
+==================================================
+
+Criar uma função isolada, por exemplo:
+
+selectLp3Narrative(answers)
+
+Ela deve retornar:
+
+{
+  narrativeType,
+  title,
+  insight,
+  story
+}
+
+Não usar apenas result.title para selecionar a história.
+
+A seleção deve considerar múltiplas respostas.
+
+==================================================
+NARRATIVA 1
+A ROTINA ENGOLIU VOCÊS
+==================================================
+
+Prioridade alta quando houver combinação de:
+
+- Cada um acaba no celular
+OU
+- A gente fala principalmente da rotina
+
+especialmente quando também houver:
+
+- descoberta baixa;
+- objetivo de proximidade;
+- objetivo de conversas profundas;
+- relação de longa duração.
+
+INSIGHT:
+
+"Ninguém decidiu se afastar. A rotina foi ocupando os espaços que antes eram de vocês."
+
+STORY:
+
+"Ninguém decidiu se afastar.
+
+Não teve um dia em que vocês acordaram e pensaram: \"vamos parar de conversar.\"
+
+Foi acontecendo.
+
+Um dia mais corrido.
+Uma semana cheia.
+Uma noite em que cada um ficou no próprio celular.
+
+E, aos poucos, as conversas que faziam vocês descobrirem um ao outro foram sendo substituídas por:
+
+\"Chegou?\"
+
+\"Vai comer?\"
+
+\"Que horas você volta?\"
+
+Vocês continuam juntos.
+
+Só que estar perto e estar conectado começaram a ser coisas diferentes.
+
+E talvez seja por isso que uma pergunta simples consiga fazer tanto."
+
+==================================================
+NARRATIVA 2
+VOCÊS CONVERSAM, MAS PARARAM DE SE DESCOBRIR
+==================================================
+
+Prioridade alta quando:
+
+- rotina = Conversamos bastante
+OU
+- rotina = Tentamos fazer algo diferente
+
+E:
+
+- descoberta = Nas últimas semanas
+- descoberta = Há alguns meses
+- descoberta = Nem lembro
+
+E especialmente:
+
+- objetivo = Conhecer melhor um ao outro
+
+INSIGHT:
+
+"Vocês ainda conversam. Talvez o que tenha diminuído seja a curiosidade."
+
+STORY:
+
+"É estranho quando você percebe que conversa todos os dias com alguém...
+
+mas não lembra da última vez que descobriu alguma coisa realmente nova sobre essa pessoa.
+
+Vocês sabem como foi o trabalho.
+O que aconteceu no trânsito.
+O que precisam resolver amanhã.
+
+Sabem da rotina.
+
+Mas e da pessoa?
+
+O que ela anda pensando?
+O que mudou dentro dela?
+O que ela nunca contou porque nunca surgiu uma pergunta que abrisse espaço?
+
+Às vezes, a distância entre duas pessoas não aparece no silêncio.
+
+Aparece quando todas as conversas começam a parecer iguais."
+
+==================================================
+NARRATIVA 3
+EXISTE UMA CONVERSA ESPERANDO
+==================================================
+
+Prioridade MUITO ALTA quando:
+
+vulnerability = "Sim"
+
+OU:
+
+vulnerability = "Algumas coisas"
+
+especialmente quando:
+
+desire = "Conversar sobre coisas difíceis"
+
+OU
+
+desire = "Voltar a sentir mais proximidade"
+
+STORY:
+
+"Tem conversa que não acontece porque falta amor.
+
+Acontece porque ninguém sabe como começar.
+
+Você pensa em falar.
+
+Espera um momento melhor.
+
+O momento não vem.
+
+Então deixa para amanhã.
+
+Amanhã vira outra semana.
+
+E aquilo continua ali — não necessariamente como uma briga, mas como uma coisa que vocês dois sabem que existe.
+
+Talvez o problema nunca tenha sido encontrar coragem para conversar.
+
+Talvez tenha sido encontrar a primeira pergunta."
+
+==================================================
+NARRATIVA 4
+VOCÊS AINDA QUEREM SE REENCONTRAR
+==================================================
+
+Prioridade alta quando:
+
+desire = "Voltar a sentir mais proximidade"
+
+especialmente com:
+
+- descoberta baixa;
+- rotina no celular;
+- rotina;
+- relacionamento mais longo.
+
+STORY:
+
+"Talvez vocês não estejam tentando salvar alguma coisa.
+
+Talvez estejam tentando reencontrar uma coisa que já existiu.
+
+Aquele jeito de conversar sem perceber a hora passar.
+
+A curiosidade de querer saber o que o outro estava pensando.
+
+A sensação de olhar para aquela pessoa e ainda existir alguma coisa nova para descobrir.
+
+Porque relacionamento não costuma esfriar de uma vez.
+
+Às vezes ele só vai ficando familiar demais.
+
+E, quando tudo parece conhecido, a curiosidade vai embora primeiro.
+
+Talvez vocês não precisem de uma grande mudança.
+
+Talvez precisem voltar a fazer perguntas que não cabem na rotina."
+
+==================================================
+NARRATIVA 5
+VOCÊS ESTÃO NO COMEÇO
+==================================================
+
+Prioridade MÁXIMA quando:
+
+time = "Ainda estamos nos conhecendo"
+
+STORY:
+
+"O começo de uma relação tem uma coisa que o tempo costuma roubar:
+
+curiosidade.
+
+Você quer saber tudo.
+
+A história que ninguém conhece.
+A coisa estranha que a pessoa gosta.
+O medo que ela quase nunca conta.
+O que faz ela rir de verdade.
+
+Cada conversa parece abrir uma porta.
+
+E talvez seja exatamente isso que vocês não deveriam perder quando a relação começar a ficar mais confortável:
+
+a vontade de continuar descobrindo quem está do outro lado."
+
+==================================================
+NARRATIVA 6
+MESMO LONGE, AINDA DÁ PARA CHEGAR PERTO
+==================================================
+
+Prioridade MÁXIMA quando:
+
+desire = "Ter mais assunto mesmo à distância"
+
+STORY:
+
+"À distância, o silêncio parece maior.
+
+Não porque existe menos carinho.
+
+Mas porque vocês não têm as pequenas coisas que normalmente criam assunto.
+
+O olhar.
+O abraço.
+O comentário no meio do caminho.
+A história que acontece durante o dia.
+
+Então a conversa precisa carregar mais peso.
+
+E é aí que \"como foi seu dia?\" começa a ficar pequeno demais.
+
+Porque vocês não precisam de mais mensagens.
+
+Precisam de mensagens que façam vocês se sentirem presentes na vida um do outro."
+
+==================================================
+NARRATIVA 7
+A INTIMIDADE QUE FICOU PARA DEPOIS
+==================================================
+
+Prioridade MÁXIMA quando:
+
+desire = "Reacender a intimidade"
+
+STORY:
+
+"Intimidade não começa necessariamente quando vocês se tocam.
+
+Muitas vezes começa muito antes.
+
+Quando alguém pergunta alguma coisa que o outro não esperava.
+
+Quando vocês conseguem falar sem precisar parecer fortes.
+
+Quando existe espaço para dizer o que deseja, o que sente e até o que tem vergonha de admitir.
+
+Com o tempo, algumas dessas conversas ficam para depois.
+
+E \"depois\" vira rotina.
+
+Talvez reacender a intimidade não seja voltar a ser quem vocês eram.
+
+Talvez seja descobrir quem vocês são agora."
+
+==================================================
+NARRATIVA 8
+VOCÊS NÃO ESTÃO MAL — E JUSTAMENTE POR ISSO
+==================================================
+
+Usar quando:
+
+- vulnerability = "Acho que não"
+- descoberta recente:
+  Hoje
+  OU
+  Nos últimos dias
+
+E:
+
+- rotina = Conversamos bastante
+  OU
+  Tentamos fazer algo diferente
+
+E não houver uma prioridade narrativa mais forte.
+
+STORY:
+
+"Nem toda relação precisa estar passando por uma crise para merecer uma boa conversa.
+
+Na verdade, talvez as melhores conversas aconteçam justamente quando está tudo bem.
+
+Quando vocês ainda têm curiosidade.
+
+Quando ainda existe vontade de conhecer melhor aquela pessoa que você já conhece há tanto tempo.
+
+Porque amar alguém não significa chegar a um ponto em que você finalmente sabe tudo sobre ela.
+
+Significa continuar descobrindo."
+
+==================================================
+REGRAS DE PRIORIDADE
+==================================================
+
+Aplicar nesta ordem:
+
+1. Ter mais assunto mesmo à distância
+→ narrativa 6
+
+2. Ainda estamos nos conhecendo
+→ narrativa 5
+
+3. Reacender a intimidade
+→ narrativa 7
+
+4. vulnerability = Sim
+→ narrativa 3
+
+5. vulnerability = Algumas coisas
+E desejo relacionado a proximidade/conversas difíceis
+→ narrativa 3
+
+6. Conversar sobre coisas difíceis
+→ narrativa 3
+
+7. Voltar a sentir mais proximidade
+→ narrativa 4
+
+8. Cada um acaba no celular
+OU
+A gente fala principalmente da rotina
++
+sinais de baixa descoberta
+→ narrativa 1
+
+9. Conversamos bastante
++
+baixa descoberta
+→ narrativa 2
+
+10. Perfil saudável/positivo
+→ narrativa 8
+
+11. Fallback
+→ narrativa 2
+
+IMPORTANTE:
+
+Não selecionar a narrativa somente por uma resposta quando existir uma combinação mais forte.
+
+==================================================
+"O QUE APARECEU NAS SUAS RESPOSTAS?"
+==================================================
+
+Essa tela NÃO deve apenas mostrar o título do perfil.
+
+Criar insights dinâmicos.
+
+Exemplos:
+
+ROTINA:
+
+"Ninguém decidiu se afastar. A rotina foi ocupando os espaços que antes eram de vocês."
+
+DESCOBERTA:
+
+"Vocês ainda conversam. Talvez o que tenha diminuído seja a curiosidade."
+
+VULNERABILIDADE:
+
+"Existe coisa que você gostaria de dizer. Talvez o problema não seja falta de vontade — é não saber por onde começar."
+
+PROXIMIDADE:
+
+"Você não parece estar procurando uma relação diferente. Parece estar procurando uma versão mais próxima da relação que vocês já têm."
+
+INTIMIDADE:
+
+"Talvez a intimidade que você procura comece antes do toque: começa quando existe espaço para dizer o que normalmente fica para depois."
+
+DISTÂNCIA:
+
+"Quando a presença física não ajuda a conversa, a pergunta precisa carregar um pouco mais de presença."
+
+COMEÇO:
+
+"Vocês ainda estão na fase em que uma pergunta pode abrir uma parte inteira daquela pessoa que você ainda não conhece."
+
+SAUDÁVEL:
+
+"Vocês não parecem estar procurando consertar alguma coisa. Parece que querem continuar descobrindo um ao outro."
+
+==================================================
+PERSONALIZAÇÃO
+==================================================
+
+Além da narrativa principal, criar pequenas frases condicionais para inserir quando fizer sentido.
+
+Exemplo:
+
+Se rotina = celular:
+"Mesmo quando finalmente existe tempo, parte desse tempo parece escapar para as telas."
+
+Se rotina = rotina:
+"As conversas continuam acontecendo, mas muitas delas parecem precisar resolver alguma coisa."
+
+Se descoberta = nem lembro:
+"E talvez seja significativo que você nem consiga lembrar da última vez."
+
+Se descoberta = hoje:
+"E isso muda bastante a história: ainda existe curiosidade acontecendo entre vocês."
+
+Se vulnerability = sim:
+"E existe pelo menos uma coisa que você ainda está carregando sozinho."
+
+Se vulnerability = algumas coisas:
+"Talvez não seja uma única conversa. Talvez sejam pequenas coisas acumuladas."
+
+Não inventar sentimentos ou acontecimentos.
+
+==================================================
+STORYBRAND
+==================================================
+
+A narrativa deve obedecer à seguinte progressão:
+
+PERSONAGEM
+→ vocês
+
+SITUAÇÃO
+→ como a relação está hoje
+
+PROBLEMA
+→ rotina, falta de descoberta, distância, conversa adiada etc.
+
+CONSEQUÊNCIA
+→ conexão ficando automática
+
+PERCEPÇÃO
+→ não necessariamente falta de amor
+
+GUIA
+→ uma boa pergunta cria um espaço diferente
+
+PLANO
+→ começar pequeno
+
+AÇÃO
+→ experimentar a próxima pergunta
+
+Não mencionar "StoryBrand" na interface.
+
+Não transformar a história em anúncio.
+
+==================================================
+IMPORTANTE SOBRE A COPY
+==================================================
+
+Não adicionar:
+
+- escassez
+- urgência artificial
+- medo
+- culpa
+- "se você não fizer..."
+- "seu relacionamento está em risco"
+- diagnósticos psicológicos
+- afirmações científicas sem fonte
+- promessas de salvar relacionamento
+
+A narrativa deve gerar reconhecimento.
+
+A sensação desejada é:
+
+"Isso parece que foi escrito para nós."
+
+==================================================
+IMPLEMENTAÇÃO
+==================================================
+
+Pode criar:
+
+artifacts/perguntas-de-conexao/src/lib/lp3-narrative.ts
+
+ou arquivo isolado equivalente.
+
+Esse arquivo deve conter:
+
+- tipos
+- arquétipos
+- regras de seleção
+- insights
+- histórias
+- personalizações
+
+Lp3.tsx deve apenas consumir essa camada.
+
+Não duplicar a copy dentro de vários componentes.
+
+Substituir a lógica atual:
+
+chooseResult()
+stories
+
+por uma solução narrativa centralizada.
+
+Manter compatibilidade com:
+
+result.themeId
+recommendedTheme
+practiceQuestions
+tracking
+localStorage
+handoff
+
+Não quebrar nada existente.
+
+==================================================
+TESTES OBRIGATÓRIOS
+==================================================
+
+Testar pelo menos estas combinações:
+
+TESTE 1
+3–10 anos
+Cada um acaba no celular
+Há alguns meses
+Algumas coisas
+Voltar a sentir mais proximidade
+
+Esperado:
+A rotina engoliu vocês.
+
+TESTE 2
+Mais de 10 anos
+Conversamos bastante
+Nem lembro
+Acho que não
+Conhecer melhor um ao outro
+
+Esperado:
+Vocês conversam, mas pararam de se descobrir.
+
+TESTE 3
+1–3 anos
+A gente fala principalmente da rotina
+Nas últimas semanas
+Sim
+Conversar sobre coisas difíceis
+
+Esperado:
+Existe uma conversa esperando.
+
+TESTE 4
+Ainda estamos nos conhecendo
+Conversamos bastante
+Hoje
+Acho que não
+Conhecer melhor um ao outro
+
+Esperado:
+Vocês estão no começo.
+
+TESTE 5
+3–10 anos
+Depende muito do dia
+Há alguns meses
+Talvez
+Ter mais assunto mesmo à distância
+
+Esperado:
+Mesmo longe, ainda dá para chegar perto.
+
+TESTE 6
+3–10 anos
+Conversamos bastante
+Nos últimos dias
+Acho que não
+Reacender a intimidade
+
+Esperado:
+A intimidade que ficou para depois.
+
+TESTE 7
+Mais de 10 anos
+Cada um acaba no celular
+Nem lembro
+Algumas coisas
+Voltar a sentir mais proximidade
+
+Esperado:
+A rotina engoliu vocês.
+
+TESTE 8
+1–3 anos
+Conversamos bastante
+Hoje
+Acho que não
+Sair da rotina
+
+Esperado:
+Vocês não estão mal — e justamente por isso.
+
+==================================================
+VALIDAÇÃO FINAL
+==================================================
+
+Rodar:
+
+- typecheck
+- build
+
+Verificar:
+
+- /lp3 continua funcionando
+- as 5 perguntas continuam exatamente iguais
+- tracking continua funcionando
+- localStorage continua funcionando
+- onboarding handoff continua funcionando
+- LP1 intacta
+- LP2 intacta
+- checkout intacto
+- router intacto
+- Auto Optimization intacto
+
+No final, informar:
+
+1. arquivos alterados;
+2. função criada para seleção narrativa;
+3. narrativas implementadas;
+4. testes executados;
+5. resultado do typecheck;
+6. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.

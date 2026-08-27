@@ -7,6 +7,10 @@ import {
   type ConnectionQuestion,
   type ConnectionTheme,
 } from "@workspace/connection-content";
+import {
+  selectLp3Narrative,
+  type Lp3Answers,
+} from "@/lib/lp3-narrative";
 
 type Lp3Props = {
   onCheckout?: () => void;
@@ -15,20 +19,13 @@ type Lp3Props = {
 };
 
 type Screen = "intro" | "question" | "result" | "story" | "practice" | "recommend" | "offer";
-type Answers = Record<string, string>;
+type Answers = Lp3Answers;
 
 type QuizQuestion = {
   id: string;
   key: string;
   title: string;
   options: string[];
-};
-
-type ResultProfile = {
-  title: string;
-  lead: string;
-  detail: string;
-  themeId: string;
 };
 
 const quizQuestions: QuizQuestion[] = [
@@ -82,45 +79,6 @@ const quizQuestions: QuizQuestion[] = [
       "Conversar sobre coisas difíceis",
       "Ter mais assunto mesmo à distância",
     ],
-  },
-];
-
-const resultProfiles: ResultProfile[] = [
-  {
-    title: "Casal no automático",
-    lead: "Vocês não parecem precisar de mais tempo juntos.",
-    detail: "Talvez precisem de mais momentos em que estejam realmente juntos.",
-    themeId: "porto-seguro",
-  },
-  {
-    title: "Reaproximação",
-    lead: "Talvez algumas coisas ainda estejam esperando para ser ditas.",
-    detail: "Uma boa pergunta não resolve tudo. Mas pode abrir uma fresta para vocês se encontrarem de novo, sem pressa.",
-    themeId: "livro-aberto",
-  },
-  {
-    title: "Casal novo",
-    lead: "Vocês ainda estão descobrindo um ao outro.",
-    detail: "O começo tem uma beleza própria: cada resposta cria um mapa novo, mesmo quando parece que vocês já sabem bastante.",
-    themeId: "voce-nao-sabia",
-  },
-  {
-    title: "À distância",
-    lead: "Uma conversa pode diminuir alguns quilômetros.",
-    detail: "Quando a presença não cabe na rotina, perguntar com atenção é um jeito de continuar chegando perto.",
-    themeId: "mesmo-longe",
-  },
-  {
-    title: "Intimidade",
-    lead: "Algumas conversas aproximam.",
-    detail: "Outras fazem a faísca voltar.",
-    themeId: "faisca",
-  },
-  {
-    title: "Conversas difíceis",
-    lead: "Algumas conversas são difíceis porque ninguém sabe como começar.",
-    detail: "Vocês não precisam ter a frase perfeita. Só precisam de um primeiro espaço seguro para falar.",
-    themeId: "depois-da-tempestade",
   },
 ];
 
@@ -189,16 +147,6 @@ function trackLp3(eventName: string, detail: Record<string, unknown> = {}) {
   }
 }
 
-function chooseResult(answers: Answers): ResultProfile {
-  if (answers.desire === "Ter mais assunto mesmo à distância") return resultProfiles[3];
-  if (answers.time === "Ainda estamos nos conhecendo") return resultProfiles[2];
-  if (answers.desire === "Conversar sobre coisas difíceis" || answers.vulnerability === "Sim") return resultProfiles[5];
-  if (answers.desire === "Reacender a intimidade") return resultProfiles[4];
-  if (answers.curiosity === "Nem lembro") return resultProfiles[1];
-  if (answers.routine === "Cada um acaba no celular" || answers.routine === "A gente fala principalmente da rotina") return resultProfiles[0];
-  return resultProfiles[1];
-}
-
 function findTheme(themeId: string): ConnectionTheme {
   return libraryThemes.find((theme) => theme.id === themeId) ?? libraryThemes[0];
 }
@@ -211,16 +159,16 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const [practiceIndex, setPracticeIndex] = useState(stored.practiceIndex);
   const [liveNote, setLiveNote] = useState("");
 
-  const result = useMemo(() => chooseResult(answers), [answers]);
+  const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
   const practiceQuestions = useMemo(() => {
     const preferred = libraryQuestions.filter((question) =>
       question.themeId === result.themeId
       || question.themeId === recommendedTheme.id
-      || question.intensity === (result.title === "Intimidade" ? "deep" : "honest"),
+      || question.intensity === (result.narrativeType === "intimacy" ? "deep" : "honest"),
     );
     return (preferred.length ? preferred : fallbackQuestions).slice(0, 8);
-  }, [recommendedTheme.id, result.themeId, result.title]);
+  }, [recommendedTheme.id, result.narrativeType, result.themeId]);
   const practiceQuestion = practiceQuestions[practiceIndex % practiceQuestions.length] ?? fallbackQuestions[0];
   const otherThemes = useMemo(
     () => libraryThemes.filter((theme) => theme.id !== recommendedTheme.id).slice(0, 5),
@@ -417,8 +365,14 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       <div className="lp3-kicker">O que apareceu nas respostas</div>
       <div className="lp3-result-card">
         <h1 id="lp3-result-title" className="lp3-result-title">{result.title}</h1>
-        <p className="lp3-result-lead">{result.lead}</p>
-        <p className="lp3-result-detail">{result.detail}</p>
+        <p className="lp3-result-lead">{result.insight}</p>
+        {result.personalizations.length > 0 && (
+          <div className="lp3-result-detail">
+            {result.personalizations.map((personalization) => (
+              <p key={personalization}>{personalization}</p>
+            ))}
+          </div>
+        )}
       </div>
       <div className="lp3-back-row">
         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-result">
@@ -431,28 +385,12 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     </section>
   );
 
-  const stories: Record<string, string> = {
-    "Casal no automático":
-      "Depois de alguns anos, eles achavam que já conheciam cada resposta. Até uma pergunta pequena lembrar que rotina não é a mesma coisa que presença. A conversa daquela noite não mudou tudo — só abriu espaço para se olharem de novo.",
-    Reaproximação:
-      "Eles não precisavam ganhar uma discussão. Precisavam encontrar um jeito de falar sem se defender o tempo todo. Uma pergunta cuidadosa deu nome ao que vinha sendo adiado e a conversa finalmente encontrou um começo.",
-    "Casal novo":
-      "Achavam que já conversavam bastante. Mas uma pergunta diferente levou a uma lembrança, depois a outra, e de repente havia um lado inteiro daquela pessoa ainda esperando para ser conhecido.",
-    "À distância":
-      "As chamadas terminavam sem assunto e os quilômetros pareciam maiores no fim do dia. Quando passaram a chegar com uma pergunta, o espaço continuou existindo — mas a sensação de estar longe diminuiu um pouco.",
-    Intimidade:
-      "Algumas conversas pedem calma. Outras pedem coragem para dizer o que ainda acende. Sem pressa e sem performance, uma pergunta abriu um caminho mais próximo entre os dois.",
-    "Conversas difíceis":
-      "Eles vinham adiando aquele assunto porque ninguém sabia como começar. Uma pergunta não resolveu a história por eles. Mas tirou o peso de inventar a primeira frase.",
-  };
-
   const renderStory = () => (
     <section className="lp3-view lp3-story" aria-labelledby="lp3-story-title">
-      <div className="lp3-kicker">Depois da leitura</div>
-      <h1 id="lp3-story-title" className="lp3-section-title">Uma história que poderia ser a de vocês.</h1>
+      <div className="lp3-kicker">A história de vocês</div>
+      <h1 id="lp3-story-title" className="lp3-section-title">{result.title}</h1>
       <div className="lp3-editorial">
-        <p>{stories[result.title]}</p>
-        <small>Histórias assim não prometem respostas prontas. Elas lembram que toda proximidade começa quando alguém se arrisca a perguntar.</small>
+        <p style={{ whiteSpace: "pre-line" }}>{result.story}</p>
       </div>
       <div className="lp3-back-row">
         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-story">
