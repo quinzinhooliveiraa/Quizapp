@@ -309,6 +309,10 @@ export interface CheckoutCreateInput {
      * @maxLength 120
      */
   visitorKey?: string;
+  /** @maxLength 120 */
+  experimentId?: string;
+  /** @maxLength 120 */
+  experimentVariantId?: string;
 }
 
 export type PageEventInputLpId = typeof PageEventInputLpId[keyof typeof PageEventInputLpId];
@@ -345,6 +349,10 @@ export interface PageEventInput {
      * @maxLength 120
      */
   visitorKey: string;
+  /** @maxLength 120 */
+  experimentId?: string;
+  /** @maxLength 120 */
+  experimentVariantId?: string;
   eventType: PageEventInputEventType;
   /** @minimum 0 */
   timeOnPageMs?: number;
@@ -355,6 +363,116 @@ export interface PageEventInput {
   /** @maxLength 200 */
   claritySessionId?: string;
   ctaSource?: PageEventInputCtaSource;
+}
+
+export type ExperimentVariantInputStatus = typeof ExperimentVariantInputStatus[keyof typeof ExperimentVariantInputStatus];
+
+
+export const ExperimentVariantInputStatus = {
+  active: 'active',
+  paused: 'paused',
+} as const;
+
+export interface ExperimentVariantInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  path: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  weight: number;
+  status?: ExperimentVariantInputStatus;
+}
+
+export interface ExperimentInput {
+  /**
+     * @minLength 1
+     * @maxLength 160
+     */
+  name: string;
+  /** @maxLength 1000 */
+  description?: string;
+  /**
+     * @minLength 1
+     * @maxLength 160
+     */
+  objective: string;
+  /** @minItems 2 */
+  variants: ExperimentVariantInput[];
+}
+
+export type ExperimentStatusUpdateStatus = typeof ExperimentStatusUpdateStatus[keyof typeof ExperimentStatusUpdateStatus];
+
+
+export const ExperimentStatusUpdateStatus = {
+  draft: 'draft',
+  active: 'active',
+  paused: 'paused',
+  completed: 'completed',
+} as const;
+
+export interface ExperimentStatusUpdate {
+  status: ExperimentStatusUpdateStatus;
+}
+
+export type ExperimentVariantStatus = typeof ExperimentVariantStatus[keyof typeof ExperimentVariantStatus];
+
+
+export const ExperimentVariantStatus = {
+  active: 'active',
+  paused: 'paused',
+} as const;
+
+export interface ExperimentVariant {
+  id: string;
+  experimentId: string;
+  name: string;
+  path: string;
+  weight: number;
+  status: ExperimentVariantStatus;
+  createdAt: string;
+}
+
+export type ExperimentStatus = typeof ExperimentStatus[keyof typeof ExperimentStatus];
+
+
+export const ExperimentStatus = {
+  draft: 'draft',
+  active: 'active',
+  paused: 'paused',
+  completed: 'completed',
+} as const;
+
+export interface Experiment {
+  id: string;
+  name: string;
+  /** @nullable */
+  description: string | null;
+  objective: string;
+  status: ExperimentStatus;
+  variants: ExperimentVariant[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminExperimentsResponse {
+  experiments: Experiment[];
+}
+
+export interface ExperimentAssignment {
+  experimentId: string;
+  experimentVariantId: string;
+  visitorKey: string;
+  landingPage: string;
+  assignedAt: string;
 }
 
 export type SessionRecordingLookupReason = typeof SessionRecordingLookupReason[keyof typeof SessionRecordingLookupReason];
@@ -486,6 +604,22 @@ sessionId: string;
 
 export type GetAdminAnalytics200 = {
   analytics: LandingAnalytics[];
+};
+
+export type ListAdminExperimentsParams = {
+sessionId: string;
+};
+
+export type UpdateAdminExperimentStatusParams = {
+sessionId: string;
+};
+
+export type GetExperimentAssignmentParams = {
+/**
+ * @minLength 1
+ * @maxLength 120
+ */
+visitorKey: string;
 };
 
 export type ListPublicReviews200 = {

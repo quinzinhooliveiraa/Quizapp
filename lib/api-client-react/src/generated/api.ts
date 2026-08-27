@@ -23,6 +23,7 @@ import type {
   AbacatePayWebhook,
   AbacatePayWebhookResult,
   AccessState,
+  AdminExperimentsResponse,
   CancelInvite200,
   CheckAccessEmail200,
   CheckAccessEmailParams,
@@ -32,9 +33,14 @@ import type {
   CompleteGuestOnboarding200,
   CompleteOwnerOnboarding200,
   DeleteAdminBuyerParams,
+  Experiment,
+  ExperimentAssignment,
+  ExperimentInput,
+  ExperimentStatusUpdate,
   GetAdminAnalytics200,
   GetAdminAnalyticsParams,
   GetAdminSessionRecordingParams,
+  GetExperimentAssignmentParams,
   GetPreferencesParams,
   GetPushVapidPublicKey200,
   GuestAccess,
@@ -45,6 +51,7 @@ import type {
   InviteListItem,
   ListAdminBuyers200,
   ListAdminBuyersParams,
+  ListAdminExperimentsParams,
   ListAdminLpSessions200,
   ListAdminLpSessionsParams,
   ListAdminReviews200,
@@ -70,6 +77,7 @@ import type {
   Suggestion,
   SuggestionInput,
   UnsubscribeAdminPushBody,
+  UpdateAdminExperimentStatusParams,
   WebhookResult
 } from './api.schemas';
 
@@ -1813,6 +1821,331 @@ export function useGetAdminAnalytics<TData = Awaited<ReturnType<typeof getAdminA
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAdminAnalyticsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAdminExperimentsUrl = (params: ListAdminExperimentsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/experiments?${stringifiedParams}` : `/api/admin/experiments`
+}
+
+/**
+ * @summary List experiments for an administrator
+ */
+export const listAdminExperiments = async (params: ListAdminExperimentsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminExperimentsResponse> => {
+
+  return customFetch<AdminExperimentsResponse>(getListAdminExperimentsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminExperimentsQueryKey = (params?: ListAdminExperimentsParams,) => {
+    return [
+    `/api/admin/experiments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminExperimentsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminExperiments>>, TError = ErrorType<void>>(params: ListAdminExperimentsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminExperiments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminExperimentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminExperiments>>> = ({ signal }) => listAdminExperiments(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminExperiments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminExperimentsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminExperiments>>>
+export type ListAdminExperimentsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List experiments for an administrator
+ */
+
+export function useListAdminExperiments<TData = Awaited<ReturnType<typeof listAdminExperiments>>, TError = ErrorType<void>>(
+ params: ListAdminExperimentsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminExperiments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminExperimentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminExperimentUrl = () => {
+
+
+
+
+  return `/api/admin/experiments`
+}
+
+/**
+ * @summary Create a draft experiment
+ */
+export const createAdminExperiment = async (experimentInput: ExperimentInput, options?: Parameters<typeof customFetch>[1]): Promise<Experiment> => {
+
+  return customFetch<Experiment>(getCreateAdminExperimentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(experimentInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminExperimentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminExperiment>>, TError,{data: BodyType<ExperimentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminExperiment>>, TError,{data: BodyType<ExperimentInput>}, TContext> => {
+
+const mutationKey = ['createAdminExperiment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminExperiment>>, {data: BodyType<ExperimentInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminExperiment(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminExperimentMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminExperiment>>>
+    export type CreateAdminExperimentMutationBody = BodyType<ExperimentInput>
+    export type CreateAdminExperimentMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a draft experiment
+ */
+export const useCreateAdminExperiment = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminExperiment>>, TError,{data: BodyType<ExperimentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminExperiment>>,
+        TError,
+        {data: BodyType<ExperimentInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAdminExperimentMutationOptions(options));
+    }
+
+export const getUpdateAdminExperimentStatusUrl = (experimentId: string,
+    params: UpdateAdminExperimentStatusParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/experiments/${experimentId}?${stringifiedParams}` : `/api/admin/experiments/${experimentId}`
+}
+
+/**
+ * @summary Change an experiment status
+ */
+export const updateAdminExperimentStatus = async (experimentId: string,
+    experimentStatusUpdate: ExperimentStatusUpdate,
+    params: UpdateAdminExperimentStatusParams, options?: Parameters<typeof customFetch>[1]): Promise<Experiment> => {
+
+  return customFetch<Experiment>(getUpdateAdminExperimentStatusUrl(experimentId,params),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(experimentStatusUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminExperimentStatusMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminExperimentStatus>>, TError,{experimentId: string;data: BodyType<ExperimentStatusUpdate>;params: UpdateAdminExperimentStatusParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminExperimentStatus>>, TError,{experimentId: string;data: BodyType<ExperimentStatusUpdate>;params: UpdateAdminExperimentStatusParams}, TContext> => {
+
+const mutationKey = ['updateAdminExperimentStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminExperimentStatus>>, {experimentId: string;data: BodyType<ExperimentStatusUpdate>;params: UpdateAdminExperimentStatusParams}> = (props) => {
+          const {experimentId,data,params} = props ?? {};
+
+          return  updateAdminExperimentStatus(experimentId,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminExperimentStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminExperimentStatus>>>
+    export type UpdateAdminExperimentStatusMutationBody = BodyType<ExperimentStatusUpdate>
+    export type UpdateAdminExperimentStatusMutationError = ErrorType<void>
+
+    /**
+ * @summary Change an experiment status
+ */
+export const useUpdateAdminExperimentStatus = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminExperimentStatus>>, TError,{experimentId: string;data: BodyType<ExperimentStatusUpdate>;params: UpdateAdminExperimentStatusParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminExperimentStatus>>,
+        TError,
+        {experimentId: string;data: BodyType<ExperimentStatusUpdate>;params: UpdateAdminExperimentStatusParams},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminExperimentStatusMutationOptions(options));
+    }
+
+export const getGetExperimentAssignmentUrl = (experimentId: string,
+    params: GetExperimentAssignmentParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/experiments/${experimentId}/assignment?${stringifiedParams}` : `/api/experiments/${experimentId}/assignment`
+}
+
+/**
+ * @summary Resolve a persistent assignment for an active experiment
+ */
+export const getExperimentAssignment = async (experimentId: string,
+    params: GetExperimentAssignmentParams, options?: Parameters<typeof customFetch>[1]): Promise<ExperimentAssignment> => {
+
+  return customFetch<ExperimentAssignment>(getGetExperimentAssignmentUrl(experimentId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExperimentAssignmentQueryKey = (experimentId: string,
+    params?: GetExperimentAssignmentParams,) => {
+    return [
+    `/api/experiments/${experimentId}/assignment`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetExperimentAssignmentQueryOptions = <TData = Awaited<ReturnType<typeof getExperimentAssignment>>, TError = ErrorType<void>>(experimentId: string,
+    params: GetExperimentAssignmentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExperimentAssignment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExperimentAssignmentQueryKey(experimentId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExperimentAssignment>>> = ({ signal }) => getExperimentAssignment(experimentId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: experimentId !== null && experimentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExperimentAssignment>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExperimentAssignmentQueryResult = NonNullable<Awaited<ReturnType<typeof getExperimentAssignment>>>
+export type GetExperimentAssignmentQueryError = ErrorType<void>
+
+
+/**
+ * @summary Resolve a persistent assignment for an active experiment
+ */
+
+export function useGetExperimentAssignment<TData = Awaited<ReturnType<typeof getExperimentAssignment>>, TError = ErrorType<void>>(
+ experimentId: string,
+    params: GetExperimentAssignmentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExperimentAssignment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExperimentAssignmentQueryOptions(experimentId,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

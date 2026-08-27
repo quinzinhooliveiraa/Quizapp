@@ -22,4 +22,8 @@ export interface CheckoutCreateInput {
      * @maxLength 120
      */
   visitorKey?: string;
+  /** @maxLength 120 */
+  experimentId?: string;
+  /** @maxLength 120 */
+  experimentVariantId?: string;
 }

@@ -273,6 +273,256 @@
 .admin-tab-content {
   min-height: 300px;
 }
+.admin-experiment-note {
+  max-width: 760px;
+  margin: 0 0 1.4rem;
+  padding: 1rem 1.1rem;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(196, 172, 255, 0.06);
+  border: 1px solid rgba(196, 172, 255, 0.18);
+  border-radius: 0.75rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.admin-experiment-form {
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(196, 172, 255, 0.16);
+  border-radius: 0.9rem;
+}
+.admin-experiment-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.admin-experiment-form label,
+.admin-experiment-variant-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.72rem;
+}
+.admin-experiment-form input,
+.admin-experiment-form textarea,
+.admin-experiment-form select {
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  color: #f9f8fb;
+  background: rgba(16, 11, 24, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.82rem;
+  box-sizing: border-box;
+}
+.admin-experiment-form textarea {
+  resize: vertical;
+}
+.admin-experiment-form input:focus,
+.admin-experiment-form textarea:focus,
+.admin-experiment-form select:focus {
+  outline: 2px solid rgba(196, 172, 255, 0.7);
+  outline-offset: 1px;
+}
+.admin-experiment-form select:disabled {
+  color: rgba(255, 255, 255, 0.45);
+  cursor: not-allowed;
+}
+.admin-experiment-description {
+  grid-column: 1;
+}
+.admin-experiment-variants-heading,
+.admin-experiment-card-heading,
+.admin-experiment-card-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.admin-experiment-variants-heading {
+  align-items: center;
+  margin: 1.4rem 0 0.75rem;
+}
+.admin-experiment-variants-heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.admin-experiment-variants-heading > div > span {
+  color: #f9f8fb;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.admin-experiment-variants-heading small,
+.admin-experiment-card-footer small {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.72rem;
+}
+.admin-experiment-secondary-button,
+.admin-experiment-action-button {
+  padding: 0.55rem 0.75rem;
+  color: #c4acff;
+  background: transparent;
+  border: 1px solid rgba(196, 172, 255, 0.28);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+.admin-experiment-secondary-button:hover,
+.admin-experiment-action-button:hover {
+  background: rgba(196, 172, 255, 0.1);
+}
+.admin-experiment-variant-editor {
+  display: grid;
+  gap: 0.7rem;
+}
+.admin-experiment-variant-row {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr) minmax(
+      160px,
+      1.4fr
+    ) 100px 120px auto;
+  align-items: end;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.65rem;
+}
+.admin-experiment-variant-index {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-bottom: 0.15rem;
+  color: #302254;
+  background: #c4acff;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.admin-experiment-remove-button {
+  width: 1.8rem;
+  height: 1.8rem;
+  margin-bottom: 0.15rem;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.45rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.admin-experiment-remove-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.admin-experiment-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.admin-experiment-form-footer > span {
+  color: #ffadad;
+  font-size: 0.8rem;
+}
+.admin-experiment-form-footer > span.is-valid {
+  color: #b9f0cf;
+}
+.admin-experiment-list {
+  display: grid;
+  gap: 1rem;
+}
+.admin-experiment-card {
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(196, 172, 255, 0.16);
+  border-radius: 0.9rem;
+}
+.admin-experiment-card h3 {
+  margin: 0;
+  color: #f9f8fb;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.admin-experiment-card > p {
+  margin: 0.8rem 0 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.admin-experiment-status {
+  flex-shrink: 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  color: #302254;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.admin-experiment-status.is-draft {
+  color: #f9f8fb;
+  background: rgba(255, 255, 255, 0.12);
+}
+.admin-experiment-status.is-active {
+  background: #b9f0cf;
+}
+.admin-experiment-status.is-paused {
+  background: #ffc59e;
+}
+.admin-experiment-status.is-completed {
+  background: #c4acff;
+}
+.admin-experiment-variant-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+.admin-experiment-variant-list > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(120px, 1.4fr) 50px 55px;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 0.45rem;
+  font-size: 0.76rem;
+}
+.admin-experiment-variant-list strong {
+  color: #f9f8fb;
+}
+.admin-experiment-variant-list code {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.5);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-experiment-variant-list span {
+  color: #c4acff;
+  text-align: right;
+}
+.admin-experiment-variant-list small {
+  color: rgba(255, 255, 255, 0.4);
+  text-align: right;
+}
+.admin-experiment-card-footer {
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-experiment-card-footer > div {
+  display: flex;
+  gap: 0.5rem;
+}
+.admin-experiment-action-button.is-danger {
+  color: #ffc59e;
+  border-color: rgba(255, 197, 158, 0.35);
+}
 .admin-notification-icon {
   display: flex;
   align-items: center;
@@ -14940,8 +15190,16 @@ blockquote em {
   min-height: 100dvh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 76% 5%, rgba(139, 94, 175, 0.22), transparent 30rem),
-    radial-gradient(circle at 8% 74%, rgba(208, 126, 121, 0.09), transparent 24rem),
+    radial-gradient(
+      circle at 76% 5%,
+      rgba(139, 94, 175, 0.22),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 8% 74%,
+      rgba(208, 126, 121, 0.09),
+      transparent 24rem
+    ),
     var(--lp3-night);
   color: var(--lp3-ink);
   font-family: "Plus Jakarta Sans", sans-serif;
@@ -15109,7 +15367,11 @@ blockquote em {
   font-size: 0.84rem;
   font-weight: 700;
   line-height: 1.2;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 .lp3-button:hover {
@@ -15213,7 +15475,11 @@ blockquote em {
   font: inherit;
   font-size: 0.87rem;
   text-align: left;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 .lp3-option:hover {
@@ -15410,7 +15676,11 @@ blockquote em {
   border: 1px solid rgba(242, 172, 145, 0.4);
   border-radius: 1.35rem;
   padding: 1.35rem;
-  background: linear-gradient(135deg, rgba(242, 172, 145, 0.12), rgba(199, 182, 237, 0.07));
+  background: linear-gradient(
+    135deg,
+    rgba(242, 172, 145, 0.12),
+    rgba(199, 182, 237, 0.07)
+  );
 }
 
 .lp3-deck-name {
@@ -15437,7 +15707,11 @@ blockquote em {
   border-radius: 1.5rem;
   padding: clamp(1.35rem, 5vw, 3.5rem);
   background:
-    radial-gradient(circle at 92% 8%, rgba(242, 172, 145, 0.28), transparent 14rem),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(242, 172, 145, 0.28),
+      transparent 14rem
+    ),
     linear-gradient(135deg, #2b1839, #1b1125);
 }
 

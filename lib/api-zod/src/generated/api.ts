@@ -309,6 +309,10 @@ export const ReceiveCheckoutWebhookResponse = zod.object({
 export const createCheckoutBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
 export const createCheckoutBodyVisitorKeyMax = 120;
 
+export const createCheckoutBodyExperimentIdMax = 120;
+
+export const createCheckoutBodyExperimentVariantIdMax = 120;
+
 
 
 export const CreateCheckoutBody = zod.object({
@@ -317,7 +321,9 @@ export const CreateCheckoutBody = zod.object({
   "mode": zod.enum(['native', 'hosted']).optional(),
   "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
   "sourceLp": zod.enum(['v1', 'v2', 'lp3']).optional(),
-  "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional()
+  "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional(),
+  "experimentId": zod.string().max(createCheckoutBodyExperimentIdMax).optional(),
+  "experimentVariantId": zod.string().max(createCheckoutBodyExperimentVariantIdMax).optional()
 })
 
 export const CreateCheckoutResponse = zod.object({
@@ -357,6 +363,10 @@ export const ReceiveAbacatePayWebhookResponse = zod.object({
  */
 export const trackPageEventBodyVisitorKeyMax = 120;
 
+export const trackPageEventBodyExperimentIdMax = 120;
+
+export const trackPageEventBodyExperimentVariantIdMax = 120;
+
 export const trackPageEventBodyTimeOnPageMsMin = 0;
 
 export const trackPageEventBodyLastSectionMax = 80;
@@ -370,6 +380,8 @@ export const trackPageEventBodyClaritySessionIdMax = 200;
 export const TrackPageEventBody = zod.object({
   "lpId": zod.enum(['v1', 'v2', 'lp3']),
   "visitorKey": zod.string().min(1).max(trackPageEventBodyVisitorKeyMax),
+  "experimentId": zod.string().max(trackPageEventBodyExperimentIdMax).optional(),
+  "experimentVariantId": zod.string().max(trackPageEventBodyExperimentVariantIdMax).optional(),
   "eventType": zod.enum(['view', 'cta_click', 'exit']),
   "timeOnPageMs": zod.number().min(trackPageEventBodyTimeOnPageMsMin).optional(),
   "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional(),
@@ -401,6 +413,146 @@ export const GetAdminAnalyticsResponse = zod.object({
   "count": zod.number()
 }))
 }))
+})
+
+
+/**
+ * @summary List experiments for an administrator
+ */
+export const ListAdminExperimentsQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const ListAdminExperimentsResponse = zod.object({
+  "experiments": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullable(),
+  "objective": zod.string(),
+  "status": zod.enum(['draft', 'active', 'paused', 'completed']),
+  "variants": zod.array(zod.object({
+  "id": zod.string(),
+  "experimentId": zod.string(),
+  "name": zod.string(),
+  "path": zod.string(),
+  "weight": zod.number(),
+  "status": zod.enum(['active', 'paused']),
+  "createdAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Create a draft experiment
+ */
+export const createAdminExperimentBodyNameMax = 160;
+
+export const createAdminExperimentBodyDescriptionMax = 1000;
+
+export const createAdminExperimentBodyObjectiveMax = 160;
+
+export const createAdminExperimentBodyVariantsItemNameMax = 120;
+
+export const createAdminExperimentBodyVariantsItemPathMax = 500;
+
+export const createAdminExperimentBodyVariantsItemWeightMin = 0;
+export const createAdminExperimentBodyVariantsItemWeightMax = 100;
+
+export const createAdminExperimentBodyVariantsMin = 2;
+
+
+
+export const CreateAdminExperimentBody = zod.object({
+  "name": zod.string().min(1).max(createAdminExperimentBodyNameMax),
+  "description": zod.string().max(createAdminExperimentBodyDescriptionMax).optional(),
+  "objective": zod.string().min(1).max(createAdminExperimentBodyObjectiveMax),
+  "variants": zod.array(zod.object({
+  "name": zod.string().min(1).max(createAdminExperimentBodyVariantsItemNameMax),
+  "path": zod.string().min(1).max(createAdminExperimentBodyVariantsItemPathMax),
+  "weight": zod.number().min(createAdminExperimentBodyVariantsItemWeightMin).max(createAdminExperimentBodyVariantsItemWeightMax),
+  "status": zod.enum(['active', 'paused']).optional()
+})).min(createAdminExperimentBodyVariantsMin)
+})
+
+export const CreateAdminExperimentResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullable(),
+  "objective": zod.string(),
+  "status": zod.enum(['draft', 'active', 'paused', 'completed']),
+  "variants": zod.array(zod.object({
+  "id": zod.string(),
+  "experimentId": zod.string(),
+  "name": zod.string(),
+  "path": zod.string(),
+  "weight": zod.number(),
+  "status": zod.enum(['active', 'paused']),
+  "createdAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Change an experiment status
+ */
+export const UpdateAdminExperimentStatusParams = zod.object({
+  "experimentId": zod.coerce.string()
+})
+
+export const UpdateAdminExperimentStatusQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const UpdateAdminExperimentStatusBody = zod.object({
+  "status": zod.enum(['draft', 'active', 'paused', 'completed'])
+})
+
+export const UpdateAdminExperimentStatusResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullable(),
+  "objective": zod.string(),
+  "status": zod.enum(['draft', 'active', 'paused', 'completed']),
+  "variants": zod.array(zod.object({
+  "id": zod.string(),
+  "experimentId": zod.string(),
+  "name": zod.string(),
+  "path": zod.string(),
+  "weight": zod.number(),
+  "status": zod.enum(['active', 'paused']),
+  "createdAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Resolve a persistent assignment for an active experiment
+ */
+export const GetExperimentAssignmentParams = zod.object({
+  "experimentId": zod.coerce.string()
+})
+
+export const getExperimentAssignmentQueryVisitorKeyMax = 120;
+
+
+
+export const GetExperimentAssignmentQueryParams = zod.object({
+  "visitorKey": zod.coerce.string().min(1).max(getExperimentAssignmentQueryVisitorKeyMax)
+})
+
+export const GetExperimentAssignmentResponse = zod.object({
+  "experimentId": zod.string(),
+  "experimentVariantId": zod.string(),
+  "visitorKey": zod.string(),
+  "landingPage": zod.string(),
+  "assignedAt": zod.coerce.date()
 })
 
 

@@ -16,6 +16,8 @@ export const sessionsTable = pgTable("sessions", {
   packageName: text("package_name").notNull(),
   sourceLp: text("source_lp"),
   visitorKey: text("visitor_key"),
+  experimentId: text("experiment_id"),
+  experimentVariantId: text("experiment_variant_id"),
   inviteLimit: integer("invite_limit").notNull(),
   invitesUsed: integer("invites_used").notNull().default(0),
   accessGranted: boolean("access_granted").notNull().default(false),
@@ -101,6 +103,8 @@ export const pageEventsTable = pgTable("page_events", {
   id: text("id").primaryKey(),
   lpId: text("lp_id").notNull(),
   visitorKey: text("visitor_key").notNull(),
+  experimentId: text("experiment_id"),
+  experimentVariantId: text("experiment_variant_id"),
   eventType: text("event_type").notNull(),
   clarityUserId: text("clarity_user_id"),
   claritySessionId: text("clarity_session_id"),
@@ -149,3 +153,5 @@ export type PageEvent = typeof pageEventsTable.$inferSelect;
 export type NewPageEvent = typeof pageEventsTable.$inferInsert;
 export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptionsTable.$inferInsert;
+
+export * from "./experiments";

@@ -13,6 +13,8 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
   const body = req.body as {
     lpId?: string;
     visitorKey?: string;
+    experimentId?: string;
+    experimentVariantId?: string;
     eventType?: string;
     timeOnPageMs?: number;
     lastSection?: string;
@@ -35,12 +37,18 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Origem de CTA inválida" });
     return;
   }
+  if (Boolean(body.experimentId) !== Boolean(body.experimentVariantId)) {
+    res.status(400).json({ error: "Associação de experimento inválida" });
+    return;
+  }
   const lpId = body.lpId as (typeof LP_IDS)[number];
   const eventType = body.eventType as (typeof EVENT_TYPES)[number];
   await db.insert(pageEventsTable).values({
     id: crypto.randomUUID(),
     lpId,
     visitorKey: body.visitorKey.trim().slice(0, 120),
+    experimentId: body.experimentId?.trim().slice(0, 120) || null,
+    experimentVariantId: body.experimentVariantId?.trim().slice(0, 120) || null,
     eventType,
     timeOnPageMs:
       typeof body.timeOnPageMs === "number" &&

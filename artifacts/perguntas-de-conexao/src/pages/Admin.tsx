@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowLeft,
@@ -7,6 +7,7 @@ import {
   Copy,
   ChevronDown,
   ExternalLink,
+  FlaskConical,
   LayoutTemplate,
   ShieldAlert,
   Trash2,
@@ -74,6 +75,34 @@ type AnalyticsEntry = {
   topExitSections: Array<{ section: string; count: number }>;
 };
 type LpSessionsResponse = { sessions?: LpSession[] };
+type ExperimentStatus = "draft" | "active" | "paused" | "completed";
+type ExperimentVariantStatus = "active" | "paused";
+type ExperimentVariantEntry = {
+  id: string;
+  experimentId: string;
+  name: string;
+  path: string;
+  weight: number;
+  status: ExperimentVariantStatus;
+  createdAt: string;
+};
+type ExperimentEntry = {
+  id: string;
+  name: string;
+  description: string | null;
+  objective: string;
+  status: ExperimentStatus;
+  variants: ExperimentVariantEntry[];
+  createdAt: string;
+  updatedAt: string;
+};
+type ExperimentDraftVariant = {
+  key: string;
+  name: string;
+  path: string;
+  weight: string;
+  status: ExperimentVariantStatus;
+};
 
 const LANDINGS: LandingEntry[] = [
   {
@@ -102,6 +131,7 @@ const LANDINGS: LandingEntry[] = [
 const TABS = [
   { id: "buyers", label: "Compradores" },
   { id: "pages", label: "Páginas" },
+  { id: "experiments", label: "Experimentos" },
   { id: "notifications", label: "Notificações" },
   { id: "feedback", label: "Feedback" },
 ] as const;
@@ -873,6 +903,498 @@ function FeedbackTab({
   );
 }
 
+const EXPERIMENT_STATUS_LABELS: Record<ExperimentStatus, string> = {
+  draft: "Rascunho",
+  active: "Ativo",
+  paused: "Desativado",
+  completed: "Concluído",
+};
+
+function createInitialExperimentVariants(): ExperimentDraftVariant[] {
+  return [
+    {
+      key: "variant-a",
+      name: "LP1",
+      path: "/",
+      weight: "50",
+      status: "active",
+    },
+    {
+      key: "variant-b",
+      name: "LP3",
+      path: "/lp3",
+      weight: "50",
+      status: "active",
+    },
+  ];
+}
+
+function ExperimentsTab({ sessionId }: { sessionId: string }) {
+  const [experiments, setExperiments] = useState<ExperimentEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+  const [draft, setDraft] = useState({
+    name: "",
+    description: "",
+    objective: "Compra",
+    variants: createInitialExperimentVariants(),
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch(
+      `${apiBaseUrl}/api/admin/experiments?sessionId=${encodeURIComponent(sessionId)}`,
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error("experiments");
+        return (await response.json()) as { experiments?: ExperimentEntry[] };
+      })
+      .then((data) => {
+        if (mounted) setExperiments(data.experiments || []);
+      })
+      .catch(() => {
+        if (mounted) setMessage("Não foi possível carregar os experimentos.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [sessionId]);
+
+  const updateVariant = (
+    key: string,
+    field: keyof Omit<ExperimentDraftVariant, "key">,
+    value: string,
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      variants: current.variants.map((variant) =>
+        variant.key === key ? { ...variant, [field]: value } : variant,
+      ),
+    }));
+  };
+
+  const createExperiment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setMessage("");
+    const totalWeight = draft.variants.reduce(
+      (total, variant) => total + Number(variant.weight || 0),
+      0,
+    );
+    if (
+      !draft.name.trim() ||
+      !draft.objective.trim() ||
+      draft.variants.length < 2 ||
+      draft.variants.some(
+        (variant) =>
+          !variant.name.trim() ||
+          !variant.path.trim() ||
+          !variant.path.trim().startsWith("/") ||
+          !Number.isInteger(Number(variant.weight)) ||
+          Number(variant.weight) < 0,
+      ) ||
+      totalWeight !== 100
+    ) {
+      setMessage(
+        "Preencha o experimento e faça os pesos inteiros somarem exatamente 100%.",
+      );
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/experiments?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: draft.name.trim(),
+            description: draft.description.trim() || undefined,
+            objective: draft.objective.trim(),
+            variants: draft.variants.map((variant) => ({
+              name: variant.name.trim(),
+              path: variant.path.trim(),
+              weight: Number(variant.weight),
+              status: variant.status,
+            })),
+          }),
+        },
+      );
+      const data = (await response.json()) as ExperimentEntry & {
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error || "create-experiment");
+      setExperiments((current) => [data, ...current]);
+      setDraft({
+        name: "",
+        description: "",
+        objective: "Compra",
+        variants: createInitialExperimentVariants(),
+      });
+      setMessage("Experimento criado como rascunho desativado.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error && error.message !== "create-experiment"
+          ? error.message
+          : "Não foi possível criar o experimento.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changeStatus = async (
+    experiment: ExperimentEntry,
+    status: ExperimentStatus,
+  ) => {
+    if (
+      status === "paused" &&
+      !window.confirm(
+        "Desativar este experimento agora? Nenhuma nova atribuição será feita.",
+      )
+    ) {
+      return;
+    }
+    setMessage("");
+    setActionId(experiment.id);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/experiments/${encodeURIComponent(experiment.id)}?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        },
+      );
+      const data = (await response.json()) as ExperimentEntry & {
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error || "update-experiment");
+      setExperiments((current) =>
+        current.map((item) => (item.id === experiment.id ? data : item)),
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error && error.message !== "update-experiment"
+          ? error.message
+          : "Não foi possível atualizar o experimento.",
+      );
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  return (
+    <>
+      <section className="admin-section" aria-labelledby="experiments-title">
+        <div className="admin-section-heading">
+          <div>
+            <p className="admin-eyebrow">infraestrutura de testes</p>
+            <h2 id="experiments-title">Experimentos</h2>
+          </div>
+          <div className="admin-notification-icon">
+            <FlaskConical size={18} />
+          </div>
+        </div>
+        <p className="admin-experiment-note">
+          Crie configurações para testes futuros. Todo experimento nasce como
+          rascunho e não distribui tráfego até você ativá-lo explicitamente.
+        </p>
+        {message && <p className="admin-notification-message">{message}</p>}
+        <form className="admin-experiment-form" onSubmit={createExperiment}>
+          <div className="admin-experiment-form-grid">
+            <label>
+              <span>Nome</span>
+              <input
+                value={draft.name}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    name: event.target.value,
+                  }))
+                }
+                placeholder="LP1 vs LP3 — Agosto 2026"
+                maxLength={160}
+                required
+              />
+            </label>
+            <label>
+              <span>Objetivo</span>
+              <input
+                value={draft.objective}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    objective: event.target.value,
+                  }))
+                }
+                placeholder="Compra"
+                maxLength={160}
+                required
+              />
+            </label>
+            <label className="admin-experiment-description">
+              <span>Descrição opcional</span>
+              <textarea
+                value={draft.description}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    description: event.target.value,
+                  }))
+                }
+                placeholder="O que queremos aprender com este teste?"
+                maxLength={1000}
+                rows={2}
+              />
+            </label>
+            <label>
+              <span>Status</span>
+              <select value="draft" disabled>
+                <option value="draft">Rascunho — desativado</option>
+              </select>
+            </label>
+          </div>
+          <div className="admin-experiment-variants-heading">
+            <div>
+              <span>Variantes</span>
+              <small>Caminho e percentual de distribuição</small>
+            </div>
+            <button
+              type="button"
+              className="admin-experiment-secondary-button"
+              onClick={() =>
+                setDraft((current) => ({
+                  ...current,
+                  variants: [
+                    ...current.variants,
+                    {
+                      key: `variant-${Date.now()}`,
+                      name: "",
+                      path: "/",
+                      weight: "0",
+                      status: "active",
+                    },
+                  ],
+                }))
+              }
+            >
+              + Adicionar variante
+            </button>
+          </div>
+          <div className="admin-experiment-variant-editor">
+            {draft.variants.map((variant, index) => (
+              <div className="admin-experiment-variant-row" key={variant.key}>
+                <span className="admin-experiment-variant-index">
+                  {String.fromCharCode(65 + index)}
+                </span>
+                <label>
+                  <span>Nome</span>
+                  <input
+                    value={variant.name}
+                    onChange={(event) =>
+                      updateVariant(variant.key, "name", event.target.value)
+                    }
+                    placeholder="LP1"
+                    maxLength={120}
+                    required
+                  />
+                </label>
+                <label>
+                  <span>Path</span>
+                  <input
+                    value={variant.path}
+                    onChange={(event) =>
+                      updateVariant(variant.key, "path", event.target.value)
+                    }
+                    placeholder="/lp3"
+                    maxLength={500}
+                    required
+                  />
+                </label>
+                <label>
+                  <span>Percentual</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={variant.weight}
+                    onChange={(event) =>
+                      updateVariant(variant.key, "weight", event.target.value)
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  <span>Status</span>
+                  <select
+                    value={variant.status}
+                    onChange={(event) =>
+                      updateVariant(variant.key, "status", event.target.value)
+                    }
+                  >
+                    <option value="active">Ativa</option>
+                    <option value="paused">Pausada</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="admin-experiment-remove-button"
+                  onClick={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      variants: current.variants.filter(
+                        (item) => item.key !== variant.key,
+                      ),
+                    }))
+                  }
+                  disabled={draft.variants.length <= 2}
+                  aria-label={`Remover variante ${index + 1}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="admin-experiment-form-footer">
+            <span
+              className={
+                draft.variants.reduce(
+                  (total, variant) => total + Number(variant.weight || 0),
+                  0,
+                ) === 100
+                  ? "is-valid"
+                  : "is-invalid"
+              }
+            >
+              Total:{" "}
+              {draft.variants.reduce(
+                (total, variant) => total + Number(variant.weight || 0),
+                0,
+              )}
+              %
+            </span>
+            <button
+              type="submit"
+              className="button button-primary"
+              disabled={saving}
+            >
+              {saving ? "Salvando…" : "Criar experimento"}
+            </button>
+          </div>
+        </form>
+      </section>
+      <section
+        className="admin-section"
+        aria-labelledby="configured-experiments-title"
+      >
+        <div className="admin-section-heading">
+          <div>
+            <p className="admin-eyebrow">configurações salvas</p>
+            <h2 id="configured-experiments-title">Experimentos cadastrados</h2>
+          </div>
+          <span className="admin-count">{experiments.length}</span>
+        </div>
+        {loading ? (
+          <p className="admin-footnote">Carregando experimentos…</p>
+        ) : experiments.length === 0 ? (
+          <p className="admin-footnote">
+            Nenhum experimento criado. O tráfego atual continua intacto.
+          </p>
+        ) : (
+          <div className="admin-experiment-list">
+            {experiments.map((experiment) => (
+              <article className="admin-experiment-card" key={experiment.id}>
+                <div className="admin-experiment-card-heading">
+                  <div>
+                    <p className="admin-eyebrow">
+                      {experiment.objective || "teste"}
+                    </p>
+                    <h3>{experiment.name}</h3>
+                  </div>
+                  <span
+                    className={`admin-experiment-status is-${experiment.status}`}
+                  >
+                    {EXPERIMENT_STATUS_LABELS[experiment.status]}
+                  </span>
+                </div>
+                {experiment.description && <p>{experiment.description}</p>}
+                <div className="admin-experiment-variant-list">
+                  {experiment.variants.map((variant) => (
+                    <div key={variant.id}>
+                      <strong>{variant.name}</strong>
+                      <code>{variant.path}</code>
+                      <span>{variant.weight}%</span>
+                      <small>
+                        {variant.status === "active" ? "Ativa" : "Pausada"}
+                      </small>
+                    </div>
+                  ))}
+                </div>
+                <div className="admin-experiment-card-footer">
+                  <small>Criado em {formatDate(experiment.createdAt)}</small>
+                  <div>
+                    {experiment.status === "draft" && (
+                      <button
+                        type="button"
+                        className="admin-experiment-action-button"
+                        onClick={() => void changeStatus(experiment, "active")}
+                        disabled={actionId === experiment.id}
+                      >
+                        Ativar
+                      </button>
+                    )}
+                    {experiment.status === "active" && (
+                      <button
+                        type="button"
+                        className="admin-experiment-action-button is-danger"
+                        onClick={() => void changeStatus(experiment, "paused")}
+                        disabled={actionId === experiment.id}
+                      >
+                        Desativar agora
+                      </button>
+                    )}
+                    {experiment.status === "paused" && (
+                      <button
+                        type="button"
+                        className="admin-experiment-action-button"
+                        onClick={() => void changeStatus(experiment, "active")}
+                        disabled={actionId === experiment.id}
+                      >
+                        Reativar
+                      </button>
+                    )}
+                    {(experiment.status === "active" ||
+                      experiment.status === "paused") && (
+                      <button
+                        type="button"
+                        className="admin-experiment-action-button"
+                        onClick={() =>
+                          void changeStatus(experiment, "completed")
+                        }
+                        disabled={actionId === experiment.id}
+                      >
+                        Concluir
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
 export default function Admin() {
   const [status, setStatus] = useState<"checking" | "denied" | "ok">(
     "checking",
@@ -990,6 +1512,7 @@ export default function Admin() {
       />
     ),
     feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
+    experiments: <ExperimentsTab sessionId={sessionId} />,
     notifications: <NotificationsTab sessionId={sessionId} />,
   };
 

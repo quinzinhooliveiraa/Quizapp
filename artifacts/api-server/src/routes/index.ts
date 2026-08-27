@@ -7,6 +7,7 @@ import preferencesRouter from "./preferences";
 import adminRouter from "./admin";
 import feedbackRouter from "./feedback";
 import trackingRouter from "./tracking";
+import experimentsRouter from "./experiments";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(preferencesRouter);
 router.use(adminRouter);
 router.use(feedbackRouter);
 router.use(trackingRouter);
+router.use(experimentsRouter);
 
 export default router;

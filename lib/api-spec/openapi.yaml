@@ -497,6 +497,105 @@ paths:
                 required: [analytics]
         "403":
           description: Access denied
+  /admin/experiments:
+    get:
+      operationId: listAdminExperiments
+      tags: [admin]
+      summary: List experiments for an administrator
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Configured experiments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminExperimentsResponse"
+        "403":
+          description: Access denied
+    post:
+      operationId: createAdminExperiment
+      tags: [admin]
+      summary: Create a draft experiment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExperimentInput"
+      responses:
+        "201":
+          description: Draft experiment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Experiment"
+        "400":
+          description: Invalid experiment or weights
+        "403":
+          description: Access denied
+  /admin/experiments/{experimentId}:
+    patch:
+      operationId: updateAdminExperimentStatus
+      tags: [admin]
+      summary: Change an experiment status
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExperimentStatusUpdate"
+      responses:
+        "200":
+          description: Experiment status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Experiment"
+        "400":
+          description: Invalid status
+        "403":
+          description: Access denied
+        "404":
+          description: Experiment not found
+  /experiments/{experimentId}/assignment:
+    get:
+      operationId: getExperimentAssignment
+      tags: [experiments]
+      summary: Resolve a persistent assignment for an active experiment
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: visitorKey
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+      responses:
+        "200":
+          description: Persistent experiment assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperimentAssignment"
+        "404":
+          description: No active experiment found
   /suggestions:
     post:
       operationId: createSuggestion
@@ -1105,12 +1204,20 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        experimentId:
+          type: string
+          maxLength: 120
+        experimentVariantId:
+          type: string
+          maxLength: 120
       required: [packageId, buyerName]
     PageEventInput:
       type: object
       properties:
         lpId: { type: string, enum: [v1, v2, lp3] }
         visitorKey: { type: string, minLength: 1, maxLength: 120 }
+        experimentId: { type: string, maxLength: 120 }
+        experimentVariantId: { type: string, maxLength: 120 }
         eventType: { type: string, enum: [view, cta_click, exit] }
         timeOnPageMs: { type: number, minimum: 0 }
         lastSection: { type: string, maxLength: 80 }
@@ -1120,6 +1227,110 @@ components:
           type: string
           enum: [hero_quiz, hero_comprar, lp3_offer]
       required: [lpId, visitorKey, eventType]
+    ExperimentVariantInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        path:
+          type: string
+          minLength: 1
+          maxLength: 500
+        weight:
+          type: number
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [active, paused]
+      required: [name, path, weight]
+    ExperimentInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 1000
+        objective:
+          type: string
+          minLength: 1
+          maxLength: 160
+        variants:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/ExperimentVariantInput"
+      required: [name, objective, variants]
+    ExperimentStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+      required: [status]
+    ExperimentVariant:
+      type: object
+      properties:
+        id: { type: string }
+        experimentId: { type: string }
+        name: { type: string }
+        path: { type: string }
+        weight: { type: number }
+        status:
+          type: string
+          enum: [active, paused]
+        createdAt: { type: string, format: date-time }
+      required: [id, experimentId, name, path, weight, status, createdAt]
+    Experiment:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: ["string", "null"] }
+        objective: { type: string }
+        status:
+          type: string
+          enum: [draft, active, paused, completed]
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExperimentVariant"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        [
+          id,
+          name,
+          description,
+          objective,
+          status,
+          variants,
+          createdAt,
+          updatedAt,
+        ]
+    AdminExperimentsResponse:
+      type: object
+      properties:
+        experiments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Experiment"
+      required: [experiments]
+    ExperimentAssignment:
+      type: object
+      properties:
+        experimentId: { type: string }
+        experimentVariantId: { type: string }
+        visitorKey: { type: string }
+        landingPage: { type: string }
+        assignedAt: { type: string, format: date-time }
+      required:
+        [experimentId, experimentVariantId, visitorKey, landingPage, assignedAt]
     SessionRecordingLookup:
       type: object
       properties:

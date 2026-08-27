@@ -16,6 +16,10 @@ export interface PageEventInput {
      * @maxLength 120
      */
   visitorKey: string;
+  /** @maxLength 120 */
+  experimentId?: string;
+  /** @maxLength 120 */
+  experimentVariantId?: string;
   eventType: PageEventInputEventType;
   /** @minimum 0 */
   timeOnPageMs?: number;
