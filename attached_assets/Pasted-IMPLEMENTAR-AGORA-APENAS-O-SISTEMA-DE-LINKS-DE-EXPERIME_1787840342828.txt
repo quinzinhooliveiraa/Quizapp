@@ -1,0 +1,550 @@
+IMPLEMENTAR AGORA APENAS O SISTEMA DE LINKS DE EXPERIMENTOS.
+
+IMPORTANTE:
+Este projeto já possui uma infraestrutura de experimentos/A-B testing implementada.
+NÃO criar um novo sistema de experimentos.
+NÃO refatorar o sistema existente.
+NÃO alterar visual ou comportamento das LP1, LP2 ou LP3.
+NÃO ativar nenhum experimento automaticamente.
+NÃO implementar ainda o router global da rota "/".
+NÃO distribuir o tráfego principal automaticamente.
+
+OBJETIVO
+
+Quero transformar o sistema de experimentos existente em um sistema utilizável por mim através de um LINK EXCLUSIVO DE EXPERIMENTO.
+
+A ideia é:
+
+Admin
+↓
+Criar experimento
+↓
+Selecionar as landing pages por nome
+↓
+Definir peso de cada variante
+↓
+Criar experimento
+↓
+Sistema gera automaticamente um link exclusivo
+↓
+Exemplo:
+/e/lp3-vs-principal
+↓
+Pessoas que entrarem nesse link participam do experimento
+↓
+Router distribui essas pessoas entre as variantes
+↓
+A atribuição fica persistente
+↓
+Tracking + Analytics registram a variante
+↓
+Admin mostra os resultados por variante
+
+
+==================================================
+1. NÃO USAR PATH COMO INPUT PRINCIPAL DO ADMIN
+==================================================
+
+Atualmente as variantes utilizam um campo "path".
+
+Não quero que o administrador precise conhecer paths técnicos como:
+
+/
+ /lp2
+ /lp3
+
+Em vez disso, o Admin deve permitir selecionar a landing page através de um dropdown/select amigável.
+
+Exemplo:
+
+Adicionar variante
+
+Página:
+[ Reacender a chama ▼ ]
+
+Peso:
+[ 50 ] %
+
+Outra variante:
+
+Página:
+[ Jornada de Conexão ▼ ]
+
+Peso:
+[ 50 ] %
+
+Internamente o sistema continua podendo utilizar:
+
+Reacender a chama → /
+Jornada de Conexão → /lp3
+
+Mas o usuário do Admin NÃO precisa saber disso.
+
+==================================================
+2. CRIAR UM REGISTRO CENTRAL DE LANDING PAGES
+==================================================
+
+Criar uma configuração/estrutura centralizada para as landing pages disponíveis para experimentos.
+
+Exemplo conceitual:
+
+{
+  id: "v2",
+  name: "Reacender a chama",
+  path: "/"
+}
+
+{
+  id: "v1",
+  name: "Suas conversas viraram logística",
+  path: "/lp2"
+}
+
+{
+  id: "lp3",
+  name: "Jornada de Conexão",
+  path: "/lp3"
+}
+
+IMPORTANTE:
+
+Não duplicar LPs.
+Não criar novas páginas.
+Essa estrutura deve apenas mapear as páginas que já existem.
+
+Deve ser fácil adicionar futuramente:
+
+LP4
+LP5
+LP6
+
+sem precisar reescrever o sistema de experimentos.
+
+==================================================
+3. GERAR LINK EXCLUSIVO DO EXPERIMENTO
+==================================================
+
+Cada experimento deve possuir um slug único e um link público.
+
+Exemplo:
+
+Nome:
+"LP Principal vs LP3"
+
+Slug:
+"lp-principal-vs-lp3"
+
+Link:
+
+https://perguntasdeconexao.com.br/e/lp-principal-vs-lp3
+
+O slug pode ser gerado automaticamente a partir do nome do experimento, com normalização para URL.
+
+Também deve existir possibilidade de evitar colisões.
+
+Se necessário, adicionar um identificador curto ao slug.
+
+Exemplo:
+
+/e/lp-principal-vs-lp3-a7k2
+
+O link deve aparecer claramente no Admin depois que o experimento for criado.
+
+Adicionar botão:
+
+"Copiar link"
+
+==================================================
+4. CRIAR A ROTA /e/:experimentSlug
+==================================================
+
+Adicionar uma rota pública para links de experimento:
+
+/e/:experimentSlug
+
+Essa rota deve:
+
+1. Receber o slug.
+2. Encontrar o experimento correspondente.
+3. Verificar se o experimento está ativo.
+4. Obter/criar a atribuição do visitante utilizando a infraestrutura existente.
+5. Selecionar a variante conforme os pesos configurados.
+6. Renderizar a landing page correspondente.
+
+IMPORTANTE:
+
+Não criar uma nova lógica de randomização se o sistema existente já possui essa funcionalidade.
+
+Reutilizar:
+
+getOrCreateExperimentAssignment
+resolveActiveExperimentAssignment
+
+e toda a infraestrutura existente em:
+
+experiments.ts
+
+==================================================
+5. ATRIBUIÇÃO PERSISTENTE
+==================================================
+
+A pessoa deve receber uma variante e continuar vendo a mesma variante.
+
+Exemplo:
+
+Visitante A entra:
+
+/e/lp-principal-vs-lp3
+
+Recebe:
+
+LP3
+
+Se atualizar a página:
+
+LP3
+
+Se sair e retornar posteriormente:
+
+LP3
+
+Não sortear novamente para o mesmo visitante.
+
+Usar o visitorKey existente e o sistema de assignment existente.
+
+NÃO criar uma segunda implementação de identificação de visitante.
+
+==================================================
+6. PESOS
+==================================================
+
+Continuar usando o sistema existente de pesos.
+
+Exemplo:
+
+LP Principal → 50%
+LP3 → 50%
+
+Ou:
+
+LP Principal → 70%
+LP3 → 30%
+
+Ou futuramente:
+
+LP2 → 25%
+LP3 → 25%
+LP4 → 25%
+LP5 → 25%
+
+Os pesos ativos devem continuar somando exatamente 100%.
+
+A validação existente deve ser preservada.
+
+==================================================
+7. EXPERIMENTO DESATIVADO
+==================================================
+
+O link do experimento não deve começar a distribuir tráfego se o experimento estiver:
+
+draft
+paused
+stopped
+
+Com experimento não ativo:
+
+/e/slug
+
+deve mostrar uma resposta apropriada, como:
+
+"Este experimento não está disponível."
+
+OU utilizar uma página de fallback segura.
+
+NÃO redirecionar silenciosamente todo mundo para LP3.
+
+==================================================
+8. NÃO ALTERAR A ROTA PRINCIPAL
+==================================================
+
+MUDE NADA na lógica de:
+
+/
+
+Neste momento:
+
+/ continua mostrando a LP2/v2 atual.
+
+O tráfego normal continua intacto.
+
+Também preservar:
+
+/lp2
+/lp3
+
+O acesso direto a /lp3 deve continuar funcionando.
+
+IMPORTANTE:
+
+Não implementar agora:
+
+"se existe experimento ativo, trocar automaticamente a /".
+
+Isso será feito em uma próxima etapa através do Router Global.
+
+==================================================
+9. TRACKING
+==================================================
+
+Reutilizar o tracking existente.
+
+Quando alguém acessar:
+
+/e/lp-principal-vs-lp3
+
+e receber uma variante, os eventos precisam continuar associados a:
+
+experimentId
+experimentVariantId
+
+Não criar um tracking paralelo.
+
+A atribuição deve estar disponível para:
+
+page_events
+analytics
+checkout
+
+quando aplicável.
+
+==================================================
+10. CHECKOUT / ATRIBUIÇÃO
+==================================================
+
+Não modificar o checkout visual neste momento.
+
+Apenas garantir que a infraestrutura não perca:
+
+experimentId
+experimentVariantId
+
+quando a pessoa atribuída a uma variante iniciar checkout.
+
+Se o sistema atual já suporta isso, não alterar.
+
+Se houver um pequeno ajuste necessário para preservar a atribuição, fazer somente esse ajuste.
+
+NÃO implementar ainda o checkout transparente.
+
+==================================================
+11. ADMIN — LISTAGEM
+==================================================
+
+Na página de Experimentos do Admin, mostrar algo semelhante a:
+
+EXPERIMENTOS
+
+LP Principal vs LP3
+Status: Rascunho
+Link:
+https://perguntasdeconexao.com.br/e/lp-principal-vs-lp3
+
+[Copiar link]
+
+Variantes:
+
+Reacender a chama
+50%
+
+Jornada de Conexão
+50%
+
+Depois, quando houver dados:
+
+Visitantes
+CTA
+Checkout
+Compras
+Conversão
+
+por variante.
+
+Reutilizar os analytics existentes.
+
+==================================================
+12. CRIAÇÃO DO EXPERIMENTO
+==================================================
+
+A tela de criação deve ficar aproximadamente:
+
+Nome do experimento
+
+[________________________]
+
+Objetivo
+
+[________________________]
+
+Descrição (opcional)
+
+[________________________]
+
+VARIANTES
+
+Variante A
+
+Página:
+[ Reacender a chama ▼ ]
+
+Peso:
+[ 50 ] %
+
+Variante B
+
+Página:
+[ Jornada de Conexão ▼ ]
+
+Peso:
+[ 50 ] %
+
+Peso total:
+100%
+
+[ Criar experimento ]
+
+Após criar:
+
+Status:
+Rascunho
+
+Link:
+https://perguntasdeconexao.com.br/e/...
+
+[Copiar link]
+
+[Ativar experimento]
+
+==================================================
+13. SEGURANÇA CONTRA EXPERIMENTOS ACIDENTAIS
+==================================================
+
+É MUITO IMPORTANTE que criar um experimento NÃO coloque ele automaticamente no ar.
+
+Fluxo:
+
+Criar
+↓
+DRAFT
+↓
+Revisar
+↓
+Ativar manualmente
+↓
+Link começa a funcionar
+
+Nenhum experimento deve ser ativado automaticamente.
+
+==================================================
+14. COMPATIBILIDADE COM O SISTEMA ATUAL
+==================================================
+
+Antes de editar:
+
+1. Inspecione a implementação atual de experiments.
+2. Inspecione experiments.ts.
+3. Inspecione as tabelas de experiments e experimentVariants.
+4. Inspecione os endpoints existentes.
+5. Inspecione como visitorKey é criado.
+6. Inspecione como tracking recebe experimentId e experimentVariantId.
+7. Inspecione o Admin atual.
+8. Inspecione o roteamento atual.
+
+Depois implemente a menor alteração possível.
+
+NÃO substituir arquitetura existente.
+
+==================================================
+15. O QUE NÃO FAZER
+==================================================
+
+NÃO:
+
+- alterar LP1;
+- alterar LP2;
+- alterar LP3 visualmente;
+- alterar onboarding;
+- alterar o checkout visual;
+- criar novo sistema de tracking;
+- criar novo sistema de A/B testing;
+- criar randomização duplicada;
+- ativar experimento automaticamente;
+- modificar "/" para usar experimentos;
+- implementar otimização automática;
+- aumentar escopo desnecessariamente.
+
+==================================================
+16. TESTES OBRIGATÓRIOS
+==================================================
+
+Depois da implementação:
+
+1. Typecheck.
+2. Build.
+3. Verificar:
+
+/
+ 
+/lp2
+
+/lp3
+
+/admin
+
+/e/:experimentSlug
+
+4. Criar um experimento de teste com:
+
+/ → 50%
+/lp3 → 50%
+
+5. Verificar que o experimento nasce como draft.
+
+6. Ativar manualmente.
+
+7. Acessar o link do experimento.
+
+8. Confirmar que uma variante é atribuída.
+
+9. Atualizar a página.
+
+10. Confirmar que a mesma variante permanece.
+
+11. Confirmar que os eventos possuem experimentId e experimentVariantId.
+
+12. Desativar o experimento.
+
+13. Confirmar que o link deixa de distribuir tráfego.
+
+==================================================
+17. RELATÓRIO FINAL
+==================================================
+
+Quando terminar, NÃO apenas diga "feito".
+
+Informe:
+
+- arquivos alterados;
+- arquivos novos, se houver;
+- como o slug funciona;
+- como o link /e/:slug funciona;
+- como a seleção de LP pelo Admin funciona;
+- como a atribuição persistente funciona;
+- como o tracking é associado à variante;
+- como o fallback funciona;
+- quais testes foram executados;
+- resultado do typecheck;
+- resultado do build.
+
+Se encontrar algo que exija uma mudança estrutural maior, PARE e explique antes de fazer essa mudança.
+
+O objetivo é implementar somente o Experiment Link System usando a infraestrutura que já existe.

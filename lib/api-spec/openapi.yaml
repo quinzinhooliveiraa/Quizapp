@@ -618,6 +618,35 @@ paths:
                 $ref: "#/components/schemas/ExperimentAssignment"
         "404":
           description: No active experiment found
+  /experiments/link/{experimentSlug}:
+    get:
+      operationId: getExperimentLinkAssignment
+      tags: [experiments]
+      summary: Resolve an assignment from a public experiment link
+      parameters:
+        - name: experimentSlug
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 180
+        - name: visitorKey
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+      responses:
+        "200":
+          description: Persistent assignment for the experiment link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperimentAssignment"
+        "404":
+          description: Experiment link not available
   /admin/experiments/{experimentId}/analytics:
     get:
       operationId: getAdminExperimentAnalytics
@@ -1338,6 +1367,7 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
+        slug: { type: string }
         description: { type: ["string", "null"] }
         objective: { type: string }
         status:
@@ -1353,6 +1383,7 @@ components:
         [
           id,
           name,
+          slug,
           description,
           objective,
           status,

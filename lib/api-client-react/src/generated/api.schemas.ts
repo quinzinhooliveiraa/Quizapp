@@ -454,6 +454,7 @@ export const ExperimentStatus = {
 export interface Experiment {
   id: string;
   name: string;
+  slug: string;
   /** @nullable */
   description: string | null;
   objective: string;
@@ -639,6 +640,14 @@ visitorKey: string;
 };
 
 export type GetActiveExperimentAssignmentParams = {
+/**
+ * @minLength 1
+ * @maxLength 120
+ */
+visitorKey: string;
+};
+
+export type GetExperimentLinkAssignmentParams = {
 /**
  * @minLength 1
  * @maxLength 120

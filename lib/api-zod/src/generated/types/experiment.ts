@@ -11,6 +11,7 @@ import type { ExperimentVariant } from './experimentVariant';
 export interface Experiment {
   id: string;
   name: string;
+  slug: string;
   /** @nullable */
   description: string | null;
   objective: string;

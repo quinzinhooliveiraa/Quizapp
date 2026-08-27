@@ -427,6 +427,7 @@ export const ListAdminExperimentsResponse = zod.object({
   "experiments": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
+  "slug": zod.string(),
   "description": zod.string().nullable(),
   "objective": zod.string(),
   "status": zod.enum(['draft', 'active', 'paused', 'completed']),
@@ -480,6 +481,7 @@ export const CreateAdminExperimentBody = zod.object({
 export const CreateAdminExperimentResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
+  "slug": zod.string(),
   "description": zod.string().nullable(),
   "objective": zod.string(),
   "status": zod.enum(['draft', 'active', 'paused', 'completed']),
@@ -515,6 +517,7 @@ export const UpdateAdminExperimentStatusBody = zod.object({
 export const UpdateAdminExperimentStatusResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
+  "slug": zod.string(),
   "description": zod.string().nullable(),
   "objective": zod.string(),
   "status": zod.enum(['draft', 'active', 'paused', 'completed']),
@@ -568,6 +571,34 @@ export const GetActiveExperimentAssignmentQueryParams = zod.object({
 })
 
 export const GetActiveExperimentAssignmentResponse = zod.object({
+  "experimentId": zod.string(),
+  "experimentVariantId": zod.string(),
+  "visitorKey": zod.string(),
+  "landingPage": zod.string(),
+  "assignedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Resolve an assignment from a public experiment link
+ */
+export const getExperimentLinkAssignmentPathExperimentSlugMax = 180;
+
+
+
+export const GetExperimentLinkAssignmentParams = zod.object({
+  "experimentSlug": zod.coerce.string().min(1).max(getExperimentLinkAssignmentPathExperimentSlugMax)
+})
+
+export const getExperimentLinkAssignmentQueryVisitorKeyMax = 120;
+
+
+
+export const GetExperimentLinkAssignmentQueryParams = zod.object({
+  "visitorKey": zod.coerce.string().min(1).max(getExperimentLinkAssignmentQueryVisitorKeyMax)
+})
+
+export const GetExperimentLinkAssignmentResponse = zod.object({
   "experimentId": zod.string(),
   "experimentVariantId": zod.string(),
   "visitorKey": zod.string(),

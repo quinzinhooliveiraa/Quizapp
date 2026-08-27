@@ -19,6 +19,7 @@ export const EXPERIMENT_VARIANT_STATUSES = ["active", "paused"] as const;
 export const experimentsTable = pgTable("experiments", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  slug: text("slug").notNull(),
   description: text("description"),
   objective: text("objective").notNull(),
   status: text("status").notNull().default("draft"),
@@ -28,7 +29,9 @@ export const experimentsTable = pgTable("experiments", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  slugUnique: uniqueIndex("experiments_slug_unique_idx").on(table.slug),
+}));
 
 export const experimentVariantsTable = pgTable("experiment_variants", {
   id: text("id").primaryKey(),

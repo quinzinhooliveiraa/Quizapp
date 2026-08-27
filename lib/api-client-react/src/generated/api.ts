@@ -44,6 +44,7 @@ import type {
   GetAdminExperimentAnalyticsParams,
   GetAdminSessionRecordingParams,
   GetExperimentAssignmentParams,
+  GetExperimentLinkAssignmentParams,
   GetPreferencesParams,
   GetPushVapidPublicKey200,
   GuestAccess,
@@ -2233,6 +2234,95 @@ export function useGetActiveExperimentAssignment<TData = Awaited<ReturnType<type
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetActiveExperimentAssignmentQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetExperimentLinkAssignmentUrl = (experimentSlug: string,
+    params: GetExperimentLinkAssignmentParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/experiments/link/${experimentSlug}?${stringifiedParams}` : `/api/experiments/link/${experimentSlug}`
+}
+
+/**
+ * @summary Resolve an assignment from a public experiment link
+ */
+export const getExperimentLinkAssignment = async (experimentSlug: string,
+    params: GetExperimentLinkAssignmentParams, options?: Parameters<typeof customFetch>[1]): Promise<ExperimentAssignment> => {
+
+  return customFetch<ExperimentAssignment>(getGetExperimentLinkAssignmentUrl(experimentSlug,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetExperimentLinkAssignmentQueryKey = (experimentSlug: string,
+    params?: GetExperimentLinkAssignmentParams,) => {
+    return [
+    `/api/experiments/link/${experimentSlug}`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetExperimentLinkAssignmentQueryOptions = <TData = Awaited<ReturnType<typeof getExperimentLinkAssignment>>, TError = ErrorType<void>>(experimentSlug: string,
+    params: GetExperimentLinkAssignmentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExperimentLinkAssignment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetExperimentLinkAssignmentQueryKey(experimentSlug,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getExperimentLinkAssignment>>> = ({ signal }) => getExperimentLinkAssignment(experimentSlug,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: experimentSlug !== null && experimentSlug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getExperimentLinkAssignment>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetExperimentLinkAssignmentQueryResult = NonNullable<Awaited<ReturnType<typeof getExperimentLinkAssignment>>>
+export type GetExperimentLinkAssignmentQueryError = ErrorType<void>
+
+
+/**
+ * @summary Resolve an assignment from a public experiment link
+ */
+
+export function useGetExperimentLinkAssignment<TData = Awaited<ReturnType<typeof getExperimentLinkAssignment>>, TError = ErrorType<void>>(
+ experimentSlug: string,
+    params: GetExperimentLinkAssignmentParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getExperimentLinkAssignment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetExperimentLinkAssignmentQueryOptions(experimentSlug,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

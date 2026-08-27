@@ -46,6 +46,7 @@ export * from './getAdminAnalyticsParams';
 export * from './getAdminExperimentAnalyticsParams';
 export * from './getAdminSessionRecordingParams';
 export * from './getExperimentAssignmentParams';
+export * from './getExperimentLinkAssignmentParams';
 export * from './getPreferencesParams';
 export * from './getPushVapidPublicKey200';
 export * from './guestAccess';

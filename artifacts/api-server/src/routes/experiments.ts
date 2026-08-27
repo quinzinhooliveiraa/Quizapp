@@ -16,6 +16,9 @@ import {
   GetExperimentAssignmentResponse,
   GetActiveExperimentAssignmentQueryParams,
   GetActiveExperimentAssignmentResponse,
+  GetExperimentLinkAssignmentParams,
+  GetExperimentLinkAssignmentQueryParams,
+  GetExperimentLinkAssignmentResponse,
   GetAdminExperimentAnalyticsParams,
   GetAdminExperimentAnalyticsQueryParams,
   GetAdminExperimentAnalyticsResponse,
@@ -48,6 +51,50 @@ async function getExperimentWithVariants(id: string) {
     .where(eq(experimentVariantsTable.experimentId, id))
     .orderBy(asc(experimentVariantsTable.createdAt));
   return { ...experiment, variants };
+}
+
+async function getExperimentBySlug(slug: string) {
+  const [experiment] = await db
+    .select()
+    .from(experimentsTable)
+    .where(eq(experimentsTable.slug, slug))
+    .limit(1);
+  if (!experiment) return undefined;
+
+  const variants = await db
+    .select()
+    .from(experimentVariantsTable)
+    .where(eq(experimentVariantsTable.experimentId, experiment.id))
+    .orderBy(asc(experimentVariantsTable.createdAt));
+  return { ...experiment, variants };
+}
+
+function slugifyExperimentName(value: string) {
+  return (
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 150) || "experimento"
+  );
+}
+
+async function createUniqueExperimentSlug(name: string) {
+  const base = slugifyExperimentName(name);
+  let candidate = base;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const [existing] = await db
+      .select({ id: experimentsTable.id })
+      .from(experimentsTable)
+      .where(eq(experimentsTable.slug, candidate))
+      .limit(1);
+    if (!existing) return candidate;
+    const suffix = crypto.randomBytes(3).toString("hex");
+    candidate = `${base.slice(0, 141)}-${suffix}`;
+  }
+  throw new Error("Não foi possível gerar um link único para o experimento.");
 }
 
 async function getExperimentsWithVariants() {
@@ -130,12 +177,14 @@ router.post("/admin/experiments", async (req, res): Promise<void> => {
   }
 
   const experimentId = crypto.randomUUID();
+  const slug = await createUniqueExperimentSlug(name);
   const now = new Date();
   const [experiment] = await db
     .insert(experimentsTable)
     .values({
       id: experimentId,
       name,
+      slug,
       description: parsed.data.description?.trim() || null,
       objective,
       status: "draft",
@@ -252,6 +301,34 @@ router.get("/experiments/assignment", async (req, res): Promise<void> => {
   }
   res.json(GetActiveExperimentAssignmentResponse.parse(assignment));
 });
+
+router.get(
+  "/experiments/link/:experimentSlug",
+  async (req, res): Promise<void> => {
+    const params = GetExperimentLinkAssignmentParams.safeParse(req.params);
+    const query = GetExperimentLinkAssignmentQueryParams.safeParse(req.query);
+    if (!params.success || !query.success) {
+      res.status(400).json({ error: "Link de experimento inválido" });
+      return;
+    }
+
+    const experiment = await getExperimentBySlug(params.data.experimentSlug);
+    if (!experiment || experiment.status !== "active") {
+      res.status(404).json({ error: "Este experimento não está disponível." });
+      return;
+    }
+
+    const assignment = await getOrCreateExperimentAssignment(
+      experiment.id,
+      query.data.visitorKey,
+    );
+    if (!assignment) {
+      res.status(404).json({ error: "Este experimento não está disponível." });
+      return;
+    }
+    res.json(GetExperimentLinkAssignmentResponse.parse(assignment));
+  },
+);
 
 router.get(
   "/admin/experiments/:experimentId/analytics",
