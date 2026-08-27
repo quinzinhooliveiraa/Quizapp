@@ -6569,6 +6569,20 @@ blockquote em {
 .checkout-native-payment h2 {
   margin-bottom: 14px;
 }
+.checkout-native-status {
+  align-items: center;
+  background: #f4e9e0;
+  border: 1px solid #ead4ca;
+  border-radius: 999px;
+  color: var(--wine);
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: -3px 0 13px;
+  padding: 7px 12px;
+  text-transform: uppercase;
+}
 .checkout-native-recap {
   color: #856f75;
   font-size: 12px;

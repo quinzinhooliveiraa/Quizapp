@@ -506,11 +506,30 @@ function safeRemoveItem(key: string): void {
   }
 }
 
+function getStoredVisitorKey(): string {
+  try {
+    return (
+      sessionStorage.getItem("pdc-visitor-key") ||
+      localStorage.getItem("pdc-visitor-key") ||
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
+
 function clearPendingCheckoutStorage(): void {
   safeRemoveItem("conexao-pending-pix");
   safeRemoveItem("conexao-pending-session");
   safeRemoveItem("conexao-pending-bill");
   safeRemoveItem("conexao-pending-at");
+}
+
+function clearCompletedCheckoutStorage(): void {
+  clearPendingCheckoutStorage();
+  safeRemoveItem("conexao-pending-source-lp");
+  safeRemoveItem("conexao-pending-buyer-name");
+  safeRemoveItem("conexao-pending-buyer-email");
 }
 
 function localDateKey() {
@@ -2057,10 +2076,14 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
 
 function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const trackCtaClick = useLpTracking(variant);
+  const sourceFromUrl = new URLSearchParams(window.location.search).get("source");
+  const storedSourceLp = safeGetItem("conexao-pending-source-lp");
   const checkoutSourceLp: "v1" | "v2" | "lp3" =
-    new URLSearchParams(window.location.search).get("source") === "lp3"
+    sourceFromUrl === "lp3"
       ? "lp3"
-      : variant;
+      : storedSourceLp === "v1" || storedSourceLp === "v2"
+        ? storedSourceLp
+        : variant;
   const [landingQuizStep, setLandingQuizStep] = useState(0);
   const [landingQuizAnswers, setLandingQuizAnswers] =
     useState<LandingQuizAnswers>({});
@@ -2078,7 +2101,13 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     | "error"
     | "waiting-manual"
   >("idle");
-  const [buyerEmail, setBuyerEmail] = useState("");
+  const [buyerName, setBuyerName] = useState(
+    () => safeGetItem("conexao-pending-buyer-name") || "",
+  );
+  const [buyerEmail, setBuyerEmail] = useState(
+    () => safeGetItem("conexao-pending-buyer-email") || "",
+  );
+  const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [nativeCheckout, setNativeCheckout] =
     useState<NativeCheckoutData | null>(null);
@@ -2128,6 +2157,23 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     const timer = window.setTimeout(() => setSendingLong(true), 4000);
     return () => window.clearTimeout(timer);
   }, [checkoutState]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("comprar") !== "1") return;
+
+    setNameError("");
+    setEmailError("");
+    setCheckoutState("email");
+    setCheckoutOpen(true);
+    params.delete("comprar");
+    const query = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
+    );
+  }, []);
 
   useEffect(() => {
     const pendingPix = safeGetItem("conexao-pending-pix");
@@ -2209,9 +2255,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           if (!cancelled && session.accessGranted) {
             safeSetItem("conexao-session", sessionId);
             safeSetItem("conexao-role", "owner");
-            safeRemoveItem("conexao-pending-session");
-            safeRemoveItem("conexao-pending-bill");
-            safeRemoveItem("conexao-pending-at");
+            clearCompletedCheckoutStorage();
             window.location.href = "/onboarding";
             return;
           }
@@ -2260,9 +2304,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
         if (session.accessGranted && !cancelled) {
           safeSetItem("conexao-session", nativeCheckout.sessionId);
           safeSetItem("conexao-role", "owner");
-          safeRemoveItem("conexao-pending-session");
-          safeRemoveItem("conexao-pending-pix");
-          safeRemoveItem("conexao-pending-at");
+          clearCompletedCheckoutStorage();
           window.location.href = "/onboarding";
         }
       } catch {
@@ -2281,20 +2323,23 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const checkout = async (
     packageId: "couple" | "family" = selectedPackage,
     email = buyerEmail,
+    name = buyerName,
   ) => {
     setCheckoutOpen(true);
     setCheckoutState("sending");
     try {
+      const normalizedName = name.trim();
+      const normalizedEmail = email.trim().toLowerCase();
       const response = await fetch(apiUrl("/api/checkout/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           packageId,
-          buyerName: "Cliente Perguntas de Conexão",
+          buyerName: normalizedName,
           mode: nativeCheckoutEnabled ? "native" : "hosted",
-          buyerEmail: email.trim().toLowerCase() || undefined,
+          buyerEmail: normalizedEmail || undefined,
           sourceLp: checkoutSourceLp,
-          visitorKey: safeGetItem("pdc-visitor-key") || undefined,
+          visitorKey: getStoredVisitorKey() || undefined,
         }),
       });
       const data = (await response.json()) as {
@@ -2316,6 +2361,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       }
       if (data.sessionId)
         safeSetItem("conexao-pending-session", data.sessionId);
+      safeSetItem("conexao-pending-source-lp", checkoutSourceLp);
+      safeSetItem("conexao-pending-buyer-name", normalizedName);
+      safeSetItem("conexao-pending-buyer-email", normalizedEmail);
       const checkoutStartedAt = Date.now();
       safeSetItem("conexao-pending-at", String(checkoutStartedAt));
       if (nativeCheckoutEnabled) {
@@ -2359,6 +2407,30 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   ) => {
     trackCtaClick(ctaSource);
     setSelectedPackage(packageId);
+    safeSetItem("conexao-pending-source-lp", checkoutSourceLp);
+    const pendingPix = safeGetItem("conexao-pending-pix");
+    if (nativeCheckoutEnabled && pendingPix) {
+      try {
+        const parsed = JSON.parse(pendingPix) as NativeCheckoutData;
+        if (
+          parsed.sessionId &&
+          parsed.brCode &&
+          parsed.brCodeBase64 &&
+          parsed.chargeId &&
+          parsed.startedAt &&
+          Date.now() - parsed.startedAt < PENDING_CHECKOUT_MAX_AGE_MS
+        ) {
+          setNativeCheckout(parsed);
+          setCopiedCode(false);
+          setCheckoutState("native-payment");
+          setCheckoutOpen(true);
+          return;
+        }
+      } catch {
+        clearPendingCheckoutStorage();
+      }
+    }
+    setNameError("");
     setEmailError("");
     setCheckoutState("email");
     setCheckoutOpen(true);
@@ -2367,19 +2439,12 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     clearPendingCheckoutStorage();
     setNativeCheckout(null);
     setCopiedCode(false);
+    setNameError("");
     setEmailError("");
     setCheckoutState("email");
     setCheckoutOpen(true);
   };
   const closeCheckout = () => {
-    if (
-      checkoutState === "native-payment" ||
-      checkoutState === "confirming" ||
-      checkoutState === "waiting-manual"
-    ) {
-      clearPendingCheckoutStorage();
-      setNativeCheckout(null);
-    }
     setCheckoutOpen(false);
   };
   return (
@@ -2823,16 +2888,23 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 className="checkout-email-form"
                 onSubmit={(event) => {
                   event.preventDefault();
+                  const normalizedName = buyerName.trim();
                   const normalizedEmail = buyerEmail.trim().toLowerCase();
+                  if (!normalizedName) {
+                    setNameError("Digite seu nome para continuar.");
+                    return;
+                  }
                   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
                     setEmailError(
                       "Confira o e-mail — parece que falta alguma coisa.",
                     );
                     return;
                   }
+                  setNameError("");
                   setEmailError("");
+                  setBuyerName(normalizedName);
                   setBuyerEmail(normalizedEmail);
-                  void checkout(selectedPackage, normalizedEmail);
+                  void checkout(selectedPackage, normalizedEmail, normalizedName);
                 }}
               >
                 <p className="section-kicker">quase lá</p>
@@ -2845,6 +2917,32 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   Só precisamos do seu e-mail para liberar seu acesso e mandar o
                   recibo.
                 </p>
+                <label
+                  className="checkout-field-label"
+                  htmlFor="checkout-buyer-name"
+                >
+                  Seu nome
+                </label>
+                <input
+                  id="checkout-buyer-name"
+                  className="checkout-email-input"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Como podemos te chamar?"
+                  value={buyerName}
+                  onChange={(event) => {
+                    setBuyerName(event.target.value);
+                    safeSetItem("conexao-pending-buyer-name", event.target.value);
+                    if (nameError) setNameError("");
+                  }}
+                  autoFocus
+                  required
+                />
+                {nameError && (
+                  <p className="checkout-email-error" role="alert">
+                    {nameError}
+                  </p>
+                )}
                 <label
                   className="checkout-field-label"
                   htmlFor="checkout-email"
@@ -2861,9 +2959,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   value={buyerEmail}
                   onChange={(event) => {
                     setBuyerEmail(event.target.value);
+                    safeSetItem("conexao-pending-buyer-email", event.target.value);
                     if (emailError) setEmailError("");
                   }}
-                  autoFocus
                   required
                 />
                 <p className="checkout-email-note">
@@ -2885,6 +2983,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
             ) : checkoutState === "native-payment" && nativeCheckout ? (
               <div className="checkout-native-payment">
                 <p className="section-kicker">seu baralho está reservado</p>
+                <p className="checkout-native-status" role="status">
+                  Aguardando pagamento
+                </p>
                 <h2>
                   Falta só o Pix
                   <br />
@@ -2981,6 +3082,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                     setNativeCheckout(null);
                     safeRemoveItem("conexao-pending-pix");
                     safeRemoveItem("conexao-pending-session");
+                   safeRemoveItem("conexao-pending-at");
                     setCheckoutState("email");
                   }}
                   className="button button-primary button-full"
@@ -3110,8 +3212,8 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                 <button
                   onClick={() => {
                     if (nativeCheckoutEnabled) {
-                      if (buyerEmail.trim()) {
-                        void checkout(selectedPackage, buyerEmail);
+                      if (buyerName.trim() && buyerEmail.trim()) {
+                        void checkout(selectedPackage, buyerEmail, buyerName);
                       } else {
                         setCheckoutState("email");
                       }

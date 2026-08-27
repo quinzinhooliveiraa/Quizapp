@@ -1,0 +1,262 @@
+TAREFA — IMPLEMENTAR CHECKOUT TRANSPARENTE SEM ALTERAR O RESTANTE DO PRODUTO
+
+IMPORTANTE:
+
+A LP3, tracking, Clarity, Admin e integração LP3 → onboarding já foram implementados em etapas anteriores.
+
+Agora quero trabalhar SOMENTE no checkout.
+
+ANTES DE ALTERAR QUALQUER CÓDIGO:
+
+1. Audite a implementação atual do checkout.
+2. Verifique exatamente como:
+   - LP1/v1 inicia checkout;
+   - LP2/v2 inicia checkout;
+   - LP3 inicia checkout;
+   - /api/checkout/create funciona;
+   - Abacate Pay está integrada;
+   - webhook confirma pagamento;
+   - sessão de comprador é criada;
+   - sourceLp é salvo.
+3. Não refatore o sistema existente.
+4. Não altere visualmente LP1, LP2, LP3 ou onboarding.
+5. Não altere tracking, Clarity ou Admin, exceto se for estritamente necessário para preservar a atribuição existente.
+
+OBJETIVO
+
+Substituir o redirecionamento para um checkout externo por um checkout transparente dentro do próprio site.
+
+A experiência desejada é:
+
+LP3
+ ↓
+CTA
+ ↓
+modal/tela de checkout dentro do próprio domínio
+ ↓
+nome
+ ↓
+email
+ ↓
+PIX
+ ↓
+QR Code + copia e cola
+ ↓
+aguardando pagamento
+ ↓
+confirmação via webhook
+ ↓
+acesso/onboarding
+
+A pessoa NÃO deve ser enviada para uma página externa da Abacate Pay.
+
+IMPORTANTE:
+
+Utilizar a integração existente com Abacate Pay.
+
+Não criar outro gateway.
+
+Não criar outro sistema de pagamento.
+
+Verifique primeiro se o endpoint existente:
+
+POST /api/checkout/create
+
+já consegue criar uma cobrança transparente/nativa.
+
+Se a API já retornar os dados necessários para pagamento PIX, renderize esses dados dentro da interface existente.
+
+Se houver uma implementação parcialmente pronta, reutilize-a.
+
+REQUISITO 1 — FLUXO
+
+Quando o usuário clicar para comprar:
+
+1. Registrar normalmente o clique/checkout intent.
+2. Abrir o checkout dentro do próprio site.
+3. Solicitar email se ainda não estiver disponível.
+4. Criar a cobrança através da API existente.
+5. Mostrar:
+   - valor;
+   - QR Code;
+   - código copia-e-cola;
+   - status aguardando pagamento.
+6. Não abrir outro domínio.
+7. Não recarregar a landing page.
+8. Não perder visitorKey.
+9. Preservar sourceLp.
+
+REQUISITO 2 — ATRIBUIÇÃO
+
+É CRÍTICO preservar a origem.
+
+Se a compra começou na LP3:
+
+sourceLp = "lp3"
+
+Se começou na LP1:
+
+sourceLp = "v1"
+
+Se começou na LP2:
+
+sourceLp = "v2"
+
+Não alterar esse comportamento.
+
+REQUISITO 3 — EMAIL
+
+O email informado no checkout deve continuar associado à sessão de compra existente.
+
+Não criar uma segunda tabela de compradores.
+
+Não duplicar buyer/session.
+
+Utilizar a estrutura atual.
+
+REQUISITO 4 — PIX
+
+O checkout deve exibir o PIX retornado pela Abacate Pay.
+
+A interface deve ter:
+
+- QR Code;
+- botão "Copiar código PIX";
+- feedback visual quando copiar;
+- valor;
+- status "Aguardando pagamento".
+
+Não inventar dados de pagamento.
+
+Utilizar exatamente os dados retornados pela API.
+
+REQUISITO 5 — STATUS DO PAGAMENTO
+
+Utilizar o webhook existente:
+
+POST /api/checkout/abacatepay-webhook
+
+ou a infraestrutura de webhook já existente.
+
+Não criar polling agressivo.
+
+Se já existir mecanismo de consulta/status, reutilizá-lo.
+
+Quando o pagamento for confirmado:
+
+1. atualizar a sessão existente;
+2. liberar o acesso normalmente;
+3. preservar sourceLp;
+4. continuar o fluxo atual para onboarding.
+
+REQUISITO 6 — LP3 → ONBOARDING
+
+Não quebrar a integração já existente.
+
+Depois da compra originada na LP3:
+
+LP3
+→ checkout transparente
+→ pagamento
+→ onboarding
+→ dados da LP3 reaproveitados
+
+O usuário NÃO deve responder novamente as perguntas que a LP3 já coletou.
+
+REQUISITO 7 — ABANDONO
+
+Se a pessoa fechar o checkout sem pagar:
+
+- não marcar como compra;
+- manter a sessão/checkout iniciado;
+- preservar email quando fornecido;
+- preservar visitorKey;
+- preservar sourceLp.
+
+Não apagar dados.
+
+REQUISITO 8 — EXPERIÊNCIA
+
+O checkout deve parecer parte do próprio produto.
+
+Não mostrar:
+
+- URL externa;
+- iframe quebrado;
+- página da Abacate;
+- redirecionamento;
+- tela genérica de terceiro.
+
+Pode ser um modal ou uma etapa da própria página, desde que preserve a experiência atual.
+
+REQUISITO 9 — SEGURANÇA
+
+Não colocar secret keys da Abacate no frontend.
+
+Toda criação de cobrança deve continuar passando pelo backend.
+
+Não expor credenciais.
+
+REQUISITO 10 — PRESERVAÇÃO
+
+NÃO alterar:
+
+- LP1;
+- LP2;
+- LP3;
+- onboarding;
+- Admin;
+- tracking;
+- Clarity;
+- banco;
+- conteúdo;
+- visual das landing pages.
+
+Exceto os mínimos pontos necessários para o checkout funcionar.
+
+REQUISITO 11 — VALIDAÇÃO
+
+Depois de implementar:
+
+1. Typecheck.
+2. Build frontend.
+3. Build backend.
+4. git diff --check.
+5. Testar criação de checkout.
+6. Confirmar que QR Code aparece.
+7. Confirmar copia-e-cola.
+8. Confirmar que email é salvo.
+9. Confirmar sourceLp = lp3 quando iniciado pela LP3.
+10. Confirmar que v1 continua como v1.
+11. Confirmar que v2 continua como v2.
+12. Confirmar webhook.
+13. Confirmar fluxo pós-pagamento.
+14. Confirmar LP3 → onboarding.
+15. Confirmar que LP1 e LP2 continuam funcionando.
+
+IMPORTANTE:
+
+ANTES DE IMPLEMENTAR, mostre um diagnóstico curto:
+
+- o que já existe;
+- o que falta;
+- quais arquivos precisarão ser alterados;
+- se a API atual da Abacate já suporta o checkout transparente.
+
+Depois implemente somente o necessário.
+
+NÃO recrie o checkout do zero se já houver código funcional.
+
+NO FINAL:
+
+Entregue:
+
+1. Arquivos alterados.
+2. O que foi reutilizado.
+3. O que foi criado.
+4. Como o checkout agora funciona.
+5. Como sourceLp é preservado.
+6. Como o webhook funciona.
+7. Como LP3 chega ao onboarding.
+8. Testes executados.
+9. Eventuais limitações.
