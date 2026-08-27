@@ -17098,3 +17098,115 @@ blockquote em {
     margin-block: 0.8rem;
   }
 }
+
+.lp3-testimonials {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  gap: 1.2rem;
+  box-sizing: border-box;
+}
+
+.lp3-testimonials-title {
+  max-width: 22ch;
+  margin: 0;
+  color: var(--lp3-ink);
+  font-family: var(--app-font-sans);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.lp3-testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.lp3-testimonial-card {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 0;
+  padding: 1.15rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lp3-testimonial-card p {
+  max-width: 100%;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--app-font-serif);
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.lp3-testimonial-card footer {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.55rem;
+  margin-top: 1.15rem;
+  color: var(--lp3-warm-soft);
+  font-family: var(--app-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.lp3-testimonial-card cite {
+  color: var(--lp3-ink);
+  font-style: normal;
+}
+
+.lp3-testimonial-card footer span {
+  color: var(--lp3-dim);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 999px) {
+  .lp3-testimonials-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 699px) {
+  .lp3-testimonials {
+    gap: 0.9rem;
+  }
+
+  .lp3-testimonials-title {
+    max-width: 100%;
+    font-size: 1.8rem;
+  }
+
+  .lp3-testimonials-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+
+  .lp3-testimonial-card {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .lp3-testimonial-card p {
+    font-size: 0.98rem;
+  }
+}

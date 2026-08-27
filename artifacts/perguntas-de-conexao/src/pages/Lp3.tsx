@@ -11,6 +11,7 @@ import {
   selectLp3Narrative,
   type Lp3Answers,
 } from "@/lib/lp3-narrative";
+import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 
 type Lp3Props = {
   onCheckout?: () => void;
@@ -392,6 +393,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       <div className="lp3-editorial">
         <p style={{ whiteSpace: "pre-line" }}>{result.story}</p>
       </div>
+      <Lp3Testimonials />
       <div className="lp3-back-row">
         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-story">
           <ChevronLeft size={14} aria-hidden="true" /> Voltar

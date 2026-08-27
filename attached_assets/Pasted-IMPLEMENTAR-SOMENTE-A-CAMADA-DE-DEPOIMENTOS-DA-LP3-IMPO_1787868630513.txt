@@ -1,0 +1,381 @@
+IMPLEMENTAR SOMENTE A CAMADA DE DEPOIMENTOS DA LP3.
+
+IMPORTANTE:
+Esta tarefa é exclusivamente sobre inserir depoimentos estrategicamente na jornada da LP3.
+
+NÃO ALTERAR:
+- LP1
+- LP2
+- perguntas da LP3
+- lógica narrativa/storytelling
+- resultProfiles
+- seleção de narrativa
+- tracking
+- Clarity
+- Admin
+- Experimentos
+- Router
+- Auto Optimization
+- Checkout
+- Onboarding
+- banco
+- branding global
+- layout das outras LPs
+
+Não refatorar código não relacionado.
+
+==================================================
+OBJETIVO
+==================================================
+
+Adicionar prova social à LP3 sem transformar a experiência em uma landing page tradicional cheia de blocos.
+
+Os depoimentos devem aparecer como reforço de confiança em momentos estratégicos da jornada.
+
+A jornada atual continua sendo:
+
+QUIZ
+↓
+"O que apareceu nas suas respostas?"
+↓
+HISTÓRIA
+↓
+AGORA UMA PERGUNTA
+↓
+RECOMENDAÇÃO DE TEMA/BARALHO
+↓
+OFERTA
+↓
+CHECKOUT
+
+Adicionar prova social principalmente depois que a pessoa já entendeu o próprio resultado e antes da decisão de compra.
+
+==================================================
+PRIMEIRO: AUDITAR O CONTEÚDO EXISTENTE
+==================================================
+
+Antes de implementar:
+
+1. Procurar no repositório por depoimentos/reviews existentes.
+2. Procurar especialmente em:
+   - lib/connection-content
+   - páginas existentes
+   - Admin
+   - banco/schema
+   - dados de reviews
+   - componentes de reviews/depoimentos
+3. Identificar qual estrutura já existe para reviews.
+4. Reutilizar dados reais existentes sempre que possível.
+
+NÃO criar depoimentos fictícios.
+
+NÃO inventar:
+- nomes;
+- resultados;
+- frases;
+- números;
+- avaliações;
+- histórias de clientes.
+
+Se existirem depoimentos reais no projeto, reutilizá-los.
+
+==================================================
+ESTRUTURA
+==================================================
+
+Criar um componente isolado, por exemplo:
+
+Lp3Testimonials
+
+ou equivalente.
+
+Não espalhar a lógica de depoimentos dentro de Lp3.tsx.
+
+Se já existir um componente reutilizável de testimonials/reviews que possa ser usado sem alterar outras páginas, preferir reutilizá-lo.
+
+==================================================
+POSICIONAMENTO
+==================================================
+
+O primeiro ponto de inserção deve ser:
+
+depois da narrativa/"A história de vocês"
+
+e antes da etapa de oferta final.
+
+A intenção é:
+
+A pessoa se reconhece
+↓
+entende o padrão da relação
+↓
+vê que outras pessoas tiveram uma experiência parecida
+↓
+continua para experimentar
+↓
+chega à oferta
+
+Não interromper o quiz entre perguntas para mostrar depoimentos.
+
+Não colocar depoimentos na primeira tela.
+
+Não colocar depoimentos antes da pessoa responder o quiz.
+
+==================================================
+QUANTIDADE
+==================================================
+
+Desktop:
+
+3 depoimentos visíveis de forma equilibrada.
+
+Mobile:
+
+usar layout vertical ou carrossel horizontal controlado.
+
+IMPORTANTE:
+
+No mobile não permitir overflow horizontal da página.
+
+Os cards devem respeitar:
+
+width: 100%;
+max-width: 100%;
+box-sizing: border-box;
+
+e nunca causar scroll horizontal.
+
+==================================================
+DESIGN
+==================================================
+
+Os depoimentos devem seguir exatamente o branding já corrigido da LP3.
+
+Usar:
+
+- mesma tipografia;
+- mesma hierarquia;
+- mesmo sistema de cores;
+- mesmo radius;
+- mesmo estilo de cards;
+- mesma linguagem visual;
+- mesma densidade visual.
+
+Não criar um bloco visual que pareça pertencer a outra página.
+
+O componente deve parecer parte natural da LP3.
+
+Evitar:
+
+- estrelas gigantes;
+- excesso de emojis;
+- selo artificial;
+- porcentagens inventadas;
+- contadores;
+- "mais de X pessoas";
+- elementos de urgência.
+
+==================================================
+COPY DA SEÇÃO
+==================================================
+
+Usar uma headline simples e coerente com a narrativa.
+
+Preferência:
+
+"Não fomos os únicos a perceber isso."
+
+ou, se o contexto dos depoimentos existentes exigir uma adaptação mínima:
+
+"Outras pessoas também começaram por uma conversa."
+
+Não transformar a seção em anúncio.
+
+A função da seção é prova social, não persuasão agressiva.
+
+==================================================
+DEPONIMENTOS
+==================================================
+
+Se houver depoimentos reais disponíveis:
+
+selecionar os que tenham maior relação com:
+
+- conversas;
+- conexão;
+- descobrir coisas novas;
+- sair da rotina;
+- intimidade;
+- relacionamento à distância;
+- perguntas/conversas profundas.
+
+Priorizar diversidade de situações.
+
+Não selecionar três depoimentos praticamente iguais.
+
+Se os dados tiverem categoria/tema, usar isso para selecionar os mais relevantes.
+
+==================================================
+PERSONALIZAÇÃO POR NARRATIVA
+==================================================
+
+Se a estrutura de dados permitir sem criar complexidade desnecessária, preparar categorias:
+
+routine
+discovery
+vulnerability
+proximity
+intimacy
+distance
+beginning
+healthy
+
+A LP3 pode selecionar depoimentos relacionados ao narrativeType.
+
+Exemplo conceitual:
+
+narrativeType = "routine"
+→ priorizar depoimentos sobre sair da rotina/conversar novamente.
+
+narrativeType = "discovery"
+→ priorizar depoimentos sobre descobrir coisas novas.
+
+narrativeType = "vulnerability"
+→ priorizar depoimentos sobre conversas difíceis.
+
+narrativeType = "intimacy"
+→ priorizar depoimentos sobre intimidade/conexão.
+
+narrativeType = "distance"
+→ priorizar depoimentos relacionados à distância.
+
+PORÉM:
+
+Se não existir metadata confiável nos depoimentos atuais, NÃO inventar categorias artificialmente.
+
+Nesse caso usar seleção neutra.
+
+==================================================
+MOBILE
+==================================================
+
+O componente precisa ser pensado primeiro para mobile.
+
+Garantir:
+
+- cards não ultrapassam viewport;
+- texto não fica cortado;
+- nome/identificação não quebra layout;
+- espaçamento confortável;
+- nenhuma barra horizontal;
+- nenhuma altura fixa que corte o depoimento;
+- botões, se houver, ficam dentro do viewport.
+
+Se utilizar carrossel:
+
+- permitir swipe;
+- mostrar indicação visual de que existem outros cards;
+- não criar scrollbar horizontal da página inteira.
+
+==================================================
+DESKTOP
+==================================================
+
+Desktop deve aproveitar o espaço sem criar cards gigantes.
+
+Preferência:
+
+3 cards lado a lado quando houver espaço suficiente.
+
+Em telas menores:
+
+2 ou 1 card conforme necessário.
+
+==================================================
+ACESSIBILIDADE
+==================================================
+
+Garantir:
+
+- contraste adequado;
+- textos legíveis;
+- estrutura semântica;
+- não depender somente de cor;
+- carrossel navegável quando aplicável.
+
+==================================================
+NÃO ALTERAR A CONVERSÃO
+==================================================
+
+Os depoimentos não devem:
+
+- alterar CTA;
+- alterar checkout;
+- alterar sourceLp;
+- alterar experiment assignment;
+- alterar tracking existente;
+- alterar onboarding;
+- alterar comportamento das respostas.
+
+A única finalidade é adicionar prova social à experiência visual.
+
+==================================================
+TESTES
+==================================================
+
+Testar:
+
+1. /lp3
+2. primeira tela
+3. quiz completo
+4. narrativa
+5. depoimentos
+6. recomendação
+7. oferta
+
+Verificar:
+
+- depoimentos aparecem no ponto correto;
+- nenhuma pergunta foi alterada;
+- narrativa continua funcionando;
+- tracking continua funcionando;
+- localStorage continua funcionando;
+- handoff continua funcionando;
+- checkout continua funcionando;
+- LP1 intacta;
+- LP2 intacta;
+- Admin intacto;
+- Experimentos intactos;
+- Auto Optimization intacto.
+
+Testar também:
+
+- mobile;
+- desktop;
+- viewport pequeno;
+- viewport grande.
+
+IMPORTANTE:
+Verificar especificamente se não existe overflow horizontal causado pelos cards.
+
+==================================================
+VALIDAÇÃO FINAL
+==================================================
+
+Rodar:
+
+- typecheck
+- build
+
+No final informar:
+
+1. onde os depoimentos foram inseridos;
+2. qual componente foi criado/reutilizado;
+3. quais depoimentos reais foram utilizados;
+4. se houve personalização por narrativeType;
+5. validação mobile;
+6. validação desktop;
+7. resultado do typecheck;
+8. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.
