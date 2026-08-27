@@ -1,0 +1,351 @@
+OBJETIVO ÚNICO DESTA TAREFA:
+Otimizar a experiência DESKTOP da LP3 (/lp3), corrigindo distribuição, proporções, espaçamento e aproveitamento da tela.
+
+A LP3 já passou por:
+1. unificação de branding;
+2. otimização mobile.
+
+NÃO desfazer nem quebrar essas melhorias.
+
+NÃO implementar:
+- storytelling novo;
+- depoimentos;
+- checkout;
+- GA4;
+- pixel;
+- A/B testing;
+- router;
+- auto-optimization;
+- alterações no onboarding;
+- alterações no backend;
+- alterações no banco.
+
+NÃO alterar LP1, LP2 ou o aplicativo principal.
+
+ANTES DE ALTERAR:
+Inspecione a LP3 atual e seus estilos. Considere as alterações mobile já existentes e preserve-as.
+
+ARQUIVOS PRINCIPAIS:
+- artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+- artifacts/perguntas-de-conexao/src/index.css
+
+OBJETIVO:
+
+No desktop, a LP3 não deve parecer uma página mobile simplesmente esticada.
+
+Ela deve ter uma composição visual intencional, premium e equilibrada.
+
+TESTAR NO MÍNIMO:
+
+- 1024px
+- 1280px
+- 1440px
+- 1536px
+- 1920px
+
+1. CONTAINER PRINCIPAL
+
+Criar/ajustar um container centralizado com:
+
+- max-width apropriado;
+- margens automáticas;
+- padding lateral consistente;
+- conteúdo centralizado.
+
+Não deixar o conteúdo ocupar 100% de monitores grandes.
+
+Evitar:
+- textos excessivamente largos;
+- elementos colados nas bordas;
+- grandes áreas vazias sem intenção.
+
+2. HERO / INTRO
+
+Corrigir a composição da primeira tela.
+
+A hierarquia deve ser:
+
+logo/header
+↓
+pergunta/título principal
+↓
+subtítulo
+↓
+CTA
+
+Não deixar:
+
+- título muito para a esquerda;
+- subtítulo isolado à direita;
+- CTA perdido próximo do subtítulo;
+- elementos desalinhados.
+
+A primeira tela deve possuir um eixo visual claro.
+
+O conteúdo principal deve ser centralizado ou composto em uma estrutura claramente intencional.
+
+3. HEADER
+
+Manter o branding já corrigido.
+
+No desktop:
+
+- largura alinhada ao container;
+- logo com tamanho proporcional;
+- espaçamento vertical adequado;
+- nenhuma sensação de header improvisado.
+
+4. TELAS DE PERGUNTA
+
+A pergunta deve ocupar uma área confortável no desktop.
+
+Evitar que:
+
+- a pergunta fique pequena demais;
+- as opções fiquem espalhadas pela tela;
+- exista espaço vazio exagerado;
+- o CTA fique distante.
+
+Para perguntas com múltiplas opções, utilizar uma composição organizada.
+
+Dependendo da quantidade de opções, pode utilizar:
+
+- grid;
+- coluna central;
+- duas colunas;
+
+mas a escolha deve priorizar legibilidade e facilidade de interação.
+
+5. PROGRESSO
+
+O indicador de progresso deve ficar visualmente integrado ao conteúdo.
+
+Não deixar:
+
+- muito distante da pergunta;
+- colado no header;
+- ocupando espaço exagerado.
+
+6. CTA
+
+O CTA principal deve ter posição visual clara.
+
+No desktop:
+
+- largura adequada;
+- altura consistente;
+- alinhamento correto;
+- destaque sem dominar a tela.
+
+Não criar botões gigantes simplesmente porque existe espaço.
+
+7. RESULTADO
+
+A tela de resultado deve parecer uma seção premium.
+
+O diagnóstico principal deve possuir:
+
+- largura controlada;
+- hierarquia clara;
+- card bem dimensionado;
+- bom espaçamento interno.
+
+Não criar um card ocupando a tela inteira.
+
+A leitura deve seguir aproximadamente:
+
+resultado
+↓
+interpretação
+↓
+o que isso significa
+↓
+próximo passo
+
+8. STORY
+
+Nesta etapa NÃO alterar o conteúdo da história.
+
+Apenas melhorar sua apresentação.
+
+A história deve ter:
+
+- largura de leitura confortável;
+- line-height adequado;
+- tamanho de fonte adequado;
+- espaçamento entre parágrafos;
+- composição visual emocional.
+
+Evitar linhas extremamente longas.
+
+Idealmente manter uma largura de leitura controlada, mesmo em monitores grandes.
+
+9. PRACTICE / CARTA
+
+A carta deve ter destaque visual.
+
+No desktop:
+
+- tamanho suficiente para ser percebida;
+- proporção preservada;
+- centralização;
+- espaço ao redor;
+- aparência de produto real.
+
+Não deixar a carta pequena perdida no centro da tela.
+
+10. RECOMMEND / BARALHOS
+
+O catálogo deve aproveitar o espaço horizontal do desktop de forma elegante.
+
+No desktop:
+
+- permitir visualizar múltiplos baralhos;
+- manter espaçamento consistente;
+- cards com tamanho adequado;
+- não esticar cards excessivamente.
+
+Se existir carrossel horizontal, ele deve continuar funcionando.
+
+Não criar scroll horizontal na página inteira.
+
+11. OFERTA
+
+A oferta final deve ser uma composição de conversão clara.
+
+Hierarquia:
+
+produto
+↓
+benefício
+↓
+preço
+↓
+elementos de confiança
+↓
+CTA
+
+Evitar:
+
+- elementos espalhados;
+- preço perdido;
+- CTA distante;
+- excesso de espaço vazio.
+
+12. ALTURA DA TELA
+
+Não assumir que todo desktop possui a mesma altura.
+
+Testar também aproximadamente:
+
+- 768px de altura;
+- 900px;
+- 1080px.
+
+Não usar alturas fixas que causem cortes.
+
+13. RESPONSIVIDADE
+
+IMPORTANTE:
+
+Não substituir os estilos mobile existentes.
+
+Use breakpoints claros.
+
+O comportamento deve ser:
+
+mobile → layout mobile já otimizado
+tablet → adaptação intermediária
+desktop → composição desktop
+
+14. CONSISTÊNCIA ENTRE TELAS
+
+Todas as telas da LP3 devem parecer parte da mesma experiência.
+
+Não pode acontecer:
+
+intro = um layout
+question = outro
+result = outro
+offer = outro
+
+O sistema de espaçamento e largura deve ser consistente.
+
+15. PERFORMANCE VISUAL
+
+Não adicionar bibliotecas.
+
+Não adicionar imagens pesadas.
+
+Não alterar arquitetura.
+
+Não criar componentes complexos desnecessariamente.
+
+16. NÃO FAZER GAMBIARRA
+
+Não usar:
+
+- posições absolutas para estruturar layout;
+- valores negativos;
+- transformações para corrigir alinhamento;
+- overflow:hidden para esconder problemas;
+- alturas fixas frágeis.
+
+Utilizar flex/grid/container corretamente.
+
+VALIDAÇÃO:
+
+Depois da implementação:
+
+1. Rode typecheck.
+2. Rode build.
+3. Teste /lp3.
+4. Teste:
+   - 1024px
+   - 1280px
+   - 1440px
+   - 1536px
+   - 1920px
+5. Teste alturas:
+   - 768px
+   - 900px
+   - 1080px
+6. Percorra todas as telas:
+   - intro
+   - question
+   - result
+   - story
+   - practice
+   - recommend
+   - offer
+7. Confirme que o mobile continua funcionando.
+8. Confirme que não existe overflow horizontal.
+9. Confirme que nenhum conteúdo está cortado.
+
+IMPORTANTE:
+
+NÃO alterar copy.
+
+NÃO criar histórias novas.
+
+NÃO criar depoimentos.
+
+NÃO alterar checkout.
+
+NÃO alterar tracking.
+
+NÃO alterar experimentos.
+
+NÃO alterar outras LPs.
+
+NO FINAL INFORME:
+
+- arquivos alterados;
+- problemas encontrados;
+- correções realizadas;
+- breakpoints utilizados;
+- tamanhos testados;
+- resultado do typecheck;
+- resultado do build;
+- confirmação de que mobile continua funcionando;
+- qualquer problema restante.
