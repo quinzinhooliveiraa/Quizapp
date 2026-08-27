@@ -1,0 +1,384 @@
+IMPLEMENTAR SOMENTE O CHECKOUT CONTÍNUO DA LP3.
+
+IMPORTANTE:
+A LP3 deve continuar sendo a mesma experiência até o pagamento.
+
+O objetivo desta tarefa é remover a quebra de jornada que atualmente acontece quando a pessoa chega à oferta da LP3 e clica para comprar.
+
+NÃO ALTERAR:
+- LP1
+- LP2
+- perguntas da LP3
+- narrativa/storytelling
+- depoimentos
+- branding
+- Router de experimentos
+- Auto Optimization
+- tracking
+- Clarity
+- Admin
+- GA4
+- Pixel
+- banco, salvo se estritamente necessário para reutilizar APIs existentes
+- lógica de checkout existente da LP1/LP2
+
+Não criar um novo sistema de pagamento.
+
+REUTILIZAR o checkout existente.
+
+==================================================
+PROBLEMA ATUAL
+==================================================
+
+Atualmente a LP3 possui uma oferta final.
+
+Quando o usuário clica no CTA equivalente a:
+
+"Quero continuar nossas conversas"
+
+a experiência sai da LP3 e encaminha para o fluxo da LP principal.
+
+Isso quebra a narrativa e cria uma segunda experiência de checkout.
+
+Isso NÃO deve mais acontecer.
+
+==================================================
+NOVO FLUXO
+==================================================
+
+O fluxo da LP3 deve ser:
+
+LP3
+↓
+Oferta
+↓
+"Quero continuar nossas conversas"
+↓
+Nome
+↓
+E-mail
+↓
+"Continuar para o Pix"
+↓
+Checkout/Pix existente
+↓
+Pagamento confirmado
+↓
+Acesso liberado
+↓
+Onboarding existente
+
+A pessoa não deve ser enviada para:
+
+/
+/lp2
+ou qualquer outra landing page
+
+para concluir a compra.
+
+==================================================
+CHECKOUT EXISTENTE
+==================================================
+
+Antes de alterar:
+
+AUDITAR como o checkout atual funciona em:
+
+artifacts/perguntas-de-conexao/src/App.tsx
+
+e nas APIs existentes.
+
+Identificar:
+
+- startCheckout
+- modal/formulário atual
+- POST /api/checkout/create
+- sourceLp
+- visitorKey
+- buyerName
+- buyerEmail
+- packageId
+- confirmação de pagamento
+- redirecionamento pós-compra
+
+REUTILIZAR essas estruturas.
+
+Não duplicar a API.
+
+Não criar um segundo endpoint de checkout.
+
+==================================================
+FORMULÁRIO DA LP3
+==================================================
+
+Quando o usuário clicar no CTA final da LP3:
+
+não abrir a LP principal.
+
+Abrir um fluxo de identificação dentro da própria LP3.
+
+Primeiro campo:
+
+"Como podemos te chamar?"
+
+Campo:
+Nome
+
+Depois:
+
+"E para onde mandamos seu acesso?"
+
+Campo:
+E-mail
+
+CTA:
+
+"Continuar para o Pix"
+
+A experiência deve continuar visualmente integrada à LP3.
+
+==================================================
+IMPORTANTE
+==================================================
+
+O formulário de identificação NÃO deve parecer uma página externa.
+
+Ele deve usar:
+
+- mesmo background;
+- mesma tipografia;
+- mesma paleta;
+- mesmos cards;
+- mesmos botões;
+- mesmos espaçamentos;
+- mesmo branding da LP3.
+
+Não criar uma nova landing page.
+
+Pode ser:
+
+- etapa dentro da LP3;
+- modal;
+- card central;
+- tela interna da jornada.
+
+Escolher a solução que melhor preserve a arquitetura existente.
+
+Preferência:
+uma nova etapa interna da LP3.
+
+==================================================
+DADOS
+==================================================
+
+Ao chegar no checkout, preservar:
+
+buyerName
+buyerEmail
+packageId
+sourceLp = "lp3"
+visitorKey
+
+A origem da compra deve continuar sendo:
+
+lp3
+
+NUNCA transformar a origem em:
+
+v1
+v2
+
+quando a compra começou na LP3.
+
+==================================================
+RESPOSTAS DA LP3
+==================================================
+
+Não perder:
+
+- respostas das 5 perguntas;
+- narrativeType;
+- result/profile;
+- recommendedTheme;
+- handoff;
+- localStorage existente.
+
+O estado da LP3 deve permanecer intacto durante o checkout.
+
+==================================================
+PAGAMENTO
+==================================================
+
+REUTILIZAR o fluxo de Pix já existente.
+
+Não criar novo sistema de pagamento.
+
+Não alterar:
+
+- Abacate Pay;
+- webhooks;
+- confirmação;
+- criação de sessão;
+- liberação de acesso;
+
+a menos que seja estritamente necessário para conectar a LP3 ao fluxo existente.
+
+O pagamento deve continuar funcionando exatamente como funciona hoje.
+
+==================================================
+PÓS-PAGAMENTO
+==================================================
+
+Após confirmação:
+
+seguir o fluxo existente de acesso.
+
+Se o sistema atual encaminha para:
+
+/onboarding
+
+continuar utilizando:
+
+/onboarding
+
+Não criar um novo onboarding.
+
+O handoff da LP3 deve continuar disponível para que o onboarding reaproveite os dados já coletados.
+
+==================================================
+EXPERIÊNCIA
+==================================================
+
+A sensação desejada é:
+
+"Eu comecei uma jornada aqui e simplesmente continuei."
+
+Não:
+
+"Fui levado para outro site/página para comprar."
+
+A transição deve ser natural.
+
+==================================================
+TRACKING
+==================================================
+
+Preservar completamente o tracking atual.
+
+Garantir que o CTA da LP3 continue sendo registrado.
+
+Garantir que:
+
+sourceLp = "lp3"
+
+seja preservado no checkout.
+
+Não alterar tracking de LP1 ou LP2.
+
+Se já existir evento específico para checkout, reutilizá-lo.
+
+Não criar eventos desnecessários.
+
+==================================================
+EXPERIMENTOS
+==================================================
+
+IMPORTANTE:
+
+Se a LP3 estiver sendo acessada através de:
+
+/e/:experimentSlug
+
+preservar:
+
+experimentId
+experimentVariantId
+assignment
+
+durante o checkout.
+
+Não quebrar atribuição experimental.
+
+==================================================
+RESPONSIVIDADE
+==================================================
+
+O novo fluxo deve funcionar perfeitamente em:
+
+- celular;
+- desktop.
+
+No mobile:
+
+- campos não podem ultrapassar viewport;
+- teclado não deve quebrar o layout;
+- CTA deve permanecer acessível;
+- nenhum overflow horizontal.
+
+==================================================
+VALIDAÇÃO
+==================================================
+
+Testar:
+
+1. Entrar diretamente em /lp3.
+2. Completar as 5 perguntas.
+3. Ver narrativa.
+4. Ver depoimentos.
+5. Chegar à oferta.
+6. Clicar em "Quero continuar nossas conversas".
+7. Preencher nome.
+8. Preencher e-mail.
+9. Clicar em "Continuar para o Pix".
+10. Confirmar que o checkout é aberto dentro da jornada da LP3.
+11. Confirmar sourceLp = "lp3".
+12. Confirmar que visitorKey foi preservado.
+13. Confirmar que as respostas da LP3 não foram perdidas.
+14. Confirmar que o fluxo pós-pagamento continua levando ao onboarding existente.
+15. Confirmar que o onboarding ainda recebe o handoff da LP3.
+
+Também testar:
+
+/e/:experimentSlug
+
+e confirmar que a atribuição experimental continua preservada até o checkout.
+
+==================================================
+REGRESSÃO
+==================================================
+
+Verificar:
+
+- LP1 intacta;
+- LP2 intacta;
+- /lp3 funcionando;
+- /e/:slug funcionando;
+- tracking funcionando;
+- Clarity funcionando;
+- Admin funcionando;
+- Experimentos funcionando;
+- Auto Optimization funcionando;
+- onboarding funcionando.
+
+==================================================
+VALIDAÇÃO FINAL
+==================================================
+
+Rodar:
+
+- typecheck
+- build
+
+No final informar:
+
+1. como o checkout da LP3 foi integrado;
+2. quais arquivos foram alterados;
+3. se foi reutilizado o checkout existente;
+4. confirmação de sourceLp = "lp3";
+5. confirmação de preservação do visitorKey;
+6. confirmação de preservação do handoff;
+7. confirmação do fluxo pós-pagamento;
+8. resultado do typecheck;
+9. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.

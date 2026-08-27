@@ -2119,33 +2119,31 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
   };
 }
 
-function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
-  const trackCtaClick = useLpTracking(variant);
-  const sourceFromUrl = new URLSearchParams(window.location.search).get("source");
-  const storedSourceLp = safeGetItem("conexao-pending-source-lp");
-  const checkoutSourceLp: "v1" | "v2" | "lp3" =
-    sourceFromUrl === "lp3"
-      ? "lp3"
-      : storedSourceLp === "v1" || storedSourceLp === "v2"
-        ? storedSourceLp
-        : variant;
-  const [landingQuizStep, setLandingQuizStep] = useState(0);
-  const [landingQuizAnswers, setLandingQuizAnswers] =
-    useState<LandingQuizAnswers>({});
+type CheckoutState =
+  | "idle"
+  | "email"
+  | "sending"
+  | "confirming"
+  | "native-payment"
+  | "expired"
+  | "error"
+  | "waiting-manual";
+
+type CheckoutSourceLp = "v1" | "v2" | "lp3";
+
+function useCheckout({
+  sourceLp,
+  onCtaClick,
+}: {
+  sourceLp: CheckoutSourceLp;
+  onCtaClick?: (ctaSource?: LandingCtaSource) => void;
+}) {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
     "couple",
   );
-  const [checkoutState, setCheckoutState] = useState<
-    | "idle"
-    | "email"
-    | "sending"
-    | "confirming"
-    | "native-payment"
-    | "expired"
-    | "error"
-    | "waiting-manual"
-  >("idle");
+  const [checkoutState, setCheckoutState] =
+    useState<CheckoutState>("idle");
   const [buyerName, setBuyerName] = useState(
     () => safeGetItem("conexao-pending-buyer-name") || "",
   );
@@ -2159,7 +2157,6 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
-  const [, navigate] = useLocation();
   const checkoutReviewsQuery = useListPublicReviews({
     query: {
       enabled: nativeCheckoutEnabled && checkoutState === "native-payment",
@@ -2171,17 +2168,6 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   )
     .filter((review) => Boolean(review.displayName?.trim()))
     .slice(0, 2);
-
-  useEffect(() => {
-    if (!isStandaloneApp()) return;
-    // If access is stored, StoredAccessGate handles redirecting to /app.
-    if (safeGetItem("conexao-session") || safeGetItem("conexao-guest-token"))
-      return;
-    // An installed app without access sees the sales page; onboarding now requires access.
-    if (window.location.pathname !== "/") {
-      navigate("/", { replace: true });
-    }
-  }, [navigate]);
 
   useEffect(() => {
     if (checkoutState !== "confirming") {
@@ -2204,6 +2190,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   }, [checkoutState]);
 
   useEffect(() => {
+    if (sourceLp === "lp3") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("comprar") !== "1") return;
 
@@ -2218,7 +2205,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       "",
       `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
     );
-  }, []);
+  }, [sourceLp]);
 
   useEffect(() => {
     const pendingPix = safeGetItem("conexao-pending-pix");
@@ -2383,7 +2370,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           buyerName: normalizedName,
           mode: "native",
           buyerEmail: normalizedEmail || undefined,
-          sourceLp: checkoutSourceLp,
+          sourceLp,
           visitorKey: getStoredVisitorKey() || undefined,
           ...(() => {
             const assignment = getStoredExperimentAssignment();
@@ -2411,9 +2398,8 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       ) {
         throw new Error("checkout failed");
       }
-      if (data.sessionId)
-        safeSetItem("conexao-pending-session", data.sessionId);
-      safeSetItem("conexao-pending-source-lp", checkoutSourceLp);
+      safeSetItem("conexao-pending-session", data.sessionId);
+      safeSetItem("conexao-pending-source-lp", sourceLp);
       safeSetItem("conexao-pending-buyer-name", normalizedName);
       safeSetItem("conexao-pending-buyer-email", normalizedEmail);
       const checkoutStartedAt = Date.now();
@@ -2432,29 +2418,14 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       setCheckoutState("error");
     }
   };
-  const advanceLandingQuiz = (key: LandingQuizAnswerKey, value: string) => {
-    setLandingQuizAnswers((current) => ({ ...current, [key]: value }));
-    setLandingQuizStep((current) => Math.min(current + 1, 3));
-  };
-  const handleHeroQuizAnswer = (value: string, quizId: string) => {
-    setLandingQuizAnswers((current) => ({ ...current, role: value }));
-    setLandingQuizStep((current) => Math.max(current, 1));
-    trackCtaClick("hero_quiz");
-    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
-      .matches
-      ? "auto"
-      : "smooth";
-    window.requestAnimationFrame(() => {
-      document.getElementById(quizId)?.scrollIntoView({ behavior });
-    });
-  };
+
   const startCheckout = (
     packageId: "couple" | "family" = selectedPackage,
     ctaSource?: LandingCtaSource,
   ) => {
-    trackCtaClick(ctaSource);
+    onCtaClick?.(ctaSource);
     setSelectedPackage(packageId);
-    safeSetItem("conexao-pending-source-lp", checkoutSourceLp);
+    safeSetItem("conexao-pending-source-lp", sourceLp);
     const pendingPix = safeGetItem("conexao-pending-pix");
     if (nativeCheckoutEnabled && pendingPix) {
       try {
@@ -2482,6 +2453,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     setCheckoutState("email");
     setCheckoutOpen(true);
   };
+
   const restartCheckout = () => {
     clearPendingCheckoutStorage();
     setNativeCheckout(null);
@@ -2491,8 +2463,466 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     setCheckoutState("email");
     setCheckoutOpen(true);
   };
+
   const closeCheckout = () => {
     setCheckoutOpen(false);
+  };
+
+  return {
+    checkoutOpen,
+    checkoutState,
+    buyerName,
+    setBuyerName,
+    buyerEmail,
+    setBuyerEmail,
+    nameError,
+    setNameError,
+    emailError,
+    setEmailError,
+    nativeCheckout,
+    copiedCode,
+    setCopiedCode,
+    confirmingLong,
+    sendingLong,
+    checkoutReviews,
+    checkout,
+    startCheckout,
+    restartCheckout,
+    closeCheckout,
+  };
+}
+
+type CheckoutController = ReturnType<typeof useCheckout>;
+
+function CheckoutModal({
+  checkout,
+  isLp3 = false,
+}: {
+  checkout: CheckoutController;
+  isLp3?: boolean;
+}) {
+  const {
+    checkoutOpen,
+    checkoutState,
+    buyerName,
+    setBuyerName,
+    buyerEmail,
+    setBuyerEmail,
+    nameError,
+    setNameError,
+    emailError,
+    setEmailError,
+    nativeCheckout,
+    copiedCode,
+    setCopiedCode,
+    confirmingLong,
+    sendingLong,
+    checkoutReviews,
+    checkout: createCheckout,
+    restartCheckout,
+    closeCheckout,
+  } = checkout;
+
+  if (!checkoutOpen) return null;
+
+  return (
+    <div
+      className={`modal-backdrop ${isLp3 ? "lp3-checkout-backdrop" : ""} ${checkoutState === "sending" || checkoutState === "confirming" ? "modal-backdrop-loading" : ""}`}
+    >
+      <div
+        className={`checkout-modal ${isLp3 ? "lp3-checkout-modal" : ""} ${checkoutState === "sending" || checkoutState === "confirming" ? "checkout-modal-loading" : ""}`}
+      >
+        <button
+          className="modal-close"
+          onClick={closeCheckout}
+          data-testid="button-close-checkout"
+        >
+          <X size={18} />
+        </button>
+        {checkoutState === "email" ? (
+          <form
+            className="checkout-email-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const normalizedName = buyerName.trim();
+              const normalizedEmail = buyerEmail.trim().toLowerCase();
+              if (!normalizedName) {
+                setNameError("Digite seu nome para continuar.");
+                return;
+              }
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+                setEmailError(
+                  "Confira o e-mail — parece que falta alguma coisa.",
+                );
+                return;
+              }
+              setNameError("");
+              setEmailError("");
+              setBuyerName(normalizedName);
+              setBuyerEmail(normalizedEmail);
+              void createCheckout("couple", normalizedEmail, normalizedName);
+            }}
+          >
+            <p className="section-kicker">quase lá</p>
+            <h2>
+              Pra onde mandamos
+              <br />
+              <em>seu acesso?</em>
+            </h2>
+            <p className="checkout-email-intro">
+              Só precisamos do seu e-mail para liberar seu acesso e mandar o
+              recibo.
+            </p>
+            <label
+              className="checkout-field-label"
+              htmlFor="checkout-buyer-name"
+            >
+              Seu nome
+            </label>
+            <input
+              id="checkout-buyer-name"
+              className="checkout-email-input"
+              type="text"
+              autoComplete="name"
+              placeholder="Como podemos te chamar?"
+              value={buyerName}
+              onChange={(event) => {
+                setBuyerName(event.target.value);
+                safeSetItem("conexao-pending-buyer-name", event.target.value);
+                if (nameError) setNameError("");
+              }}
+              autoFocus
+              required
+            />
+            {nameError && (
+              <p className="checkout-email-error" role="alert">
+                {nameError}
+              </p>
+            )}
+            <label className="checkout-field-label" htmlFor="checkout-email">
+              Pra onde mandamos seu acesso?
+            </label>
+            <input
+              id="checkout-email"
+              className="checkout-email-input"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="seu@email.com"
+              value={buyerEmail}
+              onChange={(event) => {
+                setBuyerEmail(event.target.value);
+                safeSetItem("conexao-pending-buyer-email", event.target.value);
+                if (emailError) setEmailError("");
+              }}
+              required
+            />
+            <p className="checkout-email-note">
+              Usamos só pra liberar seu acesso e mandar o recibo.
+            </p>
+            {emailError && (
+              <p className="checkout-email-error" role="alert">
+                {emailError}
+              </p>
+            )}
+            <button
+              className="button button-primary button-full"
+              type="submit"
+              data-testid="button-continue-checkout"
+            >
+              Continuar para o Pix <ArrowRight size={16} />
+            </button>
+          </form>
+        ) : checkoutState === "native-payment" && nativeCheckout ? (
+          <div className="checkout-native-payment">
+            <p className="section-kicker">seu baralho está reservado</p>
+            <p className="checkout-native-status" role="status">
+              Aguardando pagamento
+            </p>
+            <h2>
+              Falta só o Pix
+              <br />
+              <em>e a conversa começa.</em>
+            </h2>
+            <p className="checkout-native-recap">
+              459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
+            </p>
+            <div className="checkout-native-price">
+              <strong>R$ 47,90, uma vez só</strong>
+            </div>
+            <div className="checkout-qr-wrap">
+              <img
+                src={
+                  nativeCheckout.brCodeBase64.startsWith("data:")
+                    ? nativeCheckout.brCodeBase64
+                    : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
+                }
+                alt="QR Code do Pix"
+              />
+              <p>Abra o app do seu banco e escaneie o código.</p>
+            </div>
+            <button
+              className="checkout-copy-button"
+              type="button"
+              onClick={async () => {
+                const copied = await copyPixCode(nativeCheckout.brCode);
+                if (copied) {
+                  setCopiedCode(true);
+                  window.setTimeout(() => setCopiedCode(false), 2200);
+                } else {
+                  setCopiedCode(false);
+                }
+              }}
+              data-testid="button-copy-pix"
+            >
+              <Copy size={16} />
+              {copiedCode ? "Código copiado" : "Copiar código Pix"}
+            </button>
+            <p className="checkout-native-next">
+              Assim que o Pix cair, seu baralho abre sozinho nesta tela.
+              Costuma levar poucos segundos.
+            </p>
+            <div className="checkout-guarantee">
+              <Check size={17} />
+              <span>
+                <strong>Você tem 7 dias de garantia.</strong>
+                <br />
+                Se não fizer sentido pra vocês, devolvemos seu dinheiro.
+              </span>
+            </div>
+            {checkoutReviews.length > 0 && (
+              <div className="checkout-reviews">
+                <p className="checkout-reviews-title">
+                  quem já abriu essa conversa
+                </p>
+                {checkoutReviews.map((review) => (
+                  <blockquote key={review.id}>
+                    <div className="checkout-review-meta">
+                      <div
+                        className="checkout-review-stars"
+                        aria-label={`${review.rating} de 5 estrelas`}
+                      >
+                        {"★".repeat(Math.min(5, Math.max(0, review.rating)))}
+                      </div>
+                      <span className="checkout-review-rating">
+                        {review.rating}/5
+                      </span>
+                    </div>
+                    <p>“{review.message}”</p>
+                    <cite>{review.displayName!.trim()}</cite>
+                  </blockquote>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : checkoutState === "expired" ? (
+          <div className="checkout-error-state">
+            <p className="section-kicker">o código expirou</p>
+            <h2>
+              A cobrança expirou.
+              <br />
+              <em>Gere um novo código.</em>
+            </h2>
+            <p className="checkout-error">
+              O Pix fica disponível por 15 minutos. Você pode gerar outro agora,
+              sem preencher seus dados novamente.
+            </p>
+            <button
+              onClick={restartCheckout}
+              className="button button-primary button-full"
+              data-testid="button-regenerate-pix"
+            >
+              Gerar um novo código <ArrowRight size={16} />
+            </button>
+          </div>
+        ) : checkoutState === "waiting-manual" ? (
+          <div className="checkout-confirming">
+            <div className="success-seal">
+              <Check size={22} />
+            </div>
+            <p className="section-kicker">pagamento recebido?</p>
+            <h2>
+              Estamos verificando
+              <br />
+              <em>com a Abacate Pay.</em>
+            </h2>
+            <p>
+              Não recebemos a confirmação do pagamento. Se você já pagou,
+              aguarde mais um pouco ou fale com a gente. Se ainda não pagou,
+              gere um novo código.
+            </p>
+            <button
+              onClick={() => {
+                const pendingSessionId = safeGetItem(
+                  "conexao-pending-session",
+                );
+                if (pendingSessionId)
+                  window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`;
+              }}
+              className="button button-primary button-full"
+            >
+              Já paguei — verificar de novo <ArrowRight size={16} />
+            </button>
+            <button
+              type="button"
+              className="checkout-secondary-action"
+              onClick={restartCheckout}
+            >
+              Ainda não paguei — gerar um novo código
+            </button>
+          </div>
+        ) : checkoutState === "confirming" ? (
+          <div className="checkout-confirming">
+            <div className="confirming-deck" aria-hidden="true">
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+            </div>
+            <p className="conf-kicker">preparando seu baralho</p>
+            <h2>
+              {confirmingLong ? (
+                <>
+                  Quase lá…
+                  <br />
+                  <em>as cartas estão chegando.</em>
+                </>
+              ) : (
+                <>
+                  Suas cartas estão
+                  <br />
+                  <em>entrando no baralho.</em>
+                </>
+              )}
+            </h2>
+            <p>
+              {confirmingLong
+                ? "Tá demorando um pouco mais que o normal — é a confirmação da Abacate Pay chegando. Não feche esta tela."
+                : "Assim que o pagamento for confirmado (geralmente em segundos), seu baralho abre automaticamente."}
+            </p>
+            <button
+              type="button"
+              className="checkout-secondary-action"
+              onClick={restartCheckout}
+            >
+              Ainda não paguei — gerar um novo código
+            </button>
+          </div>
+        ) : checkoutState === "sending" ? (
+          <div
+            className="checkout-confirming"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="confirming-deck" aria-hidden="true">
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+            </div>
+            <p className="conf-kicker">preparando seu pagamento</p>
+            <h2>
+              {sendingLong ? (
+                <>
+                  Só mais um instante…
+                  <br />
+                  <em>seu Pix tá quase pronto.</em>
+                </>
+              ) : (
+                <>
+                  Gerando seu Pix
+                  <br />
+                  <em>de pagamento seguro.</em>
+                </>
+              )}
+            </h2>
+            <p>
+              {sendingLong
+                ? "Tá demorando um pouco mais que o normal — não feche esta tela."
+                : "O código Pix vai aparecer aqui, sem sair deste site."}
+            </p>
+          </div>
+        ) : (
+          <div className="checkout-error-state" role="alert">
+            <p className="section-kicker">não foi possível abrir</p>
+            <h2>
+              Tente novamente
+              <br />
+              <em>em alguns instantes.</em>
+            </h2>
+            <p className="checkout-error">
+              Não deu para iniciar o pagamento agora.
+            </p>
+            <button
+              onClick={() => {
+                if (nativeCheckoutEnabled) {
+                  if (buyerName.trim() && buyerEmail.trim()) {
+                    void createCheckout("couple", buyerEmail, buyerName);
+                  } else {
+                    setCheckoutState("email");
+                  }
+                } else {
+                  void createCheckout();
+                }
+              }}
+              className="button button-primary button-full"
+              data-testid="button-retry-checkout"
+            >
+              Tentar novamente <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
+  const trackCtaClick = useLpTracking(variant);
+  const sourceFromUrl = new URLSearchParams(window.location.search).get("source");
+  const storedSourceLp = safeGetItem("conexao-pending-source-lp");
+  const checkoutSourceLp: "v1" | "v2" | "lp3" =
+    sourceFromUrl === "lp3"
+      ? "lp3"
+      : storedSourceLp === "v1" || storedSourceLp === "v2"
+        ? storedSourceLp
+        : variant;
+  const [landingQuizStep, setLandingQuizStep] = useState(0);
+  const [landingQuizAnswers, setLandingQuizAnswers] =
+    useState<LandingQuizAnswers>({});
+  const checkout = useCheckout({
+    sourceLp: checkoutSourceLp,
+    onCtaClick: trackCtaClick,
+  });
+  const { startCheckout } = checkout;
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isStandaloneApp()) return;
+    // If access is stored, StoredAccessGate handles redirecting to /app.
+    if (safeGetItem("conexao-session") || safeGetItem("conexao-guest-token"))
+      return;
+    // An installed app without access sees the sales page; onboarding now requires access.
+    if (window.location.pathname !== "/") {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
+
+  const advanceLandingQuiz = (key: LandingQuizAnswerKey, value: string) => {
+    setLandingQuizAnswers((current) => ({ ...current, [key]: value }));
+    setLandingQuizStep((current) => Math.min(current + 1, 3));
+  };
+  const handleHeroQuizAnswer = (value: string, quizId: string) => {
+    setLandingQuizAnswers((current) => ({ ...current, role: value }));
+    setLandingQuizStep((current) => Math.max(current, 1));
+    trackCtaClick("hero_quiz");
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches
+      ? "auto"
+      : "smooth";
+    window.requestAnimationFrame(() => {
+      document.getElementById(quizId)?.scrollIntoView({ behavior });
+    });
   };
   return (
     <Shell dark>
