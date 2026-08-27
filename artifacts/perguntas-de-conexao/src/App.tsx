@@ -2336,16 +2336,14 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
         body: JSON.stringify({
           packageId,
           buyerName: normalizedName,
-          mode: nativeCheckoutEnabled ? "native" : "hosted",
+          mode: "native",
           buyerEmail: normalizedEmail || undefined,
           sourceLp: checkoutSourceLp,
           visitorKey: getStoredVisitorKey() || undefined,
         }),
       });
       const data = (await response.json()) as {
-        checkoutUrl?: string;
         sessionId?: string;
-        billId?: string;
         brCode?: string;
         brCodeBase64?: string;
         chargeId?: string;
@@ -2353,9 +2351,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       if (
         !response.ok ||
         !data.sessionId ||
-        (nativeCheckoutEnabled &&
-          (!data.brCode || !data.brCodeBase64 || !data.chargeId)) ||
-        (!nativeCheckoutEnabled && !data.checkoutUrl)
+        !data.brCode ||
+        !data.brCodeBase64 ||
+        !data.chargeId
       ) {
         throw new Error("checkout failed");
       }
@@ -2366,21 +2364,16 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       safeSetItem("conexao-pending-buyer-email", normalizedEmail);
       const checkoutStartedAt = Date.now();
       safeSetItem("conexao-pending-at", String(checkoutStartedAt));
-      if (nativeCheckoutEnabled) {
-        const pix: NativeCheckoutData = {
-          sessionId: data.sessionId,
-          brCode: data.brCode!,
-          brCodeBase64: data.brCodeBase64!,
-          chargeId: data.chargeId!,
-          startedAt: checkoutStartedAt,
-        };
-        setNativeCheckout(pix);
-        safeSetItem("conexao-pending-pix", JSON.stringify(pix));
-        setCheckoutState("native-payment");
-        return;
-      }
-      if (data.billId) safeSetItem("conexao-pending-bill", data.billId);
-      window.location.href = data.checkoutUrl!;
+      const pix: NativeCheckoutData = {
+        sessionId: data.sessionId,
+        brCode: data.brCode,
+        brCodeBase64: data.brCodeBase64,
+        chargeId: data.chargeId,
+        startedAt: checkoutStartedAt,
+      };
+      setNativeCheckout(pix);
+      safeSetItem("conexao-pending-pix", JSON.stringify(pix));
+      setCheckoutState("native-payment");
     } catch {
       setCheckoutState("error");
     }
@@ -3237,12 +3230,13 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
 
 function TrackedLp3() {
   const trackCtaClick = useLpTracking("lp3");
+  const [, navigate] = useLocation();
 
   return (
     <Lp3
       onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
       onCheckout={() => {
-        window.location.href = "/?comprar=1&source=lp3";
+        navigate("/?comprar=1&source=lp3");
       }}
     />
   );
