@@ -1,0 +1,173 @@
+OBJETIVO ÚNICO DESTA TAREFA:
+Unificar visualmente a LP3 com o design system já existente da landing page principal do Perguntas de Conexão.
+
+ATENÇÃO:
+Esta tarefa é EXCLUSIVAMENTE visual.
+
+NÃO implementar:
+- checkout;
+- novo tracking;
+- A/B testing;
+- router;
+- auto-optimization;
+- GA4;
+- pixel;
+- alterações no backend;
+- alterações no banco;
+- alterações no onboarding;
+- novas funcionalidades.
+
+NÃO alterar o comportamento funcional da LP3.
+
+NÃO alterar visualmente LP1/LP2 ou o aplicativo principal.
+
+ANTES DE ALTERAR:
+1. Inspecione o código atual da LP3.
+2. Inspecione a landing page principal atualmente publicada em "/".
+3. Identifique o design system visual já utilizado pela landing page principal:
+   - cores;
+   - background;
+   - tipografia;
+   - pesos;
+   - tamanhos;
+   - espaçamentos;
+   - border-radius;
+   - sombras;
+   - estilo dos botões;
+   - estilo dos cards;
+   - progress indicators;
+   - inputs;
+   - estados hover/active/disabled.
+4. Reutilize classes, tokens, variáveis ou componentes existentes sempre que possível.
+5. NÃO recrie um segundo design system desnecessariamente.
+
+OBJETIVO VISUAL:
+
+A LP3 deve parecer parte do mesmo produto que a landing page principal.
+
+Ela pode ter uma identidade própria de "jornada/quiz", mas deve claramente pertencer ao Perguntas de Conexão.
+
+CORRIGIR ESPECIALMENTE:
+
+1. HEADER / LOGO
+- Usar a mesma apresentação visual da marca utilizada na LP principal.
+- Corrigir tamanho, alinhamento e espaçamento.
+- Não criar uma nova versão da logo.
+- Respeitar a mesma margem lateral e altura visual do header principal.
+
+2. CORES
+- Remover cores que destoem da LP principal.
+- Utilizar os mesmos tokens/variáveis de cor existentes.
+- Botões devem seguir exatamente a linguagem visual do CTA principal.
+- Estados de seleção também devem seguir a paleta existente.
+
+3. BOTÕES
+- Reutilizar o estilo do CTA existente sempre que possível.
+- Corrigir:
+  - altura;
+  - padding;
+  - border-radius;
+  - tipografia;
+  - peso;
+  - alinhamento;
+  - estados hover;
+  - active;
+  - disabled.
+- Não deixar cada tela da LP3 ter um botão visualmente diferente.
+
+4. CARDS
+- Fazer cards do quiz parecerem pertencentes ao mesmo produto.
+- Usar o mesmo tratamento de:
+  - borda;
+  - raio;
+  - sombra;
+  - background;
+  - espaçamento interno.
+- Cards podem ser específicos da experiência do quiz, mas não podem parecer de outro produto.
+
+5. BACKGROUND
+- Corrigir o background da LP3 para seguir a linguagem visual da LP principal.
+- Evitar fundos excessivamente diferentes ou contrastes que não existem no restante do produto.
+
+6. TIPOGRAFIA
+- Usar a mesma família tipográfica já utilizada.
+- Corrigir hierarquia:
+  - eyebrow;
+  - título;
+  - subtítulo;
+  - pergunta;
+  - opções;
+  - CTA;
+  - textos auxiliares.
+- Não exagerar em tamanhos de fonte.
+
+7. ESPAÇAMENTO
+- Criar uma hierarquia vertical consistente.
+- Evitar elementos colados.
+- Evitar espaços gigantes.
+- Usar os mesmos padrões de spacing existentes no projeto.
+
+8. PROGRESSO DO QUIZ
+- A barra/indicador de progresso deve parecer parte do mesmo sistema visual.
+- Deve ser discreta, elegante e consistente com a marca.
+
+9. RESULTADO
+- A tela de resultado deve seguir o mesmo design system.
+- O card de diagnóstico deve parecer um componente premium do produto.
+- Não usar aparência genérica de formulário/quiz.
+
+10. OFERTA
+- A oferta final deve utilizar o mesmo sistema visual da LP principal.
+- CTA deve ter destaque.
+- Preço, benefícios e elementos de confiança devem seguir a hierarquia visual existente.
+
+RESTRIÇÃO CRÍTICA:
+
+A LP3 já possui estilos isolados com prefixo ".lp3-*".
+
+Preserve esse isolamento sempre que possível.
+
+Não faça alterações globais em:
+- .lp-*
+- .lp2-*
+- .app-*
+- .onboarding-*
+- .play-*
+- .admin-*
+
+Se precisar reutilizar algo da LP principal, prefira composição/reutilização em vez de alterar o componente global.
+
+RESPONSIVIDADE:
+
+Nesta etapa faça apenas ajustes básicos necessários para que o novo design system não quebre em:
+- 375px
+- 390px
+- 430px
+- 768px
+- 1024px
+- desktop amplo.
+
+A otimização profunda de mobile será feita em uma etapa separada.
+
+VALIDAÇÃO:
+
+Depois da implementação:
+
+1. Rode typecheck.
+2. Rode build.
+3. Verifique /lp3.
+4. Verifique /.
+5. Verifique /lp2.
+6. Confirme que LP1/LP2 não foram alteradas.
+7. Confirme que o fluxo funcional da LP3 continua funcionando.
+8. Confirme que não houve alteração de backend.
+
+NO FINAL, NÃO faça novas melhorias por conta própria.
+
+Me entregue:
+- arquivos alterados;
+- resumo das alterações;
+- confirmação de que LP1/LP2 não foram modificadas;
+- resultado do typecheck;
+- resultado do build;
+- qualquer problema encontrado.

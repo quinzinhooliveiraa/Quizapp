@@ -16255,3 +16255,372 @@ blockquote em {
     transition: none;
   }
 }
+
+/*
+ * LP3 alignment
+ *
+ * The quiz keeps its own prefixed surface, but borrows the visual language
+ * already used by the main landing page: the dark landing background, cream
+ * text, lilac CTA, peach accent, and shared brand mark.
+ */
+.lp3-shell {
+  --lp3-ink: #f9f8fb;
+  --lp3-soft: rgba(255, 255, 255, 0.72);
+  --lp3-dim: rgba(255, 255, 255, 0.55);
+  --lp3-night: #100b18;
+  --lp3-plum: #251d49;
+  --lp3-purple: #c4acff;
+  --lp3-lilac: #8b6bd9;
+  --lp3-warm: #c4acff;
+  --lp3-warm-soft: #ffc59e;
+  background:
+    radial-gradient(circle at 82% 8%, rgba(196, 172, 255, 0.14), transparent 31rem),
+    radial-gradient(circle at 5% 82%, rgba(255, 157, 196, 0.06), transparent 25rem),
+    var(--lp3-night);
+  font-family: var(--app-font-sans);
+}
+
+.lp3-shell::before {
+  opacity: 0.1;
+}
+
+.lp3-orbit {
+  border-color: rgba(196, 172, 255, 0.1);
+}
+
+.lp3-topbar,
+.lp3-main {
+  width: min(100% - 2rem, 1120px);
+}
+
+.lp3-topbar {
+  min-height: 5.75rem;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.lp3-wordmark {
+  gap: 10px;
+  color: var(--cream);
+  font-family: var(--app-font-sans);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: none;
+}
+
+.lp3-wordmark .brand-symbol {
+  flex: 0 0 auto;
+}
+
+.lp3-wordmark i {
+  color: inherit;
+  font-family: var(--app-font-serif);
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.lp3-topbar-note,
+.lp3-mono,
+.lp3-time,
+.lp3-progress-row,
+.lp3-card-footer {
+  font-family: var(--app-font-mono);
+}
+
+.lp3-topbar-note,
+.lp3-mono {
+  color: var(--lp3-dim);
+}
+
+.lp3-login-link {
+  color: var(--cream);
+  font-family: var(--app-font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  padding: 7px 0;
+}
+
+.lp3-login-link:hover {
+  color: var(--lp3-warm-soft);
+  transform: none;
+}
+
+.lp3-login-link:focus-visible {
+  outline-color: var(--lp3-purple);
+}
+
+.lp3-main {
+  min-height: calc(100dvh - 5.75rem);
+  padding: 4.2rem 0 5rem;
+  justify-content: flex-start;
+}
+
+.lp3-intro {
+  gap: 2rem;
+}
+
+.lp3-kicker {
+  color: var(--lp3-warm-soft);
+  font-family: var(--app-font-mono);
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+}
+
+.lp3-kicker::before {
+  width: 1.9rem;
+}
+
+.lp3-display,
+.lp3-question-heading,
+.lp3-result-title,
+.lp3-section-title,
+.lp3-offer-title {
+  font-family: var(--app-font-sans);
+  font-style: normal;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.lp3-display {
+  max-width: 13ch;
+  font-size: clamp(2.8rem, 7vw, 4.9rem);
+}
+
+.lp3-intro-copy,
+.lp3-section-intro,
+.lp3-result-detail,
+.lp3-deck-copy {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.lp3-button {
+  min-height: 3.55rem;
+  border-radius: 0.65rem;
+  padding: 0.95rem 1.6rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.lp3-button-primary {
+  background: linear-gradient(135deg, #c4acff, #8b6bd9);
+  color: #1a1520;
+  box-shadow: 0 6px 20px rgba(196, 172, 255, 0.25);
+}
+
+.lp3-button-primary:hover {
+  background: linear-gradient(135deg, #d1bcff, #9a7be5);
+  box-shadow: 0 10px 28px rgba(196, 172, 255, 0.35);
+}
+
+.lp3-button-ghost {
+  border-color: rgba(255, 255, 255, 0.18);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lp3-button-ghost:hover {
+  border-color: rgba(196, 172, 255, 0.5);
+  background: rgba(196, 172, 255, 0.1);
+}
+
+.lp3-time {
+  color: var(--lp3-dim);
+  font-size: 0.62rem;
+}
+
+.lp3-question-wrap {
+  gap: 1.2rem;
+}
+
+.lp3-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lp3-progress span {
+  background: linear-gradient(90deg, #c4acff, #8b6bd9);
+}
+
+.lp3-question-heading {
+  max-width: 18ch;
+  margin-top: 1rem;
+  font-size: clamp(2rem, 5vw, 3.8rem);
+}
+
+.lp3-option {
+  min-height: 3.8rem;
+  border-color: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.lp3-option:hover {
+  border-color: rgba(196, 172, 255, 0.56);
+  background: rgba(196, 172, 255, 0.1);
+  color: var(--lp3-ink);
+}
+
+.lp3-option.is-selected {
+  border-color: var(--lp3-warm-soft);
+  background: rgba(255, 197, 158, 0.12);
+  color: var(--lp3-ink);
+}
+
+.lp3-result-card,
+.lp3-offer {
+  border-color: rgba(196, 172, 255, 0.22);
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgba(91, 63, 137, 0.26), rgba(39, 25, 67, 0.58)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.14);
+}
+
+.lp3-result-card::after {
+  border-color: rgba(255, 197, 158, 0.22);
+}
+
+.lp3-result-title,
+.lp3-section-title {
+  max-width: 16ch;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.lp3-result-lead {
+  color: var(--lp3-warm-soft);
+  font-size: clamp(1.02rem, 2.2vw, 1.25rem);
+}
+
+.lp3-editorial {
+  border-left-color: var(--lp3-warm-soft);
+}
+
+.lp3-editorial p,
+.lp3-question-card p {
+  font-family: var(--app-font-serif);
+  font-style: italic;
+}
+
+.lp3-question-card {
+  min-height: 12rem;
+  border-color: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lp3-question-card p {
+  color: var(--lp3-ink);
+}
+
+.lp3-deck {
+  border-color: rgba(196, 172, 255, 0.35);
+  border-radius: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgba(196, 172, 255, 0.12),
+    rgba(255, 255, 255, 0.04)
+  );
+}
+
+.lp3-deck-name {
+  font-family: var(--app-font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.lp3-offer {
+  background:
+    radial-gradient(circle at 92% 8%, rgba(255, 197, 158, 0.2), transparent 14rem),
+    linear-gradient(135deg, #2b1d4d, #171023);
+}
+
+.lp3-offer-title {
+  max-width: 13ch;
+  font-size: clamp(2.6rem, 7vw, 5.1rem);
+}
+
+.lp3-price strong {
+  color: var(--lp3-warm-soft);
+  font-family: var(--app-font-sans);
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.lp3-benefits li {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.lp3-benefits li::before {
+  background: var(--lp3-warm-soft);
+}
+
+.lp3-link-button:hover,
+.lp3-reset:hover {
+  color: var(--lp3-warm-soft);
+}
+
+.lp3-live-note {
+  color: var(--lp3-warm-soft);
+}
+
+@media (min-width: 700px) {
+  .lp3-topbar {
+    width: min(100% - 4rem, 1240px);
+    padding-inline: 34px;
+  }
+
+  .lp3-main {
+    width: min(100% - 4rem, 1120px);
+    padding-top: 5.5rem;
+  }
+
+  .lp3-display {
+    font-size: clamp(3.2rem, 6vw, 5.3rem);
+  }
+}
+
+@media (max-width: 699px) {
+  .lp3-main {
+    padding-top: 3.6rem;
+  }
+
+  .lp3-topbar {
+    min-height: 5.5rem;
+  }
+
+  .lp3-wordmark .brand-symbol {
+    width: 31px;
+    height: 31px;
+  }
+
+  .lp3-display {
+    font-size: clamp(2.7rem, 12vw, 4rem);
+  }
+
+  .lp3-question-heading {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+
+  .lp3-result-title,
+  .lp3-section-title,
+  .lp3-offer-title {
+    font-size: clamp(2.4rem, 11vw, 3.6rem);
+  }
+
+  .lp3-benefits {
+    grid-template-columns: 1fr;
+  }
+}

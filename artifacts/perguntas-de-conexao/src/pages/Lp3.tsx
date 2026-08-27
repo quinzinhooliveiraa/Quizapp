@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ChevronLeft, RotateCcw } from "lucide-react";
+import { ArrowRight, ChevronLeft, Feather, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import {
   questions as libraryQuestions,
@@ -581,10 +581,20 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     <main className="lp3-shell" data-section-name={screen}>
       <div className="lp3-orbit" aria-hidden="true" />
       <header className="lp3-topbar">
-        <div className="lp3-wordmark" data-testid="text-lp3-wordmark">
-          <span className="lp3-wordmark-mark" aria-hidden="true">p</span>
-          Perguntas de Conexão
-        </div>
+        <Link
+          href="/"
+          className="brand-mark brand-mark-inverse lp3-wordmark"
+          data-testid="text-lp3-wordmark"
+        >
+          <span className="brand-symbol" aria-hidden="true">
+            <Feather size={18} strokeWidth={1.6} />
+          </span>
+          <span>
+            Perguntas
+            <br />
+            <i>de Conexão</i>
+          </span>
+        </Link>
         <div className="lp3-topbar-actions">
           <span className="lp3-topbar-note">LP3 · para dois</span>
           <Link
