@@ -12,4 +12,5 @@ export type PageEventInputLpId = typeof PageEventInputLpId[keyof typeof PageEven
 export const PageEventInputLpId = {
   v1: 'v1',
   v2: 'v2',
+  lp3: 'lp3',
 } as const;

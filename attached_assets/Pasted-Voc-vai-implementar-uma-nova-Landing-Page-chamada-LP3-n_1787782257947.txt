@@ -1,0 +1,1130 @@
+Você vai implementar uma nova Landing Page chamada LP3 neste projeto.
+
+REPOSITÓRIO / PROJETO:
+Perguntas de Conexão
+GitHub: https://github.com/quinzinhooliveiraa/Quizapp
+
+IMPORTANTE:
+Antes de escrever qualquer código, faça uma inspeção completa do projeto.
+
+Quero que você primeiro descubra:
+- framework utilizado;
+- estrutura de rotas;
+- LP atual;
+- LP2, se existir;
+- componentes reutilizáveis;
+- sistema de estado;
+- banco/backend;
+- autenticação;
+- onboarding;
+- estrutura dos 15 baralhos;
+- estrutura das perguntas;
+- checkout;
+- analytics;
+- como os dados do onboarding são armazenados;
+- como o usuário chega ao produto depois da compra.
+
+NÃO altere LP1.
+NÃO altere LP2.
+NÃO altere o comportamento atual do app.
+NÃO substitua a landing page atual.
+
+A LP3 deve ser uma nova experiência independente.
+
+==================================================
+OBJETIVO
+==================================================
+
+Atualmente temos uma landing page tradicional.
+
+O tráfego principal vem de conteúdo orgânico de Instagram/TikTok.
+
+A pessoa muitas vezes entra sem necessariamente estar procurando comprar.
+
+Os dados atuais mostram que muitas pessoas clicam no CTA principal muito rapidamente, aproximadamente nos primeiros segundos.
+
+Esse clique atualmente leva ao checkout.
+
+Isso significa que o primeiro clique provavelmente representa curiosidade:
+
+"O que é isso?"
+
+e não necessariamente:
+
+"Quero pagar agora."
+
+A LP3 deve transformar esse primeiro clique em uma EXPERIÊNCIA.
+
+O CTA da LP3 deve iniciar um quiz/narrativa.
+
+Não deve levar imediatamente ao checkout.
+
+A sequência desejada é:
+
+CURIO SIDADE
+↓
+IDENTIFICAÇÃO
+↓
+REFLEXÃO
+↓
+PERSONALIZAÇÃO
+↓
+HISTÓRIA
+↓
+EXPERIÊNCIA DO PRODUTO
+↓
+RECOMENDAÇÃO
+↓
+OFERTA
+↓
+CHECKOUT
+
+==================================================
+CONCEITO
+==================================================
+
+A pessoa deve sentir que está construindo algo sobre o próprio relacionamento enquanto navega.
+
+Não quero que pareça:
+
+"Estou preenchendo um formulário."
+
+Quero que pareça:
+
+"Essa experiência está entendendo o meu relacionamento."
+
+A experiência deve ser progressiva.
+
+Começar com perguntas fáceis.
+
+Depois perguntas mais reflexivas.
+
+Depois mostrar uma interpretação cuidadosa baseada nas respostas.
+
+Depois mostrar uma história/depoimento relacionada ao perfil.
+
+Depois permitir que a pessoa experimente uma pergunta real do produto.
+
+Depois recomendar um baralho.
+
+Só então apresentar a oferta.
+
+==================================================
+BRANDING
+==================================================
+
+Utilize o branding já existente do projeto.
+
+Paleta principal:
+
+#302254
+#241a45
+#41245d
+
+Destaque:
+
+#c4acff
+
+Roxos:
+
+#7a62d3
+#8b6bd9
+#543286
+#6544a2
+
+Texto:
+
+#f8f4ff
+#f9f8fb
+#f7f0eb
+
+Accent quente:
+
+#f0ad83
+#ffc59e
+#d9a3e3
+
+Vibes:
+
+#ff9dc4
+#d968aa
+
+Verde:
+
+#76d8ac
+
+Tipografia:
+
+Instrument Serif Italic
+→ frases emocionais e palavras-chave.
+
+Plus Jakarta Sans
+→ corpo, interface, botões.
+
+Space Mono
+→ labels pequenos, uppercase.
+
+A estética precisa ser:
+
+- íntima;
+- sofisticada;
+- noturna;
+- emocional;
+- minimalista;
+- premium;
+- brasileira;
+- nada corporativa;
+- nada com aparência de curso;
+- nada de quiz genérico;
+- nada de "funil agressivo".
+
+==================================================
+ESTRUTURA DA LP3
+==================================================
+
+Criar uma experiência de aproximadamente 5 perguntas principais.
+
+Não transformar em um questionário longo.
+
+------------------------------------------
+TELA 0 — INTRO
+------------------------------------------
+
+Headline:
+
+"Talvez vocês só precisem de uma boa pergunta."
+
+Texto:
+
+"Responda algumas perguntas sobre vocês.
+No final, vamos mostrar por onde começar."
+
+CTA:
+
+"Começar"
+
+Pequeno indicador:
+
+"Leva menos de 2 minutos."
+
+Não mostrar preço ainda.
+
+------------------------------------------
+TELA 1 — TEMPO JUNTOS
+------------------------------------------
+
+Pergunta:
+
+"Há quanto tempo vocês estão juntos?"
+
+Opções:
+
+"Ainda estamos nos conhecendo"
+
+"Menos de 1 ano"
+
+"1–3 anos"
+
+"3–10 anos"
+
+"Mais de 10 anos"
+
+Salvar resposta.
+
+------------------------------------------
+TELA 2 — ROTINA
+------------------------------------------
+
+Pergunta:
+
+"Quando vocês finalmente têm um tempo só para vocês, o que costuma acontecer?"
+
+Opções:
+
+"Cada um acaba no celular"
+
+"A gente fala principalmente da rotina"
+
+"Assistimos alguma coisa"
+
+"Conversamos bastante"
+
+"Tentamos fazer algo diferente"
+
+"Depende muito do dia"
+
+Salvar resposta.
+
+------------------------------------------
+TELA 3 — CURIOSIDADE
+------------------------------------------
+
+Pergunta:
+
+"Quando foi a última vez que uma conversa entre vocês fez você descobrir algo que não sabia sobre ele(a)?"
+
+Opções:
+
+"Hoje"
+
+"Nos últimos dias"
+
+"Nas últimas semanas"
+
+"Há alguns meses"
+
+"Nem lembro"
+
+Salvar resposta.
+
+------------------------------------------
+TELA 4 — VULNERABILIDADE
+------------------------------------------
+
+Pergunta:
+
+"Existe alguma coisa que você gostaria de conversar com ele(a), mas nunca encontrou o momento certo?"
+
+Opções:
+
+"Sim"
+
+"Algumas coisas"
+
+"Talvez"
+
+"Acho que não"
+
+Salvar resposta.
+
+------------------------------------------
+TELA 5 — DESEJO
+------------------------------------------
+
+Pergunta:
+
+"Se você pudesse mudar uma coisa nas conversas de vocês hoje, o que seria?"
+
+Opções:
+
+"Ter conversas mais profundas"
+
+"Conhecer melhor um ao outro"
+
+"Sair da rotina"
+
+"Voltar a sentir mais proximidade"
+
+"Reacender a intimidade"
+
+"Conversar sobre coisas difíceis"
+
+"Ter mais assunto mesmo à distância"
+
+Salvar resposta.
+
+==================================================
+PERFIL DINÂMICO
+==================================================
+
+As respostas precisam gerar diferentes perfis.
+
+NÃO mostrar a mesma conclusão para todos.
+
+Criar pelo menos 6 perfis.
+
+------------------------------------------
+PERFIL 1 — CASAL NO AUTOMÁTICO
+------------------------------------------
+
+Sinais:
+
+- relacionamento longo;
+- rotina;
+- celular;
+- poucas descobertas recentes.
+
+Headline:
+
+"Vocês não parecem precisar de mais tempo juntos."
+
+Subheadline:
+
+"Talvez precisem de mais momentos em que estejam realmente juntos."
+
+Texto:
+
+"Depois de alguns anos, é fácil conhecer tanto a rotina de alguém que a gente esquece que ainda existe uma pessoa inteira para descobrir."
+
+Recomendação:
+
+Você Não Sabia
+ou
+Livro Aberto
+ou
+Porto Seguro
+
+------------------------------------------
+PERFIL 2 — REAPROXIMAÇÃO
+------------------------------------------
+
+Sinais:
+
+- distância emocional;
+- desejo de proximidade;
+- assuntos não conversados.
+
+Headline:
+
+"Talvez algumas coisas ainda estejam esperando para ser ditas."
+
+Texto:
+
+"Às vezes a distância não começa quando alguém vai embora.
+
+Começa quando algumas coisas deixam de ser ditas."
+
+Recomendação:
+
+Livro Aberto
+Depois da Tempestade
+Perto de Novo
+
+------------------------------------------
+PERFIL 3 — CASAL NOVO
+------------------------------------------
+
+Sinais:
+
+- menos de 1 ano;
+- alta curiosidade;
+- muitas coisas ainda desconhecidas.
+
+Headline:
+
+"Vocês ainda estão descobrindo um ao outro."
+
+Texto:
+
+"E talvez seja justamente agora que as perguntas certas façam mais diferença."
+
+Recomendação:
+
+Você Não Sabia
+Livro Aberto
+Lá Atrás
+
+------------------------------------------
+PERFIL 4 — À DISTÂNCIA
+------------------------------------------
+
+Sinais:
+
+- resposta relacionada a distância;
+- necessidade de mais assunto/conexão.
+
+Headline:
+
+"Uma conversa pode diminuir alguns quilômetros."
+
+Texto:
+
+"Quando existe distância entre vocês, ter algo realmente para conversar pode fazer o espaço parecer menor."
+
+Recomendação:
+
+Mesmo Longe
+
+------------------------------------------
+PERFIL 5 — INTIMIDADE
+------------------------------------------
+
+Sinais:
+
+- pessoa escolhe reacender intimidade;
+- respostas indicam desejo de sair da rotina.
+
+Headline:
+
+"Algumas conversas aproximam."
+
+Depois:
+
+"Outras fazem a faísca voltar."
+
+Recomendação:
+
+Faísca
+Luzes Baixas
+Fogo Alto
+Perto de Novo
+
+A comunicação deve ser adulta e sugestiva.
+
+Não mostrar conteúdo sexual explícito na LP.
+
+------------------------------------------
+PERFIL 6 — CONVERSAS DIFÍCEIS
+------------------------------------------
+
+Sinais:
+
+- assuntos evitados;
+- dificuldade de conversar;
+- necessidade de falar sobre coisas difíceis.
+
+Headline:
+
+"Algumas conversas são difíceis porque ninguém sabe como começar."
+
+Recomendação:
+
+Livro Aberto
+Depois da Tempestade
+
+==================================================
+IMPORTANTE SOBRE O PERFIL
+==================================================
+
+NÃO apresentar como diagnóstico psicológico.
+
+Não usar:
+
+"Seu diagnóstico"
+
+"Seu perfil psicológico"
+
+"Análise científica"
+
+Usar:
+
+"Pelo que você contou..."
+
+"Talvez..."
+
+"Vocês parecem..."
+
+"Pode ser que..."
+
+A interpretação é reflexiva, não clínica.
+
+==================================================
+STORYTELLING
+==================================================
+
+Depois do perfil, mostrar uma história/depoimento contextual.
+
+NÃO mostrar uma parede com 10 depoimentos.
+
+Mostrar uma história que tenha relação com o perfil daquela pessoa.
+
+Título:
+
+"Talvez você se reconheça nisso."
+
+Criar diferentes histórias para diferentes perfis.
+
+Exemplos de ângulos:
+
+CASAL LONGO:
+
+"Estamos casados há 23 anos.
+
+Eu achava que já sabia praticamente tudo sobre ele.
+
+Algumas perguntas fizeram a gente perceber que ainda existiam coisas que nunca tínhamos contado um para o outro.
+
+Foi uma das melhores conversas que tivemos em anos."
+
+CASAL À DISTÂNCIA:
+
+"Às vezes nossas chamadas acabavam ficando sem assunto.
+
+As perguntas deram outro ritmo para nossas conversas e fizeram a distância parecer um pouco menor."
+
+CASAL NOVO:
+
+"Achávamos que já conversávamos bastante.
+
+Duas perguntas depois estávamos falando de coisas que nunca tínhamos contado para ninguém."
+
+CASAL REAPROXIMAÇÃO:
+
+"Algumas perguntas trouxeram assuntos que a gente vinha adiando.
+
+Não foi sobre ganhar uma discussão.
+
+Foi sobre finalmente conseguir conversar."
+
+IMPORTANTE:
+
+Não inventar nomes, estrelas, datas, selos "Verified Buyer" ou qualquer informação falsa.
+
+Se existirem depoimentos reais no projeto, utilizar os reais.
+
+Os textos podem ser adaptados editorialmente, mas NÃO atribuir informações inexistentes.
+
+==================================================
+EXPERIÊNCIA DO PRODUTO
+==================================================
+
+Depois da história:
+
+"Agora, uma pergunta."
+
+Mostrar uma carta visualmente semelhante às cartas reais do produto.
+
+Preferir perguntas reais existentes no banco/repositório.
+
+A pergunta deve ser selecionada conforme o perfil.
+
+Exemplo:
+
+LIVRO ABERTO
+
+"Existe alguma coisa sobre você que gostaria que eu entendesse melhor?"
+
+Mostrar a carta em destaque.
+
+CTA:
+
+"Outra pergunta"
+
+Mostrar uma segunda carta.
+
+A pessoa deve experimentar a sensação real do produto.
+
+==================================================
+RECOMENDAÇÃO
+==================================================
+
+Depois:
+
+"Pelo que você contou, começaríamos por aqui."
+
+Mostrar o baralho recomendado.
+
+Exemplo:
+
+LIVRO ABERTO
+
+"Sem filtro, cara a cara."
+
+Mostrar uma pequena descrição.
+
+Depois:
+
+"Mas ele é só um dos 15."
+
+Mostrar alguns outros baralhos.
+
+Utilizar os baralhos reais existentes no projeto.
+
+Não inventar nomes diferentes dos existentes.
+
+==================================================
+OFERTA
+==================================================
+
+Só depois de toda a experiência:
+
+"Se uma pergunta já abriu essa conversa..."
+
+"Imagina ter centenas delas."
+
+Mostrar:
+
+15 baralhos
+
+445+ perguntas
+
+Acesso vitalício
+
+Sem assinatura
+
+Funciona no celular e computador
+
+Pode convidar o parceiro(a)
+
+Possibilidade de experiência à distância, se já existir no produto.
+
+Preço:
+
+R$47,90
+
+Pagamento único.
+
+Garantia de 7 dias, somente se essa garantia já existir oficialmente.
+
+CTA:
+
+"Quero continuar nossas conversas"
+
+Não usar:
+
+"COMPRE AGORA"
+
+"OFERTA IMPERDÍVEL"
+
+"ÚLTIMA CHANCE"
+
+==================================================
+EXIT INTENT / AGORA NÃO
+==================================================
+
+Se houver um botão ou comportamento equivalente a "Agora não", NÃO mostrar desconto imediatamente.
+
+Mostrar:
+
+"Antes de você ir..."
+
+E uma história curta contextualizada pelo perfil.
+
+Depois:
+
+"Talvez vocês só estejam a uma pergunta de uma conversa diferente."
+
+CTA:
+
+"Voltar para minha experiência"
+
+==================================================
+DADOS PARA O ONBOARDING
+==================================================
+
+ESTA É UMA PARTE CRÍTICA.
+
+A LP3 NÃO pode criar um banco de dados separado do onboarding.
+
+Primeiro descubra como o onboarding atual funciona.
+
+Depois faça a LP3 alimentar o MESMO modelo de dados ou um modelo compatível.
+
+Os dados da LP3 devem incluir algo equivalente a:
+
+relationshipDuration
+conversationFrequency
+discoveryFrequency
+difficultConversations
+primaryGoal
+inferredProfile
+recommendedDeck
+
+Adapte os nomes à arquitetura real.
+
+Exemplo:
+
+Se a LP3 pergunta:
+
+"Há quanto tempo vocês estão juntos?"
+
+e a pessoa responde:
+
+"3–10 anos"
+
+O onboarding NÃO deve perguntar novamente:
+
+"Há quanto tempo vocês estão juntos?"
+
+Deve reconhecer a resposta existente.
+
+O onboarding pode mostrar:
+
+"Já entendemos um pouco sobre vocês."
+
+[Editar]
+
+e seguir para o próximo dado necessário.
+
+REGRAS:
+
+- pré-preencher dados;
+- pular perguntas equivalentes;
+- permitir editar respostas;
+- nunca obrigar o usuário a repetir informações;
+- preservar compatibilidade com usuários que chegam diretamente no onboarding sem passar pela LP3.
+
+==================================================
+PERSISTÊNCIA
+==================================================
+
+A LP3 precisa sobreviver a refresh quando possível.
+
+Utilizar a estratégia de persistência existente.
+
+Para visitantes anônimos, se necessário:
+
+localStorage/sessionStorage para estado inicial.
+
+Depois sincronizar com backend/conta quando houver identificação.
+
+Criar um identificador persistente:
+
+visitor_id
+
+e também:
+
+lp_variant = "lp3"
+
+IMPORTANTE:
+
+Esse campo será usado posteriormente por um router A/B.
+
+NÃO implementar o router agora.
+
+==================================================
+PREPARAÇÃO PARA A/B TEST
+==================================================
+
+A LP3 deve ser construída para futuramente funcionar assim:
+
+perguntasdeconexao.com.br
+
+↓
+
+ROUTER
+
+↓
+
+LP1 OU LP3
+
+Mas NÃO implementar o router nesta tarefa.
+
+A LP3 deve conseguir registrar:
+
+lp_variant = LP3
+
+para que posteriormente seja possível comparar:
+
+LP1 vs LP3.
+
+Manter LP1 e LP2 completamente intactas.
+
+==================================================
+ANALYTICS
+==================================================
+
+Utilizar o sistema de analytics existente.
+
+Criar eventos equivalentes a:
+
+lp3_view
+
+lp3_start
+
+lp3_question_answered
+
+lp3_quiz_completed
+
+lp3_profile_revealed
+
+lp3_testimonial_viewed
+
+lp3_card_preview_viewed
+
+lp3_recommendation_viewed
+
+lp3_offer_viewed
+
+lp3_checkout_started
+
+lp3_email_submitted
+
+lp3_purchase_completed
+
+Quando possível, anexar:
+
+profile
+relationshipDuration
+primaryGoal
+recommendedDeck
+lp_variant
+
+Isso permitirá posteriormente descobrir:
+
+qual perfil converte mais;
+
+qual perfil abandona;
+
+qual história funciona melhor;
+
+qual recomendação gera mais checkout;
+
+qual pergunta gera abandono;
+
+LP1 vs LP3.
+
+==================================================
+PERFORMANCE
+==================================================
+
+A LP3 deve carregar rapidamente.
+
+NÃO utilizar splash screen.
+
+A primeira tela precisa aparecer imediatamente.
+
+Evitar:
+- imagens gigantes;
+- JS desnecessário;
+- animações pesadas;
+- dependências adicionais sem necessidade.
+
+O público principal é mobile.
+
+==================================================
+MOBILE
+==================================================
+
+Prioridade máxima.
+
+Uma pergunta por tela.
+
+Botões grandes.
+
+Texto legível.
+
+Cards grandes.
+
+Progresso discreto.
+
+Transições suaves.
+
+Não deixar a interface parecendo um formulário.
+
+==================================================
+DESKTOP
+==================================================
+
+No desktop, usar composição mais cinematográfica.
+
+Possibilidade de:
+
+carta + conteúdo
+
+lado a lado.
+
+Manter aparência premium.
+
+==================================================
+ANIMAÇÕES
+==================================================
+
+Usar:
+
+fade;
+
+slide;
+
+entrada da carta;
+
+transição de respostas;
+
+revelação do perfil.
+
+Tudo sutil.
+
+Não criar interface infantil.
+
+==================================================
+COPY
+==================================================
+
+Tom:
+
+íntimo;
+
+poético;
+
+direto;
+
+humano.
+
+Frases curtas.
+
+Referência:
+
+"Uma pergunta por vez.
+
+O resto acontece entre vocês."
+
+==================================================
+ARQUITETURA
+==================================================
+
+Antes de criar componentes, examine os componentes existentes.
+
+Reutilizar:
+
+- Button;
+- Card;
+- Typography;
+- Modal;
+- analytics;
+- state;
+- API;
+- onboarding components;
+
+quando fizer sentido.
+
+Não duplicar lógica.
+
+Separar conceitualmente:
+
+quiz state
+
+profile calculation
+
+story selection
+
+deck recommendation
+
+onboarding handoff
+
+analytics
+
+Mas adaptar isso à arquitetura real do projeto.
+
+==================================================
+NÃO FAZER
+==================================================
+
+NÃO:
+
+- modificar LP1;
+- modificar LP2;
+- substituir a landing atual;
+- alterar checkout atual;
+- quebrar onboarding;
+- criar outro onboarding;
+- inventar perguntas inexistentes quando houver perguntas reais;
+- inventar depoimentos como se fossem clientes reais;
+- usar diagnóstico psicológico;
+- usar dark patterns agressivos;
+- esconder preço propositalmente;
+- colocar checkout logo após o primeiro clique;
+- adicionar splash;
+- criar um A/B router nesta etapa.
+
+==================================================
+TESTES
+==================================================
+
+Depois de implementar:
+
+TESTE 1:
+Casal de longa duração + rotina + poucas descobertas.
+
+Verificar:
+perfil automático;
+história correspondente;
+baralho recomendado.
+
+TESTE 2:
+Casal novo.
+
+Verificar:
+perfil novo;
+storytelling diferente;
+recomendação diferente.
+
+TESTE 3:
+À distância.
+
+Verificar:
+perfil à distância;
+Mesmo Longe;
+história contextual.
+
+TESTE 4:
+Intimidade.
+
+Verificar:
+perfil intimidade;
+baralhos Vibes;
+copy adulta.
+
+TESTE 5:
+Conversas difíceis.
+
+Verificar:
+perfil correspondente;
+storytelling correspondente.
+
+TESTE 6:
+Refresh durante o quiz.
+
+Verificar persistência.
+
+TESTE 7:
+LP3 → onboarding.
+
+Confirmar:
+
+dados da LP3 são reconhecidos;
+
+perguntas equivalentes NÃO aparecem novamente;
+
+usuário consegue editar respostas;
+
+usuário que entra diretamente no onboarding continua funcionando.
+
+TESTE 8:
+Confirmar que LP1 continua exatamente como antes.
+
+TESTE 9:
+Confirmar que LP2 continua exatamente como antes.
+
+TESTE 10:
+Mobile.
+
+TESTE 11:
+Desktop.
+
+==================================================
+ENTREGA
+==================================================
+
+Ao terminar, NÃO diga apenas "feito".
+
+Explique:
+
+1. quais arquivos foram criados/modificados;
+
+2. qual rota foi criada para LP3;
+
+3. como o estado do quiz funciona;
+
+4. como os perfis são calculados;
+
+5. como as histórias são selecionadas;
+
+6. como os baralhos são recomendados;
+
+7. como os dados são transferidos para o onboarding;
+
+8. quais perguntas foram reaproveitadas do banco real;
+
+9. quais eventos de analytics foram adicionados;
+
+10. como a LP3 está preparada para o futuro A/B test;
+
+11. quais testes foram executados;
+
+12. qualquer problema encontrado.
+
+IMPORTANTE:
+
+Se encontrar alguma decisão arquitetural que possa quebrar o onboarding atual, PARE antes de fazer uma alteração destrutiva e explique o problema.
+
+A prioridade é:
+
+LP3 nova e funcional
++
+LP1 intacta
++
+LP2 intacta
++
+onboarding sem perguntas duplicadas
++
+arquitetura preparada para A/B test futuro.

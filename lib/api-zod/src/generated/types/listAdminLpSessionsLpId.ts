@@ -12,4 +12,5 @@ export type ListAdminLpSessionsLpId = typeof ListAdminLpSessionsLpId[keyof typeo
 export const ListAdminLpSessionsLpId = {
   v1: 'v1',
   v2: 'v2',
+  lp3: 'lp3',
 } as const;

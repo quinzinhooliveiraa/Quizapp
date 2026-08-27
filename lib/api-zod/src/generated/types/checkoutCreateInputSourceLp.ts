@@ -12,4 +12,5 @@ export type CheckoutCreateInputSourceLp = typeof CheckoutCreateInputSourceLp[key
 export const CheckoutCreateInputSourceLp = {
   v1: 'v1',
   v2: 'v2',
+  lp3: 'lp3',
 } as const;

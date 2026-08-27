@@ -91,6 +91,7 @@ import Onboarding from "@/pages/Onboarding";
 import Login from "@/pages/Login";
 import Play from "@/pages/Play";
 import Admin from "@/pages/Admin";
+import Lp3 from "@/pages/Lp3";
 import { apiBaseUrl } from "@/config";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
@@ -1900,9 +1901,30 @@ function StoredAccessGate() {
   );
 }
 
-type LandingCtaSource = "hero_quiz" | "hero_comprar";
+type LandingCtaSource = "hero_quiz" | "hero_comprar" | "lp3_offer";
 
-function useLpTracking(lpId: "v1" | "v2") {
+function trackLp3CheckoutEvent(
+  eventType: "lp3_email_submitted" | "lp3_purchase_completed",
+  metadata: Record<string, unknown> = {},
+) {
+  if (safeGetItem("conexao-lp3-checkout") !== "true") return;
+  const visitorKey =
+    safeGetItem("lp3_visitor_id") || safeGetItem("pdc-visitor-key");
+  if (!visitorKey) return;
+  void fetch(apiUrl("/api/track/page-event"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      lpId: "lp3",
+      visitorKey,
+      eventType,
+      metadata: { ...metadata, lp_variant: "lp3" },
+    }),
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
+function useLpTracking(lpId: "v1" | "v2" | "lp3") {
   const visitorKeyRef = useRef<string>("");
   const clarityUserIdRef = useRef("");
   const claritySessionIdRef = useRef("");
@@ -1960,10 +1982,18 @@ function useLpTracking(lpId: "v1" | "v2") {
       eventType: "view" | "cta_click" | "exit",
       extra: Record<string, unknown> = {},
     ) => {
+      const trackedEventType =
+        lpId === "lp3"
+          ? eventType === "view"
+            ? "lp3_view"
+            : eventType === "cta_click" && extra.ctaSource === "lp3_offer"
+              ? "lp3_checkout_started"
+              : eventType
+          : eventType;
       const payload = JSON.stringify({
         lpId,
         visitorKey,
-        eventType,
+        eventType: trackedEventType,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
         ...extra,
@@ -2038,13 +2068,17 @@ function useLpTracking(lpId: "v1" | "v2") {
   }, [lpId]);
 
   return (ctaSource?: LandingCtaSource) => {
+    const eventType =
+      lpId === "lp3" && ctaSource === "lp3_offer"
+        ? "lp3_checkout_started"
+        : "cta_click";
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         lpId,
         visitorKey: visitorKeyRef.current,
-        eventType: "cta_click",
+        eventType,
         ctaSource,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
@@ -2055,7 +2089,9 @@ function useLpTracking(lpId: "v1" | "v2") {
 }
 
 function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
-  const trackCtaClick = useLpTracking(variant);
+  const checkoutFromLp3 =
+    variant === "v2" && safeGetItem("conexao-lp3-checkout") === "true";
+  const trackCtaClick = useLpTracking(checkoutFromLp3 ? "lp3" : variant);
   const [landingQuizStep, setLandingQuizStep] = useState(0);
   const [landingQuizAnswers, setLandingQuizAnswers] =
     useState<LandingQuizAnswers>({});
@@ -2202,6 +2238,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
             accessGranted?: boolean;
           };
           if (!cancelled && session.accessGranted) {
+            trackLp3CheckoutEvent("lp3_purchase_completed", {
+              sessionId,
+            });
             safeSetItem("conexao-session", sessionId);
             safeSetItem("conexao-role", "owner");
             safeRemoveItem("conexao-pending-session");
@@ -2253,6 +2292,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
         if (!response.ok || cancelled) return;
         const session = (await response.json()) as { accessGranted?: boolean };
         if (session.accessGranted && !cancelled) {
+          trackLp3CheckoutEvent("lp3_purchase_completed", {
+            sessionId: nativeCheckout.sessionId,
+          });
           safeSetItem("conexao-session", nativeCheckout.sessionId);
           safeSetItem("conexao-role", "owner");
           safeRemoveItem("conexao-pending-session");
@@ -2288,7 +2330,8 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           buyerName: "Cliente Perguntas de Conexão",
           mode: nativeCheckoutEnabled ? "native" : "hosted",
           buyerEmail: email.trim().toLowerCase() || undefined,
-          sourceLp: variant,
+          sourceLp:
+            safeGetItem("conexao-lp3-checkout") === "true" ? "lp3" : variant,
           visitorKey: safeGetItem("pdc-visitor-key") || undefined,
         }),
       });
@@ -2358,6 +2401,18 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
     setCheckoutState("email");
     setCheckoutOpen(true);
   };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (
+      variant !== "v2" ||
+      params.get("comprar") !== "1" ||
+      params.get("source") !== "lp3"
+    )
+      return;
+    safeSetItem("conexao-lp3-checkout", "true");
+    startCheckout("couple", "lp3_offer");
+    window.history.replaceState({}, "", "/");
+  }, [variant]);
   const restartCheckout = () => {
     clearPendingCheckoutStorage();
     setNativeCheckout(null);
@@ -2375,6 +2430,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
       clearPendingCheckoutStorage();
       setNativeCheckout(null);
     }
+    safeRemoveItem("conexao-lp3-checkout");
     setCheckoutOpen(false);
   };
   return (
@@ -2827,6 +2883,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   }
                   setEmailError("");
                   setBuyerEmail(normalizedEmail);
+                  trackLp3CheckoutEvent("lp3_email_submitted", {
+                    emailProvided: true,
+                  });
                   void checkout(selectedPackage, normalizedEmail);
                 }}
               >
@@ -7339,6 +7398,14 @@ function Router() {
         <Route path="/lp2">
           <Home />
         </Route>
+        <Route path="/lp3">
+          <Lp3
+            onCheckout={() => {
+              safeSetItem("conexao-lp3-checkout", "true");
+              window.location.href = "/?comprar=1&source=lp3";
+            }}
+          />
+        </Route>
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/login" component={Login} />
         <Route path="/play" component={Play} />
@@ -7356,7 +7423,8 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 }
 function RouteAwareSplash() {
   const [location] = useLocation();
-  const isLandingPage = location === "/" || location === "/lp2";
+  const isLandingPage =
+    location === "/" || location === "/lp2" || location === "/lp3";
 
   return isLandingPage ? null : <SplashScreen />;
 }

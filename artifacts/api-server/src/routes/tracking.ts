@@ -5,9 +5,25 @@ import { db, pageEventsTable, sessionsTable } from "@workspace/db";
 import { isAdminSession } from "./feedback";
 
 const router: IRouter = Router();
-const LP_IDS = ["v1", "v2"] as const;
-const EVENT_TYPES = ["view", "cta_click", "exit"] as const;
-const CTA_SOURCES = ["hero_quiz", "hero_comprar"] as const;
+const LP_IDS = ["v1", "v2", "lp3"] as const;
+const EVENT_TYPES = [
+  "view",
+  "cta_click",
+  "exit",
+  "lp3_view",
+  "lp3_start",
+  "lp3_question_answered",
+  "lp3_quiz_completed",
+  "lp3_profile_revealed",
+  "lp3_testimonial_viewed",
+  "lp3_card_preview_viewed",
+  "lp3_recommendation_viewed",
+  "lp3_offer_viewed",
+  "lp3_checkout_started",
+  "lp3_email_submitted",
+  "lp3_purchase_completed",
+] as const;
+const CTA_SOURCES = ["hero_quiz", "hero_comprar", "lp3_offer"] as const;
 
 router.post("/track/page-event", async (req, res): Promise<void> => {
   const body = req.body as {
@@ -19,6 +35,7 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     clarityUserId?: string;
     claritySessionId?: string;
     ctaSource?: string;
+    metadata?: Record<string, unknown>;
   };
   if (
     !LP_IDS.includes(body.lpId as (typeof LP_IDS)[number]) ||
@@ -42,6 +59,10 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     lpId,
     visitorKey: body.visitorKey.trim().slice(0, 120),
     eventType,
+    metadata:
+      body.metadata && typeof body.metadata === "object"
+        ? JSON.stringify(body.metadata).slice(0, 4000)
+        : null,
     timeOnPageMs:
       typeof body.timeOnPageMs === "number" &&
       Number.isFinite(body.timeOnPageMs)
@@ -65,6 +86,9 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const analytics = await Promise.all(
     LP_IDS.map(async (lpId) => {
+      const viewEvents = lpId === "lp3" ? ["lp3_view"] : ["view"];
+      const ctaEvents =
+        lpId === "lp3" ? ["lp3_start"] : ["cta_click"];
       const [views, ctaClicks, avgTime, checkouts, purchases, exits] =
         await Promise.all([
           db
@@ -73,7 +97,10 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
             .where(
               and(
                 eq(pageEventsTable.lpId, lpId),
-                eq(pageEventsTable.eventType, "view"),
+                sql`${pageEventsTable.eventType} in (${sql.join(
+                  viewEvents.map((event) => sql`${event}`),
+                  sql`, `,
+                )})`,
                 gte(pageEventsTable.createdAt, since),
               ),
             ),
@@ -83,7 +110,10 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
             .where(
               and(
                 eq(pageEventsTable.lpId, lpId),
-                eq(pageEventsTable.eventType, "cta_click"),
+                sql`${pageEventsTable.eventType} in (${sql.join(
+                  ctaEvents.map((event) => sql`${event}`),
+                  sql`, `,
+                )})`,
                 gte(pageEventsTable.createdAt, since),
               ),
             ),
@@ -95,7 +125,7 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
             .where(
               and(
                 eq(pageEventsTable.lpId, lpId),
-                eq(pageEventsTable.eventType, "exit"),
+                sql`${pageEventsTable.eventType} in (${sql`exit`}, ${sql`lp3_view`})`,
                 gte(pageEventsTable.createdAt, since),
               ),
             ),

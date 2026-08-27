@@ -316,7 +316,7 @@ export const CreateCheckoutBody = zod.object({
   "buyerName": zod.string().min(1),
   "mode": zod.enum(['native', 'hosted']).optional(),
   "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
-  "sourceLp": zod.enum(['v1', 'v2']).optional(),
+  "sourceLp": zod.enum(['v1', 'v2', 'lp3']).optional(),
   "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional()
 })
 
@@ -368,14 +368,15 @@ export const trackPageEventBodyClaritySessionIdMax = 200;
 
 
 export const TrackPageEventBody = zod.object({
-  "lpId": zod.enum(['v1', 'v2']),
+  "lpId": zod.enum(['v1', 'v2', 'lp3']),
   "visitorKey": zod.string().min(1).max(trackPageEventBodyVisitorKeyMax),
-  "eventType": zod.enum(['view', 'cta_click', 'exit']),
+  "eventType": zod.enum(['view', 'cta_click', 'exit', 'lp3_view', 'lp3_start', 'lp3_question_answered', 'lp3_quiz_completed', 'lp3_profile_revealed', 'lp3_testimonial_viewed', 'lp3_card_preview_viewed', 'lp3_recommendation_viewed', 'lp3_offer_viewed', 'lp3_checkout_started', 'lp3_email_submitted', 'lp3_purchase_completed']),
   "timeOnPageMs": zod.number().min(trackPageEventBodyTimeOnPageMsMin).optional(),
   "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional(),
   "clarityUserId": zod.string().max(trackPageEventBodyClarityUserIdMax).optional(),
   "claritySessionId": zod.string().max(trackPageEventBodyClaritySessionIdMax).optional(),
-  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar']).optional()
+  "metadata": zod.record(zod.string(), zod.unknown()).optional(),
+  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'lp3_offer']).optional()
 })
 
 export const TrackPageEventResponse = zod.void()
@@ -390,7 +391,7 @@ export const GetAdminAnalyticsQueryParams = zod.object({
 
 export const GetAdminAnalyticsResponse = zod.object({
   "analytics": zod.array(zod.object({
-  "lpId": zod.enum(['v1', 'v2']),
+  "lpId": zod.enum(['v1', 'v2', 'lp3']),
   "views": zod.number(),
   "ctaClicks": zod.number(),
   "checkoutsStarted": zod.number(),
@@ -578,7 +579,7 @@ export const GetAdminSessionRecordingResponse = zod.object({
  */
 export const ListAdminLpSessionsQueryParams = zod.object({
   "sessionId": zod.coerce.string(),
-  "lpId": zod.enum(['v1', 'v2'])
+  "lpId": zod.enum(['v1', 'v2', 'lp3'])
 })
 
 export const ListAdminLpSessionsResponse = zod.object({

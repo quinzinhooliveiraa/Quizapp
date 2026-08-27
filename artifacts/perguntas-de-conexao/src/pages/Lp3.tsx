@@ -1,0 +1,599 @@
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, ChevronLeft, RotateCcw } from "lucide-react";
+import {
+  questions as libraryQuestions,
+  themes as libraryThemes,
+  type ConnectionQuestion,
+  type ConnectionTheme,
+} from "@workspace/connection-content";
+import { apiBaseUrl } from "@/config";
+
+type Lp3Props = {
+  onCheckout?: () => void;
+  onBack?: () => void;
+};
+
+type Screen = "intro" | "question" | "result" | "story" | "practice" | "recommend" | "offer";
+type Answers = Record<string, string>;
+
+type QuizQuestion = {
+  id: string;
+  key: string;
+  title: string;
+  options: string[];
+};
+
+type ResultProfile = {
+  title: string;
+  lead: string;
+  detail: string;
+  themeId: string;
+};
+
+const quizQuestions: QuizQuestion[] = [
+  {
+    id: "time",
+    key: "tempo juntos",
+    title: "Há quanto tempo vocês estão juntos?",
+    options: [
+      "Ainda estamos nos conhecendo",
+      "Menos de 1 ano",
+      "1–3 anos",
+      "3–10 anos",
+      "Mais de 10 anos",
+    ],
+  },
+  {
+    id: "routine",
+    key: "rotina",
+    title: "Quando vocês finalmente têm um tempo só para vocês, o que costuma acontecer?",
+    options: [
+      "Cada um acaba no celular",
+      "A gente fala principalmente da rotina",
+      "Assistimos alguma coisa",
+      "Conversamos bastante",
+      "Tentamos fazer algo diferente",
+      "Depende muito do dia",
+    ],
+  },
+  {
+    id: "curiosity",
+    key: "curiosidade",
+    title: "Quando foi a última vez que uma conversa entre vocês fez você descobrir algo que não sabia sobre ele(a)?",
+    options: ["Hoje", "Nos últimos dias", "Nas últimas semanas", "Há alguns meses", "Nem lembro"],
+  },
+  {
+    id: "vulnerability",
+    key: "vulnerabilidade",
+    title: "Existe alguma coisa que você gostaria de conversar com ele(a), mas nunca encontrou o momento certo?",
+    options: ["Sim", "Algumas coisas", "Talvez", "Acho que não"],
+  },
+  {
+    id: "desire",
+    key: "desejo",
+    title: "Se você pudesse mudar uma coisa nas conversas de vocês hoje, o que seria?",
+    options: [
+      "Ter conversas mais profundas",
+      "Conhecer melhor um ao outro",
+      "Sair da rotina",
+      "Voltar a sentir mais proximidade",
+      "Reacender a intimidade",
+      "Conversar sobre coisas difíceis",
+      "Ter mais assunto mesmo à distância",
+    ],
+  },
+];
+
+const resultProfiles: ResultProfile[] = [
+  {
+    title: "Casal no automático",
+    lead: "Vocês não parecem precisar de mais tempo juntos.",
+    detail: "Talvez precisem de mais momentos em que estejam realmente juntos.",
+    themeId: "porto-seguro",
+  },
+  {
+    title: "Reaproximação",
+    lead: "Talvez algumas coisas ainda estejam esperando para ser ditas.",
+    detail: "Uma boa pergunta não resolve tudo. Mas pode abrir uma fresta para vocês se encontrarem de novo, sem pressa.",
+    themeId: "livro-aberto",
+  },
+  {
+    title: "Casal novo",
+    lead: "Vocês ainda estão descobrindo um ao outro.",
+    detail: "O começo tem uma beleza própria: cada resposta cria um mapa novo, mesmo quando parece que vocês já sabem bastante.",
+    themeId: "voce-nao-sabia",
+  },
+  {
+    title: "À distância",
+    lead: "Uma conversa pode diminuir alguns quilômetros.",
+    detail: "Quando a presença não cabe na rotina, perguntar com atenção é um jeito de continuar chegando perto.",
+    themeId: "mesmo-longe",
+  },
+  {
+    title: "Intimidade",
+    lead: "Algumas conversas aproximam.",
+    detail: "Outras fazem a faísca voltar.",
+    themeId: "faisca",
+  },
+  {
+    title: "Conversas difíceis",
+    lead: "Algumas conversas são difíceis porque ninguém sabe como começar.",
+    detail: "Vocês não precisam ter a frase perfeita. Só precisam de um primeiro espaço seguro para falar.",
+    themeId: "depois-da-tempestade",
+  },
+];
+
+const fallbackQuestions: ConnectionQuestion[] = [
+  {
+    id: "lp3-fallback-1",
+    themeId: "porto-seguro",
+    intensity: "gentle",
+    stage: "qualquer",
+    text: "O que alguém poderia perguntar mais vezes que faria diferença pra você?",
+  },
+];
+
+function getStoredState(): { screen: Screen; currentQuestion: number; answers: Answers; practiceIndex: number } {
+  if (typeof window === "undefined") {
+    return { screen: "intro", currentQuestion: 0, answers: {}, practiceIndex: 0 };
+  }
+
+  try {
+    const raw = window.localStorage.getItem("lp3_quiz_state");
+    if (!raw) return { screen: "intro", currentQuestion: 0, answers: {}, practiceIndex: 0 };
+    const parsed = JSON.parse(raw) as Partial<{
+      screen: Screen;
+      currentQuestion: number;
+      answers: Answers;
+      practiceIndex: number;
+    }>;
+    const allowedScreens: Screen[] = ["intro", "question", "result", "story", "practice", "recommend", "offer"];
+    return {
+      screen: allowedScreens.includes(parsed.screen ?? "intro") ? (parsed.screen as Screen) : "intro",
+      currentQuestion: Math.max(0, Math.min(quizQuestions.length - 1, parsed.currentQuestion ?? 0)),
+      answers: parsed.answers ?? {},
+      practiceIndex: Math.max(0, parsed.practiceIndex ?? 0),
+    };
+  } catch {
+    return { screen: "intro", currentQuestion: 0, answers: {}, practiceIndex: 0 };
+  }
+}
+
+function getVisitorId(): string {
+  if (typeof window === "undefined") return "server";
+  const existing = window.localStorage.getItem("lp3_visitor_id");
+  if (existing) return existing;
+  const next = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `lp3-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  window.localStorage.setItem("lp3_visitor_id", next);
+  return next;
+}
+
+function trackLp3(eventName: string, detail: Record<string, unknown> = {}) {
+  if (typeof window !== "undefined") {
+    const payload = {
+      ...detail,
+      visitor_id: getVisitorId(),
+      lp_variant: "lp3",
+    };
+    window.dispatchEvent(
+      new CustomEvent(`lp3:${eventName}`, { detail: payload }),
+    );
+    const eventMap: Record<string, string> = {
+      viewed: "lp3_view",
+      started: "lp3_start",
+      answered: "lp3_question_answered",
+      screen_result: "lp3_quiz_completed",
+      screen_story: "lp3_testimonial_viewed",
+      screen_practice: "lp3_card_preview_viewed",
+      screen_recommend: "lp3_recommendation_viewed",
+      screen_offer: "lp3_offer_viewed",
+      checkout_intent: "lp3_checkout_started",
+    };
+    const eventType = eventMap[eventName];
+    if (eventType) {
+      void fetch(`${apiBaseUrl}/api/track/page-event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lpId: "lp3",
+          visitorKey: payload.visitor_id,
+          eventType,
+          ctaSource: eventType === "lp3_checkout_started" ? "lp3_offer" : undefined,
+          metadata: payload,
+        }),
+        keepalive: true,
+      }).catch(() => undefined);
+    }
+  }
+}
+
+function chooseResult(answers: Answers): ResultProfile {
+  if (answers.desire === "Ter mais assunto mesmo à distância") return resultProfiles[3];
+  if (answers.time === "Ainda estamos nos conhecendo") return resultProfiles[2];
+  if (answers.desire === "Conversar sobre coisas difíceis" || answers.vulnerability === "Sim") return resultProfiles[5];
+  if (answers.desire === "Reacender a intimidade") return resultProfiles[4];
+  if (answers.curiosity === "Nem lembro") return resultProfiles[1];
+  if (answers.routine === "Cada um acaba no celular" || answers.routine === "A gente fala principalmente da rotina") return resultProfiles[0];
+  return resultProfiles[1];
+}
+
+function findTheme(themeId: string): ConnectionTheme {
+  return libraryThemes.find((theme) => theme.id === themeId) ?? libraryThemes[0];
+}
+
+export default function Lp3({ onCheckout, onBack }: Lp3Props) {
+  const stored = useMemo(getStoredState, []);
+  const [screen, setScreen] = useState<Screen>(stored.screen);
+  const [currentQuestion, setCurrentQuestion] = useState(stored.currentQuestion);
+  const [answers, setAnswers] = useState<Answers>(stored.answers);
+  const [practiceIndex, setPracticeIndex] = useState(stored.practiceIndex);
+  const [liveNote, setLiveNote] = useState("");
+
+  const result = useMemo(() => chooseResult(answers), [answers]);
+  const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
+  const practiceQuestions = useMemo(() => {
+    const preferred = libraryQuestions.filter((question) =>
+      question.themeId === result.themeId
+      || question.themeId === recommendedTheme.id
+      || question.intensity === (result.title === "Intimidade" ? "deep" : "honest"),
+    );
+    return (preferred.length ? preferred : fallbackQuestions).slice(0, 8);
+  }, [recommendedTheme.id, result.themeId, result.title]);
+  const practiceQuestion = practiceQuestions[practiceIndex % practiceQuestions.length] ?? fallbackQuestions[0];
+  const otherThemes = useMemo(
+    () => libraryThemes.filter((theme) => theme.id !== recommendedTheme.id).slice(0, 5),
+    [recommendedTheme.id],
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem("lp_variant", "lp3");
+    window.localStorage.setItem("lp3_variant", "lp3");
+    getVisitorId();
+    trackLp3("viewed");
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("lp3_quiz_state", JSON.stringify({ screen, currentQuestion, answers, practiceIndex }));
+    const handoff = {
+      answers: {
+        relationshipDuration: answers.time,
+        conversationFrequency: answers.routine,
+        discoveryFrequency: answers.curiosity,
+        difficultConversations: answers.vulnerability,
+        primaryGoal: answers.desire,
+      },
+      inferredProfile: result.title,
+      recommendedDeck: recommendedTheme.title,
+    };
+    window.localStorage.setItem("conexao-lp3-state", JSON.stringify(handoff));
+    window.localStorage.setItem("conexao-lp3-relationship-duration", answers.time || "");
+    window.localStorage.setItem("conexao-lp3-conversation-frequency", answers.routine || "");
+    window.localStorage.setItem("conexao-lp3-discovery-frequency", answers.curiosity || "");
+    window.localStorage.setItem("conexao-lp3-difficult-conversations", answers.vulnerability || "");
+    window.localStorage.setItem("conexao-lp3-primary-goal", answers.desire || "");
+  }, [answers, currentQuestion, practiceIndex, screen]);
+
+  const moveTo = (nextScreen: Screen) => {
+    setScreen(nextScreen);
+    setLiveNote("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    trackLp3(`screen_${nextScreen}`, { result: result.title });
+    if (nextScreen === "result") {
+      trackLp3("profile_revealed", {
+        profile: result.title,
+        recommendedDeck: recommendedTheme.title,
+      });
+    }
+  };
+
+  const begin = () => {
+    setCurrentQuestion(0);
+    setScreen("question");
+    setLiveNote("");
+    trackLp3("started");
+  };
+
+  const reset = () => {
+    Object.keys(window.localStorage)
+      .filter((key) => key.startsWith("lp3"))
+      .forEach((key) => window.localStorage.removeItem(key));
+    setAnswers({});
+    setCurrentQuestion(0);
+    setPracticeIndex(0);
+    setScreen("intro");
+    setLiveNote("Tudo recomeçou. Quando quiser, começamos de novo.");
+    trackLp3("reset");
+  };
+
+  const goBack = () => {
+    if (screen === "question") {
+      if (currentQuestion === 0) {
+        setScreen("intro");
+      } else {
+        setCurrentQuestion((value) => value - 1);
+      }
+      return;
+    }
+    if (screen === "intro") {
+      onBack?.();
+      return;
+    }
+    const previous: Record<Exclude<Screen, "intro" | "question">, Screen> = {
+      result: "question",
+      story: "result",
+      practice: "story",
+      recommend: "practice",
+      offer: "recommend",
+    };
+    moveTo(previous[screen as Exclude<Screen, "intro" | "question">]);
+  };
+
+  const selectOption = (value: string) => {
+    const question = quizQuestions[currentQuestion];
+    setAnswers((existing) => ({ ...existing, [question.id]: value }));
+    setLiveNote("Resposta registrada.");
+    trackLp3("answered", { question: question.id, answer: value });
+    window.setTimeout(() => {
+      if (currentQuestion === quizQuestions.length - 1) {
+        moveTo("result");
+      } else {
+        setCurrentQuestion((valueToIncrement) => valueToIncrement + 1);
+      }
+    }, 220);
+  };
+
+  const nextPracticeQuestion = () => {
+    setPracticeIndex((index) => index + 1);
+    setLiveNote("Outra pergunta, para continuar de onde vocês estão.");
+    trackLp3("practice_next", { theme: recommendedTheme.id });
+  };
+
+  const checkout = () => {
+    trackLp3("checkout_intent", { source: "lp3_offer" });
+    setLiveNote("Vamos continuar essa conversa.");
+    onCheckout?.();
+  };
+
+  const renderIntro = () => (
+    <section className="lp3-view lp3-intro" aria-labelledby="lp3-intro-title">
+      <div className="lp3-kicker">Uma experiência para dois</div>
+      <h1 id="lp3-intro-title" className="lp3-display">Talvez vocês só precisem de uma boa pergunta.</h1>
+      <div className="lp3-copy-block">
+        <p className="lp3-intro-copy">Responda algumas perguntas sobre vocês. No final, vamos mostrar por onde começar.</p>
+        <div className="lp3-actions">
+          <button className="lp3-button lp3-button-primary" type="button" onClick={begin} data-testid="button-lp3-start">
+            Começar <ArrowRight size={16} aria-hidden="true" />
+          </button>
+          <span className="lp3-time">Leva menos de 2 minutos.</span>
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderQuestion = () => {
+    const question = quizQuestions[currentQuestion];
+    const selected = answers[question.id];
+    const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
+    return (
+      <section className="lp3-view lp3-question-wrap" aria-labelledby={`lp3-question-${question.id}`}>
+        <div className="lp3-progress-row">
+          <span>Pergunta {String(currentQuestion + 1).padStart(2, "0")} de 05</span>
+          <span>{question.key}</span>
+        </div>
+        <div className="lp3-progress" aria-label={`Progresso: ${currentQuestion + 1} de ${quizQuestions.length}`}>
+          <span style={{ width: `${progress}%` }} />
+        </div>
+        <h1 id={`lp3-question-${question.id}`} className="lp3-question-heading">{question.title}</h1>
+        <div className="lp3-options" role="radiogroup" aria-label={question.title}>
+          {question.options.map((option, index) => (
+            <button
+              className={`lp3-option ${selected === option ? "is-selected" : ""}`}
+              type="button"
+              role="radio"
+              aria-checked={selected === option}
+              key={option}
+              onClick={() => selectOption(option)}
+              data-testid={`button-lp3-option-${question.id}-${index}`}
+            >
+              <span>{option}</span>
+              <span className="lp3-option-index">{String(index + 1).padStart(2, "0")}</span>
+            </button>
+          ))}
+        </div>
+        <div className="lp3-question-footer">
+          <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-question">
+            <ChevronLeft size={14} aria-hidden="true" /> Voltar
+          </button>
+          <span className="lp3-live-note" aria-live="polite">{liveNote}</span>
+          <button className="lp3-link-button lp3-reset" type="button" onClick={reset} data-testid="button-lp3-reset-question">
+            Recomeçar
+          </button>
+        </div>
+      </section>
+    );
+  };
+
+  const renderResult = () => (
+    <section className="lp3-view lp3-result" aria-labelledby="lp3-result-title">
+      <div className="lp3-kicker">O que apareceu nas respostas</div>
+      <div className="lp3-result-card">
+        <h1 id="lp3-result-title" className="lp3-result-title">{result.title}</h1>
+        <p className="lp3-result-lead">{result.lead}</p>
+        <p className="lp3-result-detail">{result.detail}</p>
+      </div>
+      <div className="lp3-back-row">
+        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-result">
+          <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
+        </button>
+        <button className="lp3-button lp3-button-ghost" type="button" onClick={() => moveTo("story")} data-testid="button-lp3-see-story">
+          Continuar <ArrowRight size={15} aria-hidden="true" />
+        </button>
+      </div>
+    </section>
+  );
+
+  const stories: Record<string, string> = {
+    "Casal no automático":
+      "Depois de alguns anos, eles achavam que já conheciam cada resposta. Até uma pergunta pequena lembrar que rotina não é a mesma coisa que presença. A conversa daquela noite não mudou tudo — só abriu espaço para se olharem de novo.",
+    Reaproximação:
+      "Eles não precisavam ganhar uma discussão. Precisavam encontrar um jeito de falar sem se defender o tempo todo. Uma pergunta cuidadosa deu nome ao que vinha sendo adiado e a conversa finalmente encontrou um começo.",
+    "Casal novo":
+      "Achavam que já conversavam bastante. Mas uma pergunta diferente levou a uma lembrança, depois a outra, e de repente havia um lado inteiro daquela pessoa ainda esperando para ser conhecido.",
+    "À distância":
+      "As chamadas terminavam sem assunto e os quilômetros pareciam maiores no fim do dia. Quando passaram a chegar com uma pergunta, o espaço continuou existindo — mas a sensação de estar longe diminuiu um pouco.",
+    Intimidade:
+      "Algumas conversas pedem calma. Outras pedem coragem para dizer o que ainda acende. Sem pressa e sem performance, uma pergunta abriu um caminho mais próximo entre os dois.",
+    "Conversas difíceis":
+      "Eles vinham adiando aquele assunto porque ninguém sabia como começar. Uma pergunta não resolveu a história por eles. Mas tirou o peso de inventar a primeira frase.",
+  };
+
+  const renderStory = () => (
+    <section className="lp3-view lp3-story" aria-labelledby="lp3-story-title">
+      <div className="lp3-kicker">Depois da leitura</div>
+      <h1 id="lp3-story-title" className="lp3-section-title">Uma história que poderia ser a de vocês.</h1>
+      <div className="lp3-editorial">
+        <p>{stories[result.title]}</p>
+        <small>Histórias assim não prometem respostas prontas. Elas lembram que toda proximidade começa quando alguém se arrisca a perguntar.</small>
+      </div>
+      <div className="lp3-back-row">
+        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-story">
+          <ChevronLeft size={14} aria-hidden="true" /> Voltar
+        </button>
+        <button className="lp3-button lp3-button-primary" type="button" onClick={() => moveTo("practice")} data-testid="button-lp3-try-questions">
+          Experimentar uma pergunta <ArrowRight size={15} aria-hidden="true" />
+        </button>
+      </div>
+    </section>
+  );
+
+  const renderPractice = () => (
+    <section className="lp3-view lp3-practice" aria-labelledby="lp3-practice-title">
+      <div className="lp3-kicker">Da biblioteca compartilhada</div>
+      <h1 id="lp3-practice-title" className="lp3-section-title">Agora, uma pergunta.</h1>
+      <p className="lp3-section-intro">Sem responder certo ou errado. Leiam em voz alta, olhem um para o outro e deixem a resposta encontrar seu próprio tempo.</p>
+      <div className="lp3-question-card" data-testid={`card-lp3-practice-${practiceQuestion.id}`}>
+        <div className="lp3-card-footer">
+          <span>{recommendedTheme.title}</span>
+          <span>{practiceQuestion.intensity === "deep" ? "mais fundo" : "para começar"}</span>
+        </div>
+        <p data-testid={`text-lp3-practice-question-${practiceQuestion.id}`}>{practiceQuestion.text}</p>
+        <div className="lp3-card-footer">
+          <span>pergunta real</span>
+          <span>{practiceIndex + 1} / 08</span>
+        </div>
+      </div>
+      <div className="lp3-actions">
+        <button className="lp3-button lp3-button-primary" type="button" onClick={nextPracticeQuestion} data-testid="button-lp3-another-question">
+          Outra pergunta <RotateCcw size={15} aria-hidden="true" />
+        </button>
+        <button className="lp3-button lp3-button-ghost" type="button" onClick={() => moveTo("recommend")} data-testid="button-lp3-see-recommendation">
+          Ver por onde começar <ArrowRight size={15} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="lp3-back-row">
+        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-practice">
+          <ChevronLeft size={14} aria-hidden="true" /> Voltar
+        </button>
+        <span className="lp3-live-note" aria-live="polite">{liveNote}</span>
+      </div>
+    </section>
+  );
+
+  const renderRecommend = () => (
+    <section className="lp3-view lp3-recommend" aria-labelledby="lp3-recommend-title">
+      <div className="lp3-kicker">Uma direção possível</div>
+      <h1 id="lp3-recommend-title" className="lp3-section-title">Pelo que você contou, começaríamos por aqui.</h1>
+      <div className="lp3-deck" data-testid={`card-lp3-recommended-deck-${recommendedTheme.id}`}>
+        <div>
+          <span className="lp3-mono">Baralho recomendado</span>
+          <h2 className="lp3-deck-name">{recommendedTheme.title}</h2>
+        </div>
+        <div>
+          <p className="lp3-deck-copy">{recommendedTheme.description}</p>
+          <button className="lp3-button lp3-button-primary" type="button" onClick={() => moveTo("offer")} data-testid="button-lp3-see-offer">
+            Conhecer os baralhos <ArrowRight size={15} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <div>
+        <span className="lp3-mono">E outros caminhos para vocês</span>
+        <div className="lp3-card-scroller" aria-label="Outros baralhos da biblioteca">
+          {otherThemes.map((theme) => (
+            <div className="lp3-question-card" key={theme.id} data-testid={`card-lp3-theme-${theme.id}`}>
+              <div className="lp3-card-footer"><span>baralho</span><span>{theme.count} perguntas</span></div>
+              <p>{theme.title}</p>
+              <div className="lp3-card-footer"><span>{theme.description}</span></div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="lp3-back-row">
+        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-recommend">
+          <ChevronLeft size={14} aria-hidden="true" /> Voltar
+        </button>
+      </div>
+    </section>
+  );
+
+  const renderOffer = () => (
+    <section className="lp3-view lp3-offer" aria-labelledby="lp3-offer-title">
+      <div className="lp3-kicker">Para continuar de onde vocês estão</div>
+      <h1 id="lp3-offer-title" className="lp3-offer-title">Mais espaço para vocês dois.</h1>
+      <ul className="lp3-benefits">
+        <li>15 baralhos para diferentes momentos</li>
+        <li>445+ perguntas reais</li>
+        <li>Acesso vitalício</li>
+        <li>Sem assinatura</li>
+        <li>No celular e no computador</li>
+        <li>Convide seu parceiro</li>
+      </ul>
+      <div className="lp3-price">
+        <strong>R$47,90</strong>
+        <span>pagamento único</span>
+      </div>
+      <div className="lp3-actions">
+        <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-checkout-intent">
+          Quero continuar nossas conversas <ArrowRight size={15} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="lp3-back-row">
+        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-offer">
+          <ChevronLeft size={14} aria-hidden="true" /> Voltar
+        </button>
+        <button className="lp3-link-button lp3-reset" type="button" onClick={reset} data-testid="button-lp3-reset-offer">
+          Recomeçar experiência
+        </button>
+      </div>
+      <span className="lp3-live-note" aria-live="polite">{liveNote}</span>
+    </section>
+  );
+
+  const content = {
+    intro: renderIntro,
+    question: renderQuestion,
+    result: renderResult,
+    story: renderStory,
+    practice: renderPractice,
+    recommend: renderRecommend,
+    offer: renderOffer,
+  }[screen]();
+
+  return (
+    <main className="lp3-shell">
+      <div className="lp3-orbit" aria-hidden="true" />
+      <header className="lp3-topbar">
+        <div className="lp3-wordmark" data-testid="text-lp3-wordmark">
+          <span className="lp3-wordmark-mark" aria-hidden="true">p</span>
+          Perguntas de Conexão
+        </div>
+        <span className="lp3-topbar-note">LP3 · para dois</span>
+      </header>
+      <div className="lp3-main">
+        {content}
+      </div>
+      <span className="sr-only" aria-live="polite">{liveNote}</span>
+    </main>
+  );
+}

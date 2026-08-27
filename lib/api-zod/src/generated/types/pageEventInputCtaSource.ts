@@ -12,4 +12,5 @@ export type PageEventInputCtaSource = typeof PageEventInputCtaSource[keyof typeo
 export const PageEventInputCtaSource = {
   hero_quiz: 'hero_quiz',
   hero_comprar: 'hero_comprar',
+  lp3_offer: 'lp3_offer',
 } as const;

@@ -12,4 +12,5 @@ export type LandingAnalyticsLpId = typeof LandingAnalyticsLpId[keyof typeof Land
 export const LandingAnalyticsLpId = {
   v1: 'v1',
   v2: 'v2',
+  lp3: 'lp3',
 } as const;

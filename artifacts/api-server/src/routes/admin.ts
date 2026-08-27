@@ -164,7 +164,7 @@ router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
     res.status(403).json({ error: "Acesso negado" });
     return;
   }
-  if (lpId !== "v1" && lpId !== "v2") {
+  if (lpId !== "v1" && lpId !== "v2" && lpId !== "lp3") {
     res.status(400).json({ error: "Landing page inválida" });
     return;
   }
@@ -185,7 +185,10 @@ router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
       and(
         eq(pageEventsTable.lpId, lpId),
         isNotNull(pageEventsTable.visitorKey),
-        inArray(pageEventsTable.eventType, ["view", "exit"]),
+        inArray(
+          pageEventsTable.eventType,
+          lpId === "lp3" ? ["lp3_view", "exit"] : ["view", "exit"],
+        ),
         // Keep this query bounded to the same reporting window as analytics.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         gte(pageEventsTable.createdAt, since),
@@ -210,7 +213,10 @@ router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
       lastSection: null,
       hasRecording: false,
     };
-    if (event.eventType === "view" && event.createdAt < current.firstSeenAt) {
+    if (
+      (event.eventType === "view" || event.eventType === "lp3_view") &&
+      event.createdAt < current.firstSeenAt
+    ) {
       current.firstSeenAt = event.createdAt;
     }
     if (event.eventType === "exit" && current.timeOnPageMs === null) {

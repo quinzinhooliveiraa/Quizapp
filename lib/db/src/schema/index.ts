@@ -102,6 +102,7 @@ export const pageEventsTable = pgTable("page_events", {
   lpId: text("lp_id").notNull(),
   visitorKey: text("visitor_key").notNull(),
   eventType: text("event_type").notNull(),
+  metadata: text("metadata"),
   clarityUserId: text("clarity_user_id"),
   claritySessionId: text("clarity_session_id"),
   ctaSource: text("cta_source"),
