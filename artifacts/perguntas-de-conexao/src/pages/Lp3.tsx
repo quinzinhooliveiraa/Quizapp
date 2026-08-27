@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, ChevronLeft, RotateCcw } from "lucide-react";
+import { Link } from "wouter";
 import {
   questions as libraryQuestions,
   themes as libraryThemes,
@@ -584,7 +585,16 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
           <span className="lp3-wordmark-mark" aria-hidden="true">p</span>
           Perguntas de Conexão
         </div>
-        <span className="lp3-topbar-note">LP3 · para dois</span>
+        <div className="lp3-topbar-actions">
+          <span className="lp3-topbar-note">LP3 · para dois</span>
+          <Link
+            href="/login"
+            className="lp3-login-link"
+            data-testid="link-lp3-login"
+          >
+            Já tenho um baralho <ArrowRight size={13} aria-hidden="true" />
+          </Link>
+        </div>
       </header>
       <div className="lp3-main">
         {content}

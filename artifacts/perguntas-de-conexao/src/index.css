@@ -15632,6 +15632,35 @@ blockquote em {
   text-transform: uppercase;
 }
 
+.lp3-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.lp3-login-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--lp3-warm-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.lp3-login-link:hover {
+  color: var(--lp3-ink);
+  transform: translateX(2px);
+}
+
+.lp3-login-link:focus-visible {
+  outline: 2px solid var(--lp3-warm-soft);
+  outline-offset: 4px;
+}
+
 .lp3-main {
   display: flex;
   min-height: calc(100dvh - 5.5rem);
@@ -16204,6 +16233,16 @@ blockquote em {
     grid-template-columns: 0.8fr 1.2fr;
     align-items: end;
     padding: 2rem;
+  }
+}
+
+@media (max-width: 699px) {
+  .lp3-topbar-actions {
+    gap: 0.65rem;
+  }
+
+  .lp3-topbar-note {
+    display: none;
   }
 }
 
