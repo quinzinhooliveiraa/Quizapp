@@ -104,6 +104,15 @@ type ExperimentDraftVariant = {
   weight: string;
   status: ExperimentVariantStatus;
 };
+type ExperimentDraft = {
+  name: string;
+  description: string;
+  objective: string;
+  optimizationMode: "manual" | "automatic";
+  minimumSampleSizeMode: "automatic" | "custom";
+  minimumSampleSize: string;
+  variants: ExperimentDraftVariant[];
+};
 type ExperimentAnalyticsVariant = {
   variantId: string;
   name: string;
@@ -147,6 +156,12 @@ type ExperimentOptimizationSummary = {
   lastOptimizationAt: string | null;
   nextOptimizationAt: string | null;
   history: ExperimentOptimizationHistory[];
+};
+type ExperimentOptimizationRunResponse = {
+  changed: boolean;
+  reason: string;
+  winnerVariantId?: string;
+  summary: ExperimentOptimizationSummary;
 };
 
 const TABS = [
@@ -1035,6 +1050,299 @@ function ExperimentAnalytics({
   );
 }
 
+function optimizationStatusLabel(status: ExperimentOptimizationSummary["status"]) {
+  if (status === "learning") return "Aprendendo";
+  if (status === "optimizing") return "Otimizando";
+  return "Desligado";
+}
+
+function ExperimentOptimization({
+  experiment,
+  sessionId,
+  onMessage,
+}: {
+  experiment: ExperimentEntry;
+  sessionId: string;
+  onMessage: (message: string) => void;
+}) {
+  const [summary, setSummary] = useState<ExperimentOptimizationSummary | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [sampleMode, setSampleMode] = useState(experiment.minimumSampleSizeMode);
+  const [sampleSize, setSampleSize] = useState(
+    experiment.minimumSampleSize?.toString() || "",
+  );
+
+  const loadSummary = async () => {
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/experiments/${encodeURIComponent(experiment.id)}/optimization?sessionId=${encodeURIComponent(sessionId)}`,
+      );
+      if (!response.ok) throw new Error("optimization");
+      const data = (await response.json()) as ExperimentOptimizationSummary;
+      setSummary(data);
+      setSampleMode(data.minimumSampleSizeMode);
+      setSampleSize(data.minimumSampleSize?.toString() || "");
+    } catch {
+      setSummary(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadSummary();
+  }, [experiment.id, sessionId]);
+
+  const updateOptimization = async (
+    body: {
+      optimizationMode?: "manual" | "automatic";
+      minimumSampleSizeMode?: "automatic" | "custom";
+      minimumSampleSize?: number | null;
+      restoreWeights?: boolean;
+    },
+    successMessage: string,
+  ) => {
+    setSaving(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/experiments/${encodeURIComponent(experiment.id)}/optimization?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      const data = (await response.json()) as
+        | ExperimentOptimizationSummary
+        | { error?: string };
+      if (!response.ok) {
+        throw new Error("error" in data ? data.error || "optimization" : "optimization");
+      }
+      setSummary(data as ExperimentOptimizationSummary);
+      onMessage(successMessage);
+    } catch (error) {
+      onMessage(
+        error instanceof Error && error.message !== "optimization"
+          ? error.message
+          : "Não foi possível atualizar a Auto Optimization.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const runOptimization = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/experiments/${encodeURIComponent(experiment.id)}/optimization/run?sessionId=${encodeURIComponent(sessionId)}`,
+        { method: "POST" },
+      );
+      const data = (await response.json()) as
+        | ExperimentOptimizationRunResponse
+        | { error?: string };
+      if (!response.ok) {
+        throw new Error("error" in data ? data.error || "optimization" : "optimization");
+      }
+      if (!("summary" in data)) {
+        throw new Error("optimization");
+      }
+      setSummary(data.summary);
+      onMessage(data.changed ? "Auto Optimization aplicada." : data.reason);
+    } catch {
+      onMessage("Não foi possível avaliar a Auto Optimization.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="admin-footnote">Carregando Auto Optimization…</p>;
+  }
+  if (!summary) {
+    return (
+      <p className="admin-footnote">
+        Não foi possível carregar os controles de Auto Optimization.
+      </p>
+    );
+  }
+
+  const totalForProgress = Math.max(summary.minimumSampleSizeUsed, 1);
+  const progress = Math.min(
+    100,
+    Math.round((summary.totalVisitors / totalForProgress) * 100),
+  );
+
+  return (
+    <div className="admin-experiment-optimization">
+      <div className="admin-experiment-optimization-heading">
+        <div>
+          <span>Auto Optimization</span>
+          <small>
+            Conversão = compras confirmadas ÷ visitantes atribuídos
+          </small>
+        </div>
+        <span className={`admin-experiment-optimization-status is-${summary.status}`}>
+          {optimizationStatusLabel(summary.status)}
+        </span>
+      </div>
+      <div className="admin-experiment-optimization-controls">
+        <label>
+          <span>Modo</span>
+          <select
+            value={summary.optimizationMode}
+            disabled={saving}
+            onChange={(event) =>
+              void updateOptimization(
+                {
+                  optimizationMode: event.target.value as
+                    | "manual"
+                    | "automatic",
+                },
+                event.target.value === "automatic"
+                  ? "Auto Optimization ativada."
+                  : "Auto Optimization desativada; o histórico foi preservado.",
+              )
+            }
+          >
+            <option value="manual">Manual</option>
+            <option value="automatic">Automatic Optimization</option>
+          </select>
+        </label>
+        <label>
+          <span>Amostra mínima</span>
+          <select
+            value={sampleMode}
+            disabled={saving}
+            onChange={(event) =>
+              setSampleMode(event.target.value as "automatic" | "custom")
+            }
+          >
+            <option value="automatic">
+              Automática ({summary.minimumSampleSizeUsed})
+            </option>
+            <option value="custom">Personalizada</option>
+          </select>
+        </label>
+        {sampleMode === "custom" && (
+          <label>
+            <span>Visitantes</span>
+            <input
+              type="number"
+              min="2"
+              max="100000"
+              step="1"
+              value={sampleSize}
+              disabled={saving}
+              onChange={(event) => setSampleSize(event.target.value)}
+            />
+          </label>
+        )}
+        <button
+          type="button"
+          className="admin-experiment-action-button"
+          disabled={saving}
+          onClick={() =>
+            void updateOptimization(
+              {
+                minimumSampleSizeMode: sampleMode,
+                minimumSampleSize:
+                  sampleMode === "custom" ? Number(sampleSize) : null,
+              },
+              "Amostra mínima atualizada.",
+            )
+          }
+        >
+          Salvar amostra
+        </button>
+      </div>
+      <div className="admin-experiment-optimization-progress">
+        <div>
+          <span>Amostra utilizada</span>
+          <strong>
+            {summary.totalVisitors} / {summary.minimumSampleSizeUsed}
+          </strong>
+        </div>
+        <div className="admin-experiment-progress-track">
+          <span style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+      <div className="admin-experiment-optimization-metrics">
+        {summary.variants.map((variant) => (
+          <div key={variant.variantId}>
+            <strong>{variant.name}</strong>
+            <span>{variant.visitors} visitantes</span>
+            <span>{variant.purchases} compras</span>
+            <b>{Math.round(variant.conversionRate * 100)}% conversão</b>
+            <small>{variant.weight}% agora</small>
+          </div>
+        ))}
+      </div>
+      <div className="admin-experiment-optimization-footer">
+        <small>
+          Última avaliação:{" "}
+          {summary.lastOptimizationAt
+            ? formatDate(summary.lastOptimizationAt)
+            : "ainda não executada"}
+          {summary.nextOptimizationAt &&
+            ` · próxima: ${formatDate(summary.nextOptimizationAt)}`}
+        </small>
+        <div>
+          <button
+            type="button"
+            className="admin-experiment-action-button"
+            disabled={saving || summary.optimizationMode !== "automatic"}
+            onClick={() => void runOptimization()}
+          >
+            Avaliar agora
+          </button>
+          <button
+            type="button"
+            className="admin-experiment-action-button"
+            disabled={saving}
+            onClick={() =>
+              void updateOptimization(
+                { restoreWeights: true },
+                "Distribuição igual restaurada; assignments existentes foram preservados.",
+              )
+            }
+          >
+            Restaurar distribuição
+          </button>
+        </div>
+      </div>
+      {summary.history.length > 0 && (
+        <details className="admin-experiment-optimization-history">
+          <summary>Histórico de alterações ({summary.history.length})</summary>
+          <div>
+            {summary.history.map((entry) => (
+              <article key={entry.id}>
+                <strong>
+                  {formatDate(entry.evaluatedAt)} · {entry.changeType}
+                </strong>
+                <span>{entry.reason}</span>
+                <small>
+                  {Object.entries(entry.newWeights)
+                    .map(([variantId, weight]) => {
+                      const variant = summary.variants.find(
+                        (item) => item.variantId === variantId,
+                      );
+                      return `${variant?.name || variantId}: ${weight}%`;
+                    })
+                    .join(" · ")}
+                </small>
+              </article>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
 function ExperimentsTab({ sessionId }: { sessionId: string }) {
   const [experiments, setExperiments] = useState<ExperimentEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1044,10 +1352,13 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
     null,
   );
   const [message, setMessage] = useState("");
-  const [draft, setDraft] = useState({
+  const [draft, setDraft] = useState<ExperimentDraft>({
     name: "",
     description: "",
     objective: "Compra",
+    optimizationMode: "manual",
+    minimumSampleSizeMode: "automatic",
+    minimumSampleSize: "",
     variants: createInitialExperimentVariants(),
   });
 
@@ -1126,6 +1437,12 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
             name: draft.name.trim(),
             description: draft.description.trim() || undefined,
             objective: draft.objective.trim(),
+            optimizationMode: draft.optimizationMode,
+            minimumSampleSizeMode: draft.minimumSampleSizeMode,
+            minimumSampleSize:
+              draft.minimumSampleSizeMode === "custom"
+                ? Number(draft.minimumSampleSize)
+                : null,
             variants: draft.variants.map((variant) => ({
               name:
                 LANDINGS.find((landing) => landing.id === variant.landingId)
@@ -1148,6 +1465,9 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
         name: "",
         description: "",
         objective: "Compra",
+        optimizationMode: "manual",
+        minimumSampleSizeMode: "automatic",
+        minimumSampleSize: "",
         variants: createInitialExperimentVariants(),
       });
       setMessage("Experimento criado como rascunho desativado.");
@@ -1292,6 +1612,59 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                 <option value="draft">Rascunho — desativado</option>
               </select>
             </label>
+            <label>
+              <span>Auto Optimization</span>
+              <select
+                value={draft.optimizationMode}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    optimizationMode: event.target.value as
+                      | "manual"
+                      | "automatic",
+                  }))
+                }
+              >
+                <option value="manual">Manual</option>
+                <option value="automatic">Automatic Optimization</option>
+              </select>
+            </label>
+            <label>
+              <span>Amostra mínima</span>
+              <select
+                value={draft.minimumSampleSizeMode}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    minimumSampleSizeMode: event.target.value as
+                      | "automatic"
+                      | "custom",
+                  }))
+                }
+              >
+                <option value="automatic">Automática/recomendada</option>
+                <option value="custom">Personalizada</option>
+              </select>
+            </label>
+            {draft.minimumSampleSizeMode === "custom" && (
+              <label>
+                <span>Visitantes necessários</span>
+                <input
+                  type="number"
+                  min="2"
+                  max="100000"
+                  step="1"
+                  value={draft.minimumSampleSize}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      minimumSampleSize: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </label>
+            )}
           </div>
           <div className="admin-experiment-variants-heading">
             <div>
@@ -1502,6 +1875,11 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                   experimentId={experiment.id}
                   sessionId={sessionId}
                 />
+                 <ExperimentOptimization
+                   experiment={experiment}
+                   sessionId={sessionId}
+                   onMessage={setMessage}
+                 />
                 <div className="admin-experiment-card-footer">
                   <small>Criado em {formatDate(experiment.createdAt)}</small>
                   <div>

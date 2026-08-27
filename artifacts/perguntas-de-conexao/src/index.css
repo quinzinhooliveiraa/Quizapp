@@ -611,6 +611,172 @@
 .admin-experiment-analytics-row small {
   font-size: 0.62rem;
 }
+.admin-experiment-optimization {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-experiment-optimization-heading,
+.admin-experiment-optimization-footer,
+.admin-experiment-optimization-progress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.admin-experiment-optimization-heading > div,
+.admin-experiment-optimization-progress > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.admin-experiment-optimization-heading span:first-child {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-experiment-optimization-heading small,
+.admin-experiment-optimization-footer small {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.68rem;
+}
+.admin-experiment-optimization-status {
+  flex-shrink: 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  color: #302254;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.admin-experiment-optimization-status.is-learning {
+  color: #302254;
+  background: #ffc59e;
+}
+.admin-experiment-optimization-status.is-optimizing {
+  background: #b9f0cf;
+}
+.admin-experiment-optimization-status.is-off {
+  color: #f9f8fb;
+  background: rgba(255, 255, 255, 0.12);
+}
+.admin-experiment-optimization-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+}
+.admin-experiment-optimization-controls label {
+  display: flex;
+  min-width: 150px;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+}
+.admin-experiment-optimization-controls input,
+.admin-experiment-optimization-controls select {
+  min-width: 0;
+  padding: 0.58rem 0.65rem;
+  color: #f9f8fb;
+  background: rgba(16, 11, 24, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.76rem;
+}
+.admin-experiment-optimization-controls input:focus,
+.admin-experiment-optimization-controls select:focus {
+  outline: 2px solid rgba(196, 172, 255, 0.7);
+  outline-offset: 1px;
+}
+.admin-experiment-optimization-progress {
+  margin-top: 0.9rem;
+}
+.admin-experiment-optimization-progress strong {
+  color: #c4acff;
+  font-size: 0.78rem;
+}
+.admin-experiment-progress-track {
+  height: 0.35rem;
+  margin-top: 0.45rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+.admin-experiment-progress-track span {
+  display: block;
+  height: 100%;
+  background: #c4acff;
+  border-radius: inherit;
+  transition: width 0.25s ease;
+}
+.admin-experiment-optimization-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+.admin-experiment-optimization-metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem;
+  background: rgba(196, 172, 255, 0.045);
+  border-radius: 0.45rem;
+  font-size: 0.7rem;
+}
+.admin-experiment-optimization-metrics strong {
+  color: #f9f8fb;
+}
+.admin-experiment-optimization-metrics span,
+.admin-experiment-optimization-metrics small {
+  color: rgba(255, 255, 255, 0.44);
+}
+.admin-experiment-optimization-metrics b {
+  color: #c4acff;
+}
+.admin-experiment-optimization-footer {
+  align-items: flex-end;
+  margin-top: 0.85rem;
+}
+.admin-experiment-optimization-footer > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.admin-experiment-optimization-history {
+  margin-top: 0.8rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.72rem;
+}
+.admin-experiment-optimization-history summary {
+  color: #c4acff;
+  cursor: pointer;
+}
+.admin-experiment-optimization-history > div {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+.admin-experiment-optimization-history article {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.6rem 0.7rem;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 0.45rem;
+}
+.admin-experiment-optimization-history article strong {
+  color: #f9f8fb;
+  font-size: 0.7rem;
+}
+.admin-experiment-optimization-history article small {
+  color: rgba(255, 255, 255, 0.42);
+}
 .admin-experiment-card-footer {
   align-items: center;
   margin-top: 1rem;
@@ -624,6 +790,16 @@
 .admin-experiment-action-button.is-danger {
   color: #ffc59e;
   border-color: rgba(255, 197, 158, 0.35);
+}
+@media (max-width: 720px) {
+  .admin-experiment-optimization-heading,
+  .admin-experiment-optimization-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .admin-experiment-optimization-footer > div {
+    justify-content: flex-start;
+  }
 }
 .experiment-link-state {
   display: flex;
