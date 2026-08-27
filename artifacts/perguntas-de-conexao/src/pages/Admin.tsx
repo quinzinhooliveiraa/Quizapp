@@ -91,6 +91,9 @@ type ExperimentEntry = {
   description: string | null;
   objective: string;
   status: ExperimentStatus;
+  optimizationMode: "manual" | "automatic";
+  minimumSampleSizeMode: "automatic" | "custom";
+  minimumSampleSize: number | null;
   variants: ExperimentVariantEntry[];
   createdAt: string;
   updatedAt: string;
@@ -110,6 +113,40 @@ type ExperimentAnalyticsVariant = {
   ctaClicks: number;
   checkoutsStarted: number;
   purchasesConfirmed: number;
+};
+type ExperimentOptimizationVariant = {
+  variantId: string;
+  name: string;
+  path: string;
+  weight: number;
+  visitors: number;
+  purchases: number;
+  conversionRate: number;
+};
+type ExperimentOptimizationHistory = {
+  id: string;
+  evaluatedAt: string;
+  previousWeights: Record<string, number>;
+  newWeights: Record<string, number>;
+  conversionsByVariant: Record<string, number>;
+  visitorsByVariant: Record<string, number>;
+  conversionRatesByVariant: Record<string, number>;
+  winnerVariantId: string;
+  sampleSize: number;
+  reason: string;
+  changeType: "automatic";
+};
+type ExperimentOptimizationSummary = {
+  optimizationMode: "manual" | "automatic";
+  minimumSampleSizeMode: "automatic" | "custom";
+  minimumSampleSize: number | null;
+  minimumSampleSizeUsed: number;
+  status: "off" | "learning" | "optimizing";
+  totalVisitors: number;
+  variants: ExperimentOptimizationVariant[];
+  lastOptimizationAt: string | null;
+  nextOptimizationAt: string | null;
+  history: ExperimentOptimizationHistory[];
 };
 
 const TABS = [

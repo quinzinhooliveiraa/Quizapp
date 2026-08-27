@@ -2,6 +2,7 @@ import http from "http";
 import app from "./app";
 import { attachLobbyServer } from "./lib/lobbyServer";
 import { logger } from "./lib/logger";
+import { startExperimentOptimizationScheduler } from "./lib/experiment-optimization";
 
 const rawPort = process.env["PORT"];
 
@@ -27,4 +28,5 @@ httpServer.listen(port, (err?: Error) => {
   }
 
   logger.info({ port }, "Server listening (HTTP + WebSocket)");
+  startExperimentOptimizationScheduler();
 });

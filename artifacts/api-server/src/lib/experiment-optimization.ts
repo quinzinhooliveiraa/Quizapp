@@ -77,15 +77,33 @@ function isAutomatic(experiment: Pick<Experiment, "optimizationMode">) {
   return experiment.optimizationMode === "automatic";
 }
 
+export function isOptimizationAllowed(
+  experiment: Pick<Experiment, "status" | "optimizationMode">,
+) {
+  return experiment.status === "active" && isAutomatic(experiment);
+}
+
 export function calculateMinimumSampleSize(
   variantCount: number,
   mode: MinimumSampleSizeMode,
   customValue: number | null | undefined,
 ) {
-  if (mode === "custom" && Number.isInteger(customValue) && customValue >= 2) {
+  if (
+    mode === "custom" &&
+    typeof customValue === "number" &&
+    Number.isInteger(customValue) &&
+    customValue >= 2
+  ) {
     return Math.min(customValue, 100_000);
   }
   return Math.max(200, variantCount * 100);
+}
+
+export function hasReachedMinimumSampleSize(
+  totalVisitors: number,
+  minimumSampleSize: number,
+) {
+  return totalVisitors >= minimumSampleSize;
 }
 
 export function calculateConversionRate(purchases: number, visitors: number) {
@@ -220,6 +238,28 @@ export function calculateGradualWeights(
     return null;
   }
   return result;
+}
+
+/**
+ * Restores an even distribution across active variants. This is deliberately
+ * a manual control: it does not create an optimization-history entry and it
+ * never touches assignments already persisted for existing visitors.
+ */
+export function calculateRestoredWeights(variants: WeightVariant[]) {
+  const activeVariants = variants.filter((variant) => variant.status === "active");
+  if (activeVariants.length < 2) return null;
+
+  const baseWeight = Math.floor(100 / activeVariants.length);
+  const remainder = 100 % activeVariants.length;
+  const activeIds = new Set(activeVariants.map((variant) => variant.id));
+  let activeIndex = 0;
+
+  return variants.map((variant) => ({
+    id: variant.id,
+    weight: activeIds.has(variant.id)
+      ? baseWeight + (activeIndex++ < remainder ? 1 : 0)
+      : 0,
+  }));
 }
 
 async function getExperiment(experimentId: string) {
@@ -405,16 +445,21 @@ export async function runExperimentOptimization(
     return {
       changed: false,
       reason: "São necessárias pelo menos duas variantes ativas.",
-      summary: await getExperimentOptimizationSummary(experimentId),
+      summary: (await getExperimentOptimizationSummary(experimentId))!,
     };
   }
 
-  if (summary.totalVisitors < summary.minimumSampleSizeUsed) {
+  if (
+    !hasReachedMinimumSampleSize(
+      summary.totalVisitors,
+      summary.minimumSampleSizeUsed,
+    )
+  ) {
     await setNextEvaluation(experimentId, now);
     return {
       changed: false,
       reason: `Amostra insuficiente: ${summary.totalVisitors}/${summary.minimumSampleSizeUsed}.`,
-      summary: await getExperimentOptimizationSummary(experimentId),
+      summary: (await getExperimentOptimizationSummary(experimentId))!,
     };
   }
 
@@ -431,7 +476,7 @@ export async function runExperimentOptimization(
     return {
       changed: false,
       reason: "Ainda não há um novo bloco de dados para avaliar.",
-      summary: await getExperimentOptimizationSummary(experimentId),
+      summary: (await getExperimentOptimizationSummary(experimentId))!,
     };
   }
 
@@ -444,7 +489,7 @@ export async function runExperimentOptimization(
     return {
       changed: false,
       reason: "Não há variante ativa elegível para otimização.",
-      summary: await getExperimentOptimizationSummary(experimentId),
+      summary: (await getExperimentOptimizationSummary(experimentId))!,
     };
   }
   const runnerUp = metrics
@@ -455,7 +500,7 @@ export async function runExperimentOptimization(
     return {
       changed: false,
       reason: "A diferença observada ainda não tem evidência suficiente.",
-      summary: await getExperimentOptimizationSummary(experimentId),
+      summary: (await getExperimentOptimizationSummary(experimentId))!,
     };
   }
 
@@ -465,7 +510,7 @@ export async function runExperimentOptimization(
     return {
       changed: false,
       reason: "A distribuição já está no limite seguro de aprendizado.",
-      summary: await getExperimentOptimizationSummary(experimentId),
+      summary: (await getExperimentOptimizationSummary(experimentId))!,
     };
   }
 
@@ -530,7 +575,11 @@ export async function runExperimentOptimization(
 }
 
 export function startExperimentOptimizationScheduler() {
+  let running = false;
   const run = async () => {
+    if (running) return;
+    running = true;
+    try {
     const experiments = await db
       .select({ id: experimentsTable.id })
       .from(experimentsTable)
@@ -550,8 +599,12 @@ export function startExperimentOptimizationScheduler() {
         );
       }
     }
+    } finally {
+      running = false;
+    }
   };
 
+  void run();
   const interval = setInterval(() => {
     void run();
   }, OPTIMIZATION_INTERVAL_MS);

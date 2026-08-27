@@ -5,6 +5,8 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { ExperimentMinimumSampleSizeMode } from './experimentMinimumSampleSizeMode';
+import type { ExperimentOptimizationMode } from './experimentOptimizationMode';
 import type { ExperimentStatus } from './experimentStatus';
 import type { ExperimentVariant } from './experimentVariant';
 
@@ -16,6 +18,10 @@ export interface Experiment {
   description: string | null;
   objective: string;
   status: ExperimentStatus;
+  optimizationMode: ExperimentOptimizationMode;
+  minimumSampleSizeMode: ExperimentMinimumSampleSizeMode;
+  /** @nullable */
+  minimumSampleSize: number | null;
   variants: ExperimentVariant[];
   createdAt: Date;
   updatedAt: Date;

@@ -431,6 +431,9 @@ export const ListAdminExperimentsResponse = zod.object({
   "description": zod.string().nullable(),
   "objective": zod.string(),
   "status": zod.enum(['draft', 'active', 'paused', 'completed']),
+  "optimizationMode": zod.enum(['manual', 'automatic']),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']),
+  "minimumSampleSize": zod.number().int().nullable(),
   "variants": zod.array(zod.object({
   "id": zod.string(),
   "experimentId": zod.string(),
@@ -464,6 +467,11 @@ export const createAdminExperimentBodyVariantsItemWeightMax = 100;
 
 export const createAdminExperimentBodyVariantsMin = 2;
 
+export const createAdminExperimentBodyOptimizationModeDefault = `manual`;
+export const createAdminExperimentBodyMinimumSampleSizeModeDefault = `automatic`;
+export const createAdminExperimentBodyMinimumSampleSizeMin = 2;
+export const createAdminExperimentBodyMinimumSampleSizeMax = 100000;
+
 
 
 export const CreateAdminExperimentBody = zod.object({
@@ -475,7 +483,10 @@ export const CreateAdminExperimentBody = zod.object({
   "path": zod.string().min(1).max(createAdminExperimentBodyVariantsItemPathMax),
   "weight": zod.number().min(createAdminExperimentBodyVariantsItemWeightMin).max(createAdminExperimentBodyVariantsItemWeightMax),
   "status": zod.enum(['active', 'paused']).optional()
-})).min(createAdminExperimentBodyVariantsMin)
+})).min(createAdminExperimentBodyVariantsMin),
+  "optimizationMode": zod.enum(['manual', 'automatic']).default(createAdminExperimentBodyOptimizationModeDefault),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']).default(createAdminExperimentBodyMinimumSampleSizeModeDefault),
+  "minimumSampleSize": zod.number().int().min(createAdminExperimentBodyMinimumSampleSizeMin).max(createAdminExperimentBodyMinimumSampleSizeMax).nullish()
 })
 
 export const CreateAdminExperimentResponse = zod.object({
@@ -485,6 +496,9 @@ export const CreateAdminExperimentResponse = zod.object({
   "description": zod.string().nullable(),
   "objective": zod.string(),
   "status": zod.enum(['draft', 'active', 'paused', 'completed']),
+  "optimizationMode": zod.enum(['manual', 'automatic']),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']),
+  "minimumSampleSize": zod.number().int().nullable(),
   "variants": zod.array(zod.object({
   "id": zod.string(),
   "experimentId": zod.string(),
@@ -496,6 +510,158 @@ export const CreateAdminExperimentResponse = zod.object({
 })),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get automatic optimization status and history
+ */
+export const GetAdminExperimentOptimizationParams = zod.object({
+  "experimentId": zod.coerce.string()
+})
+
+export const GetAdminExperimentOptimizationQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const GetAdminExperimentOptimizationResponse = zod.object({
+  "optimizationMode": zod.enum(['manual', 'automatic']),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']),
+  "minimumSampleSize": zod.number().int().nullable(),
+  "minimumSampleSizeUsed": zod.number().int(),
+  "status": zod.enum(['off', 'learning', 'optimizing']),
+  "totalVisitors": zod.number().int(),
+  "variants": zod.array(zod.object({
+  "variantId": zod.string(),
+  "name": zod.string(),
+  "path": zod.string(),
+  "weight": zod.number().int(),
+  "visitors": zod.number().int(),
+  "purchases": zod.number().int(),
+  "conversionRate": zod.number()
+})),
+  "lastOptimizationAt": zod.coerce.date().nullable(),
+  "nextOptimizationAt": zod.coerce.date().nullable(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "evaluatedAt": zod.coerce.date(),
+  "previousWeights": zod.record(zod.string(), zod.number().int()),
+  "newWeights": zod.record(zod.string(), zod.number().int()),
+  "conversionsByVariant": zod.record(zod.string(), zod.number().int()),
+  "visitorsByVariant": zod.record(zod.string(), zod.number().int()),
+  "conversionRatesByVariant": zod.record(zod.string(), zod.number()),
+  "winnerVariantId": zod.string(),
+  "sampleSize": zod.number().int(),
+  "reason": zod.string(),
+  "changeType": zod.enum(['automatic'])
+}))
+})
+
+
+/**
+ * @summary Update automatic optimization controls
+ */
+export const UpdateAdminExperimentOptimizationParams = zod.object({
+  "experimentId": zod.coerce.string()
+})
+
+export const UpdateAdminExperimentOptimizationQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const updateAdminExperimentOptimizationBodyMinimumSampleSizeMin = 2;
+export const updateAdminExperimentOptimizationBodyMinimumSampleSizeMax = 100000;
+
+
+
+export const UpdateAdminExperimentOptimizationBody = zod.object({
+  "optimizationMode": zod.enum(['manual', 'automatic']).optional(),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']).optional(),
+  "minimumSampleSize": zod.number().int().min(updateAdminExperimentOptimizationBodyMinimumSampleSizeMin).max(updateAdminExperimentOptimizationBodyMinimumSampleSizeMax).nullish(),
+  "restoreWeights": zod.boolean().optional()
+})
+
+export const UpdateAdminExperimentOptimizationResponse = zod.object({
+  "optimizationMode": zod.enum(['manual', 'automatic']),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']),
+  "minimumSampleSize": zod.number().int().nullable(),
+  "minimumSampleSizeUsed": zod.number().int(),
+  "status": zod.enum(['off', 'learning', 'optimizing']),
+  "totalVisitors": zod.number().int(),
+  "variants": zod.array(zod.object({
+  "variantId": zod.string(),
+  "name": zod.string(),
+  "path": zod.string(),
+  "weight": zod.number().int(),
+  "visitors": zod.number().int(),
+  "purchases": zod.number().int(),
+  "conversionRate": zod.number()
+})),
+  "lastOptimizationAt": zod.coerce.date().nullable(),
+  "nextOptimizationAt": zod.coerce.date().nullable(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "evaluatedAt": zod.coerce.date(),
+  "previousWeights": zod.record(zod.string(), zod.number().int()),
+  "newWeights": zod.record(zod.string(), zod.number().int()),
+  "conversionsByVariant": zod.record(zod.string(), zod.number().int()),
+  "visitorsByVariant": zod.record(zod.string(), zod.number().int()),
+  "conversionRatesByVariant": zod.record(zod.string(), zod.number()),
+  "winnerVariantId": zod.string(),
+  "sampleSize": zod.number().int(),
+  "reason": zod.string(),
+  "changeType": zod.enum(['automatic'])
+}))
+})
+
+
+/**
+ * @summary Evaluate automatic optimization for an experiment
+ */
+export const RunAdminExperimentOptimizationParams = zod.object({
+  "experimentId": zod.coerce.string()
+})
+
+export const RunAdminExperimentOptimizationQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const RunAdminExperimentOptimizationResponse = zod.object({
+  "changed": zod.boolean(),
+  "reason": zod.string(),
+  "winnerVariantId": zod.string().nullable(),
+  "summary": zod.object({
+  "optimizationMode": zod.enum(['manual', 'automatic']),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']),
+  "minimumSampleSize": zod.number().int().nullable(),
+  "minimumSampleSizeUsed": zod.number().int(),
+  "status": zod.enum(['off', 'learning', 'optimizing']),
+  "totalVisitors": zod.number().int(),
+  "variants": zod.array(zod.object({
+  "variantId": zod.string(),
+  "name": zod.string(),
+  "path": zod.string(),
+  "weight": zod.number().int(),
+  "visitors": zod.number().int(),
+  "purchases": zod.number().int(),
+  "conversionRate": zod.number()
+})),
+  "lastOptimizationAt": zod.coerce.date().nullable(),
+  "nextOptimizationAt": zod.coerce.date().nullable(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "evaluatedAt": zod.coerce.date(),
+  "previousWeights": zod.record(zod.string(), zod.number().int()),
+  "newWeights": zod.record(zod.string(), zod.number().int()),
+  "conversionsByVariant": zod.record(zod.string(), zod.number().int()),
+  "visitorsByVariant": zod.record(zod.string(), zod.number().int()),
+  "conversionRatesByVariant": zod.record(zod.string(), zod.number()),
+  "winnerVariantId": zod.string(),
+  "sampleSize": zod.number().int(),
+  "reason": zod.string(),
+  "changeType": zod.enum(['automatic'])
+}))
+})
 })
 
 
@@ -521,6 +687,9 @@ export const UpdateAdminExperimentStatusResponse = zod.object({
   "description": zod.string().nullable(),
   "objective": zod.string(),
   "status": zod.enum(['draft', 'active', 'paused', 'completed']),
+  "optimizationMode": zod.enum(['manual', 'automatic']),
+  "minimumSampleSizeMode": zod.enum(['automatic', 'custom']),
+  "minimumSampleSize": zod.number().int().nullable(),
   "variants": zod.array(zod.object({
   "id": zod.string(),
   "experimentId": zod.string(),

@@ -22,13 +22,28 @@ import {
   GetAdminExperimentAnalyticsParams,
   GetAdminExperimentAnalyticsQueryParams,
   GetAdminExperimentAnalyticsResponse,
+  GetAdminExperimentOptimizationParams,
+  GetAdminExperimentOptimizationQueryParams,
+  GetAdminExperimentOptimizationResponse,
   ListAdminExperimentsQueryParams,
   ListAdminExperimentsResponse,
+  RunAdminExperimentOptimizationParams,
+  RunAdminExperimentOptimizationQueryParams,
+  RunAdminExperimentOptimizationResponse,
+  UpdateAdminExperimentOptimizationBody,
+  UpdateAdminExperimentOptimizationParams,
+  UpdateAdminExperimentOptimizationQueryParams,
+  UpdateAdminExperimentOptimizationResponse,
   UpdateAdminExperimentStatusBody,
   UpdateAdminExperimentStatusParams,
   UpdateAdminExperimentStatusQueryParams,
   UpdateAdminExperimentStatusResponse,
 } from "@workspace/api-zod";
+import {
+  calculateRestoredWeights,
+  getExperimentOptimizationSummary,
+  runExperimentOptimization,
+} from "../lib/experiment-optimization";
 import {
   getOrCreateExperimentAssignment,
   resolveActiveExperimentAssignment,
@@ -156,6 +171,19 @@ router.post("/admin/experiments", async (req, res): Promise<void> => {
     status: variant.status || "active",
   }));
   if (
+    parsed.data.minimumSampleSizeMode === "custom" &&
+    (typeof parsed.data.minimumSampleSize !== "number" ||
+      !Number.isInteger(parsed.data.minimumSampleSize) ||
+      parsed.data.minimumSampleSize < 2 ||
+      parsed.data.minimumSampleSize > 100_000)
+  ) {
+    res.status(400).json({
+      error:
+        "Informe uma amostra mínima inteira entre 2 e 100000 para o modo personalizado.",
+    });
+    return;
+  }
+  if (
     !name ||
     !objective ||
     variants.some(
@@ -188,6 +216,12 @@ router.post("/admin/experiments", async (req, res): Promise<void> => {
       description: parsed.data.description?.trim() || null,
       objective,
       status: "draft",
+      optimizationMode: parsed.data.optimizationMode,
+      minimumSampleSizeMode: parsed.data.minimumSampleSizeMode,
+      minimumSampleSize:
+        parsed.data.minimumSampleSizeMode === "custom"
+          ? parsed.data.minimumSampleSize ?? null
+          : null,
       createdAt: now,
       updatedAt: now,
     })
@@ -327,6 +361,165 @@ router.get(
       return;
     }
     res.json(GetExperimentLinkAssignmentResponse.parse(assignment));
+  },
+);
+
+router.get(
+  "/admin/experiments/:experimentId/optimization",
+  async (req, res): Promise<void> => {
+    const params = GetAdminExperimentOptimizationParams.safeParse(req.params);
+    const query = GetAdminExperimentOptimizationQueryParams.safeParse(req.query);
+    if (
+      !params.success ||
+      !query.success ||
+      !(await isAdminSession(query.data.sessionId))
+    ) {
+      res.status(403).json({ error: "Acesso negado" });
+      return;
+    }
+
+    const summary = await getExperimentOptimizationSummary(
+      params.data.experimentId,
+    );
+    if (!summary) {
+      res.status(404).json({ error: "Experimento não encontrado" });
+      return;
+    }
+    res.json(GetAdminExperimentOptimizationResponse.parse(summary));
+  },
+);
+
+router.patch(
+  "/admin/experiments/:experimentId/optimization",
+  async (req, res): Promise<void> => {
+    const params = UpdateAdminExperimentOptimizationParams.safeParse(req.params);
+    const query = UpdateAdminExperimentOptimizationQueryParams.safeParse(
+      req.query,
+    );
+    if (
+      !params.success ||
+      !query.success ||
+      !(await isAdminSession(query.data.sessionId))
+    ) {
+      res.status(403).json({ error: "Acesso negado" });
+      return;
+    }
+
+    const parsed = UpdateAdminExperimentOptimizationBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+
+    const [experiment] = await db
+      .select()
+      .from(experimentsTable)
+      .where(eq(experimentsTable.id, params.data.experimentId))
+      .limit(1);
+    if (!experiment) {
+      res.status(404).json({ error: "Experimento não encontrado" });
+      return;
+    }
+
+    const nextMode = parsed.data.optimizationMode ?? experiment.optimizationMode;
+    const nextSampleMode =
+      parsed.data.minimumSampleSizeMode ?? experiment.minimumSampleSizeMode;
+    const nextSampleSize =
+      parsed.data.minimumSampleSize === undefined
+        ? experiment.minimumSampleSize
+        : parsed.data.minimumSampleSize;
+    if (
+      nextSampleMode === "custom" &&
+      (typeof nextSampleSize !== "number" ||
+        !Number.isInteger(nextSampleSize) ||
+        nextSampleSize < 2 ||
+        nextSampleSize > 100_000)
+    ) {
+      res.status(400).json({
+        error:
+          "Informe uma amostra mínima inteira entre 2 e 100000 para o modo personalizado.",
+      });
+      return;
+    }
+
+    const shouldRestore = parsed.data.restoreWeights === true;
+    const variants = shouldRestore
+      ? await db
+          .select()
+          .from(experimentVariantsTable)
+          .where(eq(experimentVariantsTable.experimentId, experiment.id))
+          .orderBy(asc(experimentVariantsTable.createdAt))
+      : [];
+    const restoredWeights = shouldRestore
+      ? calculateRestoredWeights(variants)
+      : null;
+    if (shouldRestore && !restoredWeights) {
+      res.status(400).json({
+        error: "São necessárias pelo menos duas variantes ativas para restaurar a distribuição.",
+      });
+      return;
+    }
+
+    const now = new Date();
+    await db.transaction(async (tx) => {
+      const experimentPatch: Partial<typeof experimentsTable.$inferInsert> = {
+        updatedAt: now,
+      };
+      if (parsed.data.optimizationMode !== undefined) {
+        experimentPatch.optimizationMode = nextMode;
+        experimentPatch.nextOptimizationAt =
+          nextMode === "automatic" ? now : null;
+      }
+      if (parsed.data.minimumSampleSizeMode !== undefined) {
+        experimentPatch.minimumSampleSizeMode = nextSampleMode;
+      }
+      if (parsed.data.minimumSampleSize !== undefined) {
+        experimentPatch.minimumSampleSize = parsed.data.minimumSampleSize;
+      } else if (nextSampleMode === "automatic") {
+        experimentPatch.minimumSampleSize = null;
+      }
+      await tx
+        .update(experimentsTable)
+        .set(experimentPatch)
+        .where(eq(experimentsTable.id, experiment.id));
+
+      if (restoredWeights) {
+        for (const variant of restoredWeights) {
+          await tx
+            .update(experimentVariantsTable)
+            .set({ weight: variant.weight })
+            .where(eq(experimentVariantsTable.id, variant.id));
+        }
+      }
+    });
+
+    const summary = await getExperimentOptimizationSummary(experiment.id);
+    res.json(UpdateAdminExperimentOptimizationResponse.parse(summary));
+  },
+);
+
+router.post(
+  "/admin/experiments/:experimentId/optimization/run",
+  async (req, res): Promise<void> => {
+    const params = RunAdminExperimentOptimizationParams.safeParse(req.params);
+    const query = RunAdminExperimentOptimizationQueryParams.safeParse(req.query);
+    if (
+      !params.success ||
+      !query.success ||
+      !(await isAdminSession(query.data.sessionId))
+    ) {
+      res.status(403).json({ error: "Acesso negado" });
+      return;
+    }
+
+    const result = await runExperimentOptimization(params.data.experimentId, {
+      force: true,
+    });
+    if (!result) {
+      res.status(404).json({ error: "Experimento não encontrado" });
+      return;
+    }
+    res.json(RunAdminExperimentOptimizationResponse.parse(result));
   },
 );
 

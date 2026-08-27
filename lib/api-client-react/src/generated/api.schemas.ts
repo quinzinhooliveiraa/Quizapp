@@ -392,6 +392,22 @@ export interface ExperimentVariantInput {
   status?: ExperimentVariantInputStatus;
 }
 
+export type ExperimentInputOptimizationMode = typeof ExperimentInputOptimizationMode[keyof typeof ExperimentInputOptimizationMode];
+
+
+export const ExperimentInputOptimizationMode = {
+  manual: 'manual',
+  automatic: 'automatic',
+} as const;
+
+export type ExperimentInputMinimumSampleSizeMode = typeof ExperimentInputMinimumSampleSizeMode[keyof typeof ExperimentInputMinimumSampleSizeMode];
+
+
+export const ExperimentInputMinimumSampleSizeMode = {
+  automatic: 'automatic',
+  custom: 'custom',
+} as const;
+
 export interface ExperimentInput {
   /**
      * @minLength 1
@@ -407,6 +423,14 @@ export interface ExperimentInput {
   objective: string;
   /** @minItems 2 */
   variants: ExperimentVariantInput[];
+  optimizationMode?: ExperimentInputOptimizationMode;
+  minimumSampleSizeMode?: ExperimentInputMinimumSampleSizeMode;
+  /**
+     * @minimum 2
+     * @maximum 100000
+     * @nullable
+     */
+  minimumSampleSize?: number | null;
 }
 
 export type ExperimentStatusUpdateStatus = typeof ExperimentStatusUpdateStatus[keyof typeof ExperimentStatusUpdateStatus];
@@ -451,6 +475,22 @@ export const ExperimentStatus = {
   completed: 'completed',
 } as const;
 
+export type ExperimentOptimizationMode = typeof ExperimentOptimizationMode[keyof typeof ExperimentOptimizationMode];
+
+
+export const ExperimentOptimizationMode = {
+  manual: 'manual',
+  automatic: 'automatic',
+} as const;
+
+export type ExperimentMinimumSampleSizeMode = typeof ExperimentMinimumSampleSizeMode[keyof typeof ExperimentMinimumSampleSizeMode];
+
+
+export const ExperimentMinimumSampleSizeMode = {
+  automatic: 'automatic',
+  custom: 'custom',
+} as const;
+
 export interface Experiment {
   id: string;
   name: string;
@@ -459,6 +499,10 @@ export interface Experiment {
   description: string | null;
   objective: string;
   status: ExperimentStatus;
+  optimizationMode: ExperimentOptimizationMode;
+  minimumSampleSizeMode: ExperimentMinimumSampleSizeMode;
+  /** @nullable */
+  minimumSampleSize: number | null;
   variants: ExperimentVariant[];
   createdAt: string;
   updatedAt: string;
@@ -490,6 +534,124 @@ export interface AdminExperimentAnalyticsVariant {
 export interface AdminExperimentAnalyticsResponse {
   experimentId: string;
   variants: AdminExperimentAnalyticsVariant[];
+}
+
+export type ExperimentOptimizationUpdateOptimizationMode = typeof ExperimentOptimizationUpdateOptimizationMode[keyof typeof ExperimentOptimizationUpdateOptimizationMode];
+
+
+export const ExperimentOptimizationUpdateOptimizationMode = {
+  manual: 'manual',
+  automatic: 'automatic',
+} as const;
+
+export type ExperimentOptimizationUpdateMinimumSampleSizeMode = typeof ExperimentOptimizationUpdateMinimumSampleSizeMode[keyof typeof ExperimentOptimizationUpdateMinimumSampleSizeMode];
+
+
+export const ExperimentOptimizationUpdateMinimumSampleSizeMode = {
+  automatic: 'automatic',
+  custom: 'custom',
+} as const;
+
+export interface ExperimentOptimizationUpdate {
+  optimizationMode?: ExperimentOptimizationUpdateOptimizationMode;
+  minimumSampleSizeMode?: ExperimentOptimizationUpdateMinimumSampleSizeMode;
+  /**
+     * @minimum 2
+     * @maximum 100000
+     * @nullable
+     */
+  minimumSampleSize?: number | null;
+  restoreWeights?: boolean;
+}
+
+export interface ExperimentOptimizationVariant {
+  variantId: string;
+  name: string;
+  path: string;
+  weight: number;
+  visitors: number;
+  purchases: number;
+  conversionRate: number;
+}
+
+export type ExperimentOptimizationHistoryPreviousWeights = {[key: string]: number};
+
+export type ExperimentOptimizationHistoryNewWeights = {[key: string]: number};
+
+export type ExperimentOptimizationHistoryConversionsByVariant = {[key: string]: number};
+
+export type ExperimentOptimizationHistoryVisitorsByVariant = {[key: string]: number};
+
+export type ExperimentOptimizationHistoryConversionRatesByVariant = {[key: string]: number};
+
+export type ExperimentOptimizationHistoryChangeType = typeof ExperimentOptimizationHistoryChangeType[keyof typeof ExperimentOptimizationHistoryChangeType];
+
+
+export const ExperimentOptimizationHistoryChangeType = {
+  automatic: 'automatic',
+} as const;
+
+export interface ExperimentOptimizationHistory {
+  id: string;
+  evaluatedAt: string;
+  previousWeights: ExperimentOptimizationHistoryPreviousWeights;
+  newWeights: ExperimentOptimizationHistoryNewWeights;
+  conversionsByVariant: ExperimentOptimizationHistoryConversionsByVariant;
+  visitorsByVariant: ExperimentOptimizationHistoryVisitorsByVariant;
+  conversionRatesByVariant: ExperimentOptimizationHistoryConversionRatesByVariant;
+  winnerVariantId: string;
+  sampleSize: number;
+  reason: string;
+  changeType: ExperimentOptimizationHistoryChangeType;
+}
+
+export type ExperimentOptimizationSummaryOptimizationMode = typeof ExperimentOptimizationSummaryOptimizationMode[keyof typeof ExperimentOptimizationSummaryOptimizationMode];
+
+
+export const ExperimentOptimizationSummaryOptimizationMode = {
+  manual: 'manual',
+  automatic: 'automatic',
+} as const;
+
+export type ExperimentOptimizationSummaryMinimumSampleSizeMode = typeof ExperimentOptimizationSummaryMinimumSampleSizeMode[keyof typeof ExperimentOptimizationSummaryMinimumSampleSizeMode];
+
+
+export const ExperimentOptimizationSummaryMinimumSampleSizeMode = {
+  automatic: 'automatic',
+  custom: 'custom',
+} as const;
+
+export type ExperimentOptimizationSummaryStatus = typeof ExperimentOptimizationSummaryStatus[keyof typeof ExperimentOptimizationSummaryStatus];
+
+
+export const ExperimentOptimizationSummaryStatus = {
+  off: 'off',
+  learning: 'learning',
+  optimizing: 'optimizing',
+} as const;
+
+export interface ExperimentOptimizationSummary {
+  optimizationMode: ExperimentOptimizationSummaryOptimizationMode;
+  minimumSampleSizeMode: ExperimentOptimizationSummaryMinimumSampleSizeMode;
+  /** @nullable */
+  minimumSampleSize: number | null;
+  minimumSampleSizeUsed: number;
+  status: ExperimentOptimizationSummaryStatus;
+  totalVisitors: number;
+  variants: ExperimentOptimizationVariant[];
+  /** @nullable */
+  lastOptimizationAt: string | null;
+  /** @nullable */
+  nextOptimizationAt: string | null;
+  history: ExperimentOptimizationHistory[];
+}
+
+export interface ExperimentOptimizationRunResponse {
+  changed: boolean;
+  reason: string;
+  /** @nullable */
+  winnerVariantId: string | null;
+  summary: ExperimentOptimizationSummary;
 }
 
 export type SessionRecordingLookupReason = typeof SessionRecordingLookupReason[keyof typeof SessionRecordingLookupReason];
@@ -624,6 +786,18 @@ export type GetAdminAnalytics200 = {
 };
 
 export type ListAdminExperimentsParams = {
+sessionId: string;
+};
+
+export type GetAdminExperimentOptimizationParams = {
+sessionId: string;
+};
+
+export type UpdateAdminExperimentOptimizationParams = {
+sessionId: string;
+};
+
+export type RunAdminExperimentOptimizationParams = {
 sessionId: string;
 };
 

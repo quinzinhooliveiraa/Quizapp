@@ -37,11 +37,15 @@ import type {
   Experiment,
   ExperimentAssignment,
   ExperimentInput,
+  ExperimentOptimizationRunResponse,
+  ExperimentOptimizationSummary,
+  ExperimentOptimizationUpdate,
   ExperimentStatusUpdate,
   GetActiveExperimentAssignmentParams,
   GetAdminAnalytics200,
   GetAdminAnalyticsParams,
   GetAdminExperimentAnalyticsParams,
+  GetAdminExperimentOptimizationParams,
   GetAdminSessionRecordingParams,
   GetExperimentAssignmentParams,
   GetExperimentLinkAssignmentParams,
@@ -75,12 +79,14 @@ import type {
   ResetOwnerOnboarding200,
   Review,
   ReviewInput,
+  RunAdminExperimentOptimizationParams,
   SessionInput,
   SessionRecordingLookup,
   SubscribeAdminPushBody,
   Suggestion,
   SuggestionInput,
   UnsubscribeAdminPushBody,
+  UpdateAdminExperimentOptimizationParams,
   UpdateAdminExperimentStatusParams,
   WebhookResult
 } from './api.schemas';
@@ -1990,6 +1996,256 @@ export const useCreateAdminExperiment = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateAdminExperimentMutationOptions(options));
+    }
+
+export const getGetAdminExperimentOptimizationUrl = (experimentId: string,
+    params: GetAdminExperimentOptimizationParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/experiments/${experimentId}/optimization?${stringifiedParams}` : `/api/admin/experiments/${experimentId}/optimization`
+}
+
+/**
+ * @summary Get automatic optimization status and history
+ */
+export const getAdminExperimentOptimization = async (experimentId: string,
+    params: GetAdminExperimentOptimizationParams, options?: Parameters<typeof customFetch>[1]): Promise<ExperimentOptimizationSummary> => {
+
+  return customFetch<ExperimentOptimizationSummary>(getGetAdminExperimentOptimizationUrl(experimentId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminExperimentOptimizationQueryKey = (experimentId: string,
+    params?: GetAdminExperimentOptimizationParams,) => {
+    return [
+    `/api/admin/experiments/${experimentId}/optimization`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminExperimentOptimizationQueryOptions = <TData = Awaited<ReturnType<typeof getAdminExperimentOptimization>>, TError = ErrorType<void>>(experimentId: string,
+    params: GetAdminExperimentOptimizationParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminExperimentOptimization>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminExperimentOptimizationQueryKey(experimentId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminExperimentOptimization>>> = ({ signal }) => getAdminExperimentOptimization(experimentId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: experimentId !== null && experimentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminExperimentOptimization>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminExperimentOptimizationQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminExperimentOptimization>>>
+export type GetAdminExperimentOptimizationQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get automatic optimization status and history
+ */
+
+export function useGetAdminExperimentOptimization<TData = Awaited<ReturnType<typeof getAdminExperimentOptimization>>, TError = ErrorType<void>>(
+ experimentId: string,
+    params: GetAdminExperimentOptimizationParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminExperimentOptimization>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminExperimentOptimizationQueryOptions(experimentId,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminExperimentOptimizationUrl = (experimentId: string,
+    params: UpdateAdminExperimentOptimizationParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/experiments/${experimentId}/optimization?${stringifiedParams}` : `/api/admin/experiments/${experimentId}/optimization`
+}
+
+/**
+ * @summary Update automatic optimization controls
+ */
+export const updateAdminExperimentOptimization = async (experimentId: string,
+    experimentOptimizationUpdate: ExperimentOptimizationUpdate,
+    params: UpdateAdminExperimentOptimizationParams, options?: Parameters<typeof customFetch>[1]): Promise<ExperimentOptimizationSummary> => {
+
+  return customFetch<ExperimentOptimizationSummary>(getUpdateAdminExperimentOptimizationUrl(experimentId,params),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(experimentOptimizationUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminExperimentOptimizationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminExperimentOptimization>>, TError,{experimentId: string;data: BodyType<ExperimentOptimizationUpdate>;params: UpdateAdminExperimentOptimizationParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminExperimentOptimization>>, TError,{experimentId: string;data: BodyType<ExperimentOptimizationUpdate>;params: UpdateAdminExperimentOptimizationParams}, TContext> => {
+
+const mutationKey = ['updateAdminExperimentOptimization'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminExperimentOptimization>>, {experimentId: string;data: BodyType<ExperimentOptimizationUpdate>;params: UpdateAdminExperimentOptimizationParams}> = (props) => {
+          const {experimentId,data,params} = props ?? {};
+
+          return  updateAdminExperimentOptimization(experimentId,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminExperimentOptimizationMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminExperimentOptimization>>>
+    export type UpdateAdminExperimentOptimizationMutationBody = BodyType<ExperimentOptimizationUpdate>
+    export type UpdateAdminExperimentOptimizationMutationError = ErrorType<void>
+
+    /**
+ * @summary Update automatic optimization controls
+ */
+export const useUpdateAdminExperimentOptimization = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminExperimentOptimization>>, TError,{experimentId: string;data: BodyType<ExperimentOptimizationUpdate>;params: UpdateAdminExperimentOptimizationParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminExperimentOptimization>>,
+        TError,
+        {experimentId: string;data: BodyType<ExperimentOptimizationUpdate>;params: UpdateAdminExperimentOptimizationParams},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminExperimentOptimizationMutationOptions(options));
+    }
+
+export const getRunAdminExperimentOptimizationUrl = (experimentId: string,
+    params: RunAdminExperimentOptimizationParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/experiments/${experimentId}/optimization/run?${stringifiedParams}` : `/api/admin/experiments/${experimentId}/optimization/run`
+}
+
+/**
+ * @summary Evaluate automatic optimization for an experiment
+ */
+export const runAdminExperimentOptimization = async (experimentId: string,
+    params: RunAdminExperimentOptimizationParams, options?: Parameters<typeof customFetch>[1]): Promise<ExperimentOptimizationRunResponse> => {
+
+  return customFetch<ExperimentOptimizationRunResponse>(getRunAdminExperimentOptimizationUrl(experimentId,params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRunAdminExperimentOptimizationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runAdminExperimentOptimization>>, TError,{experimentId: string;params: RunAdminExperimentOptimizationParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof runAdminExperimentOptimization>>, TError,{experimentId: string;params: RunAdminExperimentOptimizationParams}, TContext> => {
+
+const mutationKey = ['runAdminExperimentOptimization'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof runAdminExperimentOptimization>>, {experimentId: string;params: RunAdminExperimentOptimizationParams}> = (props) => {
+          const {experimentId,params} = props ?? {};
+
+          return  runAdminExperimentOptimization(experimentId,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RunAdminExperimentOptimizationMutationResult = NonNullable<Awaited<ReturnType<typeof runAdminExperimentOptimization>>>
+
+    export type RunAdminExperimentOptimizationMutationError = ErrorType<void>
+
+    /**
+ * @summary Evaluate automatic optimization for an experiment
+ */
+export const useRunAdminExperimentOptimization = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runAdminExperimentOptimization>>, TError,{experimentId: string;params: RunAdminExperimentOptimizationParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof runAdminExperimentOptimization>>,
+        TError,
+        {experimentId: string;params: RunAdminExperimentOptimizationParams},
+        TContext
+      > => {
+      return useMutation(getRunAdminExperimentOptimizationMutationOptions(options));
     }
 
 export const getUpdateAdminExperimentStatusUrl = (experimentId: string,
