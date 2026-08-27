@@ -7,6 +7,7 @@
 - [OpenAPI query parameter generation](openapi-query-params.md) — avoid adding generated query params to an operation whose generated path params already use the same name; manual query reads can preserve compatibility.
 - [Abacate checkout status](abacate-checkout-status.md) — retrieve a checkout with `/checkouts/get?id=...`; `/billings/{id}` returns the wrong result for this integration.
 - [Checkout attribution context](checkout-attribution-context.md) — payment sessions must read the landing visitor identity from session storage.
+- [Checkout UI reuse](checkout-ui-reuse.md) — keep landing-page checkout presentation on the shared controller/modal so source attribution and Pix state stay in one flow.
 - [Drizzle non-TTY schema conflicts](drizzle-non-tty-schema-conflicts.md) — column drops/renames can still require interactive confirmation when schema push runs without a TTY.
 - [Orval Zod barrel collisions](orval-zod-barrel-collisions.md) — request-body schemas can collide with generated type names; expose generated types under a namespace when this occurs.
 - [LP3 narrative priority](lp3-narrative-priority.md) — low-discovery routine signals with renewed proximity resolve to the routine narrative despite partial vulnerability.

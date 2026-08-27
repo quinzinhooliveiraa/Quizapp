@@ -2859,7 +2859,7 @@ function CheckoutModal({
                   if (buyerName.trim() && buyerEmail.trim()) {
                     void createCheckout("couple", buyerEmail, buyerName);
                   } else {
-                    setCheckoutState("email");
+                    restartCheckout();
                   }
                 } else {
                   void createCheckout();
@@ -2890,11 +2890,32 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const [landingQuizStep, setLandingQuizStep] = useState(0);
   const [landingQuizAnswers, setLandingQuizAnswers] =
     useState<LandingQuizAnswers>({});
-  const checkout = useCheckout({
+  const checkoutController = useCheckout({
     sourceLp: checkoutSourceLp,
     onCtaClick: trackCtaClick,
   });
-  const { startCheckout } = checkout;
+  const {
+    startCheckout,
+    checkout,
+    checkoutOpen,
+    checkoutState,
+    closeCheckout,
+    buyerName,
+    setBuyerName,
+    buyerEmail,
+    setBuyerEmail,
+    nameError,
+    setNameError,
+    emailError,
+    setEmailError,
+    nativeCheckout,
+    copiedCode,
+    setCopiedCode,
+    confirmingLong,
+    sendingLong,
+    checkoutReviews,
+    restartCheckout,
+  } = checkoutController;
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -3381,7 +3402,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   setEmailError("");
                   setBuyerName(normalizedName);
                   setBuyerEmail(normalizedEmail);
-                  void checkout(selectedPackage, normalizedEmail, normalizedName);
+                  void checkout("couple", normalizedEmail, normalizedName);
                 }}
               >
                 <p className="section-kicker">quase lá</p>
@@ -3555,13 +3576,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   agora, sem preencher seus dados novamente.
                 </p>
                 <button
-                  onClick={() => {
-                    setNativeCheckout(null);
-                    safeRemoveItem("conexao-pending-pix");
-                    safeRemoveItem("conexao-pending-session");
-                   safeRemoveItem("conexao-pending-at");
-                    setCheckoutState("email");
-                  }}
+                  onClick={restartCheckout}
                   className="button button-primary button-full"
                   data-testid="button-regenerate-pix"
                 >
@@ -3690,9 +3705,9 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
                   onClick={() => {
                     if (nativeCheckoutEnabled) {
                       if (buyerName.trim() && buyerEmail.trim()) {
-                        void checkout(selectedPackage, buyerEmail, buyerName);
+                        void checkout("couple", buyerEmail, buyerName);
                       } else {
-                        setCheckoutState("email");
+                        restartCheckout();
                       }
                     } else {
                       void checkout();
@@ -3714,15 +3729,18 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
 
 function TrackedLp3() {
   const trackCtaClick = useLpTracking("lp3");
-  const [, navigate] = useLocation();
+  const checkout = useCheckout({
+    sourceLp: "lp3",
+  });
 
   return (
-    <Lp3
-      onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
-      onCheckout={() => {
-        navigate("/?comprar=1&source=lp3");
-      }}
-    />
+    <>
+      <Lp3
+        onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
+        onCheckout={() => checkout.startCheckout("couple")}
+      />
+      <CheckoutModal checkout={checkout} isLp3 />
+    </>
   );
 }
 
