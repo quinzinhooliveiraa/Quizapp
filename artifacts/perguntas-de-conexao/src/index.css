@@ -148,7 +148,7 @@
 .lp-anchor-target {
   display: block;
   height: 0;
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* Admin */
@@ -493,7 +493,7 @@
   color: #f9f8fb;
 }
 .admin-experiment-variant-list code {
-  overflow: hidden;
+  overflow: clip;
   color: rgba(255, 255, 255, 0.5);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -531,7 +531,7 @@
   text-transform: uppercase;
 }
 .admin-experiment-link code {
-  overflow: hidden;
+  overflow: clip;
   color: #c4acff;
   font-size: 0.75rem;
   text-overflow: ellipsis;
@@ -16578,17 +16578,153 @@ blockquote em {
 
 @media (min-width: 700px) {
   .lp3-topbar {
-    width: min(100% - 4rem, 1240px);
-    padding-inline: 34px;
+    width: min(100% - 4rem, 1120px);
+    padding-inline: 0;
   }
 
   .lp3-main {
     width: min(100% - 4rem, 1120px);
-    padding-top: 5.5rem;
+    min-height: calc(100dvh - 5.75rem);
+    padding: clamp(3rem, 7vh, 5rem) 0 clamp(4rem, 8vh, 6rem);
+    justify-content: center;
+  }
+
+  .lp3-intro {
+    width: min(100%, 56rem);
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1.6rem;
+    margin: 0 auto;
+  }
+
+  .lp3-intro > .lp3-kicker,
+  .lp3-intro > .lp3-display,
+  .lp3-intro > .lp3-copy-block {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .lp3-intro > .lp3-copy-block {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 0;
   }
 
   .lp3-display {
+    max-width: 14ch;
+    font-size: clamp(3.4rem, 6vw, 5.8rem);
+  }
+
+  .lp3-intro-copy {
+    max-width: 40rem;
+  }
+
+  .lp3-actions {
+    gap: 1.2rem;
+  }
+
+  .lp3-question-wrap,
+  .lp3-result,
+  .lp3-story,
+  .lp3-practice,
+  .lp3-offer {
+    width: min(100%, 56rem);
+    max-width: none;
+    margin: 0 auto;
+    gap: 1.5rem;
+  }
+
+  .lp3-question-wrap {
+    width: min(100%, 52rem);
+  }
+
+  .lp3-question-heading {
+    max-width: 24ch;
+    margin: 0.55rem 0 0.15rem;
+    font-size: clamp(2.8rem, 5vw, 4.4rem);
+    line-height: 1;
+  }
+
+  .lp3-options {
+    width: min(100%, 48rem);
+    gap: 0.8rem;
+  }
+
+  .lp3-option {
+    min-height: 4rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .lp3-result,
+  .lp3-story,
+  .lp3-practice,
+  .lp3-offer {
+    width: min(100%, 54rem);
+  }
+
+  .lp3-result-card {
+    width: min(100%, 48rem);
+    padding: clamp(2.25rem, 4vw, 3.5rem);
+  }
+
+  .lp3-result-title,
+  .lp3-section-title {
+    font-size: clamp(2.8rem, 5vw, 4.8rem);
+  }
+
+  .lp3-result-lead {
+    max-width: 34rem;
+  }
+
+  .lp3-story .lp3-editorial {
+    width: min(100%, 45rem);
+  }
+
+  .lp3-editorial p {
+    font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  }
+
+  .lp3-practice .lp3-question-card {
+    width: min(100%, 46rem);
+    min-height: 17rem;
+    justify-self: center;
+    padding: 1.5rem;
+  }
+
+  .lp3-practice .lp3-question-card p {
+    font-size: clamp(1.8rem, 3vw, 2.45rem);
+  }
+
+  .lp3-practice .lp3-actions {
+    justify-content: center;
+  }
+
+  .lp3-recommend {
+    width: min(100%, 64rem);
+  }
+
+  .lp3-recommend .lp3-deck {
+    width: min(100%, 58rem);
+    justify-self: center;
+    padding: 2rem;
+  }
+
+  .lp3-card-scroller {
+    grid-auto-columns: minmax(18rem, 24%);
+  }
+
+  .lp3-offer {
+    padding: clamp(2.25rem, 5vw, 3.5rem);
+  }
+
+  .lp3-offer-title {
+    max-width: 14ch;
     font-size: clamp(3.2rem, 6vw, 5.3rem);
+  }
+
+  .lp3-offer .lp3-actions {
+    justify-content: flex-start;
   }
 }
 
