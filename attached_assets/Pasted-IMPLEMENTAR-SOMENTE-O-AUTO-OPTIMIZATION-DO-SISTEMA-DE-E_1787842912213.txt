@@ -1,0 +1,525 @@
+IMPLEMENTAR SOMENTE O AUTO OPTIMIZATION DO SISTEMA DE EXPERIMENTOS
+
+IMPORTANTE:
+Antes de alterar qualquer código, audite a implementação atual do sistema de experimentos e entenda como já funcionam:
+- experiments
+- experimentVariants
+- experimentAssignments
+- weights
+- tracking
+- checkout
+- analytics
+- Admin
+- /e/:experimentSlug
+
+NÃO recrie o sistema de experimentos.
+NÃO refatore as LPs.
+NÃO altere LP1, LP2 ou LP3 visualmente.
+NÃO altere o comportamento atual de /, /lp2 ou /lp3.
+NÃO conecte o Auto Optimization ao tráfego principal.
+NÃO implemente o router automático do domínio principal.
+NÃO altere o checkout transparente.
+NÃO altere o Microsoft Clarity.
+
+O objetivo desta tarefa é APENAS adicionar uma camada de AUTO OPTIMIZATION em cima do sistema de experimentos que já existe.
+
+==================================================
+1. CONCEITO
+==================================================
+
+Atualmente um experimento possui variantes com pesos de distribuição.
+
+Exemplo:
+
+Variante A = 50
+Variante B = 50
+
+O sistema atual já distribui visitantes de acordo com esses pesos.
+
+O Auto Optimization deve analisar os resultados do experimento e, quando houver dados suficientes, ajustar automaticamente os pesos para favorecer a variante que estiver apresentando melhor conversão.
+
+IMPORTANTE:
+O Auto Optimization NÃO deve criar novas variantes.
+Ele apenas ajusta os weights das variantes existentes.
+
+==================================================
+2. MODO DE OTIMIZAÇÃO
+==================================================
+
+Adicionar ao experimento uma configuração:
+
+optimizationMode:
+- manual
+- automatic
+
+Experimentos existentes devem continuar funcionando como:
+optimizationMode = "manual"
+
+Ou seja:
+NENHUM experimento existente deve começar a se otimizar automaticamente apenas por causa desta implementação.
+
+Ao criar um novo experimento, permitir escolher:
+
+Manual
+ou
+Automatic Optimization
+
+==================================================
+3. AMOSTRA MÍNIMA
+==================================================
+
+A amostra mínima deve ser configurável.
+
+Adicionar uma configuração:
+
+minimumSampleSize
+
+Deve existir uma opção automática/recomendada.
+
+Exemplo:
+
+minimumSampleSizeMode:
+- automatic
+- custom
+
+minimumSampleSize:
+- número inteiro configurável quando custom
+
+Se o usuário escolher "automatic", o sistema deve calcular uma amostra mínima razoável com base no número de variantes.
+
+NÃO inventar uma fórmula estatística complexa sem necessidade.
+
+A prioridade é:
+- segurança
+- previsibilidade
+- impedir otimização prematura
+
+Mostrar no Admin qual amostra mínima está sendo utilizada.
+
+==================================================
+4. MÉTRICA DE OTIMIZAÇÃO
+==================================================
+
+A métrica principal deve ser CONVERSÃO EM COMPRA.
+
+Não otimizar simplesmente por:
+- cliques
+- tempo na página
+- quantidade de sessões
+
+A prioridade é:
+
+compras / visitantes atribuídos à variante
+
+Exemplo:
+
+A:
+100 visitantes
+3 compras
+3% conversão
+
+B:
+100 visitantes
+7 compras
+7% conversão
+
+B é a variante vencedora provisória.
+
+Utilizar os dados que o sistema atual já possui.
+
+Não criar um segundo sistema paralelo de tracking.
+
+==================================================
+5. REGRA DE SEGURANÇA
+==================================================
+
+O sistema NÃO deve alterar os pesos simplesmente porque uma variante está numericamente na frente.
+
+Depois da amostra mínima ser atingida, calcular a diferença de performance.
+
+Somente otimizar quando existir evidência suficiente de que a diferença não é apenas ruído.
+
+Pode utilizar uma abordagem estatística simples e robusta, como comparação de proporções/Bayesian approach, mas:
+
+- não adicionar dependências pesadas sem necessidade;
+- não implementar uma solução acadêmica exageradamente complexa;
+- documentar claramente a regra utilizada.
+
+Se não houver evidência suficiente:
+
+MANTER OS PESOS ATUAIS.
+
+==================================================
+6. AJUSTE DOS PESOS
+==================================================
+
+Quando existir um vencedor suficientemente confiável:
+
+não enviar imediatamente a variante perdedora para 0%.
+
+Usar redistribuição gradual.
+
+Exemplo:
+
+50 / 50
+↓
+40 / 60
+↓
+30 / 70
+↓
+20 / 80
+
+O sistema pode continuar aprendendo.
+
+Nunca permitir:
+- peso negativo
+- peso > 100
+- soma diferente de 100
+
+Manter pelo menos 10% de tráfego para uma variante ativa enquanto o experimento estiver em aprendizado.
+
+Exemplo:
+
+10 / 90
+
+é permitido.
+
+0 / 100
+
+não é permitido durante o modo automático.
+
+==================================================
+7. FREQUÊNCIA DE OTIMIZAÇÃO
+==================================================
+
+NÃO recalcular o peso a cada visitante.
+
+Criar um mecanismo de avaliação periódica.
+
+Por exemplo:
+
+- avaliar após atingir a amostra mínima;
+- depois reavaliar após novos blocos de dados.
+
+O intervalo deve ser configurável ou definido de maneira segura no backend.
+
+Evitar atualizações constantes de peso.
+
+==================================================
+8. HISTÓRICO
+==================================================
+
+Toda alteração automática de peso deve ser registrada.
+
+Criar histórico contendo pelo menos:
+
+- experimentId
+- timestamp
+- weights anteriores
+- weights novos
+- conversões por variante
+- visitantes por variante
+- taxa de conversão por variante
+- variante considerada vencedora
+- motivo da alteração
+- tipo de alteração:
+  "automatic"
+
+Exemplo:
+
+Experimento:
+LP3 vs LP2
+
+Antes:
+LP2 50%
+LP3 50%
+
+Depois:
+LP2 35%
+LP3 65%
+
+Motivo:
+LP3 apresentou maior conversão com evidência suficiente após atingir a amostra mínima.
+
+==================================================
+9. ADMIN
+==================================================
+
+Adicionar ao painel de experimentos informações como:
+
+AUTO OPTIMIZATION
+
+Status:
+OFF / LEARNING / OPTIMIZING
+
+Amostra:
+142 / 200
+
+Variante:
+LP3
+Visitantes: 100
+Compras: 8
+Conversão: 8%
+
+Variante:
+LP2
+Visitantes: 100
+Compras: 3
+Conversão: 3%
+
+Distribuição atual:
+
+LP2 35%
+LP3 65%
+
+Também mostrar:
+
+Última otimização:
+data/hora
+
+Próxima avaliação:
+data/hora, se aplicável
+
+E um histórico simples das alterações.
+
+==================================================
+10. CONTROLES MANUAIS
+==================================================
+
+No Admin deve ser possível:
+
+- ativar/desativar Auto Optimization;
+- voltar para distribuição manual;
+- restaurar 50/50;
+- alterar a amostra mínima quando configurável.
+
+IMPORTANTE:
+
+Desativar Auto Optimization NÃO deve apagar o histórico.
+
+Também não deve apagar atribuições existentes.
+
+==================================================
+11. ATRIBUIÇÃO DOS VISITANTES
+==================================================
+
+PRESERVAR COMPLETAMENTE o mecanismo atual de assignment.
+
+Um visitante que já recebeu uma variante deve continuar naquela variante.
+
+O Auto Optimization só deve alterar a distribuição para NOVOS visitantes.
+
+NÃO reatribuir visitantes existentes.
+
+NÃO apagar experimentAssignments.
+
+==================================================
+12. EXPERIMENTOS ATIVOS
+==================================================
+
+O Auto Optimization só pode atuar em:
+
+experimentos com status = active
+
+Nunca alterar:
+
+draft
+paused
+completed
+
+Experimentos pausados/completados devem manter seus dados históricos intactos.
+
+==================================================
+13. COMPATIBILIDADE
+==================================================
+
+Preservar completamente:
+
+/e/:experimentSlug
+
+getOrCreateExperimentAssignment()
+
+resolveActiveExperimentAssignment()
+
+tracking existente
+
+checkout existente
+
+Clarity
+
+LP1
+
+LP2
+
+LP3
+
+Não alterar o funcionamento do router principal.
+
+IMPORTANTE:
+
+A função resolveActiveExperimentAssignment() NÃO deve passar a ser chamada automaticamente por "/".
+
+Não conectar o experimento ao domínio principal nesta tarefa.
+
+==================================================
+14. BACKEND
+==================================================
+
+Preferir implementar a lógica no backend.
+
+Criar funções isoladas para:
+
+- calcular métricas do experimento;
+- verificar se atingiu amostra mínima;
+- avaliar vencedor;
+- calcular novos pesos;
+- registrar histórico;
+- executar uma otimização.
+
+Não colocar lógica estatística importante no frontend.
+
+Criar endpoints administrativos somente se forem necessários.
+
+==================================================
+15. BANCO
+==================================================
+
+Reutilizar as tabelas atuais sempre que possível.
+
+Somente criar novas estruturas se forem realmente necessárias.
+
+Provavelmente será necessário armazenar:
+
+- configuração de otimização do experimento;
+- histórico de otimizações.
+
+Não criar uma nova estrutura paralela para tracking ou conversões.
+
+Criar migration/schema seguindo o padrão já utilizado pelo projeto.
+
+==================================================
+16. EXECUÇÃO
+==================================================
+
+Não executar otimização automaticamente a cada request.
+
+Criar uma função/service isolada, por exemplo:
+
+runExperimentOptimization(experimentId)
+
+Ela deve:
+
+1. verificar se o experimento está active;
+2. verificar se optimizationMode = automatic;
+3. buscar métricas atuais;
+4. verificar minimumSampleSize;
+5. calcular conversões;
+6. verificar evidência suficiente;
+7. se não houver evidência:
+   não alterar nada;
+8. se houver:
+   calcular novos weights;
+9. registrar histórico;
+10. atualizar as variantes.
+
+A função deve ser segura para ser executada novamente.
+
+==================================================
+17. TESTES OBRIGATÓRIOS
+==================================================
+
+Criar testes para pelo menos:
+
+1. Experimento manual:
+   não altera weights.
+
+2. Experimento automático abaixo da amostra:
+   não altera weights.
+
+3. Empate/resultado inconclusivo:
+   não altera weights.
+
+4. Variante vencedora:
+   altera weights gradualmente.
+
+5. Soma dos weights:
+   sempre = 100.
+
+6. Nenhuma variante:
+   peso < 10% durante aprendizado.
+
+7. Visitante existente:
+   mantém assignment original mesmo depois da alteração dos weights.
+
+8. Experimento paused:
+   não otimiza.
+
+9. Experimento completed:
+   não otimiza.
+
+10. Histórico:
+   toda alteração automática gera registro.
+
+11. Experimentos existentes:
+   continuam funcionando exatamente como antes.
+
+==================================================
+18. VALIDAÇÃO FINAL
+==================================================
+
+Depois da implementação:
+
+- rodar typecheck;
+- rodar testes;
+- rodar build frontend;
+- rodar build backend;
+- verificar /;
+- verificar /lp2;
+- verificar /lp3;
+- verificar /admin;
+- verificar /e/:experimentSlug.
+
+Confirmar explicitamente:
+
+1. LP1 não foi alterada.
+2. LP2 não foi alterada.
+3. LP3 não foi alterada visualmente.
+4. Checkout não foi alterado.
+5. Clarity não foi alterado.
+6. / não começou a distribuir experimentos automaticamente.
+7. Experimentos manuais continuam manuais.
+8. Auto Optimization funciona somente quando explicitamente ativado.
+
+==================================================
+19. REGRA PRINCIPAL DESTA TAREFA
+==================================================
+
+ESTA É UMA IMPLEMENTAÇÃO DE INFRAESTRUTURA.
+
+Não melhorar copy.
+Não mexer em design.
+Não refatorar landing pages.
+Não alterar checkout.
+Não implementar router automático do domínio principal.
+Não criar novos sistemas de tracking.
+
+Apenas:
+
+EXPERIMENTOS EXISTENTES
++
+DADOS DE CONVERSÃO EXISTENTES
++
+AUTO OPTIMIZATION
++
+CONFIGURAÇÃO NO ADMIN
++
+HISTÓRICO
++
+TESTES
+
+Antes de editar, mostre um resumo curto de:
+- arquivos que serão alterados;
+- tabelas que precisarão ser alteradas/criadas;
+- como a otimização será executada.
+
+Depois implemente.

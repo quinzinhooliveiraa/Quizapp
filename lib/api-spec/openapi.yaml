@@ -537,6 +537,88 @@ paths:
           description: Invalid experiment or weights
         "403":
           description: Access denied
+  /admin/experiments/{experimentId}/optimization:
+    get:
+      operationId: getAdminExperimentOptimization
+      tags: [admin]
+      summary: Get automatic optimization status and history
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Optimization summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperimentOptimizationSummary"
+        "403":
+          description: Access denied
+        "404":
+          description: Experiment not found
+    patch:
+      operationId: updateAdminExperimentOptimization
+      tags: [admin]
+      summary: Update automatic optimization controls
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExperimentOptimizationUpdate"
+      responses:
+        "200":
+          description: Optimization controls updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperimentOptimizationSummary"
+        "400":
+          description: Invalid optimization controls
+        "403":
+          description: Access denied
+        "404":
+          description: Experiment not found
+  /admin/experiments/{experimentId}/optimization/run:
+    post:
+      operationId: runAdminExperimentOptimization
+      tags: [admin]
+      summary: Evaluate automatic optimization for an experiment
+      parameters:
+        - name: experimentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Optimization evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExperimentOptimizationRunResponse"
+        "403":
+          description: Access denied
+        "404":
+          description: Experiment not found
   /admin/experiments/{experimentId}:
     patch:
       operationId: updateAdminExperimentStatus
@@ -1341,6 +1423,18 @@ components:
           minItems: 2
           items:
             $ref: "#/components/schemas/ExperimentVariantInput"
+        optimizationMode:
+          type: string
+          enum: [manual, automatic]
+          default: manual
+        minimumSampleSizeMode:
+          type: string
+          enum: [automatic, custom]
+          default: automatic
+        minimumSampleSize:
+          type: ["integer", "null"]
+          minimum: 2
+          maximum: 100000
       required: [name, objective, variants]
     ExperimentStatusUpdate:
       type: object
@@ -1373,6 +1467,14 @@ components:
         status:
           type: string
           enum: [draft, active, paused, completed]
+        optimizationMode:
+          type: string
+          enum: [manual, automatic]
+        minimumSampleSizeMode:
+          type: string
+          enum: [automatic, custom]
+        minimumSampleSize:
+          type: ["integer", "null"]
         variants:
           type: array
           items:
@@ -1387,6 +1489,9 @@ components:
           description,
           objective,
           status,
+          optimizationMode,
+          minimumSampleSizeMode,
+          minimumSampleSize,
           variants,
           createdAt,
           updatedAt,
@@ -1440,6 +1545,126 @@ components:
           items:
             $ref: "#/components/schemas/AdminExperimentAnalyticsVariant"
       required: [experimentId, variants]
+    ExperimentOptimizationUpdate:
+      type: object
+      properties:
+        optimizationMode:
+          type: string
+          enum: [manual, automatic]
+        minimumSampleSizeMode:
+          type: string
+          enum: [automatic, custom]
+        minimumSampleSize:
+          type: ["integer", "null"]
+          minimum: 2
+          maximum: 100000
+        restoreWeights:
+          type: boolean
+      minProperties: 1
+    ExperimentOptimizationVariant:
+      type: object
+      properties:
+        variantId: { type: string }
+        name: { type: string }
+        path: { type: string }
+        weight: { type: integer }
+        visitors: { type: integer }
+        purchases: { type: integer }
+        conversionRate: { type: number }
+      required:
+        [variantId, name, path, weight, visitors, purchases, conversionRate]
+    ExperimentOptimizationHistory:
+      type: object
+      properties:
+        id: { type: string }
+        evaluatedAt: { type: string, format: date-time }
+        previousWeights:
+          type: object
+          additionalProperties: { type: integer }
+        newWeights:
+          type: object
+          additionalProperties: { type: integer }
+        conversionsByVariant:
+          type: object
+          additionalProperties: { type: integer }
+        visitorsByVariant:
+          type: object
+          additionalProperties: { type: integer }
+        conversionRatesByVariant:
+          type: object
+          additionalProperties: { type: number }
+        winnerVariantId: { type: string }
+        sampleSize: { type: integer }
+        reason: { type: string }
+        changeType:
+          type: string
+          enum: [automatic]
+      required:
+        [
+          id,
+          evaluatedAt,
+          previousWeights,
+          newWeights,
+          conversionsByVariant,
+          visitorsByVariant,
+          conversionRatesByVariant,
+          winnerVariantId,
+          sampleSize,
+          reason,
+          changeType,
+        ]
+    ExperimentOptimizationSummary:
+      type: object
+      properties:
+        optimizationMode:
+          type: string
+          enum: [manual, automatic]
+        minimumSampleSizeMode:
+          type: string
+          enum: [automatic, custom]
+        minimumSampleSize:
+          type: ["integer", "null"]
+        minimumSampleSizeUsed: { type: integer }
+        status:
+          type: string
+          enum: [off, learning, optimizing]
+        totalVisitors: { type: integer }
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExperimentOptimizationVariant"
+        lastOptimizationAt:
+          type: ["string", "null"]
+          format: date-time
+        nextOptimizationAt:
+          type: ["string", "null"]
+          format: date-time
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExperimentOptimizationHistory"
+      required:
+        [
+          optimizationMode,
+          minimumSampleSizeMode,
+          minimumSampleSize,
+          minimumSampleSizeUsed,
+          status,
+          totalVisitors,
+          variants,
+          lastOptimizationAt,
+          nextOptimizationAt,
+          history,
+        ]
+    ExperimentOptimizationRunResponse:
+      type: object
+      properties:
+        changed: { type: boolean }
+        reason: { type: string }
+        winnerVariantId: { type: ["string", "null"] }
+        summary:
+          $ref: "#/components/schemas/ExperimentOptimizationSummary"
+      required: [changed, reason, winnerVariantId, summary]
     SessionRecordingLookup:
       type: object
       properties:
