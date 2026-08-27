@@ -1,0 +1,239 @@
+TAREFA — FINALIZAR A INTEGRAÇÃO DA LP3 AO TRACKING E AO ADMIN EXISTENTES
+
+IMPORTANTE:
+Esta tarefa pode ter sido parcialmente implementada em uma execução anterior.
+
+ANTES DE ALTERAR QUALQUER ARQUIVO:
+1. Audite o estado atual do código.
+2. Verifique o git status e os commits recentes.
+3. Inspecione como LP1/v1 e LP2/v2 já funcionam.
+4. Compare isso com a implementação atual da LP3.
+5. Faça um checklist dos requisitos abaixo indicando:
+   - JÁ IMPLEMENTADO
+   - PARCIALMENTE IMPLEMENTADO
+   - FALTANDO
+6. Só depois implemente o que estiver faltando.
+
+NÃO:
+- recrie funcionalidades que já existem;
+- duplique hooks, endpoints ou tabelas;
+- substitua o sistema atual de tracking;
+- refatore LP1 ou LP2;
+- altere visualmente LP1, LP2 ou o aplicativo;
+- reverta alterações existentes;
+- crie um segundo sistema de analytics;
+- crie um segundo sistema de gravação do Clarity.
+
+OBJETIVO
+
+A LP3 deve ser tratada como uma terceira landing page dentro DA MESMA infraestrutura já existente.
+
+Arquitetura desejada:
+
+LP1/v1
+LP2/v2
+LP3
+  ↓
+tracking existente
+  ↓
+page_events
+  ↓
+analytics existente
+  ↓
+Admin existente
+  ↓
+sessões + gravações Clarity
+
+REQUISITO 1 — TRACKING
+
+Adicionar LP3 ao sistema de tracking existente.
+
+A LP3 deve utilizar o mesmo mecanismo usado por LP1/LP2 sempre que possível.
+
+Não criar um tracker separado.
+
+O backend deve aceitar:
+
+lpId = "lp3"
+
+e os mesmos eventos já utilizados pelas outras LPs:
+
+view
+cta_click
+exit
+
+Se a LP3 atualmente possui eventos CustomEvent próprios, eles podem continuar existindo se forem necessários para a experiência, mas eles NÃO substituem o tracking oficial.
+
+O tracking oficial precisa chegar ao:
+
+POST /api/track/page-event
+
+A LP3 precisa gerar corretamente:
+
+- visualização;
+- clique em CTA;
+- saída;
+- visitorKey;
+- clarityUserId;
+- claritySessionId;
+- seção/metadata quando o sistema existente já suportar isso.
+
+REQUISITO 2 — CLARITY
+
+A LP3 precisa utilizar a mesma inicialização do Microsoft Clarity existente.
+
+NÃO criar outro projeto Clarity.
+
+NÃO duplicar o script.
+
+Reutilizar a infraestrutura existente.
+
+A sessão da LP3 precisa poder ser associada ao:
+
+visitorKey
+clarityUserId
+claritySessionId
+
+para que o Admin consiga encontrar a gravação posteriormente.
+
+REQUISITO 3 — ADMIN
+
+Adicionar LP3 ao sistema de landing pages existente no Admin.
+
+Não criar uma página administrativa nova.
+
+A LP3 deve aparecer junto das demais landing pages existentes.
+
+Nome sugerido:
+
+"LP3 — Quiz + narrativa"
+
+O Admin deve conseguir visualizar para LP3 as mesmas métricas disponíveis para as outras LPs, quando aplicável:
+
+- visualizações;
+- cliques;
+- checkouts;
+- compras;
+- tempo médio;
+- saída;
+- sessões.
+
+REQUISITO 4 — SESSÕES
+
+O endpoint existente:
+
+GET /api/admin/lp-sessions
+
+deve conseguir retornar sessões da LP3.
+
+Não criar endpoint paralelo.
+
+Reutilizar a estrutura existente.
+
+REQUISITO 5 — GRAVAÇÃO CLARITY
+
+O botão existente de "Ver gravação" no Admin deve funcionar também para visitantes da LP3.
+
+Reutilizar:
+
+GET /api/admin/session-recording
+
+e toda a infraestrutura existente.
+
+Não criar outro sistema de gravação.
+
+REQUISITO 6 — ANALYTICS
+
+O endpoint:
+
+GET /api/admin/analytics
+
+deve incluir LP3.
+
+A LP3 deve aparecer no mesmo objeto/estrutura usada para v1/v2.
+
+Não criar uma API de analytics específica para LP3.
+
+REQUISITO 7 — CHECKOUT / ATRIBUIÇÃO
+
+Garantir que uma compra iniciada na LP3 continue sendo registrada como:
+
+sourceLp = "lp3"
+
+e NÃO como v1 ou v2.
+
+Preservar completamente o comportamento existente de:
+
+sourceLp = "v1"
+sourceLp = "v2"
+
+Não alterar LP1/LP2.
+
+REQUISITO 8 — BANCO / TIPAGEM / OPENAPI
+
+Audite:
+
+lib/db/src/schema/index.ts
+lib/api-spec/openapi.yaml
+artifacts/api-server/src/routes/tracking.ts
+artifacts/api-server/src/routes/admin.ts
+artifacts/api-server/src/routes/connection.ts
+
+Se "lp3" estiver faltando em enums, validações ou schemas necessários, adicione.
+
+Se o OpenAPI precisar ser atualizado, atualize.
+
+Se os clientes gerados precisarem ser regenerados, faça isso usando o mecanismo já existente no projeto.
+
+Não criar estrutura de banco nova se a infraestrutura existente já comportar LP3.
+
+REQUISITO 9 — PRESERVAÇÃO
+
+É CRÍTICO NÃO ALTERAR O COMPORTAMENTO VISUAL OU FUNCIONAL DE:
+
+- LP1
+- LP2
+- onboarding existente
+- app
+- play
+- checkout existente
+
+A LP3 deve ser adicionada de forma isolada.
+
+Se precisar modificar App.tsx, faça somente alterações localizadas necessárias para integração da LP3.
+
+REQUISITO 10 — VALIDAÇÃO
+
+Depois da implementação:
+
+1. Rode typecheck.
+2. Rode build do frontend.
+3. Rode build do backend.
+4. Rode git diff --check.
+5. Verifique as rotas:
+   /
+   /lp2
+   /lp3
+   /onboarding
+   /admin
+6. Confirme que LP1 e LP2 continuam funcionando.
+7. Confirme que LP3 envia tracking.
+8. Confirme que LP3 aparece no Admin.
+9. Confirme que LP3 aparece nas sessões.
+10. Confirme que sourceLp continua correto no checkout.
+
+NO FINAL:
+
+Não diga simplesmente "feito".
+
+Entregue um relatório objetivo dividido em:
+
+1. O que já existia antes desta execução.
+2. O que estava faltando.
+3. O que foi alterado agora.
+4. Arquivos alterados.
+5. O que foi validado.
+6. Eventuais pontos que ainda dependem de teste real com usuário.
+
+IMPORTANTE:
+Se TODOS os requisitos já estiverem implementados, NÃO faça alterações desnecessárias. Apenas valide e informe que a tarefa já estava concluída.

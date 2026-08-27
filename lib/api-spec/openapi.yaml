@@ -1118,7 +1118,7 @@ components:
         claritySessionId: { type: string, maxLength: 200 }
         ctaSource:
           type: string
-          enum: [hero_quiz, hero_comprar]
+          enum: [hero_quiz, hero_comprar, lp3_offer]
       required: [lpId, visitorKey, eventType]
     SessionRecordingLookup:
       type: object

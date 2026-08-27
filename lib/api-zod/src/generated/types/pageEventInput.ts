@@ -8,7 +8,6 @@
 import type { PageEventInputCtaSource } from './pageEventInputCtaSource';
 import type { PageEventInputEventType } from './pageEventInputEventType';
 import type { PageEventInputLpId } from './pageEventInputLpId';
-import type { PageEventInputMetadata } from './pageEventInputMetadata';
 
 export interface PageEventInput {
   lpId: PageEventInputLpId;
@@ -26,6 +25,5 @@ export interface PageEventInput {
   clarityUserId?: string;
   /** @maxLength 200 */
   claritySessionId?: string;
-  metadata?: PageEventInputMetadata;
   ctaSource?: PageEventInputCtaSource;
 }

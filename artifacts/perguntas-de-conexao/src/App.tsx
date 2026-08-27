@@ -1901,7 +1901,7 @@ function StoredAccessGate() {
   );
 }
 
-type LandingCtaSource = "hero_quiz" | "hero_comprar";
+type LandingCtaSource = "hero_quiz" | "hero_comprar" | "lp3_offer";
 
 function useLpTracking(lpId: "v1" | "v2" | "lp3") {
   const visitorKeyRef = useRef<string>("");
@@ -3138,7 +3138,7 @@ function TrackedLp3() {
 
   return (
     <Lp3
-      onCtaClick={() => trackCtaClick()}
+      onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
       onCheckout={() => {
         window.location.href = "/?comprar=1&source=lp3";
       }}

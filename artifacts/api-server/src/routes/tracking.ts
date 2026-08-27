@@ -7,7 +7,7 @@ import { isAdminSession } from "./feedback";
 const router: IRouter = Router();
 const LP_IDS = ["v1", "v2", "lp3"] as const;
 const EVENT_TYPES = ["view", "cta_click", "exit"] as const;
-const CTA_SOURCES = ["hero_quiz", "hero_comprar"] as const;
+const CTA_SOURCES = ["hero_quiz", "hero_comprar", "lp3_offer"] as const;
 
 router.post("/track/page-event", async (req, res): Promise<void> => {
   const body = req.body as {

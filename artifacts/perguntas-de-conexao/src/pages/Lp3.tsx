@@ -9,7 +9,7 @@ import {
 
 type Lp3Props = {
   onCheckout?: () => void;
-  onCtaClick?: () => void;
+  onCtaClick?: (ctaSource?: "lp3_offer") => void;
   onBack?: () => void;
 };
 
@@ -347,7 +347,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
 
   const checkout = () => {
     trackLp3("checkout_intent", { source: "lp3_offer" });
-    onCtaClick?.();
+    onCtaClick?.("lp3_offer");
     setLiveNote("Vamos continuar essa conversa.");
     onCheckout?.();
   };

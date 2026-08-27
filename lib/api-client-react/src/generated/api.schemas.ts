@@ -327,21 +327,7 @@ export const PageEventInputEventType = {
   view: 'view',
   cta_click: 'cta_click',
   exit: 'exit',
-  lp3_view: 'lp3_view',
-  lp3_start: 'lp3_start',
-  lp3_question_answered: 'lp3_question_answered',
-  lp3_quiz_completed: 'lp3_quiz_completed',
-  lp3_profile_revealed: 'lp3_profile_revealed',
-  lp3_testimonial_viewed: 'lp3_testimonial_viewed',
-  lp3_card_preview_viewed: 'lp3_card_preview_viewed',
-  lp3_recommendation_viewed: 'lp3_recommendation_viewed',
-  lp3_offer_viewed: 'lp3_offer_viewed',
-  lp3_checkout_started: 'lp3_checkout_started',
-  lp3_email_submitted: 'lp3_email_submitted',
-  lp3_purchase_completed: 'lp3_purchase_completed',
 } as const;
-
-export type PageEventInputMetadata = { [key: string]: unknown };
 
 export type PageEventInputCtaSource = typeof PageEventInputCtaSource[keyof typeof PageEventInputCtaSource];
 
@@ -368,7 +354,6 @@ export interface PageEventInput {
   clarityUserId?: string;
   /** @maxLength 200 */
   claritySessionId?: string;
-  metadata?: PageEventInputMetadata;
   ctaSource?: PageEventInputCtaSource;
 }
 

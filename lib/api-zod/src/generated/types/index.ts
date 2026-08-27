@@ -61,7 +61,6 @@ export * from './pageEventInput';
 export * from './pageEventInputCtaSource';
 export * from './pageEventInputEventType';
 export * from './pageEventInputLpId';
-export * from './pageEventInputMetadata';
 export * from './preferences';
 export * from './preferencesInput';
 export * from './question';

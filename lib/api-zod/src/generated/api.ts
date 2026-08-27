@@ -370,12 +370,11 @@ export const trackPageEventBodyClaritySessionIdMax = 200;
 export const TrackPageEventBody = zod.object({
   "lpId": zod.enum(['v1', 'v2', 'lp3']),
   "visitorKey": zod.string().min(1).max(trackPageEventBodyVisitorKeyMax),
-  "eventType": zod.enum(['view', 'cta_click', 'exit', 'lp3_view', 'lp3_start', 'lp3_question_answered', 'lp3_quiz_completed', 'lp3_profile_revealed', 'lp3_testimonial_viewed', 'lp3_card_preview_viewed', 'lp3_recommendation_viewed', 'lp3_offer_viewed', 'lp3_checkout_started', 'lp3_email_submitted', 'lp3_purchase_completed']),
+  "eventType": zod.enum(['view', 'cta_click', 'exit']),
   "timeOnPageMs": zod.number().min(trackPageEventBodyTimeOnPageMsMin).optional(),
   "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional(),
   "clarityUserId": zod.string().max(trackPageEventBodyClarityUserIdMax).optional(),
   "claritySessionId": zod.string().max(trackPageEventBodyClaritySessionIdMax).optional(),
-  "metadata": zod.record(zod.string(), zod.unknown()).optional(),
   "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'lp3_offer']).optional()
 })
 
