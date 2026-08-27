@@ -94,20 +94,6 @@ const welcomeDeckStorageKey = "conexao-personalized-decks";
 const welcomeDeckIdStorageKey = "conexao-welcome-deck-id";
 const welcomeDeckDoneStorageKey = "conexao-welcome-deck-done";
 const openWelcomeDeckStorageKey = "conexao-open-welcome-deck";
-const lp3HandoffStorageKey = "conexao-lp3-state";
-
-type Lp3Handoff = {
-  answers?: {
-    relationshipDuration?: string;
-    conversationFrequency?: string;
-    discoveryFrequency?: string;
-    difficultConversations?: string;
-    primaryGoal?: string;
-  };
-  inferredProfile?: string;
-  recommendedDeck?: string;
-};
-
 function safeGetItem(key: string): string | null {
   try {
     return localStorage.getItem(key);
@@ -130,26 +116,6 @@ function safeRemoveItem(key: string): void {
   } catch {
     // Storage may be unavailable in embedded or private browsers.
   }
-}
-
-function readLp3Handoff(): Lp3Handoff | null {
-  try {
-    const value = JSON.parse(safeGetItem(lp3HandoffStorageKey) || "null");
-    if (!value || typeof value !== "object") return null;
-    const handoff = value as Lp3Handoff;
-    return handoff.answers && typeof handoff.answers === "object"
-      ? handoff
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function lp3DiscoveryToOnboarding(value?: string): string {
-  if (value === "Hoje" || value === "Nos últimos dias") return "Nesta semana";
-  if (value === "Nem lembro") return "Sinceramente, não lembro";
-  if (value) return "Faz um tempo";
-  return "";
 }
 
 function removeWelcomeDeck() {
@@ -342,15 +308,10 @@ export default function Onboarding() {
   const activeSteps = useMemo(
     () =>
       isInvitedGuest
-        ? steps.filter((step) => {
-            if (step.id === "welcome-role" || step.id === "guest-entry")
-              return false;
-            return !(step.id === "surprise" && readLp3Handoff()?.answers?.discoveryFrequency);
-          })
-        : steps.filter((step) => {
-            if (step.id === "email") return false;
-            return !(step.id === "surprise" && readLp3Handoff()?.answers?.discoveryFrequency);
-          }),
+        ? steps.filter(
+            (step) => step.id !== "welcome-role" && step.id !== "guest-entry",
+          )
+        : steps.filter((step) => step.id !== "email"),
     [isInvitedGuest],
   );
   const [role, setRole] = useState<OnboardingRole>(readOnboardingRole);
@@ -382,11 +343,7 @@ export default function Onboarding() {
   );
   const [guestEmailError, setGuestEmailError] = useState("");
   const [guestEmailChecking, setGuestEmailChecking] = useState(false);
-  const [surprise, setSurprise] = useState(
-    () =>
-      safeGetItem("conexao-onboarding-surprise") ||
-      lp3DiscoveryToOnboarding(readLp3Handoff()?.answers?.discoveryFrequency),
-  );
+  const [surprise, setSurprise] = useState("");
   const [feeling, setFeeling] = useState(
     () => safeGetItem("conexao-onboarding-feeling") || "",
   );
@@ -480,7 +437,6 @@ export default function Onboarding() {
     safeSetItem("conexao-onboarding-relationship", relationship);
     safeSetItem("conexao-onboarding-date", date);
     safeSetItem("conexao-onboarding-curiosity", JSON.stringify(curiosity));
-    safeSetItem("conexao-onboarding-surprise", surprise);
     safeSetItem("conexao-onboarding-feeling", feeling);
     if (role) safeSetItem("conexao-role", role);
     if (guestEmail.trim())
@@ -492,18 +448,6 @@ export default function Onboarding() {
       safeSetItem("conexao-curiosity", JSON.stringify(curiosity));
       safeSetItem("conexao-feeling", feeling);
       safeSetItem("conexao-partner-pronoun", pronoun);
-      const lp3Handoff = readLp3Handoff();
-      if (lp3Handoff) {
-        safeSetItem(
-          "conexao-lp3-profile",
-          lp3Handoff.inferredProfile || "",
-        );
-        safeSetItem(
-          "conexao-lp3-recommended-deck",
-          lp3Handoff.recommendedDeck || "",
-        );
-      }
-
       try {
         const apiBase = apiBaseUrl;
         const guestToken = safeGetItem("conexao-guest-token");
@@ -625,7 +569,6 @@ export default function Onboarding() {
     safeRemoveItem("conexao-onboarding-relationship");
     safeRemoveItem("conexao-onboarding-date");
     safeRemoveItem("conexao-onboarding-curiosity");
-    safeRemoveItem("conexao-onboarding-surprise");
     safeRemoveItem("conexao-onboarding-feeling");
     safeRemoveItem("conexao-guest-email");
     safeRemoveItem("conexao-onboarding-complete");

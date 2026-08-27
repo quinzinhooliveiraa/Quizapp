@@ -6,7 +6,6 @@ import {
   type ConnectionQuestion,
   type ConnectionTheme,
 } from "@workspace/connection-content";
-import { apiBaseUrl } from "@/config";
 
 type Lp3Props = {
   onCheckout?: () => void;
@@ -180,32 +179,6 @@ function trackLp3(eventName: string, detail: Record<string, unknown> = {}) {
     window.dispatchEvent(
       new CustomEvent(`lp3:${eventName}`, { detail: payload }),
     );
-    const eventMap: Record<string, string> = {
-      viewed: "lp3_view",
-      started: "lp3_start",
-      answered: "lp3_question_answered",
-      screen_result: "lp3_quiz_completed",
-      screen_story: "lp3_testimonial_viewed",
-      screen_practice: "lp3_card_preview_viewed",
-      screen_recommend: "lp3_recommendation_viewed",
-      screen_offer: "lp3_offer_viewed",
-      checkout_intent: "lp3_checkout_started",
-    };
-    const eventType = eventMap[eventName];
-    if (eventType) {
-      void fetch(`${apiBaseUrl}/api/track/page-event`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lpId: "lp3",
-          visitorKey: payload.visitor_id,
-          eventType,
-          ctaSource: eventType === "lp3_checkout_started" ? "lp3_offer" : undefined,
-          metadata: payload,
-        }),
-        keepalive: true,
-      }).catch(() => undefined);
-    }
   }
 }
 

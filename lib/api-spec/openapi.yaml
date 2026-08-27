@@ -697,7 +697,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [v1, v2, lp3]
+            enum: [v1, v2]
       responses:
         "200":
           description: Recent landing page sessions
@@ -1100,7 +1100,7 @@ components:
           pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
         sourceLp:
           type: string
-          enum: [v1, v2, lp3]
+          enum: [v1, v2]
         visitorKey:
           type: string
           minLength: 1
@@ -1109,38 +1109,16 @@ components:
     PageEventInput:
       type: object
       properties:
-        lpId: { type: string, enum: [v1, v2, lp3] }
+        lpId: { type: string, enum: [v1, v2] }
         visitorKey: { type: string, minLength: 1, maxLength: 120 }
-        eventType:
-          type: string
-          enum:
-            [
-              view,
-              cta_click,
-              exit,
-              lp3_view,
-              lp3_start,
-              lp3_question_answered,
-              lp3_quiz_completed,
-              lp3_profile_revealed,
-              lp3_testimonial_viewed,
-              lp3_card_preview_viewed,
-              lp3_recommendation_viewed,
-              lp3_offer_viewed,
-              lp3_checkout_started,
-              lp3_email_submitted,
-              lp3_purchase_completed,
-            ]
+        eventType: { type: string, enum: [view, cta_click, exit] }
         timeOnPageMs: { type: number, minimum: 0 }
         lastSection: { type: string, maxLength: 80 }
         clarityUserId: { type: string, maxLength: 200 }
         claritySessionId: { type: string, maxLength: 200 }
-        metadata:
-          type: object
-          additionalProperties: true
         ctaSource:
           type: string
-          enum: [hero_quiz, hero_comprar, lp3_offer]
+          enum: [hero_quiz, hero_comprar]
       required: [lpId, visitorKey, eventType]
     SessionRecordingLookup:
       type: object
@@ -1155,7 +1133,7 @@ components:
     LandingAnalytics:
       type: object
       properties:
-        lpId: { type: string, enum: [v1, v2, lp3] }
+        lpId: { type: string, enum: [v1, v2] }
         views: { type: number }
         ctaClicks: { type: number }
         checkoutsStarted: { type: number }

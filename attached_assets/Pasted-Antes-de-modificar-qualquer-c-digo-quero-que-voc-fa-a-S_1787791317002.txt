@@ -1,0 +1,258 @@
+Antes de modificar qualquer código, quero que você faça SOMENTE uma análise da estrutura atual do projeto.
+
+NÃO IMPLEMENTE NADA AINDA.
+NÃO ALTERE NENHUM ARQUIVO.
+NÃO RESTAURE NADA.
+NÃO APAGUE NADA.
+
+Contexto:
+
+Quero criar uma nova LP chamada LP3.
+
+A LP3 será uma nova landing page em formato de quiz/experiência progressiva.
+
+PORÉM, o projeto já possui:
+
+- LP(s) existentes;
+- onboarding;
+- Admin;
+- analytics/tracking;
+- Microsoft Clarity;
+- sistema de gravações/visualização de sessões;
+- backend/API;
+- banco de dados;
+- checkout;
+- componentes e estilos já utilizados pelo produto.
+
+Eu NÃO quero reconstruir nenhuma dessas coisas.
+
+Quero REAPROVEITAR a infraestrutura existente.
+
+A LP3 deve ser adicionada ao sistema atual, não criar um segundo sistema paralelo.
+
+
+==================================================
+OBJETIVO DESTA TAREFA
+==================================================
+
+Faça uma auditoria técnica do projeto para descobrir exatamente como ele está estruturado hoje.
+
+Não faça alterações.
+
+Me entregue um relatório contendo:
+
+1. Qual arquivo/componente implementa a LP1 atual.
+
+2. Qual arquivo/componente implementa a LP2, caso exista.
+
+3. Qual arquivo/componente atualmente implementa ou começou a implementar a LP3, caso exista.
+
+4. Como as rotas estão estruturadas.
+
+5. Onde o React/frontend é inicializado.
+
+6. Onde está o Admin.
+
+7. Como o tracking/analytics funciona.
+
+8. Onde o Microsoft Clarity é inicializado.
+
+9. Como as sessões/gravações do Clarity são utilizadas ou exibidas no Admin.
+
+10. Onde estão as APIs relacionadas às landing pages.
+
+11. Onde as respostas do quiz/onboarding são armazenadas.
+
+12. Como o onboarding atual recebe os dados do usuário.
+
+13. Como o checkout é iniciado.
+
+14. Quais componentes visuais existentes podem ser reutilizados na LP3.
+
+15. Quais componentes NÃO devem ser alterados porque são compartilhados pela LP1/LP2/app.
+
+16. Se já existe algum código de A/B testing, experimentos, variantes ou distribuição de tráfego.
+
+17. Se já existe algum sistema no Admin que permita acompanhar conversão/interação por página/origem.
+
+18. Quais arquivos seriam necessários modificar para adicionar LP3 de maneira isolada.
+
+19. Quais novos arquivos seriam necessários criar.
+
+20. Qual seria a menor alteração possível para adicionar `/lp3` sem modificar o comportamento da LP1/LP2.
+
+
+==================================================
+REGRA MAIS IMPORTANTE
+==================================================
+
+LP1 e LP2 são PRODUÇÃO.
+
+Não queremos refatorar essas páginas.
+
+Não queremos "melhorar" essas páginas.
+
+Não queremos substituir componentes existentes.
+
+Não queremos migrar a arquitetura.
+
+Não queremos criar uma nova arquitetura.
+
+Queremos adicionar uma terceira experiência.
+
+
+==================================================
+SOBRE A LP3
+==================================================
+
+A LP3 futuramente será:
+
+/lp3
+
+Ela será uma experiência de quiz.
+
+A pessoa chega através do tráfego orgânico.
+
+Em vez de receber imediatamente uma página tradicional de venda, ela passa por uma sequência de perguntas.
+
+As respostas serão usadas para:
+
+- identificar o contexto do relacionamento;
+- personalizar a narrativa;
+- escolher histórias/depoimentos relevantes;
+- recomendar conteúdos/baralhos;
+- aumentar envolvimento;
+- eventualmente gerar um perfil/retrato do casal;
+- levar para a oferta;
+- e futuramente reutilizar os dados no onboarding para que a pessoa NÃO precise responder as mesmas coisas novamente depois da compra.
+
+
+IMPORTANTE:
+
+NÃO implementar isso agora.
+
+Nesta tarefa estamos apenas mapeando a infraestrutura existente.
+
+
+==================================================
+REAPROVEITAMENTO
+==================================================
+
+Quero especificamente que você procure coisas que JÁ EXISTEM e possam ser reutilizadas.
+
+Por exemplo:
+
+- componentes de UI;
+- sistema de perguntas;
+- estado de quiz;
+- persistência;
+- autenticação;
+- tracking;
+- eventos;
+- analytics;
+- Clarity;
+- Admin;
+- APIs;
+- banco;
+- onboarding;
+- checkout.
+
+Se algo já existe, NÃO recrie.
+
+Se existe uma função que pode ser chamada pela LP3, use essa função futuramente.
+
+Se existe um componente que pode ser reutilizado sem alterar LP1/LP2, registre-o.
+
+Se existe um componente compartilhado mas alterá-lo poderia modificar LP1/LP2, NÃO altere-o.
+
+
+==================================================
+GIT
+==================================================
+
+Também analise:
+
+git status
+
+git log --oneline --decorate -20
+
+E identifique os commits recentes relacionados a:
+
+- LP;
+- landing page;
+- LP3;
+- checkout;
+- onboarding;
+- analytics;
+- Clarity;
+- Admin.
+
+NÃO faça reset.
+
+NÃO faça revert.
+
+NÃO faça checkout de commits.
+
+NÃO modifique o histórico.
+
+Somente analise.
+
+
+==================================================
+RESULTADO ESPERADO
+==================================================
+
+No final quero uma resposta técnica objetiva com:
+
+ARQUITETURA ATUAL
+
+LP1:
+arquivo(s):
+rota:
+
+LP2:
+arquivo(s):
+rota:
+
+LP3:
+arquivo(s), se já existir:
+rota:
+
+FRONTEND:
+...
+
+BACKEND:
+...
+
+ADMIN:
+...
+
+CLARITY:
+...
+
+ANALYTICS:
+...
+
+ONBOARDING:
+...
+
+CHECKOUT:
+...
+
+
+DEPOIS:
+
+"Para criar LP3 de forma segura, os arquivos que precisam ser criados/modificados são:"
+
+Liste exatamente os arquivos.
+
+E:
+
+"Os seguintes arquivos NÃO devem ser modificados:"
+
+Liste os arquivos críticos da LP1/LP2.
+
+
+NÃO ALTERE NENHUM ARQUIVO NESTA ETAPA.
+
+Depois de apresentar o relatório, PARE e aguarde minha aprovação.
