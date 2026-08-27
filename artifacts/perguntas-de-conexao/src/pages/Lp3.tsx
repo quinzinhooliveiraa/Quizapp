@@ -229,7 +229,20 @@ export default function Lp3({ onCheckout, onBack }: Lp3Props) {
 
   useEffect(() => {
     window.localStorage.setItem("lp3_quiz_state", JSON.stringify({ screen, currentQuestion, answers, practiceIndex }));
+    let previousAnsweredAt: string | undefined;
+    try {
+      const previous = JSON.parse(
+        window.localStorage.getItem("conexao-lp3-state") || "{}",
+      ) as { answeredAt?: unknown };
+      if (typeof previous.answeredAt === "string") {
+        previousAnsweredAt = previous.answeredAt;
+      }
+    } catch {
+      // A malformed previous handoff is replaced below.
+    }
+    const hasCompletedQuiz = quizQuestions.every((question) => Boolean(answers[question.id]));
     const handoff = {
+      source: "lp3",
       answers: {
         relationshipDuration: answers.time,
         conversationFrequency: answers.routine,
@@ -239,6 +252,9 @@ export default function Lp3({ onCheckout, onBack }: Lp3Props) {
       },
       inferredProfile: result.title,
       recommendedDeck: recommendedTheme.title,
+      ...(hasCompletedQuiz
+        ? { answeredAt: previousAnsweredAt ?? new Date().toISOString() }
+        : {}),
     };
     window.localStorage.setItem("conexao-lp3-state", JSON.stringify(handoff));
     window.localStorage.setItem("conexao-lp3-relationship-duration", answers.time || "");

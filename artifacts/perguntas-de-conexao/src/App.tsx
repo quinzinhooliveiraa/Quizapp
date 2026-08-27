@@ -2057,6 +2057,10 @@ function useLpTracking(lpId: "v1" | "v2") {
 
 function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const trackCtaClick = useLpTracking(variant);
+  const checkoutSourceLp: "v1" | "v2" | "lp3" =
+    new URLSearchParams(window.location.search).get("source") === "lp3"
+      ? "lp3"
+      : variant;
   const [landingQuizStep, setLandingQuizStep] = useState(0);
   const [landingQuizAnswers, setLandingQuizAnswers] =
     useState<LandingQuizAnswers>({});
@@ -2289,7 +2293,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
           buyerName: "Cliente Perguntas de Conexão",
           mode: nativeCheckoutEnabled ? "native" : "hosted",
           buyerEmail: email.trim().toLowerCase() || undefined,
-          sourceLp: variant,
+          sourceLp: checkoutSourceLp,
           visitorKey: safeGetItem("pdc-visitor-key") || undefined,
         }),
       });

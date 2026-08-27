@@ -1,0 +1,270 @@
+Quero fazer APENAS uma alteração pequena e isolada no projeto.
+
+IMPORTANTE:
+NÃO recrie a LP3.
+NÃO altere a LP1.
+NÃO altere a LP2.
+NÃO altere o design ou comportamento existente das outras landing pages.
+NÃO refatore App.tsx inteiro.
+NÃO altere o sistema de tracking existente das LP1/LP2.
+NÃO altere o Admin visualmente.
+NÃO altere o checkout para um novo fluxo.
+NÃO crie um novo sistema de onboarding.
+
+A LP3 já existe e está funcionando em:
+
+/lp3
+
+Arquivo principal:
+
+artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+
+O objetivo desta tarefa é SOMENTE conectar os dados que a pessoa respondeu na LP3 ao onboarding existente.
+
+==================================================
+OBJETIVO
+==================================================
+
+Hoje a LP3 coleta informações importantes sobre o casal, mas essas informações ficam no localStorage e o onboarding não aproveita completamente esses dados.
+
+Quero que o fluxo seja:
+
+LP3
+↓
+pessoa responde o quiz
+↓
+dados da LP3 são preservados
+↓
+pessoa compra
+↓
+entra no onboarding
+↓
+onboarding reconhece que aquela pessoa já respondeu determinadas perguntas
+↓
+não pede novamente informações que já foram respondidas
+↓
+reaproveita os dados para preencher/preparar o onboarding
+
+A experiência deve parecer contínua.
+
+A pessoa deve sentir:
+
+"Eu já contei isso para vocês, então vocês já sabem."
+
+==================================================
+ANTES DE ALTERAR
+==================================================
+
+Primeiro faça uma auditoria SOMENTE dos arquivos envolvidos:
+
+- artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+- artifacts/perguntas-de-conexao/src/pages/Onboarding.tsx
+- artifacts/perguntas-de-conexao/src/App.tsx
+
+Procure especificamente:
+
+1. Todas as chaves localStorage utilizadas pela LP3.
+2. Todas as informações coletadas pela LP3.
+3. Como a LP3 atualmente salva essas informações.
+4. Como o onboarding atualmente inicializa seus estados.
+5. Como o onboarding identifica owner/guest.
+6. Como o checkout cria a sessão.
+7. Como a sessão de comprador é recuperada depois da compra.
+8. Se já existe algum mecanismo de "handoff" LP3 → onboarding.
+9. Se existe código antigo ou parcialmente removido que já fazia essa integração.
+
+NÃO altere nada durante essa primeira análise.
+
+Depois disso, implemente somente a integração mínima necessária.
+
+==================================================
+DADOS DA LP3
+==================================================
+
+A auditoria atual identificou estas chaves:
+
+lp3_quiz_state
+conexao-lp3-state
+conexao-lp3-relationship-duration
+conexao-lp3-conversation-frequency
+conexao-lp3-discovery-frequency
+conexao-lp3-difficult-conversations
+conexao-lp3-primary-goal
+lp3_visitor_id
+
+Verifique o código real antes de assumir qualquer estrutura.
+
+Crie um único objeto de handoff, se isso for compatível com o código existente, contendo os dados necessários.
+
+Exemplo conceitual:
+
+{
+  source: "lp3",
+  relationshipType: ...,
+  relationshipDuration: ...,
+  conversationFrequency: ...,
+  discoveryFrequency: ...,
+  difficultConversations: ...,
+  primaryGoal: ...,
+  lp3Profile: ...,
+  answeredAt: ...
+}
+
+NÃO duplique desnecessariamente dados.
+
+Use o formato real encontrado no código.
+
+==================================================
+ONBOARDING
+==================================================
+
+O onboarding já possui:
+
+conexao-onboarding-step
+conexao-onboarding-name
+conexao-onboarding-pronoun
+conexao-onboarding-relationship
+conexao-onboarding-date
+conexao-onboarding-curiosity
+conexao-onboarding-feeling
+conexao-guest-email
+
+Faça o onboarding verificar o handoff da LP3 ANTES de apresentar perguntas que já foram respondidas.
+
+Regra:
+
+Se a LP3 já forneceu uma informação equivalente à pergunta do onboarding:
+
+- reutilizar a resposta;
+- preencher o estado correspondente;
+- não perguntar novamente;
+- avançar para a próxima informação realmente necessária.
+
+Se não existir resposta equivalente:
+
+- comportamento atual permanece exatamente igual.
+
+NÃO pule perguntas simplesmente porque a pessoa veio da LP3.
+
+Só pule perguntas quando existir uma correspondência real entre o dado coletado na LP3 e o dado solicitado pelo onboarding.
+
+==================================================
+EXPERIÊNCIA
+==================================================
+
+Não quero que apareça algo como:
+
+"Você já respondeu isso na LP3."
+
+A experiência deve parecer natural.
+
+Exemplo:
+
+LP3:
+"Há quanto tempo vocês estão juntos?"
+
+Pessoa:
+"1 a 3 anos"
+
+Depois da compra, no onboarding:
+
+em vez de perguntar novamente:
+
+"Há quanto tempo vocês estão juntos?"
+
+o sistema já considera essa informação preenchida.
+
+==================================================
+CHECKOUT / ATRIBUIÇÃO
+==================================================
+
+Existe outro pequeno problema identificado na auditoria.
+
+A LP3 atualmente faz:
+
+/?comprar=1&source=lp3
+
+Mas o fluxo da Home pode acabar registrando a compra como v2.
+
+Corrija SOMENTE a atribuição de origem para que uma compra iniciada pela LP3 seja registrada como:
+
+sourceLp = "lp3"
+
+Não altere o comportamento de v1 ou v2.
+
+Se for necessário transportar source=lp3 através do fluxo existente, faça isso da maneira mais pequena e isolada possível.
+
+==================================================
+NÃO FAZER
+==================================================
+
+Não:
+
+- criar nova LP;
+- apagar LP existente;
+- renomear LP1/LP2;
+- modificar Home;
+- modificar LandingV2Quiz;
+- modificar visual da LP1;
+- modificar visual da LP2;
+- modificar tracking v1/v2;
+- criar novo sistema de autenticação;
+- criar nova arquitetura de onboarding;
+- criar tabela no banco neste momento;
+- instalar dependências desnecessárias;
+- refatorar arquivos inteiros;
+- remover código existente;
+- restaurar commits automaticamente;
+- fazer git reset;
+- fazer checkout de branch;
+- apagar alterações locais.
+
+Preserve todas as alterações locais existentes.
+
+==================================================
+SEGURANÇA
+==================================================
+
+Antes de modificar qualquer arquivo:
+
+1. Faça uma cópia lógica/backup dos arquivos que serão alterados OU registre exatamente quais trechos serão modificados.
+2. Verifique git status.
+3. NÃO faça git reset.
+4. NÃO faça git checkout -- .
+5. NÃO reverta alterações locais.
+6. NÃO sobrescreva arquivos inteiros.
+
+Faça alterações pequenas e localizadas.
+
+==================================================
+VALIDAÇÃO
+==================================================
+
+Depois da implementação:
+
+1. Rode o build/typecheck existente.
+2. Verifique se /lp3 continua funcionando.
+3. Verifique se / continua funcionando.
+4. Verifique se /lp2 continua funcionando.
+5. Verifique se /onboarding continua funcionando quando acessado diretamente sem LP3.
+6. Verifique o fluxo LP3 → checkout → onboarding.
+7. Verifique que respostas não duplicadas não aparecem novamente.
+8. Verifique que dados ausentes continuam sendo perguntados normalmente.
+
+Se algum teste falhar, NÃO tente resolver alterando LP1/LP2.
+
+==================================================
+ENTREGA
+==================================================
+
+No final, me informe:
+
+1. Quais arquivos foram alterados.
+2. Quais linhas/blocos foram alterados.
+3. Como os dados da LP3 chegam ao onboarding.
+4. Quais perguntas do onboarding agora são reaproveitadas.
+5. Como a atribuição sourceLp=lp3 foi corrigida.
+6. Resultado do build/typecheck.
+7. Se LP1 e LP2 permaneceram intactas.
+
+Não faça nenhuma outra alteração além desta tarefa.

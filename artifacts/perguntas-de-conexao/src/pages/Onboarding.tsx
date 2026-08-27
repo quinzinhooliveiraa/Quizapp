@@ -49,6 +49,82 @@ const steps: Step[] = [
 
 type OnboardingRole = "" | "owner" | "guest";
 
+type Lp3HandoffAnswers = {
+  relationshipDuration?: unknown;
+  conversationFrequency?: unknown;
+  discoveryFrequency?: unknown;
+  difficultConversations?: unknown;
+  primaryGoal?: unknown;
+};
+
+type Lp3Prefill = {
+  curiosity: string[];
+  surprise: string;
+};
+
+const emptyLp3Prefill: Lp3Prefill = { curiosity: [], surprise: "" };
+const lp3GoalToCuriosity: Record<string, string> = {
+  "Ter conversas mais profundas": "O que ela ainda não disse",
+  "Conhecer melhor um ao outro": "Como ela realmente é",
+  "Voltar a sentir mais proximidade": "Se estamos na mesma página",
+  "Conversar sobre coisas difíceis": "O que nunca é conversado",
+};
+const lp3DiscoveryToSurprise: Record<string, string> = {
+  Hoje: "Nesta semana",
+  "Nos últimos dias": "Nesta semana",
+  "Nas últimas semanas": "Faz um tempo",
+  "Há alguns meses": "Faz um tempo",
+  "Nem lembro": "Sinceramente, não lembro",
+};
+
+function readLp3Prefill(): Lp3Prefill {
+  try {
+    const parsed = JSON.parse(
+      safeGetItem("conexao-lp3-state") || "",
+    ) as { answers?: Lp3HandoffAnswers };
+    const answers = parsed?.answers;
+    if (!answers || typeof answers !== "object") return emptyLp3Prefill;
+
+    const goal =
+      typeof answers.primaryGoal === "string"
+        ? lp3GoalToCuriosity[answers.primaryGoal]
+        : undefined;
+    const vulnerability =
+      answers.difficultConversations === "Sim" ||
+      answers.difficultConversations === "Algumas coisas"
+        ? "O que nunca é conversado"
+        : undefined;
+    const curiosity = Array.from(
+      new Set([goal, vulnerability].filter((value): value is string => Boolean(value))),
+    );
+    const surprise =
+      typeof answers.discoveryFrequency === "string"
+        ? lp3DiscoveryToSurprise[answers.discoveryFrequency] || ""
+        : "";
+
+    return { curiosity, surprise };
+  } catch {
+    return emptyLp3Prefill;
+  }
+}
+
+function getAvailableSteps(
+  isInvitedGuest: boolean,
+  lp3Prefill: Lp3Prefill = emptyLp3Prefill,
+) {
+  const skippedSteps = new Set<StepId>();
+  if (lp3Prefill.curiosity.length > 0) skippedSteps.add("curiosity");
+  if (lp3Prefill.surprise) skippedSteps.add("surprise");
+
+  return steps.filter(
+    (step) =>
+      !skippedSteps.has(step.id) &&
+      (isInvitedGuest
+        ? step.id !== "welcome-role" && step.id !== "guest-entry"
+        : step.id !== "email"),
+  );
+}
+
 const curiosityOptions = [
   "Como ela realmente é",
   "O que ela ainda não disse",
@@ -163,12 +239,11 @@ function readOnboardingRole(): OnboardingRole {
   return role === "owner" || role === "guest" ? role : "";
 }
 
-function getInitialOnboardingStep() {
-  const availableSteps = safeGetItem("conexao-guest-token")
-    ? steps.filter(
-        (step) => step.id !== "welcome-role" && step.id !== "guest-entry",
-      )
-    : steps.filter((step) => step.id !== "email");
+function getInitialOnboardingStep(lp3Prefill: Lp3Prefill = readLp3Prefill()) {
+  const availableSteps = getAvailableSteps(
+    !!safeGetItem("conexao-guest-token"),
+    lp3Prefill,
+  );
   const saved = Number(safeGetItem("conexao-onboarding-step"));
   if (!Number.isInteger(saved) || saved < 0 || saved >= availableSteps.length)
     return 0;
@@ -303,16 +378,14 @@ function Choice({
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [stepIndex, setStepIndex] = useState(getInitialOnboardingStep);
+  const lp3Prefill = useMemo(readLp3Prefill, []);
+  const [stepIndex, setStepIndex] = useState(() =>
+    getInitialOnboardingStep(lp3Prefill),
+  );
   const isInvitedGuest = !!safeGetItem("conexao-guest-token");
   const activeSteps = useMemo(
-    () =>
-      isInvitedGuest
-        ? steps.filter(
-            (step) => step.id !== "welcome-role" && step.id !== "guest-entry",
-          )
-        : steps.filter((step) => step.id !== "email"),
-    [isInvitedGuest],
+    () => getAvailableSteps(isInvitedGuest, lp3Prefill),
+    [isInvitedGuest, lp3Prefill],
   );
   const [role, setRole] = useState<OnboardingRole>(readOnboardingRole);
   const [name, setName] = useState(
@@ -333,9 +406,14 @@ export default function Onboarding() {
   );
   const [curiosity, setCuriosity] = useState<string[]>(() => {
     try {
-      return JSON.parse(safeGetItem("conexao-onboarding-curiosity") || "[]");
+      const stored = JSON.parse(
+        safeGetItem("conexao-onboarding-curiosity") || "[]",
+      );
+      return Array.isArray(stored) && stored.length > 0
+        ? stored
+        : lp3Prefill.curiosity;
     } catch {
-      return [];
+      return lp3Prefill.curiosity;
     }
   });
   const [guestEmail, setGuestEmail] = useState(
@@ -343,7 +421,9 @@ export default function Onboarding() {
   );
   const [guestEmailError, setGuestEmailError] = useState("");
   const [guestEmailChecking, setGuestEmailChecking] = useState(false);
-  const [surprise, setSurprise] = useState("");
+  const [surprise, setSurprise] = useState(
+    () => safeGetItem("conexao-onboarding-surprise") || lp3Prefill.surprise,
+  );
   const [feeling, setFeeling] = useState(
     () => safeGetItem("conexao-onboarding-feeling") || "",
   );
