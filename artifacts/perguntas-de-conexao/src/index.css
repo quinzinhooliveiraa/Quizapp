@@ -17960,8 +17960,12 @@ blockquote em {
   .lp3-story .lp3-back-row .lp3-link-button {
     flex: 1 1 0;
     min-width: 0;
+    min-height: 2.9rem;
     width: 100%;
     justify-content: center;
+    padding: 0.65rem 0.55rem;
+    font-size: 0.82rem;
+    line-height: 1.1;
   }
 
   .lp3-story .lp3-back-row > .lp3-button {

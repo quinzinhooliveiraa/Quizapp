@@ -470,7 +470,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
           <ChevronLeft size={14} aria-hidden="true" /> Voltar
         </button>
         <button className="lp3-button lp3-button-primary" type="button" onClick={() => moveTo("practice")} data-testid="button-lp3-try-questions">
-          Experimentar uma pergunta <ArrowRight size={15} aria-hidden="true" />
+          Experimentar pergunta <ArrowRight size={15} aria-hidden="true" />
         </button>
       </div>
     </section>
