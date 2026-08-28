@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ChevronLeft, Feather, Menu, RotateCcw } from "lucide-react";
+import { ArrowRight, ChevronLeft, Menu, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import {
   questions as libraryQuestions,
@@ -16,6 +16,7 @@ import { PlanToAction } from "@/components/PlanToAction";
 import { RecommendedThemeCarousel } from "@/components/RecommendedThemeCarousel";
 import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
+import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 
 type Lp3Props = {
   onCheckout?: () => void;
@@ -585,16 +586,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   return (
     <div className="site-shell shell-dark lp3-shell">
       <header className="site-header">
-        <Link href="/" data-testid="link-logo" className="brand-mark brand-mark-inverse">
-          <span className="brand-symbol">
-            <Feather size={18} strokeWidth={1.6} />
-          </span>
-          <span>
-            Perguntas
-            <br />
-            <i>de Conexão</i>
-          </span>
-        </Link>
+        <BrandLogo inverse />
         <nav className={`main-nav ${menuOpen ? "nav-open" : ""}`}>
           <Link href="/app" data-testid="link-experience">
             Experiência
@@ -620,26 +612,10 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         </button>
       </header>
       <main className="lp-main lp3-main" data-section-name={screen}>
-        <div className="lp3-orbit" aria-hidden="true" />
         {content}
         <span className="sr-only" aria-live="polite">{liveNote}</span>
       </main>
-      <footer className="site-footer">
-        <Link href="/" className="brand-mark brand-mark-inverse" data-testid="link-footer-logo">
-          <span className="brand-symbol">
-            <Feather size={18} strokeWidth={1.6} />
-          </span>
-          <span>
-            Perguntas
-            <br />
-            <i>de Conexão</i>
-          </span>
-        </Link>
-        <span>Para conversas que ficam.</span>
-        <span className="footer-copy">
-          © {new Date().getFullYear()} Perguntas de Conexão
-        </span>
-      </footer>
+      <SiteFooter logoTestId="link-footer-logo" />
     </div>
   );
 }

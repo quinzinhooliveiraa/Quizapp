@@ -100,6 +100,7 @@ import Login from "@/pages/Login";
 import Play from "@/pages/Play";
 import Admin from "@/pages/Admin";
 import Lp3 from "@/pages/Lp3";
+import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { apiBaseUrl } from "@/config";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
@@ -657,25 +658,6 @@ function selectPersonalizedQuestionIds(
     .slice(0, Math.min(count, available.length))
     .map((question) => question.id);
 }
-function Logo({ inverse = false }: { inverse?: boolean }) {
-  return (
-    <Link
-      href="/"
-      data-testid="link-logo"
-      className={`brand-mark ${inverse ? "brand-mark-inverse" : ""}`}
-    >
-      <span className="brand-symbol">
-        <Feather size={18} strokeWidth={1.6} />
-      </span>
-      <span>
-        Perguntas
-        <br />
-        <i>de Conexão</i>
-      </span>
-    </Link>
-  );
-}
-
 const LANDING_QUIZ_STEPS = [
   {
     key: "role",
@@ -1584,7 +1566,7 @@ function Shell({
   return (
     <div className={`site-shell ${dark ? "shell-dark" : ""}`}>
       <header className="site-header">
-        <Logo inverse={dark} />
+        <BrandLogo inverse={dark} />
         <nav className={`main-nav ${menuOpen ? "nav-open" : ""}`}>
           <Link href="/app" data-testid="link-experience">
             Experiência
@@ -1613,13 +1595,7 @@ function Shell({
         </button>
       </header>
       {children}
-      <footer className="site-footer">
-        <Logo inverse />
-        <span>Para conversas que ficam.</span>
-        <span className="footer-copy">
-          © {new Date().getFullYear()} Perguntas de Conexão
-        </span>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
