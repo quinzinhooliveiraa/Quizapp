@@ -16928,6 +16928,10 @@ blockquote em {
     width: min(100%, 47rem);
   }
 
+  .lp3-practice .lp3-section-intro {
+    max-width: 49rem;
+  }
+
   .lp3-editorial p {
     font-size: clamp(1.8rem, 2.8vw, 2.5rem);
   }
@@ -17018,6 +17022,10 @@ blockquote em {
     width: min(100%, 54rem);
   }
 
+  .lp3-practice .lp3-section-intro {
+    max-width: 56rem;
+  }
+
   .lp3-practice .lp3-question-card {
     width: min(100%, 56rem);
   }
@@ -17059,6 +17067,10 @@ blockquote em {
 
   .lp3-story .lp3-editorial {
     width: min(100%, 56rem);
+  }
+
+  .lp3-practice .lp3-section-intro {
+    max-width: 58rem;
   }
 
   .lp3-practice .lp3-question-card {
@@ -17148,6 +17160,10 @@ blockquote em {
     max-width: 100%;
     font-size: 0.93rem;
     line-height: 1.55;
+  }
+
+  .lp3-practice .lp3-section-intro {
+    max-width: 100%;
   }
 
   .lp3-actions {
