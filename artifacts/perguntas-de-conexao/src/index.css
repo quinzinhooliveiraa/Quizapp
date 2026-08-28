@@ -16855,6 +16855,12 @@ blockquote em {
     padding: 1rem 1.1rem;
   }
 
+  /* Odd-sized answer sets finish on a full row instead of leaving a
+     distracting half-width gap beside the final option. */
+  .lp3-option:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .lp3-question-footer {
     width: 100%;
   }
