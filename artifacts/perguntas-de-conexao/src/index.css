@@ -17996,12 +17996,32 @@ blockquote em {
  * while leaving the quiz screens that follow under their existing styles.
  */
 .lp3-shell {
-  background: var(--wine);
+  background: #100b18;
   color: var(--cream);
 }
 
 .lp3-shell::before {
   display: none;
+}
+
+.lp3-shell .site-header {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: max(34px, calc((100% - 1172px) / 2));
+  background: var(--wine);
+}
+
+.lp3-shell .site-footer {
+  width: 100%;
+  padding-inline: max(34px, calc((100% - 1172px) / 2));
+}
+
+.lp3-main {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  background: #100b18;
 }
 
 .lp3-main[data-section-name="intro"] {
@@ -18015,4 +18035,14 @@ blockquote em {
 .lp3-main[data-section-name="intro"] .lp-hero-inner {
   width: 100%;
   max-width: 1200px;
+}
+
+@media (max-width: 700px) {
+  .lp3-shell .site-header {
+    padding-inline: 20px;
+  }
+
+  .lp3-shell .site-footer {
+    padding-inline: 20px;
+  }
 }
