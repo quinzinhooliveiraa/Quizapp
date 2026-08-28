@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ChevronLeft, Menu, RotateCcw } from "lucide-react";
+import { ArrowRight, ChevronLeft, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import {
   questions as libraryQuestions,
@@ -166,7 +166,6 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const [answers, setAnswers] = useState<Answers>(stored.answers);
   const [practiceIndex, setPracticeIndex] = useState(stored.practiceIndex);
   const [liveNote, setLiveNote] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
@@ -565,29 +564,9 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     <div className="site-shell shell-dark lp3-shell">
       <header className="site-header">
         <BrandLogo inverse />
-        <nav className={`main-nav ${menuOpen ? "nav-open" : ""}`}>
-          <Link href="/app" data-testid="link-experience">
-            Experiência
-          </Link>
-          <a href="/#como-funciona" data-testid="link-how-it-works">
-            Como funciona
-          </a>
-          <a href="/#lp-precos" data-testid="link-packages">
-            Pacotes
-          </a>
-        </nav>
         <Link href="/login" className="header-cta" data-testid="link-header-cta">
           Abrir meu baralho <ArrowRight size={16} />
         </Link>
-        <button
-          className="menu-toggle"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-label="Abrir menu"
-          aria-expanded={menuOpen}
-          data-testid="button-menu"
-        >
-          <Menu size={22} />
-        </button>
       </header>
       <main className="lp-main lp3-main" data-section-name={screen}>
         {content}
