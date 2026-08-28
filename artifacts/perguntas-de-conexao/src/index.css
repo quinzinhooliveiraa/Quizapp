@@ -16995,7 +16995,7 @@ blockquote em {
   }
 
   .lp3-options {
-    width: min(100%, 56rem);
+    width: 100%;
   }
 
   .lp3-result,
@@ -17042,7 +17042,7 @@ blockquote em {
   }
 
   .lp3-options {
-    width: min(100%, 58rem);
+    width: 100%;
   }
 
   .lp3-result,
