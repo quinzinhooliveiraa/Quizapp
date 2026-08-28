@@ -17706,6 +17706,207 @@ blockquote em {
   }
 }
 
+/*
+ * LP3 testimonials carousel
+ *
+ * Match the main landing page testimonial treatment while keeping this
+ * section compact: one readable card at a time, touch navigation on mobile,
+ * and explicit arrows on larger screens.
+ */
+.lp3-story-card-title {
+  max-width: 16ch;
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.9rem, 4.4vw, 3.4rem);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.lp3-testimonials {
+  margin-top: clamp(2rem, 5vw, 3.75rem);
+}
+
+.lp3-testimonial-carousel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.2rem;
+  width: min(100%, 58rem);
+  margin: 0 auto;
+}
+
+.lp3-testimonial-card-active {
+  display: flex;
+  min-height: 14rem;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0;
+  padding: 2rem clamp(1.25rem, 4vw, 2.4rem);
+  overflow: hidden;
+  border: 1px solid rgba(196, 172, 255, 0.2);
+  border-radius: 1rem;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(196, 172, 255, 0.1),
+      rgba(255, 157, 196, 0.05)
+    ),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.16);
+  touch-action: pan-y;
+}
+
+.lp3-testimonial-card-active p {
+  display: -webkit-box;
+  max-width: 100%;
+  margin: 0 0 1.15rem;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.78);
+  font-family: var(--app-font-serif);
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+  font-style: italic;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  white-space: pre-line;
+}
+
+.lp3-testimonial-card-active p.is-expanded {
+  display: block;
+  overflow: visible;
+}
+
+.lp3-testimonial-more {
+  align-self: flex-start;
+  margin: -0.35rem 0 1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lp3-purple);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lp3-testimonial-more:hover {
+  color: var(--lp3-ink);
+}
+
+.lp3-testimonial-card-active footer {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  color: var(--lp3-ink);
+  font-family: var(--app-font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.lp3-testimonial-card-active cite {
+  color: var(--lp3-ink);
+  font-style: normal;
+}
+
+.lp3-testimonial-card-active footer span {
+  color: rgba(196, 172, 255, 0.8);
+  font-size: 0.68rem;
+  font-weight: 400;
+}
+
+.lp3-testimonial-carousel .lp3-testimonial-arrow {
+  display: inline-flex;
+  width: 2.8rem;
+  height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(196, 172, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(196, 172, 255, 0.08);
+  color: var(--lp3-purple);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.lp3-testimonial-carousel .lp3-testimonial-arrow:hover {
+  border-color: rgba(196, 172, 255, 0.6);
+  background: rgba(196, 172, 255, 0.18);
+  transform: scale(1.05);
+}
+
+.lp3-testimonial-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 1.2rem 0 0;
+}
+
+.lp3-testimonial-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition:
+    width 180ms ease,
+    background 180ms ease;
+}
+
+.lp3-testimonial-dot.is-active {
+  width: 1.35rem;
+  border-radius: 0.5rem;
+  background: var(--lp3-purple);
+}
+
+@media (max-width: 699px) {
+  .lp3-story-card-title {
+    max-width: 100%;
+    font-size: clamp(1.8rem, 7.5vw, 2.55rem);
+  }
+
+  .lp3-testimonials {
+    margin-top: 2.4rem;
+  }
+
+  .lp3-testimonial-carousel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .lp3-testimonial-card-active {
+    min-height: 15.5rem;
+    padding: 1.4rem 1.1rem;
+  }
+
+  .lp3-testimonial-card-active p {
+    font-size: 0.93rem;
+    line-height: 1.55;
+  }
+
+  .lp3-testimonial-carousel .lp3-testimonial-arrow {
+    display: none;
+  }
+
+  .lp3-testimonial-dots {
+    margin-top: 1rem;
+  }
+}
+
 .lp3-testimonials {
   display: grid;
   width: 100%;
