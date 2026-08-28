@@ -104,6 +104,7 @@ import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { apiBaseUrl } from "@/config";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
+import pixCheckoutBackground from "@assets/__(9)_1787950976332.jpeg";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -2336,7 +2337,12 @@ function CheckoutModal({
       aria-label="Continuar para o Pix"
     >
       <div
-        className={`checkout-modal ${isLp3 ? "lp3-checkout-modal" : ""} ${checkoutState === "sending" || checkoutState === "confirming" ? "checkout-modal-loading" : ""}`}
+        className={`checkout-modal ${isLp3 ? "lp3-checkout-modal" : ""} ${isLp3 && checkoutState === "native-payment" ? "lp3-checkout-pix-modal" : ""} ${checkoutState === "sending" || checkoutState === "confirming" ? "checkout-modal-loading" : ""}`}
+        style={
+          isLp3 && checkoutState === "native-payment"
+            ? ({ "--lp3-pix-background": `url("${pixCheckoutBackground}")` } as CSSProperties)
+            : undefined
+        }
       >
         <button
           className="modal-close"
@@ -2442,8 +2448,8 @@ function CheckoutModal({
         ) : checkoutState === "native-payment" && nativeCheckout ? (
           <div className="checkout-native-payment">
             <p className="section-kicker">seu baralho está reservado</p>
-            <p className="checkout-native-status" role="status">
-              Aguardando pagamento
+            <p className="checkout-native-status" role="status" aria-live="polite">
+              Pix pronto · aguardando confirmação
             </p>
             <h2>
               Falta só o Pix
@@ -2485,8 +2491,8 @@ function CheckoutModal({
               {copiedCode ? "Código copiado" : "Copiar código Pix"}
             </button>
             <p className="checkout-native-next">
-              Assim que o Pix cair, seu baralho abre sozinho nesta tela.
-              Costuma levar poucos segundos.
+              Pagou? A confirmação chega em poucos segundos e seu baralho abre
+              automaticamente nesta tela.
             </p>
             <div className="checkout-guarantee">
               <Check size={17} />

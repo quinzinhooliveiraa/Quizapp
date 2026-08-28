@@ -18625,6 +18625,47 @@ blockquote em {
   font-family: var(--app-font-sans);
 }
 
+.lp3-checkout-modal.lp3-checkout-pix-modal {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(10, 7, 18, 0.58) 0%,
+      rgba(12, 7, 22, 0.7) 38%,
+      rgba(9, 6, 16, 0.94) 100%
+    ),
+    var(--lp3-pix-background) center / cover no-repeat;
+  box-shadow:
+    0 1.5rem 3rem rgba(0, 0, 0, 0.45),
+    inset 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.lp3-checkout-pix-modal .checkout-native-status {
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+}
+
+.lp3-checkout-pix-modal .checkout-native-status::before {
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  background: #9dffcf;
+  box-shadow: 0 0 0 0.2rem rgba(157, 255, 207, 0.12);
+  content: "";
+}
+
+.lp3-checkout-pix-modal .checkout-qr-wrap {
+  border-color: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 0.9rem 2.2rem rgba(0, 0, 0, 0.34),
+    0 0 0 0.35rem rgba(255, 255, 255, 0.08);
+}
+
+.lp3-checkout-pix-modal .checkout-native-next {
+  max-width: 24rem;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.78rem;
+}
+
 .lp3-checkout-modal h2 {
   margin: 1rem 0 1.25rem;
   color: #f9f8fb;
