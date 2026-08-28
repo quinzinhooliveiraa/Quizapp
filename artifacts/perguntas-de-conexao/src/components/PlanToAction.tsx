@@ -1,12 +1,17 @@
+import type { ConnectionQuestion } from "@workspace/connection-content";
+import { RecommendedQuestionCarousel } from "@/components/RecommendedQuestionCarousel";
+
 type PlanToActionProps = {
   recommendationBridge: string;
-  firstQuestion: string;
+  questions: ConnectionQuestion[];
+  themeTitle: string;
   onAction: () => void;
 };
 
 export function PlanToAction({
   recommendationBridge,
-  firstQuestion,
+  questions,
+  themeTitle,
   onAction,
 }: PlanToActionProps) {
   return (
@@ -16,9 +21,10 @@ export function PlanToAction({
         <h2 id="lp3-first-step-title" className="lp3-first-step-title">
           Comecem por uma pergunta.
         </h2>
-        <blockquote className="lp3-first-question">
-          <p>{firstQuestion}</p>
-        </blockquote>
+        <RecommendedQuestionCarousel
+          questions={questions}
+          themeTitle={themeTitle}
+        />
       </div>
       <div className="lp3-plan-cta">
         <button

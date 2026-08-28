@@ -17557,3 +17557,277 @@ blockquote em {
     max-width: 100%;
   }
 }
+
+/* LP3 recommendation rows reuse the product card language without widening the page. */
+.lp3-recommended-question-carousel,
+.lp3-recommended-theme-carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(17rem, 31%);
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+  padding: 0.2rem 0.1rem 0.85rem;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.lp3-recommended-question-carousel::-webkit-scrollbar,
+.lp3-recommended-theme-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.lp3-recommended-question-carousel:focus-visible,
+.lp3-recommended-theme-carousel:focus-visible {
+  outline: 2px solid var(--lp3-warm-soft);
+  outline-offset: 4px;
+}
+
+.lp3-recommended-question-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 18rem;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: 1.25rem;
+  padding: 1.2rem;
+  color: #fff;
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.24);
+}
+
+.lp3-recommended-question-card::before {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 25% 23%, rgba(255, 255, 255, 0.2), transparent 25%),
+    radial-gradient(circle at 80% 72%, rgba(255, 198, 222, 0.22), transparent 28%),
+    linear-gradient(180deg, rgba(39, 18, 47, 0.08), rgba(44, 9, 35, 0.2));
+  content: "";
+}
+
+.lp3-recommended-question-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.lp3-recommended-question-grain::after {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+  content: "";
+  mix-blend-mode: soft-light;
+}
+
+.lp3-recommended-question-top,
+.lp3-recommended-question-copy,
+.lp3-recommended-question-foot {
+  position: relative;
+  z-index: 2;
+}
+
+.lp3-recommended-question-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lp3-recommended-question-top > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 0.34rem 0.68rem;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.1);
+  font: 0.56rem var(--app-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp3-recommended-question-top strong {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.76rem;
+  line-height: 0.85;
+  text-align: right;
+  letter-spacing: -0.04em;
+}
+
+.lp3-recommended-question-top strong i {
+  color: rgba(255, 255, 255, 0.57);
+  font-style: normal;
+}
+
+.lp3-recommended-question-copy {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  padding: 1.35rem 0 1rem;
+}
+
+.lp3-recommended-question-copy p {
+  max-width: 20rem;
+  margin: 0;
+  color: #fff;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.4rem, 2.6vw, 2.15rem);
+  font-style: italic;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.lp3-recommended-question-foot {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.48);
+  font: 0.53rem var(--app-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp3-recommended-question-foot span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.lp3-recommended-theme-card {
+  position: relative;
+  min-width: 0;
+  min-height: 17rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1.25rem;
+  color: #fff;
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.25);
+}
+
+.lp3-recommended-theme-image,
+.lp3-recommended-theme-fallback,
+.lp3-recommended-theme-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lp3-recommended-theme-image {
+  display: block;
+  object-fit: cover;
+}
+
+.lp3-recommended-theme-fallback {
+  background: transparent;
+}
+
+.lp3-recommended-theme-shade {
+  background:
+    radial-gradient(circle at 70% 23%, rgba(255, 255, 255, 0.16), transparent 24%),
+    linear-gradient(180deg, transparent 25%, rgba(9, 7, 19, 0.84) 100%);
+  pointer-events: none;
+}
+
+.lp3-recommended-theme-top,
+.lp3-recommended-theme-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.lp3-recommended-theme-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 1.2rem;
+  font: 0.58rem var(--app-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp3-recommended-theme-top span {
+  max-width: 52%;
+  overflow-wrap: anywhere;
+  padding: 0.36rem 0.58rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lp3-recommended-theme-copy {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  left: 1.2rem;
+}
+
+.lp3-recommended-theme-copy strong {
+  display: block;
+  font-size: 1.5rem;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.lp3-recommended-theme-copy p {
+  max-width: 15rem;
+  margin: 0.55rem 0 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 699px) {
+  .lp3-recommended-question-carousel,
+  .lp3-recommended-theme-carousel {
+    grid-auto-columns: minmax(15rem, 84%);
+    padding-right: 0.1rem;
+  }
+
+  .lp3-recommended-question-card {
+    min-height: 15rem;
+    padding: 1rem;
+  }
+
+  .lp3-recommended-question-copy p {
+    font-size: clamp(1.35rem, 6vw, 1.75rem);
+  }
+
+  .lp3-recommended-theme-card {
+    min-height: 15rem;
+  }
+
+  .lp3-recommended-theme-top {
+    padding: 1rem;
+  }
+
+  .lp3-recommended-theme-copy {
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+  }
+}

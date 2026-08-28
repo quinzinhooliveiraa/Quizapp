@@ -13,6 +13,7 @@ import {
 } from "@/lib/lp3-narrative";
 import { getLp3RecommendationBridge } from "@/lib/lp3-recommendation";
 import { PlanToAction } from "@/components/PlanToAction";
+import { RecommendedThemeCarousel } from "@/components/RecommendedThemeCarousel";
 import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 
@@ -460,20 +461,13 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       </div>
       <PlanToAction
         recommendationBridge={recommendationBridge}
-        firstQuestion={practiceQuestion.text}
+        questions={practiceQuestions}
+        themeTitle={recommendedTheme.title}
         onAction={checkout}
       />
       <div>
         <span className="lp3-mono">E outros caminhos para vocês</span>
-        <div className="lp3-card-scroller" aria-label="Outros baralhos da biblioteca">
-          {otherThemes.map((theme) => (
-            <div className="lp3-question-card" key={theme.id} data-testid={`card-lp3-theme-${theme.id}`}>
-              <div className="lp3-card-footer"><span>baralho</span><span>{theme.count} perguntas</span></div>
-              <p>{theme.title}</p>
-              <div className="lp3-card-footer"><span>{theme.description}</span></div>
-            </div>
-          ))}
-        </div>
+        <RecommendedThemeCarousel themes={otherThemes} />
       </div>
       <div className="lp3-back-row">
         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-recommend">
