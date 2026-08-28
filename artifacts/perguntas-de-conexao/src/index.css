@@ -18418,6 +18418,14 @@ blockquote em {
     flex-direction: column;
     gap: 1.2rem;
     padding: 1.35rem;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(19, 14, 29, 0.8),
+        rgba(25, 16, 35, 0.64) 48%,
+        rgba(15, 12, 25, 0.86)
+      ),
+      url("/lp3-result-wallpaper.jpeg") center 42% / cover no-repeat;
   }
 
   .lp3-result-card-label {
