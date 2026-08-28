@@ -443,7 +443,22 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       <div className="lp3-kicker">A história de vocês</div>
       <h1 id="lp3-story-title" className="lp3-section-title">{result.title}</h1>
       <div className="lp3-editorial">
-        <p style={{ whiteSpace: "pre-line" }}>{result.story}</p>
+        {result.story
+          .split(/\n\s*\n/)
+          .map((paragraph) => paragraph.trim())
+          .filter(Boolean)
+          .map((paragraph, index, paragraphs) => (
+            <p
+              key={`${paragraph}-${index}`}
+              className={[
+                index === 0 ? "lp3-story-lead" : "",
+                index === paragraphs.length - 1 ? "lp3-story-closing" : "",
+                paragraph.startsWith('"') || paragraph.startsWith("“") ? "lp3-story-quote" : "",
+              ].filter(Boolean).join(" ")}
+            >
+              {paragraph}
+            </p>
+          ))}
       </div>
       <Lp3Testimonials />
       <div className="lp3-back-row">

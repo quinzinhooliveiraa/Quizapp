@@ -17469,6 +17469,91 @@ blockquote em {
   }
 }
 
+/*
+ * LP3 story refinement
+ *
+ * Keep the result's story closer to the LP1 storytelling rhythm: a smaller
+ * headline followed by a narrow editorial column with controlled paragraph
+ * spacing and a clear opening/closing cadence.
+ */
+.lp3-story {
+  gap: 1.1rem;
+}
+
+.lp3-story .lp3-section-title {
+  max-width: 17ch;
+  margin: 0;
+  font-family: var(--app-font-sans);
+  font-size: clamp(2.2rem, 4.8vw, 4.25rem);
+  font-style: normal;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.99;
+}
+
+.lp3-story .lp3-editorial {
+  width: min(100%, 42rem);
+  max-width: 42rem;
+  margin-top: 0.35rem;
+  border-left-color: rgba(246, 203, 184, 0.72);
+  padding: 0.4rem 0 0.4rem clamp(0.95rem, 3vw, 1.5rem);
+}
+
+.lp3-story .lp3-editorial p {
+  max-width: 37rem;
+  margin: 0;
+  color: rgba(249, 248, 251, 0.72);
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.16rem, 2.15vw, 1.45rem);
+  font-style: italic;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.lp3-story .lp3-editorial p + p {
+  margin-top: 1.15rem;
+}
+
+.lp3-story .lp3-editorial p.lp3-story-lead {
+  color: var(--lp3-ink);
+  font-size: clamp(1.35rem, 2.8vw, 1.8rem);
+  line-height: 1.16;
+}
+
+.lp3-story .lp3-editorial p.lp3-story-quote,
+.lp3-story .lp3-editorial p.lp3-story-closing {
+  color: var(--lp3-ink);
+}
+
+@media (max-width: 699px) {
+  .lp3-story .lp3-section-title {
+    max-width: 100%;
+    font-size: clamp(2rem, 8.5vw, 3rem);
+    line-height: 1;
+  }
+
+  .lp3-story .lp3-editorial {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 0.2rem;
+    padding: 0.35rem 0 0.35rem 0.9rem;
+  }
+
+  .lp3-story .lp3-editorial p {
+    font-size: clamp(1.15rem, 5.3vw, 1.42rem);
+    line-height: 1.22;
+  }
+
+  .lp3-story .lp3-editorial p + p {
+    margin-top: 0.9rem;
+  }
+
+  .lp3-story .lp3-editorial p.lp3-story-lead {
+    font-size: clamp(1.3rem, 6vw, 1.7rem);
+    line-height: 1.16;
+  }
+}
+
 .lp3-testimonials {
   display: grid;
   width: 100%;
