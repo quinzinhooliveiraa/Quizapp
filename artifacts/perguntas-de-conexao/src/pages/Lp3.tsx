@@ -263,6 +263,11 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     trackLp3("reset");
   };
 
+  const returnToIntro = () => {
+    reset();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const goBack = () => {
     if (screen === "question") {
       if (currentQuestion === 0) {
@@ -587,7 +592,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   return (
     <div className={`site-shell shell-dark lp3-shell ${screen === "question" ? "lp3-quiz-active" : ""}`}>
       <header className="site-header">
-        <BrandLogo inverse />
+        <BrandLogo inverse href="/lp3" onClick={returnToIntro} />
         <Link href="/login" className="header-cta" data-testid="link-header-cta">
           Abrir meu baralho <ArrowRight size={16} />
         </Link>
@@ -596,7 +601,11 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         {content}
         <span className="sr-only" aria-live="polite">{liveNote}</span>
       </main>
-      <SiteFooter logoTestId="link-footer-logo" />
+      <SiteFooter
+        logoTestId="link-footer-logo"
+        logoHref="/lp3"
+        onLogoClick={returnToIntro}
+      />
     </div>
   );
 }
