@@ -40,7 +40,12 @@ import {
   questions as connectionQuestions,
   themes as connectionThemes,
 } from "@workspace/connection-content";
-import { getLandingPageByPath } from "@/lib/landing-pages";
+import {
+  DEFAULT_PRIMARY_LANDING_PAGE_ID,
+  getLandingPageById,
+  getLandingPageByPath,
+  type LandingPageId,
+} from "@/lib/landing-pages";
 import { landingTestimonials } from "@/lib/testimonials";
 import {
   ArrowRight,
@@ -3208,6 +3213,61 @@ function TrackedLp3() {
       <CheckoutModal checkout={checkout} isLp3 />
     </>
   );
+}
+
+function PrimaryLandingPageRoute() {
+  const [landingPageId, setLandingPageId] = useState<LandingPageId>(
+    DEFAULT_PRIMARY_LANDING_PAGE_ID,
+  );
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const timeout = window.setTimeout(() => {
+      if (!mounted) return;
+      setLandingPageId(DEFAULT_PRIMARY_LANDING_PAGE_ID);
+      setReady(true);
+    }, 2500);
+
+    fetch(apiUrl("/api/landing-pages/primary"))
+      .then(async (response) => {
+        if (!response.ok) throw new Error("primary-landing-page");
+        return (await response.json()) as { primaryLandingPage?: string };
+      })
+      .then((data) => {
+        if (!mounted) return;
+        const landing = data.primaryLandingPage
+          ? getLandingPageById(data.primaryLandingPage)
+          : undefined;
+        setLandingPageId(landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID);
+        setReady(true);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setLandingPageId(DEFAULT_PRIMARY_LANDING_PAGE_ID);
+        setReady(true);
+      })
+      .finally(() => window.clearTimeout(timeout));
+
+    return () => {
+      mounted = false;
+      window.clearTimeout(timeout);
+    };
+  }, []);
+
+  if (!ready) {
+    return (
+      <main className="primary-landing-loading" role="status" aria-live="polite">
+        <span className="brand-symbol" aria-hidden="true">
+          <Feather size={18} strokeWidth={1.6} />
+        </span>
+        <p>Preparando a experiência…</p>
+      </main>
+    );
+  }
+
+  if (landingPageId === "lp3") return <TrackedLp3 />;
+  return <Home variant={landingPageId === "v2" ? "v2" : "v1"} />;
 }
 
 function ExperimentUnavailable() {
@@ -7493,7 +7553,7 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/">
-          <Home variant="v2" />
+          <PrimaryLandingPageRoute />
         </Route>
         <Route path="/lp2">
           <Home />

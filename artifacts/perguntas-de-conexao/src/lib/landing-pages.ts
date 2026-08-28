@@ -1,4 +1,5 @@
 export type LandingPageId = "v1" | "v2" | "lp3";
+export const DEFAULT_PRIMARY_LANDING_PAGE_ID: LandingPageId = "v2";
 
 export type LandingPage = {
   id: LandingPageId;

@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
 import {
+  DEFAULT_PRIMARY_LANDING_PAGE_ID,
   EXPERIMENT_LANDING_PAGES as LANDINGS,
+  getLandingPageById,
+  type LandingPageId,
   type LandingPage as LandingEntry,
 } from "@/lib/landing-pages";
 
@@ -302,6 +305,129 @@ function formatDuration(seconds: number | null) {
 
 function shortVisitorKey(visitorKey: string) {
   return `${visitorKey.slice(0, 8)}…`;
+}
+
+function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
+  const [selectedId, setSelectedId] = useState<LandingPageId>(
+    DEFAULT_PRIMARY_LANDING_PAGE_ID,
+  );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    fetch(
+      `${apiBaseUrl}/api/admin/landing-pages/primary?sessionId=${encodeURIComponent(sessionId)}`,
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error("primary-landing-page");
+        return (await response.json()) as { primaryLandingPage?: string };
+      })
+      .then((data) => {
+        if (!mounted) return;
+        const landing = data.primaryLandingPage
+          ? getLandingPageById(data.primaryLandingPage)
+          : undefined;
+        setSelectedId(landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID);
+      })
+      .catch(() => {
+        if (mounted) setMessage("Não foi possível carregar a configuração atual.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [sessionId]);
+
+  const save = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/landing-pages/primary?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ primaryLandingPage: selectedId }),
+        },
+      );
+      const data = (await response.json()) as {
+        primaryLandingPage?: string;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(data.error || "primary-landing-page");
+      const landing = data.primaryLandingPage
+        ? getLandingPageById(data.primaryLandingPage)
+        : undefined;
+      setSelectedId(landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID);
+      setMessage("Landing Page Principal atualizada.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error && error.message !== "primary-landing-page"
+          ? error.message
+          : "Não foi possível salvar a Landing Page Principal.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const selectedLanding = getLandingPageById(selectedId);
+
+  return (
+    <section className="admin-section admin-primary-landing" aria-labelledby="primary-landing-title">
+      <div className="admin-section-heading">
+        <div>
+          <p className="admin-eyebrow">domínio principal</p>
+          <h2 id="primary-landing-title">Landing Page Principal</h2>
+        </div>
+        <span className="admin-count">/</span>
+      </div>
+      <p className="admin-primary-landing-copy">
+        Escolha qual landing page será exibida diretamente na rota principal do domínio.
+        Os links individuais e os experimentos continuam separados.
+      </p>
+      <form className="admin-primary-landing-form" onSubmit={save}>
+        <div className="admin-primary-landing-current">
+          <span>LP atual</span>
+          <strong>{selectedLanding?.name || "Reacender a chama"}</strong>
+        </div>
+        <label>
+          <span>Selecionar LP</span>
+          <select
+            value={selectedId}
+            disabled={loading || saving}
+            onChange={(event) => setSelectedId(event.target.value as LandingPageId)}
+            data-testid="select-primary-landing-page"
+          >
+            {LANDINGS.map((landing) => (
+              <option key={landing.id} value={landing.id}>
+                {landing.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="submit"
+          className="admin-experiment-action-button"
+          disabled={loading || saving}
+          data-testid="button-save-primary-landing-page"
+        >
+          {saving ? "Salvando…" : "Salvar"}
+        </button>
+      </form>
+      {message && (
+        <p className="admin-primary-landing-message" role="status">
+          {message}
+        </p>
+      )}
+    </section>
+  );
 }
 
 function LpSessionsList({
@@ -778,6 +904,7 @@ function PagesTab({
 
   return (
     <section className="admin-section" aria-labelledby="landing-pages-title">
+      <PrimaryLandingPageSettings sessionId={sessionId} />
       <div className="admin-section-heading">
         <div>
           <p className="admin-eyebrow">publicações</p>

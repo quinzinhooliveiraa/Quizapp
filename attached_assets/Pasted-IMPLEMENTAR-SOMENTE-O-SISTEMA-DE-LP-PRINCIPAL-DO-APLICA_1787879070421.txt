@@ -1,0 +1,464 @@
+IMPLEMENTAR SOMENTE O SISTEMA DE “LP PRINCIPAL” DO APLICATIVO.
+
+IMPORTANTE:
+O objetivo é permitir que o administrador escolha qual Landing Page será exibida no domínio principal.
+
+NÃO ALTERAR:
+- Router de experimentos;
+- Auto Optimization;
+- sistema A/B;
+- URLs `/e/:experimentSlug`;
+- lógica de experimentos;
+- tracking;
+- Clarity;
+- checkout;
+- onboarding;
+- perguntas;
+- narrativas;
+- LP1;
+- LP2;
+- LP3;
+- componentes visuais existentes.
+
+Esta tarefa é exclusivamente sobre definir qual LP responde à rota principal `/`.
+
+==================================================
+OBJETIVO
+==================================================
+
+Hoje existe uma LP definida como principal.
+
+Quero poder alterar isso pelo Admin sem precisar modificar código.
+
+Exemplo:
+
+Configuração atual:
+
+DOMÍNIO PRINCIPAL
+→ `/`
+→ LP1
+
+No futuro:
+
+DOMÍNIO PRINCIPAL
+→ `/`
+→ LP3
+
+A alteração deve ser feita pelo painel administrativo.
+
+==================================================
+LPs DISPONÍVEIS
+==================================================
+
+Usar o registro central de Landing Pages que já existe no projeto.
+
+Atualmente temos:
+
+- LP1 → `/`
+- LP2 → `/lp2`
+- LP3 → `/lp3`
+
+IMPORTANTE:
+
+Não criar uma segunda fonte de verdade para as LPs.
+
+Reutilizar o registro existente de Landing Pages sempre que possível.
+
+O administrador deve selecionar pelo NOME da LP, e não precisar conhecer paths técnicos.
+
+Exemplo no Admin:
+
+LP PRINCIPAL
+
+[ Reacender a chama ▼ ]
+
+Opções:
+
+- Reacender a chama
+- Suas conversas viraram logística
+- Jornada de Conexão
+
+==================================================
+CONFIGURAÇÃO PERSISTENTE
+==================================================
+
+Criar uma configuração persistente para armazenar a LP principal.
+
+Exemplo conceitual:
+
+primaryLandingPage = "lp1"
+
+ou
+
+primaryLandingPage = "lp3"
+
+O valor deve representar um identificador estável da LP, NÃO o texto exibido ao usuário.
+
+Não armazenar HTML.
+
+Não armazenar URL completa.
+
+Não duplicar a LP.
+
+Não criar uma nova página para cada configuração.
+
+==================================================
+ADMIN
+==================================================
+
+Adicionar no Admin uma seção clara:
+
+"Landing Page Principal"
+
+Mostrar:
+
+LP atual:
+[ nome da LP ]
+
+Dropdown:
+
+[ selecionar LP ]
+
+Botão:
+
+"Salvar"
+
+Depois de salvar:
+
+- mostrar confirmação;
+- atualizar a LP principal exibida;
+- manter a configuração persistida após reload;
+- manter a configuração após reiniciar o servidor.
+
+Se já existir um sistema de configurações administrativas, reutilizá-lo.
+
+Não criar infraestrutura duplicada sem necessidade.
+
+==================================================
+COMPORTAMENTO DA ROTA /
+==================================================
+
+A rota `/` deve consultar a configuração da LP principal.
+
+Exemplo:
+
+primaryLandingPage = LP1
+
+/
+
+→ renderiza LP1
+
+Se:
+
+primaryLandingPage = LP3
+
+/
+
+→ renderiza LP3
+
+IMPORTANTE:
+
+Não fazer redirect do navegador de `/` para `/lp3`.
+
+Preferencialmente, a rota `/` deve resolver/renderizar a LP configurada internamente.
+
+Isso mantém o domínio principal limpo:
+
+https://dominio.com.br/
+
+em vez de:
+
+https://dominio.com.br/lp3
+
+==================================================
+ROTAS INDIVIDUAIS
+==================================================
+
+As rotas existentes devem continuar funcionando normalmente.
+
+Exemplo:
+
+/lp2
+→ LP2
+
+/lp3
+→ LP3
+
+/e/:experimentSlug
+→ Router de experimento
+
+A alteração da LP principal NÃO deve remover nem alterar essas rotas.
+
+==================================================
+SEPARAÇÃO DOS EXPERIMENTOS
+==================================================
+
+MUITO IMPORTANTE:
+
+A LP principal NÃO deve utilizar automaticamente o Router de experimentos.
+
+Não fazer:
+
+/ → /e/algum-experimento
+
+Não fazer distribuição automática de tráfego na rota principal.
+
+Não conectar:
+
+primaryLandingPage
+
+com:
+
+experiment assignment
+
+Auto Optimization
+
+A/B testing
+
+O tráfego principal deve continuar sendo 100% da LP configurada.
+
+Exemplo:
+
+primaryLandingPage = LP3
+
+Todo acesso normal:
+
+/ → LP3
+
+Enquanto um experimento continua separado:
+
+/e/teste-lp → variantes do experimento
+
+==================================================
+TRACKING
+==================================================
+
+Preservar o tracking existente.
+
+A troca da LP principal não pode quebrar:
+
+- page view;
+- CTA;
+- checkout;
+- purchase;
+- experiment tracking quando aplicável;
+- visitor ID;
+- localStorage.
+
+IMPORTANTE:
+
+Não transformar acessos normais à LP principal em assignments de experimento.
+
+==================================================
+DOMÍNIO
+==================================================
+
+Não alterar configuração de domínio.
+
+Apenas garantir que a aplicação trate `/` como a LP atualmente selecionada.
+
+==================================================
+FALLBACK
+==================================================
+
+Implementar fallback seguro.
+
+Se:
+
+- configuração não existir;
+- configuração estiver inválida;
+- LP configurada não estiver disponível;
+
+usar a LP principal atual como fallback.
+
+Não deixar a página branca.
+
+Não causar loop de redirect.
+
+Não quebrar o servidor.
+
+==================================================
+SEGURANÇA
+==================================================
+
+Somente usuários com acesso administrativo podem alterar a LP principal.
+
+Não expor endpoint de alteração sem a proteção administrativa já utilizada pelo sistema.
+
+Reutilizar a autenticação/autorização existente.
+
+==================================================
+CACHE / ATUALIZAÇÃO
+==================================================
+
+Depois de alterar a LP principal no Admin:
+
+- a nova configuração deve entrar em vigor;
+- não exigir alteração de código;
+- não exigir novo deploy;
+- não exigir reiniciar manualmente o servidor, se a arquitetura atual permitir atualização dinâmica.
+
+Se existir cache, invalidá-lo corretamente.
+
+==================================================
+NÃO DUPLICAR LPs
+==================================================
+
+Não copiar:
+
+Lp1.tsx
+Lp2.tsx
+Lp3.tsx
+
+Não criar versões alternativas.
+
+A configuração deve apenas decidir qual componente/página responde à rota `/`.
+
+==================================================
+TESTES OBRIGATÓRIOS
+==================================================
+
+Testar:
+
+TESTE 1
+
+Configurar:
+
+LP principal = LP1
+
+Acessar `/`.
+
+Esperado:
+
+LP1.
+
+---
+
+TESTE 2
+
+Configurar:
+
+LP principal = LP3
+
+Acessar `/`.
+
+Esperado:
+
+LP3.
+
+---
+
+TESTE 3
+
+Com LP3 como principal:
+
+Acessar `/lp3`.
+
+Esperado:
+
+LP3.
+
+---
+
+TESTE 4
+
+Com LP3 como principal:
+
+Acessar `/lp2`.
+
+Esperado:
+
+LP2.
+
+---
+
+TESTE 5
+
+Com LP3 como principal:
+
+Acessar um `/e/:experimentSlug` ativo.
+
+Esperado:
+
+Router do experimento funcionando normalmente.
+
+---
+
+TESTE 6
+
+Com LP3 como principal:
+
+acessar `/`.
+
+Não deve criar assignment de experimento.
+
+---
+
+TESTE 7
+
+Alterar LP principal pelo Admin.
+
+Recarregar página.
+
+Esperado:
+
+nova LP continua configurada.
+
+---
+
+TESTE 8
+
+Reiniciar servidor.
+
+Esperado:
+
+configuração permanece.
+
+---
+
+TESTE 9
+
+Configuração inválida.
+
+Esperado:
+
+fallback para LP principal segura.
+
+==================================================
+VALIDAÇÃO
+==================================================
+
+Rodar:
+
+- typecheck
+- build
+
+Verificar:
+
+- `/` funcionando;
+- `/lp2` funcionando;
+- `/lp3` funcionando;
+- `/e/:experimentSlug` funcionando;
+- Admin funcionando;
+- experimentos intactos;
+- Auto Optimization intacto;
+- tracking intacto;
+- checkout intacto.
+
+==================================================
+RELATÓRIO FINAL
+==================================================
+
+Informar:
+
+1. arquivos alterados;
+2. onde a configuração da LP principal foi armazenada;
+3. como o Admin altera a configuração;
+4. como `/` resolve a LP principal;
+5. como foi garantida a separação dos experimentos;
+6. fallback implementado;
+7. testes executados;
+8. resultado do typecheck;
+9. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.

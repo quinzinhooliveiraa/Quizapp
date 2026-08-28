@@ -273,6 +273,73 @@
 .admin-tab-content {
   min-height: 300px;
 }
+.admin-primary-landing {
+  margin-bottom: 1.35rem;
+  padding: 1.15rem;
+  background: rgba(196, 172, 255, 0.055);
+  border: 1px solid rgba(196, 172, 255, 0.2);
+  border-radius: 0.9rem;
+}
+.admin-primary-landing .admin-section-heading {
+  margin-bottom: 0;
+}
+.admin-primary-landing-copy {
+  max-width: 650px;
+  margin: 0.85rem 0 1.1rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.admin-primary-landing-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(220px, 1.5fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+.admin-primary-landing-current,
+.admin-primary-landing-form label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+}
+.admin-primary-landing-current strong {
+  overflow: hidden;
+  padding: 0.68rem 0.75rem;
+  color: #f9f8fb;
+  background: rgba(16, 11, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-primary-landing-form select {
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  color: #f9f8fb;
+  background: rgba(16, 11, 24, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.82rem;
+  box-sizing: border-box;
+}
+.admin-primary-landing-form select:focus {
+  outline: 2px solid rgba(196, 172, 255, 0.7);
+  outline-offset: 1px;
+}
+.admin-primary-landing-form button {
+  min-height: 2.35rem;
+}
+.admin-primary-landing-message {
+  margin: 0.8rem 0 0;
+  color: #b9f0cf;
+  font-size: 0.78rem;
+}
 .admin-experiment-note {
   max-width: 760px;
   margin: 0 0 1.4rem;

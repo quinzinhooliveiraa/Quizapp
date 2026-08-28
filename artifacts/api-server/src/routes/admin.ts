@@ -3,11 +3,17 @@ import crypto from "node:crypto";
 import { and, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import {
   db,
+  appSettingsTable,
   pageEventsTable,
   pushSubscriptionsTable,
   sessionsTable,
 } from "@workspace/db";
 import { isAdminSession } from "./feedback";
+import {
+  getPrimaryLandingPageId,
+  isPrimaryLandingPageId,
+  setPrimaryLandingPageId,
+} from "../lib/primary-landing-page";
 
 const router: IRouter = Router();
 
@@ -34,6 +40,53 @@ router.get("/admin/check", async (req, res): Promise<void> => {
 
   const email = row?.buyerEmail?.trim().toLowerCase();
   res.json({ isAdmin: Boolean(email && getAdminEmails().includes(email)) });
+});
+
+router.get("/landing-pages/primary", async (_req, res): Promise<void> => {
+  const primary = await getPrimaryLandingPageId();
+  res.json({
+    primaryLandingPage: primary.id,
+    fallbackUsed: primary.usedFallback,
+  });
+});
+
+router.get("/admin/landing-pages/primary", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+
+  const primary = await getPrimaryLandingPageId();
+  res.json({
+    primaryLandingPage: primary.id,
+    fallbackUsed: primary.usedFallback,
+  });
+});
+
+router.patch("/admin/landing-pages/primary", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+
+  const primaryLandingPage =
+    typeof req.body?.primaryLandingPage === "string"
+      ? req.body.primaryLandingPage.trim()
+      : "";
+  if (!isPrimaryLandingPageId(primaryLandingPage)) {
+    res.status(400).json({ error: "Landing page principal inválida" });
+    return;
+  }
+
+  const saved = await setPrimaryLandingPageId(primaryLandingPage);
+  res.json({
+    primaryLandingPage: saved,
+    fallbackUsed: false,
+  });
 });
 
 router.get("/push/vapid-public-key", (_req, res): void => {
