@@ -327,6 +327,12 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
             <span className="lp-hl-lilac">reaproximar</span> do seu parceiro
             em uma noite
           </h1>
+          <p className="lp-hero-sub">
+            Tenha acesso a perguntas de conexão que abrem conversa de verdade
+            entre você e seu parceiro.{" "}
+            <strong>Pare de ter conversas monótonas</strong> e reaproxime-se
+            da pessoa que você ama.
+          </p>
         </div>
         <div className="lp-hero-mockups lp-hero-mockups-photo" aria-hidden="true">
           <img

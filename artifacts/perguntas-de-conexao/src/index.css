@@ -18061,16 +18061,24 @@ blockquote em {
  */
 @media (max-width: 699px) {
   .lp3-main[data-section-name="intro"] .lp-hero {
-    padding: 1.25rem 1rem 1.35rem;
+    box-sizing: border-box;
+    min-height: calc(100svh - 76px);
+    padding: 1.25rem 1rem calc(3.25rem + env(safe-area-inset-bottom));
   }
 
   .lp3-main[data-section-name="intro"] .lp-hero-inner {
+    min-height: calc(100svh - 76px - 4.5rem - env(safe-area-inset-bottom));
     gap: 0.75rem;
+    justify-content: space-between;
   }
 
   .lp3-main[data-section-name="intro"] .lp-hero-copy {
     display: grid;
     gap: 0.45rem;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-hero-sub {
+    display: none;
   }
 
   .lp3-main[data-section-name="intro"] .lp-eyebrow {
