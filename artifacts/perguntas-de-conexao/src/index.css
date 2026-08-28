@@ -16290,6 +16290,7 @@ blockquote em {
 .lp3-deck {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   isolation: isolate;
   gap: 1.2rem;
   overflow: hidden;
@@ -19544,13 +19545,28 @@ blockquote em {
 
 @media (min-width: 700px) {
   /*
-   * Keep the recommendation bridge, editorial rail, question row and CTA on
-   * the same left edge as the recommended deck above them.
+   * Keep every part of the recommendation journey in one column. The wider
+   * parent used to center the deck and the action plan at different widths,
+   * which made the copy and question row drift inward from the cards.
    */
-  .lp3-shell .lp3-recommend > .lp3-plan-to-action {
+  .lp3-shell .lp3-recommend {
+    width: min(100%, 62rem);
+    max-width: none;
+  }
+
+  .lp3-shell .lp3-recommend > .lp3-story-to-solution,
+  .lp3-shell .lp3-recommend > .lp3-deck,
+  .lp3-shell .lp3-recommend > .lp3-plan-to-action,
+  .lp3-shell .lp3-recommend > .lp3-recommend-paths,
+  .lp3-shell .lp3-recommend > .lp3-back-row {
     width: 100%;
-    max-width: 62rem;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
+    justify-self: stretch;
+  }
+
+  .lp3-shell .lp3-recommend > .lp3-deck {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

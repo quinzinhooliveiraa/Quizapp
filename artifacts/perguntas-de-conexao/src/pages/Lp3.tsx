@@ -668,7 +668,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         themeTitle={recommendedTheme.title}
         onAction={checkout}
       />
-      <div>
+      <div className="lp3-recommend-paths">
         <span className="lp3-mono">E outros caminhos para vocês</span>
         <RecommendedThemeCarousel themes={otherThemes} />
       </div>
