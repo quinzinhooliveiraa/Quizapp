@@ -17992,8 +17992,8 @@ blockquote em {
 }
 
 /*
- * LP3 intro: use the LP1 shell and sales hero language without changing
- * the quiz screens that follow.
+ * LP3 intro: copy the photographed sales hero shown by the primary campaign
+ * while leaving the quiz screens that follow under their existing styles.
  */
 .lp3-shell {
   background: var(--wine);
@@ -18012,68 +18012,7 @@ blockquote em {
   background: #100b18;
 }
 
-.lp3-main[data-section-name="intro"] .lp-hero::before {
-  display: block;
-}
-
 .lp3-main[data-section-name="intro"] .lp-hero-inner {
   width: 100%;
   max-width: 1200px;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 3rem;
-}
-
-.lp3-main[data-section-name="intro"] .lp-hero-copy {
-  min-width: 0;
-}
-
-.lp3-main[data-section-name="intro"] .lp-hero-h1 {
-  max-width: none;
-  font-family: var(--app-font-sans);
-  font-size: clamp(2rem, 4.5vw, 3.2rem);
-  font-weight: 300;
-  line-height: 1.15;
-  letter-spacing: normal;
-}
-
-.lp3-main[data-section-name="intro"] .lp-hero-sub {
-  max-width: 39rem;
-}
-
-.lp3-main[data-section-name="intro"] .lp-cta-primary {
-  border-radius: 0.65rem;
-}
-
-.lp3-main[data-section-name="intro"] .lp-hero-mockups {
-  min-width: 0;
-}
-
-@media (max-width: 900px) {
-  .lp3-main[data-section-name="intro"] .lp-hero-inner {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
-
-@media (max-width: 700px) {
-  .lp3-main[data-section-name="intro"] .lp-hero {
-    padding-right: 1.2rem;
-    padding-left: 1.2rem;
-  }
-
-  .lp3-main[data-section-name="intro"] .lp-hero-inner {
-    gap: 1.5rem;
-  }
-
-  .lp3-main[data-section-name="intro"] .lp-hero-h1 {
-    font-size: clamp(2rem, 10vw, 3rem);
-  }
-
-  .lp3-main[data-section-name="intro"] .lp-hero-sub {
-    font-size: 1rem;
-  }
-
-  .lp3-main[data-section-name="intro"] .lp-hero-mockups {
-    height: 320px;
-  }
 }

@@ -17,6 +17,8 @@ import { RecommendedThemeCarousel } from "@/components/RecommendedThemeCarousel"
 import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
+import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
+import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
 type Lp3Props = {
   onCheckout?: () => void;
@@ -313,77 +315,53 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   };
 
   const renderIntro = () => (
-    <section className="lp3-view lp-hero lp3-hero" data-section-name="hero" aria-labelledby="lp3-intro-title">
+    <section className="lp3-view lp-hero lp2-hero lp3-hero" data-section-name="hero" aria-labelledby="lp3-intro-title">
       <div className="lp-hero-inner">
         <div className="lp-hero-copy">
           <span className="lp-eyebrow">
             baralho digital de perguntas · para casais
           </span>
           <h1 id="lp3-intro-title" className="lp-hero-h1">
-            Suas conversas viraram <em>logística.</em>
-            <br />
-            <strong>É hora de voltar a se conhecer.</strong>
+            Descubra perguntas para{" "}
+            <span className="lp-hl-salmon">reacender a chama</span> do seu
+            relacionamento e se{" "}
+            <span className="lp-hl-lilac">reaproximar</span> do seu parceiro
+            em uma noite
           </h1>
           <p className="lp-hero-sub">
-            Responda algumas perguntas sobre vocês e descubra por onde começar
-            uma conversa mais próxima. Leva menos de 2 minutos.
+            Tenha acesso a perguntas de conexão que abrem conversa de verdade
+            entre você e seu parceiro.{" "}
+            <strong>Pare de ter conversas monótonas</strong> e reaproxime-se
+            da pessoa que você ama.
           </p>
-          <div className="lp-hero-actions lp3-hero-actions lp3-hero-quiz">
-            <p className="lp-hero-quiz-context">
-              Descubra o ponto de partida certo para vocês. É grátis e leva menos
-              de 2 minutos.
-            </p>
-            <button
-              className="lp-cta-primary lp-cta-big"
-              type="button"
-              onClick={begin}
-              data-testid="button-lp3-start"
-            >
-              Começar <ArrowRight size={18} aria-hidden="true" />
-            </button>
-          </div>
-          <div className="lp-hero-trust">
-            <div className="lp-trust-avatars" aria-hidden="true">
-              <span className="lp-trust-avatar lp-trust-a">M</span>
-              <span className="lp-trust-avatar lp-trust-b">L</span>
-              <span className="lp-trust-avatar lp-trust-c">R</span>
-            </div>
-            <span>
-              Já usado por <strong>50 casais</strong> no Brasil
-            </span>
-          </div>
         </div>
-        <div className="lp-hero-mockups" aria-hidden="true">
-          <div className="lp-mockup-mac">
-            <div className="lp-mockup-mac-bar">
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="lp-mockup-mac-screen">
-              <div className="lp-mock-card lp-mock-card-front">
-                <span className="lp-mock-tag">porto seguro</span>
-                <p className="lp-mock-text">
-                  "Qual foi a última vez que você se sentiu{" "}
-                  <em>completamente</em> em casa comigo?"
-                </p>
-                <span className="lp-mock-num">03 / 31</span>
-              </div>
-            </div>
-          </div>
-          <div className="lp-mockup-phone">
-            <div className="lp-mockup-phone-notch" />
-            <div className="lp-mockup-phone-screen">
-              <div className="lp-mock-card lp-mock-card-back">
-                <span className="lp-mock-tag lp-mock-tag-vibe">faísca</span>
-                <p className="lp-mock-text">
-                  "O que em mim ainda te <em>surpreende?</em>"
-                </p>
-                <span className="lp-mock-num">07 / 31</span>
-              </div>
-            </div>
-          </div>
+        <div className="lp-hero-mockups lp-hero-mockups-photo" aria-hidden="true">
+          <img
+            src={heroMockupMac}
+            alt=""
+            className="lp-mockup-photo lp-mockup-photo-mac"
+            width={1400}
+            height={933}
+            fetchPriority="high"
+            loading="eager"
+          />
+          <img
+            src={heroMockupPhone}
+            alt=""
+            className="lp-mockup-photo lp-mockup-photo-phone"
+            width={360}
+            height={778}
+            loading="eager"
+          />
         </div>
+        <button
+          type="button"
+          onClick={begin}
+          className="lp-cta-primary lp-cta-big lp2-hero-cta"
+          data-testid="button-lp3-start"
+        >
+          Quero reacender a conexão <ArrowRight size={18} />
+        </button>
       </div>
     </section>
   );
