@@ -17607,7 +17607,7 @@ blockquote em {
 }
 
 .lp3-story-card-title {
-  max-width: 16ch;
+  max-width: 100%;
   margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
   color: var(--lp3-ink);
   font-family: var(--app-font-sans);
@@ -17616,6 +17616,7 @@ blockquote em {
   font-weight: 300;
   letter-spacing: -0.045em;
   line-height: 0.99;
+  text-wrap: balance;
 }
 
 .lp3-story-editorial {
@@ -17658,6 +17659,39 @@ blockquote em {
 
 .lp3-story-editorial p.lp3-story-closing {
   color: var(--lp3-warm-soft);
+}
+
+.lp3-story .lp3-back-row {
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.lp3-story .lp3-back-row > .lp3-button {
+  margin-left: auto;
+}
+
+.lp3-story .lp3-back-row .lp3-link-button {
+  display: inline-flex;
+  min-height: 3.55rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.65rem;
+  padding: 0.95rem 1.15rem;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(255, 255, 255, 0.68);
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.lp3-story .lp3-back-row .lp3-link-button:hover {
+  border-color: rgba(196, 172, 255, 0.42);
+  background: rgba(196, 172, 255, 0.08);
+  color: var(--lp3-ink);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 699px) {
@@ -17714,13 +17748,14 @@ blockquote em {
  * and explicit arrows on larger screens.
  */
 .lp3-story-card-title {
-  max-width: 16ch;
+  max-width: 100%;
   margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
   font-family: var(--app-font-serif);
   font-size: clamp(1.9rem, 4.4vw, 3.4rem);
   font-style: italic;
   font-weight: 400;
   line-height: 1;
+  text-wrap: balance;
 }
 
 .lp3-testimonials {
@@ -17760,7 +17795,7 @@ blockquote em {
 }
 
 .lp3-testimonial-card-active p {
-  display: -webkit-box;
+  display: block;
   max-width: 100%;
   margin: 0 0 1.15rem;
   overflow: hidden;
@@ -17770,38 +17805,12 @@ blockquote em {
   font-style: italic;
   line-height: 1.6;
   overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
   white-space: pre-line;
 }
 
-.lp3-testimonial-card-active p.is-expanded {
-  display: block;
-  overflow: visible;
-}
-
-.lp3-testimonial-more {
-  align-self: flex-start;
-  margin: -0.35rem 0 1rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--lp3-purple);
-  cursor: pointer;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.lp3-testimonial-more:hover {
-  color: var(--lp3-ink);
-}
-
 .lp3-testimonial-card-active footer {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
+  display: grid;
+  gap: 0.35rem;
   margin: 0;
   color: var(--lp3-ink);
   font-family: var(--app-font-mono);
@@ -17812,12 +17821,25 @@ blockquote em {
   text-transform: uppercase;
 }
 
+.lp3-testimonial-attribution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .lp3-testimonial-card-active cite {
   color: var(--lp3-ink);
   font-style: normal;
 }
 
-.lp3-testimonial-card-active footer span {
+.lp3-testimonial-stars {
+  display: inline-flex;
+  gap: 0.12rem;
+  color: var(--lp3-warm-soft);
+}
+
+.lp3-testimonial-detail {
   color: rgba(196, 172, 255, 0.8);
   font-size: 0.68rem;
   font-weight: 400;
@@ -17889,13 +17911,31 @@ blockquote em {
   }
 
   .lp3-testimonial-card-active {
-    min-height: 15.5rem;
+    min-height: 0;
     padding: 1.4rem 1.1rem;
   }
 
   .lp3-testimonial-card-active p {
     font-size: 0.93rem;
     line-height: 1.55;
+  }
+
+  .lp3-testimonial-card-active footer {
+    font-size: 0.7rem;
+  }
+
+  .lp3-story .lp3-back-row {
+    align-items: stretch;
+  }
+
+  .lp3-story .lp3-back-row > .lp3-button,
+  .lp3-story .lp3-back-row .lp3-link-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lp3-story .lp3-back-row > .lp3-button {
+    margin-left: 0;
   }
 
   .lp3-testimonial-carousel .lp3-testimonial-arrow {

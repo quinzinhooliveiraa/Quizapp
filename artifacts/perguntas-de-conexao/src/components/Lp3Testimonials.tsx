@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { landingTestimonials } from "@/lib/testimonials";
 
 export function Lp3Testimonials() {
@@ -7,19 +7,16 @@ export function Lp3Testimonials() {
     ({ name }) => name === "Caio" || name === "Fernanda" || name === "Marina",
   );
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const activeTestimonial = testimonials[activeIndex];
 
   const move = (direction: -1 | 1) => {
-    setIsExpanded(false);
     setActiveIndex(
       (current) => (current + direction + testimonials.length) % testimonials.length,
     );
   };
 
   const selectTestimonial = (index: number) => {
-    setIsExpanded(false);
     setActiveIndex(index);
   };
 
@@ -60,21 +57,17 @@ export function Lp3Testimonials() {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <p className={isExpanded ? "is-expanded" : ""}>
-            “{activeTestimonial.quote}”
-          </p>
-          <button
-            type="button"
-            className="lp3-testimonial-more"
-            onClick={() => setIsExpanded((current) => !current)}
-            aria-expanded={isExpanded}
-            data-testid="button-lp3-testimonial-more"
-          >
-            {isExpanded ? "Ver menos" : "Ver mais"}
-          </button>
+          <p>“{activeTestimonial.quote}”</p>
           <footer>
-            <cite>{activeTestimonial.name}</cite>
-            <span>{activeTestimonial.detail}</span>
+            <div className="lp3-testimonial-attribution">
+              <cite>{activeTestimonial.name}</cite>
+              <span className="lp3-testimonial-stars" role="img" aria-label="5 de 5 estrelas">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <Star key={index} size={14} strokeWidth={1.8} fill="currentColor" aria-hidden="true" />
+                ))}
+              </span>
+            </div>
+            <span className="lp3-testimonial-detail">{activeTestimonial.detail}</span>
           </footer>
         </blockquote>
         <button
