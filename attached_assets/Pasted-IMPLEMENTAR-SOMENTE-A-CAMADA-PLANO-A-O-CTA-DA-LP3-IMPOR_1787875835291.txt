@@ -1,0 +1,403 @@
+IMPLEMENTAR SOMENTE A CAMADA “PLANO → AÇÃO → CTA” DA LP3.
+
+IMPORTANTE:
+Esta tarefa NÃO é para refazer a LP3.
+É apenas para melhorar a conexão entre:
+
+HISTÓRIA PERSONALIZADA
+→ SOLUÇÃO
+→ BARALHO RECOMENDADO
+→ PRIMEIRA AÇÃO
+→ CTA
+→ CHECKOUT
+
+NÃO ALTERAR:
+- as 5 perguntas;
+- a lógica de seleção das narrativas;
+- as 8 histórias;
+- os insights;
+- a nova transição Story → Solução já implementada;
+- LP1;
+- LP2;
+- Router;
+- Experimentos;
+- Auto Optimization;
+- Admin;
+- Tracking;
+- Clarity;
+- banco;
+- checkout técnico;
+- onboarding técnico;
+- branding já corrigido.
+
+==================================================
+OBJETIVO
+==================================================
+
+A pessoa acabou de ler uma história que descreve a situação dela.
+
+Depois disso, ela precisa entender:
+
+1. O que fazer agora?
+2. Por que esse baralho foi recomendado para ela?
+3. Qual é o primeiro passo?
+4. O que acontece quando ela clicar?
+
+A transição deve seguir:
+
+HISTÓRIA
+↓
+PERCEPÇÃO
+↓
+GUIA
+↓
+PLANO
+↓
+AÇÃO
+
+A pessoa não deve sentir que saiu de uma história emocional e caiu em uma página de produto aleatória.
+
+==================================================
+ESTRUTURA FINAL
+==================================================
+
+Manter a estrutura:
+
+[HISTÓRIA PERSONALIZADA]
+
+↓
+
+[TRANSIÇÃO STORY → SOLUÇÃO EXISTENTE]
+
+↓
+
+"Pelo que você nos contou, começaríamos por aqui."
+
+↓
+
+[BARALHO RECOMENDADO]
+
+↓
+
+[EXPLICAÇÃO CURTA DA RECOMENDAÇÃO]
+
+↓
+
+"Comecem por uma pergunta."
+
+↓
+
+[PERGUNTA INICIAL / PRIMEIRO PASSO]
+
+↓
+
+[CTA]
+
+==================================================
+REGRA PRINCIPAL
+==================================================
+
+O baralho recomendado deve parecer uma CONSEQUÊNCIA das respostas da pessoa.
+
+Não apresentar como:
+
+"Você precisa comprar este baralho."
+
+A lógica deve ser:
+
+"Você contou isso."
+↓
+"Isso revela este padrão."
+↓
+"Por isso, este é um bom ponto de partida."
+↓
+"Vocês não precisam resolver tudo agora."
+↓
+"Comecem por uma pergunta."
+
+==================================================
+COPY
+==================================================
+
+Usar exatamente:
+
+"Pelo que você nos contou, começaríamos por aqui."
+
+Depois do baralho:
+
+"Vocês não precisam resolver tudo de uma vez."
+
+"Comecem por uma pergunta."
+
+Não reescrever essas frases.
+
+Não adicionar:
+- urgência;
+- escassez;
+- culpa;
+- medo;
+- pressão;
+- promessas de transformação;
+- "salvar o relacionamento";
+- "última chance";
+- linguagem agressiva de venda.
+
+==================================================
+CONEXÃO COM A NARRATIVA
+==================================================
+
+A explicação do baralho deve ser contextualizada de acordo com o resultado já selecionado.
+
+IMPORTANTE:
+Não criar novas histórias.
+
+Usar apenas o contexto que já existe em `selectLp3Narrative(answers)`.
+
+Criar uma função isolada, por exemplo:
+
+getLp3RecommendationBridge(narrativeType, answers)
+
+Ela pode retornar uma frase curta específica para a narrativa.
+
+Exemplos de intenção:
+
+ROTINA:
+A recomendação deve reforçar que o objetivo é criar espaço para conversas que normalmente são engolidas pela rotina.
+
+DESCOBERTA:
+A recomendação deve reforçar a curiosidade e a descoberta de coisas novas sobre o parceiro.
+
+CONVERSA DIFÍCIL:
+A recomendação deve reforçar que o baralho ajuda a encontrar uma primeira pergunta para abrir uma conversa que ficou esperando.
+
+PROXIMIDADE:
+A recomendação deve reforçar a criação de momentos de conexão.
+
+COMEÇO:
+A recomendação deve reforçar continuar descobrindo quem está do outro lado.
+
+DISTÂNCIA:
+A recomendação deve reforçar criar presença através da conversa.
+
+INTIMIDADE:
+A recomendação deve reforçar que intimidade também começa nas conversas.
+
+SAUDÁVEL:
+A recomendação deve reforçar continuar cultivando a curiosidade mesmo quando a relação está bem.
+
+NÃO inventar fatos sobre o casal.
+
+==================================================
+PRIMEIRA AÇÃO
+==================================================
+
+A LP3 deve apresentar o conceito de:
+
+"Comecem por uma pergunta."
+
+O objetivo é diminuir a percepção de esforço.
+
+A pessoa não está sendo convidada a:
+
+- mudar o relacionamento;
+- fazer terapia;
+- resolver conflitos;
+- ter uma conversa enorme.
+
+Ela está sendo convidada a:
+
+COMEÇAR UMA CONVERSA.
+
+==================================================
+CTA
+==================================================
+
+O CTA existente deve permanecer funcional.
+
+O texto principal do CTA deve ser:
+
+"Quero começar essa conversa"
+
+Não substituir por:
+- Comprar agora;
+- Quero comprar;
+- Quero salvar meu relacionamento;
+- Quero melhorar meu relacionamento;
+- Começar agora ou nunca;
+- qualquer CTA agressivo.
+
+O CTA deve aparecer imediatamente depois da recomendação e do primeiro passo.
+
+==================================================
+MICROCOPY DO CTA
+==================================================
+
+Adicionar uma microcopy curta abaixo do CTA:
+
+"Você começa escolhendo o seu nome e onde quer receber o acesso."
+
+IMPORTANTE:
+
+Essa frase deve refletir o fluxo REAL existente.
+
+Não mencionar Pix aqui se o usuário ainda não tiver chegado à etapa de pagamento.
+
+Não prometer acesso imediato caso isso não seja garantido tecnicamente.
+
+==================================================
+HANDOFF
+==================================================
+
+Ao clicar em:
+
+"Quero começar essa conversa"
+
+preservar integralmente o fluxo existente.
+
+Não criar checkout novo.
+
+Não criar formulário novo.
+
+Não alterar o processamento de pagamento.
+
+Não alterar o onboarding técnico.
+
+Apenas garantir que a ação continue levando para o fluxo já implementado.
+
+==================================================
+REAPROVEITAMENTO DAS RESPOSTAS
+==================================================
+
+As respostas do quiz devem continuar disponíveis durante todo o fluxo.
+
+Não perder:
+
+- respostas;
+- narrativeType;
+- recommendedTheme;
+- result.themeId;
+- tracking;
+- localStorage;
+- experiment assignment.
+
+O CTA deve continuar associado à mesma sessão/visitante.
+
+==================================================
+RESPONSIVE
+==================================================
+
+Garantir que essa nova camada funcione perfeitamente em:
+
+- celular;
+- tablet;
+- desktop.
+
+Mobile:
+
+- sem overflow horizontal;
+- CTA dentro da viewport;
+- botão com largura adequada;
+- textos sem cortes;
+- espaçamento consistente;
+- card do baralho sem ultrapassar a tela.
+
+Desktop:
+
+- limitar largura do conteúdo;
+- manter hierarquia visual;
+- evitar elementos excessivamente espalhados;
+- CTA visualmente conectado ao conteúdo anterior.
+
+==================================================
+NÃO FAZER
+==================================================
+
+Não alterar:
+
+- perguntas;
+- narrativas;
+- seleção de narrativa;
+- storytelling;
+- branding;
+- depoimentos;
+- checkout;
+- onboarding;
+- router;
+- experimentos;
+- auto optimization;
+- tracking.
+
+Esta tarefa é EXCLUSIVAMENTE:
+
+PLANO → PRIMEIRA AÇÃO → CTA.
+
+==================================================
+TESTES OBRIGATÓRIOS
+==================================================
+
+Testar pelo menos:
+
+1. narrativa ROTINA
+2. narrativa CONVERSA DIFÍCIL
+3. narrativa COMEÇO
+4. narrativa INTIMIDADE
+
+Em todos os casos verificar:
+
+História
+↓
+Transição
+↓
+Baralho recomendado
+↓
+Explicação coerente
+↓
+"Comecem por uma pergunta."
+↓
+"Quero começar essa conversa"
+↓
+fluxo existente
+
+Também verificar:
+
+- respostas preservadas;
+- recommendedTheme preservado;
+- tracking preservado;
+- CTA funcionando.
+
+==================================================
+VALIDAÇÃO
+==================================================
+
+Rodar:
+
+- typecheck
+- build
+
+Verificar:
+
+- /lp3 funcionando;
+- LP1 intacta;
+- LP2 intacta;
+- checkout intacto;
+- onboarding intacto;
+- router intacto;
+- experimentos intactos;
+- Auto Optimization intacto.
+
+==================================================
+RELATÓRIO FINAL
+==================================================
+
+Informar:
+
+1. arquivos alterados;
+2. função criada;
+3. como a recomendação foi conectada à narrativa;
+4. como o CTA foi conectado ao plano;
+5. confirmação de que o fluxo existente foi preservado;
+6. testes executados;
+7. resultado do typecheck;
+8. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.

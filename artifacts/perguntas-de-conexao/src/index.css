@@ -16044,6 +16044,75 @@ blockquote em {
   text-transform: uppercase;
 }
 
+.lp3-plan-to-action {
+  display: grid;
+  width: min(100%, 47rem);
+  min-width: 0;
+  gap: 1.25rem;
+  margin: 0.2rem auto 0;
+}
+
+.lp3-recommendation-bridge {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--lp3-soft);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.lp3-first-step {
+  display: grid;
+  min-width: 0;
+  gap: 0.7rem;
+  border-left: 1px solid var(--lp3-warm-soft);
+  padding-left: clamp(1rem, 3vw, 1.5rem);
+}
+
+.lp3-first-step-title {
+  margin: 0;
+  color: var(--lp3-ink);
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.7rem, 4vw, 2.55rem);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.lp3-first-question {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1rem 1.15rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lp3-first-question p {
+  margin: 0;
+  color: var(--lp3-ink);
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.35rem, 3.5vw, 2rem);
+  font-style: italic;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.lp3-plan-cta {
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
+}
+
+.lp3-plan-cta p,
+.lp3-cta-note {
+  max-width: 30rem;
+  margin: 0;
+  color: var(--lp3-dim);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
 .lp3-section-intro {
   max-width: 37rem;
   margin: 0;
@@ -17028,6 +17097,51 @@ blockquote em {
 
   .lp3-transition-body,
   .lp3-transition-direction {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .lp3-plan-to-action {
+    width: 100%;
+    gap: 1rem;
+    margin-top: 0;
+  }
+
+  .lp3-recommendation-bridge {
+    max-width: 100%;
+    font-size: 0.91rem;
+    overflow-wrap: anywhere;
+  }
+
+  .lp3-first-step {
+    padding-left: 0.9rem;
+  }
+
+  .lp3-first-step-title {
+    max-width: 100%;
+    font-size: clamp(1.6rem, 8vw, 2.25rem);
+    overflow-wrap: anywhere;
+  }
+
+  .lp3-first-question {
+    width: 100%;
+    padding: 0.9rem 1rem;
+  }
+
+  .lp3-first-question p {
+    font-size: clamp(1.25rem, 6vw, 1.7rem);
+  }
+
+  .lp3-plan-cta {
+    width: 100%;
+  }
+
+  .lp3-plan-cta .lp3-button {
+    width: 100%;
+  }
+
+  .lp3-plan-cta p,
+  .lp3-cta-note {
     max-width: 100%;
     overflow-wrap: anywhere;
   }

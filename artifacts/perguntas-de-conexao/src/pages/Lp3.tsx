@@ -11,6 +11,8 @@ import {
   selectLp3Narrative,
   type Lp3Answers,
 } from "@/lib/lp3-narrative";
+import { getLp3RecommendationBridge } from "@/lib/lp3-recommendation";
+import { PlanToAction } from "@/components/PlanToAction";
 import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 
@@ -163,6 +165,10 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
+  const recommendationBridge = useMemo(
+    () => getLp3RecommendationBridge(result.narrativeType),
+    [result.narrativeType],
+  );
   const practiceQuestions = useMemo(() => {
     const preferred = libraryQuestions.filter((question) =>
       question.themeId === result.themeId
@@ -450,11 +456,13 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         </div>
         <div>
           <p className="lp3-deck-copy">{recommendedTheme.description}</p>
-          <button className="lp3-button lp3-button-primary" type="button" onClick={() => moveTo("offer")} data-testid="button-lp3-see-offer">
-            Conhecer os baralhos <ArrowRight size={15} aria-hidden="true" />
-          </button>
         </div>
       </div>
+      <PlanToAction
+        recommendationBridge={recommendationBridge}
+        firstQuestion={practiceQuestion.text}
+        onAction={checkout}
+      />
       <div>
         <span className="lp3-mono">E outros caminhos para vocês</span>
         <div className="lp3-card-scroller" aria-label="Outros baralhos da biblioteca">
@@ -493,8 +501,9 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       </div>
       <div className="lp3-actions">
         <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-checkout-intent">
-          Quero continuar nossas conversas <ArrowRight size={15} aria-hidden="true" />
+          Quero começar essa conversa <ArrowRight size={15} aria-hidden="true" />
         </button>
+        <p className="lp3-cta-note">Você começa escolhendo o seu nome e onde quer receber o acesso.</p>
       </div>
       <div className="lp3-back-row">
         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-offer">
