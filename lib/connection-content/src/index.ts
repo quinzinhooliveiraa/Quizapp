@@ -5,6 +5,8 @@ export type ConnectionTheme = {
   count: number;
   audience: "todos" | "casais" | "18+";
   kind: "tema" | "vibe";
+  /** Optional cover art used as a low-opacity background on recommendation cards. */
+  backgroundUrl?: string;
 };
 
 export type ConnectionQuestion = {

@@ -645,11 +645,20 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       <div className="lp3-kicker">Uma direção possível</div>
       <StoryToSolution />
       <div className="lp3-deck" data-testid={`card-lp3-recommended-deck-${recommendedTheme.id}`}>
-        <div>
+        {recommendedTheme.backgroundUrl ? (
+          <img
+            className="lp3-deck-background"
+            src={recommendedTheme.backgroundUrl}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+          />
+        ) : null}
+        <div className="lp3-deck-info">
           <span className="lp3-mono">Baralho recomendado</span>
           <h2 className="lp3-deck-name">{recommendedTheme.title}</h2>
         </div>
-        <div>
+        <div className="lp3-deck-description">
           <p className="lp3-deck-copy">{recommendedTheme.description}</p>
         </div>
       </div>
