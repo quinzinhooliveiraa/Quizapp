@@ -17866,7 +17866,7 @@ blockquote em {
 .lp3-testimonial-carousel .lp3-testimonial-arrow:hover {
   border-color: rgba(196, 172, 255, 0.6);
   background: rgba(196, 172, 255, 0.18);
-  transform: scale(1.05);
+  transform: translateY(-50%) scale(1.05);
 }
 
 .lp3-testimonial-dots {
@@ -17893,6 +17893,34 @@ blockquote em {
   width: 1.35rem;
   border-radius: 0.5rem;
   background: var(--lp3-purple);
+}
+
+@media (min-width: 700px) {
+  .lp3-testimonial-carousel {
+    position: relative;
+    display: block;
+    width: 100%;
+    margin: 0;
+  }
+
+  .lp3-testimonial-card-active {
+    width: 100%;
+  }
+
+  .lp3-testimonial-carousel .lp3-testimonial-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
+  }
+
+  .lp3-testimonial-carousel .lp3-testimonial-arrow:first-child {
+    left: -4.1rem;
+  }
+
+  .lp3-testimonial-carousel .lp3-testimonial-arrow:last-child {
+    right: -4.1rem;
+  }
 }
 
 @media (max-width: 699px) {
@@ -17930,12 +17958,20 @@ blockquote em {
 
   .lp3-story .lp3-back-row > .lp3-button,
   .lp3-story .lp3-back-row .lp3-link-button {
+    flex: 1 1 0;
+    min-width: 0;
     width: 100%;
     justify-content: center;
   }
 
   .lp3-story .lp3-back-row > .lp3-button {
     margin-left: 0;
+    width: auto;
+  }
+
+  .lp3-story .lp3-back-row .lp3-link-button {
+    width: auto;
+    padding-inline: 0.8rem;
   }
 
   .lp3-testimonial-carousel .lp3-testimonial-arrow {
