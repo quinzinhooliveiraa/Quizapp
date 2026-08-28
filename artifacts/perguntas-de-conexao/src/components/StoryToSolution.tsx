@@ -13,11 +13,8 @@ export function StoryToSolution() {
             Talvez precisem apenas de uma conversa diferente.
           </p>
           <p className="lp3-transition-guide">
-            Foi por isso que criamos o Perguntas de Conexão.
-          </p>
-          <p className="lp3-transition-body">
-            Um jeito simples de começar conversas que normalmente acabam ficando
-            para depois.
+            Foi por isso que criamos o Perguntas de Conexão: um jeito simples de
+            começar conversas que normalmente acabam ficando para depois.
           </p>
           <p className="lp3-transition-direction">
             Pelo que você nos contou, começaríamos por aqui.
