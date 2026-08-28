@@ -20,6 +20,9 @@
     },
     {
       "path": "../../lib/connection-content"
+    },
+    {
+      "path": "../../lib/landing-pages"
     }
   ]
 }

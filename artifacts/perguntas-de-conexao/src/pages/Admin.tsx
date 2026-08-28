@@ -308,6 +308,9 @@ function shortVisitorKey(visitorKey: string) {
 }
 
 function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
+  const [currentId, setCurrentId] = useState<LandingPageId>(
+    DEFAULT_PRIMARY_LANDING_PAGE_ID,
+  );
   const [selectedId, setSelectedId] = useState<LandingPageId>(
     DEFAULT_PRIMARY_LANDING_PAGE_ID,
   );
@@ -329,7 +332,9 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
         const landing = data.primaryLandingPage
           ? getLandingPageById(data.primaryLandingPage)
           : undefined;
-        setSelectedId(landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID);
+        const resolvedId = landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
+        setCurrentId(resolvedId);
+        setSelectedId(resolvedId);
       })
       .catch(() => {
         if (mounted) setMessage("Não foi possível carregar a configuração atual.");
@@ -364,7 +369,9 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
       const landing = data.primaryLandingPage
         ? getLandingPageById(data.primaryLandingPage)
         : undefined;
-      setSelectedId(landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID);
+      const resolvedId = landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
+      setCurrentId(resolvedId);
+      setSelectedId(resolvedId);
       setMessage("Landing Page Principal atualizada.");
     } catch (error) {
       setMessage(
@@ -377,7 +384,7 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
     }
   };
 
-  const selectedLanding = getLandingPageById(selectedId);
+  const currentLanding = getLandingPageById(currentId);
 
   return (
     <section className="admin-section admin-primary-landing" aria-labelledby="primary-landing-title">
@@ -395,7 +402,7 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
       <form className="admin-primary-landing-form" onSubmit={save}>
         <div className="admin-primary-landing-current">
           <span>LP atual</span>
-          <strong>{selectedLanding?.name || "Reacender a chama"}</strong>
+          <strong>{currentLanding?.name || "Reacender a chama"}</strong>
         </div>
         <label>
           <span>Selecionar LP</span>

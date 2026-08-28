@@ -1,16 +1,19 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { appSettingsTable, db } from "@workspace/db";
+import {
+  DEFAULT_PRIMARY_LANDING_PAGE_ID,
+  isLandingPageId,
+  type LandingPageId,
+} from "@workspace/landing-pages";
 
 export const PRIMARY_LANDING_PAGE_SETTING_KEY = "primary_landing_page";
-export const DEFAULT_PRIMARY_LANDING_PAGE_ID = "v2";
-export const PRIMARY_LANDING_PAGE_IDS = ["v1", "v2", "lp3"] as const;
-
-export type PrimaryLandingPageId = (typeof PRIMARY_LANDING_PAGE_IDS)[number];
+export { DEFAULT_PRIMARY_LANDING_PAGE_ID };
+export type PrimaryLandingPageId = LandingPageId;
 
 export function isPrimaryLandingPageId(
   value: string | null | undefined,
 ): value is PrimaryLandingPageId {
-  return Boolean(value && PRIMARY_LANDING_PAGE_IDS.includes(value as PrimaryLandingPageId));
+  return isLandingPageId(value);
 }
 
 export async function getPrimaryLandingPageId(): Promise<{
@@ -20,7 +23,7 @@ export async function getPrimaryLandingPageId(): Promise<{
   const [setting] = await db
     .select({ value: appSettingsTable.value })
     .from(appSettingsTable)
-    .where(and(eq(appSettingsTable.key, PRIMARY_LANDING_PAGE_SETTING_KEY)))
+    .where(eq(appSettingsTable.key, PRIMARY_LANDING_PAGE_SETTING_KEY))
     .limit(1);
 
   if (!isPrimaryLandingPageId(setting?.value)) {

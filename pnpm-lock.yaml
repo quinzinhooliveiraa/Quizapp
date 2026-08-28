@@ -179,6 +179,9 @@ importers:
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
+      '@workspace/landing-pages':
+        specifier: workspace:*
+        version: link:../../lib/landing-pages
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -540,6 +543,9 @@ importers:
       '@workspace/connection-content':
         specifier: workspace:*
         version: link:../../lib/connection-content
+      '@workspace/landing-pages':
+        specifier: workspace:*
+        version: link:../../lib/landing-pages
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -657,6 +663,8 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+
+  lib/landing-pages: {}
 
   scripts:
     devDependencies:
