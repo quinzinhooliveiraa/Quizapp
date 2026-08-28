@@ -16067,11 +16067,51 @@ blockquote em {
 }
 
 .lp3-story-to-solution {
-  width: min(100%, 47rem);
+  display: grid;
+  width: 100%;
   min-width: 0;
+  gap: 0.9rem;
   margin: 1rem 0 0.8rem;
-  border-left: 1px solid var(--lp3-warm-soft);
-  padding: 0.4rem 0 0.4rem clamp(1rem, 3vw, 1.5rem);
+}
+
+.lp3-story-to-solution-card {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  isolation: isolate;
+  overflow: clip;
+  border: 1px solid rgba(196, 172, 255, 0.28);
+  border-radius: 1rem;
+  padding: clamp(1.35rem, 5vw, 3.4rem);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(19, 14, 29, 0.72),
+      rgba(25, 16, 35, 0.58) 48%,
+      rgba(15, 12, 25, 0.82)
+    ),
+    url("/lp3-result-wallpaper.jpeg") center 42% / cover no-repeat;
+  background-color: #18121f;
+  box-shadow:
+    0 1.8rem 4rem rgba(0, 0, 0, 0.24),
+    inset 0 1px rgba(255, 255, 255, 0.13),
+    inset 0 -1px rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(24px) saturate(125%);
+  backdrop-filter: blur(24px) saturate(125%);
+}
+
+.lp3-story-to-solution-card::after {
+  position: absolute;
+  z-index: -1;
+  right: -5rem;
+  bottom: -8rem;
+  width: 17rem;
+  height: 17rem;
+  border: 1px solid rgba(255, 197, 158, 0.18);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
 }
 
 .lp3-transition-copy {
@@ -16081,41 +16121,49 @@ blockquote em {
 }
 
 .lp3-transition-lead {
-  max-width: 24ch;
+  max-width: 100%;
   margin: 0;
   color: var(--lp3-ink);
   font-family: var(--app-font-serif);
-  font-size: clamp(1.8rem, 4.5vw, 3.15rem);
+  font-size: clamp(1.85rem, 4vw, 2.85rem);
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 1.02;
+  overflow-wrap: normal;
+  text-wrap: pretty;
 }
 
 .lp3-transition-guide {
-  max-width: 32rem;
+  max-width: 100%;
   margin: 0.45rem 0 0;
   color: var(--lp3-warm-soft);
   font-size: clamp(1.05rem, 2.3vw, 1.35rem);
   line-height: 1.35;
+  overflow-wrap: normal;
+  text-wrap: pretty;
 }
 
 .lp3-transition-body {
-  max-width: 31rem;
+  max-width: 100%;
   margin: 0;
   color: var(--lp3-soft);
   font-size: 0.94rem;
   line-height: 1.65;
+  overflow-wrap: normal;
+  text-wrap: pretty;
 }
 
 .lp3-transition-direction {
-  max-width: 32rem;
-  margin: 0.45rem 0 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
   color: var(--lp3-ink);
   font-family: var(--app-font-mono);
   font-size: 0.67rem;
   letter-spacing: 0.09em;
   line-height: 1.55;
+  overflow-wrap: anywhere;
   text-transform: uppercase;
 }
 
@@ -17265,7 +17313,11 @@ blockquote em {
   .lp3-story-to-solution {
     width: 100%;
     margin: 0.55rem 0 0.35rem;
-    padding-left: 0.9rem;
+    padding: 0;
+  }
+
+  .lp3-story-to-solution-card {
+    padding: 1.25rem;
   }
 
   .lp3-transition-copy {
@@ -17276,19 +17328,21 @@ blockquote em {
     max-width: 100%;
     font-size: clamp(1.65rem, 8vw, 2.45rem);
     line-height: 1.08;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
+    text-wrap: pretty;
   }
 
   .lp3-transition-guide {
     max-width: 100%;
     font-size: 1.02rem;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
+    text-wrap: pretty;
   }
 
-  .lp3-transition-body,
-  .lp3-transition-direction {
+  .lp3-transition-body {
     max-width: 100%;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
+    text-wrap: pretty;
   }
 
   .lp3-plan-to-action {
