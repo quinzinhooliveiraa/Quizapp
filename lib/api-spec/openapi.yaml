@@ -472,6 +472,18 @@ paths:
           description: Event recorded
         "400":
           description: Invalid event
+  /landing-pages/primary:
+    get:
+      operationId: getPrimaryLandingPage
+      tags: [landing-pages]
+      summary: Get the landing page configured for the main route
+      responses:
+        "200":
+          description: Current primary landing page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrimaryLandingPageResponse"
   /admin/analytics:
     get:
       operationId: getAdminAnalytics
@@ -495,6 +507,51 @@ paths:
                     items:
                       $ref: "#/components/schemas/LandingAnalytics"
                 required: [analytics]
+        "403":
+          description: Access denied
+  /admin/landing-pages/primary:
+    get:
+      operationId: getAdminPrimaryLandingPage
+      tags: [admin]
+      summary: Get the landing page configured for the main route
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Current primary landing page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrimaryLandingPageResponse"
+        "403":
+          description: Access denied
+    patch:
+      operationId: updateAdminPrimaryLandingPage
+      tags: [admin]
+      summary: Change the landing page configured for the main route
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrimaryLandingPageInput"
+      responses:
+        "200":
+          description: Primary landing page updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrimaryLandingPageResponse"
+        "400":
+          description: Invalid landing page
         "403":
           description: Access denied
   /admin/experiments:
@@ -1043,6 +1100,22 @@ paths:
           description: Access denied
 components:
   schemas:
+    PrimaryLandingPageId:
+      type: string
+      enum: [v1, v2, lp3]
+    PrimaryLandingPageInput:
+      type: object
+      properties:
+        primaryLandingPage:
+          $ref: "#/components/schemas/PrimaryLandingPageId"
+      required: [primaryLandingPage]
+    PrimaryLandingPageResponse:
+      type: object
+      properties:
+        primaryLandingPage:
+          $ref: "#/components/schemas/PrimaryLandingPageId"
+        fallbackUsed: { type: boolean }
+      required: [primaryLandingPage, fallbackUsed]
     Suggestion:
       type: object
       properties:

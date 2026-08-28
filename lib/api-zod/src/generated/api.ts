@@ -394,6 +394,15 @@ export const TrackPageEventResponse = zod.void()
 
 
 /**
+ * @summary Get the landing page configured for the main route
+ */
+export const GetPrimaryLandingPageResponse = zod.object({
+  "primaryLandingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "fallbackUsed": zod.boolean()
+})
+
+
+/**
  * @summary Get landing page analytics
  */
 export const GetAdminAnalyticsQueryParams = zod.object({
@@ -413,6 +422,36 @@ export const GetAdminAnalyticsResponse = zod.object({
   "count": zod.number()
 }))
 }))
+})
+
+
+/**
+ * @summary Get the landing page configured for the main route
+ */
+export const GetAdminPrimaryLandingPageQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const GetAdminPrimaryLandingPageResponse = zod.object({
+  "primaryLandingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "fallbackUsed": zod.boolean()
+})
+
+
+/**
+ * @summary Change the landing page configured for the main route
+ */
+export const UpdateAdminPrimaryLandingPageQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const UpdateAdminPrimaryLandingPageBody = zod.object({
+  "primaryLandingPage": zod.enum(['v1', 'v2', 'lp3'])
+})
+
+export const UpdateAdminPrimaryLandingPageResponse = zod.object({
+  "primaryLandingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "fallbackUsed": zod.boolean()
 })
 
 

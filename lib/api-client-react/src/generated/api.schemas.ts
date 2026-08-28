@@ -5,6 +5,24 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+export type PrimaryLandingPageId = typeof PrimaryLandingPageId[keyof typeof PrimaryLandingPageId];
+
+
+export const PrimaryLandingPageId = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+} as const;
+
+export interface PrimaryLandingPageInput {
+  primaryLandingPage: PrimaryLandingPageId;
+}
+
+export interface PrimaryLandingPageResponse {
+  primaryLandingPage: PrimaryLandingPageId;
+  fallbackUsed: boolean;
+}
+
 export interface Suggestion {
   id: string;
   /** @nullable */
@@ -783,6 +801,14 @@ sessionId: string;
 
 export type GetAdminAnalytics200 = {
   analytics: LandingAnalytics[];
+};
+
+export type GetAdminPrimaryLandingPageParams = {
+sessionId: string;
+};
+
+export type UpdateAdminPrimaryLandingPageParams = {
+sessionId: string;
 };
 
 export type ListAdminExperimentsParams = {

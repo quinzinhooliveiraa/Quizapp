@@ -46,6 +46,7 @@ import type {
   GetAdminAnalyticsParams,
   GetAdminExperimentAnalyticsParams,
   GetAdminExperimentOptimizationParams,
+  GetAdminPrimaryLandingPageParams,
   GetAdminSessionRecordingParams,
   GetExperimentAssignmentParams,
   GetExperimentLinkAssignmentParams,
@@ -72,6 +73,8 @@ import type {
   PageEventInput,
   Preferences,
   PreferencesInput,
+  PrimaryLandingPageInput,
+  PrimaryLandingPageResponse,
   Question,
   QuestionSession,
   QuestionTheme,
@@ -88,6 +91,7 @@ import type {
   UnsubscribeAdminPushBody,
   UpdateAdminExperimentOptimizationParams,
   UpdateAdminExperimentStatusParams,
+  UpdateAdminPrimaryLandingPageParams,
   WebhookResult
 } from './api.schemas';
 
@@ -1759,6 +1763,83 @@ export const useTrackPageEvent = <TError = ErrorType<void>,
       return useMutation(getTrackPageEventMutationOptions(options));
     }
 
+export const getGetPrimaryLandingPageUrl = () => {
+
+
+
+
+  return `/api/landing-pages/primary`
+}
+
+/**
+ * @summary Get the landing page configured for the main route
+ */
+export const getPrimaryLandingPage = async ( options?: Parameters<typeof customFetch>[1]): Promise<PrimaryLandingPageResponse> => {
+
+  return customFetch<PrimaryLandingPageResponse>(getGetPrimaryLandingPageUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPrimaryLandingPageQueryKey = () => {
+    return [
+    `/api/landing-pages/primary`
+    ] as const;
+    }
+
+
+export const getGetPrimaryLandingPageQueryOptions = <TData = Awaited<ReturnType<typeof getPrimaryLandingPage>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPrimaryLandingPage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPrimaryLandingPageQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPrimaryLandingPage>>> = ({ signal }) => getPrimaryLandingPage({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPrimaryLandingPage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPrimaryLandingPageQueryResult = NonNullable<Awaited<ReturnType<typeof getPrimaryLandingPage>>>
+export type GetPrimaryLandingPageQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the landing page configured for the main route
+ */
+
+export function useGetPrimaryLandingPage<TData = Awaited<ReturnType<typeof getPrimaryLandingPage>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPrimaryLandingPage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPrimaryLandingPageQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetAdminAnalyticsUrl = (params: GetAdminAnalyticsParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -1842,6 +1923,169 @@ export function useGetAdminAnalytics<TData = Awaited<ReturnType<typeof getAdminA
 
 
 
+
+export const getGetAdminPrimaryLandingPageUrl = (params: GetAdminPrimaryLandingPageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/landing-pages/primary?${stringifiedParams}` : `/api/admin/landing-pages/primary`
+}
+
+/**
+ * @summary Get the landing page configured for the main route
+ */
+export const getAdminPrimaryLandingPage = async (params: GetAdminPrimaryLandingPageParams, options?: Parameters<typeof customFetch>[1]): Promise<PrimaryLandingPageResponse> => {
+
+  return customFetch<PrimaryLandingPageResponse>(getGetAdminPrimaryLandingPageUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminPrimaryLandingPageQueryKey = (params?: GetAdminPrimaryLandingPageParams,) => {
+    return [
+    `/api/admin/landing-pages/primary`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminPrimaryLandingPageQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPrimaryLandingPage>>, TError = ErrorType<void>>(params: GetAdminPrimaryLandingPageParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPrimaryLandingPage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPrimaryLandingPageQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPrimaryLandingPage>>> = ({ signal }) => getAdminPrimaryLandingPage(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPrimaryLandingPage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminPrimaryLandingPageQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPrimaryLandingPage>>>
+export type GetAdminPrimaryLandingPageQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the landing page configured for the main route
+ */
+
+export function useGetAdminPrimaryLandingPage<TData = Awaited<ReturnType<typeof getAdminPrimaryLandingPage>>, TError = ErrorType<void>>(
+ params: GetAdminPrimaryLandingPageParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPrimaryLandingPage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminPrimaryLandingPageQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminPrimaryLandingPageUrl = (params: UpdateAdminPrimaryLandingPageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/landing-pages/primary?${stringifiedParams}` : `/api/admin/landing-pages/primary`
+}
+
+/**
+ * @summary Change the landing page configured for the main route
+ */
+export const updateAdminPrimaryLandingPage = async (primaryLandingPageInput: PrimaryLandingPageInput,
+    params: UpdateAdminPrimaryLandingPageParams, options?: Parameters<typeof customFetch>[1]): Promise<PrimaryLandingPageResponse> => {
+
+  return customFetch<PrimaryLandingPageResponse>(getUpdateAdminPrimaryLandingPageUrl(params),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(primaryLandingPageInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminPrimaryLandingPageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminPrimaryLandingPage>>, TError,{data: BodyType<PrimaryLandingPageInput>;params: UpdateAdminPrimaryLandingPageParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminPrimaryLandingPage>>, TError,{data: BodyType<PrimaryLandingPageInput>;params: UpdateAdminPrimaryLandingPageParams}, TContext> => {
+
+const mutationKey = ['updateAdminPrimaryLandingPage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminPrimaryLandingPage>>, {data: BodyType<PrimaryLandingPageInput>;params: UpdateAdminPrimaryLandingPageParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  updateAdminPrimaryLandingPage(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminPrimaryLandingPageMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminPrimaryLandingPage>>>
+    export type UpdateAdminPrimaryLandingPageMutationBody = BodyType<PrimaryLandingPageInput>
+    export type UpdateAdminPrimaryLandingPageMutationError = ErrorType<void>
+
+    /**
+ * @summary Change the landing page configured for the main route
+ */
+export const useUpdateAdminPrimaryLandingPage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminPrimaryLandingPage>>, TError,{data: BodyType<PrimaryLandingPageInput>;params: UpdateAdminPrimaryLandingPageParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminPrimaryLandingPage>>,
+        TError,
+        {data: BodyType<PrimaryLandingPageInput>;params: UpdateAdminPrimaryLandingPageParams},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminPrimaryLandingPageMutationOptions(options));
+    }
 
 export const getListAdminExperimentsUrl = (params: ListAdminExperimentsParams,) => {
   const normalizedParams = new URLSearchParams();

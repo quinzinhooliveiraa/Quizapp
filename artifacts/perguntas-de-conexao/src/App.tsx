@@ -128,23 +128,6 @@ type StoredExperimentAssignment = {
   experimentVariantId: string;
 };
 
-function getStoredExperimentAssignment(): StoredExperimentAssignment | undefined {
-  try {
-    const raw =
-      sessionStorage.getItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY) ||
-      localStorage.getItem(EXPERIMENT_ASSIGNMENT_STORAGE_KEY);
-    if (!raw) return undefined;
-    const parsed = JSON.parse(raw) as Partial<StoredExperimentAssignment>;
-    if (!parsed.experimentId || !parsed.experimentVariantId) return undefined;
-    return {
-      experimentId: parsed.experimentId,
-      experimentVariantId: parsed.experimentVariantId,
-    };
-  } catch {
-    return undefined;
-  }
-}
-
 function storeExperimentAssignment(assignment: StoredExperimentAssignment) {
   const raw = JSON.stringify(assignment);
   try {
@@ -1818,7 +1801,10 @@ function StoredAccessGate() {
 
 type LandingCtaSource = "hero_quiz" | "hero_comprar" | "lp3_offer";
 
-function useLpTracking(lpId: "v1" | "v2" | "lp3") {
+function useLpTracking(
+  lpId: "v1" | "v2" | "lp3",
+  experimentAssignment?: StoredExperimentAssignment,
+) {
   const visitorKeyRef = useRef<string>("");
   const clarityUserIdRef = useRef("");
   const claritySessionIdRef = useRef("");
@@ -1863,13 +1849,12 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
       eventType: "view" | "cta_click" | "exit",
       extra: Record<string, unknown> = {},
     ) => {
-      const assignment = getStoredExperimentAssignment();
       const payload = JSON.stringify({
         lpId,
         visitorKey,
         eventType,
-        experimentId: assignment?.experimentId,
-        experimentVariantId: assignment?.experimentVariantId,
+        experimentId: experimentAssignment?.experimentId,
+        experimentVariantId: experimentAssignment?.experimentVariantId,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
         ...extra,
@@ -1941,10 +1926,9 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", sendExit);
     };
-  }, [lpId]);
+  }, [experimentAssignment, lpId]);
 
   return (ctaSource?: LandingCtaSource) => {
-    const assignment = getStoredExperimentAssignment();
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1952,8 +1936,8 @@ function useLpTracking(lpId: "v1" | "v2" | "lp3") {
         lpId,
         visitorKey: visitorKeyRef.current,
         eventType: "cta_click",
-        experimentId: assignment?.experimentId,
-        experimentVariantId: assignment?.experimentVariantId,
+        experimentId: experimentAssignment?.experimentId,
+        experimentVariantId: experimentAssignment?.experimentVariantId,
         ctaSource,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
@@ -1978,9 +1962,11 @@ type CheckoutSourceLp = "v1" | "v2" | "lp3";
 function useCheckout({
   sourceLp,
   onCtaClick,
+  experimentAssignment,
 }: {
   sourceLp: CheckoutSourceLp;
   onCtaClick?: (ctaSource?: LandingCtaSource) => void;
+  experimentAssignment?: StoredExperimentAssignment;
 }) {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
@@ -2216,15 +2202,12 @@ function useCheckout({
           buyerEmail: normalizedEmail || undefined,
           sourceLp,
           visitorKey: getStoredVisitorKey() || undefined,
-          ...(() => {
-            const assignment = getStoredExperimentAssignment();
-            return assignment
-              ? {
-                  experimentId: assignment.experimentId,
-                  experimentVariantId: assignment.experimentVariantId,
-                }
-              : {};
-          })(),
+          ...(experimentAssignment
+            ? {
+                experimentId: experimentAssignment.experimentId,
+                experimentVariantId: experimentAssignment.experimentVariantId,
+              }
+            : {}),
         }),
       });
       const data = (await response.json()) as {
@@ -2724,8 +2707,14 @@ function CheckoutModal({
   );
 }
 
-function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
-  const trackCtaClick = useLpTracking(variant);
+function Home({
+  variant = "v1",
+  experimentAssignment,
+}: {
+  variant?: "v1" | "v2";
+  experimentAssignment?: StoredExperimentAssignment;
+}) {
+  const trackCtaClick = useLpTracking(variant, experimentAssignment);
   const sourceFromUrl = new URLSearchParams(window.location.search).get("source");
   const storedSourceLp = safeGetItem("conexao-pending-source-lp");
   const checkoutSourceLp: "v1" | "v2" | "lp3" =
@@ -2740,6 +2729,7 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   const checkoutController = useCheckout({
     sourceLp: checkoutSourceLp,
     onCtaClick: trackCtaClick,
+    experimentAssignment,
   });
   const { startCheckout } = checkoutController;
   const [, navigate] = useLocation();
@@ -3198,10 +3188,15 @@ function Home({ variant = "v1" }: { variant?: "v1" | "v2" }) {
   );
 }
 
-function TrackedLp3() {
-  const trackCtaClick = useLpTracking("lp3");
+function TrackedLp3({
+  experimentAssignment,
+}: {
+  experimentAssignment?: StoredExperimentAssignment;
+}) {
+  const trackCtaClick = useLpTracking("lp3", experimentAssignment);
   const checkout = useCheckout({
     sourceLp: "lp3",
+    experimentAssignment,
   });
 
   return (
@@ -3295,6 +3290,8 @@ function ExperimentLinkRoute() {
     "loading" | "ready" | "unavailable" | "error"
   >("loading");
   const [landingPage, setLandingPage] = useState("");
+  const [experimentAssignment, setExperimentAssignment] =
+    useState<StoredExperimentAssignment>();
 
   useEffect(() => {
     let mounted = true;
@@ -3320,6 +3317,7 @@ function ExperimentLinkRoute() {
       .then(({ assignment, landing }) => {
         if (!mounted) return;
         storeExperimentAssignment(assignment);
+        setExperimentAssignment(assignment);
         setLandingPage(landing.path);
         setState("ready");
       })
@@ -3343,8 +3341,15 @@ function ExperimentLinkRoute() {
     );
   }
   if (state !== "ready") return <ExperimentUnavailable />;
-  if (landingPage === "/lp3") return <TrackedLp3 />;
-  return <Home variant={landingPage === "/" ? "v2" : "v1"} />;
+  if (landingPage === "/lp3") {
+    return <TrackedLp3 experimentAssignment={experimentAssignment} />;
+  }
+  return (
+    <Home
+      variant={landingPage === "/" ? "v2" : "v1"}
+      experimentAssignment={experimentAssignment}
+    />
+  );
 }
 
 function AccessPill({ access }: { access: any }) {
