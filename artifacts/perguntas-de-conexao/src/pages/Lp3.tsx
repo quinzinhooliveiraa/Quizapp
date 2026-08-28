@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ChevronLeft, Feather, RotateCcw } from "lucide-react";
+import { ArrowRight, ChevronLeft, Feather, Menu, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import {
   questions as libraryQuestions,
@@ -16,6 +16,8 @@ import { PlanToAction } from "@/components/PlanToAction";
 import { RecommendedThemeCarousel } from "@/components/RecommendedThemeCarousel";
 import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
+import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
+import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
 type Lp3Props = {
   onCheckout?: () => void;
@@ -163,6 +165,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const [answers, setAnswers] = useState<Answers>(stored.answers);
   const [practiceIndex, setPracticeIndex] = useState(stored.practiceIndex);
   const [liveNote, setLiveNote] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
@@ -311,16 +314,52 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   };
 
   const renderIntro = () => (
-    <section className="lp3-view lp3-intro" aria-labelledby="lp3-intro-title">
-      <div className="lp3-kicker">Uma experiência para dois</div>
-      <h1 id="lp3-intro-title" className="lp3-display">Talvez vocês só precisem de uma boa pergunta.</h1>
-      <div className="lp3-copy-block">
-        <p className="lp3-intro-copy">Responda algumas perguntas sobre vocês. No final, vamos mostrar por onde começar.</p>
-        <div className="lp3-actions">
-          <button className="lp3-button lp3-button-primary" type="button" onClick={begin} data-testid="button-lp3-start">
-            Começar <ArrowRight size={16} aria-hidden="true" />
-          </button>
-          <span className="lp3-time">Leva menos de 2 minutos.</span>
+    <section className="lp3-view lp-hero lp3-hero" data-section-name="hero" aria-labelledby="lp3-intro-title">
+      <div className="lp-hero-inner">
+        <div className="lp-hero-copy">
+          <span className="lp-eyebrow">
+            baralho digital de perguntas · para casais
+          </span>
+          <h1 id="lp3-intro-title" className="lp-hero-h1">
+            Descubra perguntas para{" "}
+            <span className="lp-hl-salmon">reacender a chama</span> do seu
+            relacionamento e se{" "}
+            <span className="lp-hl-lilac">reaproximar</span> do seu parceiro
+            em uma noite
+          </h1>
+          <p className="lp-hero-sub">
+            Responda algumas perguntas sobre vocês e descubra por onde começar
+            uma conversa mais próxima. Leva menos de 2 minutos.
+          </p>
+          <div className="lp-hero-actions lp3-hero-actions">
+            <button
+              className="lp-cta-primary lp-cta-big lp3-hero-cta"
+              type="button"
+              onClick={begin}
+              data-testid="button-lp3-start"
+            >
+              Começar <ArrowRight size={18} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+        <div className="lp-hero-mockups lp-hero-mockups-photo" aria-hidden="true">
+          <img
+            src={heroMockupMac}
+            alt=""
+            className="lp-mockup-photo lp-mockup-photo-mac"
+            width={1400}
+            height={933}
+            fetchPriority="high"
+            loading="eager"
+          />
+          <img
+            src={heroMockupPhone}
+            alt=""
+            className="lp-mockup-photo lp-mockup-photo-phone"
+            width={360}
+            height={778}
+            loading="eager"
+          />
         </div>
       </div>
     </section>
@@ -522,15 +561,10 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   }[screen]();
 
   return (
-    <main className="lp3-shell" data-section-name={screen}>
-      <div className="lp3-orbit" aria-hidden="true" />
-      <header className="lp3-topbar">
-        <Link
-          href="/"
-          className="brand-mark brand-mark-inverse lp3-wordmark"
-          data-testid="text-lp3-wordmark"
-        >
-          <span className="brand-symbol" aria-hidden="true">
+    <div className="site-shell shell-dark lp3-shell">
+      <header className="site-header">
+        <Link href="/" data-testid="link-logo" className="brand-mark brand-mark-inverse">
+          <span className="brand-symbol">
             <Feather size={18} strokeWidth={1.6} />
           </span>
           <span>
@@ -539,21 +573,51 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
             <i>de Conexão</i>
           </span>
         </Link>
-        <div className="lp3-topbar-actions">
-          <span className="lp3-topbar-note">LP3 · para dois</span>
-          <Link
-            href="/login"
-            className="lp3-login-link"
-            data-testid="link-lp3-login"
-          >
-            Já tenho um baralho <ArrowRight size={13} aria-hidden="true" />
+        <nav className={`main-nav ${menuOpen ? "nav-open" : ""}`}>
+          <Link href="/app" data-testid="link-experience">
+            Experiência
           </Link>
-        </div>
+          <a href="/#como-funciona" data-testid="link-how-it-works">
+            Como funciona
+          </a>
+          <a href="/#lp-precos" data-testid="link-packages">
+            Pacotes
+          </a>
+        </nav>
+        <Link href="/login" className="header-cta" data-testid="link-header-cta">
+          Abrir meu baralho <ArrowRight size={16} />
+        </Link>
+        <button
+          className="menu-toggle"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label="Abrir menu"
+          aria-expanded={menuOpen}
+          data-testid="button-menu"
+        >
+          <Menu size={22} />
+        </button>
       </header>
-      <div className="lp3-main">
+      <main className="lp-main lp3-main" data-section-name={screen}>
+        <div className="lp3-orbit" aria-hidden="true" />
         {content}
-      </div>
-      <span className="sr-only" aria-live="polite">{liveNote}</span>
-    </main>
+        <span className="sr-only" aria-live="polite">{liveNote}</span>
+      </main>
+      <footer className="site-footer">
+        <Link href="/" className="brand-mark brand-mark-inverse" data-testid="link-footer-logo">
+          <span className="brand-symbol">
+            <Feather size={18} strokeWidth={1.6} />
+          </span>
+          <span>
+            Perguntas
+            <br />
+            <i>de Conexão</i>
+          </span>
+        </Link>
+        <span>Para conversas que ficam.</span>
+        <span className="footer-copy">
+          © {new Date().getFullYear()} Perguntas de Conexão
+        </span>
+      </footer>
+    </div>
   );
 }

@@ -1,0 +1,412 @@
+IMPLEMENTAR SOMENTE O AJUSTE 1 DA LP3:
+HERO + HEADER + FOOTER.
+
+IMPORTANTE:
+Esta tarefa é exclusivamente visual/estrutural para a primeira seção da LP3 e para header/footer.
+
+NÃO ALTERAR:
+- perguntas da LP3;
+- lógica do quiz;
+- narrativa;
+- resultProfiles;
+- stories;
+- depoimentos;
+- cartas;
+- temas;
+- checkout;
+- onboarding;
+- tracking;
+- Clarity;
+- Router;
+- experimentos;
+- Auto Optimization;
+- LP2;
+- funcionamento da LP1.
+
+A LP1 deve ser usada SOMENTE como REFERÊNCIA VISUAL.
+Não alterar nenhum arquivo da LP1.
+
+==================================================
+OBJETIVO
+==================================================
+
+A LP3 atualmente possui uma identidade visual diferente da LP1.
+
+Quero que a LP3 passe a utilizar a mesma linguagem visual, estrutura, espaçamento e hierarquia da LP1.
+
+A sensação deve ser:
+
+"Esta é outra experiência do mesmo produto."
+
+E NÃO:
+
+"Esta é uma landing page diferente."
+
+A LP1 é a referência principal para:
+
+- header;
+- footer;
+- tipografia;
+- espaçamento;
+- largura de conteúdo;
+- tratamento das imagens;
+- botões;
+- bordas;
+- sombras;
+- radius;
+- cores;
+- background;
+- hierarquia visual;
+- comportamento responsivo.
+
+==================================================
+1. HEADER
+==================================================
+
+Localizar o header/menu utilizado pela LP1.
+
+Reproduzir na LP3 a mesma estrutura visual.
+
+IMPORTANTE:
+
+Não criar um novo design de header.
+
+Reutilizar os mesmos componentes/estilos da LP1 sempre que tecnicamente possível.
+
+Manter:
+
+- mesma altura;
+- mesmo espaçamento horizontal;
+- mesma posição do logo;
+- mesma tipografia;
+- mesmas cores;
+- mesmos estados;
+- mesmo comportamento mobile;
+- mesmo comportamento desktop.
+
+Não exibir nenhum texto técnico como:
+
+"LP3"
+"LP3 pra 2"
+"LP3 para 2"
+
+ou qualquer identificação interna da variante.
+
+A pessoa deve enxergar apenas a marca/produto.
+
+==================================================
+2. FOOTER
+==================================================
+
+Aplicar na LP3 o mesmo footer utilizado pela LP1.
+
+Reutilizar o componente existente da LP1 se houver.
+
+Manter:
+
+- mesma estrutura;
+- mesma hierarquia;
+- mesmas cores;
+- mesmo espaçamento;
+- mesmos links;
+- mesma tipografia;
+- mesmo comportamento responsivo.
+
+Não duplicar o footer desnecessariamente.
+
+Não alterar o footer da LP1.
+
+==================================================
+3. HERO DA LP3
+==================================================
+
+A primeira seção da LP3 deve passar a seguir a MESMA ESTRUTURA VISUAL da primeira seção da LP1.
+
+IMPORTANTE:
+
+Não transformar a LP3 em uma cópia funcional da LP1.
+
+A LP3 continua sendo uma experiência de quiz.
+
+A diferença é que o HERO da LP3 deve usar a mesma linguagem visual da LP1.
+
+Estrutura desejada:
+
+HEADER
+
+↓
+
+
+HERO
+
+[ imagens / composição visual ]
+
+[ HEADLINE ]
+
+[ SUBTÍTULO ]
+
+[ CTA ]
+
+↓
+
+
+QUIZ LP3
+
+==================================================
+4. IMAGENS
+==================================================
+
+Usar a mesma lógica visual das imagens utilizadas no HERO da LP1.
+
+Verificar como a LP1 posiciona:
+
+- imagens;
+- fotos;
+- composição;
+- crops;
+- radius;
+- sombras;
+- espaçamento;
+- proporções.
+
+Aplicar a mesma lógica na LP3.
+
+Não inventar uma composição completamente nova.
+
+Se a LP1 já possui componentes reutilizáveis para isso, reutilizá-los.
+
+==================================================
+5. HEADLINE
+==================================================
+
+A headline atual da LP3 deve ser substituída por uma headline mais específica.
+
+IMPORTANTE:
+
+Como primeira tentativa, utilizar a MESMA HEADLINE PRINCIPAL DA LP1, caso ela faça sentido semanticamente para a experiência da LP3.
+
+Não inventar uma headline diferente sem necessidade.
+
+A intenção é manter consistência de campanha e branding.
+
+A headline deve:
+
+- ter peso visual semelhante à LP1;
+- ocupar largura semelhante;
+- ter tamanho semelhante;
+- ter mesma hierarquia;
+- manter responsividade.
+
+Se a headline da LP1 tiver destaque para tempo/método/transformação, preservar essa lógica.
+
+==================================================
+6. SUBTÍTULO
+==================================================
+
+O subtítulo deve seguir:
+
+- mesma largura de texto da LP1;
+- mesmo tamanho aproximado;
+- mesma line-height;
+- mesmo espaçamento;
+- mesma hierarquia.
+
+Não deixar o subtítulo comprimido ou excessivamente afastado.
+
+==================================================
+7. CTA
+==================================================
+
+O botão da LP3 deve utilizar EXATAMENTE a linguagem visual do CTA principal da LP1.
+
+Reutilizar o componente de botão da LP1 se existir.
+
+Preservar:
+
+- cor;
+- radius;
+- tamanho;
+- tipografia;
+- sombra;
+- hover;
+- active;
+- espaçamento;
+- largura responsiva.
+
+O CTA deve iniciar o quiz.
+
+Exemplo conceitual:
+
+"Começar"
+
+Não alterar a lógica existente do clique.
+
+==================================================
+8. BACKGROUND
+==================================================
+
+O background do HERO da LP3 deve seguir o background da LP1.
+
+Não utilizar um background que faça a LP3 parecer outro produto.
+
+Preservar a paleta e tratamento visual da marca.
+
+==================================================
+9. DESKTOP
+==================================================
+
+No desktop, comparar diretamente LP1 e LP3.
+
+A primeira viewport deve possuir:
+
+- proporção semelhante;
+- quantidade semelhante de espaço negativo;
+- headline com escala semelhante;
+- CTA com posição semelhante;
+- imagens com composição semelhante;
+- header alinhado;
+- conteúdo centralizado corretamente.
+
+Não deixar:
+
+- título deslocado para uma lateral;
+- subtítulo isolado;
+- CTA perdido;
+- elementos com espaçamento arbitrário.
+
+A composição deve parecer deliberadamente construída.
+
+==================================================
+10. MOBILE
+==================================================
+
+O mobile deve seguir a mesma lógica responsiva da LP1.
+
+IMPORTANTE:
+
+Não simplesmente reduzir o desktop.
+
+Verificar como a LP1 reorganiza:
+
+- header;
+- imagens;
+- headline;
+- subtítulo;
+- CTA.
+
+Aplicar a mesma estratégia.
+
+A primeira viewport deve ficar visualmente equilibrada.
+
+Não permitir:
+
+- overflow horizontal;
+- elementos cortados;
+- textos saindo da tela;
+- botão desconfigurado;
+- imagens quebradas;
+- espaçamentos excessivos.
+
+==================================================
+11. QUIZ
+==================================================
+
+O CTA do HERO deve continuar levando para o quiz existente.
+
+NÃO ALTERAR:
+
+- perguntas;
+- respostas;
+- estado do quiz;
+- tracking;
+- localStorage;
+- lógica de navegação.
+
+A única mudança é visual na seção anterior ao quiz.
+
+==================================================
+12. ARQUITETURA
+==================================================
+
+Antes de criar componentes novos:
+
+verificar se a LP1 já possui componentes reutilizáveis para:
+
+- Header;
+- Footer;
+- Button;
+- Hero;
+- Image composition;
+- Typography.
+
+Se existirem componentes compartilháveis, reutilizá-los.
+
+Não duplicar código desnecessariamente.
+
+Se o componente da LP1 estiver fortemente acoplado à LP1 e não puder ser reutilizado sem risco, criar uma abstração compartilhada mínima.
+
+Não alterar comportamento da LP1.
+
+==================================================
+13. RESPONSIVIDADE
+==================================================
+
+Testar pelo menos:
+
+- desktop largo;
+- desktop padrão;
+- tablet;
+- mobile pequeno;
+- mobile padrão.
+
+Garantir que não exista:
+
+- overflow;
+- scroll horizontal;
+- sobreposição;
+- texto cortado.
+
+==================================================
+14. VALIDAÇÃO
+==================================================
+
+Executar:
+
+- typecheck;
+- build.
+
+Verificar:
+
+/lp3
+
+e garantir:
+
+- header correto;
+- hero correto;
+- CTA funcionando;
+- quiz funcionando;
+- footer correto.
+
+Também verificar:
+
+/
+
+A LP1 deve permanecer visualmente e funcionalmente intacta.
+
+==================================================
+RELATÓRIO FINAL
+==================================================
+
+Informar:
+
+1. arquivos alterados;
+2. quais componentes da LP1 foram reutilizados;
+3. como o hero da LP3 foi adaptado;
+4. como header/footer foram sincronizados visualmente;
+5. headline utilizada;
+6. comportamento desktop;
+7. comportamento mobile;
+8. resultado do typecheck;
+9. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.
