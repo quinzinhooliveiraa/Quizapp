@@ -12,3 +12,4 @@
 - [Drizzle non-TTY schema conflicts](drizzle-non-tty-schema-conflicts.md) — column drops/renames can still require interactive confirmation when schema push runs without a TTY.
 - [Orval Zod barrel collisions](orval-zod-barrel-collisions.md) — request-body schemas can collide with generated type names; expose generated types under a namespace when this occurs.
 - [LP3 narrative priority](lp3-narrative-priority.md) — low-discovery routine signals with renewed proximity resolve to the routine narrative despite partial vulnerability.
+- [LP3 story card](lp3-story-card.md) — keep the story title and narrative inside the same composed card; testimonials stay as the next section.

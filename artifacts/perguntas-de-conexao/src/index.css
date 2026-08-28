@@ -17554,6 +17554,158 @@ blockquote em {
   }
 }
 
+/*
+ * LP3 story card
+ *
+ * The story is the emotional continuation of the result. Keep its title and
+ * narrative together in the same composed surface, while using the LP1
+ * editorial rhythm inside the card instead of a single oversized text block.
+ */
+.lp3-story-card {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  isolation: isolate;
+  overflow: clip;
+  border: 1px solid rgba(196, 172, 255, 0.28);
+  border-radius: 1rem;
+  padding: clamp(1.35rem, 5vw, 3.4rem);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(19, 14, 29, 0.72),
+      rgba(25, 16, 35, 0.58) 48%,
+      rgba(15, 12, 25, 0.82)
+    ),
+    url("/lp3-result-wallpaper.jpeg") center 42% / cover no-repeat;
+  background-color: #18121f;
+  box-shadow:
+    0 1.8rem 4rem rgba(0, 0, 0, 0.24),
+    inset 0 1px rgba(255, 255, 255, 0.13),
+    inset 0 -1px rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(24px) saturate(125%);
+  backdrop-filter: blur(24px) saturate(125%);
+}
+
+.lp3-story-card::after {
+  position: absolute;
+  z-index: -1;
+  right: -5rem;
+  bottom: -8rem;
+  width: 17rem;
+  height: 17rem;
+  border: 1px solid rgba(255, 197, 158, 0.18);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.lp3-story-card-main {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.lp3-story-card-title {
+  max-width: 16ch;
+  margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+  color: var(--lp3-ink);
+  font-family: var(--app-font-sans);
+  font-size: clamp(2.15rem, 5.2vw, 4.1rem);
+  font-style: normal;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.99;
+}
+
+.lp3-story-editorial {
+  width: min(100%, 42rem);
+  max-width: 42rem;
+  border-left: 1px solid rgba(246, 203, 184, 0.72);
+  padding: 0.4rem 0 0.4rem clamp(0.95rem, 3vw, 1.5rem);
+}
+
+.lp3-story-editorial p {
+  max-width: 37rem;
+  margin: 0;
+  color: rgba(249, 248, 251, 0.78);
+  font-family: var(--app-font-sans);
+  font-size: clamp(0.92rem, 1.55vw, 1.04rem);
+  line-height: 1.58;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.lp3-story-editorial p + p {
+  margin-top: 1.05rem;
+}
+
+.lp3-story-editorial p.lp3-story-lead {
+  color: var(--lp3-ink);
+  font-size: clamp(1rem, 1.8vw, 1.18rem);
+}
+
+.lp3-story-editorial p.lp3-story-quote {
+  margin-block: 1.65rem;
+  border-left: 3px solid var(--lp3-purple);
+  padding: 0.35rem 0 0.35rem 1rem;
+  color: var(--lp3-ink);
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.28rem, 2.25vw, 1.65rem);
+  font-style: italic;
+  line-height: 1.24;
+}
+
+.lp3-story-editorial p.lp3-story-closing {
+  color: var(--lp3-warm-soft);
+}
+
+@media (max-width: 699px) {
+  .lp3-story-card {
+    padding: 1.25rem;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(19, 14, 29, 0.82),
+        rgba(25, 16, 35, 0.68) 48%,
+        rgba(15, 12, 25, 0.88)
+      ),
+      url("/lp3-result-wallpaper.jpeg") center 42% / cover no-repeat;
+  }
+
+  .lp3-story-card-title {
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+    font-size: clamp(2rem, 8.5vw, 3rem);
+    line-height: 1;
+  }
+
+  .lp3-story-editorial {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.35rem 0 0.35rem 0.9rem;
+  }
+
+  .lp3-story-editorial p {
+    font-size: clamp(0.92rem, 4.1vw, 1rem);
+    line-height: 1.55;
+  }
+
+  .lp3-story-editorial p + p {
+    margin-top: 0.9rem;
+  }
+
+  .lp3-story-editorial p.lp3-story-lead {
+    font-size: clamp(0.98rem, 4.5vw, 1.12rem);
+  }
+
+  .lp3-story-editorial p.lp3-story-quote {
+    margin-block: 1.35rem;
+    padding-left: 0.8rem;
+    font-size: clamp(1.2rem, 5.8vw, 1.45rem);
+  }
+}
+
 .lp3-testimonials {
   display: grid;
   width: 100%;
