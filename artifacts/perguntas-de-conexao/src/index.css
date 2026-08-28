@@ -19471,3 +19471,38 @@ blockquote em {
 .lp3-practice-actions .lp3-practice-back {
   order: -1;
 }
+
+/*
+ * LP3 viewport containment
+ *
+ * The LP3 screens use full-width surfaces with internal padding. Keep that
+ * padding inside each element's declared width so no screen or control can
+ * push the page beyond the viewport. Horizontal carousels keep their own
+ * intentional scrolling behavior.
+ */
+.lp3-shell,
+.lp3-shell *,
+.lp3-shell *::before,
+.lp3-shell *::after {
+  box-sizing: border-box;
+}
+
+.lp3-shell {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.lp3-shell .site-header,
+.lp3-shell .site-footer,
+.lp3-shell .lp3-main,
+.lp3-shell .lp3-view,
+.lp3-shell .lp3-view > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.lp3-shell .lp3-button,
+.lp3-shell .lp3-link-button {
+  max-width: 100%;
+}
