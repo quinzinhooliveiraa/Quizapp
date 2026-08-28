@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ChevronLeft, RotateCcw } from "lucide-react";
+import {
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import {
   questions as libraryQuestions,
@@ -166,6 +172,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const [answers, setAnswers] = useState<Answers>(stored.answers);
   const [practiceIndex, setPracticeIndex] = useState(stored.practiceIndex);
   const [liveNote, setLiveNote] = useState("");
+  const practiceSwipeStart = useRef<number | null>(null);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
@@ -181,7 +188,6 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     );
     return (preferred.length ? preferred : fallbackQuestions).slice(0, 8);
   }, [recommendedTheme.id, result.narrativeType, result.themeId]);
-  const practiceQuestion = practiceQuestions[practiceIndex % practiceQuestions.length] ?? fallbackQuestions[0];
   const otherThemes = useMemo(
     () => libraryThemes.filter((theme) => theme.id !== recommendedTheme.id).slice(0, 5),
     [recommendedTheme.id],
@@ -307,8 +313,34 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
 
   const nextPracticeQuestion = () => {
     setPracticeIndex((index) => index + 1);
-    setLiveNote("Outra pergunta, para continuar de onde vocês estão.");
+    setLiveNote("");
     trackLp3("practice_next", { theme: recommendedTheme.id });
+  };
+
+  const previousPracticeQuestion = () => {
+    setPracticeIndex((index) =>
+      index === 0 ? practiceQuestions.length - 1 : index - 1,
+    );
+    setLiveNote("");
+    trackLp3("practice_previous", { theme: recommendedTheme.id });
+  };
+
+  const handlePracticePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    practiceSwipeStart.current = event.clientX;
+  };
+
+  const handlePracticePointerUp = (event: ReactPointerEvent<HTMLElement>) => {
+    const start = practiceSwipeStart.current;
+    practiceSwipeStart.current = null;
+    if (start === null) return;
+
+    const distance = event.clientX - start;
+    if (Math.abs(distance) < 48) return;
+    if (distance < 0) {
+      nextPracticeQuestion();
+    } else {
+      previousPracticeQuestion();
+    }
   };
 
   const checkout = () => {
@@ -481,38 +513,132 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     </section>
   );
 
-  const renderPractice = () => (
-    <section className="lp3-view lp3-practice" aria-labelledby="lp3-practice-title">
-      <div className="lp3-kicker">Da biblioteca compartilhada</div>
-      <h1 id="lp3-practice-title" className="lp3-section-title">Agora, uma pergunta.</h1>
-      <p className="lp3-section-intro">Sem responder certo ou errado. Leiam em voz alta, olhem um para o outro e deixem a resposta encontrar seu próprio tempo.</p>
-      <div className="lp3-question-card" data-testid={`card-lp3-practice-${practiceQuestion.id}`}>
-        <div className="lp3-card-footer">
-          <span>{recommendedTheme.title}</span>
-          <span>{practiceQuestion.intensity === "deep" ? "mais fundo" : "para começar"}</span>
+  const renderPractice = () => {
+    const visiblePracticeQuestions = [2, 1, 0].map((offset) => ({
+      offset,
+      question:
+        practiceQuestions[(practiceIndex + offset) % practiceQuestions.length] ??
+        fallbackQuestions[0],
+    }));
+    const practicePosition =
+      (practiceIndex % practiceQuestions.length) + 1;
+
+    return (
+      <section className="lp3-view lp3-practice" aria-labelledby="lp3-practice-title">
+        <div className="lp3-kicker">Da biblioteca compartilhada</div>
+        <h1 id="lp3-practice-title" className="lp3-section-title">
+          Agora, uma pergunta.
+        </h1>
+        <p className="lp3-section-intro">
+          Sem responder certo ou errado. Leiam em voz alta, olhem um para o
+          outro e deixem a resposta encontrar seu próprio tempo.
+        </p>
+        <div className="lp3-practice-deck-shell">
+          <button
+            className="lp3-practice-navigation lp3-practice-navigation-previous"
+            type="button"
+            onClick={previousPracticeQuestion}
+            aria-label="Pergunta anterior"
+            title="Pergunta anterior"
+            data-testid="button-lp3-previous-question-arrow"
+          >
+            <ChevronLeft size={21} aria-hidden="true" />
+          </button>
+          <div
+            className="lp3-practice-deck"
+            aria-label={`Pergunta ${practicePosition} de ${practiceQuestions.length}`}
+            onPointerDown={handlePracticePointerDown}
+            onPointerUp={handlePracticePointerUp}
+            onPointerCancel={() => {
+              practiceSwipeStart.current = null;
+            }}
+          >
+            {visiblePracticeQuestions.map(({ offset, question }) => {
+              const questionPosition =
+                ((practiceIndex + offset) % practiceQuestions.length) + 1;
+              const isFront = offset === 0;
+              return (
+                <article
+                  key={`${question.id}-${offset}`}
+                  className={`lp3-question-card ${isFront ? "is-front" : "is-underlay"} lp3-question-card-layer-${offset}`}
+                  aria-hidden={!isFront}
+                  data-testid={
+                    isFront
+                      ? `card-lp3-practice-${question.id}`
+                      : undefined
+                  }
+                >
+                  <div className="lp3-practice-card-grain" />
+                  <div className="lp3-practice-card-top">
+                    <span>{recommendedTheme.title}</span>
+                    <strong>
+                      Perguntas
+                      <br />
+                      <i>de Conexão</i>
+                    </strong>
+                  </div>
+                  <div className="lp3-practice-card-copy">
+                    <span className="lp3-practice-card-kicker">
+                      {question.intensity === "deep"
+                        ? "mais fundo"
+                        : "para começar"}
+                    </span>
+                    <p
+                      data-testid={
+                        isFront
+                          ? `text-lp3-practice-question-${question.id}`
+                          : undefined
+                      }
+                    >
+                      {question.text}
+                    </p>
+                  </div>
+                  <div className="lp3-practice-card-footer">
+                    <span>não existe resposta certa</span>
+                    <span className="lp3-practice-card-count">
+                      {String(questionPosition).padStart(2, "0")} /{" "}
+                      {String(practiceQuestions.length).padStart(2, "0")}
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <button
+            className="lp3-practice-navigation lp3-practice-navigation-next"
+            type="button"
+            onClick={nextPracticeQuestion}
+            aria-label="Próxima pergunta"
+            title="Próxima pergunta"
+            data-testid="button-lp3-next-question-arrow"
+          >
+            <ChevronRight size={21} aria-hidden="true" />
+          </button>
         </div>
-        <p data-testid={`text-lp3-practice-question-${practiceQuestion.id}`}>{practiceQuestion.text}</p>
-        <div className="lp3-card-footer">
-          <span>pergunta real</span>
-          <span>{practiceIndex + 1} / 08</span>
+        <div className="lp3-practice-actions">
+          <button
+            className="lp3-button lp3-button-primary"
+            type="button"
+            onClick={() => moveTo("recommend")}
+            data-testid="button-lp3-see-recommendation"
+          >
+            Ver por onde começar <ArrowRight size={15} aria-hidden="true" />
+          </button>
+          <button
+            className="lp3-button lp3-button-ghost lp3-practice-back"
+            type="button"
+            onClick={goBack}
+            data-testid="button-lp3-back-practice"
+          >
+            <ChevronLeft size={15} aria-hidden="true" /> Voltar
+          </button>
         </div>
-      </div>
-      <div className="lp3-actions">
-        <button className="lp3-button lp3-button-primary" type="button" onClick={nextPracticeQuestion} data-testid="button-lp3-another-question">
-          Outra pergunta <RotateCcw size={15} aria-hidden="true" />
-        </button>
-        <button className="lp3-button lp3-button-ghost" type="button" onClick={() => moveTo("recommend")} data-testid="button-lp3-see-recommendation">
-          Ver por onde começar <ArrowRight size={15} aria-hidden="true" />
-        </button>
-      </div>
-      <div className="lp3-back-row">
-        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-practice">
-          <ChevronLeft size={14} aria-hidden="true" /> Voltar
-        </button>
-        <span className="lp3-live-note" aria-live="polite">{liveNote}</span>
-      </div>
-    </section>
-  );
+        <span className="lp3-live-note" aria-live="polite">
+          {liveNote}
+        </span>
+      </section>
+    );
+  };
 
   const renderRecommend = () => (
     <section className="lp3-view lp3-recommend" aria-labelledby="lp3-recommend-title">

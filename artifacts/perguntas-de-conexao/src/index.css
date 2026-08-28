@@ -17740,6 +17740,318 @@ blockquote em {
   }
 }
 
+/* LP3 practice deck — mirror the in-app question card interaction. */
+.lp3-practice .lp3-section-title {
+  font-family: var(--app-font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.lp3-practice-deck-shell {
+  position: relative;
+  display: flex;
+  width: min(100%, 43rem);
+  align-items: center;
+  justify-content: center;
+  margin: 0.35rem auto 0;
+}
+
+.lp3-practice-deck {
+  position: relative;
+  width: min(100%, 24rem);
+  aspect-ratio: 3 / 4;
+  isolation: isolate;
+}
+
+.lp3-practice-navigation {
+  position: absolute;
+  top: 50%;
+  z-index: 8;
+  display: grid;
+  width: 2.85rem;
+  height: 2.85rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(34, 22, 48, 0.72);
+  box-shadow:
+    0 0.7rem 1.6rem rgba(0, 0, 0, 0.24),
+    inset 0 1px rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.lp3-practice-navigation-previous {
+  left: 0.2rem;
+}
+
+.lp3-practice-navigation-next {
+  right: 0.2rem;
+}
+
+.lp3-practice-navigation:hover,
+.lp3-practice-navigation:focus-visible {
+  border-color: rgba(238, 180, 164, 0.62);
+  color: #fff;
+  background: rgba(138, 48, 76, 0.72);
+  outline: none;
+  transform: translateY(-50%) scale(1.06);
+}
+
+.lp3-practice-navigation:active {
+  transform: translateY(-50%) scale(0.97);
+}
+
+.lp3-practice-deck .lp3-question-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.19);
+  border-radius: 2rem;
+  padding: 1.25rem;
+  color: #fff;
+  background:
+    linear-gradient(
+      145deg,
+      #c78091 0%,
+      #a04470 44%,
+      #71315e 73%,
+      #cc6b8b 100%
+    );
+  box-shadow:
+    0 2rem 4.8rem rgba(0, 0, 0, 0.36),
+    0 0 3rem rgba(172, 51, 151, 0.14);
+  transition:
+    transform 260ms ease,
+    opacity 260ms ease;
+}
+
+.lp3-practice-deck .lp3-question-card::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      circle at 25% 23%,
+      rgba(255, 255, 255, 0.2),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 80% 72%,
+      rgba(255, 198, 222, 0.22),
+      transparent 28%
+    ),
+    linear-gradient(180deg, rgba(39, 18, 47, 0.08), rgba(44, 9, 35, 0.2));
+  content: "";
+  pointer-events: none;
+}
+
+.lp3-practice-card-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.lp3-practice-deck .lp3-question-card-layer-2 {
+  z-index: 1;
+  transform: translate(1.05rem, 0.9rem) scale(0.95);
+  opacity: 0.42;
+}
+
+.lp3-practice-deck .lp3-question-card-layer-1 {
+  z-index: 2;
+  transform: translate(0.55rem, 0.45rem) scale(0.975);
+  opacity: 0.72;
+}
+
+.lp3-practice-deck .lp3-question-card.is-front {
+  z-index: 3;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.lp3-practice-deck .lp3-question-card.is-front:active {
+  cursor: grabbing;
+}
+
+.lp3-practice-card-top,
+.lp3-practice-card-copy,
+.lp3-practice-card-footer {
+  position: relative;
+  z-index: 2;
+}
+
+.lp3-practice-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.lp3-practice-card-top > span {
+  max-width: 68%;
+  overflow: hidden;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.63rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lp3-practice-card-top strong {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.76rem;
+  line-height: 0.85;
+  text-align: right;
+  letter-spacing: -0.04em;
+}
+
+.lp3-practice-card-top strong i {
+  color: rgba(255, 255, 255, 0.57);
+  font-style: normal;
+}
+
+.lp3-practice-card-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  padding: 1.5rem 0 4.5rem;
+}
+
+.lp3-practice-card-kicker {
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.62);
+  font: 0.66rem var(--app-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lp3-practice-card-copy p {
+  max-width: 20rem;
+  margin: 0;
+  color: #fff;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.8rem, 5vw, 2.55rem);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.18;
+  letter-spacing: 0;
+  word-spacing: 0.08em;
+}
+
+.lp3-practice-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  color: rgba(255, 255, 255, 0.57);
+  font: 0.58rem var(--app-font-mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.lp3-practice-card-footer > span:first-child {
+  max-width: 70%;
+}
+
+.lp3-practice-card-count {
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+}
+
+.lp3-practice-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 0.2rem;
+}
+
+.lp3-practice-actions .lp3-practice-back {
+  gap: 0.35rem;
+}
+
+.lp3-practice .lp3-live-note {
+  min-height: 0;
+  text-align: center;
+}
+
+@media (max-width: 699px) {
+  .lp3-practice-deck-shell {
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  .lp3-practice-deck {
+    width: min(100%, 22rem);
+  }
+
+  .lp3-practice-navigation {
+    display: none;
+  }
+
+  .lp3-practice-deck .lp3-question-card {
+    border-radius: 1.7rem;
+    padding: 1rem;
+  }
+
+  .lp3-practice-card-copy {
+    padding-bottom: 4rem;
+  }
+
+  .lp3-practice-card-copy p {
+    font-size: clamp(1.65rem, 8vw, 2.25rem);
+  }
+
+  .lp3-practice-actions {
+    width: 100%;
+    gap: 0.55rem;
+  }
+
+  .lp3-practice-actions .lp3-button {
+    min-width: 0;
+    padding-inline: 0.85rem;
+    font-size: 0.83rem;
+    white-space: nowrap;
+  }
+
+  .lp3-practice-actions .lp3-button-primary {
+    flex: 1;
+  }
+
+  .lp3-practice-actions .lp3-practice-back {
+    flex: 0 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp3-practice-deck .lp3-question-card,
+  .lp3-practice-navigation {
+    transition: none;
+  }
+}
+
 /*
  * LP3 testimonials carousel
  *
@@ -19000,5 +19312,49 @@ blockquote em {
     min-height: 2.85rem;
     padding-inline: 1rem;
     font-size: 0.86rem;
+  }
+}
+
+/* Keep the story actions together on narrow screens. */
+@media (max-width: 699px) {
+  .lp3-story .lp3-back-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .lp3-story .lp3-back-row > .lp3-button,
+  .lp3-story .lp3-back-row .lp3-link-button {
+    grid-row: 1;
+    min-width: 0;
+    width: auto;
+    min-height: 2.9rem;
+    padding-block: 0.65rem;
+    font-size: 0.76rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .lp3-story .lp3-back-row > .lp3-button {
+    grid-column: 1;
+    margin-left: 0;
+    padding-inline: 0.65rem;
+  }
+
+  .lp3-story .lp3-back-row .lp3-link-button {
+    grid-column: 2;
+    justify-content: center;
+    padding-inline: 0.8rem;
+  }
+
+  .lp3-practice-actions {
+    flex-wrap: nowrap;
+  }
+
+  .lp3-practice-actions .lp3-button {
+    min-height: 2.9rem;
+    padding-block: 0.65rem;
   }
 }
