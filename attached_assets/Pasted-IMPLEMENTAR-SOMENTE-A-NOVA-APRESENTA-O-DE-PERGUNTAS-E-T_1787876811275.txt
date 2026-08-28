@@ -1,0 +1,338 @@
+IMPLEMENTAR SOMENTE A NOVA APRESENTAÇÃO DE PERGUNTAS E TEMAS RECOMENDADOS DA LP3.
+
+IMPORTANTE:
+Não alterar a lógica de recomendação.
+Não alterar as narrativas.
+Não alterar o checkout.
+Não alterar o onboarding.
+Não alterar o router.
+Não alterar experimentos.
+Não alterar Auto Optimization.
+Não alterar tracking.
+Não alterar LP1 ou LP2.
+
+O objetivo é exclusivamente corrigir a apresentação visual/interativa das perguntas e dos temas recomendados na LP3.
+
+==================================================
+1. PERGUNTAS RECOMENDADAS — FORMATO DE CARTAS
+==================================================
+
+Na etapa:
+
+"Pelo que você nos contou, começaríamos por aqui."
+
+as perguntas recomendadas NÃO devem aparecer como uma lista vertical comum.
+
+Elas devem aparecer como CARTAS, seguindo visualmente o padrão que já existe no onboarding / página principal do produto.
+
+Referência conceitual:
+
+┌─────────────────────────────┐
+│                             │
+│       PERGUNTA              │
+│                             │
+│  "..."                      │
+│                             │
+│                             │
+└─────────────────────────────┘
+
+[ carta ] [ carta ] [ carta ]
+
+O usuário deve poder navegar horizontalmente pelas cartas.
+
+==================================================
+2. INTERAÇÃO MOBILE
+==================================================
+
+No celular:
+
+- usar scroll horizontal por toque/swipe;
+- o usuário deve conseguir arrastar as cartas com o dedo;
+- não usar um carrossel que dependa exclusivamente de botões;
+- permitir que parte da próxima carta fique visível para indicar que existe mais conteúdo;
+- usar scroll-snap quando apropriado;
+- não permitir overflow horizontal da página inteira;
+- somente o container das cartas deve possuir o scroll horizontal;
+- esconder a scrollbar visualmente se isso estiver de acordo com o padrão atual do produto.
+
+A experiência deve parecer:
+
+[ CARTA 1 ] [ CARTA 2 parcialmente ]
+
+usuário arrasta →
+
+[ CARTA 2 ] [ CARTA 3 parcialmente ]
+
+==================================================
+3. DESKTOP
+==================================================
+
+No desktop:
+
+- manter as cartas centralizadas;
+- permitir navegação horizontal;
+- não deixar as cartas ultrapassarem a viewport;
+- não criar uma faixa horizontal que cause scroll no BODY;
+- manter dimensões consistentes;
+- usar quantidade de cartas visível de acordo com o espaço disponível.
+
+A experiência deve continuar visualmente semelhante ao produto existente.
+
+==================================================
+4. REUTILIZAR O PADRÃO VISUAL EXISTENTE
+==================================================
+
+IMPORTANTE:
+
+Antes de criar um novo design, verificar no código da LP principal/onboarding como as perguntas são atualmente apresentadas.
+
+Reutilizar:
+
+- estrutura visual;
+- tipografia;
+- bordas;
+- radius;
+- espaçamento;
+- hierarquia;
+- tratamento da pergunta;
+- indicadores existentes, se houver.
+
+Não criar um novo estilo de carta sem necessidade.
+
+A LP3 deve parecer parte do MESMO PRODUTO.
+
+==================================================
+5. TEMAS / BARALHOS RECOMENDADOS
+==================================================
+
+Na parte:
+
+"Outros caminhos para vocês"
+ou equivalente atual da LP3,
+
+os temas/baralhos recomendados devem aparecer como CARDS.
+
+O visual deve ser inspirado nos cards que já existem no aplicativo/produto.
+
+Neste momento NÃO temos as imagens finais.
+
+Portanto, criar a estrutura pensando desde já que cada tema poderá futuramente possuir uma imagem.
+
+Estrutura conceitual:
+
+{
+  id,
+  title,
+  description,
+  imageUrl?: string
+}
+
+ou estrutura equivalente.
+
+==================================================
+6. PREPARAÇÃO PARA FUTURAS IMAGENS
+==================================================
+
+IMPORTANTE:
+
+Não fazer integração com API agora.
+
+Mas a arquitetura deve estar preparada para isso.
+
+O componente deve aceitar algo como:
+
+imageUrl?: string
+
+Quando `imageUrl` existir:
+
+→ renderizar a imagem.
+
+Quando não existir:
+
+→ renderizar o fallback visual atual.
+
+Não colocar URLs de imagens falsas.
+
+Não depender de imagens externas agora.
+
+Não criar uma API fictícia.
+
+A ideia é que futuramente o backend possa fornecer:
+
+theme.imageUrl
+
+e a LP3 passe a renderizar automaticamente.
+
+==================================================
+7. COMPATIBILIDADE COM A RECOMENDAÇÃO ATUAL
+==================================================
+
+Não alterar:
+
+recommendedTheme
+
+result.themeId
+
+practiceQuestions
+
+ou qualquer lógica que determine quais perguntas/temas aparecem.
+
+Somente alterar a forma como esses dados são apresentados.
+
+Fluxo:
+
+respostas
+↓
+narrativeType
+↓
+recommendedTheme
+↓
+practiceQuestions
+↓
+APRESENTAÇÃO EM CARTAS
+
+==================================================
+8. CARDS DOS TEMAS
+==================================================
+
+Os cards devem ter aparência próxima aos cards existentes no produto.
+
+Devem conter, quando disponíveis:
+
+- imagem;
+- nome do tema;
+- descrição curta;
+- qualquer informação já existente atualmente.
+
+Não inventar novos dados.
+
+Não adicionar preço dentro desses cards se isso não existir atualmente.
+
+Não transformar esses cards em anúncios.
+
+==================================================
+9. RESPONSIVIDADE
+==================================================
+
+Testar obrigatoriamente:
+
+MOBILE:
+
+- 320px
+- 375px
+- 390px
+- 430px
+
+DESKTOP:
+
+- 1280px
+- 1440px
+- 1920px
+
+Garantir:
+
+- zero overflow horizontal do body;
+- cartas dentro da viewport;
+- swipe funcionando;
+- textos não cortados;
+- botões não quebrados;
+- cards não esmagados;
+- espaçamento consistente.
+
+==================================================
+10. ACESSIBILIDADE / UX
+==================================================
+
+As cartas devem continuar navegáveis por teclado quando possível.
+
+Não impedir o foco.
+
+Adicionar aria-labels apropriados quando forem necessários.
+
+O scroll horizontal deve continuar sendo utilizável sem mouse no mobile.
+
+==================================================
+11. IMPLEMENTAÇÃO
+==================================================
+
+Preferir componentes reutilizáveis.
+
+Exemplo:
+
+RecommendedQuestionCarousel.tsx
+
+RecommendedThemeCarousel.tsx
+
+ou nomes equivalentes.
+
+Evitar colocar toda a lógica diretamente dentro de Lp3.tsx.
+
+Os componentes devem receber dados por props.
+
+Exemplo conceitual:
+
+<RecommendedQuestionCarousel
+  questions={practiceQuestions}
+/>
+
+<RecommendedThemeCarousel
+  themes={recommendedThemes}
+/>
+
+Não duplicar dados.
+
+==================================================
+12. NÃO ALTERAR A COPY
+==================================================
+
+Não alterar nenhuma copy existente da LP3.
+
+Esta tarefa é visual/estrutural.
+
+Não reescrever:
+
+- narrativas;
+- insights;
+- transição;
+- plano;
+- CTA.
+
+==================================================
+13. VALIDAÇÃO
+==================================================
+
+Testar:
+
+1. LP3 com poucas perguntas.
+2. LP3 com várias perguntas.
+3. Swipe das perguntas no mobile.
+4. Scroll dos temas no mobile.
+5. Navegação no desktop.
+6. Tema sem imagem.
+7. Tema com imageUrl simulada localmente apenas para validar o componente, sem persistir dados falsos.
+8. Zero overflow horizontal.
+9. recommendedTheme preservado.
+10. practiceQuestions preservado.
+11. CTA funcionando normalmente.
+
+Rodar:
+
+- typecheck
+- build
+
+==================================================
+RELATÓRIO FINAL
+==================================================
+
+Informar:
+
+1. arquivos alterados;
+2. componentes criados/alterados;
+3. onde foi encontrado o padrão visual de cartas existente;
+4. como o swipe horizontal foi implementado;
+5. como os temas foram preparados para futuras imagens;
+6. confirmação de que não houve alteração na lógica de recomendação;
+7. resultado do typecheck;
+8. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.
