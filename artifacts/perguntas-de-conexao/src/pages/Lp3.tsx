@@ -426,14 +426,14 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
             </div>
           )}
         </div>
-        <div className="lp3-result-card-footer">
-          <button className="lp3-link-button lp3-result-back" type="button" onClick={goBack} data-testid="button-lp3-back-result">
-            <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
-          </button>
-          <button className="lp3-button lp3-button-primary lp3-result-cta" type="button" onClick={() => moveTo("story")} data-testid="button-lp3-see-story">
-            Continuar <ArrowRight size={15} aria-hidden="true" />
-          </button>
-        </div>
+      </div>
+      <div className="lp3-result-card-footer">
+        <button className="lp3-link-button lp3-result-back" type="button" onClick={goBack} data-testid="button-lp3-back-result">
+          <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
+        </button>
+        <button className="lp3-button lp3-button-primary lp3-result-cta" type="button" onClick={() => moveTo("story")} data-testid="button-lp3-see-story">
+          Continuar <ArrowRight size={15} aria-hidden="true" />
+        </button>
       </div>
     </section>
   );

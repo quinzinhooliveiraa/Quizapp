@@ -18245,22 +18245,14 @@ blockquote em {
   isolation: isolate;
   border-color: rgba(196, 172, 255, 0.28);
   background:
-    radial-gradient(
-      circle at 100% 0%,
-      rgba(255, 197, 158, 0.15),
-      transparent 34%
-    ),
-    radial-gradient(
-      circle at 0% 100%,
-      rgba(196, 172, 255, 0.14),
-      transparent 42%
-    ),
     linear-gradient(
       135deg,
-      rgba(76, 53, 111, 0.52),
-      rgba(34, 24, 57, 0.7) 55%,
-      rgba(22, 16, 35, 0.82)
-    );
+      rgba(19, 14, 29, 0.7),
+      rgba(25, 16, 35, 0.52) 48%,
+      rgba(15, 12, 25, 0.78)
+    ),
+    url("/lp3-result-wallpaper.jpeg") center 42% / cover no-repeat;
+  background-color: #18121f;
   box-shadow:
     0 1.8rem 4rem rgba(0, 0, 0, 0.24),
     inset 0 1px rgba(255, 255, 255, 0.13),
@@ -18332,8 +18324,9 @@ blockquote em {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 1.2rem;
+  width: 100%;
+  margin-top: 0.15rem;
+  padding-top: 0;
 }
 
 .lp3-result-back {
@@ -18374,11 +18367,9 @@ blockquote em {
     width: 100%;
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(16rem, 0.82fr);
-    grid-template-areas:
-      "main support"
-      "footer footer";
+    grid-template-areas: "main support";
     column-gap: clamp(2rem, 5vw, 5rem);
-    row-gap: clamp(2rem, 4vw, 3.25rem);
+    row-gap: 0;
     padding: clamp(2.2rem, 5vw, 4rem);
   }
 
@@ -18396,7 +18387,10 @@ blockquote em {
 
   .lp3-result-title {
     max-width: 12ch;
-    font-size: clamp(2.35rem, 4vw, 4rem);
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: clamp(2.05rem, 3.35vw, 3.35rem);
+    font-style: italic;
+    font-weight: 400;
     line-height: 1;
   }
 
@@ -18416,9 +18410,6 @@ blockquote em {
     line-height: 1.6;
   }
 
-  .lp3-result-card-footer {
-    grid-area: footer;
-  }
 }
 
 @media (max-width: 699px) {
@@ -18436,7 +18427,10 @@ blockquote em {
 
   .lp3-result-title {
     max-width: 100%;
-    font-size: clamp(2rem, 9vw, 2.8rem);
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: clamp(1.85rem, 8vw, 2.65rem);
+    font-style: italic;
+    font-weight: 400;
     line-height: 1.02;
   }
 
@@ -18462,7 +18456,7 @@ blockquote em {
   .lp3-result-card-footer {
     gap: 0.65rem;
     margin-top: 0.15rem;
-    padding-top: 0.95rem;
+    padding-top: 0;
   }
 
   .lp3-result-back {
