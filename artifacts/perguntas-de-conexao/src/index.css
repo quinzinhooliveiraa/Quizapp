@@ -16175,6 +16175,52 @@ blockquote em {
   margin: 0.2rem auto 0;
 }
 
+.lp3-recommend-paths {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.lp3-recommend-paths-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 3.55rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.65rem;
+  padding: 0.95rem 1.15rem;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--lp3-ink);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.lp3-recommend-paths-toggle:hover {
+  border-color: rgba(196, 172, 255, 0.42);
+  background: rgba(196, 172, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.lp3-recommend-paths-toggle svg {
+  flex: 0 0 auto;
+  color: var(--lp3-warm-soft);
+  transition: transform 180ms ease;
+}
+
+.lp3-recommend-paths-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.lp3-recommend-paths-content {
+  min-width: 0;
+}
+
 .lp3-recommendation-bridge {
   max-width: 34rem;
   margin: 0;
@@ -17387,6 +17433,11 @@ blockquote em {
     margin-top: 0;
   }
 
+  .lp3-recommend-paths-toggle {
+    min-height: 3rem;
+    padding: 0.75rem 0.85rem;
+  }
+
   .lp3-recommendation-bridge {
     max-width: 100%;
     font-size: 0.91rem;
@@ -17413,10 +17464,6 @@ blockquote em {
   }
 
   .lp3-plan-cta {
-    width: 100%;
-  }
-
-  .lp3-plan-cta .lp3-button {
     width: 100%;
   }
 

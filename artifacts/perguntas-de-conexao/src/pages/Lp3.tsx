@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import {
   questions as libraryQuestions,
@@ -172,6 +172,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const [answers, setAnswers] = useState<Answers>(stored.answers);
   const [practiceIndex, setPracticeIndex] = useState(stored.practiceIndex);
   const [liveNote, setLiveNote] = useState("");
+  const [showOtherPaths, setShowOtherPaths] = useState(false);
   const practiceSwipeStart = useRef<number | null>(null);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
@@ -236,6 +237,12 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     window.localStorage.setItem("conexao-lp3-difficult-conversations", answers.vulnerability || "");
     window.localStorage.setItem("conexao-lp3-primary-goal", answers.desire || "");
   }, [answers, currentQuestion, practiceIndex, screen]);
+
+  useEffect(() => {
+    if (screen !== "recommend") {
+      setShowOtherPaths(false);
+    }
+  }, [screen]);
 
   const moveTo = (nextScreen: Screen) => {
     setScreen(nextScreen);
@@ -666,15 +673,30 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         recommendationBridge={recommendationBridge}
         questions={practiceQuestions}
         themeTitle={recommendedTheme.title}
-        onAction={checkout}
       />
       <div className="lp3-recommend-paths">
-        <span className="lp3-mono">E outros caminhos para vocês</span>
-        <RecommendedThemeCarousel themes={otherThemes} />
+        <button
+          className="lp3-recommend-paths-toggle"
+          type="button"
+          aria-controls="lp3-other-paths"
+          aria-expanded={showOtherPaths}
+          onClick={() => setShowOtherPaths((isVisible) => !isVisible)}
+        >
+          <span className="lp3-mono">E outros caminhos para vocês</span>
+          <ChevronDown size={18} aria-hidden="true" />
+        </button>
+        {showOtherPaths ? (
+          <div id="lp3-other-paths" className="lp3-recommend-paths-content">
+            <RecommendedThemeCarousel themes={otherThemes} />
+          </div>
+        ) : null}
       </div>
-      <div className="lp3-back-row">
-        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-recommend">
+      <div className="lp3-practice-actions lp3-recommend-actions">
+        <button className="lp3-button lp3-button-ghost lp3-practice-back" type="button" onClick={goBack} data-testid="button-lp3-back-recommend">
           <ChevronLeft size={14} aria-hidden="true" /> Voltar
+        </button>
+        <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-start-conversation">
+          Quero começar essa conversa <ArrowRight size={15} aria-hidden="true" />
         </button>
       </div>
     </section>

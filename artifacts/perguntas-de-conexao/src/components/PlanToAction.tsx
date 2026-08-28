@@ -5,14 +5,12 @@ type PlanToActionProps = {
   recommendationBridge: string;
   questions: ConnectionQuestion[];
   themeTitle: string;
-  onAction: () => void;
 };
 
 export function PlanToAction({
   recommendationBridge,
   questions,
   themeTitle,
-  onAction,
 }: PlanToActionProps) {
   return (
     <section className="lp3-plan-to-action" aria-labelledby="lp3-first-step-title">
@@ -25,17 +23,6 @@ export function PlanToAction({
           questions={questions}
           themeTitle={themeTitle}
         />
-      </div>
-      <div className="lp3-plan-cta">
-        <button
-          className="lp3-button lp3-button-primary"
-          type="button"
-          onClick={onAction}
-          data-testid="button-lp3-start-conversation"
-        >
-          Quero começar essa conversa <span aria-hidden="true">→</span>
-        </button>
-        <p>Você começa escolhendo o seu nome e onde quer receber o acesso.</p>
       </div>
     </section>
   );
