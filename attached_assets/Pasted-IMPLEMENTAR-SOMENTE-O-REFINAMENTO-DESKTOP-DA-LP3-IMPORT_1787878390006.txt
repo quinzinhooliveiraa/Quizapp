@@ -1,0 +1,276 @@
+IMPLEMENTAR SOMENTE O REFINAMENTO DESKTOP DA LP3.
+
+IMPORTANTE:
+A funcionalidade atual está funcionando.
+As perguntas em cartas e os temas em cards já foram implementados.
+
+NÃO REFAZER A FUNCIONALIDADE.
+NÃO ALTERAR A LÓGICA.
+
+O objetivo desta tarefa é melhorar EXCLUSIVAMENTE a experiência visual da LP3 em desktop.
+
+==================================================
+PROBLEMA
+==================================================
+
+No desktop, a LP3 está com aparência excessivamente "mobile aumentada".
+
+Existe muito espaço vazio e os elementos não aproveitam corretamente a largura disponível.
+
+Queremos que a LP3 pareça uma página de vendas profissional em desktop, mantendo o mesmo branding e linguagem visual do produto.
+
+==================================================
+1. CONTAINER PRINCIPAL
+==================================================
+
+Revisar os containers da LP3 para desktop.
+
+Evitar:
+
+- conteúdo excessivamente estreito;
+- grandes áreas vazias;
+- elementos comprimidos no centro;
+- cards pequenos demais;
+- textos ocupando uma largura desnecessariamente pequena.
+
+Criar uma largura máxima coerente para cada seção.
+
+Não usar simplesmente:
+
+max-width: 500px
+
+para toda a LP3.
+
+A largura deve variar de acordo com o tipo de conteúdo.
+
+==================================================
+2. HISTÓRIA / STORYTELLING
+==================================================
+
+A história personalizada deve ter leitura confortável no desktop.
+
+Usar uma largura de leitura apropriada para texto longo.
+
+Evitar:
+
+- linhas gigantes;
+- bloco de texto estreito demais;
+- excesso de espaço lateral;
+- título pequeno demais.
+
+A história deve ser o principal elemento emocional da página.
+
+Criar hierarquia visual clara entre:
+
+- título;
+- insight;
+- história;
+- transição para a solução.
+
+==================================================
+3. PERGUNTAS EM CARTAS
+==================================================
+
+O carrossel de perguntas deve aproveitar melhor a largura desktop.
+
+No desktop:
+
+- mostrar múltiplas cartas simultaneamente quando houver espaço;
+- não deixar apenas uma carta pequena centralizada;
+- manter tamanho visual consistente;
+- preservar o scroll horizontal;
+- preservar scroll-snap;
+- não causar overflow do BODY.
+
+A experiência deve parecer um conjunto de cartas de um produto premium.
+
+Exemplo conceitual:
+
+┌────────────┐  ┌────────────┐  ┌────────────┐
+│            │  │            │  │            │
+│ PERGUNTA   │  │ PERGUNTA   │  │ PERGUNTA   │
+│            │  │            │  │            │
+└────────────┘  └────────────┘  └────────────┘
+
+e não:
+
+             ┌────────────┐
+             │            │
+             │ PERGUNTA   │
+             │            │
+             └────────────┘
+
+==================================================
+4. TEMAS / BARALHOS
+==================================================
+
+No desktop, os cards dos temas também devem aproveitar melhor o espaço.
+
+Mostrar uma quantidade adequada de cards simultaneamente.
+
+Não deixar cards pequenos demais.
+
+Manter:
+
+- estrutura preparada para imageUrl;
+- fallback;
+- scroll horizontal;
+- responsividade.
+
+Quando houver espaço suficiente, mostrar vários cards.
+
+Quando não houver, permitir navegação horizontal.
+
+==================================================
+5. HIERARQUIA VISUAL
+==================================================
+
+Revisar a proporção entre:
+
+- títulos;
+- subtítulos;
+- texto;
+- cards;
+- CTA;
+- espaçamentos.
+
+A página não deve parecer uma sequência de componentes independentes.
+
+Ela deve ser percebida como uma única narrativa:
+
+QUIZ
+↓
+RESULTADO
+↓
+HISTÓRIA
+↓
+SOLUÇÃO
+↓
+CARTAS
+↓
+BARALHO
+↓
+CTA
+
+==================================================
+6. ESPAÇAMENTO
+==================================================
+
+Revisar especialmente:
+
+- padding vertical entre seções;
+- margin entre título e conteúdo;
+- espaço entre storytelling e solução;
+- espaço entre solução e cartas;
+- espaço entre cartas e CTA.
+
+Evitar tanto:
+
+- elementos grudados;
+- quanto espaços gigantes sem função.
+
+O espaçamento deve criar ritmo de leitura.
+
+==================================================
+7. CTA
+==================================================
+
+O CTA final deve ter presença visual adequada no desktop.
+
+Não aumentar exageradamente.
+
+Não deixar pequeno perdido no meio da página.
+
+Ele deve ser visualmente percebido como a consequência natural de toda a narrativa anterior.
+
+==================================================
+8. BREAKPOINTS
+==================================================
+
+O refinamento deve considerar pelo menos:
+
+1024px
+1280px
+1440px
+1920px
+
+Não quebrar o mobile que já foi implementado.
+
+A partir do breakpoint desktop, adaptar progressivamente:
+
+- largura dos containers;
+- número de cards visíveis;
+- tamanho das cartas;
+- espaçamento;
+- tipografia.
+
+Não criar um layout completamente diferente.
+
+==================================================
+9. NÃO ALTERAR
+==================================================
+
+Não alterar:
+
+- copy;
+- histórias;
+- seleção narrativa;
+- perguntas;
+- respostas;
+- recomendação;
+- depoimentos;
+- checkout;
+- onboarding;
+- tracking;
+- router;
+- experimentos;
+- auto optimization;
+- API;
+- estrutura de dados.
+
+Somente CSS/layout/responsividade desktop.
+
+==================================================
+10. VALIDAÇÃO VISUAL
+==================================================
+
+Testar a LP3 em:
+
+- 1024x768
+- 1280x800
+- 1440x900
+- 1920x1080
+
+Verificar especialmente:
+
+- nenhum overflow horizontal;
+- nenhum elemento cortado;
+- nenhum card ultrapassando container;
+- cards aproveitando corretamente a largura;
+- história confortável para leitura;
+- CTA bem posicionado;
+- espaçamento equilibrado.
+
+Também verificar rapidamente mobile para garantir que nada foi quebrado.
+
+==================================================
+11. VALIDAÇÃO TÉCNICA
+==================================================
+
+Rodar:
+
+- typecheck
+- build
+
+Não modificar lógica de aplicação.
+
+No relatório final informar:
+
+1. arquivos alterados;
+2. principais ajustes desktop;
+3. breakpoints utilizados;
+4. confirmação de que mobile foi preservado;
+5. resultado do typecheck;
+6. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.

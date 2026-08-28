@@ -15531,7 +15531,8 @@ blockquote em {
   --lp3-warm-soft: #f6cbb8;
   position: relative;
   min-height: 100dvh;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   background:
     radial-gradient(
       circle at 76% 5%,
@@ -16707,8 +16708,8 @@ blockquote em {
   .lp3-main {
     width: min(100% - 5rem, 1160px);
     min-height: calc(100dvh - 5.75rem);
-    padding: clamp(3.5rem, 8vh, 6.5rem) 0 clamp(4rem, 9vh, 7rem);
-    justify-content: center;
+    padding: clamp(3.25rem, 7vh, 5.75rem) 0 clamp(4rem, 8vh, 6.5rem);
+    justify-content: flex-start;
   }
 
   .lp3-intro {
@@ -16856,7 +16857,7 @@ blockquote em {
 
 @media (min-width: 1180px) {
   .lp3-intro {
-    width: min(100%, 62rem);
+    width: min(100%, 66rem);
   }
 
   .lp3-intro > .lp3-copy-block {
@@ -16864,7 +16865,7 @@ blockquote em {
   }
 
   .lp3-question-wrap {
-    width: min(100%, 58rem);
+    width: min(100%, 60rem);
   }
 
   .lp3-question-heading {
@@ -16872,14 +16873,14 @@ blockquote em {
   }
 
   .lp3-options {
-    width: min(100%, 54rem);
+    width: min(100%, 56rem);
   }
 
   .lp3-result,
   .lp3-story,
   .lp3-practice,
   .lp3-offer {
-    width: min(100%, 62rem);
+    width: min(100%, 64rem);
   }
 
   .lp3-recommend {
@@ -16892,15 +16893,66 @@ blockquote em {
   }
 
   .lp3-story .lp3-editorial {
-    width: min(100%, 49rem);
+    width: min(100%, 54rem);
   }
 
   .lp3-practice .lp3-question-card {
-    width: min(100%, 52rem);
+    width: min(100%, 56rem);
   }
 
   .lp3-recommend .lp3-deck {
+    width: min(100%, 70rem);
+  }
+}
+
+@media (min-width: 1440px) {
+  .lp3-topbar,
+  .lp3-main {
+    width: min(100% - 6rem, 1240px);
+  }
+
+  .lp3-intro {
+    width: min(100%, 72rem);
+  }
+
+  .lp3-question-wrap {
+    width: min(100%, 62rem);
+  }
+
+  .lp3-options {
+    width: min(100%, 58rem);
+  }
+
+  .lp3-result,
+  .lp3-story,
+  .lp3-practice,
+  .lp3-offer {
     width: min(100%, 66rem);
+  }
+
+  .lp3-result-card,
+  .lp3-offer {
+    width: min(100%, 60rem);
+  }
+
+  .lp3-story .lp3-editorial {
+    width: min(100%, 56rem);
+  }
+
+  .lp3-practice .lp3-question-card {
+    width: min(100%, 58rem);
+  }
+
+  .lp3-recommend {
+    width: min(100%, 76rem);
+  }
+
+  .lp3-recommend .lp3-deck {
+    width: min(100%, 70rem);
+  }
+
+  .lp3-card-scroller {
+    grid-auto-columns: minmax(20rem, 30%);
   }
 }
 
