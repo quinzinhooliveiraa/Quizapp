@@ -17763,6 +17763,24 @@ blockquote em {
   font-weight: 400;
 }
 
+/* Keep the practice introduction visually centered across viewport sizes. */
+.lp3-practice > .lp3-kicker {
+  justify-content: center;
+}
+
+.lp3-practice > .lp3-section-title {
+  width: 100%;
+  max-width: 16ch;
+  justify-self: center;
+  text-align: center;
+}
+
+.lp3-practice > .lp3-section-intro {
+  width: min(100%, 49rem);
+  margin-inline: auto;
+  text-align: center;
+}
+
 .lp3-practice-deck-shell {
   position: relative;
   display: flex;
