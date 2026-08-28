@@ -17950,3 +17950,43 @@ blockquote em {
     left: 1rem;
   }
 }
+
+/*
+ * LP3 hero pass: keep the quiz experience, but use the exact sales-hero
+ * composition already established by LP1.
+ */
+.lp3-main[data-section-name="intro"] {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lp3-main[data-section-name="intro"] .lp3-hero {
+  width: 100%;
+}
+
+.lp3-main[data-section-name="intro"] .lp3-hero-inner {
+  max-width: 1200px;
+}
+
+@media (max-width: 900px) {
+  .lp3-main[data-section-name="intro"] .lp-hero-copy {
+    max-width: 620px;
+  }
+}
+
+@media (max-width: 640px) {
+  .lp3-main[data-section-name="intro"] .lp-hero {
+    padding-top: 2.5rem;
+    padding-bottom: 3rem;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-hero-copy {
+    max-width: 100%;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-hero-trust {
+    align-items: flex-start;
+  }
+}
