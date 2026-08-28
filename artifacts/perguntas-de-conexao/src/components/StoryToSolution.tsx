@@ -19,11 +19,11 @@ export function StoryToSolution() {
             Um jeito simples de começar conversas que normalmente acabam ficando
             para depois.
           </p>
+          <p className="lp3-transition-direction">
+            Pelo que você nos contou, começaríamos por aqui.
+          </p>
         </div>
       </div>
-      <p className="lp3-transition-direction">
-        Pelo que você nos contou, começaríamos por aqui.
-      </p>
     </section>
   );
 }
