@@ -18171,3 +18171,16 @@ blockquote em {
     text-align: center;
   }
 }
+
+@media (max-width: 699px) {
+  .lp3-shell.lp3-quiz-active > .site-header,
+  .lp3-shell.lp3-quiz-active > .site-footer {
+    display: none;
+  }
+
+  .lp3-shell.lp3-quiz-active > .lp3-main {
+    min-height: 100dvh;
+    padding-top: max(1.5rem, env(safe-area-inset-top));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}

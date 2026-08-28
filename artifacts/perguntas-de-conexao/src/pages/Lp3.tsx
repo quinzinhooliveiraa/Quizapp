@@ -561,7 +561,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   }[screen]();
 
   return (
-    <div className="site-shell shell-dark lp3-shell">
+    <div className={`site-shell shell-dark lp3-shell ${screen === "question" ? "lp3-quiz-active" : ""}`}>
       <header className="site-header">
         <BrandLogo inverse />
         <Link href="/login" className="header-cta" data-testid="link-header-cta">
