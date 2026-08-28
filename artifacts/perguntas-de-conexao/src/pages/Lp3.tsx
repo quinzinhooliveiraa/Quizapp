@@ -412,23 +412,28 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     <section className="lp3-view lp3-result" aria-labelledby="lp3-result-title">
       <div className="lp3-kicker">O que apareceu nas respostas</div>
       <div className="lp3-result-card">
-        <h1 id="lp3-result-title" className="lp3-result-title">{result.title}</h1>
-        <p className="lp3-result-lead">{result.insight}</p>
-        {result.personalizations.length > 0 && (
-          <div className="lp3-result-detail">
-            {result.personalizations.map((personalization) => (
-              <p key={personalization}>{personalization}</p>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="lp3-back-row">
-        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-result">
-          <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
-        </button>
-        <button className="lp3-button lp3-button-ghost" type="button" onClick={() => moveTo("story")} data-testid="button-lp3-see-story">
-          Continuar <ArrowRight size={15} aria-hidden="true" />
-        </button>
+        <div className="lp3-result-card-main">
+          <span className="lp3-result-card-label">Leitura da conexão</span>
+          <h1 id="lp3-result-title" className="lp3-result-title">{result.title}</h1>
+        </div>
+        <div className="lp3-result-card-support">
+          <p className="lp3-result-lead">{result.insight}</p>
+          {result.personalizations.length > 0 && (
+            <div className="lp3-result-detail">
+              {result.personalizations.map((personalization) => (
+                <p key={personalization}>{personalization}</p>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="lp3-result-card-footer">
+          <button className="lp3-link-button lp3-result-back" type="button" onClick={goBack} data-testid="button-lp3-back-result">
+            <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
+          </button>
+          <button className="lp3-button lp3-button-primary lp3-result-cta" type="button" onClick={() => moveTo("story")} data-testid="button-lp3-see-story">
+            Continuar <ArrowRight size={15} aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </section>
   );
