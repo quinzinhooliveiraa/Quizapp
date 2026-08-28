@@ -2740,13 +2740,6 @@ function Home({
   return (
     <Shell dark>
       <StoredAccessGate />
-      <Link
-        href="/login"
-        className="home-login-link"
-        data-testid="link-home-login"
-      >
-        Já tem baralho? Entrar
-      </Link>
       <main className="lp-main">
         {variant === "v2" ? (
           <LandingV2Quiz

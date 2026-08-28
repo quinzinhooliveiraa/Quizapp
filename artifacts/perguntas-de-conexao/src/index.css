@@ -7651,8 +7651,15 @@ blockquote em {
   .main-nav.nav-open {
     display: flex;
   }
+  /*
+   * The account entry point is a primary action on every landing page,
+   * including narrow screens. Keep it visible beside the brand instead of
+   * hiding it behind the mobile menu.
+   */
   .header-cta {
-    display: none;
+    display: inline-flex;
+    flex-shrink: 0;
+    font-size: 9px;
   }
   .menu-toggle {
     display: block;
@@ -18044,5 +18051,57 @@ blockquote em {
 
   .lp3-shell .site-footer {
     padding-inline: 20px;
+  }
+}
+
+/*
+ * LP3 mobile first frame: the opening screen should communicate the offer
+ * without requiring a scroll. The supporting paragraph is intentionally
+ * omitted in the component, leaving the headline, product image and CTA.
+ */
+@media (max-width: 699px) {
+  .lp3-main[data-section-name="intro"] .lp-hero {
+    padding: 1.25rem 1rem 1.35rem;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-hero-inner {
+    gap: 0.75rem;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-hero-copy {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-eyebrow {
+    margin-bottom: 0;
+    font-size: 0.56rem;
+    letter-spacing: 0.12em;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-hero-h1 {
+    max-width: 20ch;
+    margin: 0;
+    font-size: clamp(1.75rem, 7.2vw, 2rem);
+    line-height: 1.06;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-hero-mockups {
+    width: min(100%, 350px);
+    height: clamp(190px, 31vw + 80px, 245px);
+    margin-top: 1.1rem;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-mockup-photo-mac {
+    width: 96%;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp-mockup-photo-phone {
+    width: 31%;
+  }
+
+  .lp3-main[data-section-name="intro"] .lp2-hero-cta {
+    width: min(100%, 330px);
+    margin-top: 0;
   }
 }
