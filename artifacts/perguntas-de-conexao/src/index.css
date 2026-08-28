@@ -15991,6 +15991,59 @@ blockquote em {
   line-height: 1.6;
 }
 
+.lp3-story-to-solution {
+  width: min(100%, 47rem);
+  min-width: 0;
+  margin: 1rem 0 0.8rem;
+  border-left: 1px solid var(--lp3-warm-soft);
+  padding: 0.4rem 0 0.4rem clamp(1rem, 3vw, 1.5rem);
+}
+
+.lp3-transition-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.9rem;
+}
+
+.lp3-transition-lead {
+  max-width: 24ch;
+  margin: 0;
+  color: var(--lp3-ink);
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.8rem, 4.5vw, 3.15rem);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+.lp3-transition-guide {
+  max-width: 32rem;
+  margin: 0.45rem 0 0;
+  color: var(--lp3-warm-soft);
+  font-size: clamp(1.05rem, 2.3vw, 1.35rem);
+  line-height: 1.35;
+}
+
+.lp3-transition-body {
+  max-width: 31rem;
+  margin: 0;
+  color: var(--lp3-soft);
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.lp3-transition-direction {
+  max-width: 32rem;
+  margin: 0.45rem 0 0;
+  color: var(--lp3-ink);
+  font-family: var(--app-font-mono);
+  font-size: 0.67rem;
+  letter-spacing: 0.09em;
+  line-height: 1.55;
+  text-transform: uppercase;
+}
+
 .lp3-section-intro {
   max-width: 37rem;
   margin: 0;
@@ -16948,6 +17001,35 @@ blockquote em {
   .lp3-editorial {
     max-width: 100%;
     padding: 0.35rem 0 0.35rem 1rem;
+  }
+
+  .lp3-story-to-solution {
+    width: 100%;
+    margin: 0.55rem 0 0.35rem;
+    padding-left: 0.9rem;
+  }
+
+  .lp3-transition-copy {
+    gap: 0.75rem;
+  }
+
+  .lp3-transition-lead {
+    max-width: 100%;
+    font-size: clamp(1.65rem, 8vw, 2.45rem);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+  }
+
+  .lp3-transition-guide {
+    max-width: 100%;
+    font-size: 1.02rem;
+    overflow-wrap: anywhere;
+  }
+
+  .lp3-transition-body,
+  .lp3-transition-direction {
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .lp3-editorial p {

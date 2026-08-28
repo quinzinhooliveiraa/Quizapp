@@ -1,0 +1,302 @@
+IMPLEMENTAR SOMENTE A NOVA CAMADA DE TRANSIÇÃO STORY → SOLUÇÃO DA LP3.
+
+IMPORTANTE:
+Não reescrever as histórias existentes.
+Não alterar as 5 perguntas.
+Não alterar a lógica de seleção das narrativas.
+Não alterar branding.
+Não alterar LP1.
+Não alterar LP2.
+Não alterar Router.
+Não alterar Experimentos.
+Não alterar Auto Optimization.
+Não alterar Admin.
+Não alterar Tracking.
+Não alterar Clarity.
+Não alterar Checkout.
+Não alterar Onboarding.
+
+==================================================
+OBJETIVO
+==================================================
+
+Ajustar a transição entre:
+
+STORYTELLING PERSONALIZADO
+↓
+PERGUNTAS DE CONEXÃO
+↓
+BARALHO RECOMENDADO
+
+A LP3 já possui histórias personalizadas.
+
+O problema atual é que a narrativa termina e a solução aparece de forma abrupta.
+
+Queremos criar uma ponte narrativa seguindo esta lógica:
+
+PERSONAGEM
+→ situação
+→ problema
+→ consequência
+→ percepção
+→ GUIA
+→ plano
+→ ação
+
+A pessoa deve sentir:
+
+"Isso descreveu exatamente o que acontece conosco."
+
+e depois:
+
+"Eu não preciso resolver tudo agora. Só preciso começar uma conversa diferente."
+
+e então:
+
+"É exatamente para isso que esse produto existe."
+
+==================================================
+NOVA ESTRUTURA
+==================================================
+
+Depois da história personalizada, adicionar uma seção de transição:
+
+[HISTÓRIA PERSONALIZADA]
+
+↓
+
+"Talvez vocês não precisem de uma grande mudança."
+
+↓
+
+"Talvez precisem apenas de uma conversa diferente."
+
+↓
+
+"Foi por isso que criamos o Perguntas de Conexão."
+
+↓
+
+"Um jeito simples de começar conversas que normalmente acabam ficando para depois."
+
+↓
+
+"Pelo que você nos contou, começaríamos por aqui."
+
+↓
+
+[BARALHO RECOMENDADO]
+
+==================================================
+COPY OFICIAL
+==================================================
+
+Usar exatamente estas frases:
+
+"Talvez vocês não precisem de uma grande mudança."
+
+"Talvez precisem apenas de uma conversa diferente."
+
+"Foi por isso que criamos o Perguntas de Conexão."
+
+"Um jeito simples de começar conversas que normalmente acabam ficando para depois."
+
+"Pelo que você nos contou, começaríamos por aqui."
+
+NÃO reescrever.
+NÃO resumir.
+NÃO melhorar com IA.
+NÃO criar variações.
+
+==================================================
+IMPORTANTE: A MARCA É O GUIA
+==================================================
+
+A pessoa continua sendo o protagonista.
+
+Não escrever:
+
+"Vamos salvar seu relacionamento."
+
+"Vamos melhorar seu relacionamento."
+
+"Seu relacionamento precisa disso."
+
+Não colocar a marca como heroína.
+
+A lógica é:
+
+VOCÊS
+→ têm uma situação
+→ perceberam algo
+→ podem dar um pequeno próximo passo
+→ nós criamos uma ferramenta para ajudar nesse passo.
+
+O Perguntas de Conexão deve aparecer como GUIA/FERRAMENTA.
+
+==================================================
+ADAPTAÇÃO POR NARRATIVA
+==================================================
+
+A estrutura da ponte deve ser a mesma para todas as narrativas.
+
+Não criar 8 novas histórias.
+
+Apenas permitir que a transição preserve coerência com a narrativa anterior.
+
+Exemplo:
+
+ROTINA:
+
+História termina falando sobre a rotina.
+
+Depois:
+
+"Talvez vocês não precisem de uma grande mudança."
+
+"Talvez precisem apenas de uma conversa diferente."
+
+"Foi por isso que criamos o Perguntas de Conexão."
+
+"Um jeito simples de começar conversas que normalmente acabam ficando para depois."
+
+↓
+
+"Pelo que você nos contou, começaríamos por aqui."
+
+DISTÂNCIA:
+
+Manter exatamente a mesma estrutura.
+
+INTIMIDADE:
+
+Manter exatamente a mesma estrutura.
+
+COMEÇO:
+
+Manter exatamente a mesma estrutura.
+
+Não criar copy adicional nesta tarefa.
+
+==================================================
+ORDEM VISUAL
+==================================================
+
+A ordem da tela deve ser:
+
+1. História personalizada
+
+2. Espaçamento visual
+
+3. "Talvez vocês não precisem de uma grande mudança."
+
+4. "Talvez precisem apenas de uma conversa diferente."
+
+5. "Foi por isso que criamos o Perguntas de Conexão."
+
+6. "Um jeito simples de começar conversas que normalmente acabam ficando para depois."
+
+7. "Pelo que você nos contou, começaríamos por aqui."
+
+8. Baralho recomendado
+
+9. CTA existente
+
+Não transformar todas as frases em títulos grandes.
+
+Criar hierarquia visual clara.
+
+A narrativa deve continuar sendo o elemento emocional dominante.
+
+A solução deve aparecer como consequência natural da história.
+
+==================================================
+RESPONSIVE
+==================================================
+
+Garantir que essa nova seção funcione corretamente em:
+
+- desktop;
+- tablet;
+- mobile.
+
+No mobile:
+
+- não permitir overflow horizontal;
+- não permitir texto cortado;
+- não criar elementos ultrapassando a viewport;
+- espaçamento confortável;
+- largura máxima adequada;
+- tipografia responsiva.
+
+Não alterar outras seções da LP3.
+
+==================================================
+IMPLEMENTAÇÃO
+==================================================
+
+Preferir componente isolado, por exemplo:
+
+StoryToSolution.tsx
+
+ou nome equivalente.
+
+Lp3.tsx deve apenas renderizar o componente.
+
+Não duplicar a copy em vários lugares.
+
+==================================================
+VALIDAÇÃO
+==================================================
+
+Testar pelo menos:
+
+- narrativa 1;
+- narrativa 3;
+- narrativa 5;
+- narrativa 7.
+
+Confirmar que todas passam por:
+
+HISTÓRIA
+↓
+TRANSIÇÃO
+↓
+SOLUÇÃO
+↓
+BARALHO
+
+Rodar:
+
+- typecheck
+- build
+
+Verificar:
+
+- /lp3 funcionando;
+- 5 perguntas intactas;
+- narrativa intacta;
+- tracking intacto;
+- localStorage intacto;
+- handoff intacto;
+- LP1 intacta;
+- LP2 intacta;
+- checkout intacto;
+- router intacto;
+- Auto Optimization intacto.
+
+==================================================
+RELATÓRIO FINAL
+==================================================
+
+Informar:
+
+1. arquivos alterados;
+2. componente criado;
+3. onde a transição foi inserida;
+4. confirmação das copys implementadas;
+5. testes executados;
+6. resultado do typecheck;
+7. resultado do build.
+
+NÃO FAZER NENHUMA OUTRA ALTERAÇÃO.

@@ -11,6 +11,7 @@ import {
   selectLp3Narrative,
   type Lp3Answers,
 } from "@/lib/lp3-narrative";
+import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 
 type Lp3Props = {
@@ -441,7 +442,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const renderRecommend = () => (
     <section className="lp3-view lp3-recommend" aria-labelledby="lp3-recommend-title">
       <div className="lp3-kicker">Uma direção possível</div>
-      <h1 id="lp3-recommend-title" className="lp3-section-title">Pelo que você contou, começaríamos por aqui.</h1>
+      <StoryToSolution />
       <div className="lp3-deck" data-testid={`card-lp3-recommended-deck-${recommendedTheme.id}`}>
         <div>
           <span className="lp3-mono">Baralho recomendado</span>
