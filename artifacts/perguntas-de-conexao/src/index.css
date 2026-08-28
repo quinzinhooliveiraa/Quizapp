@@ -17750,7 +17750,7 @@ blockquote em {
 .lp3-practice-deck-shell {
   position: relative;
   display: flex;
-  width: min(100%, 43rem);
+  width: 100%;
   align-items: center;
   justify-content: center;
   margin: 0.35rem auto 0;
@@ -17884,10 +17884,22 @@ blockquote em {
   cursor: grab;
   touch-action: pan-y;
   user-select: none;
+  animation: lp3-practice-card-in 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .lp3-practice-deck .lp3-question-card.is-front:active {
   cursor: grabbing;
+}
+
+@keyframes lp3-practice-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) rotate(0.7deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
 }
 
 .lp3-practice-card-top,
@@ -18004,7 +18016,7 @@ blockquote em {
   }
 
   .lp3-practice-deck {
-    width: min(100%, 22rem);
+    width: 100%;
   }
 
   .lp3-practice-navigation {
@@ -18049,6 +18061,10 @@ blockquote em {
   .lp3-practice-deck .lp3-question-card,
   .lp3-practice-navigation {
     transition: none;
+  }
+
+  .lp3-practice-deck .lp3-question-card.is-front {
+    animation: none;
   }
 }
 
@@ -19319,7 +19335,7 @@ blockquote em {
 @media (max-width: 699px) {
   .lp3-story .lp3-back-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     grid-template-rows: auto;
     align-items: stretch;
     gap: 0.55rem;
@@ -19338,23 +19354,32 @@ blockquote em {
   }
 
   .lp3-story .lp3-back-row > .lp3-button {
-    grid-column: 1;
+    grid-column: 2;
     margin-left: 0;
     padding-inline: 0.65rem;
   }
 
   .lp3-story .lp3-back-row .lp3-link-button {
-    grid-column: 2;
+    grid-column: 1;
     justify-content: center;
     padding-inline: 0.8rem;
   }
 
   .lp3-practice-actions {
     flex-wrap: nowrap;
+    justify-content: space-between;
   }
 
   .lp3-practice-actions .lp3-button {
     min-height: 2.9rem;
     padding-block: 0.65rem;
   }
+
+  .lp3-practice-actions .lp3-practice-back {
+    order: -1;
+  }
+}
+
+.lp3-practice-actions .lp3-practice-back {
+  order: -1;
 }
