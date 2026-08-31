@@ -71,15 +71,8 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
   res.status(204).end();
 });
 
-router.get("/admin/analytics", async (req, res): Promise<void> => {
-  const sessionId =
-    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
-  if (!(await isAdminSession(sessionId))) {
-    res.status(403).json({ error: "Acesso negado" });
-    return;
-  }
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const analytics = await Promise.all(
+async function computeFunnel(since: Date) {
+  return Promise.all(
     LP_IDS.map(async (lpId) => {
       const [views, ctaClicks, avgTime, checkouts, purchases, exits] =
         await Promise.all([
@@ -164,7 +157,44 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
       };
     }),
   );
+}
+
+router.get("/admin/analytics", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const analytics = await computeFunnel(since);
   res.json({ analytics });
+});
+
+router.get("/report/funnel", async (req, res): Promise<void> => {
+  const token = req.header("x-report-token");
+  if (!token || token !== process.env.ANALYTICS_REPORT_TOKEN) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+
+  const days = Math.min(
+    Math.max(parseInt(String(req.query.days ?? "2"), 10) || 2, 1),
+    90,
+  );
+  const now = Date.now();
+  const since = new Date(now - days * 24 * 60 * 60 * 1000);
+  const [windowData, baseline] = await Promise.all([
+    computeFunnel(since),
+    computeFunnel(new Date(now - 30 * 24 * 60 * 60 * 1000)),
+  ]);
+
+  res.json({
+    generatedAt: new Date().toISOString(),
+    windowDays: days,
+    window: windowData,
+    last30Days: baseline,
+  });
 });
 
 export default router;
