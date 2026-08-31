@@ -1,0 +1,97 @@
+# Endpoint de funil por token (pra rotina de otimização a cada 2 dias)
+
+## Contexto
+
+Quero uma rotina automática que, a cada 2 dias, leia o funil por LP e me mande um
+resumo de "o que otimizar pra vender mais". Essa rotina roda numa sessão sem login
+de admin, então precisa de uma rota que devolva os números protegida por **token**
+(não por sessão de admin).
+
+A boa notícia: **o cálculo já existe.** A rota `GET /admin/analytics` (em
+`artifacts/api-server/src/routes/tracking.ts`) já monta, por LP, exatamente o que
+preciso: `views`, `ctaClicks`, `checkoutsStarted`, `purchasesConfirmed`,
+`avgTimeOnPageSeconds` e `topExitSections`. Só está protegida por `isAdminSession`
+e fixada em 30 dias. Este prompt **reaproveita esse cálculo** — sem duplicar lógica.
+
+## O que fazer
+
+Arquivo: `artifacts/api-server/src/routes/tracking.ts`
+
+### 1. Extrair o cálculo pra uma função reutilizável
+
+Hoje a lógica que roda dentro de `GET /admin/analytics` (o `Promise.all` que
+percorre `LP_IDS` e devolve o array de analytics por LP) está inline. Extraia ela
+para uma função, por exemplo:
+
+```ts
+async function computeFunnel(since: Date) {
+  // ...exatamente o mesmo Promise.all que já existe, usando `since`...
+  return analytics; // o mesmo array por LP que a rota já devolve hoje
+}
+```
+
+Faça a rota `/admin/analytics` continuar funcionando igual, só que chamando
+`computeFunnel(since)` internamente (com o `since` de 30 dias que ela já usa).
+**Não mude o comportamento nem a resposta dela.**
+
+### 2. Nova rota protegida por token
+
+Crie `GET /report/funnel` na mesma file:
+
+```ts
+router.get("/report/funnel", async (req, res) => {
+  const token = req.header("x-report-token");
+  if (!token || token !== process.env.ANALYTICS_REPORT_TOKEN) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  const days = Math.min(
+    Math.max(parseInt(String(req.query.days ?? "2"), 10) || 2, 1),
+    90,
+  );
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const [windowData, baseline] = await Promise.all([
+    computeFunnel(since),
+    computeFunnel(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)),
+  ]);
+  res.json({
+    generatedAt: new Date().toISOString(),
+    windowDays: days,
+    window: windowData,   // últimos `days` dias (default 2)
+    last30Days: baseline, // base de comparação
+  });
+});
+```
+
+Regras:
+- Autentica **só** pelo header `x-report-token` comparado a
+  `process.env.ANALYTICS_REPORT_TOKEN`. Nunca aceite o token via query string na URL.
+- Se o token não bater, `401`. Se a env var não estiver setada, também `401`
+  (nunca deixe a rota aberta por falta de config).
+- Devolve os dois recortes: a janela curta (default 2 dias) e os 30 dias como
+  base de comparação.
+
+### 3. (Bônus, se for simples) cliques por origem de CTA
+
+Se der pra incluir sem complicar: no `computeFunnel`, além do total de
+`ctaClicks`, agrupe os `cta_click` por `ctaSource` (a coluna já existe em
+`pageEventsTable`) e devolva algo como `ctaClicksBySource: { hero: 3, preco: 1 }`.
+Ajuda a saber qual botão converte. Se for atrapalhar, deixa pra depois.
+
+## Variável de ambiente (IMPORTANTE — o usuário seta isto no Railway)
+
+No serviço da API no Railway, adicione a env var:
+
+```
+ANALYTICS_REPORT_TOKEN=v9Cw8EPP81XE0rRRs7ba2crQ3ClwiAUKJsR_w9AIJqE
+```
+
+(É um token só de leitura de métricas agregadas, sem dado pessoal — baixo risco.)
+
+## Depois de aplicar
+
+1. Formata os arquivos tocados.
+2. Roda typecheck e build.
+3. Teste rápido: com a env setada, um `GET` em
+   `https://<api>/api/report/funnel?days=2` com o header
+   `x-report-token: <o token>` deve devolver o JSON. Sem o header, deve dar `401`.
