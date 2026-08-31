@@ -15698,11 +15698,19 @@ blockquote em {
   font-weight: 400;
 }
 
-.lp3-topbar-note,
-.lp3-mono {
+.lp3-topbar-note {
   color: var(--lp3-dim);
   font-family: "Space Mono", monospace;
   font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp3-mono {
+  color: var(--lp3-dim);
+  font-family: var(--app-font-sans);
+  font-size: 0.62rem;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -15759,8 +15767,9 @@ blockquote em {
   align-items: center;
   gap: 0.8rem;
   color: var(--lp3-warm);
-  font-family: "Space Mono", monospace;
+  font-family: var(--app-font-sans);
   font-size: 0.65rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -16159,8 +16168,9 @@ blockquote em {
   max-width: 100%;
   margin: 0;
   color: var(--lp3-ink);
-  font-family: var(--app-font-mono);
+  font-family: var(--app-font-sans);
   font-size: 0.67rem;
+  font-weight: 600;
   letter-spacing: 0.09em;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -16327,8 +16337,9 @@ blockquote em {
   align-items: center;
   justify-content: space-between;
   color: var(--lp3-dim);
-  font-family: "Space Mono", monospace;
+  font-family: var(--app-font-sans);
   font-size: 0.58rem;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -16441,7 +16452,7 @@ blockquote em {
 
 .lp3-price span {
   color: var(--lp3-dim);
-  font-family: "Space Mono", monospace;
+  font-family: var(--app-font-serif);
   font-size: 0.62rem;
   text-transform: uppercase;
 }
@@ -16651,16 +16662,19 @@ blockquote em {
 }
 
 .lp3-topbar-note,
-.lp3-mono,
 .lp3-time,
-.lp3-progress-row,
-.lp3-card-footer {
+.lp3-progress-row {
   font-family: var(--app-font-mono);
 }
 
-.lp3-topbar-note,
 .lp3-mono {
-  color: var(--lp3-dim);
+  font-family: var(--app-font-sans);
+  font-weight: 600;
+}
+
+.lp3-card-footer {
+  font-family: var(--app-font-sans);
+  font-weight: 600;
 }
 
 .lp3-login-link {
@@ -16696,9 +16710,9 @@ blockquote em {
 
 .lp3-kicker {
   color: var(--lp3-warm-soft);
-  font-family: var(--app-font-mono);
+  font-family: var(--app-font-sans);
   font-size: 0.58rem;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.14em;
 }
 
@@ -18312,7 +18326,7 @@ blockquote em {
   gap: 0.35rem;
   margin: 0;
   color: var(--lp3-ink);
-  font-family: var(--app-font-mono);
+  font-family: var(--app-font-sans);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -18555,8 +18569,9 @@ blockquote em {
   gap: 0.3rem 0.55rem;
   margin-top: 1.15rem;
   color: var(--lp3-warm-soft);
-  font-family: var(--app-font-mono);
+  font-family: var(--app-font-sans);
   font-size: 0.62rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 1.4;
   text-transform: uppercase;
@@ -19362,8 +19377,9 @@ blockquote em {
   display: block;
   margin-bottom: 0.9rem;
   color: rgba(255, 197, 158, 0.78);
-  font-family: var(--app-font-mono);
+  font-family: var(--app-font-sans);
   font-size: 0.58rem;
+  font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
