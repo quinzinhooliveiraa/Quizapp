@@ -15694,7 +15694,7 @@ blockquote em {
   color: var(--lp3-warm-soft);
   font-family: "Instrument Serif", serif;
   font-size: 1.15rem;
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
 }
 
@@ -15788,7 +15788,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(3.7rem, 14vw, 7.8rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.045em;
   line-height: 0.9;
@@ -15904,7 +15904,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(2.45rem, 8vw, 5.6rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 0.96;
@@ -16030,7 +16030,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(2.8rem, 9vw, 6.5rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.04em;
   line-height: 0.93;
@@ -16063,7 +16063,7 @@ blockquote em {
   color: var(--lp3-soft);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(1.5rem, 4vw, 2.45rem);
-  font-style: italic;
+  font-style: normal;
   line-height: 1.08;
 }
 
@@ -16135,7 +16135,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: var(--app-font-serif);
   font-size: clamp(1.85rem, 4vw, 2.85rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 1.02;
@@ -16252,7 +16252,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: var(--app-font-serif);
   font-size: clamp(1.7rem, 4vw, 2.55rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 1.05;
@@ -16272,7 +16272,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: var(--app-font-serif);
   font-size: clamp(1.35rem, 3.5vw, 2rem);
-  font-style: italic;
+  font-style: normal;
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
@@ -16328,7 +16328,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: 1.6rem;
-  font-style: italic;
+  font-style: normal;
   line-height: 1.08;
 }
 
@@ -16398,7 +16398,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: 2.6rem;
-  font-style: italic;
+  font-style: normal;
   line-height: 0.95;
 }
 
@@ -16431,7 +16431,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(3rem, 10vw, 7rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.05em;
   line-height: 0.9;
@@ -16656,7 +16656,7 @@ blockquote em {
   color: inherit;
   font-family: var(--app-font-serif);
   font-size: 17px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.03em;
 }
@@ -16852,7 +16852,7 @@ blockquote em {
 .lp3-editorial p,
 .lp3-question-card p {
   font-family: var(--app-font-serif);
-  font-style: italic;
+  font-style: normal;
 }
 
 .lp3-question-card {
@@ -16878,7 +16878,7 @@ blockquote em {
 
 .lp3-deck-name {
   font-family: var(--app-font-serif);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
 }
 
@@ -17672,7 +17672,7 @@ blockquote em {
   color: rgba(249, 248, 251, 0.72);
   font-family: var(--app-font-serif);
   font-size: clamp(1.16rem, 2.15vw, 1.45rem);
-  font-style: italic;
+  font-style: normal;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
@@ -17820,7 +17820,7 @@ blockquote em {
   color: var(--lp3-ink);
   font-family: var(--app-font-serif);
   font-size: clamp(1.28rem, 2.25vw, 1.65rem);
-  font-style: italic;
+  font-style: normal;
   line-height: 1.24;
 }
 
@@ -17910,7 +17910,7 @@ blockquote em {
 /* LP3 practice deck — mirror the in-app question card interaction. */
 .lp3-practice .lp3-section-title {
   font-family: var(--app-font-serif);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
 }
 
@@ -18150,7 +18150,7 @@ blockquote em {
   color: #fff;
   font-family: var(--app-font-serif);
   font-size: clamp(1.8rem, 5vw, 2.55rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1.18;
   letter-spacing: 0;
@@ -18265,7 +18265,7 @@ blockquote em {
   margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
   font-family: var(--app-font-serif);
   font-size: clamp(1.9rem, 4.4vw, 3.4rem);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   line-height: 1;
   text-wrap: balance;
@@ -18315,7 +18315,7 @@ blockquote em {
   color: rgba(255, 255, 255, 0.78);
   font-family: var(--app-font-serif);
   font-size: clamp(1rem, 1.5vw, 1.18rem);
-  font-style: italic;
+  font-style: normal;
   line-height: 1.6;
   overflow-wrap: anywhere;
   white-space: pre-line;
@@ -18555,7 +18555,7 @@ blockquote em {
   color: rgba(255, 255, 255, 0.75);
   font-family: var(--app-font-serif);
   font-size: 1rem;
-  font-style: italic;
+  font-style: normal;
   line-height: 1.45;
   overflow-wrap: anywhere;
   white-space: pre-line;
@@ -18941,7 +18941,7 @@ blockquote em {
   color: #fff;
   font-family: var(--app-font-serif);
   font-size: clamp(1.4rem, 2.6vw, 2.15rem);
-  font-style: italic;
+  font-style: normal;
   line-height: 1.12;
   overflow-wrap: anywhere;
 }
@@ -19468,7 +19468,7 @@ blockquote em {
     max-width: 12ch;
     font-family: "Instrument Serif", Georgia, serif;
     font-size: clamp(2.05rem, 3.35vw, 3.35rem);
-    font-style: italic;
+    font-style: normal;
     font-weight: 400;
     line-height: 1;
   }
@@ -19516,7 +19516,7 @@ blockquote em {
     max-width: 100%;
     font-family: "Instrument Serif", Georgia, serif;
     font-size: clamp(1.85rem, 8vw, 2.65rem);
-    font-style: italic;
+    font-style: normal;
     font-weight: 400;
     line-height: 1.02;
   }
