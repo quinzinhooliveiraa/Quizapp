@@ -583,18 +583,19 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       packageId: parsed.data.packageId,
       packageName: config.name,
       sourceLp: parsed.data.sourceLp || null,
-       visitorKey,
-       experimentId:
-         parsed.data.experimentId?.trim().slice(0, 120) ||
-         assignment?.experimentId ||
-         null,
+      visitorKey,
+      experimentId:
+        parsed.data.experimentId?.trim().slice(0, 120) ||
+        assignment?.experimentId ||
+        null,
       experimentVariantId:
-         parsed.data.experimentVariantId?.trim().slice(0, 120) ||
-         assignment?.experimentVariantId ||
-         null,
+        parsed.data.experimentVariantId?.trim().slice(0, 120) ||
+        assignment?.experimentVariantId ||
+        null,
       inviteLimit: config.limit,
       invitesUsed: 0,
       accessGranted: false,
+      internal: parsed.data.internal === true,
     })
     .returning();
 

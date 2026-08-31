@@ -26,4 +26,5 @@ export interface CheckoutCreateInput {
   experimentId?: string;
   /** @maxLength 120 */
   experimentVariantId?: string;
+  internal?: boolean;
 }

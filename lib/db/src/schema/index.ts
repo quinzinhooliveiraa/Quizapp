@@ -21,6 +21,7 @@ export const sessionsTable = pgTable("sessions", {
   inviteLimit: integer("invite_limit").notNull(),
   invitesUsed: integer("invites_used").notNull().default(0),
   accessGranted: boolean("access_granted").notNull().default(false),
+  internal: boolean("internal").notNull().default(false),
   onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   relationshipType: text("relationship_type"),
   partnerPronoun: text("partner_pronoun"),
@@ -109,6 +110,7 @@ export const pageEventsTable = pgTable("page_events", {
   clarityUserId: text("clarity_user_id"),
   claritySessionId: text("clarity_session_id"),
   ctaSource: text("cta_source"),
+  internal: boolean("internal").notNull().default(false),
   timeOnPageMs: integer("time_on_page_ms"),
   lastSection: text("last_section"),
   createdAt: timestamp("created_at", { withTimezone: true })

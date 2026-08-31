@@ -175,6 +175,7 @@ const TABS = [
   { id: "feedback", label: "Feedback" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
+const INTERNAL_TRACKING_STORAGE_KEY = "pdc_internal";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -293,6 +294,22 @@ function safeGetItem(key: string): string | null {
   }
 }
 
+function safeSetItem(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage may be unavailable in embedded or private browsers.
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Storage may be unavailable in embedded or private browsers.
+  }
+}
+
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("pt-BR");
 }
@@ -337,7 +354,8 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
         setSelectedId(resolvedId);
       })
       .catch(() => {
-        if (mounted) setMessage("Não foi possível carregar a configuração atual.");
+        if (mounted)
+          setMessage("Não foi possível carregar a configuração atual.");
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -387,7 +405,10 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
   const currentLanding = getLandingPageById(currentId);
 
   return (
-    <section className="admin-section admin-primary-landing" aria-labelledby="primary-landing-title">
+    <section
+      className="admin-section admin-primary-landing"
+      aria-labelledby="primary-landing-title"
+    >
       <div className="admin-section-heading">
         <div>
           <p className="admin-eyebrow">domínio principal</p>
@@ -396,8 +417,8 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
         <span className="admin-count">/</span>
       </div>
       <p className="admin-primary-landing-copy">
-        Escolha qual landing page será exibida diretamente na rota principal do domínio.
-        Os links individuais e os experimentos continuam separados.
+        Escolha qual landing page será exibida diretamente na rota principal do
+        domínio. Os links individuais e os experimentos continuam separados.
       </p>
       <form className="admin-primary-landing-form" onSubmit={save}>
         <div className="admin-primary-landing-current">
@@ -409,7 +430,9 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
           <select
             value={selectedId}
             disabled={loading || saving}
-            onChange={(event) => setSelectedId(event.target.value as LandingPageId)}
+            onChange={(event) =>
+              setSelectedId(event.target.value as LandingPageId)
+            }
             data-testid="select-primary-landing-page"
           >
             {LANDINGS.map((landing) => (
@@ -1147,7 +1170,10 @@ function ExperimentAnalytics({
       ) : (
         <div className="admin-experiment-analytics-grid">
           {variants.map((variant) => (
-            <div key={variant.variantId} className="admin-experiment-analytics-row">
+            <div
+              key={variant.variantId}
+              className="admin-experiment-analytics-row"
+            >
               <div>
                 <strong>{variant.name}</strong>
                 <code>{variant.path}</code>
@@ -1184,7 +1210,9 @@ function ExperimentAnalytics({
   );
 }
 
-function optimizationStatusLabel(status: ExperimentOptimizationSummary["status"]) {
+function optimizationStatusLabel(
+  status: ExperimentOptimizationSummary["status"],
+) {
   if (status === "learning") return "Aprendendo";
   if (status === "optimizing") return "Otimizando";
   return "Desligado";
@@ -1204,7 +1232,9 @@ function ExperimentOptimization({
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [sampleMode, setSampleMode] = useState(experiment.minimumSampleSizeMode);
+  const [sampleMode, setSampleMode] = useState(
+    experiment.minimumSampleSizeMode,
+  );
   const [sampleSize, setSampleSize] = useState(
     experiment.minimumSampleSize?.toString() || "",
   );
@@ -1250,10 +1280,11 @@ function ExperimentOptimization({
         },
       );
       const data = (await response.json()) as
-        | ExperimentOptimizationSummary
-        | { error?: string };
+        ExperimentOptimizationSummary | { error?: string };
       if (!response.ok) {
-        throw new Error("error" in data ? data.error || "optimization" : "optimization");
+        throw new Error(
+          "error" in data ? data.error || "optimization" : "optimization",
+        );
       }
       setSummary(data as ExperimentOptimizationSummary);
       onMessage(successMessage);
@@ -1276,10 +1307,11 @@ function ExperimentOptimization({
         { method: "POST" },
       );
       const data = (await response.json()) as
-        | ExperimentOptimizationRunResponse
-        | { error?: string };
+        ExperimentOptimizationRunResponse | { error?: string };
       if (!response.ok) {
-        throw new Error("error" in data ? data.error || "optimization" : "optimization");
+        throw new Error(
+          "error" in data ? data.error || "optimization" : "optimization",
+        );
       }
       if (!("summary" in data)) {
         throw new Error("optimization");
@@ -1315,11 +1347,11 @@ function ExperimentOptimization({
       <div className="admin-experiment-optimization-heading">
         <div>
           <span>Auto Optimization</span>
-          <small>
-            Conversão = compras confirmadas ÷ visitantes atribuídos
-          </small>
+          <small>Conversão = compras confirmadas ÷ visitantes atribuídos</small>
         </div>
-        <span className={`admin-experiment-optimization-status is-${summary.status}`}>
+        <span
+          className={`admin-experiment-optimization-status is-${summary.status}`}
+        >
           {optimizationStatusLabel(summary.status)}
         </span>
       </div>
@@ -1333,8 +1365,7 @@ function ExperimentOptimization({
               void updateOptimization(
                 {
                   optimizationMode: event.target.value as
-                    | "manual"
-                    | "automatic",
+                    "manual" | "automatic",
                 },
                 event.target.value === "automatic"
                   ? "Auto Optimization ativada."
@@ -1754,8 +1785,7 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                   setDraft((current) => ({
                     ...current,
                     optimizationMode: event.target.value as
-                      | "manual"
-                      | "automatic",
+                      "manual" | "automatic",
                   }))
                 }
               >
@@ -1771,8 +1801,7 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                   setDraft((current) => ({
                     ...current,
                     minimumSampleSizeMode: event.target.value as
-                      | "automatic"
-                      | "custom",
+                      "automatic" | "custom",
                   }))
                 }
               >
@@ -1971,8 +2000,9 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                     <div key={variant.id}>
                       <strong>{variant.name}</strong>
                       <code>
-                        {LANDINGS.find((landing) => landing.path === variant.path)
-                          ?.name || variant.path}
+                        {LANDINGS.find(
+                          (landing) => landing.path === variant.path,
+                        )?.name || variant.path}
                       </code>
                       <span>{variant.weight}%</span>
                       <small>
@@ -2009,11 +2039,11 @@ function ExperimentsTab({ sessionId }: { sessionId: string }) {
                   experimentId={experiment.id}
                   sessionId={sessionId}
                 />
-                 <ExperimentOptimization
-                   experiment={experiment}
-                   sessionId={sessionId}
-                   onMessage={setMessage}
-                 />
+                <ExperimentOptimization
+                  experiment={experiment}
+                  sessionId={sessionId}
+                  onMessage={setMessage}
+                />
                 <div className="admin-experiment-card-footer">
                   <small>Criado em {formatDate(experiment.createdAt)}</small>
                   <div>
@@ -2083,8 +2113,21 @@ export default function Admin() {
   const [buyerTotal, setBuyerTotal] = useState(0);
   const [analytics, setAnalytics] = useState<AnalyticsEntry[]>([]);
   const [lpSessions, setLpSessions] = useState<Record<string, LpSession[]>>({});
+  const [internalTrackingEnabled, setInternalTrackingEnabled] = useState(
+    () => safeGetItem(INTERNAL_TRACKING_STORAGE_KEY) === "1",
+  );
   const sessionId = safeGetItem("conexao-session")?.trim() || "";
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  const toggleInternalTracking = () => {
+    const nextValue = !internalTrackingEnabled;
+    if (nextValue) {
+      safeSetItem(INTERNAL_TRACKING_STORAGE_KEY, "1");
+    } else {
+      safeRemoveItem(INTERNAL_TRACKING_STORAGE_KEY);
+    }
+    setInternalTrackingEnabled(nextValue);
+  };
 
   useEffect(() => {
     const sessionId = safeGetItem("conexao-session")?.trim();
@@ -2210,6 +2253,31 @@ export default function Admin() {
         <p className="admin-header-copy">
           Acompanhe cadastros, páginas ativas e o retorno de quem usa o app.
         </p>
+        <div className="admin-internal-control">
+          <button
+            type="button"
+            className={`admin-internal-toggle${
+              internalTrackingEnabled ? " is-active" : ""
+            }`}
+            onClick={toggleInternalTracking}
+            aria-pressed={internalTrackingEnabled}
+          >
+            {internalTrackingEnabled
+              ? "Desligar modo interno"
+              : "Não contar minhas visitas neste navegador"}
+          </button>
+          <span
+            className={`admin-internal-status${
+              internalTrackingEnabled ? " is-active" : ""
+            }`}
+            role="status"
+          >
+            Modo interno:{" "}
+            {internalTrackingEnabled
+              ? "ATIVO neste navegador"
+              : "inativo neste navegador"}
+          </span>
+        </div>
       </header>
       <nav className="admin-tabs" aria-label="Seções do painel">
         {TABS.map((tab) => (

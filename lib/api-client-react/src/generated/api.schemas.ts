@@ -331,6 +331,7 @@ export interface CheckoutCreateInput {
   experimentId?: string;
   /** @maxLength 120 */
   experimentVariantId?: string;
+  internal?: boolean;
 }
 
 export type PageEventInputLpId = typeof PageEventInputLpId[keyof typeof PageEventInputLpId];
@@ -381,6 +382,7 @@ export interface PageEventInput {
   /** @maxLength 200 */
   claritySessionId?: string;
   ctaSource?: PageEventInputCtaSource;
+  internal?: boolean;
 }
 
 export type ExperimentVariantInputStatus = typeof ExperimentVariantInputStatus[keyof typeof ExperimentVariantInputStatus];

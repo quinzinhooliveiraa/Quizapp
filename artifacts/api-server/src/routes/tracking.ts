@@ -22,6 +22,7 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     clarityUserId?: string;
     claritySessionId?: string;
     ctaSource?: string;
+    internal?: boolean;
   };
   if (
     !LP_IDS.includes(body.lpId as (typeof LP_IDS)[number]) ||
@@ -67,6 +68,7 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
     clarityUserId: body.clarityUserId?.trim().slice(0, 200) || null,
     claritySessionId: body.claritySessionId?.trim().slice(0, 200) || null,
     ctaSource: body.ctaSource?.trim().slice(0, 40) || null,
+    internal: body.internal === true,
   });
   res.status(204).end();
 });
@@ -83,6 +85,7 @@ async function computeFunnel(since: Date) {
               and(
                 eq(pageEventsTable.lpId, lpId),
                 eq(pageEventsTable.eventType, "view"),
+                eq(pageEventsTable.internal, false),
                 gte(pageEventsTable.createdAt, since),
               ),
             ),
@@ -93,6 +96,7 @@ async function computeFunnel(since: Date) {
               and(
                 eq(pageEventsTable.lpId, lpId),
                 eq(pageEventsTable.eventType, "cta_click"),
+                eq(pageEventsTable.internal, false),
                 gte(pageEventsTable.createdAt, since),
               ),
             ),
@@ -105,13 +109,19 @@ async function computeFunnel(since: Date) {
               and(
                 eq(pageEventsTable.lpId, lpId),
                 eq(pageEventsTable.eventType, "exit"),
+                eq(pageEventsTable.internal, false),
                 gte(pageEventsTable.createdAt, since),
               ),
             ),
           db
             .select({ value: count() })
             .from(sessionsTable)
-            .where(eq(sessionsTable.sourceLp, lpId)),
+            .where(
+              and(
+                eq(sessionsTable.sourceLp, lpId),
+                eq(sessionsTable.internal, false),
+              ),
+            ),
           db
             .select({ value: count() })
             .from(sessionsTable)
@@ -119,6 +129,7 @@ async function computeFunnel(since: Date) {
               and(
                 eq(sessionsTable.sourceLp, lpId),
                 eq(sessionsTable.accessGranted, true),
+                eq(sessionsTable.internal, false),
               ),
             ),
           db
@@ -131,6 +142,7 @@ async function computeFunnel(since: Date) {
               and(
                 eq(pageEventsTable.lpId, lpId),
                 eq(pageEventsTable.eventType, "exit"),
+                eq(pageEventsTable.internal, false),
                 gte(pageEventsTable.createdAt, since),
               ),
             )

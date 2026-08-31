@@ -1441,6 +1441,9 @@ components:
         experimentVariantId:
           type: string
           maxLength: 120
+        internal:
+          type: boolean
+          default: false
       required: [packageId, buyerName]
     PageEventInput:
       type: object
@@ -1457,6 +1460,9 @@ components:
         ctaSource:
           type: string
           enum: [hero_quiz, hero_comprar, lp3_offer]
+        internal:
+          type: boolean
+          default: false
       required: [lpId, visitorKey, eventType]
     ExperimentVariantInput:
       type: object

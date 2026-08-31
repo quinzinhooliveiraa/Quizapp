@@ -124,6 +124,7 @@ const PENDING_CHECKOUT_MAX_AGE_MS = 30 * 60 * 1000;
 const HOSTED_CHECKOUT_MAX_WAIT_MS = 3 * 60 * 1000;
 const HOSTED_CHECKOUT_POLL_INTERVAL_MS = 2000;
 const EXPERIMENT_ASSIGNMENT_STORAGE_KEY = "pdc-experiment-assignment";
+const INTERNAL_TRACKING_STORAGE_KEY = "pdc_internal";
 
 type StoredExperimentAssignment = {
   experimentId: string;
@@ -530,6 +531,22 @@ function safeRemoveItem(key: string): void {
   } catch {
     // Storage may be unavailable in embedded or private browsers.
   }
+}
+
+function syncInternalTrackingFromUrl(): void {
+  if (typeof window === "undefined") return;
+  const internalFlag = new URLSearchParams(window.location.search).get(
+    "internal",
+  );
+  if (internalFlag === "1") {
+    safeSetItem(INTERNAL_TRACKING_STORAGE_KEY, "1");
+  } else if (internalFlag === "0") {
+    safeRemoveItem(INTERNAL_TRACKING_STORAGE_KEY);
+  }
+}
+
+function isInternalTrackingEnabled(): boolean {
+  return safeGetItem(INTERNAL_TRACKING_STORAGE_KEY) === "1";
 }
 
 function getStoredVisitorKey(): string {
@@ -1790,6 +1807,7 @@ function useLpTracking(
   const exitSentRef = useRef(false);
 
   useEffect(() => {
+    syncInternalTrackingFromUrl();
     const visitorKey = getOrCreateVisitorKey();
     visitorKeyRef.current = visitorKey;
     startedAtRef.current = Date.now();
@@ -1840,6 +1858,7 @@ function useLpTracking(
         eventType,
         experimentId: experimentAssignment?.experimentId,
         experimentVariantId: experimentAssignment?.experimentVariantId,
+        internal: isInternalTrackingEnabled(),
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
         ...extra,
@@ -1914,6 +1933,7 @@ function useLpTracking(
   }, [experimentAssignment, lpId]);
 
   return (ctaSource?: LandingCtaSource) => {
+    syncInternalTrackingFromUrl();
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1923,6 +1943,7 @@ function useLpTracking(
         eventType: "cta_click",
         experimentId: experimentAssignment?.experimentId,
         experimentVariantId: experimentAssignment?.experimentVariantId,
+        internal: isInternalTrackingEnabled(),
         ctaSource,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
@@ -2174,6 +2195,7 @@ function useCheckout({
     setCheckoutOpen(true);
     setCheckoutState("sending");
     try {
+      syncInternalTrackingFromUrl();
       const normalizedName = name.trim();
       const normalizedEmail = email.trim().toLowerCase();
       const response = await fetch(apiUrl("/api/checkout/create"), {
@@ -2186,6 +2208,7 @@ function useCheckout({
           buyerEmail: normalizedEmail || undefined,
           sourceLp,
           visitorKey: getStoredVisitorKey() || undefined,
+          internal: isInternalTrackingEnabled(),
           ...(experimentAssignment
             ? {
                 experimentId: experimentAssignment.experimentId,

@@ -313,7 +313,7 @@ export const createCheckoutBodyExperimentIdMax = 120;
 
 export const createCheckoutBodyExperimentVariantIdMax = 120;
 
-
+export const createCheckoutBodyInternalDefault = false;
 
 export const CreateCheckoutBody = zod.object({
   "packageId": zod.enum(['couple']),
@@ -323,7 +323,8 @@ export const CreateCheckoutBody = zod.object({
   "sourceLp": zod.enum(['v1', 'v2', 'lp3']).optional(),
   "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional(),
   "experimentId": zod.string().max(createCheckoutBodyExperimentIdMax).optional(),
-  "experimentVariantId": zod.string().max(createCheckoutBodyExperimentVariantIdMax).optional()
+  "experimentVariantId": zod.string().max(createCheckoutBodyExperimentVariantIdMax).optional(),
+  "internal": zod.boolean().default(createCheckoutBodyInternalDefault)
 })
 
 export const CreateCheckoutResponse = zod.object({
@@ -375,7 +376,7 @@ export const trackPageEventBodyClarityUserIdMax = 200;
 
 export const trackPageEventBodyClaritySessionIdMax = 200;
 
-
+export const trackPageEventBodyInternalDefault = false;
 
 export const TrackPageEventBody = zod.object({
   "lpId": zod.enum(['v1', 'v2', 'lp3']),
@@ -387,7 +388,8 @@ export const TrackPageEventBody = zod.object({
   "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional(),
   "clarityUserId": zod.string().max(trackPageEventBodyClarityUserIdMax).optional(),
   "claritySessionId": zod.string().max(trackPageEventBodyClaritySessionIdMax).optional(),
-  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'lp3_offer']).optional()
+  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'lp3_offer']).optional(),
+  "internal": zod.boolean().default(trackPageEventBodyInternalDefault)
 })
 
 export const TrackPageEventResponse = zod.void()

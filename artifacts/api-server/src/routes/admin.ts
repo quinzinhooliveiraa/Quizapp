@@ -239,6 +239,7 @@ router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
         eq(pageEventsTable.lpId, lpId),
         isNotNull(pageEventsTable.visitorKey),
         inArray(pageEventsTable.eventType, ["view", "exit"]),
+        eq(pageEventsTable.internal, false),
         // Keep this query bounded to the same reporting window as analytics.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         gte(pageEventsTable.createdAt, since),

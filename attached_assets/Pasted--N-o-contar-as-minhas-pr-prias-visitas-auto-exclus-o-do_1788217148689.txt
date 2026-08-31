@@ -1,0 +1,73 @@
+# Não contar as minhas próprias visitas (auto-exclusão do tracking)
+
+## Problema
+
+O rastreamento (`POST /api/track/page-event` em
+`artifacts/api-server/src/routes/tracking.ts`) grava **todas** as visitas, sem
+nenhuma exclusão do próprio dono. Como eu (admin) abro as LPs o tempo todo pra
+testar, minhas visitas estão inflando `views`, `checkoutsStarted` etc. e
+distorcendo a conversão. A exclusão de IP que fizemos foi só no Clarity, não aqui.
+
+Precisamos poder marcar "este navegador sou eu" e **não contar** esses eventos nas
+métricas. O dado bruto pode até ser gravado como interno, mas os relatórios devem
+ignorá-lo.
+
+## O que fazer
+
+### 1. Banco — marcar eventos/sessões como internos
+
+- Em `lib/db/src/schema` (onde estão `pageEventsTable` e `sessionsTable`),
+  adicione uma coluna booleana `internal` (default `false`, not null) nas **duas**
+  tabelas. Gere a migration.
+
+### 2. Backend — gravar e filtrar
+
+- Em `POST /track/page-event`: aceite `internal?: boolean` no corpo e salve em
+  `pageEventsTable.internal` (default false).
+- Na criação da sessão de checkout (a rota que cria a sessão / `checkout/create`):
+  aceite `internal?: boolean` e salve em `sessionsTable.internal`.
+- Em `computeFunnel(...)` (a função que já existe e alimenta `/admin/analytics` e
+  `/report/funnel`): **exclua os internos** de tudo. Ou seja, adicione
+  `eq(pageEventsTable.internal, false)` em todas as contagens de eventos, e
+  `eq(sessionsTable.internal, false)` nas contagens de `checkoutsStarted` e
+  `purchasesConfirmed`. Assim os relatórios passam a mostrar só tráfego real.
+
+### 3. Frontend — mandar `internal: true` quando este navegador for meu
+
+- Leia uma flag persistente do `localStorage`, chave `pdc_internal` (valor `"1"`).
+- Se ela estiver setada, inclua `internal: true` no corpo de **todos** os
+  `track/page-event` e na criação da sessão de checkout.
+- Atalho pra ligar sem depender do admin: se a URL tiver `?internal=1`, seta
+  `localStorage.pdc_internal = "1"`; se tiver `?internal=0`, remove. (Assim eu
+  abro `perguntasdeconexao.com.br/?internal=1` uma vez em cada aparelho que uso
+  pra testar.)
+
+### 4. Admin — botão pra ligar/desligar neste navegador
+
+No painel admin, adicione um controle simples:
+- Um botão/toggle **"Não contar minhas visitas neste navegador"**.
+- Estado ligado = `localStorage.pdc_internal = "1"`; desligado = remove a chave.
+- Mostre o estado atual de forma clara (ex.: "Modo interno: ATIVO neste
+  navegador" em verde). Isso me dá confiança visual de que está funcionando.
+
+### 5. (Opcional, reforço) bloquear meu IP no servidor
+
+Se for simples, no `track/page-event`, se o IP da requisição estiver numa lista de
+IPs internos por env var (ex.: `INTERNAL_IPS`, separada por vírgula), grave o
+evento como `internal: true` automaticamente. É um reforço caso eu esqueça de
+ligar a flag num aparelho. Se complicar, deixa pra depois — a flag do passo 3/4
+já resolve.
+
+## Importante
+
+- Isso **não** limpa retroativamente os dados velhos (não guardamos IP nos eventos
+  antigos), então os 30 dias atuais seguem poluídos. A partir desta mudança, os
+  números passam a ser limpos — vamos tratar o histórico novo como a base real.
+- Não apague eventos; só **exclua os internos das contagens** dos relatórios.
+
+## Depois de aplicar
+
+1. Formata, typecheck, build.
+2. Testa: abre `/?internal=1`, navega, e confirma no `/admin/analytics` (ou no
+   `/report/funnel`) que suas visitas **não** aumentam os números. Depois abre uma
+   aba anônima (sem a flag) e confirma que ali a visita **conta**.
