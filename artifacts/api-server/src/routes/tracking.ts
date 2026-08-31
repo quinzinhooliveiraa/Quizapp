@@ -172,7 +172,9 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
 });
 
 router.get("/report/funnel", async (req, res): Promise<void> => {
-  const token = req.header("x-report-token");
+  const token =
+    req.header("x-report-token") ??
+    (typeof req.query.token === "string" ? req.query.token : undefined);
   if (!token || token !== process.env.ANALYTICS_REPORT_TOKEN) {
     res.status(401).json({ error: "unauthorized" });
     return;
