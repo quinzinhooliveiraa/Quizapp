@@ -1,0 +1,95 @@
+# LP3 — arrumar SÓ a fonte, e SÓ nas telas depois do quiz
+
+## Contexto — o que estamos resolvendo (e o que NÃO estamos)
+
+Recebemos feedback de que a LP3 "cansa a leitura / fica confusa". Investigamos e
+a causa é **só a tipografia**, não o layout, não o espaçamento, não os textos —
+tudo isso está aprovado e **não deve ser tocado**.
+
+O que descobrimos, com número:
+
+- A LP3 usa a fonte **monoespaçada (Space Mono)** 20 vezes como rótulo
+  decorativo. A LP1 (nossa página de referência, que é limpa) usa **zero** vezes.
+- A fonte **Inter** está sendo carregada no site e **nunca é usada** (peso morto).
+
+A confusão aparece **depois que a pessoa responde o quiz** — nas telas de
+resultado, história, prática, recomendação e oferta. **O quiz em si e a barra de
+progresso estão perfeitos e NÃO devem mudar.**
+
+Então a regra de ouro deste prompt: **mexa apenas em `font-family` (e nada além
+disso) e apenas nas classes listadas abaixo.** Sem mudar tamanho, peso além do
+indicado, espaçamento, cor, layout, markup ou texto.
+
+## Arquivos
+
+- `artifacts/perguntas-de-conexao/index.html`
+- `artifacts/perguntas-de-conexao/src/index.css`
+
+Não é preciso tocar em nenhum `.tsx`.
+
+## Parte 1 — remover a fonte Inter (peso morto)
+
+Em `index.html`, existe um `<link>` carregando **Inter** do Google Fonts. Ela não
+é usada em lugar nenhum (o sistema de fontes do app é Plus Jakarta Sans +
+Instrument Serif + Space Mono, definido em `index.css` nas variáveis
+`--app-font-sans/serif/mono`). **Remova o `<link>` da Inter** e os `preconnect`
+que só servem a ela, se forem exclusivos dela. Não remova o import do `index.css`
+que traz Instrument Serif / Plus Jakarta Sans / Space Mono.
+
+## Parte 2 — trocar mono → sans, SÓ nestas classes (todas pós-quiz)
+
+Em `index.css`, nas classes abaixo, troque a `font-family` de
+`var(--app-font-mono)` / `"Space Mono", monospace` para **`var(--app-font-sans)`**
+(Plus Jakarta Sans). **Mantenha** o `text-transform: uppercase` e o
+`letter-spacing` que já existirem — é o que preserva a cara de "rótulo". Para o
+rótulo continuar com peso de etiqueta, garanta `font-weight: 600` (só onde hoje
+está mais leve por herança da mono).
+
+Classes a alterar (todas confirmadas como exclusivas das telas pós-quiz):
+
+- `.lp3-kicker` — os rótulos no topo de cada seção (resultado, história,
+  prática, recomendação, oferta). Sugestão: `letter-spacing: 0.2em; font-weight: 700;`
+- `.lp3-mono` — usada só na tela de recomendação ("Baralho recomendado" / "E
+  outros caminhos para vocês").
+- `.lp3-transition-direction` — a transição da seção de história.
+- `.lp3-result-card-label` — o rótulo do card de resultado.
+- `.lp3-card-footer` — o rodapé do card de recomendação.
+- `.lp3-testimonial-card footer` **e** `.lp3-testimonial-card-active footer` — o
+  rodapé (nome/meta) dos depoimentos.
+
+## Parte 3 — o preço em serifa (na tela de oferta)
+
+Na classe **`.lp3-price span`** (o "R$ 47,90" da oferta), troque a `font-family`
+de mono para **`var(--app-font-serif)`** (Instrument Serif). Fica elegante e no
+mesmo sistema da LP1. Não mude o tamanho nem a cor.
+
+## ⚠️ NÃO TOCAR (o quiz está perfeito e é intocável)
+
+Estas classes usam mono de propósito e o usuário aprovou — **deixe exatamente como
+estão**:
+
+- `.lp3-time`
+- `.lp3-progress-row` (e qualquer classe da barra de progresso do quiz)
+- `.lp3-option-index`
+- `.lp3-topbar-note` e `.lp3-wordmark-mark` (o cabeçalho fixo do topo — ele
+  aparece durante o quiz também, então não mexa)
+
+Se alguma dessas estiver **agrupada no mesmo seletor** de uma classe da Parte 2
+(por exemplo `.lp3-topbar-note, .lp3-mono { font-family: ... }`), **separe os
+seletores**: deixe a do quiz/topbar com a mono e mude só a pós-quiz. Não mude as
+duas de uma vez.
+
+## Resultado esperado
+
+Depois da mudança, as telas pós-quiz passam a usar **2 fontes** (Instrument Serif
+nos títulos + Plus Jakarta Sans em todo o resto, incluindo os rótulos em maiúscula),
+igual à LP1. O quiz continua idêntico. Nenhum elemento muda de posição, tamanho
+ou cor — só a família da fonte dos rótulos e do preço.
+
+## Depois de aplicar
+
+1. Formata os arquivos tocados.
+2. Roda o typecheck e o build pra garantir que nada quebrou.
+3. Confere no navegador, em desktop e mobile: entra na LP3, responde o quiz
+   (confirma que ele está idêntico), e passa pelas telas seguintes vendo se os
+   rótulos agora estão na fonte do corpo (sem a mono dura) e o preço em serifa.
