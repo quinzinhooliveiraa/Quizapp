@@ -1,6 +1,6 @@
 export type LandingPageId = "v1" | "v2" | "lp3";
 
-export type LandingPagePath = "/" | "/lp2" | "/lp3";
+export type LandingPagePath = "/" | "/lp1" | "/lp2" | "/lp3";
 
 export type LandingPage = {
   id: LandingPageId;
@@ -21,7 +21,7 @@ export const LANDING_PAGES: readonly LandingPage[] = [
   {
     id: "v2",
     name: "Reacender a chama",
-    path: "/",
+    path: "/lp1",
     description:
       "A página principal com o hero de mockups e a experiência guiada de perguntas.",
   },

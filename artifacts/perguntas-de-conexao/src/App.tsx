@@ -1809,6 +1809,14 @@ function useLpTracking(
       document.head.appendChild(script);
     }
     window.clarity?.("identify", visitorKey);
+    window.clarity?.("set", "lp", lpId);
+    if (experimentAssignment?.experimentVariantId) {
+      window.clarity?.(
+        "set",
+        "variante",
+        experimentAssignment.experimentVariantId,
+      );
+    }
     const readClarityIds = () => {
       const cookies = Object.fromEntries(
         document.cookie
@@ -1949,8 +1957,7 @@ function useCheckout({
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
     "couple",
   );
-  const [checkoutState, setCheckoutState] =
-    useState<CheckoutState>("idle");
+  const [checkoutState, setCheckoutState] = useState<CheckoutState>("idle");
   const [buyerName, setBuyerName] = useState(
     () => safeGetItem("conexao-pending-buyer-name") || "",
   );
@@ -2340,7 +2347,9 @@ function CheckoutModal({
         className={`checkout-modal ${isLp3 ? "lp3-checkout-modal" : ""} ${isLp3 && checkoutState === "native-payment" ? "lp3-checkout-pix-modal" : ""} ${checkoutState === "sending" || checkoutState === "confirming" ? "checkout-modal-loading" : ""}`}
         style={
           isLp3 && checkoutState === "native-payment"
-            ? ({ "--lp3-pix-background": `url("${pixCheckoutBackground}")` } as CSSProperties)
+            ? ({
+                "--lp3-pix-background": `url("${pixCheckoutBackground}")`,
+              } as CSSProperties)
             : undefined
         }
       >
@@ -2448,7 +2457,11 @@ function CheckoutModal({
         ) : checkoutState === "native-payment" && nativeCheckout ? (
           <div className="checkout-native-payment">
             <p className="section-kicker">seu baralho está reservado</p>
-            <p className="checkout-native-status" role="status" aria-live="polite">
+            <p
+              className="checkout-native-status"
+              role="status"
+              aria-live="polite"
+            >
               Pix pronto · aguardando confirmação
             </p>
             <h2>
@@ -2565,9 +2578,7 @@ function CheckoutModal({
             </p>
             <button
               onClick={() => {
-                const pendingSessionId = safeGetItem(
-                  "conexao-pending-session",
-                );
+                const pendingSessionId = safeGetItem("conexao-pending-session");
                 if (pendingSessionId)
                   window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`;
               }}
@@ -2621,11 +2632,7 @@ function CheckoutModal({
             </button>
           </div>
         ) : checkoutState === "sending" ? (
-          <div
-            className="checkout-confirming"
-            role="status"
-            aria-live="polite"
-          >
+          <div className="checkout-confirming" role="status" aria-live="polite">
             <div className="confirming-deck" aria-hidden="true">
               <span className="conf-card" />
               <span className="conf-card" />
@@ -2697,7 +2704,9 @@ function Home({
   experimentAssignment?: StoredExperimentAssignment;
 }) {
   const trackCtaClick = useLpTracking(variant, experimentAssignment);
-  const sourceFromUrl = new URLSearchParams(window.location.search).get("source");
+  const sourceFromUrl = new URLSearchParams(window.location.search).get(
+    "source",
+  );
   const storedSourceLp = safeGetItem("conexao-pending-source-lp");
   const checkoutSourceLp: "v1" | "v2" | "lp3" =
     sourceFromUrl === "lp3"
@@ -2722,7 +2731,10 @@ function Home({
     if (safeGetItem("conexao-session") || safeGetItem("conexao-guest-token"))
       return;
     // An installed app without access sees the sales page; onboarding now requires access.
-    if (window.location.pathname !== "/") {
+    if (
+      window.location.pathname !== "/" &&
+      window.location.pathname !== "/lp1"
+    ) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
@@ -3227,7 +3239,11 @@ function PrimaryLandingPageRoute() {
 
   if (!ready) {
     return (
-      <main className="primary-landing-loading" role="status" aria-live="polite">
+      <main
+        className="primary-landing-loading"
+        role="status"
+        aria-live="polite"
+      >
         <span className="brand-symbol" aria-hidden="true">
           <Feather size={18} strokeWidth={1.6} />
         </span>
@@ -3282,7 +3298,9 @@ function ExperimentLinkRoute() {
           landingPage?: string;
         };
         const landing = data.landingPage
-          ? getLandingPageByPath(data.landingPage)
+          ? data.landingPage === "/"
+            ? getLandingPageById("v2")
+            : getLandingPageByPath(data.landingPage)
           : undefined;
         if (!response.ok || !landing) {
           throw new Error(response.status === 404 ? "unavailable" : "error");
@@ -3298,7 +3316,11 @@ function ExperimentLinkRoute() {
       })
       .catch((error: unknown) => {
         if (!mounted) return;
-        setState(error instanceof Error && error.message === "unavailable" ? "unavailable" : "error");
+        setState(
+          error instanceof Error && error.message === "unavailable"
+            ? "unavailable"
+            : "error",
+        );
       });
     return () => {
       mounted = false;
@@ -3321,7 +3343,7 @@ function ExperimentLinkRoute() {
   }
   return (
     <Home
-      variant={landingPage === "/" ? "v2" : "v1"}
+      variant={landingPage === "/lp1" || landingPage === "/" ? "v2" : "v1"}
       experimentAssignment={experimentAssignment}
     />
   );
@@ -7538,6 +7560,9 @@ function Router() {
         <Route path="/lp2">
           <Home />
         </Route>
+        <Route path="/lp1">
+          <Home variant="v2" />
+        </Route>
         <Route path="/lp3">
           <TrackedLp3 />
         </Route>
@@ -7561,6 +7586,7 @@ function RouteAwareSplash() {
   const [location] = useLocation();
   const isLandingPage =
     location === "/" ||
+    location === "/lp1" ||
     location === "/lp2" ||
     location === "/lp3" ||
     location.startsWith("/e/");

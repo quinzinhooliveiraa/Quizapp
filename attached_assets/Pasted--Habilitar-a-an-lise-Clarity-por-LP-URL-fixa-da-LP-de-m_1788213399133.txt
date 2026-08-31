@@ -1,0 +1,117 @@
+# Habilitar a análise: Clarity por LP + URL fixa da LP de mockups
+
+Dois consertos independentes que destravam análise e teste A/B. Podem ser feitos
+juntos, mas são separados — se um der problema, o outro não depende dele.
+
+---
+
+## PARTE A — marcar a LP nas gravações do Clarity
+
+### Problema
+
+O Clarity está instalado e grava todas as sessões, mas o código só chama
+`clarity("identify", visitorKey)`. Ele **nunca diz ao Clarity qual LP a pessoa
+está vendo**. Resultado: no painel do Clarity todas as gravações ficam no mesmo
+balaio, sem como filtrar "só LP3" ou "só a LP de mockups". Isso inviabiliza
+assistir as sessões de uma LP específica.
+
+### O que fazer
+
+Arquivo: `artifacts/perguntas-de-conexao/src/App.tsx`
+
+No mesmo `useEffect` que inicializa o Clarity (onde já existe
+`window.clarity?.("identify", visitorKey)`), adicione logo depois uma chamada de
+tag com o `lpId` (que já está disponível nesse componente, é o mesmo usado no
+`track`):
+
+```ts
+window.clarity?.("identify", visitorKey);
+window.clarity?.("set", "lp", lpId);
+```
+
+Se houver `experimentAssignment` disponível ali, marque também a variante — ajuda
+a separar as gravações por braço do teste A/B:
+
+```ts
+if (experimentAssignment?.experimentVariantId) {
+  window.clarity?.("set", "variante", experimentAssignment.experimentVariantId);
+}
+```
+
+Use exatamente a API `clarity("set", "<nome-do-filtro>", "<valor>")` — é o método
+oficial de custom tags do Clarity. Não invente outro nome de função.
+
+### Resultado
+
+No painel do Clarity, em Filters, passa a aparecer a dimensão **"lp"** (e
+"variante"). Aí dá pra assistir só as gravações de uma LP com um clique. As tags
+valem para gravações **novas** (as antigas não são retag).
+
+---
+
+## PARTE B — dar uma URL fixa própria pra LP de mockups (v2)
+
+### Problema
+
+Hoje a "principal" só controla o que aparece na raiz `/` (via
+`PrimaryLandingPageRoute`, que resolve por **id**, não por caminho). As rotas fixas
+são: `/lp2` → a LP "Suas conversas viraram logística" (variant v1); `/lp3` → LP3.
+A LP de **mockups** ("Reacender a chama", variant **v2**) **não tem rota fixa
+própria** — ela só aparece em `/` quando é a principal. Então, ao definir a LP3
+como principal, a LP de mockups ficou **sem nenhuma URL** que a mostre. Isso quebra
+o teste A/B, porque cada variante precisa de um endereço estável para o router de
+experimentos (`ExperimentLinkRoute` navega para `variant.path`).
+
+### O que fazer
+
+1. **Nova rota fixa** em `artifacts/perguntas-de-conexao/src/App.tsx`, junto das
+   outras (`/lp2`, `/lp3`):
+
+   ```tsx
+   <Route path="/lp1">
+     <Home variant="v2" />
+   </Route>
+   ```
+
+   (Se preferir um nome mais claro que `/lp1`, pode ser `/reacender` ou
+   `/mockups` — escolha um e use o mesmo no passo 2. Mantenha `/lp1` como padrão se
+   estiver em dúvida.)
+
+2. **Atualizar o registro** em `lib/landing-pages/src/index.ts`: a entrada de id
+   `v2` hoje tem `path: "/"`. Troque para `path: "/lp1"` (o mesmo caminho do passo
+   1). Assim o painel admin e o router de experimentos passam a apontar o tráfego
+   da LP de mockups para essa URL estável, em vez de `/`.
+
+   ⚠️ Antes de trocar, verifique se algo depende de `getLandingPageByPath("/")`
+   retornar a v2. O `PrimaryLandingPageRoute` usa `getLandingPageById` (não por
+   caminho), então ele **não** é afetado. Se encontrar algum uso de
+   `getLandingPageByPath("/")`, ajuste para continuar funcionando (ou adicione um
+   alias em vez de trocar o path). O objetivo é: **a LP de mockups sempre acessível
+   por uma URL própria, independente de qual LP esteja como principal**, sem
+   quebrar o `/`.
+
+3. **Não mexa** na rota `/` nem no `PrimaryLandingPageRoute` — a raiz continua
+   sendo o "ponteiro" que mostra a LP marcada como principal. A diferença é que
+   agora, quando a principal for a LP3 (ou qualquer outra), a LP de mockups não
+   some: ela continua viva em `/lp1`.
+
+### Resultado
+
+- `/` → mostra a LP principal (hoje LP3), como já é.
+- `/lp1` → sempre a LP de mockups (Reacender a chama), aconteça o que acontecer.
+- `/lp2` → sempre "Suas conversas viraram logística".
+- `/lp3` → sempre LP3.
+
+Nenhuma LP fica órfã ao trocar a principal, e o teste A/B passa a poder rotear
+tráfego para qualquer uma delas.
+
+---
+
+## Depois de aplicar (as duas partes)
+
+1. Formata os arquivos tocados.
+2. Roda typecheck e build pra garantir que nada quebrou.
+3. Testa no navegador: abre `/lp1` e confirma que a LP de mockups aparece; abre `/`
+   e confirma que a principal (LP3) continua lá; entra numa LP, e no painel do
+   Clarity (aba Filters, pode levar alguns minutos pra popular) confirma que
+   aparece o filtro "lp".

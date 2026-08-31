@@ -14,3 +14,4 @@
 - [LP3 narrative priority](lp3-narrative-priority.md) — low-discovery routine signals with renewed proximity resolve to the routine narrative despite partial vulnerability.
 - [LP3 story card](lp3-story-card.md) — keep the story title and narrative inside the same composed card; testimonials stay as the next section.
 - [LP3 CSS formatting](lp3-css-formatting.md) — targeted typography edits sit in legacy CSS where automatic formatting can reflow unrelated rules; keep diffs scoped.
+- [Fixed landing routes](fixed-landing-routes.md) — every public landing path must be whitelisted by the route-aware splash layer or it renders hidden behind the splash.
