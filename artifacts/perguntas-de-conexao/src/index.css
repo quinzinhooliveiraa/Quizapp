@@ -16725,10 +16725,10 @@ blockquote em {
 .lp3-result-title,
 .lp3-section-title,
 .lp3-offer-title {
-  font-family: var(--app-font-sans);
+  font-family: var(--app-font-serif);
   font-style: normal;
-  font-weight: 300;
-  letter-spacing: -0.045em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   line-height: 1.05;
 }
 
@@ -17650,11 +17650,11 @@ blockquote em {
 .lp3-story .lp3-section-title {
   max-width: 17ch;
   margin: 0;
-  font-family: var(--app-font-sans);
+  font-family: var(--app-font-serif);
   font-size: clamp(2.2rem, 4.8vw, 4.25rem);
   font-style: normal;
-  font-weight: 300;
-  letter-spacing: -0.045em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   line-height: 0.99;
 }
 
@@ -17777,11 +17777,11 @@ blockquote em {
   max-width: 100%;
   margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
   color: var(--lp3-ink);
-  font-family: var(--app-font-sans);
+  font-family: var(--app-font-serif);
   font-size: clamp(2.15rem, 5.2vw, 4.1rem);
   font-style: normal;
-  font-weight: 300;
-  letter-spacing: -0.045em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   line-height: 0.99;
   text-wrap: balance;
 }
@@ -17912,6 +17912,7 @@ blockquote em {
   font-family: var(--app-font-serif);
   font-style: normal;
   font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 /* Keep the practice introduction visually centered across viewport sizes. */
@@ -18267,6 +18268,7 @@ blockquote em {
   font-size: clamp(1.9rem, 4.4vw, 3.4rem);
   font-style: normal;
   font-weight: 400;
+  letter-spacing: -0.01em;
   line-height: 1;
   text-wrap: balance;
 }

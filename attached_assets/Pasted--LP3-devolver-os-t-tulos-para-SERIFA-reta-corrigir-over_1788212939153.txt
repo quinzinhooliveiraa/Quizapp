@@ -1,0 +1,72 @@
+# LP3 — devolver os títulos para SERIFA reta (corrigir over-reach do prompt anterior)
+
+## Contexto
+
+No ajuste de fontes anterior, os **títulos** da LP3 foram trocados de serifa
+(Instrument Serif) para **sans** (Plus Jakarta) por engano. O combinado — e
+aprovado em mockup — era: títulos em **Instrument Serif, retos (sem itálico)**.
+Além disso, isso pegou a **pergunta do quiz** e o **hero**, que deviam ficar
+intactos. Este prompt devolve todos esses títulos para a serifa reta.
+
+**Importante:** o texto de corpo, descrições, parágrafos, rótulos (kickers) e
+legendas **continuam em sans — não mexa neles.** Só os TÍTULOS listados abaixo
+voltam para serifa.
+
+## Arquivo
+
+`artifacts/perguntas-de-conexao/src/index.css`
+
+## O que fazer
+
+Estas classes de **título** devem ser **Instrument Serif, `font-style: normal`
+(reto, sem itálico), `font-weight: 400`**:
+
+- `.lp3-display` (título do hero)
+- `.lp3-question-heading` (a pergunta do quiz)
+- `.lp3-result-title`
+- `.lp3-section-title` (inclui `.lp3-story .lp3-section-title` e
+  `.lp3-practice .lp3-section-title`)
+- `.lp3-offer-title`
+- `.lp3-story-card-title`
+
+**Procure TODAS as regras** (a regra base **e** as dentro de `@media`) que hoje
+setam `font-family: var(--app-font-sans)` para qualquer uma dessas classes e troque
+para **`var(--app-font-serif)`**. Hoje existe pelo menos uma regra agrupada assim:
+
+```css
+.lp3-display,
+.lp3-question-heading,
+.lp3-result-title,
+.lp3-section-title,
+.lp3-offer-title {
+  font-family: var(--app-font-sans);   /* -> trocar para var(--app-font-serif) */
+  font-style: normal;                   /* manter normal (sem itálico) */
+  font-weight: 300;                     /* -> trocar para 400 */
+  letter-spacing: -0.045em;             /* -> afrouxar: use -0.01em (o -0.045 era pro sans e aperta demais a serifa) */
+  line-height: 1.05;                    /* pode manter */
+}
+```
+
+E há regras separadas para `.lp3-story .lp3-section-title` e `.lp3-story-card-title`
+que também estão em sans — troque essas para serifa do mesmo jeito.
+
+### Regras
+
+- **Não** altere tamanho (`font-size`) de nenhuma — cada título já tem o seu, e
+  está bom. Mexa só em `font-family`, `font-style`, `font-weight` e, onde o
+  `letter-spacing` estiver muito negativo (herança do sans), afrouxe para algo
+  em torno de `-0.01em`.
+- **Não** toque em nenhum `var(--app-font-sans)` que esteja em parágrafo,
+  descrição, legenda, kicker ou corpo de texto — esses ficam sans de propósito.
+- Confirme que a **pergunta do quiz** (`.lp3-question-heading`) voltou a ser
+  serifa em todos os breakpoints — é o sinal de que o quiz está de volta ao
+  original.
+
+## Depois de aplicar
+
+1. Formata o arquivo.
+2. Roda typecheck e build.
+3. Confere no navegador (desktop e mobile): a pergunta do quiz e os títulos das
+   telas pós-quiz (resultado, história, recomendação, oferta) devem estar em
+   **serifa reta**, sem itálico. Os rótulos (kickers), o preço já ajustado e os
+   parágrafos continuam como estavam.
