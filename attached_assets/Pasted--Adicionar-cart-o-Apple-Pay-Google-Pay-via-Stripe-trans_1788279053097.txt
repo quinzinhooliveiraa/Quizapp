@@ -1,0 +1,156 @@
+# Adicionar cartão + Apple Pay + Google Pay via Stripe (transparente), Pix continua na Abacate
+
+## Objetivo
+
+Hoje o checkout só tem **Pix** (AbacatePay, transparente, funcionando). A Abacate
+descontinuou cartão. Vamos **adicionar cartão + Apple Pay + Google Pay + Link via
+Stripe**, mantendo tudo **transparente (dentro do site)** — sem redirecionamento —
+pra não perder a visibilidade no Clarity. O Pix **continua igual** na Abacate.
+
+Arquitetura: uma tela de pagamento com **abas Pix | Cartão**. Pix usa o fluxo atual.
+Cartão usa o **Stripe Payment Element**, que já traz cartão, Apple Pay, Google Pay e
+Link automaticamente. **O acesso só é liberado pelo webhook** (nunca pelo frontend),
+reaproveitando exatamente a mesma função que o Pix já usa (`grantSessionAccess`).
+
+## Variáveis de ambiente (o dono seta no Railway/Replit — NÃO colocar no código)
+
+- Backend (serviço da API): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- Frontend (serviço do site): `VITE_STRIPE_PUBLISHABLE_KEY`
+
+Se qualquer uma faltar, a aba de cartão deve aparecer desabilitada com uma mensagem
+("Cartão indisponível no momento"), e o Pix continua funcionando normal. Nunca
+derrube o checkout inteiro por falta da config do Stripe.
+
+## BACKEND — `artifacts/api-server`
+
+### 1. Dependência e client
+
+Adicione a lib oficial `stripe` (npm) ao `api-server`. Crie
+`src/lib/stripe.ts` com um client inicializado a partir de
+`process.env.STRIPE_SECRET_KEY` e duas funções:
+
+- `createStripePaymentIntent({ sessionId, amount, buyerEmail })`:
+  cria um PaymentIntent com:
+  - `amount: 4790`, `currency: "brl"`
+  - `automatic_payment_methods: { enabled: true }` (isso liga cartão + Apple Pay +
+    Google Pay + Link conforme o que estiver habilitado no painel da Stripe)
+  - `metadata: { sessionId }`
+  - `receipt_email: buyerEmail` se houver
+  Retorne `{ paymentIntentId, clientSecret }`.
+- `verifyStripeWebhook(rawBody, signature)`: usa
+  `stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET)` e
+  devolve o evento (ou lança erro se inválido).
+
+Não remova nada da Abacate. As duas coisas coexistem.
+
+### 2. Coluna nova
+
+Em `lib/db/src/schema`, na `sessionsTable`, adicione
+`stripePaymentIntentId: text("stripe_payment_intent_id")` (nullable). Gere a
+migration.
+
+### 3. Rota de criação — aceitar método
+
+Na rota `POST /checkout/create` (em `routes/connection.ts`), aceite um campo novo
+`method: "pix" | "card"` (default `"pix"`, pra não quebrar nada).
+
+- `method: "pix"` → comportamento atual (cria charge na Abacate, devolve
+  `brCode`/`brCodeBase64`). **Não mexer.**
+- `method: "card"` → cria a MESMA sessão (mesmos campos: buyerName, buyerEmail,
+  sourceLp, visitorKey, experimento, `internal`), depois chama
+  `createStripePaymentIntent(...)`, salva `stripePaymentIntentId` na sessão, e
+  devolve `{ sessionId, clientSecret }`.
+
+Mantenha a criação da sessão idêntica pros dois caminhos (só muda o provedor de
+pagamento no fim). O `internal` continua sendo salvo dos dois lados.
+
+### 4. Webhook do Stripe
+
+Crie `POST /checkout/stripe-webhook`. **Precisa do corpo cru (raw body)** pra
+validar a assinatura — configure o parser raw só nessa rota (o webhook da Abacate
+já usa rawBody no projeto; siga o mesmo padrão).
+
+- Valide com `verifyStripeWebhook(rawBody, req.header("stripe-signature"))`.
+- Trate o evento `payment_intent.succeeded`:
+  - pegue `sessionId` de `event.data.object.metadata.sessionId` (ou ache a sessão
+    por `stripePaymentIntentId`).
+  - reaproveite **exatamente** a mesma lógica do webhook da Abacate: idempotência
+    via `processedEventsTable` usando `event.id`, depois
+    `grantSessionAccess(tx, sessionId)` e `notifyGrantedAccess(req, updated)`.
+  - **Não duplique** a lógica de liberar acesso — chame a mesma função.
+- Responda 200 rápido. Ignore outros tipos de evento (responda 200 sem fazer nada).
+
+### 5. Polling de status (opcional, mas recomendado)
+
+O front vai confirmar o pagamento e depois esperar o acesso liberar. O endpoint
+`GET /access/sessions/:sessionId` já existe e já checa `accessGranted`. Para o
+cartão, o webhook é a fonte da verdade; o front só faz polling nesse endpoint até
+`accessGranted` virar true (igual ao Pix). Não precisa consultar a Stripe no
+polling — o webhook já grava.
+
+## FRONTEND — `artifacts/perguntas-de-conexao`
+
+### 6. Dependências
+
+Adicione `@stripe/stripe-js` e `@stripe/react-stripe-js`.
+
+### 7. Tela de pagamento com abas
+
+Onde hoje aparece o checkout Pix nativo (depois do modal de e-mail "Pra onde
+mandamos seu acesso?"), transforme numa tela com **duas abas no topo**:
+
+- **Aba "Pix"** (default): exatamente o fluxo de hoje — QR (`brCodeBase64`),
+  copia-e-cola (`brCode`), aviso de "abre sozinho quando cair", polling. Não mexer.
+- **Aba "Cartão"**: monta o **Stripe Payment Element**.
+
+Regras da aba Cartão:
+- Ao entrar na aba (ou ao abrir a tela), chame `POST /checkout/create` com
+  `method: "card"` pra obter o `clientSecret`. (Se a pessoa começou no Pix e trocou
+  pra Cartão, pode criar a intenção de cartão nesse momento — evite criar as duas
+  ao mesmo tempo sem necessidade.)
+- Inicialize o Stripe com `loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)`.
+- Renderize `<Elements stripe={stripePromise} options={{ clientSecret, appearance }}>`
+  com um `appearance` no tema escuro do produto (use as cores do app pra não
+  destoar) e dentro dele o `<PaymentElement />`.
+- Botão "Pagar R$ 47,90". No clique, `stripe.confirmPayment({ elements, redirect:
+  "if_required" })`. Com Payment Element + `redirect: "if_required"`, cartão resolve
+  na hora sem sair do site; Apple Pay/Google Pay abrem a folha nativa do aparelho.
+- **Sucesso do `confirmPayment` NÃO libera o produto.** Depois do sucesso, mostre
+  "Confirmando pagamento…" e faça polling em `GET /access/sessions/:sessionId` até
+  `accessGranted` virar true — aí sim vai pra tela de sucesso que já existe. (O
+  webhook é quem libera.)
+- Erros do cartão: mostre a mensagem do Stripe (`error.message`) de forma amigável,
+  sem quebrar a tela.
+
+### 8. Recap e garantia continuam
+
+A tela de pagamento continua mostrando o que a pessoa está levando (459 perguntas ·
+15 baralhos · acesso vitalício), o valor R$ 47,90, a garantia de 7 dias, e os
+depoimentos reais (se houver na tabela — se não houver, não mostra; **não inventar**).
+Isso vale pras duas abas.
+
+## O que NÃO fazer
+
+- Não remover nem alterar o fluxo de Pix da Abacate.
+- Não liberar acesso pelo frontend — só pelo webhook, via `grantSessionAccess`.
+- Não pedir CPF nem dados além do necessário (e-mail já é capturado).
+- Não colocar chaves da Stripe no código — só via env vars.
+- Não inventar depoimentos.
+
+## Apple Pay — 1 passo manual (avisar o dono)
+
+Pro Apple Pay aparecer no site, a Stripe exige **registrar o domínio** em
+Settings → Payment Methods → Apple Pay (ou domínios do Payment Element) no painel da
+Stripe, incluindo `perguntasdeconexao.com.br` e o `www`. Google Pay e Link não
+precisam disso. Deixe um aviso claro no fim da execução lembrando esse passo.
+
+## Depois de aplicar
+
+1. Formata, roda typecheck e build (frontend e backend).
+2. Testa no modo teste da Stripe (chaves `sk_test`/`pk_test` e cartão de teste
+   `4242 4242 4242 4242`): abre o checkout, aba Cartão, paga, confirma que o webhook
+   chega, `grantSessionAccess` roda, o acesso libera e a tela de sucesso aparece —
+   tudo sem sair do site.
+3. Confirma que a aba Pix continua idêntica e funcionando.
+4. Lembrete: cadastrar o endpoint do webhook (`/api/checkout/stripe-webhook`) no
+   painel da Stripe e colar o `STRIPE_WEBHOOK_SECRET` no Railway.
