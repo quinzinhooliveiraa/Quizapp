@@ -8,6 +8,7 @@
 - [Abacate checkout status](abacate-checkout-status.md) — retrieve a checkout with `/checkouts/get?id=...`; `/billings/{id}` returns the wrong result for this integration.
 - [Checkout attribution context](checkout-attribution-context.md) — payment sessions must read the landing visitor identity from session storage.
 - [Checkout UI reuse](checkout-ui-reuse.md) — keep landing-page checkout presentation on the shared controller/modal so source attribution and Pix state stay in one flow.
+- [Inline checkout payment](inline-checkout-payment.md) — keep Pix and card payment creation/rendering inside the first checkout; the CTA must not become a separate payment page.
 - [Testimonials source](testimonials-source.md) — LP1 and LP3 must consume one shared official testimonials array; LP3 may preserve its existing subset by filtering that source.
 - [Drizzle non-TTY schema conflicts](drizzle-non-tty-schema-conflicts.md) — column drops/renames can still require interactive confirmation when schema push runs without a TTY.
 - [Orval Zod barrel collisions](orval-zod-barrel-collisions.md) — request-body schemas can collide with generated type names; expose generated types under a namespace when this occurs.

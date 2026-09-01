@@ -3,7 +3,9 @@ import {
   type FormEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  forwardRef,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -2027,11 +2029,18 @@ function useCheckout({
   >("pix");
   const [cardError, setCardError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
+  const [paymentCreating, setPaymentCreating] = useState<"pix" | "card" | null>(
+    null,
+  );
+  const [paymentError, setPaymentError] = useState("");
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
   const checkoutReviewsQuery = useListPublicReviews({
     query: {
-      enabled: nativeCheckoutEnabled && checkoutState === "native-payment",
+      enabled:
+        nativeCheckoutEnabled &&
+        Boolean(nativeCheckout) &&
+        (checkoutState === "email" || checkoutState === "native-payment"),
       queryKey: getListPublicReviewsQueryKey(),
     },
   });
@@ -2120,7 +2129,7 @@ function useCheckout({
             Date.now() - parsed.startedAt < PENDING_CHECKOUT_MAX_AGE_MS
           ) {
             setNativeCheckout(parsed);
-            setCheckoutState("native-payment");
+            setCheckoutState("email");
             setCheckoutOpen(true);
             return;
           }
@@ -2143,7 +2152,7 @@ function useCheckout({
         ) {
           setCardCheckout(parsed);
           setSelectedPaymentMethod("card");
-          setCheckoutState("card-payment");
+          setCheckoutState("email");
           setCheckoutOpen(true);
           return;
         }
@@ -2233,7 +2242,11 @@ function useCheckout({
   }, []);
 
   useEffect(() => {
-    if (!checkoutOpen || checkoutState !== "native-payment" || !nativeCheckout)
+    if (
+      !checkoutOpen ||
+      !nativeCheckout ||
+      (checkoutState !== "email" && checkoutState !== "native-payment")
+    )
       return;
 
     let cancelled = false;
@@ -2327,9 +2340,15 @@ function useCheckout({
     packageId: "couple" | "family" = selectedPackage,
     email = buyerEmail,
     name = buyerName,
+    inline = false,
   ) => {
     setCheckoutOpen(true);
-    setCheckoutState("sending");
+    setPaymentError("");
+    if (inline) {
+      setPaymentCreating("pix");
+    } else {
+      setCheckoutState("sending");
+    }
     try {
       syncInternalTrackingFromUrl();
       const normalizedName = name.trim();
@@ -2385,24 +2404,37 @@ function useCheckout({
       setNativeCheckout(pix);
       safeSetItem("conexao-pending-pix", JSON.stringify(pix));
       setSelectedPaymentMethod("pix");
-      setCheckoutState("native-payment");
+      if (!inline) setCheckoutState("native-payment");
     } catch {
-      setCheckoutState("error");
+      if (inline) {
+        setPaymentError(
+          "Não foi possível abrir o Pix aqui agora. Tente novamente.",
+        );
+      } else {
+        setCheckoutState("error");
+      }
+    } finally {
+      if (inline) setPaymentCreating(null);
     }
   };
 
-  const createCardCheckout = async () => {
+  const createCardCheckout = async (inline = false) => {
     if (!cardAvailable || !stripePromise) return;
     if (cardCheckout) {
       setCardError("");
       setSelectedPaymentMethod("card");
-      setCheckoutState("card-payment");
+      if (!inline) setCheckoutState("card-payment");
       return;
     }
 
     setSelectedPaymentMethod("card");
     setCardError("");
-    setCheckoutState("card-sending");
+    setPaymentError("");
+    if (inline) {
+      setPaymentCreating("card");
+    } else {
+      setCheckoutState("card-sending");
+    }
     try {
       syncInternalTrackingFromUrl();
       const normalizedName = buyerName.trim();
@@ -2447,12 +2479,18 @@ function useCheckout({
       safeSetItem("conexao-pending-at", String(checkoutStartedAt));
       safeSetItem("conexao-pending-card", JSON.stringify(card));
       setCardCheckout(card);
-      setCheckoutState("card-payment");
+      if (!inline) setCheckoutState("card-payment");
     } catch {
-      setCardError(
-        "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha o Pix.",
-      );
-      setCheckoutState("card-error");
+      const message =
+        "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha o Pix.";
+      setCardError(message);
+      if (inline) {
+        setPaymentError(message);
+      } else {
+        setCheckoutState("card-error");
+      }
+    } finally {
+      if (inline) setPaymentCreating(null);
     }
   };
 
@@ -2511,6 +2549,8 @@ function useCheckout({
     setNativeCheckout(null);
     setCardCheckout(null);
     setCardError("");
+    setPaymentCreating(null);
+    setPaymentError("");
     setSelectedPaymentMethod("pix");
     setCopiedCode(false);
     setNameError("");
@@ -2540,8 +2580,12 @@ function useCheckout({
     selectedPaymentMethod,
     setSelectedPaymentMethod,
     cardError,
+    setCardError,
     copiedCode,
     setCopiedCode,
+    paymentCreating,
+    paymentError,
+    setPaymentError,
     confirmingLong,
     sendingLong,
     checkoutReviews,
@@ -2640,18 +2684,27 @@ function CheckoutPaymentTabs({
   );
 }
 
-function CardPaymentForm({
-  onPaymentSubmitted,
-}: {
-  onPaymentSubmitted: () => void;
-}) {
+type CardPaymentFormHandle = {
+  submit: () => void;
+};
+
+const CardPaymentForm = forwardRef<
+  CardPaymentFormHandle,
+  {
+    onPaymentSubmitted: () => void;
+    showSubmitButton?: boolean;
+  }
+>(function CardPaymentForm(
+  { onPaymentSubmitted, showSubmitButton = true },
+  ref,
+) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     if (!stripe || !elements || submitting) return;
 
     setSubmitting(true);
@@ -2673,28 +2726,35 @@ function CardPaymentForm({
     onPaymentSubmitted();
   };
 
+  useImperativeHandle(ref, () => ({
+    submit: () => void handleSubmit(),
+  }));
+
   return (
-    <form className="checkout-card-form" onSubmit={handleSubmit}>
+    <div className="checkout-card-form">
       <PaymentElement options={{ layout: "tabs" }} />
       {error && (
         <p className="checkout-card-error" role="alert">
           {error}
         </p>
       )}
-      <button
-        className="button button-primary button-full checkout-card-submit"
-        type="submit"
-        disabled={!stripe || !elements || submitting}
-      >
-        {submitting ? "Confirmando pagamento…" : "Pagar R$ 47,90"}
-        {!submitting && <ArrowRight size={16} />}
-      </button>
+      {showSubmitButton && (
+        <button
+          className="button button-primary button-full checkout-card-submit"
+          type="button"
+          onClick={() => void handleSubmit()}
+          disabled={!stripe || !elements || submitting}
+        >
+          {submitting ? "Confirmando pagamento…" : "Pagar R$ 47,90"}
+          {!submitting && <ArrowRight size={16} />}
+        </button>
+      )}
       <p className="checkout-card-note">
         Pagamento seguro. Cartão, Apple Pay, Google Pay e Link.
       </p>
-    </form>
+    </div>
   );
-}
+});
 
 function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
   const {
@@ -2714,8 +2774,12 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     selectedPaymentMethod,
     setSelectedPaymentMethod,
     cardError,
+    setCardError,
     copiedCode,
     setCopiedCode,
+    paymentCreating,
+    paymentError,
+    setPaymentError,
     confirmingLong,
     sendingLong,
     checkoutReviews,
@@ -2726,6 +2790,49 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     restartCheckout,
     closeCheckout,
   } = checkout;
+
+  const cardPaymentFormRef = useRef<CardPaymentFormHandle>(null);
+
+  const hasValidBuyerDetails =
+    buyerName.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
+
+  useEffect(() => {
+    if (
+      !checkoutOpen ||
+      checkoutState !== "email" ||
+      !hasValidBuyerDetails ||
+      paymentCreating
+    ) {
+      return;
+    }
+
+    const normalizedName = buyerName.trim();
+    const normalizedEmail = buyerEmail.trim().toLowerCase();
+
+    if (selectedPaymentMethod === "pix" && !nativeCheckout) {
+      void createCheckout("couple", normalizedEmail, normalizedName, true);
+    } else if (
+      selectedPaymentMethod === "card" &&
+      cardAvailable &&
+      !cardCheckout
+    ) {
+      void createCardCheckout(true);
+    }
+  }, [
+    buyerEmail,
+    buyerName,
+    cardAvailable,
+    cardCheckout,
+    checkoutOpen,
+    checkoutState,
+    createCardCheckout,
+    createCheckout,
+    hasValidBuyerDetails,
+    nativeCheckout,
+    paymentCreating,
+    selectedPaymentMethod,
+  ]);
 
   const handleInitialCheckout = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -2748,9 +2855,15 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     setBuyerName(normalizedName);
     setBuyerEmail(normalizedEmail);
     if (selectedPaymentMethod === "card") {
-      void createCardCheckout();
+      if (cardCheckout) {
+        cardPaymentFormRef.current?.submit();
+      } else {
+        void createCardCheckout(true);
+      }
     } else {
-      void createCheckout("couple", normalizedEmail, normalizedName);
+      if (!nativeCheckout) {
+        void createCheckout("couple", normalizedEmail, normalizedName, true);
+      }
     }
   };
 
@@ -2833,9 +2946,17 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
         </div>
       )}
     </>
+  ) : paymentCreating === "pix" ? (
+    <p className="checkout-payment-preview" role="status" aria-live="polite">
+      Abrindo o QR Code aqui…
+    </p>
+  ) : paymentError ? (
+    <p className="checkout-payment-preview checkout-inline-error" role="alert">
+      {paymentError}
+    </p>
   ) : (
     <p className="checkout-payment-preview">
-      Seu QR code Pix aparece aqui assim que você continuar.
+      Preencha seus dados para abrir o QR Code aqui.
     </p>
   );
 
@@ -2887,7 +3008,11 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           },
         }}
       >
-        <CardPaymentForm onPaymentSubmitted={handleCardPaymentSubmitted} />
+        <CardPaymentForm
+          ref={cardPaymentFormRef}
+          onPaymentSubmitted={handleCardPaymentSubmitted}
+          showSubmitButton={checkoutState !== "email"}
+        />
       </Elements>
       <div className="checkout-guarantee">
         <Check size={17} />
@@ -2898,9 +3023,17 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
         </span>
       </div>
     </>
+  ) : paymentCreating === "card" ? (
+    <p className="checkout-payment-preview" role="status" aria-live="polite">
+      Abrindo o pagamento com cartão aqui…
+    </p>
+  ) : paymentError ? (
+    <p className="checkout-payment-preview checkout-inline-error" role="alert">
+      {paymentError}
+    </p>
   ) : (
     <p className="checkout-payment-preview">
-      O pagamento seguro com cartão aparece aqui assim que você continuar.
+      Preencha seus dados para abrir o pagamento com cartão aqui.
     </p>
   );
 
@@ -3093,17 +3226,13 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 <CheckoutPaymentTabs
                   selectedPaymentMethod={selectedPaymentMethod}
                   cardAvailable={cardAvailable}
-                  onSelect={setSelectedPaymentMethod}
-                  pixContent={
-                    <p className="checkout-payment-preview">
-                      O QR code aparece aqui assim que você continuar.
-                    </p>
-                  }
-                  cardContent={
-                    <p className="checkout-payment-preview">
-                      O pagamento seguro aparece aqui assim que você continuar.
-                    </p>
-                  }
+                  onSelect={(method) => {
+                    setCardError("");
+                    setPaymentError("");
+                    setSelectedPaymentMethod(method);
+                  }}
+                  pixContent={pixPaymentContent}
+                  cardContent={cardPaymentContent}
                 />
                 <div
                   className="checkout-order-summary"
@@ -3146,6 +3275,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
               <button
                 className="button button-primary checkout-purchase-button"
                 type="submit"
+                disabled={paymentCreating !== null}
                 data-testid="button-continue-checkout"
               >
                 Garantir meu deck <ArrowRight size={17} />

@@ -21006,6 +21006,11 @@ blockquote em {
   line-height: 1.5;
 }
 
+.checkout-inline-error {
+  color: #a2384b;
+  font-weight: 700;
+}
+
 .checkout-payment-panel .checkout-native-status {
   margin-top: 0;
 }
