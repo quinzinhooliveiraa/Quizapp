@@ -1,0 +1,120 @@
+# Checkout v2 — ajustes visuais + acordeão de pagamento
+
+O checkout do estilo "loja" já está no ar e funcionando (Pix nativo + Stripe
+Payment Element + webhook liberando acesso). Este prompt faz **apenas ajustes de
+visual e de comportamento da tela** — de novo, **NÃO mexer no motor do pagamento**.
+
+## REGRA DE OURO (a mesma de antes)
+- Reaproveitar **exatamente** o que já existe: geração da cobrança Pix
+  (`brCode`/`brCodeBase64`, copiar código, polling de status), o **Stripe Payment
+  Element** (`clientSecret`, `confirmPayment`), a captura de nome/e-mail, o webhook
+  e a tela de sucesso.
+- **Não** alterar backend, rotas, chamadas de API, nomes de env, nem a lógica de
+  pagamento. Só apresentação (JSX/CSS) e o comportamento de expandir/recolher.
+- Continuar enviando `internal`, `experimentId`/`experimentVariantId`,
+  `visitorKey`, `buyerName`, `buyerEmail` e `method` como já é hoje.
+
+Arquivo: `artifacts/perguntas-de-conexao/src/App.tsx` (área do checkout) + CSS.
+
+---
+
+## 1) Forma de pagamento vira ACORDEÃO (mudança principal)
+
+Hoje são dois cards lado a lado (Pix | Cartão). Trocar por **duas linhas
+empilhadas, uma embaixo da outra**, cada uma expansível:
+
+- Cada linha tem: ícone do método, título, uma frase curta e uma **bolinha de
+  seleção** (radio) à direita.
+- **Ao tocar numa linha, ela fica selecionada e EXPANDE logo abaixo dela mesma**,
+  revelando a interface daquele método — **na mesma página, sem abrir outra tela,
+  sem modal, sem "carregando" em tela cheia**. A outra linha recolhe.
+- Anima a altura (transição suave de `max-height`), não aparece "seco".
+
+### Pix expandido (reusar o fluxo Pix que já existe)
+Dentro da área expandida do Pix, mostrar o que já temos hoje:
+- o **QR code** (`brCodeBase64`);
+- logo abaixo, o **código copia-e-cola** numa caixa (estilo AbacatePay), com um
+  botão **"Copiar"**;
+- a frase "assim que cair, seu acesso abre sozinho";
+- o **polling** de status continua rodando igual.
+- **Importante — contraste do botão "Copiar":** hoje o texto fica roxo em cima de
+  botão roxo e não dá pra ler. Corrigir: **botão vinho (`--wine`) com texto
+  branco**. Ao copiar, mostrar um "✓ Código copiado!" em verde.
+- Se o QR só é gerado quando a pessoa confirma/escolhe Pix, mantenha essa mesma
+  regra — só que agora ele aparece **inline dentro da linha do Pix**, não numa
+  etapa separada.
+
+### Cartão expandido (reusar o Stripe Payment Element que já existe)
+Dentro da área expandida do Cartão, montar o **Stripe Payment Element** exatamente
+como já é feito hoje (mesmo `clientSecret` vindo do `/checkout/create` com
+`method:"card"`). O Payment Element já renderiza os campos de cartão e, quando
+disponível no dispositivo, os botões **Apple Pay / Google Pay** — deixá-lo cuidar
+disso. Só garantir que ele apareça **inline, na mesma tela**, dentro da linha.
+
+> Ou seja: as "linhas" fazem o papel das antigas abas/cards; muda só a aparência e
+> o fato de o conteúdo expandir embaixo. A lógica de quando gerar o Pix e quando
+> montar o Element é a mesma de hoje.
+
+---
+
+## 2) Tirar a promessa de "em até 12x"
+Na frase da linha do Cartão, **remover "em até 12x"** (o parcelamento pode não
+estar ativo). Deixar algo como: **"Apple Pay e Google Pay disponíveis"**. Não
+prometer parcelas em lugar nenhum da tela.
+
+---
+
+## 3) Card do produto vira ROXO/vinho (com "wallpaper")
+Trocar aquele card/thumbnail atual (que ficou esquisito) por um **bloco de
+destaque roxo-vinho da marca**, com um leve padrão de fundo (pontinhos/estrelas,
+bem sutil, tipo "wallpaper"). Dentro dele:
+- um kicker pequeno em caixa alta: **"SEU PRÓXIMO RITUAL"**;
+- o título **"Perguntas de Conexão"** em **Instrument Serif** (pode destacar
+  "Conexão" em itálico/rosado);
+- uma linha curta: "Um baralho digital pra sair do automático e criar conversas
+  que ficam.";
+- um **selo/pill** com o preço: **R$ 47,90 · uma vez só · vitalício**.
+
+Gradiente sugerido: roxo `#7a4fa0` → `#5b3a7a` → `#3a2350`, texto branco. É só
+**este bloco** que é escuro/roxo; o resto da tela continua claro.
+
+---
+
+## 4) "O que você leva" mais limpo
+O bloco com "01 / 02 / 03" ficou estranho. Trocar por **três chips/cartõezinhos
+brancos limpos**, cada um com um ícone em cima, título e subtítulo (sem os números
+soltos):
+- 🃏 **459 perguntas** · 15 baralhos
+- 📶 **Jogo online** · a dois, à distância
+- 🎭 **Temas & vibes** · pra cada momento
+
+---
+
+## Estilo (mesmos tokens do checkout claro)
+```
+--bg:#f4f1f7; --card:#ffffff; --ink:#2a2233; --soft:#6f6580; --dim:#9a90a8;
+--line:#ece7f1; --wine:#7a2e46; --wine2:#a23c5e; --good:#2fa36b;
+--plum:#5b3a7a; --plum2:#7a4fa0;  /* só do card de produto roxo */
+```
+- Títulos em Instrument Serif; corpo em Plus Jakarta Sans.
+- Linha de método selecionada: borda vinho + cabeçalho com fundo `#fbf3f6` +
+  bolinha preenchida de vinho.
+- Botão primário "Garantir meu deck" na barra fixa embaixo (gradiente
+  `--wine2 → --wine`, texto branco) — dispara a mesma ação de pagar do método
+  selecionado que já existe hoje.
+
+**Não** mudar o tema escuro do resto do site/LPs. Isto é só o checkout.
+
+## Fora de escopo (não incluir agora)
+- Cupom, "convidar o par" e parcelamento. Nada de campo não funcional.
+
+## Depois de aplicar
+1. Formata, typecheck e build.
+2. Testa o fluxo COMPLETO nos dois métodos, garantindo que nada quebrou:
+   - **Pix:** toca em Pix → expande inline → QR + copia-e-cola aparecem, botão
+     "Copiar" legível, polling + liberação de acesso seguem funcionando.
+   - **Cartão:** toca em Cartão → expande inline → Stripe Payment Element aparece
+     na mesma tela (com Apple/Google Pay quando o device suporta), paga em modo
+     teste (4242…), webhook libera o acesso e vai pra tela de sucesso.
+3. Confere no **celular** (onde a maioria acessa) e no desktop — o expandir tem que
+   ficar suave e nada pode abrir outra página/modal.
