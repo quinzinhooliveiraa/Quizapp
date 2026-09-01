@@ -63,6 +63,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  CreditCard,
   Download,
   Feather,
   Flame,
@@ -78,9 +79,11 @@ import {
   MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
+  QrCode,
   Quote,
   RotateCw,
   Send,
+  ShieldCheck,
   Settings2,
   Shuffle,
   Sparkles,
@@ -112,7 +115,6 @@ import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { apiBaseUrl } from "@/config";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
-import pixCheckoutBackground from "@assets/__(9)_1787950976332.jpeg";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -2536,6 +2538,7 @@ function useCheckout({
     cardCheckout,
     cardAvailable,
     selectedPaymentMethod,
+    setSelectedPaymentMethod,
     cardError,
     copiedCode,
     setCopiedCode,
@@ -2564,15 +2567,30 @@ function CheckoutPaymentTabs({
   onSelect: (method: "pix" | "card") => void;
 }) {
   return (
-    <div className="checkout-payment-tabs" role="tablist" aria-label="Método de pagamento">
+    <div
+      className="checkout-payment-tabs"
+      role="tablist"
+      aria-label="Método de pagamento"
+      data-testid="payment-method-selector"
+    >
       <button
         className={selectedPaymentMethod === "pix" ? "active" : ""}
         type="button"
         role="tab"
         aria-selected={selectedPaymentMethod === "pix"}
         onClick={() => onSelect("pix")}
+        data-testid="button-payment-pix"
       >
-        Pix
+        <span className="payment-tab-icon" aria-hidden="true">
+          <QrCode size={18} strokeWidth={1.8} />
+        </span>
+        <span className="payment-tab-copy">
+          <strong>Pix</strong>
+          <small>cai na hora · acesso imediato</small>
+        </span>
+        <span className="payment-tab-check" aria-hidden="true">
+          <Check size={15} />
+        </span>
       </button>
       <button
         className={`${selectedPaymentMethod === "card" ? "active" : ""} ${!cardAvailable ? "disabled" : ""}`}
@@ -2582,9 +2600,22 @@ function CheckoutPaymentTabs({
         aria-disabled={!cardAvailable}
         disabled={!cardAvailable}
         onClick={() => onSelect("card")}
+        data-testid="button-payment-card"
       >
-        Cartão
-        {!cardAvailable && <span>indisponível</span>}
+        <span className="payment-tab-icon" aria-hidden="true">
+          <CreditCard size={18} strokeWidth={1.8} />
+        </span>
+        <span className="payment-tab-copy">
+          <strong>Cartão</strong>
+          <small>
+            {cardAvailable
+              ? "Apple Pay, Google Pay · em até 12x"
+              : "indisponível agora"}
+          </small>
+        </span>
+        <span className="payment-tab-check" aria-hidden="true">
+          <Check size={15} />
+        </span>
       </button>
     </div>
   );
@@ -2644,10 +2675,8 @@ function CardPaymentForm({ onPaymentSubmitted }: { onPaymentSubmitted: () => voi
 
 function CheckoutModal({
   checkout,
-  isLp3 = false,
 }: {
   checkout: CheckoutController;
-  isLp3?: boolean;
 }) {
   const {
     checkoutOpen,
@@ -2664,6 +2693,7 @@ function CheckoutModal({
     cardCheckout,
     cardAvailable,
     selectedPaymentMethod,
+    setSelectedPaymentMethod,
     cardError,
     copiedCode,
     setCopiedCode,
@@ -2678,125 +2708,229 @@ function CheckoutModal({
     closeCheckout,
   } = checkout;
 
+  const handleInitialCheckout = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalizedName = buyerName.trim();
+    const normalizedEmail = buyerEmail.trim().toLowerCase();
+    let valid = true;
+
+    if (!normalizedName) {
+      setNameError("Digite seu nome para continuar.");
+      valid = false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setEmailError("Confira o e-mail — parece que falta alguma coisa.");
+      valid = false;
+    }
+    if (!valid) return;
+
+    setNameError("");
+    setEmailError("");
+    setBuyerName(normalizedName);
+    setBuyerEmail(normalizedEmail);
+    if (selectedPaymentMethod === "card") {
+      void createCardCheckout();
+    } else {
+      void createCheckout("couple", normalizedEmail, normalizedName);
+    }
+  };
+
   if (!checkoutOpen) return null;
 
   return (
     <div
-      className={`modal-backdrop ${isLp3 ? "lp3-checkout-backdrop" : ""} ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "modal-backdrop-loading" : ""}`}
+      className={`modal-backdrop ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "modal-backdrop-loading" : ""}`}
       role="dialog"
       aria-modal="true"
-      aria-label="Continuar para o Pix"
+      aria-label="Finalizar compra"
     >
       <div
-        className={`checkout-modal ${isLp3 ? "lp3-checkout-modal" : ""} ${isLp3 && checkoutState === "native-payment" ? "lp3-checkout-pix-modal" : ""} ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "checkout-modal-loading" : ""}`}
-        style={
-          isLp3 && checkoutState === "native-payment"
-            ? ({
-                "--lp3-pix-background": `url("${pixCheckoutBackground}")`,
-              } as CSSProperties)
-            : undefined
-        }
+        className={`checkout-modal ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "checkout-modal-loading" : ""}`}
       >
         <button
           className="modal-close"
+          type="button"
           onClick={closeCheckout}
           data-testid="button-close-checkout"
+          aria-label="Fechar checkout"
         >
           <X size={18} />
         </button>
         {checkoutState === "email" ? (
           <form
-            className="checkout-email-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const normalizedName = buyerName.trim();
-              const normalizedEmail = buyerEmail.trim().toLowerCase();
-              if (!normalizedName) {
-                setNameError("Digite seu nome para continuar.");
-                return;
-              }
-              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-                setEmailError(
-                  "Confira o e-mail — parece que falta alguma coisa.",
-                );
-                return;
-              }
-              setNameError("");
-              setEmailError("");
-              setBuyerName(normalizedName);
-              setBuyerEmail(normalizedEmail);
-              void createCheckout("couple", normalizedEmail, normalizedName);
-            }}
+            className="checkout-email-form checkout-store-form"
+            onSubmit={handleInitialCheckout}
           >
-            <p className="section-kicker">quase lá</p>
-            <h2>
-              Pra onde mandamos
-              <br />
-              <em>seu acesso?</em>
-            </h2>
-            <p className="checkout-email-intro">
-              Só precisamos do seu e-mail para liberar seu acesso e mandar o
-              recibo.
-            </p>
-            <label
-              className="checkout-field-label"
-              htmlFor="checkout-buyer-name"
-            >
-              Seu nome
-            </label>
-            <input
-              id="checkout-buyer-name"
-              className="checkout-email-input"
-              type="text"
-              autoComplete="name"
-              placeholder="Como podemos te chamar?"
-              value={buyerName}
-              onChange={(event) => {
-                setBuyerName(event.target.value);
-                safeSetItem("conexao-pending-buyer-name", event.target.value);
-                if (nameError) setNameError("");
-              }}
-              autoFocus
-              required
-            />
-            {nameError && (
-              <p className="checkout-email-error" role="alert">
-                {nameError}
-              </p>
-            )}
-            <label className="checkout-field-label" htmlFor="checkout-email">
-              Pra onde mandamos seu acesso?
-            </label>
-            <input
-              id="checkout-email"
-              className="checkout-email-input"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="seu@email.com"
-              value={buyerEmail}
-              onChange={(event) => {
-                setBuyerEmail(event.target.value);
-                safeSetItem("conexao-pending-buyer-email", event.target.value);
-                if (emailError) setEmailError("");
-              }}
-              required
-            />
-            <p className="checkout-email-note">
-              Usamos só pra liberar seu acesso e mandar o recibo.
-            </p>
-            {emailError && (
-              <p className="checkout-email-error" role="alert">
-                {emailError}
-              </p>
-            )}
-            <button
-              className="button button-primary button-full"
-              type="submit"
-              data-testid="button-continue-checkout"
-            >
-              Continuar para o Pix <ArrowRight size={16} />
-            </button>
+            <header className="checkout-store-header">
+              <button
+                className="checkout-store-back"
+                type="button"
+                onClick={closeCheckout}
+                aria-label="Voltar"
+                data-testid="button-back-checkout"
+              >
+                <ChevronLeft size={17} />
+              </button>
+              <div className="checkout-store-mark" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div>
+                <p className="checkout-store-title">Finalizar compra</p>
+                <p className="checkout-store-eyebrow">Perguntas de Conexão</p>
+                <p className="checkout-store-secure">
+                  <ShieldCheck size={14} /> checkout seguro
+                </p>
+              </div>
+            </header>
+            <div className="checkout-store-grid">
+              <section className="checkout-product-column">
+                <p className="checkout-store-kicker">seu próximo ritual</p>
+                <h2>
+                  Perguntas de
+                  <br />
+                  <em>Conexão</em>
+                </h2>
+                <p className="checkout-store-intro">
+                  Um baralho digital para sair do automático e criar conversas
+                  que ficam.
+                </p>
+                <div className="checkout-product-card" data-testid="card-product">
+                  <div className="checkout-product-art" aria-hidden="true">
+                    <span>CONEXÃO</span>
+                    <strong>Q</strong>
+                    <small>perguntas para dois</small>
+                  </div>
+                  <div className="checkout-product-meta">
+                    <div>
+                      <strong>Perguntas de Conexão</strong>
+                      <span>Acesso vitalício · uso online</span>
+                    </div>
+                    <b data-testid="text-checkout-price">R$ 47,90</b>
+                  </div>
+                </div>
+                <div className="checkout-benefits" data-testid="list-checkout-benefits">
+                  {[
+                    ["459 perguntas", "15 baralhos"],
+                    ["Jogo online", "(a dois, à distância)"],
+                    ["Temas & vibes", "para cada momento"],
+                  ].map(([title, detail], index) => (
+                    <div className="checkout-benefit" key={title}>
+                      <span className="checkout-benefit-number">0{index + 1}</span>
+                      <span>
+                        <strong>{title}</strong>
+                        <small>{detail}</small>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+              <section className="checkout-order-column">
+                <div className="checkout-section-heading">
+                  <span>01</span>
+                  <div>
+                    <h3>Seus dados</h3>
+                    <p>Para liberar o acesso e enviar o recibo.</p>
+                  </div>
+                </div>
+                <div className="checkout-fields-inline">
+                  <label className="checkout-field">
+                    <span>Nome</span>
+                    <input
+                      id="checkout-buyer-name"
+                      className="checkout-email-input"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Seu nome"
+                      value={buyerName}
+                      onChange={(event) => {
+                        setBuyerName(event.target.value);
+                        safeSetItem("conexao-pending-buyer-name", event.target.value);
+                        if (nameError) setNameError("");
+                      }}
+                      autoFocus
+                      required
+                      data-testid="input-checkout-name"
+                    />
+                    {nameError && (
+                      <small className="checkout-email-error" role="alert">
+                        {nameError}
+                      </small>
+                    )}
+                  </label>
+                  <label className="checkout-field">
+                    <span>E-mail</span>
+                    <input
+                      id="checkout-email"
+                      className="checkout-email-input"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder="seu@email.com"
+                      value={buyerEmail}
+                      onChange={(event) => {
+                        setBuyerEmail(event.target.value);
+                        safeSetItem("conexao-pending-buyer-email", event.target.value);
+                        if (emailError) setEmailError("");
+                      }}
+                      required
+                      data-testid="input-checkout-email"
+                    />
+                    {emailError && (
+                      <small className="checkout-email-error" role="alert">
+                        {emailError}
+                      </small>
+                    )}
+                  </label>
+                </div>
+                <div className="checkout-section-heading checkout-payment-heading">
+                  <span>02</span>
+                  <div>
+                    <h3>Como você prefere pagar?</h3>
+                    <p>Uma única cobrança. Sem assinatura.</p>
+                  </div>
+                </div>
+                <CheckoutPaymentTabs
+                  selectedPaymentMethod={selectedPaymentMethod}
+                  cardAvailable={cardAvailable}
+                  onSelect={setSelectedPaymentMethod}
+                />
+                <div className="checkout-order-summary" data-testid="summary-checkout">
+                  <div>
+                    <span>Perguntas de Conexão</span>
+                    <span>R$ 47,90</span>
+                  </div>
+                  <div className="checkout-summary-total">
+                    <strong>Total hoje</strong>
+                    <strong>R$ 47,90</strong>
+                  </div>
+                </div>
+                <div className="checkout-reassurance">
+                  <div>
+                    <Check size={16} />
+                    <span><strong>7 dias de garantia</strong><small>Se não fizer sentido, devolvemos seu dinheiro.</small></span>
+                  </div>
+                  <div>
+                    <ShieldCheck size={16} />
+                    <span><strong>Compra protegida</strong><small>Seus dados são tratados com segurança.</small></span>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <div className="checkout-purchase-bar">
+              <div className="checkout-purchase-total">
+                <span>Total</span>
+                <strong>R$ 47,90</strong>
+              </div>
+              <button
+                className="button button-primary checkout-purchase-button"
+                type="submit"
+                data-testid="button-continue-checkout"
+              >
+                Garantir meu deck <ArrowRight size={17} />
+              </button>
+            </div>
           </form>
         ) : checkoutState === "native-payment" && nativeCheckout ? (
           <div className="checkout-native-payment">
@@ -2916,15 +3050,28 @@ function CheckoutModal({
               options={{
                 clientSecret: cardCheckout.clientSecret,
                 appearance: {
-                  theme: "night",
+                  theme: "stripe",
                   variables: {
-                    colorPrimary: "#c4acff",
-                    colorBackground: "#171021",
-                    colorText: "#f9f8fb",
-                    colorTextSecondary: "rgba(249, 248, 251, 0.68)",
-                    colorDanger: "#ffb4ab",
-                    borderRadius: "10px",
+                    colorPrimary: "#7a2e46",
+                    colorBackground: "#ffffff",
+                    colorText: "#2a2233",
+                    colorTextSecondary: "#756b78",
+                    colorDanger: "#a2384b",
+                    borderRadius: "12px",
                     fontFamily: "var(--app-font-sans)",
+                  },
+                  rules: {
+                    ".Input": {
+                      backgroundColor: "#ffffff",
+                      borderColor: "#d9d1dc",
+                    },
+                    ".Input:focus": {
+                      borderColor: "#7a2e46",
+                      boxShadow: "0 0 0 3px rgba(122, 46, 70, 0.14)",
+                    },
+                    ".Label": {
+                      color: "#2a2233",
+                    },
                   },
                 },
               }}
@@ -3660,7 +3807,7 @@ function TrackedLp3({
         onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
         onCheckout={() => checkout.startCheckout("couple")}
       />
-      <CheckoutModal checkout={checkout} isLp3 />
+      <CheckoutModal checkout={checkout} />
     </>
   );
 }

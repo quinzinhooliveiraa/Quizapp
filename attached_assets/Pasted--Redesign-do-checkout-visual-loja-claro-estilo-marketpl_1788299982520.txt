@@ -1,0 +1,101 @@
+# Redesign do checkout — visual "loja" (claro, estilo marketplace)
+
+## Objetivo e regra de ouro
+
+O checkout **funciona** hoje (Pix nativo com QR + Stripe Payment Element com
+cartão/Apple Pay/Google Pay, confirmação por webhook, liberação automática de
+acesso). Este prompt **NÃO muda nada disso** — muda só o **visual e o layout**,
+deixando a tela com cara de loja familiar (fundo claro, estilo Shopee/Mercado
+Livre), porque no momento de pagar a familiaridade converte mais que o visual
+escuro atual.
+
+**REGRA DE OURO — não quebrar o pagamento:**
+- Reaproveite **exatamente** os componentes/estado/handlers que já existem: a
+  geração da cobrança Pix (`brCode`/`brCodeBase64`, copiar código, polling de
+  status), o **Stripe Payment Element** (`@stripe/react-stripe-js`,
+  `confirmPayment`, o `clientSecret`), a captura de e-mail, a liberação de acesso
+  pelo webhook e a tela de sucesso.
+- **Não** altere o backend, as rotas, as chamadas de API, os nomes de env, nem a
+  lógica de pagamento. Só a camada de apresentação (JSX/CSS) muda.
+- Mantenha o envio de `internal`, `experimentId`/`experimentVariantId`,
+  `visitorKey`, `buyerName`, `buyerEmail` e `method` como já é feito hoje.
+
+Arquivo principal: `artifacts/perguntas-de-conexao/src/App.tsx` (a área do checkout)
+e o CSS correspondente.
+
+## Nova estrutura da tela (uma tela só, rolável, com barra fixa embaixo)
+
+De cima pra baixo:
+
+1. **Cabeçalho:** "Finalizar compra" com uma seta/voltar (fecha o checkout, como
+   hoje).
+2. **Card do produto:** miniatura (pode ser um quadrado com gradiente vinho e o
+   símbolo da pena ✒ por enquanto), título **"Perguntas de Conexão"** (em serifa
+   Instrument), subtítulo "Acesso vitalício · sem mensalidade", e à direita o preço
+   **R$ 47,90 / uma vez só**.
+3. **"O que você leva":** três blocos pequenos lado a lado — **459 perguntas · 15
+   baralhos**, **Jogo online (a dois, à distância)**, **Temas & vibes**. Serve pra
+   pessoa entender o produto e não desistir por não saber o que tem.
+4. **"Seus dados":** dois campos — **Nome** e **E-mail**. É a MESMA captura que
+   hoje é feita no modal de e-mail; traga pra dentro da tela (inline) e adicione o
+   campo de nome. Esses valores vão pro `buyerName`/`buyerEmail` como já vão hoje.
+5. **"Forma de pagamento":** duas **linhas selecionáveis** (não mais o toggle
+   Pix|Cartão em cima), estilo marketplace, cada uma com bolinha de seleção:
+   - **Pix** — "cai na hora · acesso imediato"
+   - **Cartão de crédito** — "Apple Pay, Google Pay · em até 12x"
+   Ao selecionar uma linha, ela fica destacada (fundo levemente tingido + barra
+   vinho na lateral) e **revela logo abaixo a interface de pagamento daquele
+   método**, reaproveitando o que já existe:
+   - Pix selecionado → o QR (`brCodeBase64`) + botão "Copiar código Pix" + o aviso
+     "assim que cair, seu acesso abre sozinho" + o polling — tudo como já é hoje.
+   - Cartão selecionado → o **Stripe Payment Element** montado como já é hoje
+     (com o `clientSecret` vindo do `/checkout/create` com `method:"card"`).
+   Ou seja: as "linhas" fazem o papel que as abas faziam; só muda a aparência. A
+   lógica de quando gerar o Pix e quando montar o Element é a mesma de hoje.
+6. **Resumo:** "Perguntas de Conexão — R$ 47,90", "Garantia de 7 dias — incluída",
+   e **Total R$ 47,90**.
+7. **Selo de confiança:** uma linha discreta "🔒 Pagamento seguro · seus dados são
+   protegidos".
+8. **Barra fixa embaixo:** Total **R$ 47,90** à esquerda e o botão primário
+   **"Garantir meu deck"** à direita. Esse botão dispara a **mesma ação de pagar do
+   método selecionado** que já existe hoje (no Pix, confirmar/gerar; no cartão,
+   `confirmPayment`). No cartão, enquanto processa, mostra "Processando…"; depois
+   do sucesso, segue pro polling → tela de sucesso, como hoje.
+
+## Estilo (tema claro — trocar só as cores/estrutura desta tela)
+
+Use estes tokens (mantendo o vinho da marca como destaque, pra não ficar genérico):
+
+```
+--bg:#f3f1f5;      /* fundo geral claro */
+--card:#ffffff;    /* cartões brancos */
+--ink:#2a2233;     /* texto */
+--soft:#6f6580; --dim:#9a90a8; --line:#eae6ef;
+--wine:#7a2e46; --wine2:#a23c5e;  /* botão primário e seleção */
+--good:#2fa36b;   /* "incluída", confirmações */
+```
+
+- Título do produto e headings principais: **Instrument Serif**. Corpo: Plus
+  Jakarta Sans.
+- Botão primário: gradiente `--wine2 → --wine`, texto branco, cantos arredondados.
+- Linha de método selecionada: fundo `#fbf3f6` + barra vinho na lateral esquerda +
+  bolinha preenchida de vinho.
+- Cantos arredondados (16px nos cards), espaçamento generoso, visual limpo.
+
+**Importante:** esse tema claro é só do **checkout**. Não mude o tema escuro do
+resto do site/LPs.
+
+## Fora de escopo por enquanto (não incluir)
+- Cupom e "convidar o par" — deixaremos pra depois. Não adicione campos não
+  funcionais agora.
+
+## Depois de aplicar
+1. Formata, typecheck e build.
+2. Testa o fluxo COMPLETO nos dois métodos, garantindo que nada de pagamento
+   quebrou:
+   - **Pix:** seleciona Pix, gera o QR, copia o código, e confirma que o polling +
+     liberação de acesso seguem funcionando.
+   - **Cartão:** seleciona Cartão, o Stripe Payment Element aparece, paga (em modo
+     teste, cartão 4242…), e confirma que o webhook libera o acesso e vai pra tela
+     de sucesso.
+3. Confere no celular (é onde a maioria acessa) e no desktop.
