@@ -20969,7 +20969,7 @@ blockquote em {
 
 .checkout-payment-tabs {
   gap: 0.65rem;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .checkout-payment-item {
@@ -20985,11 +20985,6 @@ blockquote em {
   border-color: #7a2e46;
   background: #fbf3f6;
   box-shadow: 0 0 0 3px rgba(122, 46, 70, 0.07);
-}
-
-.checkout-payment-item > button {
-  min-height: 4.55rem;
-  padding: 0.85rem 1rem;
 }
 
 .checkout-payment-panel {
