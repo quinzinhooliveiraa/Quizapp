@@ -2561,11 +2561,57 @@ function CheckoutPaymentTabs({
   selectedPaymentMethod,
   cardAvailable,
   onSelect,
+  pixContent,
+  cardContent,
 }: {
   selectedPaymentMethod: "pix" | "card";
   cardAvailable: boolean;
   onSelect: (method: "pix" | "card") => void;
+  pixContent?: ReactNode;
+  cardContent?: ReactNode;
 }) {
+  const renderPaymentItem = (
+    method: "pix" | "card",
+    icon: ReactNode,
+    title: string,
+    description: string,
+    content?: ReactNode,
+  ) => {
+    const selected = selectedPaymentMethod === method;
+    const disabled = method === "card" && !cardAvailable;
+
+    return (
+      <div className={`checkout-payment-item ${selected ? "is-selected" : ""}`}>
+        <button
+          className={`${selected ? "active" : ""} ${disabled ? "disabled" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={selected}
+          aria-disabled={disabled}
+          disabled={disabled}
+          onClick={() => onSelect(method)}
+          data-testid={`button-payment-${method}`}
+        >
+          <span className="payment-tab-icon" aria-hidden="true">
+            {icon}
+          </span>
+          <span className="payment-tab-copy">
+            <strong>{title}</strong>
+            <small>{description}</small>
+          </span>
+          <span className="payment-tab-check" aria-hidden="true">
+            {selected && <Check size={13} strokeWidth={2.5} />}
+          </span>
+        </button>
+        {selected && content && (
+          <div className="checkout-payment-panel" role="tabpanel">
+            {content}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
       className="checkout-payment-tabs"
@@ -2573,55 +2619,31 @@ function CheckoutPaymentTabs({
       aria-label="Método de pagamento"
       data-testid="payment-method-selector"
     >
-      <button
-        className={selectedPaymentMethod === "pix" ? "active" : ""}
-        type="button"
-        role="tab"
-        aria-selected={selectedPaymentMethod === "pix"}
-        onClick={() => onSelect("pix")}
-        data-testid="button-payment-pix"
-      >
-        <span className="payment-tab-icon" aria-hidden="true">
-          <QrCode size={18} strokeWidth={1.8} />
-        </span>
-        <span className="payment-tab-copy">
-          <strong>Pix</strong>
-          <small>cai na hora · acesso imediato</small>
-        </span>
-        <span className="payment-tab-check" aria-hidden="true">
-          <Check size={15} />
-        </span>
-      </button>
-      <button
-        className={`${selectedPaymentMethod === "card" ? "active" : ""} ${!cardAvailable ? "disabled" : ""}`}
-        type="button"
-        role="tab"
-        aria-selected={selectedPaymentMethod === "card"}
-        aria-disabled={!cardAvailable}
-        disabled={!cardAvailable}
-        onClick={() => onSelect("card")}
-        data-testid="button-payment-card"
-      >
-        <span className="payment-tab-icon" aria-hidden="true">
-          <CreditCard size={18} strokeWidth={1.8} />
-        </span>
-        <span className="payment-tab-copy">
-          <strong>Cartão</strong>
-          <small>
-            {cardAvailable
-              ? "Apple Pay, Google Pay · em até 12x"
-              : "indisponível agora"}
-          </small>
-        </span>
-        <span className="payment-tab-check" aria-hidden="true">
-          <Check size={15} />
-        </span>
-      </button>
+      {renderPaymentItem(
+        "pix",
+        <QrCode size={18} strokeWidth={1.8} />,
+        "Pix",
+        "cai na hora · acesso imediato",
+        pixContent,
+      )}
+      {renderPaymentItem(
+        "card",
+        <CreditCard size={18} strokeWidth={1.8} />,
+        "Cartão",
+        cardAvailable
+          ? "Apple Pay e Google Pay disponíveis"
+          : "indisponível agora",
+        cardContent,
+      )}
     </div>
   );
 }
 
-function CardPaymentForm({ onPaymentSubmitted }: { onPaymentSubmitted: () => void }) {
+function CardPaymentForm({
+  onPaymentSubmitted,
+}: {
+  onPaymentSubmitted: () => void;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -2673,11 +2695,7 @@ function CardPaymentForm({ onPaymentSubmitted }: { onPaymentSubmitted: () => voi
   );
 }
 
-function CheckoutModal({
-  checkout,
-}: {
-  checkout: CheckoutController;
-}) {
+function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
   const {
     checkoutOpen,
     checkoutState,
@@ -2735,6 +2753,156 @@ function CheckoutModal({
     }
   };
 
+  const pixPaymentContent = nativeCheckout ? (
+    <>
+      <p className="section-kicker">seu baralho está reservado</p>
+      <p className="checkout-native-status" role="status" aria-live="polite">
+        Pix pronto · aguardando confirmação
+      </p>
+      <h2>
+        Falta só o Pix
+        <br />
+        <em>e a conversa começa.</em>
+      </h2>
+      <p className="checkout-native-recap">
+        459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
+      </p>
+      <div className="checkout-native-price">
+        <strong>R$ 47,90, uma vez só</strong>
+      </div>
+      <div className="checkout-qr-wrap">
+        <img
+          src={
+            nativeCheckout.brCodeBase64.startsWith("data:")
+              ? nativeCheckout.brCodeBase64
+              : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
+          }
+          alt="QR Code do Pix"
+        />
+        <p>Abra o app do seu banco e escaneie o código.</p>
+      </div>
+      <button
+        className="checkout-copy-button"
+        type="button"
+        onClick={async () => {
+          const copied = await copyPixCode(nativeCheckout.brCode);
+          if (copied) {
+            setCopiedCode(true);
+            window.setTimeout(() => setCopiedCode(false), 2200);
+          } else {
+            setCopiedCode(false);
+          }
+        }}
+        data-testid="button-copy-pix"
+      >
+        {copiedCode ? <Check size={16} /> : <Copy size={16} />}
+        {copiedCode ? "Código copiado!" : "Copiar"}
+      </button>
+      <p className="checkout-native-next">
+        Assim que cair, seu acesso abre sozinho.
+      </p>
+      <div className="checkout-guarantee">
+        <Check size={17} />
+        <span>
+          <strong>Você tem 7 dias de garantia.</strong>
+          <br />
+          Se não fizer sentido pra vocês, devolvemos seu dinheiro.
+        </span>
+      </div>
+      {checkoutReviews.length > 0 && (
+        <div className="checkout-reviews">
+          <p className="checkout-reviews-title">quem já abriu essa conversa</p>
+          {checkoutReviews.map((review) => (
+            <blockquote key={review.id}>
+              <div className="checkout-review-meta">
+                <div
+                  className="checkout-review-stars"
+                  aria-label={`${review.rating} de 5 estrelas`}
+                >
+                  {"★".repeat(Math.min(5, Math.max(0, review.rating)))}
+                </div>
+                <span className="checkout-review-rating">
+                  {review.rating}/5
+                </span>
+              </div>
+              <p>“{review.message}”</p>
+              <cite>{review.displayName!.trim()}</cite>
+            </blockquote>
+          ))}
+        </div>
+      )}
+    </>
+  ) : (
+    <p className="checkout-payment-preview">
+      Seu QR code Pix aparece aqui assim que você continuar.
+    </p>
+  );
+
+  const cardPaymentContent = cardCheckout ? (
+    <>
+      <p className="section-kicker">seu baralho está reservado</p>
+      <p className="checkout-native-status" role="status">
+        Cartão · pagamento seguro
+      </p>
+      <h2>
+        Falta só o cartão
+        <br />
+        <em>e a conversa começa.</em>
+      </h2>
+      <p className="checkout-native-recap">
+        459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
+      </p>
+      <div className="checkout-native-price">
+        <strong>R$ 47,90, uma vez só</strong>
+      </div>
+      <Elements
+        stripe={stripePromise}
+        options={{
+          clientSecret: cardCheckout.clientSecret,
+          appearance: {
+            theme: "stripe",
+            variables: {
+              colorPrimary: "#7a2e46",
+              colorBackground: "#ffffff",
+              colorText: "#2a2233",
+              colorTextSecondary: "#756b78",
+              colorDanger: "#a2384b",
+              borderRadius: "12px",
+              fontFamily: "var(--app-font-sans)",
+            },
+            rules: {
+              ".Input": {
+                backgroundColor: "#ffffff",
+                borderColor: "#d9d1dc",
+              },
+              ".Input:focus": {
+                borderColor: "#7a2e46",
+                boxShadow: "0 0 0 3px rgba(122, 46, 70, 0.14)",
+              },
+              ".Label": {
+                color: "#2a2233",
+              },
+            },
+          },
+        }}
+      >
+        <CardPaymentForm onPaymentSubmitted={handleCardPaymentSubmitted} />
+      </Elements>
+      <div className="checkout-guarantee">
+        <Check size={17} />
+        <span>
+          <strong>Você tem 7 dias de garantia.</strong>
+          <br />
+          Se não fizer sentido pra vocês, devolvemos seu dinheiro.
+        </span>
+      </div>
+    </>
+  ) : (
+    <p className="checkout-payment-preview">
+      O pagamento seguro com cartão aparece aqui assim que você continuar.
+    </p>
+  );
+
   if (!checkoutOpen) return null;
 
   return (
@@ -2786,38 +2954,59 @@ function CheckoutModal({
             </header>
             <div className="checkout-store-grid">
               <section className="checkout-product-column">
-                <p className="checkout-store-kicker">seu próximo ritual</p>
-                <h2>
-                  Perguntas de
-                  <br />
-                  <em>Conexão</em>
-                </h2>
-                <p className="checkout-store-intro">
-                  Um baralho digital para sair do automático e criar conversas
-                  que ficam.
-                </p>
-                <div className="checkout-product-card" data-testid="card-product">
-                  <div className="checkout-product-art" aria-hidden="true">
-                    <span>CONEXÃO</span>
-                    <strong>Q</strong>
-                    <small>perguntas para dois</small>
-                  </div>
-                  <div className="checkout-product-meta">
-                    <div>
-                      <strong>Perguntas de Conexão</strong>
-                      <span>Acesso vitalício · uso online</span>
-                    </div>
-                    <b data-testid="text-checkout-price">R$ 47,90</b>
+                <div
+                  className="checkout-product-card"
+                  data-testid="card-product"
+                >
+                  <div
+                    className="checkout-product-wallpaper"
+                    aria-hidden="true"
+                  />
+                  <div className="checkout-product-copy">
+                    <p className="checkout-store-kicker">SEU PRÓXIMO RITUAL</p>
+                    <h2>
+                      Perguntas de <em>Conexão</em>
+                    </h2>
+                    <p className="checkout-store-intro">
+                      Um baralho digital pra sair do automático e criar
+                      conversas que ficam.
+                    </p>
+                    <span
+                      className="checkout-product-price"
+                      data-testid="text-checkout-price"
+                    >
+                      R$ 47,90 · uma vez só · vitalício
+                    </span>
                   </div>
                 </div>
-                <div className="checkout-benefits" data-testid="list-checkout-benefits">
+                <div
+                  className="checkout-benefits"
+                  data-testid="list-checkout-benefits"
+                >
                   {[
-                    ["459 perguntas", "15 baralhos"],
-                    ["Jogo online", "(a dois, à distância)"],
-                    ["Temas & vibes", "para cada momento"],
-                  ].map(([title, detail], index) => (
+                    {
+                      icon: <Layers3 size={17} strokeWidth={1.8} />,
+                      title: "459 perguntas",
+                      detail: "15 baralhos",
+                    },
+                    {
+                      icon: <MonitorSmartphone size={17} strokeWidth={1.8} />,
+                      title: "Jogo online",
+                      detail: "a dois, à distância",
+                    },
+                    {
+                      icon: <Sparkles size={17} strokeWidth={1.8} />,
+                      title: "Temas & vibes",
+                      detail: "pra cada momento",
+                    },
+                  ].map(({ icon, title, detail }) => (
                     <div className="checkout-benefit" key={title}>
-                      <span className="checkout-benefit-number">0{index + 1}</span>
+                      <span
+                        className="checkout-benefit-icon"
+                        aria-hidden="true"
+                      >
+                        {icon}
+                      </span>
                       <span>
                         <strong>{title}</strong>
                         <small>{detail}</small>
@@ -2846,7 +3035,10 @@ function CheckoutModal({
                       value={buyerName}
                       onChange={(event) => {
                         setBuyerName(event.target.value);
-                        safeSetItem("conexao-pending-buyer-name", event.target.value);
+                        safeSetItem(
+                          "conexao-pending-buyer-name",
+                          event.target.value,
+                        );
                         if (nameError) setNameError("");
                       }}
                       autoFocus
@@ -2871,7 +3063,10 @@ function CheckoutModal({
                       value={buyerEmail}
                       onChange={(event) => {
                         setBuyerEmail(event.target.value);
-                        safeSetItem("conexao-pending-buyer-email", event.target.value);
+                        safeSetItem(
+                          "conexao-pending-buyer-email",
+                          event.target.value,
+                        );
                         if (emailError) setEmailError("");
                       }}
                       required
@@ -2895,8 +3090,21 @@ function CheckoutModal({
                   selectedPaymentMethod={selectedPaymentMethod}
                   cardAvailable={cardAvailable}
                   onSelect={setSelectedPaymentMethod}
+                  pixContent={
+                    <p className="checkout-payment-preview">
+                      O QR code aparece aqui assim que você continuar.
+                    </p>
+                  }
+                  cardContent={
+                    <p className="checkout-payment-preview">
+                      O pagamento seguro aparece aqui assim que você continuar.
+                    </p>
+                  }
                 />
-                <div className="checkout-order-summary" data-testid="summary-checkout">
+                <div
+                  className="checkout-order-summary"
+                  data-testid="summary-checkout"
+                >
                   <div>
                     <span>Perguntas de Conexão</span>
                     <span>R$ 47,90</span>
@@ -2909,11 +3117,19 @@ function CheckoutModal({
                 <div className="checkout-reassurance">
                   <div>
                     <Check size={16} />
-                    <span><strong>7 dias de garantia</strong><small>Se não fizer sentido, devolvemos seu dinheiro.</small></span>
+                    <span>
+                      <strong>7 dias de garantia</strong>
+                      <small>
+                        Se não fizer sentido, devolvemos seu dinheiro.
+                      </small>
+                    </span>
                   </div>
                   <div>
                     <ShieldCheck size={16} />
-                    <span><strong>Compra protegida</strong><small>Seus dados são tratados com segurança.</small></span>
+                    <span>
+                      <strong>Compra protegida</strong>
+                      <small>Seus dados são tratados com segurança.</small>
+                    </span>
                   </div>
                 </div>
               </section>
@@ -2938,90 +3154,9 @@ function CheckoutModal({
               selectedPaymentMethod={selectedPaymentMethod}
               cardAvailable={cardAvailable}
               onSelect={selectPaymentMethod}
+              pixContent={pixPaymentContent}
+              cardContent={cardPaymentContent}
             />
-            <p className="section-kicker">seu baralho está reservado</p>
-            <p
-              className="checkout-native-status"
-              role="status"
-              aria-live="polite"
-            >
-              Pix pronto · aguardando confirmação
-            </p>
-            <h2>
-              Falta só o Pix
-              <br />
-              <em>e a conversa começa.</em>
-            </h2>
-            <p className="checkout-native-recap">
-              459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
-            </p>
-            <div className="checkout-native-price">
-              <strong>R$ 47,90, uma vez só</strong>
-            </div>
-            <div className="checkout-qr-wrap">
-              <img
-                src={
-                  nativeCheckout.brCodeBase64.startsWith("data:")
-                    ? nativeCheckout.brCodeBase64
-                    : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
-                }
-                alt="QR Code do Pix"
-              />
-              <p>Abra o app do seu banco e escaneie o código.</p>
-            </div>
-            <button
-              className="checkout-copy-button"
-              type="button"
-              onClick={async () => {
-                const copied = await copyPixCode(nativeCheckout.brCode);
-                if (copied) {
-                  setCopiedCode(true);
-                  window.setTimeout(() => setCopiedCode(false), 2200);
-                } else {
-                  setCopiedCode(false);
-                }
-              }}
-              data-testid="button-copy-pix"
-            >
-              <Copy size={16} />
-              {copiedCode ? "Código copiado" : "Copiar código Pix"}
-            </button>
-            <p className="checkout-native-next">
-              Pagou? A confirmação chega em poucos segundos e seu baralho abre
-              automaticamente nesta tela.
-            </p>
-            <div className="checkout-guarantee">
-              <Check size={17} />
-              <span>
-                <strong>Você tem 7 dias de garantia.</strong>
-                <br />
-                Se não fizer sentido pra vocês, devolvemos seu dinheiro.
-              </span>
-            </div>
-            {checkoutReviews.length > 0 && (
-              <div className="checkout-reviews">
-                <p className="checkout-reviews-title">
-                  quem já abriu essa conversa
-                </p>
-                {checkoutReviews.map((review) => (
-                  <blockquote key={review.id}>
-                    <div className="checkout-review-meta">
-                      <div
-                        className="checkout-review-stars"
-                        aria-label={`${review.rating} de 5 estrelas`}
-                      >
-                        {"★".repeat(Math.min(5, Math.max(0, review.rating)))}
-                      </div>
-                      <span className="checkout-review-rating">
-                        {review.rating}/5
-                      </span>
-                    </div>
-                    <p>“{review.message}”</p>
-                    <cite>{review.displayName!.trim()}</cite>
-                  </blockquote>
-                ))}
-              </div>
-            )}
           </div>
         ) : checkoutState === "card-payment" && cardCheckout ? (
           <div className="checkout-card-payment">
@@ -3029,65 +3164,9 @@ function CheckoutModal({
               selectedPaymentMethod={selectedPaymentMethod}
               cardAvailable={cardAvailable}
               onSelect={selectPaymentMethod}
+              pixContent={pixPaymentContent}
+              cardContent={cardPaymentContent}
             />
-            <p className="section-kicker">seu baralho está reservado</p>
-            <p className="checkout-native-status" role="status">
-              Cartão · pagamento seguro
-            </p>
-            <h2>
-              Falta só o cartão
-              <br />
-              <em>e a conversa começa.</em>
-            </h2>
-            <p className="checkout-native-recap">
-              459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
-            </p>
-            <div className="checkout-native-price">
-              <strong>R$ 47,90, uma vez só</strong>
-            </div>
-            <Elements
-              stripe={stripePromise}
-              options={{
-                clientSecret: cardCheckout.clientSecret,
-                appearance: {
-                  theme: "stripe",
-                  variables: {
-                    colorPrimary: "#7a2e46",
-                    colorBackground: "#ffffff",
-                    colorText: "#2a2233",
-                    colorTextSecondary: "#756b78",
-                    colorDanger: "#a2384b",
-                    borderRadius: "12px",
-                    fontFamily: "var(--app-font-sans)",
-                  },
-                  rules: {
-                    ".Input": {
-                      backgroundColor: "#ffffff",
-                      borderColor: "#d9d1dc",
-                    },
-                    ".Input:focus": {
-                      borderColor: "#7a2e46",
-                      boxShadow: "0 0 0 3px rgba(122, 46, 70, 0.14)",
-                    },
-                    ".Label": {
-                      color: "#2a2233",
-                    },
-                  },
-                },
-              }}
-            >
-              <CardPaymentForm
-                onPaymentSubmitted={handleCardPaymentSubmitted}
-              />
-            </Elements>
-            <div className="checkout-guarantee">
-              <Check size={17} />
-              <span>
-                <strong>Você tem 7 dias de garantia.</strong>
-                <br />
-                Se não fizer sentido pra vocês, devolvemos seu dinheiro.
-              </span>
-            </div>
           </div>
         ) : checkoutState === "card-sending" ? (
           <div className="checkout-confirming" role="status" aria-live="polite">
