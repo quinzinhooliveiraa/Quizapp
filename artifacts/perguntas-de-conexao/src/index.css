@@ -20849,6 +20849,43 @@ blockquote em {
 
 .checkout-store-header {
   gap: 0.95rem;
+  min-height: 4.8rem;
+  padding: 1rem 4.2rem 0.95rem 1.35rem;
+}
+
+.checkout-store-back {
+  width: 2.15rem;
+  height: 2.15rem;
+  margin-left: -0.1rem;
+}
+
+.checkout-store-mark {
+  flex: 0 0 2.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.checkout-store-logo {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.checkout-store-title {
+  margin-bottom: 0.12rem;
+  font-size: 0.76rem;
+  line-height: 1.15;
+}
+
+.checkout-store-eyebrow {
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
+.checkout-store-secure {
+  gap: 0.25rem;
+  margin-top: 0.16rem;
+  font-size: 0.57rem;
+  letter-spacing: 0.08em;
 }
 
 .checkout-product-card .checkout-store-kicker {
