@@ -2939,10 +2939,13 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
               >
                 <ChevronLeft size={17} />
               </button>
-              <div className="checkout-store-mark" aria-hidden="true">
-                <span />
-                <span />
-                <span />
+              <div className="checkout-store-mark">
+                <img
+                  className="checkout-store-logo"
+                  src="/checkout-logo.png"
+                  alt=""
+                  aria-hidden="true"
+                />
               </div>
               <div>
                 <p className="checkout-store-title">Finalizar compra</p>

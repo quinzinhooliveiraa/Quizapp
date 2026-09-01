@@ -20777,8 +20777,8 @@ blockquote em {
   border: 0;
   border-radius: 1.15rem;
   background:
-    linear-gradient(135deg, rgba(190, 135, 205, 0.42), transparent 42%),
-    linear-gradient(145deg, #7a4fa0 0%, #5b3a7a 56%, #3a2350 100%);
+    linear-gradient(135deg, rgba(21, 18, 25, 0.38), rgba(21, 18, 25, 0.62)),
+    url("/checkout-background.jpeg") center 42% / cover;
   box-shadow: 0 1rem 2.2rem rgba(71, 43, 93, 0.2);
 }
 
@@ -20832,6 +20832,23 @@ blockquote em {
   position: relative;
   z-index: 1;
   max-width: 27rem;
+}
+
+.checkout-store-mark {
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.checkout-store-logo {
+  display: block;
+  width: 3.2rem;
+  height: 3.2rem;
+  object-fit: contain;
+}
+
+.checkout-store-header {
+  gap: 0.95rem;
 }
 
 .checkout-product-card .checkout-store-kicker {
