@@ -305,6 +305,14 @@ export const CheckoutCreateInputMode = {
   hosted: 'hosted',
 } as const;
 
+export type CheckoutCreateInputMethod = typeof CheckoutCreateInputMethod[keyof typeof CheckoutCreateInputMethod];
+
+
+export const CheckoutCreateInputMethod = {
+  pix: 'pix',
+  card: 'card',
+} as const;
+
 export type CheckoutCreateInputSourceLp = typeof CheckoutCreateInputSourceLp[keyof typeof CheckoutCreateInputSourceLp];
 
 
@@ -319,6 +327,7 @@ export interface CheckoutCreateInput {
   /** @minLength 1 */
   buyerName: string;
   mode?: CheckoutCreateInputMode;
+  method?: CheckoutCreateInputMethod;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
   sourceLp?: CheckoutCreateInputSourceLp;
@@ -721,6 +730,7 @@ export interface CheckoutCreateResponse {
   brCode?: string;
   brCodeBase64?: string;
   chargeId?: string;
+  clientSecret?: string;
 }
 
 export type AbacatePayWebhookDataMetadata = {
@@ -796,6 +806,8 @@ export type ResetGuestOnboarding200 = {
 export type CancelInvite200 = {
   ok: boolean;
 };
+
+export type ReceiveStripeWebhookBody = { [key: string]: unknown };
 
 export type GetAdminAnalyticsParams = {
 sessionId: string;

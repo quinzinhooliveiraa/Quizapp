@@ -78,6 +78,7 @@ import type {
   Question,
   QuestionSession,
   QuestionTheme,
+  ReceiveStripeWebhookBody,
   ResetGuestOnboarding200,
   ResetOwnerOnboarding200,
   Review,
@@ -1690,6 +1691,77 @@ export const useReceiveAbacatePayWebhook = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getReceiveAbacatePayWebhookMutationOptions(options));
+    }
+
+export const getReceiveStripeWebhookUrl = () => {
+
+
+
+
+  return `/api/checkout/stripe-webhook`
+}
+
+/**
+ * @summary Receive an authenticated Stripe payment confirmation webhook
+ */
+export const receiveStripeWebhook = async (receiveStripeWebhookBody: ReceiveStripeWebhookBody, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getReceiveStripeWebhookUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(receiveStripeWebhookBody)
+  }
+);}
+
+
+
+
+
+export const getReceiveStripeWebhookMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveStripeWebhook>>, TError,{data: BodyType<ReceiveStripeWebhookBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveStripeWebhook>>, TError,{data: BodyType<ReceiveStripeWebhookBody>}, TContext> => {
+
+const mutationKey = ['receiveStripeWebhook'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveStripeWebhook>>, {data: BodyType<ReceiveStripeWebhookBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  receiveStripeWebhook(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveStripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveStripeWebhook>>>
+    export type ReceiveStripeWebhookMutationBody = BodyType<ReceiveStripeWebhookBody>
+    export type ReceiveStripeWebhookMutationError = ErrorType<void>
+
+    /**
+ * @summary Receive an authenticated Stripe payment confirmation webhook
+ */
+export const useReceiveStripeWebhook = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveStripeWebhook>>, TError,{data: BodyType<ReceiveStripeWebhookBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof receiveStripeWebhook>>,
+        TError,
+        {data: BodyType<ReceiveStripeWebhookBody>},
+        TContext
+      > => {
+      return useMutation(getReceiveStripeWebhookMutationOptions(options));
     }
 
 export const getTrackPageEventUrl = () => {

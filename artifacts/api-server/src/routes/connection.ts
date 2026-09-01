@@ -40,6 +40,11 @@ import {
   fetchAbacatePixStatus,
   verifyAbacateSignature,
 } from "../lib/abacatepay";
+import {
+  createStripePaymentIntent,
+  isStripeConfigured,
+  verifyStripeWebhook,
+} from "../lib/stripe";
 import { sendPurchaseNotification } from "../lib/push";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 
@@ -512,6 +517,10 @@ router.get("/access/check-email", async (req, res): Promise<void> => {
   });
 });
 
+router.get("/checkout/availability", (_req, res): void => {
+  res.json({ card: isStripeConfigured() });
+});
+
 router.post("/access/sessions", async (req, res): Promise<void> => {
   if (process.env.ALLOW_DEMO_ACCESS !== "true") {
     res
@@ -552,6 +561,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
   }
 
   const mode = parsed.data.mode ?? "native";
+  const method = parsed.data.method ?? "pix";
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
   if (
     Boolean(parsed.data.experimentId) !==
@@ -567,7 +577,13 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       : undefined;
 
   const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;
-  if (mode === "hosted" && !productId) {
+  if (method === "card" && !isStripeConfigured()) {
+    res.status(503).json({
+      error: "Pagamento com cartão indisponível no momento.",
+    });
+    return;
+  }
+  if (method === "pix" && mode === "hosted" && !productId) {
     res.status(500).json({ error: "Produto da Abacate Pay não configurado" });
     return;
   }
@@ -600,6 +616,24 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     .returning();
 
   try {
+    if (method === "card") {
+      const paymentIntent = await createStripePaymentIntent({
+        sessionId,
+        buyerEmail,
+      });
+      await db
+        .update(sessionsTable)
+        .set({ stripePaymentIntentId: paymentIntent.id })
+        .where(eq(sessionsTable.id, sessionId));
+      res.status(201).json(
+        CreateCheckoutResponse.parse({
+          sessionId,
+          clientSecret: paymentIntent.clientSecret,
+        }),
+      );
+      return;
+    }
+
     if (mode === "native") {
       const charge = await createAbacatePixCharge({
         sessionId,
@@ -634,12 +668,72 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     await db.delete(sessionsTable).where(eq(sessionsTable.id, sessionId));
     req.log.error(
       { err: error, sessionId },
-      "Failed to create Abacate Pay checkout",
+      "Failed to create checkout",
     );
     res.status(502).json({
       error: "O pagamento não abriu. Tenta de novo em instantes.",
     });
   }
+});
+
+router.post("/checkout/stripe-webhook", async (req, res): Promise<void> => {
+  const signature = req.header("stripe-signature");
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
+  if (!rawBody) {
+    res.status(400).json({ error: "Corpo original do webhook ausente" });
+    return;
+  }
+
+  let event;
+  try {
+    event = verifyStripeWebhook(rawBody, signature);
+  } catch (error) {
+    req.log.warn({ err: error }, "Stripe webhook signature rejected");
+    res.status(400).json({ error: "Webhook Stripe inválido" });
+    return;
+  }
+
+  if (event.type !== "payment_intent.succeeded") {
+    res.json({ received: true });
+    return;
+  }
+
+  const paymentIntent = event.data.object;
+  const sessionIdFromMetadata = paymentIntent.metadata?.sessionId;
+  let sessionId =
+    typeof sessionIdFromMetadata === "string" && sessionIdFromMetadata
+      ? sessionIdFromMetadata
+      : null;
+
+  if (!sessionId) {
+    const [session] = await db
+      .select({ id: sessionsTable.id })
+      .from(sessionsTable)
+      .where(eq(sessionsTable.stripePaymentIntentId, paymentIntent.id))
+      .limit(1);
+    sessionId = session?.id ?? null;
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [processedEvent] = await tx
+      .insert(processedEventsTable)
+      .values({ id: event.id })
+      .onConflictDoNothing()
+      .returning();
+    if (!processedEvent) return "duplicate" as const;
+
+    if (sessionId) {
+      const updated = await grantSessionAccess(tx, sessionId);
+      notifyGrantedAccess(req, updated);
+    }
+    return "processed" as const;
+  });
+
+  req.log.info(
+    { eventId: event.id, paymentIntentId: paymentIntent.id, sessionId, result },
+    "Stripe payment intent processed",
+  );
+  res.json({ received: true });
 });
 
 router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {

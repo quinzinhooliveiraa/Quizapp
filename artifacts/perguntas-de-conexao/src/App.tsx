@@ -1,5 +1,6 @@
 import {
   type CSSProperties,
+  type FormEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
@@ -12,6 +13,13 @@ import {
   QueryClientProvider,
   useQueryClient,
 } from "@tanstack/react-query";
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -123,8 +131,16 @@ const nativeCheckoutEnabled = true;
 const PENDING_CHECKOUT_MAX_AGE_MS = 30 * 60 * 1000;
 const HOSTED_CHECKOUT_MAX_WAIT_MS = 3 * 60 * 1000;
 const HOSTED_CHECKOUT_POLL_INTERVAL_MS = 2000;
+const CARD_CHECKOUT_MAX_WAIT_MS = 15 * 60 * 1000;
+const CARD_CHECKOUT_POLL_INTERVAL_MS = 3000;
 const EXPERIMENT_ASSIGNMENT_STORAGE_KEY = "pdc-experiment-assignment";
 const INTERNAL_TRACKING_STORAGE_KEY = "pdc_internal";
+const stripePublishableKey = (
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined
+)?.trim();
+const stripePromise = stripePublishableKey
+  ? loadStripe(stripePublishableKey)
+  : null;
 
 type StoredExperimentAssignment = {
   experimentId: string;
@@ -169,6 +185,12 @@ type NativeCheckoutData = {
   brCode: string;
   brCodeBase64: string;
   chargeId: string;
+  startedAt: number;
+};
+
+type CardCheckoutData = {
+  sessionId: string;
+  clientSecret: string;
   startedAt: number;
 };
 
@@ -580,6 +602,7 @@ function getOrCreateVisitorKey(): string {
 
 function clearPendingCheckoutStorage(): void {
   safeRemoveItem("conexao-pending-pix");
+  safeRemoveItem("conexao-pending-card");
   safeRemoveItem("conexao-pending-session");
   safeRemoveItem("conexao-pending-bill");
   safeRemoveItem("conexao-pending-at");
@@ -1959,6 +1982,10 @@ type CheckoutState =
   | "sending"
   | "confirming"
   | "native-payment"
+  | "card-sending"
+  | "card-payment"
+  | "card-confirming"
+  | "card-error"
   | "expired"
   | "error"
   | "waiting-manual";
@@ -1989,6 +2016,14 @@ function useCheckout({
   const [emailError, setEmailError] = useState("");
   const [nativeCheckout, setNativeCheckout] =
     useState<NativeCheckoutData | null>(null);
+  const [cardCheckout, setCardCheckout] = useState<CardCheckoutData | null>(
+    null,
+  );
+  const [cardAvailable, setCardAvailable] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "pix" | "card"
+  >("pix");
+  const [cardError, setCardError] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
@@ -2003,6 +2038,30 @@ function useCheckout({
   )
     .filter((review) => Boolean(review.displayName?.trim()))
     .slice(0, 2);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!stripePromise) {
+      setCardAvailable(false);
+      return;
+    }
+
+    fetch(apiUrl("/api/checkout/availability"))
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as { card?: boolean };
+      })
+      .then((availability) => {
+        if (!cancelled) setCardAvailable(Boolean(availability?.card));
+      })
+      .catch(() => {
+        if (!cancelled) setCardAvailable(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (checkoutState !== "confirming") {
@@ -2065,6 +2124,28 @@ function useCheckout({
           }
           clearPendingCheckoutStorage();
         }
+      } catch {
+        clearPendingCheckoutStorage();
+      }
+    }
+
+    const pendingCard = safeGetItem("conexao-pending-card");
+    if (stripePromise && pendingCard) {
+      try {
+        const parsed = JSON.parse(pendingCard) as CardCheckoutData;
+        if (
+          parsed.sessionId &&
+          parsed.clientSecret &&
+          parsed.startedAt &&
+          Date.now() - parsed.startedAt < PENDING_CHECKOUT_MAX_AGE_MS
+        ) {
+          setCardCheckout(parsed);
+          setSelectedPaymentMethod("card");
+          setCheckoutState("card-payment");
+          setCheckoutOpen(true);
+          return;
+        }
+        clearPendingCheckoutStorage();
       } catch {
         clearPendingCheckoutStorage();
       }
@@ -2187,6 +2268,59 @@ function useCheckout({
     };
   }, [checkoutOpen, checkoutState, nativeCheckout]);
 
+  useEffect(() => {
+    if (!checkoutOpen || checkoutState !== "card-confirming" || !cardCheckout)
+      return;
+
+    let cancelled = false;
+    let timeoutId: number | null = null;
+    const checkPayment = async () => {
+      if (cancelled) return;
+      if (Date.now() - cardCheckout.startedAt >= CARD_CHECKOUT_MAX_WAIT_MS) {
+        setCardError(
+          "O pagamento foi enviado, mas a confirmação ainda não chegou. Aguarde um pouco e tente verificar novamente.",
+        );
+        setCheckoutState("card-payment");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          apiUrl(
+            `/api/access/sessions/${encodeURIComponent(cardCheckout.sessionId)}`,
+          ),
+        );
+        if (response.ok && !cancelled) {
+          const session = (await response.json()) as {
+            accessGranted?: boolean;
+          };
+          if (session.accessGranted) {
+            safeSetItem("conexao-session", cardCheckout.sessionId);
+            safeSetItem("conexao-role", "owner");
+            clearCompletedCheckoutStorage();
+            window.location.href = "/onboarding";
+            return;
+          }
+        }
+      } catch {
+        // Keep polling while Stripe's webhook and the API settle.
+      }
+
+      if (!cancelled) {
+        timeoutId = window.setTimeout(
+          checkPayment,
+          CARD_CHECKOUT_POLL_INTERVAL_MS,
+        );
+      }
+    };
+
+    void checkPayment();
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [checkoutOpen, checkoutState, cardCheckout]);
+
   const checkout = async (
     packageId: "couple" | "family" = selectedPackage,
     email = buyerEmail,
@@ -2205,6 +2339,7 @@ function useCheckout({
           packageId,
           buyerName: normalizedName,
           mode: "native",
+          method: "pix",
           buyerEmail: normalizedEmail || undefined,
           sourceLp,
           visitorKey: getStoredVisitorKey() || undefined,
@@ -2247,10 +2382,91 @@ function useCheckout({
       };
       setNativeCheckout(pix);
       safeSetItem("conexao-pending-pix", JSON.stringify(pix));
+      setSelectedPaymentMethod("pix");
       setCheckoutState("native-payment");
     } catch {
       setCheckoutState("error");
     }
+  };
+
+  const createCardCheckout = async () => {
+    if (!cardAvailable || !stripePromise) return;
+    if (cardCheckout) {
+      setCardError("");
+      setSelectedPaymentMethod("card");
+      setCheckoutState("card-payment");
+      return;
+    }
+
+    setSelectedPaymentMethod("card");
+    setCardError("");
+    setCheckoutState("card-sending");
+    try {
+      syncInternalTrackingFromUrl();
+      const normalizedName = buyerName.trim();
+      const normalizedEmail = buyerEmail.trim().toLowerCase();
+      const response = await fetch(apiUrl("/api/checkout/create"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          packageId: "couple",
+          buyerName: normalizedName,
+          method: "card",
+          buyerEmail: normalizedEmail || undefined,
+          sourceLp,
+          visitorKey: getStoredVisitorKey() || undefined,
+          internal: isInternalTrackingEnabled(),
+          ...(experimentAssignment
+            ? {
+                experimentId: experimentAssignment.experimentId,
+                experimentVariantId: experimentAssignment.experimentVariantId,
+              }
+            : {}),
+        }),
+      });
+      const data = (await response.json()) as {
+        sessionId?: string;
+        clientSecret?: string;
+      };
+      if (!response.ok || !data.sessionId || !data.clientSecret) {
+        throw new Error("card checkout failed");
+      }
+
+      const checkoutStartedAt = Date.now();
+      const card: CardCheckoutData = {
+        sessionId: data.sessionId,
+        clientSecret: data.clientSecret,
+        startedAt: checkoutStartedAt,
+      };
+      safeSetItem("conexao-pending-session", data.sessionId);
+      safeSetItem("conexao-pending-source-lp", sourceLp);
+      safeSetItem("conexao-pending-buyer-name", normalizedName);
+      safeSetItem("conexao-pending-buyer-email", normalizedEmail);
+      safeSetItem("conexao-pending-at", String(checkoutStartedAt));
+      safeSetItem("conexao-pending-card", JSON.stringify(card));
+      setCardCheckout(card);
+      setCheckoutState("card-payment");
+    } catch {
+      setCardError(
+        "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha o Pix.",
+      );
+      setCheckoutState("card-error");
+    }
+  };
+
+  const selectPaymentMethod = (method: "pix" | "card") => {
+    if (method === "card") {
+      void createCardCheckout();
+      return;
+    }
+    setCardError("");
+    setSelectedPaymentMethod("pix");
+    if (nativeCheckout) setCheckoutState("native-payment");
+  };
+
+  const handleCardPaymentSubmitted = () => {
+    setCardError("");
+    setCheckoutState("card-confirming");
   };
 
   const startCheckout = (
@@ -2291,6 +2507,9 @@ function useCheckout({
   const restartCheckout = () => {
     clearPendingCheckoutStorage();
     setNativeCheckout(null);
+    setCardCheckout(null);
+    setCardError("");
+    setSelectedPaymentMethod("pix");
     setCopiedCode(false);
     setNameError("");
     setEmailError("");
@@ -2314,12 +2533,19 @@ function useCheckout({
     emailError,
     setEmailError,
     nativeCheckout,
+    cardCheckout,
+    cardAvailable,
+    selectedPaymentMethod,
+    cardError,
     copiedCode,
     setCopiedCode,
     confirmingLong,
     sendingLong,
     checkoutReviews,
     checkout,
+    createCardCheckout,
+    selectPaymentMethod,
+    handleCardPaymentSubmitted,
     startCheckout,
     restartCheckout,
     closeCheckout,
@@ -2327,6 +2553,94 @@ function useCheckout({
 }
 
 type CheckoutController = ReturnType<typeof useCheckout>;
+
+function CheckoutPaymentTabs({
+  selectedPaymentMethod,
+  cardAvailable,
+  onSelect,
+}: {
+  selectedPaymentMethod: "pix" | "card";
+  cardAvailable: boolean;
+  onSelect: (method: "pix" | "card") => void;
+}) {
+  return (
+    <div className="checkout-payment-tabs" role="tablist" aria-label="Método de pagamento">
+      <button
+        className={selectedPaymentMethod === "pix" ? "active" : ""}
+        type="button"
+        role="tab"
+        aria-selected={selectedPaymentMethod === "pix"}
+        onClick={() => onSelect("pix")}
+      >
+        Pix
+      </button>
+      <button
+        className={`${selectedPaymentMethod === "card" ? "active" : ""} ${!cardAvailable ? "disabled" : ""}`}
+        type="button"
+        role="tab"
+        aria-selected={selectedPaymentMethod === "card"}
+        aria-disabled={!cardAvailable}
+        disabled={!cardAvailable}
+        onClick={() => onSelect("card")}
+      >
+        Cartão
+        {!cardAvailable && <span>indisponível</span>}
+      </button>
+    </div>
+  );
+}
+
+function CardPaymentForm({ onPaymentSubmitted }: { onPaymentSubmitted: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!stripe || !elements || submitting) return;
+
+    setSubmitting(true);
+    setError("");
+    const result = await stripe.confirmPayment({
+      elements,
+      redirect: "if_required",
+    });
+
+    if (result.error) {
+      setError(
+        result.error.message ||
+          "Não foi possível confirmar o pagamento. Confira os dados e tente novamente.",
+      );
+      setSubmitting(false);
+      return;
+    }
+
+    onPaymentSubmitted();
+  };
+
+  return (
+    <form className="checkout-card-form" onSubmit={handleSubmit}>
+      <PaymentElement options={{ layout: "tabs" }} />
+      {error && (
+        <p className="checkout-card-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        className="button button-primary button-full checkout-card-submit"
+        type="submit"
+        disabled={!stripe || !elements || submitting}
+      >
+        {submitting ? "Confirmando pagamento…" : "Pagar R$ 47,90"}
+        {!submitting && <ArrowRight size={16} />}
+      </button>
+      <p className="checkout-card-note">
+        Pagamento seguro. Cartão, Apple Pay, Google Pay e Link.
+      </p>
+    </form>
+  );
+}
 
 function CheckoutModal({
   checkout,
@@ -2347,12 +2661,19 @@ function CheckoutModal({
     emailError,
     setEmailError,
     nativeCheckout,
+    cardCheckout,
+    cardAvailable,
+    selectedPaymentMethod,
+    cardError,
     copiedCode,
     setCopiedCode,
     confirmingLong,
     sendingLong,
     checkoutReviews,
     checkout: createCheckout,
+    createCardCheckout,
+    selectPaymentMethod,
+    handleCardPaymentSubmitted,
     restartCheckout,
     closeCheckout,
   } = checkout;
@@ -2361,13 +2682,13 @@ function CheckoutModal({
 
   return (
     <div
-      className={`modal-backdrop ${isLp3 ? "lp3-checkout-backdrop" : ""} ${checkoutState === "sending" || checkoutState === "confirming" ? "modal-backdrop-loading" : ""}`}
+      className={`modal-backdrop ${isLp3 ? "lp3-checkout-backdrop" : ""} ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "modal-backdrop-loading" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label="Continuar para o Pix"
     >
       <div
-        className={`checkout-modal ${isLp3 ? "lp3-checkout-modal" : ""} ${isLp3 && checkoutState === "native-payment" ? "lp3-checkout-pix-modal" : ""} ${checkoutState === "sending" || checkoutState === "confirming" ? "checkout-modal-loading" : ""}`}
+        className={`checkout-modal ${isLp3 ? "lp3-checkout-modal" : ""} ${isLp3 && checkoutState === "native-payment" ? "lp3-checkout-pix-modal" : ""} ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "checkout-modal-loading" : ""}`}
         style={
           isLp3 && checkoutState === "native-payment"
             ? ({
@@ -2479,6 +2800,11 @@ function CheckoutModal({
           </form>
         ) : checkoutState === "native-payment" && nativeCheckout ? (
           <div className="checkout-native-payment">
+            <CheckoutPaymentTabs
+              selectedPaymentMethod={selectedPaymentMethod}
+              cardAvailable={cardAvailable}
+              onSelect={selectPaymentMethod}
+            />
             <p className="section-kicker">seu baralho está reservado</p>
             <p
               className="checkout-native-status"
@@ -2562,6 +2888,125 @@ function CheckoutModal({
                 ))}
               </div>
             )}
+          </div>
+        ) : checkoutState === "card-payment" && cardCheckout ? (
+          <div className="checkout-card-payment">
+            <CheckoutPaymentTabs
+              selectedPaymentMethod={selectedPaymentMethod}
+              cardAvailable={cardAvailable}
+              onSelect={selectPaymentMethod}
+            />
+            <p className="section-kicker">seu baralho está reservado</p>
+            <p className="checkout-native-status" role="status">
+              Cartão · pagamento seguro
+            </p>
+            <h2>
+              Falta só o cartão
+              <br />
+              <em>e a conversa começa.</em>
+            </h2>
+            <p className="checkout-native-recap">
+              459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
+            </p>
+            <div className="checkout-native-price">
+              <strong>R$ 47,90, uma vez só</strong>
+            </div>
+            <Elements
+              stripe={stripePromise}
+              options={{
+                clientSecret: cardCheckout.clientSecret,
+                appearance: {
+                  theme: "night",
+                  variables: {
+                    colorPrimary: "#c4acff",
+                    colorBackground: "#171021",
+                    colorText: "#f9f8fb",
+                    colorTextSecondary: "rgba(249, 248, 251, 0.68)",
+                    colorDanger: "#ffb4ab",
+                    borderRadius: "10px",
+                    fontFamily: "var(--app-font-sans)",
+                  },
+                },
+              }}
+            >
+              <CardPaymentForm
+                onPaymentSubmitted={handleCardPaymentSubmitted}
+              />
+            </Elements>
+            <div className="checkout-guarantee">
+              <Check size={17} />
+              <span>
+                <strong>Você tem 7 dias de garantia.</strong>
+                <br />
+                Se não fizer sentido pra vocês, devolvemos seu dinheiro.
+              </span>
+            </div>
+          </div>
+        ) : checkoutState === "card-sending" ? (
+          <div className="checkout-confirming" role="status" aria-live="polite">
+            <div className="confirming-deck" aria-hidden="true">
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+            </div>
+            <p className="conf-kicker">preparando seu pagamento</p>
+            <h2>
+              Abrindo o pagamento
+              <br />
+              <em>com cartão.</em>
+            </h2>
+            <p>Seu pagamento seguro vai aparecer aqui em instantes.</p>
+          </div>
+        ) : checkoutState === "card-confirming" ? (
+          <div className="checkout-confirming" role="status" aria-live="polite">
+            <div className="confirming-deck" aria-hidden="true">
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+              <span className="conf-card" />
+            </div>
+            <p className="conf-kicker">Confirmando pagamento…</p>
+            <h2>
+              Pagamento enviado
+              <br />
+              <em>liberando seu baralho.</em>
+            </h2>
+            <p>
+              Assim que a confirmação chegar, seu acesso será liberado
+              automaticamente. Não feche esta tela.
+            </p>
+          </div>
+        ) : checkoutState === "card-error" ? (
+          <div className="checkout-error-state" role="alert">
+            <CheckoutPaymentTabs
+              selectedPaymentMethod="card"
+              cardAvailable={cardAvailable}
+              onSelect={selectPaymentMethod}
+            />
+            <p className="section-kicker">pagamento indisponível</p>
+            <h2>
+              Tente o cartão
+              <br />
+              <em>mais uma vez.</em>
+            </h2>
+            <p className="checkout-error">
+              {cardError ||
+                "Não foi possível iniciar o pagamento com cartão agora."}
+            </p>
+            <button
+              onClick={() => void createCardCheckout()}
+              className="button button-primary button-full"
+            >
+              Tentar novamente <ArrowRight size={16} />
+            </button>
+            <button
+              type="button"
+              className="checkout-secondary-action"
+              onClick={() => selectPaymentMethod("pix")}
+            >
+              Pagar com Pix
+            </button>
           </div>
         ) : checkoutState === "expired" ? (
           <div className="checkout-error-state">

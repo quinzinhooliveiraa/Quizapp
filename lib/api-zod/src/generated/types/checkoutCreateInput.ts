@@ -5,6 +5,7 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { CheckoutCreateInputMethod } from './checkoutCreateInputMethod';
 import type { CheckoutCreateInputMode } from './checkoutCreateInputMode';
 import type { CheckoutCreateInputPackageId } from './checkoutCreateInputPackageId';
 import type { CheckoutCreateInputSourceLp } from './checkoutCreateInputSourceLp';
@@ -14,6 +15,7 @@ export interface CheckoutCreateInput {
   /** @minLength 1 */
   buyerName: string;
   mode?: CheckoutCreateInputMode;
+  method?: CheckoutCreateInputMethod;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
   sourceLp?: CheckoutCreateInputSourceLp;

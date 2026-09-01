@@ -13,4 +13,5 @@ export interface CheckoutCreateResponse {
   brCode?: string;
   brCodeBase64?: string;
   chargeId?: string;
+  clientSecret?: string;
 }

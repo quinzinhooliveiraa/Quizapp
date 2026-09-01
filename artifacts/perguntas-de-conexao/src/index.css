@@ -7216,6 +7216,12 @@ blockquote em {
   overflow-y: auto;
   padding-bottom: 32px;
 }
+.checkout-modal:has(.checkout-card-payment) {
+  width: min(100%, 480px);
+  max-height: min(92vh, 760px);
+  overflow-y: auto;
+  padding-bottom: 32px;
+}
 .checkout-email-form {
   display: flex;
   flex-direction: column;
@@ -7269,6 +7275,88 @@ blockquote em {
   flex-direction: column;
   align-items: center;
   text-align: center;
+}
+.checkout-payment-tabs {
+  align-items: stretch;
+  background: #f4e9e0;
+  border: 1px solid #ead4ca;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 0 23px;
+  padding: 4px;
+  width: 100%;
+}
+.checkout-payment-tabs button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: #856f75;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 2px;
+  justify-content: center;
+  min-height: 43px;
+  padding: 7px 10px;
+}
+.checkout-payment-tabs button.active {
+  background: var(--paper);
+  box-shadow: 0 2px 8px rgba(48, 26, 39, 0.08);
+  color: var(--wine);
+}
+.checkout-payment-tabs button:hover:not(:disabled) {
+  color: var(--wine);
+}
+.checkout-payment-tabs button:disabled,
+.checkout-payment-tabs button.disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+.checkout-payment-tabs button span {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.checkout-card-payment {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+.checkout-card-payment h2 {
+  margin-bottom: 14px;
+}
+.checkout-card-form {
+  margin-top: 4px;
+  text-align: left;
+  width: 100%;
+}
+.checkout-card-submit {
+  margin-top: 18px;
+}
+.checkout-card-submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.checkout-card-note {
+  color: #9b8588;
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 11px 0 0;
+  text-align: center;
+}
+.checkout-card-error {
+  color: #a2384b;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 12px 0 0;
 }
 .checkout-native-payment h2 {
   margin-bottom: 14px;

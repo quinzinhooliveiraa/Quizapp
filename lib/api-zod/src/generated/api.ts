@@ -306,6 +306,7 @@ export const ReceiveCheckoutWebhookResponse = zod.object({
  * @summary Create an Abacate Pay checkout
  */
 
+export const createCheckoutBodyMethodDefault = `pix`;
 export const createCheckoutBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
 export const createCheckoutBodyVisitorKeyMax = 120;
 
@@ -319,6 +320,7 @@ export const CreateCheckoutBody = zod.object({
   "packageId": zod.enum(['couple']),
   "buyerName": zod.string().min(1),
   "mode": zod.enum(['native', 'hosted']).optional(),
+  "method": zod.enum(['pix', 'card']).default(createCheckoutBodyMethodDefault),
   "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
   "sourceLp": zod.enum(['v1', 'v2', 'lp3']).optional(),
   "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional(),
@@ -333,7 +335,8 @@ export const CreateCheckoutResponse = zod.object({
   "billId": zod.string().optional(),
   "brCode": zod.string().optional(),
   "brCodeBase64": zod.string().optional(),
-  "chargeId": zod.string().optional()
+  "chargeId": zod.string().optional(),
+  "clientSecret": zod.string().optional()
 })
 
 
@@ -357,6 +360,18 @@ export const ReceiveAbacatePayWebhookResponse = zod.object({
   "accepted": zod.boolean(),
   "message": zod.string()
 })
+
+
+/**
+ * @summary Receive an authenticated Stripe payment confirmation webhook
+ */
+export const ReceiveStripeWebhookHeader = zod.object({
+  "stripe-signature": zod.string()
+})
+
+export const ReceiveStripeWebhookBody = zod.record(zod.string(), zod.unknown())
+
+export const ReceiveStripeWebhookResponse = zod.unknown()
 
 
 /**

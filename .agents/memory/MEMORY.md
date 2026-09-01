@@ -15,3 +15,4 @@
 - [LP3 story card](lp3-story-card.md) — keep the story title and narrative inside the same composed card; testimonials stay as the next section.
 - [LP3 CSS formatting](lp3-css-formatting.md) — targeted typography edits sit in legacy CSS where automatic formatting can reflow unrelated rules; keep diffs scoped.
 - [Fixed landing routes](fixed-landing-routes.md) — every public landing path must be whitelisted by the route-aware splash layer or it renders hidden behind the splash.
+- [Artifact build environment](artifact-build-environment.md) — manual Vite builds need PORT and BASE_PATH; aggregate builds may also include unrelated artifact requirements.

@@ -12,6 +12,7 @@ export const sessionsTable = pgTable("sessions", {
   buyerName: text("buyer_name").notNull(),
   buyerEmail: text("buyer_email"),
   abacateChargeId: text("abacate_charge_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
   packageId: text("package_id").notNull(),
   packageName: text("package_name").notNull(),
   sourceLp: text("source_lp"),

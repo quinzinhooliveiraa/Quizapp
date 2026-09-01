@@ -456,6 +456,29 @@ paths:
                 $ref: "#/components/schemas/AbacatePayWebhookResult"
         "401":
           description: Invalid webhook signature
+  /checkout/stripe-webhook:
+    post:
+      operationId: receiveStripeWebhook
+      tags: [checkout]
+      summary: Receive an authenticated Stripe payment confirmation webhook
+      parameters:
+        - name: stripe-signature
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Webhook received
+        "400":
+          description: Invalid webhook signature or body
   /track/page-event:
     post:
       operationId: trackPageEvent
@@ -1425,6 +1448,10 @@ components:
         mode:
           type: string
           enum: [native, hosted]
+        method:
+          type: string
+          enum: [pix, card]
+          default: pix
         buyerEmail:
           type: string
           pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
@@ -1795,6 +1822,8 @@ components:
         brCodeBase64:
           type: string
         chargeId:
+          type: string
+        clientSecret:
           type: string
       required: [sessionId]
     AbacatePayWebhook:
