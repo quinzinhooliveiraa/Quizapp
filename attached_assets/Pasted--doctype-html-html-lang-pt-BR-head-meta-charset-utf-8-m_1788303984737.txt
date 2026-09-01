@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Checkout v2 — acordeão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f1f7; --card:#ffffff; --ink:#2a2233; --soft:#6f6580; --dim:#9a90a8;
+    --line:#ece7f1; --wine:#7a2e46; --wine2:#a23c5e; --plum:#5b3a7a; --plum2:#7a4fa0;
+    --good:#2fa36b;
+    --sans:"Plus Jakarta Sans",sans-serif; --serif:"Instrument Serif",Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  body{background:#d9d5de;font-family:var(--sans);color:var(--ink);padding:20px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap;}
+  .phone{width:390px;max-width:100%;background:var(--bg);border-radius:26px;overflow:hidden;
+    box-shadow:0 30px 70px rgba(0,0,0,.3);position:relative;padding-bottom:92px;}
+  .cap{width:100%;text-align:center;font-size:.8rem;color:#555;margin:-6px 0 8px;font-weight:700;letter-spacing:.02em;}
+  .top{background:var(--card);padding:14px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2;}
+  .top .ico{width:34px;height:34px;border-radius:9px;background:linear-gradient(140deg,var(--plum2),var(--wine));flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--serif);font-size:1.1rem;}
+  .top .tt{flex:1;}
+  .top .tt b{font-size:.82rem;display:block;font-weight:700;}
+  .top .tt small{font-size:.62rem;color:var(--wine);font-weight:700;letter-spacing:.05em;}
+  .top .x{color:var(--dim);font-size:1.2rem;}
+
+  /* HERO produto — card roxo com wallpaper */
+  .hero{margin:10px;border-radius:18px;padding:20px 18px;color:#fff;position:relative;overflow:hidden;
+    background:radial-gradient(130% 120% at 15% 10%,#7a4fa0 0%,#5b3a7a 40%,#3a2350 100%);}
+  .hero::after{content:"";position:absolute;inset:0;opacity:.14;
+    background-image:radial-gradient(circle at 80% 20%,#fff 0 2px,transparent 2px),radial-gradient(circle at 65% 70%,#fff 0 1.5px,transparent 1.5px),radial-gradient(circle at 30% 85%,#fff 0 2px,transparent 2px),radial-gradient(circle at 90% 60%,#fff 0 1.5px,transparent 1.5px);}
+  .hero .kick{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#e7d6f2;font-weight:700;position:relative;}
+  .hero h1{font-family:var(--serif);font-weight:400;font-size:2rem;line-height:1;margin:6px 0 8px;position:relative;}
+  .hero h1 em{font-style:italic;color:#f2c9dd;}
+  .hero p{font-size:.82rem;color:#e5dcef;line-height:1.4;position:relative;max-width:82%;}
+  .hero .pill{position:relative;display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:7px 13px;font-size:.78rem;font-weight:700;}
+  .hero .pill b{font-size:.9rem;}
+  .hero .pill small{color:#e0d3ee;font-weight:600;}
+
+  /* O que você leva — chips limpos */
+  .leva{margin:12px 10px 0;}
+  .leva-h{font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:0 4px 8px;}
+  .chips{display:flex;gap:8px;}
+  .chip{flex:1;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 8px;text-align:center;}
+  .chip .ic{width:30px;height:30px;margin:0 auto 7px;border-radius:9px;background:#f3ecf7;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+  .chip b{font-size:.82rem;display:block;line-height:1.15;}
+  .chip small{font-size:.66rem;color:var(--dim);line-height:1.2;display:block;margin-top:2px;}
+
+  .sec{background:var(--card);margin:12px 10px 0;border-radius:16px;padding:16px;border:1px solid var(--line);}
+  .sec-h{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;}
+  .sec-h .n{font-family:var(--serif);font-size:1.05rem;color:var(--wine2);line-height:1;}
+  .sec-h b{font-size:.98rem;font-weight:700;}
+  .sec-h small{font-size:.72rem;color:var(--dim);display:block;font-weight:500;margin-top:2px;}
+  .sec-h .col{display:flex;flex-direction:column;}
+
+  .field{margin-bottom:10px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:block;font-size:.7rem;color:var(--soft);font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px;}
+  .field input{width:100%;border:1px solid var(--line);background:#faf9fb;border-radius:11px;padding:13px 12px;
+    font-family:inherit;font-size:.92rem;color:var(--ink);}
+  .field input::placeholder{color:var(--dim);}
+
+  /* PAGAMENTO — acordeão */
+  .pay{display:flex;flex-direction:column;gap:10px;}
+  .pm{border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);transition:border-color .15s;}
+  .pm.on{border-color:var(--wine);}
+  .pm-head{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer;}
+  .pm.on .pm-head{background:#fbf3f6;}
+  .pm .mi{width:36px;height:36px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-size:1.05rem;}
+  .pm .mi.pix{background:#e5f7ef;color:#12996a;}
+  .pm .mi.card{background:#eef1fb;color:#3a58c8;}
+  .pm .txt b{font-size:.9rem;display:block;}
+  .pm .txt small{font-size:.72rem;color:var(--soft);}
+  .pm .radio{margin-left:auto;width:21px;height:21px;border-radius:50%;border:2px solid #cfc7da;flex:none;position:relative;}
+  .pm.on .radio{border-color:var(--wine);}
+  .pm.on .radio::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--wine);}
+  /* corpo expandível */
+  .pm-body{max-height:0;overflow:hidden;transition:max-height .28s ease;}
+  .pm.on .pm-body{max-height:520px;}
+  .pm-inner{padding:4px 16px 18px;border-top:1px solid var(--line);}
+
+  /* PIX expandido */
+  .qr{width:150px;height:150px;margin:16px auto 12px;border-radius:12px;background:#fff;border:1px solid var(--line);
+    display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);gap:2px;padding:10px;}
+  .qr i{background:var(--ink);border-radius:1px;}
+  .qr i.o{background:transparent;}
+  .pix-hint{text-align:center;font-size:.78rem;color:var(--soft);margin-bottom:12px;line-height:1.4;}
+  .pix-hint b{color:var(--good);}
+  .copybox{display:flex;align-items:center;gap:8px;border:1px dashed #cdbfd6;border-radius:11px;background:#faf7fc;padding:10px 12px;}
+  .copybox code{flex:1;font-family:ui-monospace,monospace;font-size:.72rem;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .copybtn{background:var(--wine);color:#fff;border:none;font-family:inherit;font-weight:700;font-size:.78rem;
+    padding:9px 14px;border-radius:9px;cursor:pointer;flex:none;}
+  .copied{color:var(--good);font-size:.74rem;font-weight:700;text-align:center;margin-top:8px;height:1em;}
+
+  /* CARTÃO expandido */
+  .wallets{display:flex;gap:8px;margin:16px 0 12px;}
+  .wallet{flex:1;border:1px solid #d9d2e2;border-radius:11px;padding:11px;text-align:center;font-size:.82rem;font-weight:700;background:#faf9fb;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .wallet.ap{background:#111;color:#fff;border-color:#111;}
+  .wallet.gp{background:#fff;color:#3c4043;}
+  .sep{display:flex;align-items:center;gap:10px;color:var(--dim);font-size:.7rem;margin:6px 0 12px;}
+  .sep::before,.sep::after{content:"";flex:1;height:1px;background:var(--line);}
+  .cardrow{display:flex;gap:8px;margin-top:8px;}
+  .cardrow .field{flex:1;margin:0;}
+
+  /* resumo */
+  .row{display:flex;justify-content:space-between;font-size:.86rem;color:var(--soft);margin-bottom:8px;}
+  .row.total{color:var(--ink);font-weight:800;font-size:1.02rem;border-top:1px solid var(--line);padding-top:11px;margin-top:4px;}
+  .row.total b{color:var(--wine);}
+  .guard{display:flex;gap:10px;align-items:flex-start;margin-top:12px;}
+  .guard .g{flex:1;display:flex;gap:8px;align-items:flex-start;font-size:.74rem;color:var(--soft);line-height:1.3;}
+  .guard .g b{color:var(--ink);display:block;font-size:.78rem;}
+  .guard .gi{color:var(--wine2);font-size:.95rem;flex:none;}
+
+  .bar{position:absolute;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);padding:12px 14px;display:flex;align-items:center;gap:12px;}
+  .bar .tot small{font-size:.64rem;color:var(--dim);display:block;}
+  .bar .tot b{font-size:1.12rem;color:var(--ink);}
+  .bar .cta{margin-left:auto;background:linear-gradient(180deg,var(--wine2),var(--wine));color:#fff;border:none;
+    font-family:inherit;font-weight:800;font-size:.95rem;padding:14px 22px;border-radius:12px;cursor:pointer;box-shadow:0 8px 20px rgba(122,46,70,.35);}
+</style>
+</head>
+<body>
+  <div>
+    <div class="cap">👆 toque em Pix ou Cartão pra ver expandir</div>
+    <div class="phone">
+      <div class="top">
+        <div class="ico">✒</div>
+        <div class="tt"><b>Finalizar compra</b><small>🔒 CHECKOUT SEGURO</small></div>
+        <div class="x">✕</div>
+      </div>
+
+      <!-- HERO produto roxo -->
+      <div class="hero">
+        <div class="kick">Seu próximo ritual</div>
+        <h1>Perguntas de <em>Conexão</em></h1>
+        <p>Um baralho digital pra sair do automático e criar conversas que ficam.</p>
+        <div class="pill">✒ <b>R$ 47,90</b> <small>· uma vez só · vitalício</small></div>
+      </div>
+
+      <!-- O que você leva -->
+      <div class="leva">
+        <div class="leva-h">O que você leva</div>
+        <div class="chips">
+          <div class="chip"><div class="ic">🃏</div><b>459 perguntas</b><small>15 baralhos</small></div>
+          <div class="chip"><div class="ic">📶</div><b>Jogo online</b><small>a dois, à distância</small></div>
+          <div class="chip"><div class="ic">🎭</div><b>Temas & vibes</b><small>pra cada momento</small></div>
+        </div>
+      </div>
+
+      <!-- DADOS -->
+      <div class="sec">
+        <div class="sec-h"><span class="n">1</span><div class="col"><b>Seus dados</b><small>Pra liberar o acesso e enviar o recibo.</small></div></div>
+        <div class="field"><label>Nome</label><input placeholder="Seu nome"></div>
+        <div class="field"><label>E-mail</label><input placeholder="seu@email.com"></div>
+      </div>
+
+      <!-- PAGAMENTO acordeão -->
+      <div class="sec">
+        <div class="sec-h"><span class="n">2</span><div class="col"><b>Como você prefere pagar?</b><small>Uma única cobrança. Sem assinatura.</small></div></div>
+        <div class="pay">
+
+          <!-- PIX -->
+          <div class="pm on" id="pmPix">
+            <div class="pm-head" onclick="sel('Pix')">
+              <div class="mi pix">⚡</div>
+              <div class="txt"><b>Pix</b><small>cai na hora · acesso imediato</small></div>
+              <div class="radio"></div>
+            </div>
+            <div class="pm-body"><div class="pm-inner">
+              <div class="qr" id="qr"></div>
+              <div class="pix-hint">Escaneie o QR ou copie o código.<br>Assim que cair, <b>seu acesso abre sozinho.</b></div>
+              <div class="copybox">
+                <code>00020126580014br.gov.bcb.pix0136a1b2c3d4-...5204000053039865802BR</code>
+                <button class="copybtn" onclick="copiar(event)">Copiar</button>
+              </div>
+              <div class="copied" id="cp"></div>
+            </div></div>
+          </div>
+
+          <!-- CARTÃO -->
+          <div class="pm" id="pmCard">
+            <div class="pm-head" onclick="sel('Card')">
+              <div class="mi card">💳</div>
+              <div class="txt"><b>Cartão de crédito</b><small>Apple Pay e Google Pay disponíveis</small></div>
+              <div class="radio"></div>
+            </div>
+            <div class="pm-body"><div class="pm-inner">
+              <div class="wallets">
+                <div class="wallet ap"> Pay</div>
+                <div class="wallet gp">G Pay</div>
+              </div>
+              <div class="sep">ou pague com o cartão</div>
+              <div class="field"><label>Número do cartão</label><input placeholder="0000 0000 0000 0000"></div>
+              <div class="cardrow">
+                <div class="field"><label>Validade</label><input placeholder="MM/AA"></div>
+                <div class="field"><label>CVV</label><input placeholder="123"></div>
+              </div>
+            </div></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RESUMO -->
+      <div class="sec">
+        <div class="row"><span>Perguntas de Conexão</span><span>R$ 47,90</span></div>
+        <div class="row total"><span>Total hoje</span><b>R$ 47,90</b></div>
+        <div class="guard">
+          <div class="g"><span class="gi">✓</span><span><b>7 dias de garantia</b>Se não fizer sentido, devolvemos.</span></div>
+          <div class="g"><span class="gi">🛡</span><span><b>Compra protegida</b>Seus dados com segurança.</span></div>
+        </div>
+      </div>
+
+      <!-- BARRA -->
+      <div class="bar">
+        <div class="tot"><small>Total</small><b>R$ 47,90</b></div>
+        <button class="cta">Garantir meu deck →</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // QR fake
+  const qr=document.getElementById('qr');
+  let s='';for(let i=0;i<81;i++){s+=`<i class="${Math.random()>.5?'':'o'}"></i>`;}
+  // cantos do QR
+  qr.innerHTML=s;
+  function sel(which){
+    const pix=document.getElementById('pmPix'), card=document.getElementById('pmCard');
+    if(which==='Pix'){pix.classList.add('on');card.classList.remove('on');}
+    else{card.classList.add('on');pix.classList.remove('on');}
+  }
+  function copiar(e){
+    e.stopPropagation();
+    document.getElementById('cp').textContent='✓ Código copiado!';
+    setTimeout(()=>document.getElementById('cp').textContent='',1800);
+  }
+</script>
+</body>
+</html>

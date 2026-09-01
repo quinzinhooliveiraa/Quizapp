@@ -2530,7 +2530,7 @@ function useCheckout({
         ) {
           setNativeCheckout(parsed);
           setCopiedCode(false);
-          setCheckoutState("native-payment");
+          setCheckoutState("email");
           setCheckoutOpen(true);
           return;
         }
@@ -2796,6 +2796,30 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
   const hasValidBuyerDetails =
     buyerName.trim().length > 0 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
+
+  const handlePaymentMethodSelect = (method: "pix" | "card") => {
+    setCardError("");
+    setPaymentError("");
+    setSelectedPaymentMethod(method);
+
+    if (!checkoutOpen || checkoutState !== "email" || !hasValidBuyerDetails) {
+      return;
+    }
+
+    const normalizedName = buyerName.trim();
+    const normalizedEmail = buyerEmail.trim().toLowerCase();
+
+    if (method === "pix" && !nativeCheckout && !paymentCreating) {
+      void createCheckout("couple", normalizedEmail, normalizedName, true);
+    } else if (
+      method === "card" &&
+      cardAvailable &&
+      !cardCheckout &&
+      !paymentCreating
+    ) {
+      void createCardCheckout(true);
+    }
+  };
 
   useEffect(() => {
     if (
@@ -3226,11 +3250,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 <CheckoutPaymentTabs
                   selectedPaymentMethod={selectedPaymentMethod}
                   cardAvailable={cardAvailable}
-                  onSelect={(method) => {
-                    setCardError("");
-                    setPaymentError("");
-                    setSelectedPaymentMethod(method);
-                  }}
+                  onSelect={handlePaymentMethodSelect}
                   pixContent={pixPaymentContent}
                   cardContent={cardPaymentContent}
                 />
