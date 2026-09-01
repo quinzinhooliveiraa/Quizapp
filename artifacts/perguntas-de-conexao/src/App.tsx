@@ -2587,6 +2587,7 @@ function CheckoutPaymentTabs({
           type="button"
           role="tab"
           aria-selected={selected}
+          aria-expanded={selected}
           aria-disabled={disabled}
           disabled={disabled}
           onClick={() => onSelect(method)}
@@ -2629,7 +2630,7 @@ function CheckoutPaymentTabs({
       {renderPaymentItem(
         "card",
         <CreditCard size={18} strokeWidth={1.8} />,
-        "Cartão",
+        "Cartão de crédito",
         cardAvailable
           ? "Apple Pay e Google Pay disponíveis"
           : "indisponível agora",
