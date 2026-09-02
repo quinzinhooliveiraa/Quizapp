@@ -1,0 +1,157 @@
+# Aplicar EXATAMENTE este patch (nova tela de oferta da LP3) — não inventar nada
+
+Tarefa única: aplicar o diff abaixo. Ele reformula o passo da OFERTA da LP3 pra
+ordem: (1) dor personalizada do quiz, (2) soco "Dá pra resolver isso hoje à noite.",
+(3) "O que vocês ganham" (benefícios), (4) depoimentos, (5) preço + botão "Quero
+resolver isso hoje". Também move o <Lp3Testimonials/> do passo "história" pra oferta
+e corrige "445+" -> "459". NÃO redesenhe nada além do diff, NÃO mexa em checkout,
+pagamento, quiz nem em outros passos. Arquivos: Lp3.tsx e index.css.
+
+IMPORTANTE: este patch SUBSTITUI qualquer prompt anterior de "mover depoimentos"
+(o de número 26). Se você ainda não aplicou aquele, ignore-o e aplique só este.
+
+Passos: com shell, salve o conteúdo entre as marcas em `lp3-oferta-dor.patch` na
+raiz e rode `git apply lp3-oferta-dor.patch` (se falhar, `git apply --3way`). Sem
+shell, faça as edições à mão seguindo o diff. Depois rode o build
+(`pnpm --filter @workspace/perguntas-de-conexao build`), commit e deploy.
+
+===PATCH INÍCIO===
+From 2bb17b3b88a0a2b7de43720e47c69b94d645dcc2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 2 Sep 2026 15:29:03 +0000
+Subject: [PATCH] =?UTF-8?q?LP3=20oferta:=20dor=20personalizada=20+=20soco?=
+ =?UTF-8?q?=20"resolva=20isso"=20+=20reordem=20(dor=E2=86=92soco=E2=86=92g?=
+ =?UTF-8?q?anhos=E2=86=92depoimentos=E2=86=92pre=C3=A7o)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Topo da oferta agora relembra a DOR do quiz (8 frases por narrativeType) com o
+  kicker "A verdade que o quiz mostrou".
+- Soco fixo (título): "Dá pra resolver isso hoje à noite." (serifa itálica, warm).
+- Ordem: dor → soco → "O que vocês ganham" (benefícios) → depoimentos → preço → botão.
+- Depoimentos movidos do passo "história" pra dentro da oferta (acima do preço).
+- Botão: "Quero começar essa conversa" -> "Quero resolver isso hoje".
+- Benefícios: 445+ -> 459, inclui "Jogo a distância".
+- Substitui o patch anterior de mover depoimentos (26).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01UTVWCYJwvoi1QhUC8kbTkx
+---
+ artifacts/perguntas-de-conexao/src/index.css  | 32 +++++++++++++++++
+ .../perguntas-de-conexao/src/pages/Lp3.tsx    | 34 +++++++++++++------
+ 2 files changed, 56 insertions(+), 10 deletions(-)
+
+diff --git a/artifacts/perguntas-de-conexao/src/index.css b/artifacts/perguntas-de-conexao/src/index.css
+index 4e937b2..f57fe78 100644
+--- a/artifacts/perguntas-de-conexao/src/index.css
++++ b/artifacts/perguntas-de-conexao/src/index.css
+@@ -16848,6 +16848,38 @@ blockquote em {
+   line-height: 0.9;
+ }
+ 
++/* topo da oferta: dor personalizada + soco "resolva isso" */
++.lp3-offer-pain {
++  max-width: 22ch;
++  margin: 0 0 0.4rem;
++  color: var(--lp3-ink);
++  font-family: "Instrument Serif", Georgia, serif;
++  font-size: clamp(1.7rem, 6.5vw, 2.5rem);
++  font-weight: 400;
++  line-height: 1.04;
++  letter-spacing: -0.02em;
++}
++
++.lp3-offer-title.lp3-offer-soco {
++  max-width: 20ch;
++  margin: 0 0 1.5rem;
++  color: var(--lp3-warm);
++  font-style: italic;
++  font-size: clamp(1.9rem, 7.5vw, 3rem);
++  letter-spacing: -0.02em;
++  line-height: 1;
++}
++
++.lp3-offer-gain-label {
++  margin: 0.2rem 0 0.9rem;
++  color: var(--lp3-lilac);
++  font-family: var(--app-font-serif);
++  font-size: 0.66rem;
++  font-weight: 600;
++  letter-spacing: 0.12em;
++  text-transform: uppercase;
++}
++
+ .lp3-price {
+   display: flex;
+   align-items: baseline;
+diff --git a/artifacts/perguntas-de-conexao/src/pages/Lp3.tsx b/artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+index fa0ca44..99d1b5f 100644
+--- a/artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
++++ b/artifacts/perguntas-de-conexao/src/pages/Lp3.tsx
+@@ -35,6 +35,19 @@ type Lp3Props = {
+ type Screen = "intro" | "question" | "result" | "story" | "practice" | "recommend" | "offer";
+ type Answers = Lp3Answers;
+ 
++// Dor personalizada mostrada no topo da oferta, puxada do resultado do quiz.
++const OFFER_PAIN: Record<string, string> = {
++  routine: "Vocês viraram colegas de casa.",
++  discovery: "Falam todo dia e não sabem mais nada um do outro.",
++  "waiting-conversation": "Tem uma conversa que vocês fogem há meses.",
++  reconnection: "Ficou tudo morno e vocês fingem que não.",
++  beginning: "A rotina mata isso aqui se você deixar.",
++  distance: "“Bom dia” e “boa noite” viraram a relação de vocês.",
++  intimacy: "Vocês empurram a intimidade com a barriga.",
++  healthy: "“Tá tudo bem” é onde a maioria trava.",
++};
++const OFFER_PAIN_FALLBACK = "A conversa de vocês virou logística.";
++
+ type QuizQuestion = {
+   id: string;
+   key: string;
+@@ -515,7 +528,6 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
+           </div>
+         </div>
+       </div>
+-      <Lp3Testimonials />
+       <div className="lp3-back-row">
+         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-story">
+           <ChevronLeft size={14} aria-hidden="true" /> Voltar
+@@ -711,23 +723,25 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
+ 
+   const renderOffer = () => (
+     <section className="lp3-view lp3-offer" aria-labelledby="lp3-offer-title">
+-      <div className="lp3-kicker">Para continuar de onde vocês estão</div>
+-      <h1 id="lp3-offer-title" className="lp3-offer-title">Mais espaço para vocês dois.</h1>
++      <div className="lp3-kicker">A verdade que o quiz mostrou</div>
++      <p className="lp3-offer-pain">{OFFER_PAIN[result.narrativeType] ?? OFFER_PAIN_FALLBACK}</p>
++      <h1 id="lp3-offer-title" className="lp3-offer-title lp3-offer-soco">Dá pra resolver isso hoje à noite.</h1>
++      <div className="lp3-offer-gain-label">O que vocês ganham</div>
+       <ul className="lp3-benefits">
+-        <li>15 baralhos para diferentes momentos</li>
+-        <li>445+ perguntas reais</li>
+-        <li>Acesso vitalício</li>
+-        <li>Sem assinatura</li>
++        <li>15 baralhos para cada momento</li>
++        <li>459 perguntas reais</li>
++        <li>Jogo a distância (a dois, longe)</li>
++        <li>Acesso vitalício · sem assinatura</li>
+         <li>No celular e no computador</li>
+-        <li>Convide seu parceiro</li>
+       </ul>
++      <Lp3Testimonials />
+       <div className="lp3-price">
+         <strong>R$47,90</strong>
+-        <span>pagamento único</span>
++        <span>pagamento único · sem mensalidade</span>
+       </div>
+       <div className="lp3-actions">
+         <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-checkout-intent">
+-          Quero começar essa conversa <ArrowRight size={15} aria-hidden="true" />
++          Quero resolver isso hoje <ArrowRight size={15} aria-hidden="true" />
+         </button>
+         <p className="lp3-cta-note">Você começa escolhendo o seu nome e onde quer receber o acesso.</p>
+       </div>
+-- 
+2.43.0
+===PATCH FIM===
