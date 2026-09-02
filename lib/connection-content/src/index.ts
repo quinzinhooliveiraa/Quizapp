@@ -18,21 +18,21 @@ export type ConnectionQuestion = {
 };
 
 export const themes: ConnectionTheme[] = [
-  { id: "porto-seguro", title: "Porto Seguro", description: "As conversas que parecem casa.", count: 31, kind: "tema", audience: "todos" },
-  { id: "livro-aberto", title: "Livro Aberto", description: "Sem filtro, cara a cara.", count: 31, kind: "tema", audience: "todos" },
-  { id: "voce-nao-sabia", title: "Você Não Sabia", description: "Descobertas que ainda cabem entre vocês.", count: 32, kind: "tema", audience: "todos" },
-  { id: "em-voz-alta", title: "Em Voz Alta", description: "A vida que os dois querem construir.", count: 30, kind: "tema", audience: "todos" },
-  { id: "la-atras", title: "Lá Atrás", description: "O que formou quem você é hoje.", count: 28, kind: "tema", audience: "todos" },
-  { id: "modo-leve", title: "Modo Leve", description: "Pra rir e não levar tão a sério.", count: 31, kind: "tema", audience: "todos" },
-  { id: "viagens", title: "Viagens", description: "Lugares que já foram nossos, e os que ainda vão ser.", count: 30, kind: "tema", audience: "todos" },
-  { id: "carreira-dinheiro", title: "Carreira & Dinheiro", description: "Como vocês pensam o lado prático da vida a dois.", count: 30, kind: "tema", audience: "todos" },
-  { id: "depois-da-tempestade", title: "Depois da Tempestade", description: "Brigas, mágoas e o caminho de volta.", count: 30, kind: "tema", audience: "todos" },
-  { id: "faisca", title: "Faísca", description: "O lado mais provocante de vocês dois.", count: 31, kind: "vibe", audience: "casais" },
-  { id: "luzes-baixas", title: "Luzes Baixas", description: "Para quando a noite pede mais coragem.", count: 35, kind: "vibe", audience: "18+" },
-  { id: "fogo-alto", title: "Fogo Alto", description: "Sem tabu: desejos, curiosidades e limites.", count: 30, kind: "vibe", audience: "18+" },
-  { id: "sem-freio", title: "Sem Freio", description: "O mais ousado. Só pra quem topa de verdade.", count: 30, kind: "vibe", audience: "18+" },
-  { id: "mesmo-longe", title: "Mesmo Longe", description: "Pra quando a rotina ou a distância afastam.", count: 30, kind: "vibe", audience: "casais" },
-  { id: "perto-de-novo", title: "Perto de Novo", description: "Esquentar o espaço entre vocês.", count: 30, kind: "vibe", audience: "casais" },
+  { id: "porto-seguro", title: "Porto Seguro", description: "As conversas que parecem casa.", count: 31, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/porto-seguro.jpg" },
+  { id: "livro-aberto", title: "Livro Aberto", description: "Sem filtro, cara a cara.", count: 31, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/livro-aberto.jpg" },
+  { id: "voce-nao-sabia", title: "Você Não Sabia", description: "Descobertas que ainda cabem entre vocês.", count: 32, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/voce-nao-sabia.jpg" },
+  { id: "em-voz-alta", title: "Em Voz Alta", description: "A vida que os dois querem construir.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/em-voz-alta.jpg" },
+  { id: "la-atras", title: "Lá Atrás", description: "O que formou quem você é hoje.", count: 28, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/la-atras.jpg" },
+  { id: "modo-leve", title: "Modo Leve", description: "Pra rir e não levar tão a sério.", count: 31, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/modo-leve.jpg" },
+  { id: "viagens", title: "Viagens", description: "Lugares que já foram nossos, e os que ainda vão ser.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/viagens.jpg" },
+  { id: "carreira-dinheiro", title: "Carreira & Dinheiro", description: "Como vocês pensam o lado prático da vida a dois.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/carreira-dinheiro.jpg" },
+  { id: "depois-da-tempestade", title: "Depois da Tempestade", description: "Brigas, mágoas e o caminho de volta.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/depois-da-tempestade.jpg" },
+  { id: "faisca", title: "Faísca", description: "O lado mais provocante de vocês dois.", count: 31, kind: "vibe", audience: "casais", backgroundUrl: "/theme-backgrounds/faisca.jpg" },
+  { id: "luzes-baixas", title: "Luzes Baixas", description: "Para quando a noite pede mais coragem.", count: 35, kind: "vibe", audience: "18+", backgroundUrl: "/theme-backgrounds/luzes-baixas.jpg" },
+  { id: "fogo-alto", title: "Fogo Alto", description: "Sem tabu: desejos, curiosidades e limites.", count: 30, kind: "vibe", audience: "18+", backgroundUrl: "/theme-backgrounds/fogo-alto.jpg" },
+  { id: "sem-freio", title: "Sem Freio", description: "O mais ousado. Só pra quem topa de verdade.", count: 30, kind: "vibe", audience: "18+", backgroundUrl: "/theme-backgrounds/sem-freio.jpg" },
+  { id: "mesmo-longe", title: "Mesmo Longe", description: "Pra quando a rotina ou a distância afastam.", count: 30, kind: "vibe", audience: "casais", backgroundUrl: "/theme-backgrounds/mesmo-longe.jpg" },
+  { id: "perto-de-novo", title: "Perto de Novo", description: "Esquentar o espaço entre vocês.", count: 30, kind: "vibe", audience: "casais", backgroundUrl: "/theme-backgrounds/perto-de-novo.jpg" },
 ];
 
 export const questions: ConnectionQuestion[] = [

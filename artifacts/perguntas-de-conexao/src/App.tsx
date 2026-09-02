@@ -129,6 +129,26 @@ const queryClient = new QueryClient({
 });
 const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
+// Baralhos que têm foto de fundo (arquivos em /public/theme-backgrounds/).
+const THEME_BACKGROUND_IDS = new Set([
+  "porto-seguro",
+  "livro-aberto",
+  "voce-nao-sabia",
+  "em-voz-alta",
+  "la-atras",
+  "modo-leve",
+  "viagens",
+  "carreira-dinheiro",
+  "depois-da-tempestade",
+  "faisca",
+  "luzes-baixas",
+  "fogo-alto",
+  "sem-freio",
+  "mesmo-longe",
+  "perto-de-novo",
+]);
+const themeBackgroundUrl = (id: string): string | null =>
+  THEME_BACKGROUND_IDS.has(id) ? `/theme-backgrounds/${id}.jpg` : null;
 const inviteUrlFromToken = (token: string) =>
   `${window.location.origin}/invite/${token}`;
 const nativeCheckoutEnabled = true;
@@ -6550,6 +6570,15 @@ function AppExperienceReference() {
                           data-theme-index={index}
                           data-testid={`button-theme-card-${theme.id}`}
                         >
+                          {themeBackgroundUrl(theme.id) && (
+                            <img
+                              className="theme-cover-photo"
+                              src={themeBackgroundUrl(theme.id) as string}
+                              alt=""
+                              aria-hidden="true"
+                              loading="lazy"
+                            />
+                          )}
                           <span className="theme-cover-shade" />
                           <span className="theme-cover-top">
                             <span className="theme-cover-meta">
