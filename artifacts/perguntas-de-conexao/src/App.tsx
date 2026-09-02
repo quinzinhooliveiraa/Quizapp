@@ -2295,7 +2295,7 @@ function useCheckout({
         setCardError(
           "O pagamento foi enviado, mas a confirmação ainda não chegou. Aguarde um pouco e tente verificar novamente.",
         );
-        setCheckoutState("card-payment");
+        setCheckoutState("email");
         return;
       }
 
@@ -2404,7 +2404,7 @@ function useCheckout({
       setNativeCheckout(pix);
       safeSetItem("conexao-pending-pix", JSON.stringify(pix));
       setSelectedPaymentMethod("pix");
-      if (!inline) setCheckoutState("native-payment");
+      if (!inline) setCheckoutState("email");
     } catch {
       if (inline) {
         setPaymentError(
@@ -2423,7 +2423,7 @@ function useCheckout({
     if (cardCheckout) {
       setCardError("");
       setSelectedPaymentMethod("card");
-      if (!inline) setCheckoutState("card-payment");
+      if (!inline) setCheckoutState("email");
       return;
     }
 
@@ -2479,7 +2479,7 @@ function useCheckout({
       safeSetItem("conexao-pending-at", String(checkoutStartedAt));
       safeSetItem("conexao-pending-card", JSON.stringify(card));
       setCardCheckout(card);
-      if (!inline) setCheckoutState("card-payment");
+      if (!inline) setCheckoutState("email");
     } catch {
       const message =
         "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha o Pix.";
@@ -2501,7 +2501,7 @@ function useCheckout({
     }
     setCardError("");
     setSelectedPaymentMethod("pix");
-    if (nativeCheckout) setCheckoutState("native-payment");
+    if (nativeCheckout) setCheckoutState("email");
   };
 
   const handleCardPaymentSubmitted = () => {
@@ -2892,22 +2892,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
   };
 
   const pixPaymentContent = nativeCheckout ? (
-    <>
-      <p className="section-kicker">seu baralho está reservado</p>
-      <p className="checkout-native-status" role="status" aria-live="polite">
-        Pix pronto · aguardando confirmação
-      </p>
-      <h2>
-        Falta só o Pix
-        <br />
-        <em>e a conversa começa.</em>
-      </h2>
-      <p className="checkout-native-recap">
-        459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
-      </p>
-      <div className="checkout-native-price">
-        <strong>R$ 47,90, uma vez só</strong>
-      </div>
+    <div className="checkout-pix-inline">
       <div className="checkout-qr-wrap">
         <img
           src={
@@ -2917,59 +2902,33 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           }
           alt="QR Code do Pix"
         />
-        <p>Abra o app do seu banco e escaneie o código.</p>
       </div>
-      <button
-        className="checkout-copy-button"
-        type="button"
-        onClick={async () => {
-          const copied = await copyPixCode(nativeCheckout.brCode);
-          if (copied) {
-            setCopiedCode(true);
-            window.setTimeout(() => setCopiedCode(false), 2200);
-          } else {
-            setCopiedCode(false);
-          }
-        }}
-        data-testid="button-copy-pix"
-      >
-        {copiedCode ? <Check size={16} /> : <Copy size={16} />}
-        {copiedCode ? "Código copiado!" : "Copiar"}
-      </button>
-      <p className="checkout-native-next">
-        Assim que cair, seu acesso abre sozinho.
+      <p className="checkout-pix-hint">
+        Escaneie o QR ou copie o código.
+        <br />
+        <strong>Assim que cair, seu acesso abre sozinho.</strong>
       </p>
-      <div className="checkout-guarantee">
-        <Check size={17} />
-        <span>
-          <strong>Você tem 7 dias de garantia.</strong>
-          <br />
-          Se não fizer sentido pra vocês, devolvemos seu dinheiro.
-        </span>
+      <div className="checkout-pix-copybox">
+        <code>{nativeCheckout.brCode}</code>
+        <button
+          className="checkout-copy-button"
+          type="button"
+          onClick={async () => {
+            const copied = await copyPixCode(nativeCheckout.brCode);
+            if (copied) {
+              setCopiedCode(true);
+              window.setTimeout(() => setCopiedCode(false), 2200);
+            } else {
+              setCopiedCode(false);
+            }
+          }}
+          data-testid="button-copy-pix"
+        >
+          {copiedCode ? <Check size={16} /> : <Copy size={16} />}
+          {copiedCode ? "Copiado!" : "Copiar"}
+        </button>
       </div>
-      {checkoutReviews.length > 0 && (
-        <div className="checkout-reviews">
-          <p className="checkout-reviews-title">quem já abriu essa conversa</p>
-          {checkoutReviews.map((review) => (
-            <blockquote key={review.id}>
-              <div className="checkout-review-meta">
-                <div
-                  className="checkout-review-stars"
-                  aria-label={`${review.rating} de 5 estrelas`}
-                >
-                  {"★".repeat(Math.min(5, Math.max(0, review.rating)))}
-                </div>
-                <span className="checkout-review-rating">
-                  {review.rating}/5
-                </span>
-              </div>
-              <p>“{review.message}”</p>
-              <cite>{review.displayName!.trim()}</cite>
-            </blockquote>
-          ))}
-        </div>
-      )}
-    </>
+    </div>
   ) : paymentCreating === "pix" ? (
     <p className="checkout-payment-preview" role="status" aria-live="polite">
       Abrindo o QR Code aqui…
@@ -2980,27 +2939,12 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     </p>
   ) : (
     <p className="checkout-payment-preview">
-      Preencha seus dados para abrir o QR Code aqui.
+      Toque em “Garantir meu deck” que o QR aparece aqui.
     </p>
   );
 
   const cardPaymentContent = cardCheckout ? (
-    <>
-      <p className="section-kicker">seu baralho está reservado</p>
-      <p className="checkout-native-status" role="status">
-        Cartão · pagamento seguro
-      </p>
-      <h2>
-        Falta só o cartão
-        <br />
-        <em>e a conversa começa.</em>
-      </h2>
-      <p className="checkout-native-recap">
-        459 perguntas · 15 baralhos · acesso vitalício, sem mensalidade
-      </p>
-      <div className="checkout-native-price">
-        <strong>R$ 47,90, uma vez só</strong>
-      </div>
+    <div className="checkout-card-inline">
       <Elements
         stripe={stripePromise}
         options={{
@@ -3038,15 +2982,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           showSubmitButton={checkoutState !== "email"}
         />
       </Elements>
-      <div className="checkout-guarantee">
-        <Check size={17} />
-        <span>
-          <strong>Você tem 7 dias de garantia.</strong>
-          <br />
-          Se não fizer sentido pra vocês, devolvemos seu dinheiro.
-        </span>
-      </div>
-    </>
+    </div>
   ) : paymentCreating === "card" ? (
     <p className="checkout-payment-preview" role="status" aria-live="polite">
       Abrindo o pagamento com cartão aqui…
