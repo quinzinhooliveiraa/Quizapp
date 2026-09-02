@@ -784,6 +784,7 @@ export interface AdminFunnelAnalytics {
   purchasesConfirmed: number;
   /** @nullable */
   avgTimeOnPageSeconds: number | null;
+  heroExits: number;
   topExitSections: AdminFunnelAnalyticsTopExitSectionsItem[];
   deviceBreakdown: AnalyticsDeviceBreakdown;
   checkoutsByCtaSource: AnalyticsCtaSource[];
@@ -885,6 +886,28 @@ sessionId: string;
 export type GetAdminAnalytics200 = {
   analytics: LandingAnalytics[];
 };
+
+export type GetAdminFunnelAnalyticsParams = {
+sessionId: string;
+lp?: GetAdminFunnelAnalyticsLp;
+from?: string;
+to?: string;
+/**
+ * @minimum 1
+ * @maximum 90
+ */
+days?: number;
+};
+
+export type GetAdminFunnelAnalyticsLp = typeof GetAdminFunnelAnalyticsLp[keyof typeof GetAdminFunnelAnalyticsLp];
+
+
+export const GetAdminFunnelAnalyticsLp = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+  all: 'all',
+} as const;
 
 export type GetAdminPrimaryLandingPageParams = {
 sessionId: string;

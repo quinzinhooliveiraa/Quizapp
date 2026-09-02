@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowLeft,
@@ -20,6 +20,15 @@ import {
   type LandingPageId,
   type LandingPage as LandingEntry,
 } from "@/lib/landing-pages";
+import {
+  getGetAdminFunnelAnalyticsQueryKey,
+  useGetAdminFunnelAnalytics,
+  type GetAdminFunnelAnalyticsParams,
+} from "@workspace/api-client-react";
+import AnalyticsFunnelPanel, {
+  type AnalyticsLandingPageId as FunnelLandingPageId,
+  type AnalyticsViewMode,
+} from "@/components/AnalyticsFunnelPanel";
 
 type SuggestionEntry = {
   id: string;
@@ -76,6 +85,7 @@ type AnalyticsEntry = {
   topExitSections: Array<{ section: string; count: number }>;
 };
 type LpSessionsResponse = { sessions?: LpSession[] };
+type AnalyticsPeriod = "2" | "7" | "30" | "custom";
 type ExperimentStatus = "draft" | "active" | "paused" | "completed";
 type ExperimentVariantStatus = "active" | "paused";
 type ExperimentVariantEntry = {
@@ -170,6 +180,7 @@ type ExperimentOptimizationRunResponse = {
 const TABS = [
   { id: "buyers", label: "Compradores" },
   { id: "pages", label: "Páginas" },
+  { id: "analytics", label: "Análise" },
   { id: "experiments", label: "Experimentos" },
   { id: "notifications", label: "Notificações" },
   { id: "feedback", label: "Feedback" },
@@ -687,6 +698,136 @@ function AnalyticsPanel({
         sessionId={sessionId}
       />
     </div>
+  );
+}
+
+function AnalyticsTab({ sessionId }: { sessionId: string }) {
+  const [landingPage, setLandingPage] = useState<FunnelLandingPageId>("v2");
+  const [period, setPeriod] = useState<AnalyticsPeriod>("30");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [viewMode, setViewMode] = useState<AnalyticsViewMode>("funnel");
+
+  const params = useMemo<GetAdminFunnelAnalyticsParams>(() => {
+    const base = { sessionId, lp: landingPage };
+    if (period === "custom") {
+      return {
+        ...base,
+        ...(customFrom ? { from: customFrom } : {}),
+        ...(customTo ? { to: customTo } : {}),
+      };
+    }
+    return { ...base, days: Number(period) };
+  }, [customFrom, customTo, landingPage, period, sessionId]);
+
+  const canFetch =
+    Boolean(sessionId) &&
+    (period !== "custom" || Boolean(customFrom && customTo));
+  const query = useGetAdminFunnelAnalytics(params, {
+    query: {
+      enabled: canFetch,
+      queryKey: getGetAdminFunnelAnalyticsQueryKey(params),
+      staleTime: 30_000,
+      retry: 1,
+    },
+  });
+
+  return (
+    <section className="admin-section admin-analysis" aria-labelledby="analysis-title">
+      <div className="admin-section-heading">
+        <div>
+          <p className="admin-eyebrow">leitura de conversão</p>
+          <h2 id="analysis-title">Análise</h2>
+        </div>
+        <span className="admin-count">sem tráfego interno</span>
+      </div>
+      <p className="admin-analysis-copy">
+        Entenda onde a jornada perde força e quais sinais diferenciam uma visita
+        curiosa de uma compra.
+      </p>
+
+      <div className="admin-analysis-controls" aria-label="Filtros de análise">
+        <label>
+          <span>Landing page</span>
+          <select
+            value={landingPage}
+            onChange={(event) =>
+              setLandingPage(event.target.value as FunnelLandingPageId)
+            }
+            data-testid="select-analytics-landing-page"
+          >
+            <option value="v2">LP principal · Perguntas que aproximam</option>
+            <option value="lp3">LP3 · Oferta essencial</option>
+            <option value="v1">V1 · Reacender a chama</option>
+            <option value="all">Todas as landing pages</option>
+          </select>
+        </label>
+        <label>
+          <span>Período</span>
+          <select
+            value={period}
+            onChange={(event) =>
+              setPeriod(event.target.value as AnalyticsPeriod)
+            }
+            data-testid="select-analytics-period"
+          >
+            <option value="2">Últimos 2 dias</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </label>
+        {period === "custom" && (
+          <div className="admin-analysis-date-range">
+            <label>
+              <span>Início</span>
+              <input
+                type="date"
+                value={customFrom}
+                max={customTo || undefined}
+                onChange={(event) => setCustomFrom(event.target.value)}
+                data-testid="input-analytics-from"
+              />
+            </label>
+            <label>
+              <span>Fim</span>
+              <input
+                type="date"
+                value={customTo}
+                min={customFrom || undefined}
+                onChange={(event) => setCustomTo(event.target.value)}
+                data-testid="input-analytics-to"
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      {period === "custom" && (!customFrom || !customTo) && (
+        <p className="admin-analysis-hint" role="status">
+          Escolha as duas datas para carregar o período personalizado.
+        </p>
+      )}
+      {query.isFetching && (
+        <div className="admin-analysis-state" role="status" aria-live="polite">
+          <span className="admin-analysis-spinner" aria-hidden="true" />
+          Carregando sinais da jornada…
+        </div>
+      )}
+      {query.isError && (
+        <div className="admin-analysis-state is-error" role="alert">
+          Não foi possível carregar a análise agora. Tente novamente em alguns
+          instantes.
+        </div>
+      )}
+      {query.data && !query.isFetching && !query.isError && (
+        <AnalyticsFunnelPanel
+          data={query.data}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+      )}
+    </section>
   );
 }
 
@@ -2230,6 +2371,7 @@ export default function Admin() {
         sessionId={sessionId}
       />
     ),
+    analytics: <AnalyticsTab sessionId={sessionId} />,
     feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
     experiments: <ExperimentsTab sessionId={sessionId} />,
     notifications: <NotificationsTab sessionId={sessionId} />,

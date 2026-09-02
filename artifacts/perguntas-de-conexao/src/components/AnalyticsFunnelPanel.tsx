@@ -29,6 +29,7 @@ export type AnalyticsFunnelData = {
   checkoutsStarted: number;
   purchasesConfirmed: number;
   avgTimeOnPageSeconds: number | null;
+  heroExits: number;
   topExitSections: Array<{ section: string; count: number }>;
   deviceBreakdown: {
     views: { mobile: number; desktop: number; tablet: number };
@@ -104,7 +105,9 @@ function formatLcp(milliseconds: number | null) {
 }
 
 function formatDate(value: string) {
-  const date = new Date(`${value}T12:00:00`);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T12:00:00`)
+    : new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
@@ -128,16 +131,27 @@ function humanize(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function wavePath(center: number, y: number, width: number, height: number) {
-  const left = center - width / 2;
-  const right = center + width / 2;
+function horizontalWavePath(
+  points: Array<{ x: number; height: number }>,
+  centerY: number,
+) {
+  const top = points.map(({ x, height }) => ({ x, y: centerY - height }));
+  const bottom = points.map(({ x, height }) => ({ x, y: centerY + height }));
+  const curve = (line: Array<{ x: number; y: number }>) =>
+    line
+      .slice(1)
+      .map((point, index) => {
+        const previous = line[index];
+        const midpoint = previous.x + (point.x - previous.x) / 2;
+        return `C ${midpoint} ${previous.y}, ${midpoint} ${point.y}, ${point.x} ${point.y}`;
+      })
+      .join(" ");
+
   return [
-    `M ${left} ${y + 12}`,
-    `C ${left + width * 0.16} ${y - 3}, ${left + width * 0.3} ${y + 14}, ${center} ${y + 4}`,
-    `C ${right - width * 0.3} ${y - 5}, ${right - width * 0.15} ${y + 17}, ${right} ${y + 8}`,
-    `L ${right} ${y + height - 12}`,
-    `C ${right - width * 0.17} ${y + height + 3}, ${right - width * 0.33} ${y + height - 14}, ${center} ${y + height - 4}`,
-    `C ${left + width * 0.3} ${y + height + 4}, ${left + width * 0.15} ${y + height - 17}, ${left} ${y + height - 10}`,
+    `M ${top[0].x} ${top[0].y}`,
+    curve(top),
+    `L ${bottom[bottom.length - 1].x} ${bottom[bottom.length - 1].y}`,
+    curve([...bottom].reverse()),
     "Z",
   ].join(" ");
 }
@@ -180,9 +194,6 @@ function AnalyticsFunnelPanel({
     0,
   );
   const visitorSplitTotal = data.visitors.new + data.visitors.recurring;
-  const heroExitCount = data.topExitSections
-    .filter((item) => item.section.toLowerCase().includes("hero"))
-    .reduce((total, item) => total + item.count, 0);
   const unpaidCheckouts = Math.max(
     data.checkoutsStarted - data.purchasesConfirmed,
     0,
@@ -190,6 +201,13 @@ function AnalyticsFunnelPanel({
   const deviceRows = STAGES.map((stage) => ({
     ...stage,
     values: data.deviceBreakdown[stage.key],
+  }));
+  const funnelPoints = STAGES.map((stage, index) => ({
+    x: 112 + index * 258,
+    height:
+      data.views > 0
+        ? Math.max(10, 112 * (data[stage.key] / data.views))
+        : 10,
   }));
 
   return (
@@ -259,8 +277,8 @@ function AnalyticsFunnelPanel({
             <ArrowDownRight size={14} aria-hidden="true" />
             Saíram no topo
           </span>
-          <strong>{formatPercent(heroExitCount, data.views)}</strong>
-          <small>{formatNumber(heroExitCount)} saídas no hero</small>
+           <strong>{formatPercent(data.heroExits, data.views)}</strong>
+           <small>{formatNumber(data.heroExits)} saídas no hero</small>
         </article>
         <article className="analytics-funnel-kpi is-alert">
           <span className="analytics-funnel-kpi-label">
@@ -274,9 +292,10 @@ function AnalyticsFunnelPanel({
 
       {viewMode === "funnel" ? (
         <div className="analytics-funnel-visual" data-testid="analytics-funnel-visual">
-          <svg
+            <svg
             className="analytics-funnel-svg"
-            viewBox="0 0 1000 314"
+             viewBox="0 0 1000 300"
+             preserveAspectRatio="none"
             role="img"
             aria-labelledby="analytics-funnel-svg-title analytics-funnel-svg-description"
           >
@@ -297,40 +316,56 @@ function AnalyticsFunnelPanel({
               </linearGradient>
             </defs>
             <line
-              x1="500"
-              y1="18"
-              x2="500"
-              y2="300"
+              x1="40"
+              y1="150"
+              x2="960"
+              y2="150"
               className="analytics-funnel-center-line"
               aria-hidden="true"
             />
+            <path
+              d={horizontalWavePath(funnelPoints, 150)}
+              fill="url(#analytics-funnel-wave-gradient)"
+              className="analytics-funnel-wave"
+            />
+            <path
+              d={horizontalWavePath(
+                funnelPoints.map((point) => ({
+                  ...point,
+                  height: Math.max(4, point.height * 0.24),
+                })),
+                150,
+              )}
+              fill="url(#analytics-funnel-wave-highlight)"
+              className="analytics-funnel-wave-highlight"
+            />
             {STAGES.map((stage, index) => {
               const value = data[stage.key];
-              const width = value > 0 ? Math.max(30, 500 * (value / Math.max(data.views, 1))) : 0;
-              const y = 12 + index * 74;
+              const point = funnelPoints[index];
               return (
                 <g key={stage.key} className="analytics-funnel-svg-stage">
-                  {width > 0 && (
-                    <>
-                      <path
-                        d={wavePath(500, y, width, 57)}
-                        fill="url(#analytics-funnel-wave-gradient)"
-                        className="analytics-funnel-wave"
-                      />
-                      <path
-                        d={wavePath(500, y + 5, width * 0.94, 17)}
-                        fill="url(#analytics-funnel-wave-highlight)"
-                        className="analytics-funnel-wave-highlight"
-                      />
-                    </>
-                  )}
-                  <text x="34" y={y + 30} className="analytics-funnel-svg-label">
+                  <text
+                    x={point.x}
+                    y="25"
+                    textAnchor="middle"
+                    className="analytics-funnel-svg-label"
+                  >
                     {stage.label}
                   </text>
-                  <text x="34" y={y + 49} className="analytics-funnel-svg-percent">
-                    {formatPercent(value, data.views)} do topo
+                  <text
+                    x={point.x}
+                    y="154"
+                    textAnchor="middle"
+                    className="analytics-funnel-svg-percent"
+                  >
+                    {formatPercent(value, data.views)}
                   </text>
-                  <text x="966" y={y + 39} textAnchor="end" className="analytics-funnel-svg-value">
+                  <text
+                    x={point.x}
+                    y="283"
+                    textAnchor="middle"
+                    className="analytics-funnel-svg-value"
+                  >
                     {formatNumber(value)}
                   </text>
                 </g>
@@ -345,10 +380,14 @@ function AnalyticsFunnelPanel({
         </div>
       ) : (
         <div className="analytics-funnel-list-view" data-testid="analytics-funnel-list-view">
-          {STAGES.map((stage, index) => {
+           {STAGES.map((stage, index) => {
             const StageIcon = stage.icon;
             const value = data[stage.key];
-            const nextValue = STAGES[index + 1] ? data[STAGES[index + 1].key] : null;
+             const previousValue = index > 0 ? data[STAGES[index - 1].key] : null;
+             const drop =
+               previousValue == null
+                 ? null
+                 : Math.max(previousValue - value, 0);
             return (
               <div className="analytics-funnel-list-row" key={stage.key} data-testid={`row-analytics-stage-${stage.key}`}>
                 <span className="analytics-funnel-list-index">0{index + 1}</span>
@@ -357,10 +396,19 @@ function AnalyticsFunnelPanel({
                 </span>
                 <span className="analytics-funnel-list-copy">
                   <strong>{stage.label}</strong>
-                  <small>
-                    {nextValue != null
-                      ? `${formatPercent(nextValue, value)} seguem para a próxima etapa`
-                      : "Etapa final do caminho"}
+                   <small
+                     className={
+                       drop != null &&
+                       previousValue != null &&
+                       previousValue > 0 &&
+                       drop / previousValue >= 0.5
+                         ? "is-alert"
+                         : undefined
+                     }
+                   >
+                     {drop == null
+                       ? "Ponto de partida da jornada"
+                       : `Queda de ${formatPercent(drop, previousValue ?? 0)} desde a etapa anterior`}
                   </small>
                 </span>
                 <strong className="analytics-funnel-list-number">{formatNumber(value)}</strong>

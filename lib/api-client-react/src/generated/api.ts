@@ -25,6 +25,7 @@ import type {
   AccessState,
   AdminExperimentAnalyticsResponse,
   AdminExperimentsResponse,
+  AdminFunnelAnalytics,
   CancelInvite200,
   CheckAccessEmail200,
   CheckAccessEmailParams,
@@ -46,6 +47,7 @@ import type {
   GetAdminAnalyticsParams,
   GetAdminExperimentAnalyticsParams,
   GetAdminExperimentOptimizationParams,
+  GetAdminFunnelAnalyticsParams,
   GetAdminPrimaryLandingPageParams,
   GetAdminSessionRecordingParams,
   GetExperimentAssignmentParams,
@@ -1984,6 +1986,90 @@ export function useGetAdminAnalytics<TData = Awaited<ReturnType<typeof getAdminA
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAdminAnalyticsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminFunnelAnalyticsUrl = (params: GetAdminFunnelAnalyticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/analytics-funnel?${stringifiedParams}` : `/api/admin/analytics-funnel`
+}
+
+/**
+ * @summary Get conversion funnel analytics
+ */
+export const getAdminFunnelAnalytics = async (params: GetAdminFunnelAnalyticsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminFunnelAnalytics> => {
+
+  return customFetch<AdminFunnelAnalytics>(getGetAdminFunnelAnalyticsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminFunnelAnalyticsQueryKey = (params?: GetAdminFunnelAnalyticsParams,) => {
+    return [
+    `/api/admin/analytics-funnel`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminFunnelAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminFunnelAnalytics>>, TError = ErrorType<void>>(params: GetAdminFunnelAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminFunnelAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminFunnelAnalyticsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminFunnelAnalytics>>> = ({ signal }) => getAdminFunnelAnalytics(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminFunnelAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminFunnelAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminFunnelAnalytics>>>
+export type GetAdminFunnelAnalyticsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get conversion funnel analytics
+ */
+
+export function useGetAdminFunnelAnalytics<TData = Awaited<ReturnType<typeof getAdminFunnelAnalytics>>, TError = ErrorType<void>>(
+ params: GetAdminFunnelAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminFunnelAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminFunnelAnalyticsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -74,6 +74,8 @@ export * from './getAdminAnalytics200';
 export * from './getAdminAnalyticsParams';
 export * from './getAdminExperimentAnalyticsParams';
 export * from './getAdminExperimentOptimizationParams';
+export * from './getAdminFunnelAnalyticsLp';
+export * from './getAdminFunnelAnalyticsParams';
 export * from './getAdminPrimaryLandingPageParams';
 export * from './getAdminSessionRecordingParams';
 export * from './getExperimentAssignmentParams';

@@ -447,6 +447,71 @@ export const GetAdminAnalyticsResponse = zod.object({
 
 
 /**
+ * @summary Get conversion funnel analytics
+ */
+export const getAdminFunnelAnalyticsQueryLpDefault = `v2`;
+export const getAdminFunnelAnalyticsQueryDaysMax = 90;
+
+
+
+export const GetAdminFunnelAnalyticsQueryParams = zod.object({
+  "sessionId": zod.coerce.string(),
+  "lp": zod.enum(['v1', 'v2', 'lp3', 'all']).default(getAdminFunnelAnalyticsQueryLpDefault),
+  "from": zod.coerce.string().optional(),
+  "to": zod.coerce.string().optional(),
+  "days": zod.coerce.number().int().min(1).max(getAdminFunnelAnalyticsQueryDaysMax).optional()
+})
+
+export const GetAdminFunnelAnalyticsResponse = zod.object({
+  "lpId": zod.enum(['v1', 'v2', 'lp3', 'all']),
+  "from": zod.string(),
+  "to": zod.string(),
+  "views": zod.number(),
+  "ctaClicks": zod.number(),
+  "checkoutsStarted": zod.number(),
+  "purchasesConfirmed": zod.number(),
+  "avgTimeOnPageSeconds": zod.number().nullable(),
+  "heroExits": zod.number(),
+  "topExitSections": zod.array(zod.object({
+  "section": zod.string(),
+  "count": zod.number()
+})),
+  "deviceBreakdown": zod.object({
+  "views": zod.object({
+  "mobile": zod.number(),
+  "desktop": zod.number(),
+  "tablet": zod.number()
+}),
+  "ctaClicks": zod.object({
+  "mobile": zod.number(),
+  "desktop": zod.number(),
+  "tablet": zod.number()
+}),
+  "checkoutsStarted": zod.object({
+  "mobile": zod.number(),
+  "desktop": zod.number(),
+  "tablet": zod.number()
+}),
+  "purchasesConfirmed": zod.object({
+  "mobile": zod.number(),
+  "desktop": zod.number(),
+  "tablet": zod.number()
+})
+}),
+  "checkoutsByCtaSource": zod.array(zod.object({
+  "source": zod.string(),
+  "count": zod.number()
+})),
+  "visitors": zod.object({
+  "unique": zod.number(),
+  "new": zod.number(),
+  "recurring": zod.number()
+}),
+  "avgLcpMs": zod.number().nullable()
+})
+
+
+/**
  * @summary Get the landing page configured for the main route
  */
 export const GetAdminPrimaryLandingPageQueryParams = zod.object({

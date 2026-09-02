@@ -532,6 +532,49 @@ paths:
                 required: [analytics]
         "403":
           description: Access denied
+  /admin/analytics-funnel:
+    get:
+      operationId: getAdminFunnelAnalytics
+      tags: [admin]
+      summary: Get conversion funnel analytics
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: lp
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [v1, v2, lp3, all]
+            default: v2
+        - name: from
+          in: query
+          required: false
+          schema: { type: string }
+        - name: to
+          in: query
+          required: false
+          schema: { type: string }
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+      responses:
+        "200":
+          description: Funnel and diagnostic analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminFunnelAnalytics"
+        "400":
+          description: Invalid analytics filters
+        "403":
+          description: Access denied
   /admin/landing-pages/primary:
     get:
       operationId: getAdminPrimaryLandingPage
@@ -1855,6 +1898,7 @@ components:
         checkoutsStarted: { type: number }
         purchasesConfirmed: { type: number }
         avgTimeOnPageSeconds: { type: ["number", "null"] }
+        heroExits: { type: number }
         topExitSections:
           type: array
           items:
@@ -1882,6 +1926,7 @@ components:
           checkoutsStarted,
           purchasesConfirmed,
           avgTimeOnPageSeconds,
+           heroExits,
           topExitSections,
           deviceBreakdown,
           checkoutsByCtaSource,

@@ -312,6 +312,104 @@
 .admin-tab-content {
   min-height: 300px;
 }
+.admin-analysis {
+  max-width: 1160px;
+}
+.admin-analysis-copy {
+  max-width: 680px;
+  margin: -0.55rem 0 1.35rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+.admin-analysis-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(196, 172, 255, 0.14);
+  border-radius: 0.85rem;
+}
+.admin-analysis-controls > label,
+.admin-analysis-date-range label {
+  display: grid;
+  min-width: 190px;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin-analysis-controls select,
+.admin-analysis-controls input {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.65rem;
+  color: #f9f8fb;
+  background: #2b2141;
+  border: 1px solid rgba(196, 172, 255, 0.23);
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.75rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.admin-analysis-controls select:focus-visible,
+.admin-analysis-controls input:focus-visible {
+  outline: 2px solid #c4acff;
+  outline-offset: 2px;
+}
+.admin-analysis-controls option {
+  color: #f9f8fb;
+  background: #2b2141;
+}
+.admin-analysis-date-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+.admin-analysis-date-range label {
+  min-width: 145px;
+}
+.admin-analysis-hint {
+  margin: 0.75rem 0 1rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.76rem;
+}
+.admin-analysis-state {
+  display: flex;
+  min-height: 160px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 1.5rem;
+  color: rgba(255, 255, 255, 0.64);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(196, 172, 255, 0.14);
+  border-radius: 0.95rem;
+  font-size: 0.82rem;
+  text-align: center;
+}
+.admin-analysis-state.is-error {
+  color: #ffb7c5;
+  border-color: rgba(255, 116, 145, 0.3);
+}
+.admin-analysis-spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid rgba(196, 172, 255, 0.26);
+  border-top-color: #c4acff;
+  border-radius: 50%;
+  animation: admin-analysis-spin 700ms linear infinite;
+}
+@keyframes admin-analysis-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .admin-primary-landing {
   margin-bottom: 1.35rem;
   padding: 1.15rem;

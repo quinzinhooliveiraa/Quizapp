@@ -325,6 +325,11 @@
   font-size: 0.67rem;
 }
 
+.analytics-funnel-list-copy small.is-alert {
+  color: var(--analytics-rose);
+  font-weight: 700;
+}
+
 .analytics-funnel-list-number,
 .analytics-funnel-list-percent {
   color: var(--analytics-text);

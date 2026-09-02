@@ -21,6 +21,7 @@ export interface AdminFunnelAnalytics {
   purchasesConfirmed: number;
   /** @nullable */
   avgTimeOnPageSeconds: number | null;
+  heroExits: number;
   topExitSections: AdminFunnelAnalyticsTopExitSectionsItem[];
   deviceBreakdown: AnalyticsDeviceBreakdown;
   checkoutsByCtaSource: AnalyticsCtaSource[];

@@ -8402,7 +8402,15 @@ function RouteAwareSplash() {
     location === "/lp3" ||
     location.startsWith("/e/");
 
-  return isLandingPage ? null : <SplashScreen />;
+  const isAppRoute =
+    location === "/admin" ||
+    location === "/login" ||
+    location === "/onboarding" ||
+    location === "/play" ||
+    location === "/app" ||
+    location.startsWith("/invite/");
+
+  return isLandingPage || isAppRoute ? null : <SplashScreen />;
 }
 function App() {
   return (

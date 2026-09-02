@@ -138,6 +138,7 @@ async function computeFunnel(since: Date) {
               and(
                 eq(sessionsTable.sourceLp, lpId),
                 eq(sessionsTable.internal, false),
+                gte(sessionsTable.createdAt, since),
               ),
             ),
           db
@@ -148,6 +149,7 @@ async function computeFunnel(since: Date) {
                 eq(sessionsTable.sourceLp, lpId),
                 eq(sessionsTable.accessGranted, true),
                 eq(sessionsTable.internal, false),
+                gte(sessionsTable.createdAt, since),
               ),
             ),
           db
@@ -295,6 +297,7 @@ async function computeFunnelAnalytics({
     purchases,
     avgTime,
     exits,
+    heroExits,
     eventDevices,
     checkoutDevices,
     purchaseDevices,
@@ -329,6 +332,16 @@ async function computeFunnelAnalytics({
       .groupBy(pageEventsTable.lastSection)
       .orderBy(desc(count()))
       .limit(5),
+    db
+      .select({ value: count() })
+      .from(pageEventsTable)
+      .where(
+        and(
+          ...eventWindow,
+          eq(pageEventsTable.eventType, "exit"),
+          sql`lower(coalesce(${pageEventsTable.lastSection}, '')) like '%hero%'`,
+        ),
+      ),
     db
       .select({
         eventType: pageEventsTable.eventType,
@@ -421,6 +434,7 @@ async function computeFunnelAnalytics({
         section: item.section as string,
         count: Number(item.value),
       })),
+    heroExits: Number(heroExits[0]?.value || 0),
     deviceBreakdown,
     checkoutsByCtaSource: ctaSources
       .filter((item) => item.source)
