@@ -6302,6 +6302,15 @@ function AppExperienceReference() {
                           <div
                             className={`eu-progress-cover theme-cover-${themes.indexOf(theme) % 5}`}
                           >
+                              {themeBackgroundUrl(theme.id) && (
+                                <img
+                                  className="theme-cover-photo"
+                                  src={themeBackgroundUrl(theme.id) as string}
+                                  alt=""
+                                  aria-hidden="true"
+                                  loading="lazy"
+                                />
+                              )}
                             <span className="eu-progress-number">
                               {String(seenCount).padStart(2, "0")}
                             </span>
@@ -6388,6 +6397,15 @@ function AppExperienceReference() {
                                 onClick={() => changeTheme(id)}
                                 data-testid={`button-favorite-theme-${id}`}
                               >
+                                {themeBackgroundUrl(theme.id) && (
+                                  <img
+                                    className="theme-cover-photo"
+                                    src={themeBackgroundUrl(theme.id) as string}
+                                    alt=""
+                                    aria-hidden="true"
+                                    loading="lazy"
+                                  />
+                                )}
                                 <span className="eu-topic-shade" />
                                 <strong>{theme.title}</strong>
                                 <ArrowRight size={15} />
