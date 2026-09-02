@@ -3478,7 +3478,14 @@
   padding: 1.4rem 1.15rem;
   border: 1px solid rgba(191, 168, 255, 0.28);
   border-radius: 1.45rem;
-  background: linear-gradient(125deg, #302254 0%, #241a45 48%, #41245d 100%);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(8, 8, 16, 0.88) 0%,
+      rgba(9, 12, 19, 0.62) 52%,
+      rgba(7, 9, 16, 0.2) 100%
+    ),
+    url("/daily-deck-wallpaper.jpg") center 38% / cover no-repeat;
   box-shadow:
     0 1.6rem 3.2rem rgba(5, 3, 18, 0.36),
     inset 0 1px rgba(255, 255, 255, 0.11);
