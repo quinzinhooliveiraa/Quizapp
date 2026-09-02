@@ -21455,6 +21455,8 @@ blockquote em {
 
 @media (max-width: 760px) {
   .checkout-store-grid {
+    display: flex;
+    flex-direction: column;
     gap: 0.85rem;
     padding: 1rem 1rem 1.4rem;
   }
@@ -21481,5 +21483,23 @@ blockquote em {
 
   .checkout-summary-row {
     font-size: 0.8rem;
+  }
+
+  .checkout-pix-copybox {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.8rem;
+  }
+
+  .checkout-pix-copybox code {
+    width: 100%;
+    text-align: center;
+  }
+
+  .checkout-pix-copybox .checkout-copy-button {
+    width: 100%;
+    min-height: 3.35rem;
+    justify-content: center;
   }
 }
