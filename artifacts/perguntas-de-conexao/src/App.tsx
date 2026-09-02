@@ -6500,38 +6500,29 @@ function AppExperienceReference() {
               </section>
             ) : (
               <section className="deck-home" aria-labelledby="deck-home-title">
-                {activeNav === "todos" && isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => navigate("/play")}
-                    className="play-banner-cta play-banner-slim"
-                    data-testid="button-play-online-top"
-                  >
-                    <div className="play-banner-icon">
-                      <Wifi size={16} />
-                    </div>
-                    <span className="play-banner-inline">
-                      <strong>Jogar online</strong>
-                      <small>abre uma sala e manda o código</small>
-                    </span>
-                    <ArrowRight size={16} className="play-banner-arrow" />
-                  </button>
-                )}
                 <div className="deck-home-heading">
-                  <h1 id="deck-home-title" data-testid="text-deck-title">
+                  <h1
+                    id="deck-home-title"
+                    className={
+                      activeNav === "todos"
+                        ? "deck-home-title deck-home-title-all"
+                        : "deck-home-title"
+                    }
+                    data-testid="text-deck-title"
+                  >
                     {activeNav === "temas"
                       ? "Escolha um assunto pra começar"
                       : activeNav === "vibes"
                         ? "Escolha uma vibe pra agora"
-                        : "Escolha um objetivo pra começar"}
+                        : "Escolha um objetivo para começar"}
                   </h1>
-                  <p className="deck-home-subtitle">
-                    {activeNav === "temas"
-                      ? "Conversas sobre as histórias e planos que fazem parte de vocês"
-                      : activeNav === "vibes"
-                        ? "Encontrem o clima que combina com este momento"
-                        : "Por exemplo, descobrir algo novo, imaginar o que vem"}
-                  </p>
+                  {activeNav !== "todos" && (
+                    <p className="deck-home-subtitle">
+                      {activeNav === "temas"
+                        ? "Conversas sobre as histórias e planos que fazem parte de vocês"
+                        : "Encontrem o clima que combina com este momento"}
+                    </p>
+                  )}
                 </div>
                 <div className="theme-carousel-wrap">
                   <button
@@ -6701,10 +6692,6 @@ function AppExperienceReference() {
                     </button>
                   </div>
                 )}
-                <p className="deck-note">
-                  <Sparkles size={14} /> Uma pergunta por vez. Vocês decidem até
-                  onde ir.
-                </p>
               </section>
             )}
           </>

@@ -13953,6 +13953,14 @@ blockquote em {
 /* Touch layouts use swipe and the in-card actions instead of desktop
    navigation controls. */
 @media (max-width: 699px) {
+  .app-bottom-nav {
+    bottom: max(0.4rem, env(safe-area-inset-bottom));
+  }
+
+  .question-view-stage {
+    padding-top: 0.8rem;
+  }
+
   .theme-carousel-arrow,
   .question-navigation-button {
     display: none !important;
@@ -13972,6 +13980,13 @@ blockquote em {
   .app-bottom-nav > button:not(.app-nav-toggle) svg,
   .app-bottom-nav > button:not(.app-nav-toggle) .nav-dot {
     display: none;
+  }
+}
+
+@media (min-width: 381px) and (max-width: 699px) {
+  .deck-home h1.deck-home-title-all {
+    max-width: none;
+    white-space: nowrap;
   }
 }
 
