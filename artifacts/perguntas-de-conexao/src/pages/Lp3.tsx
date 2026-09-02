@@ -35,6 +35,19 @@ type Lp3Props = {
 type Screen = "intro" | "question" | "result" | "story" | "practice" | "recommend" | "offer";
 type Answers = Lp3Answers;
 
+// Dor personalizada mostrada no topo da oferta, puxada do resultado do quiz.
+const OFFER_PAIN: Record<string, string> = {
+  routine: "Vocês viraram colegas de casa.",
+  discovery: "Falam todo dia e não sabem mais nada um do outro.",
+  "waiting-conversation": "Tem uma conversa que vocês fogem há meses.",
+  reconnection: "Ficou tudo morno e vocês fingem que não.",
+  beginning: "A rotina mata isso aqui se você deixar.",
+  distance: "“Bom dia” e “boa noite” viraram a relação de vocês.",
+  intimacy: "Vocês empurram a intimidade com a barriga.",
+  healthy: "“Tá tudo bem” é onde a maioria trava.",
+};
+const OFFER_PAIN_FALLBACK = "A conversa de vocês virou logística.";
+
 type QuizQuestion = {
   id: string;
   key: string;
@@ -515,7 +528,6 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
           </div>
         </div>
       </div>
-      <Lp3Testimonials />
       <div className="lp3-back-row">
         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-story">
           <ChevronLeft size={14} aria-hidden="true" /> Voltar
@@ -711,23 +723,25 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
 
   const renderOffer = () => (
     <section className="lp3-view lp3-offer" aria-labelledby="lp3-offer-title">
-      <div className="lp3-kicker">Para continuar de onde vocês estão</div>
-      <h1 id="lp3-offer-title" className="lp3-offer-title">Mais espaço para vocês dois.</h1>
+      <div className="lp3-kicker">A verdade que o quiz mostrou</div>
+      <p className="lp3-offer-pain">{OFFER_PAIN[result.narrativeType] ?? OFFER_PAIN_FALLBACK}</p>
+      <h1 id="lp3-offer-title" className="lp3-offer-title lp3-offer-soco">Dá pra resolver isso hoje à noite.</h1>
+      <div className="lp3-offer-gain-label">O que vocês ganham</div>
       <ul className="lp3-benefits">
-        <li>15 baralhos para diferentes momentos</li>
-        <li>445+ perguntas reais</li>
-        <li>Acesso vitalício</li>
-        <li>Sem assinatura</li>
+        <li>15 baralhos para cada momento</li>
+        <li>459 perguntas reais</li>
+        <li>Jogo a distância (a dois, longe)</li>
+        <li>Acesso vitalício · sem assinatura</li>
         <li>No celular e no computador</li>
-        <li>Convide seu parceiro</li>
       </ul>
+      <Lp3Testimonials />
       <div className="lp3-price">
         <strong>R$47,90</strong>
-        <span>pagamento único</span>
+        <span>pagamento único · sem mensalidade</span>
       </div>
       <div className="lp3-actions">
         <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-checkout-intent">
-          Quero começar essa conversa <ArrowRight size={15} aria-hidden="true" />
+          Quero resolver isso hoje <ArrowRight size={15} aria-hidden="true" />
         </button>
         <p className="lp3-cta-note">Você começa escolhendo o seu nome e onde quer receber o acesso.</p>
       </div>
