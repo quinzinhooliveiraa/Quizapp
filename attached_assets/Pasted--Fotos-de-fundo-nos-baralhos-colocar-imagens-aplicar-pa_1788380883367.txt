@@ -1,0 +1,181 @@
+# Fotos de fundo nos baralhos — colocar imagens + aplicar patch
+
+Duas partes:
+
+## PARTE 1 — as imagens (o usuário vai colar 15 arquivos)
+Crie a pasta `artifacts/perguntas-de-conexao/public/theme-backgrounds/` e coloque
+dentro os 15 arquivos .jpg que o usuário forneceu (nomes exatos):
+porto-seguro.jpg, livro-aberto.jpg, voce-nao-sabia.jpg, em-voz-alta.jpg, la-atras.jpg,
+modo-leve.jpg, viagens.jpg, carreira-dinheiro.jpg, depois-da-tempestade.jpg, faisca.jpg,
+luzes-baixas.jpg, fogo-alto.jpg, sem-freio.jpg, mesmo-longe.jpg, perto-de-novo.jpg
+(mantenha os nomes exatamente assim — o código aponta pra eles.)
+
+## PARTE 2 — o código (aplicar EXATAMENTE este patch, nada além dele)
+Salve o conteúdo entre as marcas em `fotos-baralhos.patch` na raiz e rode
+`git apply fotos-baralhos.patch` (se falhar, `git apply --3way fotos-baralhos.patch`).
+Ele só: liga a foto de cada baralho no card (app) e deixa a foto mais visível na LP3.
+NÃO mexa em mais nada.
+
+Depois: `pnpm run build` (tem que passar) e deploy. Confere no app que os cards dos
+baralhos aparecem com a foto de fundo.
+
+===PATCH INÍCIO===
+From 99450260b1f45a4e3c74854b2d79165da17d8722 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 2 Sep 2026 19:00:48 +0000
+Subject: [PATCH] =?UTF-8?q?Fotos=20de=20fundo=20nos=20baralhos=20(capa)=20?=
+ =?UTF-8?q?=E2=80=94=20app=20+=20LP3?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- connection-content: backgroundUrl por tema (/theme-backgrounds/<id>.jpg).
+- App.tsx: card do baralho (theme-cover) mostra a foto de capa + mapa local de ids.
+- index.css: .theme-cover-photo (capa) + z-index do shade/conteúdo; LP3 deck bg 0.18->0.32.
+- (As 15 imagens vão em public/theme-backgrounds/, entregues à parte.)
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01UTVWCYJwvoi1QhUC8kbTkx
+---
+ artifacts/perguntas-de-conexao/src/App.tsx   | 30 ++++++++++++++++++++
+ artifacts/perguntas-de-conexao/src/index.css | 20 ++++++++++++-
+ lib/connection-content/src/index.ts          | 30 ++++++++++----------
+ 3 files changed, 64 insertions(+), 16 deletions(-)
+
+diff --git a/artifacts/perguntas-de-conexao/src/App.tsx b/artifacts/perguntas-de-conexao/src/App.tsx
+index 4c08967..7c3a1e8 100644
+--- a/artifacts/perguntas-de-conexao/src/App.tsx
++++ b/artifacts/perguntas-de-conexao/src/App.tsx
+@@ -129,6 +129,27 @@ const queryClient = new QueryClient({
+ });
+ const apiBase = apiBaseUrl;
+ const apiUrl = (path: string) => `${apiBase}${path}`;
++
++// Baralhos que têm foto de fundo (arquivos em /public/theme-backgrounds/).
++const THEME_BACKGROUND_IDS = new Set([
++  "porto-seguro",
++  "livro-aberto",
++  "voce-nao-sabia",
++  "em-voz-alta",
++  "la-atras",
++  "modo-leve",
++  "viagens",
++  "carreira-dinheiro",
++  "depois-da-tempestade",
++  "faisca",
++  "luzes-baixas",
++  "fogo-alto",
++  "sem-freio",
++  "mesmo-longe",
++  "perto-de-novo",
++]);
++const themeBackgroundUrl = (id: string): string | null =>
++  THEME_BACKGROUND_IDS.has(id) ? `/theme-backgrounds/${id}.jpg` : null;
+ const inviteUrlFromToken = (token: string) =>
+   `${window.location.origin}/invite/${token}`;
+ const nativeCheckoutEnabled = true;
+@@ -6550,6 +6571,15 @@ function AppExperienceReference() {
+                           data-theme-index={index}
+                           data-testid={`button-theme-card-${theme.id}`}
+                         >
++                          {themeBackgroundUrl(theme.id) && (
++                            <img
++                              className="theme-cover-photo"
++                              src={themeBackgroundUrl(theme.id) as string}
++                              alt=""
++                              aria-hidden="true"
++                              loading="lazy"
++                            />
++                          )}
+                           <span className="theme-cover-shade" />
+                           <span className="theme-cover-top">
+                             <span className="theme-cover-meta">
+diff --git a/artifacts/perguntas-de-conexao/src/index.css b/artifacts/perguntas-de-conexao/src/index.css
+index f57fe78..1ff94a6 100644
+--- a/artifacts/perguntas-de-conexao/src/index.css
++++ b/artifacts/perguntas-de-conexao/src/index.css
+@@ -8489,6 +8489,7 @@ blockquote em {
+ .theme-cover-shade {
+   position: absolute;
+   inset: 0;
++  z-index: 1;
+   background:
+     radial-gradient(
+       circle at 65% 28%,
+@@ -8497,6 +8498,23 @@ blockquote em {
+     ),
+     linear-gradient(180deg, transparent 35%, rgba(9, 7, 19, 0.78) 100%);
+ }
++
++/* Foto de fundo do baralho (capa) */
++.theme-cover-photo {
++  position: absolute;
++  inset: 0;
++  z-index: 0;
++  width: 100%;
++  height: 100%;
++  object-fit: cover;
++  pointer-events: none;
++}
++
++.theme-cover-top,
++.theme-cover-copy {
++  position: relative;
++  z-index: 2;
++}
+ .theme-cover-shade::after,
+ .question-card-grain::after {
+   content: "";
+@@ -16794,7 +16812,7 @@ blockquote em {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+-  opacity: 0.18;
++  opacity: 0.32;
+   pointer-events: none;
+ }
+ 
+diff --git a/lib/connection-content/src/index.ts b/lib/connection-content/src/index.ts
+index 725263b..249b013 100644
+--- a/lib/connection-content/src/index.ts
++++ b/lib/connection-content/src/index.ts
+@@ -18,21 +18,21 @@ export type ConnectionQuestion = {
+ };
+ 
+ export const themes: ConnectionTheme[] = [
+-  { id: "porto-seguro", title: "Porto Seguro", description: "As conversas que parecem casa.", count: 31, kind: "tema", audience: "todos" },
+-  { id: "livro-aberto", title: "Livro Aberto", description: "Sem filtro, cara a cara.", count: 31, kind: "tema", audience: "todos" },
+-  { id: "voce-nao-sabia", title: "Você Não Sabia", description: "Descobertas que ainda cabem entre vocês.", count: 32, kind: "tema", audience: "todos" },
+-  { id: "em-voz-alta", title: "Em Voz Alta", description: "A vida que os dois querem construir.", count: 30, kind: "tema", audience: "todos" },
+-  { id: "la-atras", title: "Lá Atrás", description: "O que formou quem você é hoje.", count: 28, kind: "tema", audience: "todos" },
+-  { id: "modo-leve", title: "Modo Leve", description: "Pra rir e não levar tão a sério.", count: 31, kind: "tema", audience: "todos" },
+-  { id: "viagens", title: "Viagens", description: "Lugares que já foram nossos, e os que ainda vão ser.", count: 30, kind: "tema", audience: "todos" },
+-  { id: "carreira-dinheiro", title: "Carreira & Dinheiro", description: "Como vocês pensam o lado prático da vida a dois.", count: 30, kind: "tema", audience: "todos" },
+-  { id: "depois-da-tempestade", title: "Depois da Tempestade", description: "Brigas, mágoas e o caminho de volta.", count: 30, kind: "tema", audience: "todos" },
+-  { id: "faisca", title: "Faísca", description: "O lado mais provocante de vocês dois.", count: 31, kind: "vibe", audience: "casais" },
+-  { id: "luzes-baixas", title: "Luzes Baixas", description: "Para quando a noite pede mais coragem.", count: 35, kind: "vibe", audience: "18+" },
+-  { id: "fogo-alto", title: "Fogo Alto", description: "Sem tabu: desejos, curiosidades e limites.", count: 30, kind: "vibe", audience: "18+" },
+-  { id: "sem-freio", title: "Sem Freio", description: "O mais ousado. Só pra quem topa de verdade.", count: 30, kind: "vibe", audience: "18+" },
+-  { id: "mesmo-longe", title: "Mesmo Longe", description: "Pra quando a rotina ou a distância afastam.", count: 30, kind: "vibe", audience: "casais" },
+-  { id: "perto-de-novo", title: "Perto de Novo", description: "Esquentar o espaço entre vocês.", count: 30, kind: "vibe", audience: "casais" },
++  { id: "porto-seguro", title: "Porto Seguro", description: "As conversas que parecem casa.", count: 31, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/porto-seguro.jpg" },
++  { id: "livro-aberto", title: "Livro Aberto", description: "Sem filtro, cara a cara.", count: 31, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/livro-aberto.jpg" },
++  { id: "voce-nao-sabia", title: "Você Não Sabia", description: "Descobertas que ainda cabem entre vocês.", count: 32, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/voce-nao-sabia.jpg" },
++  { id: "em-voz-alta", title: "Em Voz Alta", description: "A vida que os dois querem construir.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/em-voz-alta.jpg" },
++  { id: "la-atras", title: "Lá Atrás", description: "O que formou quem você é hoje.", count: 28, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/la-atras.jpg" },
++  { id: "modo-leve", title: "Modo Leve", description: "Pra rir e não levar tão a sério.", count: 31, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/modo-leve.jpg" },
++  { id: "viagens", title: "Viagens", description: "Lugares que já foram nossos, e os que ainda vão ser.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/viagens.jpg" },
++  { id: "carreira-dinheiro", title: "Carreira & Dinheiro", description: "Como vocês pensam o lado prático da vida a dois.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/carreira-dinheiro.jpg" },
++  { id: "depois-da-tempestade", title: "Depois da Tempestade", description: "Brigas, mágoas e o caminho de volta.", count: 30, kind: "tema", audience: "todos", backgroundUrl: "/theme-backgrounds/depois-da-tempestade.jpg" },
++  { id: "faisca", title: "Faísca", description: "O lado mais provocante de vocês dois.", count: 31, kind: "vibe", audience: "casais", backgroundUrl: "/theme-backgrounds/faisca.jpg" },
++  { id: "luzes-baixas", title: "Luzes Baixas", description: "Para quando a noite pede mais coragem.", count: 35, kind: "vibe", audience: "18+", backgroundUrl: "/theme-backgrounds/luzes-baixas.jpg" },
++  { id: "fogo-alto", title: "Fogo Alto", description: "Sem tabu: desejos, curiosidades e limites.", count: 30, kind: "vibe", audience: "18+", backgroundUrl: "/theme-backgrounds/fogo-alto.jpg" },
++  { id: "sem-freio", title: "Sem Freio", description: "O mais ousado. Só pra quem topa de verdade.", count: 30, kind: "vibe", audience: "18+", backgroundUrl: "/theme-backgrounds/sem-freio.jpg" },
++  { id: "mesmo-longe", title: "Mesmo Longe", description: "Pra quando a rotina ou a distância afastam.", count: 30, kind: "vibe", audience: "casais", backgroundUrl: "/theme-backgrounds/mesmo-longe.jpg" },
++  { id: "perto-de-novo", title: "Perto de Novo", description: "Esquentar o espaço entre vocês.", count: 30, kind: "vibe", audience: "casais", backgroundUrl: "/theme-backgrounds/perto-de-novo.jpg" },
+ ];
+ 
+ export const questions: ConnectionQuestion[] = [
+-- 
+2.43.0
+===PATCH FIM===
