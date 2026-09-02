@@ -21310,6 +21310,7 @@ blockquote em {
   display: grid;
   align-content: start;
   gap: 0.85rem;
+  min-width: 0;
 }
 
 .checkout-order-column {
@@ -21326,6 +21327,9 @@ blockquote em {
 .checkout-form-card,
 .checkout-summary-card {
   box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
   border: 1px solid #ded7e0;
   border-radius: 1.05rem;
   background: #fffdfb;
@@ -21374,6 +21378,14 @@ blockquote em {
   grid-template-columns: 1fr;
   gap: 0.8rem;
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.checkout-field,
+.checkout-email-input {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .checkout-payment-card .checkout-card-heading {
@@ -21457,12 +21469,14 @@ blockquote em {
   .checkout-store-grid {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0.85rem;
     padding: 1rem 1rem 1.4rem;
   }
 
   .checkout-product-column,
   .checkout-order-column {
+    width: 100%;
     gap: 0.8rem;
   }
 
