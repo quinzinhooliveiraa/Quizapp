@@ -324,6 +324,7 @@ export const CreateCheckoutBody = zod.object({
   "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
   "sourceLp": zod.enum(['v1', 'v2', 'lp3']).optional(),
   "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional(),
+  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'lp3_offer']).optional(),
   "experimentId": zod.string().max(createCheckoutBodyExperimentIdMax).optional(),
   "experimentVariantId": zod.string().max(createCheckoutBodyExperimentVariantIdMax).optional(),
   "internal": zod.boolean().default(createCheckoutBodyInternalDefault)
@@ -391,6 +392,8 @@ export const trackPageEventBodyClarityUserIdMax = 200;
 
 export const trackPageEventBodyClaritySessionIdMax = 200;
 
+export const trackPageEventBodyLcpMsMin = 0;
+
 export const trackPageEventBodyInternalDefault = false;
 
 export const TrackPageEventBody = zod.object({
@@ -404,6 +407,7 @@ export const TrackPageEventBody = zod.object({
   "clarityUserId": zod.string().max(trackPageEventBodyClarityUserIdMax).optional(),
   "claritySessionId": zod.string().max(trackPageEventBodyClaritySessionIdMax).optional(),
   "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'lp3_offer']).optional(),
+  "lcpMs": zod.number().min(trackPageEventBodyLcpMsMin).optional(),
   "internal": zod.boolean().default(trackPageEventBodyInternalDefault)
 })
 

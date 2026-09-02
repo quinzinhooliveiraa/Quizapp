@@ -322,6 +322,15 @@ export const CheckoutCreateInputSourceLp = {
   lp3: 'lp3',
 } as const;
 
+export type CheckoutCreateInputCtaSource = typeof CheckoutCreateInputCtaSource[keyof typeof CheckoutCreateInputCtaSource];
+
+
+export const CheckoutCreateInputCtaSource = {
+  hero_quiz: 'hero_quiz',
+  hero_comprar: 'hero_comprar',
+  lp3_offer: 'lp3_offer',
+} as const;
+
 export interface CheckoutCreateInput {
   packageId: CheckoutCreateInputPackageId;
   /** @minLength 1 */
@@ -336,6 +345,7 @@ export interface CheckoutCreateInput {
      * @maxLength 120
      */
   visitorKey?: string;
+  ctaSource?: CheckoutCreateInputCtaSource;
   /** @maxLength 120 */
   experimentId?: string;
   /** @maxLength 120 */
@@ -391,6 +401,8 @@ export interface PageEventInput {
   /** @maxLength 200 */
   claritySessionId?: string;
   ctaSource?: PageEventInputCtaSource;
+  /** @minimum 0 */
+  lcpMs?: number;
   internal?: boolean;
 }
 
@@ -721,6 +733,63 @@ export interface LandingAnalytics {
   /** @nullable */
   avgTimeOnPageSeconds: number | null;
   topExitSections: LandingAnalyticsTopExitSectionsItem[];
+}
+
+export interface AnalyticsDeviceCounts {
+  mobile: number;
+  desktop: number;
+  tablet: number;
+}
+
+export interface AnalyticsDeviceBreakdown {
+  views: AnalyticsDeviceCounts;
+  ctaClicks: AnalyticsDeviceCounts;
+  checkoutsStarted: AnalyticsDeviceCounts;
+  purchasesConfirmed: AnalyticsDeviceCounts;
+}
+
+export interface AnalyticsCtaSource {
+  source: string;
+  count: number;
+}
+
+export interface AnalyticsVisitors {
+  unique: number;
+  new: number;
+  recurring: number;
+}
+
+export type AdminFunnelAnalyticsLpId = typeof AdminFunnelAnalyticsLpId[keyof typeof AdminFunnelAnalyticsLpId];
+
+
+export const AdminFunnelAnalyticsLpId = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+  all: 'all',
+} as const;
+
+export type AdminFunnelAnalyticsTopExitSectionsItem = {
+  section: string;
+  count: number;
+};
+
+export interface AdminFunnelAnalytics {
+  lpId: AdminFunnelAnalyticsLpId;
+  from: string;
+  to: string;
+  views: number;
+  ctaClicks: number;
+  checkoutsStarted: number;
+  purchasesConfirmed: number;
+  /** @nullable */
+  avgTimeOnPageSeconds: number | null;
+  topExitSections: AdminFunnelAnalyticsTopExitSectionsItem[];
+  deviceBreakdown: AnalyticsDeviceBreakdown;
+  checkoutsByCtaSource: AnalyticsCtaSource[];
+  visitors: AnalyticsVisitors;
+  /** @nullable */
+  avgLcpMs: number | null;
 }
 
 export interface CheckoutCreateResponse {

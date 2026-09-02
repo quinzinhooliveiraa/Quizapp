@@ -5,6 +5,7 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { CheckoutCreateInputCtaSource } from './checkoutCreateInputCtaSource';
 import type { CheckoutCreateInputMethod } from './checkoutCreateInputMethod';
 import type { CheckoutCreateInputMode } from './checkoutCreateInputMode';
 import type { CheckoutCreateInputPackageId } from './checkoutCreateInputPackageId';
@@ -24,6 +25,7 @@ export interface CheckoutCreateInput {
      * @maxLength 120
      */
   visitorKey?: string;
+  ctaSource?: CheckoutCreateInputCtaSource;
   /** @maxLength 120 */
   experimentId?: string;
   /** @maxLength 120 */

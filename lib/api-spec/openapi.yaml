@@ -1462,6 +1462,9 @@ components:
           type: string
           minLength: 1
           maxLength: 120
+        ctaSource:
+          type: string
+          enum: [hero_quiz, hero_comprar, lp3_offer]
         experimentId:
           type: string
           maxLength: 120
@@ -1487,6 +1490,7 @@ components:
         ctaSource:
           type: string
           enum: [hero_quiz, hero_comprar, lp3_offer]
+        lcpMs: { type: number, minimum: 0 }
         internal:
           type: boolean
           default: false
@@ -1807,6 +1811,82 @@ components:
           purchasesConfirmed,
           avgTimeOnPageSeconds,
           topExitSections,
+        ]
+    AnalyticsDeviceCounts:
+      type: object
+      properties:
+        mobile: { type: number }
+        desktop: { type: number }
+        tablet: { type: number }
+      required: [mobile, desktop, tablet]
+    AnalyticsDeviceBreakdown:
+      type: object
+      properties:
+        views:
+          $ref: "#/components/schemas/AnalyticsDeviceCounts"
+        ctaClicks:
+          $ref: "#/components/schemas/AnalyticsDeviceCounts"
+        checkoutsStarted:
+          $ref: "#/components/schemas/AnalyticsDeviceCounts"
+        purchasesConfirmed:
+          $ref: "#/components/schemas/AnalyticsDeviceCounts"
+      required: [views, ctaClicks, checkoutsStarted, purchasesConfirmed]
+    AnalyticsCtaSource:
+      type: object
+      properties:
+        source: { type: string }
+        count: { type: number }
+      required: [source, count]
+    AnalyticsVisitors:
+      type: object
+      properties:
+        unique: { type: number }
+        new: { type: number }
+        recurring: { type: number }
+      required: [unique, new, recurring]
+    AdminFunnelAnalytics:
+      type: object
+      properties:
+        lpId: { type: string, enum: [v1, v2, lp3, all] }
+        from: { type: string }
+        to: { type: string }
+        views: { type: number }
+        ctaClicks: { type: number }
+        checkoutsStarted: { type: number }
+        purchasesConfirmed: { type: number }
+        avgTimeOnPageSeconds: { type: ["number", "null"] }
+        topExitSections:
+          type: array
+          items:
+            type: object
+            properties:
+              section: { type: string }
+              count: { type: number }
+            required: [section, count]
+        deviceBreakdown:
+          $ref: "#/components/schemas/AnalyticsDeviceBreakdown"
+        checkoutsByCtaSource:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsCtaSource"
+        visitors:
+          $ref: "#/components/schemas/AnalyticsVisitors"
+        avgLcpMs: { type: ["number", "null"] }
+      required:
+        [
+          lpId,
+          from,
+          to,
+          views,
+          ctaClicks,
+          checkoutsStarted,
+          purchasesConfirmed,
+          avgTimeOnPageSeconds,
+          topExitSections,
+          deviceBreakdown,
+          checkoutsByCtaSource,
+          visitors,
+          avgLcpMs,
         ]
     CheckoutCreateResponse:
       type: object

@@ -17,6 +17,8 @@ export const sessionsTable = pgTable("sessions", {
   packageName: text("package_name").notNull(),
   sourceLp: text("source_lp"),
   visitorKey: text("visitor_key"),
+  device: text("device"),
+  ctaSource: text("cta_source"),
   experimentId: text("experiment_id"),
   experimentVariantId: text("experiment_variant_id"),
   inviteLimit: integer("invite_limit").notNull(),
@@ -111,8 +113,10 @@ export const pageEventsTable = pgTable("page_events", {
   clarityUserId: text("clarity_user_id"),
   claritySessionId: text("clarity_session_id"),
   ctaSource: text("cta_source"),
+  device: text("device"),
   internal: boolean("internal").notNull().default(false),
   timeOnPageMs: integer("time_on_page_ms"),
+  lcpMs: integer("lcp_ms"),
   lastSection: text("last_section"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

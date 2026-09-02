@@ -1,0 +1,125 @@
+# Painel de Análise no admin — funil de conversão + métricas
+
+## Objetivo
+
+Criar, dentro do painel admin, uma aba **"Análise"** que mostra, por landing page,
+um **funil de conversão visual** (formato "onda" que afunila) + as métricas que
+ajudam a entender por que as pessoas não compram. Tudo com filtro de período,
+incluindo **período personalizado**, e sempre **excluindo tráfego interno**
+(`internal = true`, que já existe).
+
+## PARTE A — Rastreios novos a capturar
+
+### A1. Dispositivo (celular vs computador) — PRIORIDADE
+No `POST /api/track/page-event` e na criação da sessão de checkout
+(`POST /checkout/create`), determine o dispositivo a partir do header
+`user-agent` da requisição (mobile / desktop / tablet) e salve numa coluna nova
+`device: text("device")` em **`pageEventsTable`** e **`sessionsTable`**. Use um
+parser simples de user-agent (uma dependência leve tipo `ua-parser-js`, ou uma
+função própria com regex pra "Mobile"/"Tablet"). Gere a migration.
+
+Por quê: o tráfego é quase todo de celular (TikTok/Instagram). Se o checkout
+quebra no celular, é aqui que se enxerga.
+
+### A2. Origem do botão que levou ao checkout
+Hoje os eventos `cta_click` já têm `ctaSource` (hero/quiz/preco/final). Faça a
+criação da sessão de checkout (`/checkout/create`) **aceitar e salvar** um
+`ctaSource` na `sessionsTable` (coluna nova `cta_source`), enviado pelo frontend
+no momento em que a pessoa dispara o checkout. Assim dá pra saber **qual botão
+gera os checkouts** (testa a hipótese de que o botão do topo manda gente fria).
+
+### A3. Velocidade (LCP) — opcional, mas incluir
+No frontend, capture o **Largest Contentful Paint** com
+`PerformanceObserver({type:'largest-contentful-paint', buffered:true})` e mande
+junto num evento (pode ser no evento `view` ou `exit`, num campo novo
+`lcpMs`). Salve em `pageEventsTable.lcp_ms` (nullable). Mostrar a média no painel.
+
+Mantenha o campo `internal` sendo salvo em tudo (já existe).
+
+## PARTE B — Endpoint de análise (expandir o que já existe)
+
+O `computeFunnel(since)` já existe em `routes/tracking.ts` e já exclui internos.
+Expanda para uma versão que aceite **intervalo de datas** e **filtro de LP**, e
+retorne, além do que já retorna:
+
+- contagem por **etapa do funil**: `views`, `ctaClicks`, `checkoutsStarted`
+  (sessões), `purchasesConfirmed` (accessGranted) — já tem.
+- **tempo médio na tela** (avg `timeOnPageMs`) — já tem.
+- **saídas por seção** (`topExitSections`) — já tem.
+- **quebra por dispositivo**: para cada etapa, quantos mobile vs desktop vs tablet.
+- **checkouts por `ctaSource`**: contagem de sessões agrupada por `cta_source`.
+- **novos vs recorrentes**: com base em `visitorKey` (um visitor que aparece em
+  mais de uma sessão/dia = recorrente). Pode ser uma métrica simples: nº de
+  visitorKeys únicos e quantos apareceram mais de uma vez.
+- **LCP médio** (avg `lcp_ms`, ignorando nulos).
+
+Crie uma rota admin `GET /api/admin/analytics-funnel` protegida por
+`isAdminSession` (mesmo padrão do `/admin/analytics`) que aceite querystring:
+`?lp=v2|lp3|v1|all&from=ISO&to=ISO` (ou `&days=N` como atalho). Não quebre o
+`/admin/analytics` nem o `/report/funnel` que a rotina usa — pode reaproveitar a
+função de cálculo, só adicionando os agrupamentos novos.
+
+## PARTE C — UI do painel (aba "Análise")
+
+Adicione uma aba **"Análise"** no admin (`pages/Admin.tsx`), seguindo o visual do
+resto do painel. Ela tem, de cima pra baixo:
+
+### C1. Barra de controles
+- Seletor de **LP**: LP principal (v2) / LP3 / (opcional) Todas.
+- Seletor de **período**: `2 dias`, `7 dias`, `30 dias` e **`Personalizado`**
+  (com dois campos de data, início e fim). O personalizado manda `from`/`to` pro
+  endpoint.
+- Alternador de **visualização**: **`Funil`** / **`Lista`**.
+
+### C2. Cartões de KPI (linha de 3)
+- **Tempo médio na tela** (ex.: "65s").
+- **Saíram já no topo (hero)** em % (exits no hero ÷ views).
+- **Iniciaram e não pagaram** (checkoutsStarted − purchases), em destaque vermelho.
+
+### C3. Funil (visualização "Funil")
+Um **funil horizontal em onda** que afunila da esquerda pra direita, com 4 etapas:
+**Visitas → Clicaram comprar → Iniciaram checkout → Pagaram**.
+
+Especificação visual:
+- Uma faixa que vai estreitando: a altura de cada ponto é proporcional ao valor
+  da etapa em relação à 1ª (Visitas = 100%). Curvas suaves entre os pontos (não
+  degraus).
+- Preenchimento com gradiente horizontal **roxo → rosa** (ex.: `#8b5cf6` →
+  `#e0447a`).
+- Em cima de cada etapa, o **rótulo**; no meio da onda, a **% em relação ao topo**
+  (branco, negrito, grande); embaixo, o **número absoluto**.
+- A última etapa (Pagaram), quando for 0, afunila quase a um fio — deixe uma
+  altura mínima só pra caber o "0%".
+- Pode desenhar com **SVG** (um `<path>` com o gradiente). Responsivo
+  (`preserveAspectRatio="none"`, largura 100%).
+
+### C4. Lista (visualização "Lista")
+Mesmos dados em **tabela**: Etapa | Pessoas | % do topo | Queda em relação à etapa
+anterior (queda ≥ 50% em vermelho). É só um toggle da mesma informação.
+
+### C5. Cartões de diagnóstico (abaixo do funil)
+- **Checkouts por origem do botão**: barras horizontais por `ctaSource`
+  (Topo/Hero, Quiz, Preço, Rodapé) com a contagem. Legenda curta: "se a maioria
+  vem do topo, é clique frio."
+- **Onde mais saem**: as `topExitSections` em barras (já temos o dado).
+- **Celular vs Computador**: a quebra por dispositivo — idealmente por etapa do
+  funil (ex.: % de mobile em Visitas vs em Pagaram). Se ficar complexo, ao menos
+  o split geral de visitas e de checkouts.
+- **Velocidade (LCP médio)** e **novos vs recorrentes**: cartões simples.
+
+Todos os números vêm do endpoint da Parte B, respeitando LP + período, sem os
+internos.
+
+## O que NÃO fazer
+- Não contar tráfego interno (`internal = true`) em nenhuma métrica.
+- Não quebrar `/admin/analytics` nem `/report/funnel` (a rotina de 2 dias usa).
+- Não inventar dado: se uma métrica não tiver base (ex.: LCP sem amostras), mostre
+  "—", não um número fabricado.
+
+## Depois de aplicar
+1. Formata, typecheck e build (frontend e backend).
+2. Confere no admin: abre a aba Análise, alterna LP, período (inclusive
+   personalizado) e Funil/Lista; confirma que os números batem com o
+   `/admin/analytics`.
+3. Abre o site pelo celular e pelo computador (uma visita de cada, SEM a flag
+   interna) e confirma que o split de dispositivo registra os dois.

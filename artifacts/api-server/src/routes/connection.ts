@@ -47,6 +47,7 @@ import {
 } from "../lib/stripe";
 import { sendPurchaseNotification } from "../lib/push";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
+import { detectDevice } from "../lib/device";
 
 type Theme = {
   id: string;
@@ -600,6 +601,8 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       packageName: config.name,
       sourceLp: parsed.data.sourceLp || null,
       visitorKey,
+      device: detectDevice(req.header("user-agent")),
+      ctaSource: parsed.data.ctaSource?.trim().slice(0, 40) || null,
       experimentId:
         parsed.data.experimentId?.trim().slice(0, 120) ||
         assignment?.experimentId ||

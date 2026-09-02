@@ -1829,6 +1829,7 @@ function useLpTracking(
   const visitorKeyRef = useRef<string>("");
   const clarityUserIdRef = useRef("");
   const claritySessionIdRef = useRef("");
+  const lcpMsRef = useRef<number | null>(null);
   const startedAtRef = useRef(0);
   const lastSectionRef = useRef("hero");
   const exitSentRef = useRef(false);
@@ -1888,6 +1889,8 @@ function useLpTracking(
         internal: isInternalTrackingEnabled(),
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
+        lcpMs:
+          lcpMsRef.current == null ? undefined : Math.round(lcpMsRef.current),
         ...extra,
       });
       if (eventType === "exit") {
@@ -1905,6 +1908,22 @@ function useLpTracking(
       }
     };
     readClarityIds();
+    let lcpObserver: PerformanceObserver | null = null;
+    if ("PerformanceObserver" in window) {
+      try {
+        lcpObserver = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const latest = entries[entries.length - 1];
+          if (latest) lcpMsRef.current = latest.startTime;
+        });
+        lcpObserver.observe({
+          type: "largest-contentful-paint",
+          buffered: true,
+        });
+      } catch {
+        lcpObserver = null;
+      }
+    }
     let viewSent = false;
     const sendView = () => {
       if (viewSent) return;
@@ -1952,6 +1971,7 @@ function useLpTracking(
     window.addEventListener("pagehide", sendExit);
     return () => {
       observer.disconnect();
+      lcpObserver?.disconnect();
       window.clearInterval(clarityPoll);
       window.clearTimeout(viewFallback);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -2035,6 +2055,7 @@ function useCheckout({
   const [paymentError, setPaymentError] = useState("");
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
+  const checkoutCtaSourceRef = useRef<LandingCtaSource | null>(null);
   const checkoutReviewsQuery = useListPublicReviews({
     query: {
       enabled:
@@ -2363,6 +2384,7 @@ function useCheckout({
           method: "pix",
           buyerEmail: normalizedEmail || undefined,
           sourceLp,
+          ctaSource: checkoutCtaSourceRef.current || undefined,
           visitorKey: getStoredVisitorKey() || undefined,
           internal: isInternalTrackingEnabled(),
           ...(experimentAssignment
@@ -2448,6 +2470,7 @@ function useCheckout({
           method: "card",
           buyerEmail: normalizedEmail || undefined,
           sourceLp,
+          ctaSource: checkoutCtaSourceRef.current || undefined,
           visitorKey: getStoredVisitorKey() || undefined,
           internal: isInternalTrackingEnabled(),
           ...(experimentAssignment
@@ -2513,6 +2536,7 @@ function useCheckout({
     packageId: "couple" | "family" = selectedPackage,
     ctaSource?: LandingCtaSource,
   ) => {
+    checkoutCtaSourceRef.current = ctaSource || null;
     onCtaClick?.(ctaSource);
     setSelectedPackage(packageId);
     safeSetItem("conexao-pending-source-lp", sourceLp);
