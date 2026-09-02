@@ -3076,150 +3076,153 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     </span>
                   </div>
                 </div>
-                <div
-                  className="checkout-benefits"
-                  data-testid="list-checkout-benefits"
-                >
-                  {[
-                    {
-                      icon: <Layers3 size={17} strokeWidth={1.8} />,
-                      title: "459 perguntas",
-                      detail: "15 baralhos",
-                    },
-                    {
-                      icon: <MonitorSmartphone size={17} strokeWidth={1.8} />,
-                      title: "Jogo online",
-                      detail: "a dois, à distância",
-                    },
-                    {
-                      icon: <Sparkles size={17} strokeWidth={1.8} />,
-                      title: "Temas & vibes",
-                      detail: "pra cada momento",
-                    },
-                  ].map(({ icon, title, detail }) => (
-                    <div className="checkout-benefit" key={title}>
-                      <span
-                        className="checkout-benefit-icon"
-                        aria-hidden="true"
-                      >
-                        {icon}
-                      </span>
-                      <span>
-                        <strong>{title}</strong>
-                        <small>{detail}</small>
-                      </span>
-                    </div>
-                  ))}
+                <div className="checkout-benefits-card">
+                  <div className="checkout-card-heading">
+                    <h3>O que você leva</h3>
+                  </div>
+                  <div
+                    className="checkout-benefits"
+                    data-testid="list-checkout-benefits"
+                  >
+                    {[
+                      {
+                        icon: <Layers3 size={17} strokeWidth={1.8} />,
+                        title: "459 perguntas",
+                        detail: "15 baralhos",
+                      },
+                      {
+                        icon: <MonitorSmartphone size={17} strokeWidth={1.8} />,
+                        title: "Jogo online",
+                        detail: "a dois, à distância",
+                      },
+                      {
+                        icon: <Sparkles size={17} strokeWidth={1.8} />,
+                        title: "Temas & vibes",
+                        detail: "pra cada momento",
+                      },
+                    ].map(({ icon, title, detail }) => (
+                      <div className="checkout-benefit" key={title}>
+                        <span
+                          className="checkout-benefit-icon"
+                          aria-hidden="true"
+                        >
+                          {icon}
+                        </span>
+                        <span>
+                          <strong>{title}</strong>
+                          <small>{detail}</small>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </section>
               <section className="checkout-order-column">
-                <div className="checkout-section-heading">
-                  <span>01</span>
-                  <div>
+                <div className="checkout-form-card checkout-details-card">
+                  <div className="checkout-card-heading">
                     <h3>Seus dados</h3>
                     <p>Para liberar o acesso e enviar o recibo.</p>
                   </div>
+                  <div className="checkout-fields-inline">
+                    <label className="checkout-field">
+                      <span>Nome</span>
+                      <input
+                        id="checkout-buyer-name"
+                        className="checkout-email-input"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="Como a gente te chama"
+                        value={buyerName}
+                        onChange={(event) => {
+                          setBuyerName(event.target.value);
+                          safeSetItem(
+                            "conexao-pending-buyer-name",
+                            event.target.value,
+                          );
+                          if (nameError) setNameError("");
+                        }}
+                        autoFocus
+                        required
+                        data-testid="input-checkout-name"
+                      />
+                      {nameError && (
+                        <small className="checkout-email-error" role="alert">
+                          {nameError}
+                        </small>
+                      )}
+                    </label>
+                    <label className="checkout-field">
+                      <span>E-mail</span>
+                      <input
+                        id="checkout-email"
+                        className="checkout-email-input"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        placeholder="pra enviar seu acesso"
+                        value={buyerEmail}
+                        onChange={(event) => {
+                          setBuyerEmail(event.target.value);
+                          safeSetItem(
+                            "conexao-pending-buyer-email",
+                            event.target.value,
+                          );
+                          if (emailError) setEmailError("");
+                        }}
+                        required
+                        data-testid="input-checkout-email"
+                      />
+                      {emailError && (
+                        <small className="checkout-email-error" role="alert">
+                          {emailError}
+                        </small>
+                      )}
+                    </label>
+                  </div>
                 </div>
-                <div className="checkout-fields-inline">
-                  <label className="checkout-field">
-                    <span>Nome</span>
-                    <input
-                      id="checkout-buyer-name"
-                      className="checkout-email-input"
-                      type="text"
-                      autoComplete="name"
-                      placeholder="Seu nome"
-                      value={buyerName}
-                      onChange={(event) => {
-                        setBuyerName(event.target.value);
-                        safeSetItem(
-                          "conexao-pending-buyer-name",
-                          event.target.value,
-                        );
-                        if (nameError) setNameError("");
-                      }}
-                      autoFocus
-                      required
-                      data-testid="input-checkout-name"
-                    />
-                    {nameError && (
-                      <small className="checkout-email-error" role="alert">
-                        {nameError}
-                      </small>
-                    )}
-                  </label>
-                  <label className="checkout-field">
-                    <span>E-mail</span>
-                    <input
-                      id="checkout-email"
-                      className="checkout-email-input"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="seu@email.com"
-                      value={buyerEmail}
-                      onChange={(event) => {
-                        setBuyerEmail(event.target.value);
-                        safeSetItem(
-                          "conexao-pending-buyer-email",
-                          event.target.value,
-                        );
-                        if (emailError) setEmailError("");
-                      }}
-                      required
-                      data-testid="input-checkout-email"
-                    />
-                    {emailError && (
-                      <small className="checkout-email-error" role="alert">
-                        {emailError}
-                      </small>
-                    )}
-                  </label>
-                </div>
-                <div className="checkout-section-heading checkout-payment-heading">
-                  <span>02</span>
-                  <div>
+                <div className="checkout-form-card checkout-payment-card">
+                  <div className="checkout-card-heading checkout-payment-heading">
                     <h3>Como você prefere pagar?</h3>
                     <p>Uma única cobrança. Sem assinatura.</p>
                   </div>
+                  <CheckoutPaymentTabs
+                    selectedPaymentMethod={selectedPaymentMethod}
+                    cardAvailable={cardAvailable}
+                    onSelect={handlePaymentMethodSelect}
+                    pixContent={pixPaymentContent}
+                    cardContent={cardPaymentContent}
+                  />
                 </div>
-                <CheckoutPaymentTabs
-                  selectedPaymentMethod={selectedPaymentMethod}
-                  cardAvailable={cardAvailable}
-                  onSelect={handlePaymentMethodSelect}
-                  pixContent={pixPaymentContent}
-                  cardContent={cardPaymentContent}
-                />
                 <div
-                  className="checkout-order-summary"
+                  className="checkout-summary-card"
                   data-testid="summary-checkout"
                 >
-                  <div>
-                    <span>Perguntas de Conexão</span>
-                    <span>R$ 47,90</span>
+                  <div className="checkout-card-heading">
+                    <h3>Resumo</h3>
                   </div>
-                  <div className="checkout-summary-total">
-                    <strong>Total hoje</strong>
-                    <strong>R$ 47,90</strong>
+                  <div>
+                    <div className="checkout-summary-row">
+                      <span>Perguntas de Conexão</span>
+                      <span>R$ 47,90</span>
+                    </div>
+                    <div className="checkout-summary-row">
+                      <span>Garantia de 7 dias</span>
+                      <span className="checkout-summary-included">
+                        incluída
+                      </span>
+                    </div>
+                    <div className="checkout-summary-total">
+                      <strong>Total</strong>
+                      <strong>R$ 47,90</strong>
+                    </div>
                   </div>
                 </div>
-                <div className="checkout-reassurance">
-                  <div>
-                    <Check size={16} />
-                    <span>
-                      <strong>7 dias de garantia</strong>
-                      <small>
-                        Se não fizer sentido, devolvemos seu dinheiro.
-                      </small>
-                    </span>
-                  </div>
-                  <div>
-                    <ShieldCheck size={16} />
-                    <span>
-                      <strong>Compra protegida</strong>
-                      <small>Seus dados são tratados com segurança.</small>
-                    </span>
-                  </div>
+                <div className="checkout-security-note">
+                  <ShieldCheck size={17} />
+                  <span>
+                    Pagamento <strong>seguro</strong>
+                    <i> · seus dados são protegidos</i>
+                  </span>
                 </div>
               </section>
             </div>
