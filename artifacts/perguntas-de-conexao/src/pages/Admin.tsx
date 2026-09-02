@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Bell,
@@ -22,7 +23,9 @@ import {
 } from "@/lib/landing-pages";
 import {
   getGetAdminFunnelAnalyticsQueryKey,
+  useDeleteAdminAnalyticsData,
   useGetAdminFunnelAnalytics,
+  type DeleteAdminAnalyticsDataParams,
   type GetAdminFunnelAnalyticsParams,
 } from "@workspace/api-client-react";
 import AnalyticsFunnelPanel, {
@@ -187,6 +190,7 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 const INTERNAL_TRACKING_STORAGE_KEY = "pdc_internal";
+const CLEANUP_CONFIRMATION = "LIMPAR DADOS";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -702,11 +706,19 @@ function AnalyticsPanel({
 }
 
 function AnalyticsTab({ sessionId }: { sessionId: string }) {
+  const queryClient = useQueryClient();
   const [landingPage, setLandingPage] = useState<FunnelLandingPageId>("v2");
   const [period, setPeriod] = useState<AnalyticsPeriod>("30");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [viewMode, setViewMode] = useState<AnalyticsViewMode>("funnel");
+  const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [cleanupConfirmation, setCleanupConfirmation] = useState("");
+  const [cleanupResult, setCleanupResult] = useState<{
+    deletedEvents: number;
+    deletedSessions: number;
+    deletedInvites: number;
+  } | null>(null);
 
   const params = useMemo<GetAdminFunnelAnalyticsParams>(() => {
     const base = { sessionId, lp: landingPage };
@@ -723,6 +735,45 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
   const canFetch =
     Boolean(sessionId) &&
     (period !== "custom" || Boolean(customFrom && customTo));
+  const cleanupParams = useMemo<DeleteAdminAnalyticsDataParams>(() => {
+    const base = { sessionId, lp: landingPage };
+    if (period === "custom") {
+      return {
+        ...base,
+        ...(customFrom ? { from: customFrom } : {}),
+        ...(customTo ? { to: customTo } : {}),
+      };
+    }
+    return { ...base, days: Number(period) };
+  }, [customFrom, customTo, landingPage, period, sessionId]);
+  const cleanupMutation = useDeleteAdminAnalyticsData({
+    mutation: {
+      onSuccess: (result) => {
+        setCleanupOpen(false);
+        setCleanupConfirmation("");
+        setCleanupResult(result);
+        void queryClient.invalidateQueries({
+          queryKey: getGetAdminFunnelAnalyticsQueryKey(),
+        });
+      },
+    },
+  });
+  const landingLabel =
+    landingPage === "all"
+      ? "todas as landing pages"
+      : landingPage === "lp3"
+        ? "LP3"
+        : landingPage === "v1"
+          ? "V1"
+          : "LP principal";
+  const periodLabel =
+    period === "custom"
+      ? `${customFrom || "—"} até ${customTo || "—"}`
+      : `últimos ${period} dias`;
+  const canConfirmCleanup =
+    canFetch &&
+    cleanupConfirmation.trim().toUpperCase() === CLEANUP_CONFIRMATION &&
+    !cleanupMutation.isPending;
   const query = useGetAdminFunnelAnalytics(params, {
     query: {
       enabled: canFetch,
@@ -826,6 +877,125 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
+      )}
+
+      <section className="admin-cleanup-card" aria-labelledby="cleanup-title">
+        <div className="admin-cleanup-heading">
+          <div className="admin-cleanup-icon" aria-hidden="true">
+            <Trash2 size={18} />
+          </div>
+          <div>
+            <p className="admin-eyebrow">zona de manutenção</p>
+            <h3 id="cleanup-title">Limpar dados de teste</h3>
+          </div>
+        </div>
+        <p>
+          Apague os eventos e checkouts desta seleção para começar uma nova
+          leitura sem os logs atuais. A limpeza também remove convites ligados
+          aos checkouts selecionados.
+        </p>
+        <div className="admin-cleanup-scope">
+          <span>
+            <strong>Escopo</strong> {landingLabel}
+          </span>
+          <span>
+            <strong>Período</strong> {periodLabel}
+          </span>
+        </div>
+        {cleanupResult && (
+          <p className="admin-cleanup-result" role="status">
+            Limpeza concluída: {cleanupResult.deletedEvents} eventos,{" "}
+            {cleanupResult.deletedSessions} checkouts e{" "}
+            {cleanupResult.deletedInvites} convites removidos.
+          </p>
+        )}
+        {cleanupMutation.isError && (
+          <p className="admin-cleanup-error" role="alert">
+            Não foi possível limpar os dados. Verifique a seleção e tente
+            novamente.
+          </p>
+        )}
+        <button
+          type="button"
+          className="admin-cleanup-button"
+          onClick={() => {
+            setCleanupResult(null);
+            setCleanupConfirmation("");
+            setCleanupOpen(true);
+          }}
+          disabled={!canFetch || cleanupMutation.isPending}
+        >
+          <Trash2 size={16} />
+          Limpar dados selecionados
+        </button>
+        {!canFetch && (
+          <small className="admin-cleanup-hint">
+            Complete o período personalizado antes de limpar.
+          </small>
+        )}
+      </section>
+
+      {cleanupOpen && (
+        <div className="admin-cleanup-overlay">
+          <div
+            className="admin-cleanup-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cleanup-dialog-title"
+          >
+            <p className="admin-eyebrow">ação permanente</p>
+            <h3 id="cleanup-dialog-title">Confirmar limpeza</h3>
+            <p>
+              Você está prestes a apagar <strong>{landingLabel}</strong> no
+              período <strong>{periodLabel}</strong>.
+            </p>
+            <ul>
+              <li>eventos de visualização, clique, saída e LCP;</li>
+              <li>checkouts e compras confirmadas dentro do escopo;</li>
+              <li>convites ligados a esses checkouts.</li>
+            </ul>
+            <p className="admin-cleanup-warning">
+              Esta ação não pode ser desfeita e não cancela nem estorna uma
+              cobrança no provedor de pagamento.
+            </p>
+            <label className="admin-cleanup-confirm-label">
+              <span>
+                Digite <strong>{CLEANUP_CONFIRMATION}</strong> para continuar
+              </span>
+              <input
+                value={cleanupConfirmation}
+                onChange={(event) => setCleanupConfirmation(event.target.value)}
+                placeholder={CLEANUP_CONFIRMATION}
+                autoComplete="off"
+                data-testid="input-confirm-analytics-cleanup"
+              />
+            </label>
+            <div className="admin-cleanup-dialog-actions">
+              <button
+                type="button"
+                className="admin-cleanup-cancel"
+                onClick={() => {
+                  setCleanupOpen(false);
+                  setCleanupConfirmation("");
+                }}
+                disabled={cleanupMutation.isPending}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="admin-cleanup-button"
+                onClick={() =>
+                  cleanupMutation.mutate({ params: cleanupParams })
+                }
+                disabled={!canConfirmCleanup}
+                data-testid="button-confirm-analytics-cleanup"
+              >
+                {cleanupMutation.isPending ? "Limpando…" : "Apagar dados"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

@@ -793,6 +793,12 @@ export interface AdminFunnelAnalytics {
   avgLcpMs: number | null;
 }
 
+export interface AdminAnalyticsCleanupResponse {
+  deletedEvents: number;
+  deletedSessions: number;
+  deletedInvites: number;
+}
+
 export interface CheckoutCreateResponse {
   sessionId: string;
   checkoutUrl?: string;
@@ -903,6 +909,28 @@ export type GetAdminFunnelAnalyticsLp = typeof GetAdminFunnelAnalyticsLp[keyof t
 
 
 export const GetAdminFunnelAnalyticsLp = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+  all: 'all',
+} as const;
+
+export type DeleteAdminAnalyticsDataParams = {
+sessionId: string;
+lp?: DeleteAdminAnalyticsDataLp;
+from?: string;
+to?: string;
+/**
+ * @minimum 1
+ * @maximum 90
+ */
+days?: number;
+};
+
+export type DeleteAdminAnalyticsDataLp = typeof DeleteAdminAnalyticsDataLp[keyof typeof DeleteAdminAnalyticsDataLp];
+
+
+export const DeleteAdminAnalyticsDataLp = {
   v1: 'v1',
   v2: 'v2',
   lp3: 'lp3',

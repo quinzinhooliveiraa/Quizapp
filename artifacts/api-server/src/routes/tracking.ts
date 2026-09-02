@@ -10,9 +10,19 @@ import {
   inArray,
   isNotNull,
   lt,
+  ne,
   sql,
 } from "drizzle-orm";
-import { db, pageEventsTable, sessionsTable } from "@workspace/db";
+import {
+  db,
+  invitesTable,
+  pageEventsTable,
+  sessionsTable,
+} from "@workspace/db";
+import {
+  DeleteAdminAnalyticsDataQueryParams,
+  DeleteAdminAnalyticsDataResponse,
+} from "@workspace/api-zod";
 import { isAdminSession } from "./feedback";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice, type DeviceType } from "../lib/device";
@@ -480,6 +490,72 @@ router.get("/admin/analytics-funnel", async (req, res): Promise<void> => {
 
   const analytics = await computeFunnelAnalytics(window);
   res.json(analytics);
+});
+
+router.delete("/admin/analytics-data", async (req, res): Promise<void> => {
+  const parsed = DeleteAdminAnalyticsDataQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Filtros de limpeza inválidos" });
+    return;
+  }
+  if (!(await isAdminSession(parsed.data.sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+
+  const window = resolveAnalyticsWindow(parsed.data);
+  if ("error" in window) {
+    res.status(400).json({ error: window.error });
+    return;
+  }
+
+  const lpIds = window.lpId === "all" ? [...LP_IDS] : [window.lpId];
+  const eventFilters = [
+    inArray(pageEventsTable.lpId, lpIds),
+    gte(pageEventsTable.createdAt, window.from),
+    lt(pageEventsTable.createdAt, window.to),
+  ];
+  const sessionFilters = [
+    inArray(sessionsTable.sourceLp, lpIds),
+    gte(sessionsTable.createdAt, window.from),
+    lt(sessionsTable.createdAt, window.to),
+    ne(sessionsTable.id, parsed.data.sessionId),
+  ];
+
+  const deleted = await db.transaction(async (tx) => {
+    const sessions = await tx
+      .select({ id: sessionsTable.id })
+      .from(sessionsTable)
+      .where(and(...sessionFilters));
+    const sessionIds = sessions.map((session) => session.id);
+    const invites =
+      sessionIds.length > 0
+        ? await tx
+            .select({ token: invitesTable.token })
+            .from(invitesTable)
+            .where(inArray(invitesTable.sessionId, sessionIds))
+        : [];
+
+    const events = await tx
+      .delete(pageEventsTable)
+      .where(and(...eventFilters))
+      .returning({ id: pageEventsTable.id });
+    const deletedSessions =
+      sessionIds.length > 0
+        ? await tx
+            .delete(sessionsTable)
+            .where(inArray(sessionsTable.id, sessionIds))
+            .returning({ id: sessionsTable.id })
+        : [];
+
+    return {
+      deletedEvents: events.length,
+      deletedSessions: deletedSessions.length,
+      deletedInvites: invites.length,
+    };
+  });
+
+  res.json(DeleteAdminAnalyticsDataResponse.parse(deleted));
 });
 
 router.get("/report/funnel", async (req, res): Promise<void> => {

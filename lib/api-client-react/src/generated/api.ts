@@ -23,6 +23,7 @@ import type {
   AbacatePayWebhook,
   AbacatePayWebhookResult,
   AccessState,
+  AdminAnalyticsCleanupResponse,
   AdminExperimentAnalyticsResponse,
   AdminExperimentsResponse,
   AdminFunnelAnalytics,
@@ -34,6 +35,7 @@ import type {
   CheckoutWebhook,
   CompleteGuestOnboarding200,
   CompleteOwnerOnboarding200,
+  DeleteAdminAnalyticsDataParams,
   DeleteAdminBuyerParams,
   Experiment,
   ExperimentAssignment,
@@ -2081,6 +2083,84 @@ export function useGetAdminFunnelAnalytics<TData = Awaited<ReturnType<typeof get
 
 
 
+
+export const getDeleteAdminAnalyticsDataUrl = (params: DeleteAdminAnalyticsDataParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/analytics-data?${stringifiedParams}` : `/api/admin/analytics-data`
+}
+
+/**
+ * @summary Delete analytics and checkout data for a selected landing page window
+ */
+export const deleteAdminAnalyticsData = async (params: DeleteAdminAnalyticsDataParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminAnalyticsCleanupResponse> => {
+
+  return customFetch<AdminAnalyticsCleanupResponse>(getDeleteAdminAnalyticsDataUrl(params),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminAnalyticsDataMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminAnalyticsData>>, TError,{params: DeleteAdminAnalyticsDataParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminAnalyticsData>>, TError,{params: DeleteAdminAnalyticsDataParams}, TContext> => {
+
+const mutationKey = ['deleteAdminAnalyticsData'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminAnalyticsData>>, {params: DeleteAdminAnalyticsDataParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  deleteAdminAnalyticsData(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminAnalyticsDataMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminAnalyticsData>>>
+
+    export type DeleteAdminAnalyticsDataMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete analytics and checkout data for a selected landing page window
+ */
+export const useDeleteAdminAnalyticsData = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminAnalyticsData>>, TError,{params: DeleteAdminAnalyticsDataParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminAnalyticsData>>,
+        TError,
+        {params: DeleteAdminAnalyticsDataParams},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminAnalyticsDataMutationOptions(options));
+    }
 
 export const getGetAdminPrimaryLandingPageUrl = (params: GetAdminPrimaryLandingPageParams,) => {
   const normalizedParams = new URLSearchParams();

@@ -405,6 +405,184 @@
   border-radius: 50%;
   animation: admin-analysis-spin 700ms linear infinite;
 }
+.admin-cleanup-card {
+  position: relative;
+  margin-top: 1.2rem;
+  padding: 1rem;
+  background: rgba(100, 24, 49, 0.18);
+  border: 1px solid rgba(255, 116, 145, 0.22);
+  border-radius: 0.95rem;
+}
+.admin-cleanup-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.admin-cleanup-icon {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  color: #ff9eb3;
+  background: rgba(255, 116, 145, 0.1);
+  border: 1px solid rgba(255, 116, 145, 0.22);
+  border-radius: 0.65rem;
+}
+.admin-cleanup-heading h3 {
+  margin: 0.1rem 0 0;
+  color: #fff5f7;
+  font-size: 0.95rem;
+}
+.admin-cleanup-card > p:not(.admin-cleanup-result):not(.admin-cleanup-error) {
+  max-width: 700px;
+  margin: 0.75rem 0;
+  color: rgba(255, 232, 237, 0.64);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+.admin-cleanup-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.85rem 0 1rem;
+}
+.admin-cleanup-scope span {
+  display: inline-flex;
+  gap: 0.3rem;
+  padding: 0.42rem 0.55rem;
+  color: rgba(255, 232, 237, 0.7);
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 0.45rem;
+  font-size: 0.68rem;
+}
+.admin-cleanup-scope strong {
+  color: #ffd1db;
+}
+.admin-cleanup-button,
+.admin-cleanup-cancel {
+  display: inline-flex;
+  min-height: 2.3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-cleanup-button {
+  color: #fff;
+  background: #9b3857;
+  border: 1px solid rgba(255, 180, 195, 0.2);
+}
+.admin-cleanup-button:hover:not(:disabled) {
+  background: #b64668;
+}
+.admin-cleanup-button:disabled,
+.admin-cleanup-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.admin-cleanup-hint {
+  display: block;
+  margin-top: 0.55rem;
+  color: rgba(255, 232, 237, 0.52);
+  font-size: 0.68rem;
+}
+.admin-cleanup-result {
+  margin: 0 0 0.85rem;
+  color: #b9f3d0;
+  font-size: 0.76rem;
+}
+.admin-cleanup-error {
+  margin: 0 0 0.85rem;
+  color: #ffb7c5;
+  font-size: 0.76rem;
+}
+.admin-cleanup-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  overflow: auto;
+  padding: 1.25rem;
+  place-items: center;
+  background: rgba(13, 7, 19, 0.76);
+  backdrop-filter: blur(8px);
+}
+.admin-cleanup-dialog {
+  width: min(100%, 480px);
+  padding: 1.25rem;
+  color: rgba(255, 255, 255, 0.72);
+  background: #211426;
+  border: 1px solid rgba(255, 116, 145, 0.3);
+  border-radius: 1rem;
+  box-shadow: 0 1.2rem 4rem rgba(0, 0, 0, 0.42);
+}
+.admin-cleanup-dialog h3 {
+  margin: 0.15rem 0 0.75rem;
+  color: #fff5f7;
+  font-size: 1.15rem;
+}
+.admin-cleanup-dialog p {
+  margin: 0.7rem 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+.admin-cleanup-dialog ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+  padding-left: 1.15rem;
+  color: rgba(255, 232, 237, 0.7);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.admin-cleanup-warning {
+  padding: 0.65rem 0.75rem;
+  color: #ffb7c5 !important;
+  background: rgba(255, 116, 145, 0.08);
+  border-left: 2px solid #d65a79;
+  border-radius: 0.2rem;
+}
+.admin-cleanup-confirm-label {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.admin-cleanup-confirm-label input {
+  min-height: 2.4rem;
+  padding: 0.6rem 0.7rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 180, 195, 0.25);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.78rem;
+}
+.admin-cleanup-confirm-label input:focus-visible {
+  outline: 2px solid #ff9eb3;
+  outline-offset: 2px;
+}
+.admin-cleanup-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 1.15rem;
+}
+.admin-cleanup-cancel {
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.admin-cleanup-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
 @keyframes admin-analysis-spin {
   to {
     transform: rotate(360deg);

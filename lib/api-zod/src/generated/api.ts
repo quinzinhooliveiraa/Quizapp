@@ -512,6 +512,29 @@ export const GetAdminFunnelAnalyticsResponse = zod.object({
 
 
 /**
+ * @summary Delete analytics and checkout data for a selected landing page window
+ */
+export const deleteAdminAnalyticsDataQueryLpDefault = `v2`;
+export const deleteAdminAnalyticsDataQueryDaysMax = 90;
+
+
+
+export const DeleteAdminAnalyticsDataQueryParams = zod.object({
+  "sessionId": zod.coerce.string(),
+  "lp": zod.enum(['v1', 'v2', 'lp3', 'all']).default(deleteAdminAnalyticsDataQueryLpDefault),
+  "from": zod.coerce.string().optional(),
+  "to": zod.coerce.string().optional(),
+  "days": zod.coerce.number().int().min(1).max(deleteAdminAnalyticsDataQueryDaysMax).optional()
+})
+
+export const DeleteAdminAnalyticsDataResponse = zod.object({
+  "deletedEvents": zod.number().int(),
+  "deletedSessions": zod.number().int(),
+  "deletedInvites": zod.number().int()
+})
+
+
+/**
  * @summary Get the landing page configured for the main route
  */
 export const GetAdminPrimaryLandingPageQueryParams = zod.object({
