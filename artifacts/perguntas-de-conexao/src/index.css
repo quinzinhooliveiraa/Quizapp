@@ -1981,6 +1981,9 @@
 }
 @media (max-width: 600px) {
   .admin-page {
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
     padding-top: 2rem;
   }
   .admin-header {
@@ -2008,8 +2011,29 @@
     margin-left: 0;
   }
   .admin-tabs {
-    margin-left: -0.3rem;
-    margin-right: -0.3rem;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    touch-action: pan-x;
+    white-space: nowrap;
+  }
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .admin-primary-landing-form {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .admin-primary-landing-form button {
+    width: 100%;
   }
   .admin-metric-grid {
     grid-template-columns: repeat(2, 1fr);
