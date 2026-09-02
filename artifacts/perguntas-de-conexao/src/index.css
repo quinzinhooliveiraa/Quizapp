@@ -19536,6 +19536,40 @@ blockquote em {
   width: 100%;
 }
 
+/* faixa de argumento no hero da LP3 (o que é / garantia) */
+.lp3-hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1.1rem auto 0;
+  padding: 0;
+  list-style: none;
+  max-width: 34rem;
+}
+
+.lp3-hero-facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(183, 155, 224, 0.22);
+  border-radius: 999px;
+  background: rgba(183, 155, 224, 0.09);
+  color: #f4eefb;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lp3-hero-facts li span {
+  color: #b79be0;
+}
+
+.lp3-hero-facts li.lp3-hero-facts-good span {
+  color: #54c79a;
+}
+
 .lp3-main[data-section-name="intro"] .lp3-hero-inner {
   max-width: 1200px;
 }

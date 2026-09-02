@@ -405,6 +405,13 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         >
           Quero reacender a conexão <ArrowRight size={18} />
         </button>
+        <ul className="lp3-hero-facts" aria-label="O que está incluído">
+          <li><span aria-hidden="true">🃏</span>459 perguntas</li>
+          <li><span aria-hidden="true">📚</span>15 baralhos</li>
+          <li><span aria-hidden="true">📶</span>jogo a distância</li>
+          <li><span aria-hidden="true">∞</span>acesso vitalício</li>
+          <li className="lp3-hero-facts-good"><span aria-hidden="true">✓</span>garantia de 7 dias</li>
+        </ul>
       </div>
     </section>
   );
