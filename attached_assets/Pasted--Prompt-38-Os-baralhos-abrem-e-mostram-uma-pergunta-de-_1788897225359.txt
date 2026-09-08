@@ -1,0 +1,287 @@
+# Prompt 38 — Os baralhos abrem e mostram uma pergunta de verdade
+
+Hoje os cards de baralho são cliques mortos. Em três lugares:
+
+- `App.tsx` linha ~1452 — grade de 16 baralhos da LP2 (`LandingV2Quiz`)
+- `App.tsx` linha ~4049 — a mesma grade na outra landing
+- `components/RecommendedThemeCarousel.tsx` — o carrossel da LP3
+
+Nos três, o card é um `<div>` / `<article>` sem `onClick`, sem `href`, sem
+`role`. Em gravações reais as pessoas tocam neles várias vezes e não acontece
+nada. É o momento de maior curiosidade da página e ele termina em silêncio.
+
+Vamos transformar o clique morto em **amostra**: tocar num baralho abre uma
+pergunta real dele, diz que as outras vêm com a compra, e oferece o botão.
+
+---
+
+## PARTE 1 — `artifacts/perguntas-de-conexao/src/lib/theme-peek.ts` (arquivo novo)
+
+```ts
+import {
+  questions as connectionQuestions,
+  themes as connectionThemes,
+} from "@workspace/connection-content";
+
+// Uma pergunta por baralho, escolhida a dedo: todas na segunda pessoa
+// ("eu"/"você"), que é o formato que mais engaja.
+const PEEK_QUESTION_BY_THEME: Record<string, string> = {
+  "porto-seguro": "ps6",
+  "livro-aberto": "lv3",
+  "voce-nao-sabia": "vns10",
+  "em-voz-alta": "eva5",
+  "la-atras": "laa7",
+  "modo-leve": "ml4",
+  viagens: "via7",
+  "carreira-dinheiro": "cd3",
+  "depois-da-tempestade": "dt1",
+  faisca: "fa9",
+  "mesmo-longe": "mlg2",
+  "perto-de-novo": "pdn4",
+};
+
+export type ThemePeek = {
+  id: string;
+  title: string;
+  count: number;
+  description: string;
+  backgroundUrl?: string;
+  /** Ausente nos baralhos 18+: não mostramos conteúdo adulto em página aberta. */
+  question?: string;
+  adult: boolean;
+};
+
+export function getThemePeek(themeId: string): ThemePeek | undefined {
+  const theme = connectionThemes.find((entry) => entry.id === themeId);
+  if (!theme) return undefined;
+  const adult = theme.audience === "18+";
+  const questionId = PEEK_QUESTION_BY_THEME[themeId];
+  const question = adult
+    ? undefined
+    : connectionQuestions.find((entry) => entry.id === questionId)?.text;
+  return {
+    id: theme.id,
+    title: theme.title,
+    count: theme.count,
+    description: theme.description,
+    backgroundUrl: theme.backgroundUrl,
+    question,
+    adult,
+  };
+}
+```
+
+**Importante:** os três baralhos 18+ (`luzes-baixas`, `fogo-alto`, `sem-freio`)
+de propósito **não** mostram pergunta. A página é aberta e vem de link de bio
+do TikTok. Eles mostram só o aviso de conteúdo adulto — o que, aliás, aumenta a
+curiosidade em vez de diminuir.
+
+---
+
+## PARTE 2 — `components/ThemePeekDialog.tsx` (arquivo novo)
+
+Um modal. Se já existir um padrão de modal no projeto (overlay + `role="dialog"`
++ fechar no ESC e no clique fora), siga o mesmo padrão e as mesmas classes.
+Se não existir, use este:
+
+```tsx
+import { useEffect } from "react";
+import { ArrowRight, X } from "lucide-react";
+import type { ThemePeek } from "@/lib/theme-peek";
+
+type ThemePeekDialogProps = {
+  peek: ThemePeek;
+  onClose: () => void;
+  onBuy: () => void;
+};
+
+export function ThemePeekDialog({ peek, onClose, onBuy }: ThemePeekDialogProps) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="theme-peek-overlay"
+      role="presentation"
+      onClick={onClose}
+      data-testid="overlay-theme-peek"
+    >
+      <div
+        className="theme-peek-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="theme-peek-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          className="theme-peek-close"
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar"
+          data-testid="button-theme-peek-close"
+        >
+          <X size={18} />
+        </button>
+
+        <span className="theme-peek-kicker">
+          baralho · {peek.count} perguntas
+        </span>
+        <h2 id="theme-peek-title" className="theme-peek-title">
+          {peek.title}
+        </h2>
+
+        {peek.question ? (
+          <blockquote className="theme-peek-question" data-testid="text-theme-peek-question">
+            “{peek.question}”
+          </blockquote>
+        ) : (
+          <p className="theme-peek-adult">
+            Este baralho é 18+. As perguntas dele não ficam à mostra por aqui.
+          </p>
+        )}
+
+        <p className="theme-peek-lock">
+          {peek.question
+            ? `Essa é uma. As outras ${peek.count - 1} abrem quando o baralho for de vocês.`
+            : `São ${peek.count} perguntas, e elas abrem quando o baralho for de vocês.`}
+        </p>
+
+        <button
+          className="button button-primary theme-peek-cta"
+          type="button"
+          onClick={onBuy}
+          data-testid="button-theme-peek-buy"
+        >
+          Quero esse baralho <ArrowRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+CSS no `index.css`, seguindo as cores que já estão no projeto: overlay escuro
+com blur, caixa centralizada, largura máxima ~26rem, cantos arredondados como
+os outros cards, a pergunta em fonte grande (a mesma família e tamanho usados
+em `.lp3-recommended-question-copy p`, porque é o mesmo tipo de conteúdo). No
+celular a caixa deve caber sem cortar e sem precisar de scroll.
+
+---
+
+## PARTE 3 — Ligar nas três grades
+
+Em cada um dos três lugares: um estado
+`const [peekThemeId, setPeekThemeId] = useState<string | null>(null)`,
+o card vira clicável, e no fim do JSX:
+
+```tsx
+{peekThemeId ? (() => {
+  const peek = getThemePeek(peekThemeId);
+  return peek ? (
+    <ThemePeekDialog
+      peek={peek}
+      onClose={() => setPeekThemeId(null)}
+      onBuy={() => {
+        setPeekThemeId(null);
+        onBuy(); // na LP3 use a função `checkout` que já existe ali
+      }}
+    />
+  ) : null;
+})() : null}
+```
+
+### 3.1 — `App.tsx`, grade da `LandingV2Quiz` (linhas ~1211 e ~1452)
+
+O array `themes` local hoje é `[nome, descrição, "31 cartas"]`. **Não mude os
+textos.** Só acrescente o id como quarto item:
+
+```tsx
+const themes = [
+  ["Porto Seguro", "As conversas que parecem casa.", "31 cartas", "porto-seguro"],
+  ["Livro Aberto", "Sem filtro, cara a cara.", "31 cartas", "livro-aberto"],
+  ["Você Não Sabia", "Descobertas que ainda cabem entre vocês.", "32 cartas", "voce-nao-sabia"],
+  ["Em Voz Alta", "A vida que os dois querem construir.", "30 cartas", "em-voz-alta"],
+  ["Lá Atrás", "O que formou quem você é hoje.", "28 cartas", "la-atras"],
+  ["Modo Leve", "Pra rir e não levar tão a sério.", "31 cartas", "modo-leve"],
+  ["Viagens", "Lugares que já foram e ainda vão ser.", "30 cartas", "viagens"],
+  ["Carreira & Dinheiro", "Como pensam o lado prático.", "30 cartas", "carreira-dinheiro"],
+  ["Depois da Tempestade", "O caminho de volta.", "30 cartas", "depois-da-tempestade"],
+  ["Faísca", "O lado mais provocante de vocês.", "31 cartas", "faisca"],
+  ["Luzes Baixas", "Quando a noite pede mais coragem. 18+", "35 cartas", "luzes-baixas"],
+  ["Fogo Alto", "Desejos, curiosidades, limites. 18+", "30 cartas", "fogo-alto"],
+  ["Sem Freio", "O mais ousado. Só pra quem topa. 18+", "30 cartas", "sem-freio"],
+  ["Mesmo Longe", "Quando rotina ou distância afastam.", "30 cartas", "mesmo-longe"],
+  ["Perto de Novo", "Esquentar o espaço entre vocês.", "30 cartas", "perto-de-novo"],
+];
+```
+
+E no `.map`, o `<div className="lp-theme-card">` vira `<button>`:
+
+```tsx
+{themes.map(([name, description, count, themeId], index) => (
+  <button
+    key={name}
+    type="button"
+    className={`lp-theme-card ${index > 8 ? "lp-theme-vibe" : ""}`}
+    onClick={() => setPeekThemeId(themeId)}
+    data-testid={`button-lp-theme-${themeId}`}
+  >
+    <strong>{name}</strong>
+    <p>{description}</p>
+    <span>{count}</span>
+  </button>
+))}
+```
+
+O card "bônus" (Baralho do Dia) continua sendo `<div>` — não tem o que abrir.
+
+No CSS, `.lp-theme-card` precisa ganhar `cursor: pointer; text-align: left;
+font: inherit; appearance: none;` e um estado de hover/active discreto (subir
+1px, clarear a borda). Isso é o que faz o card **parecer** clicável — hoje ele
+parece e não é; a partir de agora tem que parecer e ser.
+
+### 3.2 — `App.tsx`, a segunda grade (linha ~4026)
+
+Mesma coisa, com o array que está inline ali (o que usa `count` como número).
+Acrescente o id como quarto item da mesma forma.
+
+### 3.3 — `components/RecommendedThemeCarousel.tsx`
+
+O `<article>` de cada tema vira clicável. Passe uma prop nova
+`onPeek: (themeId: string) => void` e chame no clique. Cuidado: o carrossel
+desliza com o dedo — **o clique não pode disparar quando a pessoa arrastou**.
+Compare a posição do ponteiro no `pointerdown` e no `pointerup`; se moveu mais
+de 8px no eixo X, não abre o modal.
+
+Em `pages/Lp3.tsx`, passe `onPeek={setPeekThemeId}` e monte o
+`ThemePeekDialog` com `onBuy={checkout}`.
+
+---
+
+## PARTE 4 — Registrar o clique
+
+Onde o modal abre, dispare o evento de tracking do mesmo jeito que a página já
+faz nos outros pontos (na LP3, `trackLp3("theme_peek", { theme: themeId })`;
+nas outras, o mesmo mecanismo de `pageEvents` que já registra `cta_click`).
+
+Quero conseguir responder depois: **quais baralhos as pessoas mais abrem?**
+Essa informação vale mais que qualquer palpite sobre posicionamento.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. No celular (ou no modo responsivo do navegador), abra `/lp1`, `/lp2` e
+   `/lp3` e toque em pelo menos 4 baralhos diferentes em cada uma. Todos
+   precisam abrir o modal.
+3. Toque num baralho 18+: tem que aparecer o aviso, **sem** pergunta.
+4. Na LP3, **arraste** o carrossel de temas: arrastar não pode abrir o modal.
+5. Toque em "Quero esse baralho": tem que ir para o checkout.
+6. Feche o modal pelo X, pelo ESC e clicando fora. Os três têm que funcionar.
+7. Deploy.
