@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import type { ConnectionTheme } from "@workspace/connection-content";
 
 export type RecommendedTheme = ConnectionTheme & {
-  imageUrl?: string;
+  backgroundUrl?: string;
 };
 
 type RecommendedThemeCarouselProps = {
@@ -45,10 +45,10 @@ export function RecommendedThemeCarousel({
           onPointerUp={(event) => handlePointerUp(event, theme.id)}
           data-testid={`card-lp3-theme-${theme.id}`}
         >
-          {theme.imageUrl ? (
+          {theme.backgroundUrl ? (
             <img
               className="lp3-recommended-theme-image"
-              src={theme.imageUrl}
+              src={theme.backgroundUrl}
               alt={`Imagem do tema ${theme.title}`}
               loading="lazy"
             />
