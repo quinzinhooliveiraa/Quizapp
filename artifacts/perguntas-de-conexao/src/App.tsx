@@ -1199,6 +1199,7 @@ function TestimonialCarousel() {
 function LandingV2Quiz({
   onBuy,
   onHeroBuy,
+  onThemePeek,
   quizStep,
   quizAnswers,
   onQuizAnswer,
@@ -1206,27 +1207,29 @@ function LandingV2Quiz({
 }: {
   onBuy: () => void;
   onHeroBuy: () => void;
+  onThemePeek: (themeId: string) => void;
   quizStep: number;
   quizAnswers: LandingQuizAnswers;
   onQuizAnswer: (key: LandingQuizAnswerKey, value: string) => void;
   onHeroQuizAnswer: (value: string) => void;
 }) {
-  const themes = [
-    ["Porto Seguro", "As conversas que parecem casa.", "31 cartas"],
-    ["Livro Aberto", "Sem filtro, cara a cara.", "31 cartas"],
-    ["Você Não Sabia", "Descobertas que ainda cabem entre vocês.", "32 cartas"],
-    ["Em Voz Alta", "A vida que os dois querem construir.", "30 cartas"],
-    ["Lá Atrás", "O que formou quem você é hoje.", "28 cartas"],
-    ["Modo Leve", "Pra rir e não levar tão a sério.", "31 cartas"],
-    ["Viagens", "Lugares que já foram e ainda vão ser.", "30 cartas"],
-    ["Carreira & Dinheiro", "Como pensam o lado prático.", "30 cartas"],
-    ["Depois da Tempestade", "O caminho de volta.", "30 cartas"],
-    ["Faísca", "O lado mais provocante de vocês.", "31 cartas"],
-    ["Luzes Baixas", "Quando a noite pede mais coragem. 18+", "35 cartas"],
-    ["Fogo Alto", "Desejos, curiosidades, limites. 18+", "30 cartas"],
-    ["Sem Freio", "O mais ousado. Só pra quem topa. 18+", "30 cartas"],
-    ["Mesmo Longe", "Quando rotina ou distância afastam.", "30 cartas"],
-    ["Perto de Novo", "Esquentar o espaço entre vocês.", "30 cartas"],
+  const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
+  const themes: Array<[string, string, string, string]> = [
+    ["Porto Seguro", "As conversas que parecem casa.", "31 cartas", "porto-seguro"],
+    ["Livro Aberto", "Sem filtro, cara a cara.", "31 cartas", "livro-aberto"],
+    ["Você Não Sabia", "Descobertas que ainda cabem entre vocês.", "32 cartas", "voce-nao-sabia"],
+    ["Em Voz Alta", "A vida que os dois querem construir.", "30 cartas", "em-voz-alta"],
+    ["Lá Atrás", "O que formou quem você é hoje.", "28 cartas", "la-atras"],
+    ["Modo Leve", "Pra rir e não levar tão a sério.", "31 cartas", "modo-leve"],
+    ["Viagens", "Lugares que já foram e ainda vão ser.", "30 cartas", "viagens"],
+    ["Carreira & Dinheiro", "Como pensam o lado prático.", "30 cartas", "carreira-dinheiro"],
+    ["Depois da Tempestade", "O caminho de volta.", "30 cartas", "depois-da-tempestade"],
+    ["Faísca", "O lado mais provocante de vocês.", "31 cartas", "faisca"],
+    ["Luzes Baixas", "Quando a noite pede mais coragem. 18+", "35 cartas", "luzes-baixas"],
+    ["Fogo Alto", "Desejos, curiosidades, limites. 18+", "30 cartas", "fogo-alto"],
+    ["Sem Freio", "O mais ousado. Só pra quem topa. 18+", "30 cartas", "sem-freio"],
+    ["Mesmo Longe", "Quando rotina ou distância afastam.", "30 cartas", "mesmo-longe"],
+    ["Perto de Novo", "Esquentar o espaço entre vocês.", "30 cartas", "perto-de-novo"],
   ];
   return (
     <>
@@ -1453,15 +1456,21 @@ function LandingV2Quiz({
             <em>para escolher o assunto da noite.</em>
           </h2>
           <div className="lp-themes-grid">
-            {themes.map(([name, description, count], index) => (
-              <div
+            {themes.map(([name, description, count, themeId], index) => (
+              <button
                 key={name}
+                type="button"
                 className={`lp-theme-card ${index > 8 ? "lp-theme-vibe" : ""}`}
+                onClick={() => {
+                  setPeekThemeId(themeId);
+                  onThemePeek(themeId);
+                }}
+                data-testid={`button-lp-theme-${themeId}`}
               >
                 <strong>{name}</strong>
                 <p>{description}</p>
                 <span>{count}</span>
-              </div>
+              </button>
             ))}
             <div className="lp-theme-card lp-theme-bonus">
               <span className="lp-theme-bonus-badge">bônus</span>
@@ -1621,6 +1630,21 @@ function LandingV2Quiz({
           </button>
         </div>
       </section>
+      {peekThemeId
+        ? (() => {
+            const peek = getThemePeek(peekThemeId);
+            return peek ? (
+              <ThemePeekDialog
+                peek={peek}
+                onClose={() => setPeekThemeId(null)}
+                onBuy={() => {
+                  setPeekThemeId(null);
+                  onBuy();
+                }}
+              />
+            ) : null;
+          })()
+        : null}
     </>
   );
 }
@@ -3730,6 +3754,7 @@ function Home({
   experimentAssignment?: StoredExperimentAssignment;
 }) {
   const trackCtaClick = useLpTracking(variant, experimentAssignment);
+  const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
   const sourceFromUrl = new URLSearchParams(window.location.search).get(
     "source",
   );
@@ -3789,6 +3814,7 @@ function Home({
           <LandingV2Quiz
             onBuy={() => startCheckout("couple")}
             onHeroBuy={() => startCheckout("couple", "hero_comprar")}
+            onThemePeek={(themeId) => trackCtaClick(`theme_peek:${themeId}`)}
             quizStep={landingQuizStep}
             quizAnswers={landingQuizAnswers}
             onQuizAnswer={advanceLandingQuiz}
@@ -4037,38 +4063,46 @@ function Home({
                 </h2>
                 <div className="lp-themes-grid">
                   {[
-                    ["Porto Seguro", "As conversas que parecem casa.", 31],
-                    ["Livro Aberto", "Sem filtro, cara a cara.", 31],
+                    ["Porto Seguro", "As conversas que parecem casa.", 31, "porto-seguro"],
+                    ["Livro Aberto", "Sem filtro, cara a cara.", 31, "livro-aberto"],
                     [
                       "Você Não Sabia",
                       "Descobertas que ainda cabem entre vocês.",
                       32,
+                      "voce-nao-sabia",
                     ],
-                    ["Em Voz Alta", "A vida que os dois querem construir.", 30],
-                    ["Lá Atrás", "O que formou quem você é hoje.", 28],
-                    ["Modo Leve", "Pra rir e não levar tão a sério.", 31],
-                    ["Viagens", "Lugares que já foram e ainda vão ser.", 30],
-                    ["Carreira & Dinheiro", "Como pensam o lado prático.", 30],
-                    ["Depois da Tempestade", "O caminho de volta.", 30],
-                    ["Faísca", "O lado mais provocante de vocês.", 31],
+                    ["Em Voz Alta", "A vida que os dois querem construir.", 30, "em-voz-alta"],
+                    ["Lá Atrás", "O que formou quem você é hoje.", 28, "la-atras"],
+                    ["Modo Leve", "Pra rir e não levar tão a sério.", 31, "modo-leve"],
+                    ["Viagens", "Lugares que já foram e ainda vão ser.", 30, "viagens"],
+                    ["Carreira & Dinheiro", "Como pensam o lado prático.", 30, "carreira-dinheiro"],
+                    ["Depois da Tempestade", "O caminho de volta.", 30, "depois-da-tempestade"],
+                    ["Faísca", "O lado mais provocante de vocês.", 31, "faisca"],
                     [
                       "Luzes Baixas",
                       "Quando a noite pede mais coragem. 18+",
                       35,
+                      "luzes-baixas",
                     ],
-                    ["Fogo Alto", "Desejos, curiosidades, limites. 18+", 30],
-                    ["Sem Freio", "O mais ousado. Só pra quem topa. 18+", 30],
-                    ["Mesmo Longe", "Quando rotina ou distância afastam.", 30],
-                    ["Perto de Novo", "Esquentar o espaço entre vocês.", 30],
-                  ].map(([name, description, count], index) => (
-                    <div
+                    ["Fogo Alto", "Desejos, curiosidades, limites. 18+", 30, "fogo-alto"],
+                    ["Sem Freio", "O mais ousado. Só pra quem topa. 18+", 30, "sem-freio"],
+                    ["Mesmo Longe", "Quando rotina ou distância afastam.", 30, "mesmo-longe"],
+                    ["Perto de Novo", "Esquentar o espaço entre vocês.", 30, "perto-de-novo"],
+                  ].map(([name, description, count, themeId], index) => (
+                    <button
                       key={String(name)}
+                      type="button"
                       className={`lp-theme-card ${index > 8 ? "lp-theme-vibe" : ""}`}
+                      onClick={() => {
+                        setPeekThemeId(String(themeId));
+                        trackCtaClick(`theme_peek:${String(themeId)}`);
+                      }}
+                      data-testid={`button-lp-theme-${String(themeId)}`}
                     >
                       <strong>{name}</strong>
                       <p>{description}</p>
                       <span>{count} cartas</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
                 <p className="lp-themes-note">
@@ -4196,6 +4230,21 @@ function Home({
           </>
         )}
       </main>
+      {variant === "v1" && peekThemeId
+        ? (() => {
+            const peek = getThemePeek(peekThemeId);
+            return peek ? (
+              <ThemePeekDialog
+                peek={peek}
+                onClose={() => setPeekThemeId(null)}
+                onBuy={() => {
+                  setPeekThemeId(null);
+                  startCheckout("couple");
+                }}
+              />
+            ) : null;
+          })()
+        : null}
       <CheckoutModal checkout={checkoutController} />
     </Shell>
   );

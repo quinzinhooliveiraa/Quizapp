@@ -17,7 +17,9 @@ import { RecommendedThemeCarousel } from "@/components/RecommendedThemeCarousel"
 import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
+import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { openSupportDialog } from "@/lib/support";
+import { getThemePeek } from "@/lib/theme-peek";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
@@ -178,6 +180,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const [answers, setAnswers] = useState<Answers>(stored.answers);
   const [liveNote, setLiveNote] = useState("");
   const [showOtherPaths, setShowOtherPaths] = useState(false);
+  const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
@@ -324,6 +327,11 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     onCtaClick?.("lp3_offer");
     setLiveNote("Vamos continuar essa conversa.");
     onCheckout?.();
+  };
+
+  const openThemePeek = (themeId: string) => {
+    setPeekThemeId(themeId);
+    trackLp3("theme_peek", { theme: themeId });
   };
 
   const renderIntro = () => (
@@ -526,7 +534,10 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         </button>
         {showOtherPaths ? (
           <div id="lp3-other-paths" className="lp3-recommend-paths-content">
-            <RecommendedThemeCarousel themes={otherThemes} />
+            <RecommendedThemeCarousel
+              themes={otherThemes}
+              onPeek={openThemePeek}
+            />
           </div>
         ) : null}
       </div>
@@ -538,6 +549,21 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
           Quero começar essa conversa <ArrowRight size={15} aria-hidden="true" />
         </button>
       </div>
+      {peekThemeId
+        ? (() => {
+            const peek = getThemePeek(peekThemeId);
+            return peek ? (
+              <ThemePeekDialog
+                peek={peek}
+                onClose={() => setPeekThemeId(null)}
+                onBuy={() => {
+                  setPeekThemeId(null);
+                  checkout();
+                }}
+              />
+            ) : null;
+          })()
+        : null}
     </section>
   );
 
