@@ -1,11 +1,5 @@
-import {
-  type PointerEvent as ReactPointerEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, ChevronDown, ChevronLeft } from "lucide-react";
 import { Link } from "wouter";
 import {
   questions as libraryQuestions,
@@ -33,7 +27,7 @@ type Lp3Props = {
   onBack?: () => void;
 };
 
-type Screen = "intro" | "question" | "result" | "story" | "practice" | "recommend" | "offer";
+type Screen = "intro" | "question" | "result" | "recommend" | "offer";
 type Answers = Lp3Answers;
 
 // Dor personalizada mostrada no topo da oferta, puxada do resultado do quiz.
@@ -120,29 +114,27 @@ const fallbackQuestions: ConnectionQuestion[] = [
   },
 ];
 
-function getStoredState(): { screen: Screen; currentQuestion: number; answers: Answers; practiceIndex: number } {
+function getStoredState(): { screen: Screen; currentQuestion: number; answers: Answers } {
   if (typeof window === "undefined") {
-    return { screen: "intro", currentQuestion: 0, answers: {}, practiceIndex: 0 };
+    return { screen: "intro", currentQuestion: 0, answers: {} };
   }
 
   try {
     const raw = window.localStorage.getItem("lp3_quiz_state");
-    if (!raw) return { screen: "intro", currentQuestion: 0, answers: {}, practiceIndex: 0 };
+    if (!raw) return { screen: "intro", currentQuestion: 0, answers: {} };
     const parsed = JSON.parse(raw) as Partial<{
       screen: Screen;
       currentQuestion: number;
       answers: Answers;
-      practiceIndex: number;
     }>;
-    const allowedScreens: Screen[] = ["intro", "question", "result", "story", "practice", "recommend", "offer"];
+    const allowedScreens: Screen[] = ["intro", "question", "result", "recommend", "offer"];
     return {
       screen: allowedScreens.includes(parsed.screen ?? "intro") ? (parsed.screen as Screen) : "intro",
       currentQuestion: Math.max(0, Math.min(quizQuestions.length - 1, parsed.currentQuestion ?? 0)),
       answers: parsed.answers ?? {},
-      practiceIndex: Math.max(0, parsed.practiceIndex ?? 0),
     };
   } catch {
-    return { screen: "intro", currentQuestion: 0, answers: {}, practiceIndex: 0 };
+    return { screen: "intro", currentQuestion: 0, answers: {} };
   }
 }
 
@@ -184,10 +176,8 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const [screen, setScreen] = useState<Screen>(stored.screen);
   const [currentQuestion, setCurrentQuestion] = useState(stored.currentQuestion);
   const [answers, setAnswers] = useState<Answers>(stored.answers);
-  const [practiceIndex, setPracticeIndex] = useState(stored.practiceIndex);
   const [liveNote, setLiveNote] = useState("");
   const [showOtherPaths, setShowOtherPaths] = useState(false);
-  const practiceSwipeStart = useRef<number | null>(null);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
@@ -216,7 +206,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("lp3_quiz_state", JSON.stringify({ screen, currentQuestion, answers, practiceIndex }));
+    window.localStorage.setItem("lp3_quiz_state", JSON.stringify({ screen, currentQuestion, answers }));
     let previousAnsweredAt: string | undefined;
     try {
       const previous = JSON.parse(
@@ -250,7 +240,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     window.localStorage.setItem("conexao-lp3-discovery-frequency", answers.curiosity || "");
     window.localStorage.setItem("conexao-lp3-difficult-conversations", answers.vulnerability || "");
     window.localStorage.setItem("conexao-lp3-primary-goal", answers.desire || "");
-  }, [answers, currentQuestion, practiceIndex, screen]);
+  }, [answers, currentQuestion, screen]);
 
   useEffect(() => {
     if (screen !== "recommend") {
@@ -284,7 +274,6 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       .forEach((key) => window.localStorage.removeItem(key));
     setAnswers({});
     setCurrentQuestion(0);
-    setPracticeIndex(0);
     setScreen("intro");
     setLiveNote("Tudo recomeçou. Quando quiser, começamos de novo.");
     trackLp3("reset");
@@ -310,9 +299,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     }
     const previous: Record<Exclude<Screen, "intro" | "question">, Screen> = {
       result: "question",
-      story: "result",
-      practice: "story",
-      recommend: "practice",
+      recommend: "result",
       offer: "recommend",
     };
     moveTo(previous[screen as Exclude<Screen, "intro" | "question">]);
@@ -330,38 +317,6 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         setCurrentQuestion((valueToIncrement) => valueToIncrement + 1);
       }
     }, 220);
-  };
-
-  const nextPracticeQuestion = () => {
-    setPracticeIndex((index) => index + 1);
-    setLiveNote("");
-    trackLp3("practice_next", { theme: recommendedTheme.id });
-  };
-
-  const previousPracticeQuestion = () => {
-    setPracticeIndex((index) =>
-      index === 0 ? practiceQuestions.length - 1 : index - 1,
-    );
-    setLiveNote("");
-    trackLp3("practice_previous", { theme: recommendedTheme.id });
-  };
-
-  const handlePracticePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
-    practiceSwipeStart.current = event.clientX;
-  };
-
-  const handlePracticePointerUp = (event: ReactPointerEvent<HTMLElement>) => {
-    const start = practiceSwipeStart.current;
-    practiceSwipeStart.current = null;
-    if (start === null) return;
-
-    const distance = event.clientX - start;
-    if (Math.abs(distance) < 48) return;
-    if (distance < 0) {
-      nextPracticeQuestion();
-    } else {
-      previousPracticeQuestion();
-    }
   };
 
   const checkout = () => {
@@ -473,48 +428,37 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     );
   };
 
-  const renderResult = () => (
-    <section className="lp3-view lp3-result" aria-labelledby="lp3-result-title">
-      <div className="lp3-kicker">O que apareceu nas respostas</div>
-      <div className="lp3-result-card">
-        <div className="lp3-result-card-main">
-          <span className="lp3-result-card-label">Leitura da conexão</span>
-          <h1 id="lp3-result-title" className="lp3-result-title">{result.title}</h1>
-        </div>
-        <div className="lp3-result-card-support">
-          <p className="lp3-result-lead">{result.insight}</p>
-          {result.personalizations.length > 0 && (
-            <div className="lp3-result-detail">
-              {result.personalizations.map((personalization) => (
-                <p key={personalization}>{personalization}</p>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="lp3-result-card-footer">
-        <button className="lp3-link-button lp3-result-back" type="button" onClick={goBack} data-testid="button-lp3-back-result">
-          <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
-        </button>
-        <button className="lp3-button lp3-button-primary lp3-result-cta" type="button" onClick={() => moveTo("story")} data-testid="button-lp3-see-story">
-          Continuar <ArrowRight size={15} aria-hidden="true" />
-        </button>
-      </div>
-    </section>
-  );
+  const renderResult = () => {
+    const storyParagraphs = result.story
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
+      .slice(1);
 
-  const renderStory = () => (
-    <section className="lp3-view lp3-story" aria-labelledby="lp3-story-title">
-      <div className="lp3-kicker">A história de vocês</div>
-      <div className="lp3-story-card">
-        <div className="lp3-story-card-main">
-          <h1 id="lp3-story-title" className="lp3-story-card-title">{result.title}</h1>
-          <div className="lp3-story-editorial">
-            {result.story
-              .split(/\n\s*\n/)
-              .map((paragraph) => paragraph.trim())
-              .filter(Boolean)
-              .map((paragraph, index, paragraphs) => (
+    return (
+      <section className="lp3-view lp3-result" aria-labelledby="lp3-result-title">
+        <div className="lp3-kicker">O que apareceu nas respostas</div>
+        <div className="lp3-result-card">
+          <div className="lp3-result-card-main">
+            <span className="lp3-result-card-label">Leitura da conexão</span>
+            <h1 id="lp3-result-title" className="lp3-result-title">{result.title}</h1>
+          </div>
+          <div className="lp3-result-card-support">
+            <p className="lp3-result-lead">{result.insight}</p>
+            {result.personalizations.length > 0 && (
+              <div className="lp3-result-detail">
+                {result.personalizations.map((personalization) => (
+                  <p key={personalization}>{personalization}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="lp3-story-card">
+          <div className="lp3-story-card-main">
+            <div className="lp3-story-editorial">
+              {storyParagraphs.map((paragraph, index, paragraphs) => (
                 <p
                   key={`${paragraph}-${index}`}
                   className={[
@@ -526,143 +470,18 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
                   {paragraph}
                 </p>
               ))}
+            </div>
           </div>
         </div>
-      </div>
-      <div className="lp3-back-row">
-        <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-story">
-          <ChevronLeft size={14} aria-hidden="true" /> Voltar
-        </button>
-        <button className="lp3-button lp3-button-primary" type="button" onClick={() => moveTo("practice")} data-testid="button-lp3-try-questions">
-          Experimentar uma pergunta <ArrowRight size={15} aria-hidden="true" />
-        </button>
-      </div>
-    </section>
-  );
 
-  const renderPractice = () => {
-    const visiblePracticeQuestions = [2, 1, 0].map((offset) => ({
-      offset,
-      question:
-        practiceQuestions[(practiceIndex + offset) % practiceQuestions.length] ??
-        fallbackQuestions[0],
-    }));
-    const practicePosition =
-      (practiceIndex % practiceQuestions.length) + 1;
-
-    return (
-      <section className="lp3-view lp3-practice" aria-labelledby="lp3-practice-title">
-        <div className="lp3-kicker">Da biblioteca compartilhada</div>
-        <h1 id="lp3-practice-title" className="lp3-section-title">
-          Agora, uma pergunta.
-        </h1>
-        <p className="lp3-section-intro">
-          Sem responder certo ou errado. Leiam em voz alta, olhem um para o
-          outro e deixem a resposta encontrar seu próprio tempo.
-        </p>
-        <div className="lp3-practice-deck-shell">
-          <button
-            className="lp3-practice-navigation lp3-practice-navigation-previous"
-            type="button"
-            onClick={previousPracticeQuestion}
-            aria-label="Pergunta anterior"
-            title="Pergunta anterior"
-            data-testid="button-lp3-previous-question-arrow"
-          >
-            <ChevronLeft size={21} aria-hidden="true" />
+        <div className="lp3-result-card-footer">
+          <button className="lp3-link-button lp3-result-back" type="button" onClick={goBack} data-testid="button-lp3-back-result">
+            <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
           </button>
-          <div
-            className="lp3-practice-deck"
-            aria-label={`Pergunta ${practicePosition} de ${practiceQuestions.length}`}
-            onPointerDown={handlePracticePointerDown}
-            onPointerUp={handlePracticePointerUp}
-            onPointerCancel={() => {
-              practiceSwipeStart.current = null;
-            }}
-          >
-            {visiblePracticeQuestions.map(({ offset, question }) => {
-              const questionPosition =
-                ((practiceIndex + offset) % practiceQuestions.length) + 1;
-              const isFront = offset === 0;
-              return (
-                <article
-                  key={`${question.id}-${offset}`}
-                  className={`lp3-question-card ${isFront ? "is-front" : "is-underlay"} lp3-question-card-layer-${offset}`}
-                  aria-hidden={!isFront}
-                  data-testid={
-                    isFront
-                      ? `card-lp3-practice-${question.id}`
-                      : undefined
-                  }
-                >
-                  <div className="lp3-practice-card-grain" />
-                  <div className="lp3-practice-card-top">
-                    <span>{recommendedTheme.title}</span>
-                    <strong>
-                      Perguntas
-                      <br />
-                      <i>de Conexão</i>
-                    </strong>
-                  </div>
-                  <div className="lp3-practice-card-copy">
-                    <span className="lp3-practice-card-kicker">
-                      {question.intensity === "deep"
-                        ? "mais fundo"
-                        : "para começar"}
-                    </span>
-                    <p
-                      data-testid={
-                        isFront
-                          ? `text-lp3-practice-question-${question.id}`
-                          : undefined
-                      }
-                    >
-                      {question.text}
-                    </p>
-                  </div>
-                  <div className="lp3-practice-card-footer">
-                    <span>não existe resposta certa</span>
-                    <span className="lp3-practice-card-count">
-                      {String(questionPosition).padStart(2, "0")} /{" "}
-                      {String(practiceQuestions.length).padStart(2, "0")}
-                    </span>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-          <button
-            className="lp3-practice-navigation lp3-practice-navigation-next"
-            type="button"
-            onClick={nextPracticeQuestion}
-            aria-label="Próxima pergunta"
-            title="Próxima pergunta"
-            data-testid="button-lp3-next-question-arrow"
-          >
-            <ChevronRight size={21} aria-hidden="true" />
-          </button>
-        </div>
-        <div className="lp3-practice-actions">
-          <button
-            className="lp3-button lp3-button-primary"
-            type="button"
-            onClick={() => moveTo("recommend")}
-            data-testid="button-lp3-see-recommendation"
-          >
+          <button className="lp3-button lp3-button-primary lp3-result-cta" type="button" onClick={() => moveTo("recommend")} data-testid="button-lp3-see-story">
             Ver por onde começar <ArrowRight size={15} aria-hidden="true" />
           </button>
-          <button
-            className="lp3-button lp3-button-ghost lp3-practice-back"
-            type="button"
-            onClick={goBack}
-            data-testid="button-lp3-back-practice"
-          >
-            <ChevronLeft size={15} aria-hidden="true" /> Voltar
-          </button>
         </div>
-        <span className="lp3-live-note" aria-live="polite">
-          {liveNote}
-        </span>
       </section>
     );
   };
@@ -762,8 +581,6 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
     intro: renderIntro,
     question: renderQuestion,
     result: renderResult,
-    story: renderStory,
-    practice: renderPractice,
     recommend: renderRecommend,
     offer: renderOffer,
   }[screen]();

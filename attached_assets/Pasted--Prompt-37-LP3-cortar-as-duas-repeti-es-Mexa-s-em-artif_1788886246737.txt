@@ -1,0 +1,164 @@
+# Prompt 37 — LP3: cortar as duas repetições
+
+Mexa **só** em `artifacts/perguntas-de-conexao/src/pages/Lp3.tsx`. Não mude
+copy que não esteja listada aqui, não mexa em CSS, não mexa em outras páginas.
+
+## Por que
+
+A LP3 tem 7 telas. Duas delas repetem conteúdo que a pessoa acabou de ver:
+
+1. A tela `result` mostra `result.title` + `result.insight`. A tela `story`
+   mostra **o mesmo `result.title`** como `<h1>` e o `result.story`, cujo
+   primeiro parágrafo **é o `insight`, palavra por palavra**
+   (veja `lib/lp3-narrative.ts`: `insight` = "Ninguém decidiu se afastar. A
+   rotina foi ocupando…" e `story` começa com "Ninguém decidiu se afastar.").
+2. A tela `practice` mostra cartas de `practiceQuestions`. A tela seguinte,
+   `recommend`, passa **esse mesmo array** para `<PlanToAction questions={practiceQuestions} />`.
+   São as mesmas 8 perguntas, na mesma ordem.
+
+O resultado é que as pessoas pulam as duas sem ler. Vamos para 5 telas:
+`intro → question → result → recommend → offer`.
+
+---
+
+## PARTE 1 — Remover `story` e `practice` do tipo e do mapa
+
+**1.1** No tipo `Screen`, tire os dois:
+
+```ts
+type Screen = "intro" | "question" | "result" | "recommend" | "offer";
+```
+
+**1.2** Em `getStoredState`, tire os dois de `allowedScreens`:
+
+```ts
+const allowedScreens: Screen[] = ["intro", "question", "result", "recommend", "offer"];
+```
+
+(Isso já resolve quem tinha `story` ou `practice` salvo no navegador: cai no
+fallback `intro`.)
+
+**1.3** No objeto `content` no fim do componente, apague as linhas `story:` e
+`practice:`.
+
+**1.4** Em `goBack`, o mapa `previous` vira:
+
+```ts
+const previous: Record<Exclude<Screen, "intro" | "question">, Screen> = {
+  result: "question",
+  recommend: "result",
+  offer: "recommend",
+};
+```
+
+---
+
+## PARTE 2 — A tela `result` absorve a história
+
+Substitua `renderResult` inteiro por:
+
+```tsx
+const renderResult = () => {
+  // O primeiro parágrafo do story é o mesmo texto do insight. Corta.
+  const storyParagraphs = result.story
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .slice(1);
+
+  return (
+    <section className="lp3-view lp3-result" aria-labelledby="lp3-result-title">
+      <div className="lp3-kicker">O que apareceu nas respostas</div>
+      <div className="lp3-result-card">
+        <div className="lp3-result-card-main">
+          <span className="lp3-result-card-label">Leitura da conexão</span>
+          <h1 id="lp3-result-title" className="lp3-result-title">{result.title}</h1>
+        </div>
+        <div className="lp3-result-card-support">
+          <p className="lp3-result-lead">{result.insight}</p>
+          {result.personalizations.length > 0 && (
+            <div className="lp3-result-detail">
+              {result.personalizations.map((personalization) => (
+                <p key={personalization}>{personalization}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="lp3-story-card">
+        <div className="lp3-story-card-main">
+          <div className="lp3-story-editorial">
+            {storyParagraphs.map((paragraph, index, paragraphs) => (
+              <p
+                key={`${paragraph}-${index}`}
+                className={[
+                  index === 0 ? "lp3-story-lead" : "",
+                  index === paragraphs.length - 1 ? "lp3-story-closing" : "",
+                  paragraph.startsWith('"') || paragraph.startsWith("“") ? "lp3-story-quote" : "",
+                ].filter(Boolean).join(" ")}
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="lp3-result-card-footer">
+        <button className="lp3-link-button lp3-result-back" type="button" onClick={goBack} data-testid="button-lp3-back-result">
+          <ChevronLeft size={14} aria-hidden="true" /> Rever respostas
+        </button>
+        <button className="lp3-button lp3-button-primary lp3-result-cta" type="button" onClick={() => moveTo("recommend")} data-testid="button-lp3-see-story">
+          Ver por onde começar <ArrowRight size={15} aria-hidden="true" />
+        </button>
+      </div>
+    </section>
+  );
+};
+```
+
+Repare em duas coisas de propósito:
+- o `<h1>` da história **sumiu** (era o mesmo título que já está acima);
+- o botão agora vai direto para `recommend` e o texto mudou de "Continuar" para
+  **"Ver por onde começar"** — um botão que diz o que entrega é sempre melhor
+  que um que diz "continuar".
+
+O `data-testid` do botão continua `button-lp3-see-story` para não quebrar
+nenhum teste ou tracking existente.
+
+---
+
+## PARTE 3 — Apagar `renderStory` e `renderPractice`
+
+Apague as duas funções inteiras.
+
+Junto com elas, apague o que só existia para a `practice`:
+
+- o estado `practiceIndex` e o `setPracticeIndex`
+- `practiceSwipeStart` (o `useRef`)
+- `nextPracticeQuestion` e `previousPracticeQuestion`
+- `handlePracticePointerDown` e `handlePracticePointerUp`
+- `practiceIndex` do objeto salvo em `lp3_quiz_state` e do retorno de
+  `getStoredState`
+
+**NÃO apague** o `useMemo` de `practiceQuestions` — ele continua alimentando o
+carrossel da tela `recommend` via `<PlanToAction />`. Também **não apague**
+`fallbackQuestions`.
+
+Se sobrar algum import sem uso depois disso (`ChevronRight`, por exemplo),
+tire do import do `lucide-react`. O build vai reclamar se sobrar.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar, sem aviso de variável não usada.
+2. Abra `/lp3` numa aba anônima e faça o quiz até o fim. O caminho tem que ser:
+   intro → 5 perguntas → **uma** tela de diagnóstico (título + insight +
+   personalizações + a história logo abaixo, sem repetir o título) →
+   recomendação → oferta.
+3. Confirme que o botão "Voltar" funciona em todas as telas.
+4. Confirme que ninguém fica preso: abra o site, faça metade do quiz, feche a
+   aba, abra de novo. Tem que voltar num ponto válido.
+5. Deploy.
