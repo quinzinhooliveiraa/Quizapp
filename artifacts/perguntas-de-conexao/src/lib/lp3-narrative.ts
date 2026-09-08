@@ -317,17 +317,15 @@ function getNarrativeKey(answers: Lp3Answers): Lp3NarrativeType {
     lowDiscovery
     && (
       answers.routine === "Conversamos bastante"
-      || answers.routine === "Tentamos fazer algo diferente"
     )
   ) {
     return "discovery";
   }
   if (
     answers.vulnerability === "Acho que não"
-    && (answers.curiosity === "Hoje" || answers.curiosity === "Nos últimos dias")
+    && answers.curiosity === "Hoje"
     && (
       answers.routine === "Conversamos bastante"
-      || answers.routine === "Tentamos fazer algo diferente"
     )
   ) {
     return "healthy";

@@ -1,0 +1,141 @@
+# Prompt 39 — Quiz: cortar opções sem quebrar o diagnóstico
+
+Mexa em dois arquivos:
+- `artifacts/perguntas-de-conexao/src/pages/Lp3.tsx` (array `quizQuestions`)
+- `artifacts/perguntas-de-conexao/src/lib/lp3-narrative.ts` (só remover
+  condições que ficaram órfãs)
+
+Nada mais.
+
+## Por que
+
+Nas gravações, duas perguntas travam as pessoas. São exatamente as duas com
+mais opções:
+
+| # | Pergunta | Opções hoje | Vira |
+|---|---|---|---|
+| 1 | tempo juntos | 5 | 4 |
+| 2 | **rotina** | **6** ← trava | 4 |
+| 3 | curiosidade | 5 | 4 |
+| 4 | vulnerabilidade | 4 | 4 (não muda) |
+| 5 | **desejo** | **7** ← trava mais | 5 |
+
+A de 7 é a **última** do quiz: a pessoa chega no fim e recebe a lista mais
+longa da página inteira.
+
+## A regra que eu segui, e por que importa
+
+`lib/lp3-narrative.ts` decide o diagnóstico comparando as respostas **por texto
+exato** (`answers.desire === "Reacender a intimidade"`). Se um texto muda, a
+comparação vira letra morta e o diagnóstico sai errado **sem dar erro nenhum**.
+
+Por isso: **nenhum texto de opção que fica foi reescrito.** Só apaguei opções
+inteiras. As que ficam estão idênticas, caractere por caractere. Se você
+reescrever alguma delas, tem que caçar a comparação correspondente no
+`lp3-narrative.ts` — e é aí que quebra.
+
+---
+
+## Lp3.tsx — as novas opções
+
+**Pergunta 1, `time`** (juntou as duas faixas longas):
+
+```ts
+options: [
+  "Ainda estamos nos conhecendo",
+  "Menos de 1 ano",
+  "1–3 anos",
+  "Mais de 3 anos",
+],
+```
+
+**Pergunta 2, `routine`** (saíram "Tentamos fazer algo diferente" e "Depende
+muito do dia" — as duas mais vagas, onde o dedo fica parado):
+
+```ts
+options: [
+  "Cada um acaba no celular",
+  "A gente fala principalmente da rotina",
+  "Assistimos alguma coisa",
+  "Conversamos bastante",
+],
+```
+
+**Pergunta 3, `curiosity`** (saiu "Nos últimos dias", que é quase igual a
+"Hoje"):
+
+```ts
+options: ["Hoje", "Nas últimas semanas", "Há alguns meses", "Nem lembro"],
+```
+
+**Pergunta 4, `vulnerability`** — **não mexa.** Já tem 4.
+
+**Pergunta 5, `desire`** (saíram "Conhecer melhor um ao outro", que é a mesma
+coisa que "conversas mais profundas", e "Sair da rotina", que a pergunta 2 já
+captura):
+
+```ts
+options: [
+  "Ter conversas mais profundas",
+  "Voltar a sentir mais proximidade",
+  "Reacender a intimidade",
+  "Conversar sobre coisas difíceis",
+  "Ter mais assunto mesmo à distância",
+],
+```
+
+Essa ficou com 5 e não 4 de propósito: cada uma dessas cinco leva a um
+diagnóstico diferente no `lp3-narrative.ts` (`reconnection`, `intimacy`,
+`waiting-conversation`, `distance`). Cortar mais deixaria diagnósticos
+inalcançáveis.
+
+---
+
+## lp3-narrative.ts — limpar as condições órfãs
+
+Duas opções deixaram de existir. As comparações que apontam para elas viram
+código morto. Não quebram nada, mas some com elas para o arquivo não mentir:
+
+**1.** Por volta da linha 316, tire a menção a "Tentamos fazer algo diferente":
+
+```ts
+  if (
+    lowDiscovery
+    && answers.routine === "Conversamos bastante"
+  ) {
+    return "discovery";
+  }
+```
+
+**2.** Por volta da linha 325, tire "Nos últimos dias" e "Tentamos fazer algo
+diferente":
+
+```ts
+  if (
+    answers.vulnerability === "Acho que não"
+    && answers.curiosity === "Hoje"
+    && answers.routine === "Conversamos bastante"
+  ) {
+    return "healthy";
+  }
+```
+
+**Não mexa em mais nada** nesse arquivo. As outras comparações continuam
+válidas porque os textos delas não mudaram.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. **Antes do deploy**, faça o quiz **cinco vezes**, uma para cada opção da
+   pergunta 5, e anote qual diagnóstico saiu. O esperado:
+   - "Ter mais assunto mesmo à distância" → diagnóstico de distância
+   - "Reacender a intimidade" → diagnóstico de intimidade
+   - "Conversar sobre coisas difíceis" → "existe uma conversa esperando"
+   - "Voltar a sentir mais proximidade" → reconexão (ou rotina, se você
+     respondeu celular/rotina e baixa descoberta antes)
+   - "Ter conversas mais profundas" → depende das outras respostas
+3. Se **duas ou mais** dessas cinco caírem no mesmo diagnóstico genérico,
+   alguma comparação ficou órfã. Me avise antes de fazer deploy.
+4. Deploy.

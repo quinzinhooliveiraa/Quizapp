@@ -61,8 +61,7 @@ const quizQuestions: QuizQuestion[] = [
       "Ainda estamos nos conhecendo",
       "Menos de 1 ano",
       "1–3 anos",
-      "3–10 anos",
-      "Mais de 10 anos",
+      "Mais de 3 anos",
     ],
   },
   {
@@ -74,15 +73,13 @@ const quizQuestions: QuizQuestion[] = [
       "A gente fala principalmente da rotina",
       "Assistimos alguma coisa",
       "Conversamos bastante",
-      "Tentamos fazer algo diferente",
-      "Depende muito do dia",
     ],
   },
   {
     id: "curiosity",
     key: "curiosidade",
     title: "Quando foi a última vez que uma conversa entre vocês fez você descobrir algo que não sabia sobre ele(a)?",
-    options: ["Hoje", "Nos últimos dias", "Nas últimas semanas", "Há alguns meses", "Nem lembro"],
+    options: ["Hoje", "Nas últimas semanas", "Há alguns meses", "Nem lembro"],
   },
   {
     id: "vulnerability",
@@ -96,8 +93,6 @@ const quizQuestions: QuizQuestion[] = [
     title: "Se você pudesse mudar uma coisa nas conversas de vocês hoje, o que seria?",
     options: [
       "Ter conversas mais profundas",
-      "Conhecer melhor um ao outro",
-      "Sair da rotina",
       "Voltar a sentir mais proximidade",
       "Reacender a intimidade",
       "Conversar sobre coisas difíceis",
