@@ -4,6 +4,8 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   forwardRef,
+  lazy,
+  Suspense,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -107,11 +109,11 @@ import {
   useLocation,
   useParams,
 } from "wouter";
-import NotFound from "@/pages/not-found";
-import Onboarding from "@/pages/Onboarding";
-import Login from "@/pages/Login";
-import Play from "@/pages/Play";
-import Admin from "@/pages/Admin";
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Onboarding = lazy(() => import("@/pages/Onboarding"));
+const Login = lazy(() => import("@/pages/Login"));
+const Play = lazy(() => import("@/pages/Play"));
+const Admin = lazy(() => import("@/pages/Admin"));
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { apiBaseUrl } from "@/config";
@@ -4215,20 +4217,26 @@ function TrackedLp3({
   );
 }
 
+const PRIMARY_LANDING_CACHE_KEY = "conexao-primary-landing";
+
+function readCachedPrimaryLanding(): LandingPageId {
+  if (typeof window === "undefined") return DEFAULT_PRIMARY_LANDING_PAGE_ID;
+  try {
+    const cached = window.localStorage.getItem(PRIMARY_LANDING_CACHE_KEY);
+    const landing = cached ? getLandingPageById(cached) : undefined;
+    return landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
+  } catch {
+    return DEFAULT_PRIMARY_LANDING_PAGE_ID;
+  }
+}
+
 function PrimaryLandingPageRoute() {
   const [landingPageId, setLandingPageId] = useState<LandingPageId>(
-    DEFAULT_PRIMARY_LANDING_PAGE_ID,
+    readCachedPrimaryLanding,
   );
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    const timeout = window.setTimeout(() => {
-      if (!mounted) return;
-      setLandingPageId(DEFAULT_PRIMARY_LANDING_PAGE_ID);
-      setReady(true);
-    }, 2500);
-
     fetch(apiUrl("/api/landing-pages/primary"))
       .then(async (response) => {
         if (!response.ok) throw new Error("primary-landing-page");
@@ -4239,36 +4247,22 @@ function PrimaryLandingPageRoute() {
         const landing = data.primaryLandingPage
           ? getLandingPageById(data.primaryLandingPage)
           : undefined;
-        setLandingPageId(landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID);
-        setReady(true);
+        const resolved = landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
+        try {
+          window.localStorage.setItem(PRIMARY_LANDING_CACHE_KEY, resolved);
+        } catch {
+          // Sem localStorage a página continua funcionando com o padrão.
+        }
+        setLandingPageId((current) => (current === resolved ? current : resolved));
       })
       .catch(() => {
-        if (!mounted) return;
-        setLandingPageId(DEFAULT_PRIMARY_LANDING_PAGE_ID);
-        setReady(true);
-      })
-      .finally(() => window.clearTimeout(timeout));
+        // A pessoa já está vendo o cache ou o padrão. Não faz nada.
+      });
 
     return () => {
       mounted = false;
-      window.clearTimeout(timeout);
     };
   }, []);
-
-  if (!ready) {
-    return (
-      <main
-        className="primary-landing-loading"
-        role="status"
-        aria-live="polite"
-      >
-        <span className="brand-symbol" aria-hidden="true">
-          <Feather size={18} strokeWidth={1.6} />
-        </span>
-        <p>Preparando a experiência…</p>
-      </main>
-    );
-  }
 
   if (landingPageId === "lp3") return <TrackedLp3 />;
   return <Home variant={landingPageId === "v2" ? "v2" : "v1"} />;
@@ -8592,32 +8586,45 @@ function ProtectedExperienceRoute() {
   return <AppExperienceReference />;
 }
 
+function RouteLoading() {
+  return (
+    <main className="primary-landing-loading" role="status" aria-live="polite">
+      <span className="brand-symbol" aria-hidden="true">
+        <Feather size={18} strokeWidth={1.6} />
+      </span>
+      <p>Carregando…</p>
+    </main>
+  );
+}
+
 function Router() {
   return (
     <RoutedErrorBoundary>
-      <Switch>
-        <Route path="/">
-          <PrimaryLandingPageRoute />
-        </Route>
-        <Route path="/lp2">
-          <Home />
-        </Route>
-        <Route path="/lp1">
-          <Home variant="v2" />
-        </Route>
-        <Route path="/lp3">
-          <TrackedLp3 />
-        </Route>
-        <Route path="/e/:experimentSlug" component={ExperimentLinkRoute} />
-        <Route path="/onboarding" component={Onboarding} />
-        <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
-        <Route path="/login" component={Login} />
-        <Route path="/play" component={Play} />
-        <Route path="/app" component={ProtectedExperienceRoute} />
-        <Route path="/invite/:token" component={InvitePage} />
-        <Route path="/admin" component={Admin} />
-        <Route component={NotFound} />
-      </Switch>
+      <Suspense fallback={<RouteLoading />}>
+        <Switch>
+          <Route path="/">
+            <PrimaryLandingPageRoute />
+          </Route>
+          <Route path="/lp2">
+            <Home />
+          </Route>
+          <Route path="/lp1">
+            <Home variant="v2" />
+          </Route>
+          <Route path="/lp3">
+            <TrackedLp3 />
+          </Route>
+          <Route path="/e/:experimentSlug" component={ExperimentLinkRoute} />
+          <Route path="/onboarding" component={Onboarding} />
+          <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
+          <Route path="/login" component={Login} />
+          <Route path="/play" component={Play} />
+          <Route path="/app" component={ProtectedExperienceRoute} />
+          <Route path="/invite/:token" component={InvitePage} />
+          <Route path="/admin" component={Admin} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
     </RoutedErrorBoundary>
   );
 }

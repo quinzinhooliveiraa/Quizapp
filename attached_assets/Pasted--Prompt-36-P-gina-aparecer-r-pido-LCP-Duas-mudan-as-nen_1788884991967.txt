@@ -1,0 +1,179 @@
+# Prompt 36 — Página aparecer rápido (LCP)
+
+Duas mudanças, nenhuma toca em copy, layout ou cor. O objetivo é só um: a
+página aparecer antes. Hoje ela demora 4,2 segundos.
+
+Não refatore nada além do descrito.
+
+---
+
+## PARTE 1 — A home espera uma chamada de API antes de mostrar qualquer coisa
+
+Em `artifacts/perguntas-de-conexao/src/App.tsx`, a função
+`PrimaryLandingPageRoute` (por volta da linha 4212) faz isto: entra na rota `/`,
+dispara `fetch("/api/landing-pages/primary")`, e **enquanto não responde mostra
+uma tela "Preparando a experiência…"**, com um timeout de 2500ms.
+
+Ou seja: todo visitante espera uma ida e volta ao servidor antes de ver o
+título. Se o servidor estiver frio, espera 2,5 segundos olhando uma tela quase
+vazia.
+
+Isso é desnecessário, porque a resposta quase nunca muda. Troque por: **mostrar
+imediatamente a última resposta conhecida (ou o padrão), e revalidar em
+segundo plano.**
+
+Substitua o corpo de `PrimaryLandingPageRoute` por:
+
+```tsx
+const PRIMARY_LANDING_CACHE_KEY = "conexao-primary-landing";
+
+function readCachedPrimaryLanding(): LandingPageId {
+  if (typeof window === "undefined") return DEFAULT_PRIMARY_LANDING_PAGE_ID;
+  try {
+    const cached = window.localStorage.getItem(PRIMARY_LANDING_CACHE_KEY);
+    const landing = cached ? getLandingPageById(cached) : undefined;
+    return landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
+  } catch {
+    return DEFAULT_PRIMARY_LANDING_PAGE_ID;
+  }
+}
+
+function PrimaryLandingPageRoute() {
+  // Renderiza na hora com o último valor conhecido. Nada de tela de espera.
+  const [landingPageId, setLandingPageId] = useState<LandingPageId>(
+    readCachedPrimaryLanding,
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    fetch(apiUrl("/api/landing-pages/primary"))
+      .then(async (response) => {
+        if (!response.ok) throw new Error("primary-landing-page");
+        return (await response.json()) as { primaryLandingPage?: string };
+      })
+      .then((data) => {
+        if (!mounted) return;
+        const landing = data.primaryLandingPage
+          ? getLandingPageById(data.primaryLandingPage)
+          : undefined;
+        const resolved = landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
+        try {
+          window.localStorage.setItem(PRIMARY_LANDING_CACHE_KEY, resolved);
+        } catch {
+          // Sem localStorage a página continua funcionando com o padrão.
+        }
+        // Só troca a página na tela se ela ainda não era a certa. Na prática
+        // isso quase nunca acontece, porque o valor em cache já está correto.
+        setLandingPageId((current) => (current === resolved ? current : resolved));
+      })
+      .catch(() => {
+        // Falhou? A pessoa já está vendo a página em cache. Não faz nada.
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (landingPageId === "lp3") return <TrackedLp3 />;
+  return <Home variant={landingPageId === "v2" ? "v2" : "v1"} />;
+}
+```
+
+Apague o estado `ready` e o bloco `if (!ready) return (<main className="primary-landing-loading">…)`.
+A classe CSS `primary-landing-loading` pode continuar existindo — outras telas
+podem usar.
+
+---
+
+## PARTE 2 — O site inteiro vem num arquivo só
+
+Hoje o build gera **um** `index.js` de ~724 KB. Dentro dele vai o painel admin,
+o onboarding, o login e o jogo — coisas que ninguém que vem de um link de bio
+precisa. Não existe nenhum `React.lazy` no projeto (procure: não tem mesmo).
+
+Em `App.tsx`, troque estes imports:
+
+```tsx
+import NotFound from "@/pages/not-found";
+import Onboarding from "@/pages/Onboarding";
+import Login from "@/pages/Login";
+import Play from "@/pages/Play";
+import Admin from "@/pages/Admin";
+```
+
+por:
+
+```tsx
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Onboarding = lazy(() => import("@/pages/Onboarding"));
+const Login = lazy(() => import("@/pages/Login"));
+const Play = lazy(() => import("@/pages/Play"));
+const Admin = lazy(() => import("@/pages/Admin"));
+```
+
+**Não** mexa no import de `Lp3` — ela é página de entrada e precisa continuar
+vindo no primeiro carregamento.
+
+Adicione `lazy` e `Suspense` ao import do react que já existe no topo do
+arquivo:
+
+```tsx
+import {
+  type CSSProperties,
+  ...
+  Suspense,
+  lazy,
+  useState,
+} from "react";
+```
+
+Agora envolva o `<Switch>` dentro de `Router()` (por volta da linha 8589) com
+um `<Suspense>`:
+
+```tsx
+function Router() {
+  return (
+    <RoutedErrorBoundary>
+      <Suspense fallback={<RouteLoading />}>
+        <Switch>
+          {/* …todas as rotas exatamente como estão hoje… */}
+        </Switch>
+      </Suspense>
+    </RoutedErrorBoundary>
+  );
+}
+```
+
+E crie o `RouteLoading` logo acima do `Router`, reaproveitando o visual que já
+existia na home:
+
+```tsx
+function RouteLoading() {
+  return (
+    <main className="primary-landing-loading" role="status" aria-live="polite">
+      <span className="brand-symbol" aria-hidden="true">
+        <Feather size={18} strokeWidth={1.6} />
+      </span>
+      <p>Carregando…</p>
+    </main>
+  );
+}
+```
+
+**Atenção:** o `InvitePage` está definido dentro do próprio `App.tsx`, não é
+import. Deixe como está.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Olhe a saída do build: onde antes aparecia **um** arquivo `index-*.js`,
+   agora devem aparecer vários (`Admin-*.js`, `Onboarding-*.js`, etc.), e o
+   `index-*.js` principal deve ter encolhido bastante. Me diga os tamanhos.
+3. Teste as rotas uma por uma: `/`, `/lp3`, `/login`, `/onboarding`, `/admin`,
+   `/play`. Todas têm que abrir. As quatro últimas podem piscar um "Carregando…"
+   por um instante na primeira vez — é esperado.
+4. Na rota `/`, confirme que **não aparece mais** "Preparando a experiência…".
+5. Deploy.
