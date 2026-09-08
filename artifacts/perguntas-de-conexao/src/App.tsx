@@ -116,8 +116,10 @@ const Play = lazy(() => import("@/pages/Play"));
 const Admin = lazy(() => import("@/pages/Admin"));
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
+import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { apiBaseUrl } from "@/config";
 import { SUPPORT_DIALOG_EVENT, openSupportDialog } from "@/lib/support";
+import { getThemePeek } from "@/lib/theme-peek";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
@@ -1845,7 +1847,11 @@ function StoredAccessGate() {
   );
 }
 
-type LandingCtaSource = "hero_quiz" | "hero_comprar" | "lp3_offer";
+type LandingCtaSource =
+  | "hero_quiz"
+  | "hero_comprar"
+  | "lp3_offer"
+  | `theme_peek:${string}`;
 
 function useLpTracking(
   lpId: "v1" | "v2" | "lp3",
