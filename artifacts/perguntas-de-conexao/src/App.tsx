@@ -1661,7 +1661,9 @@ function Shell({
         </button>
       </header>
       {children}
-      <SiteFooter />
+      <SiteFooter
+        supportAction={{ label: "Preciso de ajuda", onClick: openSupportDialog }}
+      />
     </div>
   );
 }
