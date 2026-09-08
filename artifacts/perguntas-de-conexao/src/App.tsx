@@ -2482,7 +2482,8 @@ function useCheckout({
       safeSetItem("conexao-pending-pix", JSON.stringify(pix));
       setSelectedPaymentMethod("pix");
       if (!inline) setCheckoutState("email");
-    } catch {
+    } catch (error) {
+      console.error("checkout/create falhou", error);
       if (inline) {
         setPaymentError(
           "Não foi possível abrir o Pix aqui agora. Tente novamente.",
@@ -3009,13 +3010,39 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       </div>
     </div>
   ) : paymentCreating === "pix" ? (
-    <p className="checkout-payment-preview" role="status" aria-live="polite">
-      Abrindo o QR Code aqui…
-    </p>
+    <div className="checkout-pix-inline" role="status" aria-live="polite">
+      <div className="checkout-qr-wrap checkout-qr-skeleton" aria-hidden="true" />
+      <p className="checkout-pix-hint">
+        Gerando seu código Pix…
+        <br />
+        <strong>Leva uns segundos. Não feche esta tela.</strong>
+      </p>
+    </div>
   ) : paymentError ? (
-    <p className="checkout-payment-preview checkout-inline-error" role="alert">
-      {paymentError}
-    </p>
+    <div className="checkout-payment-preview checkout-inline-error" role="alert">
+      <p>{paymentError}</p>
+      <div className="checkout-error-actions">
+        <button
+          type="button"
+          className="button button-primary"
+          onClick={() => {
+            void createCheckout("couple", buyerEmail, buyerName, true);
+          }}
+          disabled={paymentCreating !== null}
+          data-testid="button-retry-pix"
+        >
+          Tentar de novo
+        </button>
+        <button
+          type="button"
+          className="checkout-error-support"
+          onClick={openSupportDialog}
+          data-testid="button-checkout-support"
+        >
+          Falar comigo
+        </button>
+      </div>
+    </div>
   ) : (
     <p className="checkout-payment-preview">
       Toque em “Garantir meu deck” que o QR aparece aqui.

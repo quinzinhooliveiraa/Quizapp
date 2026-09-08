@@ -21606,6 +21606,15 @@ blockquote em {
   height: 156px;
 }
 
+.checkout-pix-inline .checkout-qr-skeleton {
+  box-sizing: border-box;
+  width: 182px;
+  height: 179px;
+  padding: 0;
+  background: #fbf7f9;
+  animation: checkout-qr-pulse 1.5s ease-in-out infinite;
+}
+
 .checkout-pix-hint {
   margin: 0;
   text-align: center;
@@ -21693,6 +21702,58 @@ blockquote em {
 .checkout-inline-error {
   color: #a2384b;
   font-weight: 700;
+}
+
+.checkout-inline-error > p {
+  margin: 0;
+}
+
+.checkout-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.checkout-error-actions .button {
+  min-height: 2.8rem;
+  padding: 0.7rem 1rem;
+}
+
+.checkout-error-support {
+  min-height: 2.8rem;
+  padding: 0.7rem 0;
+  border: 0;
+  background: transparent;
+  color: #7a2e46;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.checkout-error-support:hover,
+.checkout-error-support:focus-visible {
+  color: #5b2034;
+}
+
+@keyframes checkout-qr-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout-pix-inline .checkout-qr-skeleton {
+    animation: none;
+  }
 }
 
 .checkout-payment-panel .checkout-native-status {

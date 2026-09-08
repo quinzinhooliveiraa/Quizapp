@@ -1,0 +1,138 @@
+# Prompt 40 — Checkout: acabar com as falhas silenciosas
+
+Mexa só em `artifacts/perguntas-de-conexao/src/App.tsx` e no `index.css`.
+Nada de mudar preço, layout geral ou fluxo de pagamento.
+
+## Por que
+
+Numa gravação real, uma compradora clicou cinco vezes no botão de compra em
+treze segundos achando que tinha quebrado. Comprou na teimosia. Três coisas
+diferentes acontecem hoje:
+
+1. O botão fica `disabled` (isso está certo, não cria cobrança duplicada) mas
+   **o texto não muda** — no celular, um botão desabilitado com o mesmo texto é
+   idêntico a um botão morto.
+2. O único aviso de que está carregando é um parágrafo pequeno em outro ponto
+   da tela: *"Abrindo o QR Code aqui…"*. Ninguém olha para lá.
+3. Se der erro, aparece um texto vermelho e **acabou** — sem "tentar de novo",
+   sem "falar com alguém".
+
+---
+
+## PARTE 1 — O botão diz que está trabalhando
+
+(É o prompt 33. Se você já aplicou, pule.)
+
+Por volta da linha 3281:
+
+```tsx
+<button
+  className="button button-primary checkout-purchase-button"
+  type="submit"
+  disabled={paymentCreating !== null}
+  data-testid="button-continue-checkout"
+>
+  {paymentCreating !== null ? (
+    "Gerando seu Pix…"
+  ) : (
+    <>Garantir meu deck <ArrowRight size={17} /></>
+  )}
+</button>
+```
+
+---
+
+## PARTE 2 — O QR nasce onde o olho já está
+
+Por volta da linha 2979, o `pixPaymentContent` tem um ramo
+`paymentCreating === "pix"` que hoje é só um parágrafo. Troque por um
+**esqueleto do QR**: um quadrado do mesmo tamanho do QR final, pulsando, no
+mesmo lugar onde o QR vai aparecer. Assim o olho já está no lugar certo quando
+ele nasce, e a espera tem forma.
+
+```tsx
+) : paymentCreating === "pix" ? (
+  <div className="checkout-pix-inline" role="status" aria-live="polite">
+    <div className="checkout-qr-wrap checkout-qr-skeleton" aria-hidden="true" />
+    <p className="checkout-pix-hint">
+      Gerando seu código Pix…
+      <br />
+      <strong>Leva uns segundos. Não feche esta tela.</strong>
+    </p>
+  </div>
+) : paymentError ? (
+```
+
+No `index.css`, `.checkout-qr-skeleton` deve ter **exatamente as mesmas
+dimensões** que o `.checkout-qr-wrap` com o QR dentro (senão a tela pula quando
+o QR chega, e um pulo desses conta contra a pontuação de layout do Clarity).
+Fundo levemente mais claro que o card, cantos iguais, e uma animação de pulso
+suave. Respeite `@media (prefers-reduced-motion: reduce)` desligando a
+animação.
+
+---
+
+## PARTE 3 — Erro com saída
+
+O ramo `paymentError` hoje é um `<p>` e nada mais. Troque por um bloco com dois
+botões:
+
+```tsx
+) : paymentError ? (
+  <div className="checkout-payment-preview checkout-inline-error" role="alert">
+    <p>{paymentError}</p>
+    <div className="checkout-error-actions">
+      <button
+        type="button"
+        className="button button-primary"
+        onClick={() => {
+          void createCheckout("couple", buyerEmail, buyerName, true);
+        }}
+        data-testid="button-retry-pix"
+      >
+        Tentar de novo
+      </button>
+      <button
+        type="button"
+        className="checkout-error-support"
+        onClick={openSupportDialog}
+        data-testid="button-checkout-support"
+      >
+        Falar comigo
+      </button>
+    </div>
+  </div>
+) : (
+```
+
+`openSupportDialog` já está importado no topo do arquivo (linha 118) e já é
+usado em outros dois pontos. `createCheckout` é a mesma função que o envio do
+formulário chama — confira o nome exato no arquivo antes de escrever, e use os
+mesmos argumentos que o `handleSubmit` usa hoje.
+
+O "Tentar de novo" tem que ficar `disabled` enquanto `paymentCreating !== null`,
+pelo mesmo motivo do botão principal.
+
+---
+
+## PARTE 4 — Não engolir o erro no console
+
+No `catch` da criação do Pix, garanta que existe um
+`console.error("checkout/create falhou", error)` antes de mudar o estado. Sem
+isso, quando alguém reclamar eu não tenho como ver o que aconteceu — nem no
+console nem na gravação do Clarity.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Abra o checkout no celular e clique em "Garantir meu deck". Confirme, nesta
+   ordem: o texto do botão vira "Gerando seu Pix…", o esqueleto do QR aparece
+   no lugar certo, e o QR real nasce **sem a tela pular**.
+3. Force um erro (desligue a internet por um instante e tente). Confirme que
+   aparecem os dois botões e que "Falar comigo" abre o modal de suporte.
+4. Reconecte e clique em "Tentar de novo": tem que gerar o Pix normalmente.
+5. Confirme na AbacatePay que os testes não deixaram cobranças penduradas
+   além das esperadas.
+6. Deploy.
