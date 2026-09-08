@@ -8289,6 +8289,16 @@ function InvitePage() {
   );
 }
 
+function AccessLinkRoute({ params }: { params: { sessionId: string } }) {
+  useEffect(() => {
+    if (!params.sessionId) return;
+    safeSetItem("conexao-session", params.sessionId);
+    safeSetItem("conexao-role", "owner");
+    window.location.href = "/onboarding";
+  }, [params.sessionId]);
+  return null;
+}
+
 function ProtectedExperienceRoute() {
   const [, navigate] = useLocation();
   const storedSessionId = safeGetItem("conexao-session")?.trim() || "";
@@ -8413,6 +8423,7 @@ function Router() {
         </Route>
         <Route path="/e/:experimentSlug" component={ExperimentLinkRoute} />
         <Route path="/onboarding" component={Onboarding} />
+        <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
         <Route path="/login" component={Login} />
         <Route path="/play" component={Play} />
         <Route path="/app" component={ProtectedExperienceRoute} />
@@ -8440,6 +8451,7 @@ function RouteAwareSplash() {
     location === "/admin" ||
     location === "/login" ||
     location === "/onboarding" ||
+    location.startsWith("/acesso/") ||
     location === "/play" ||
     location === "/app" ||
     location.startsWith("/invite/");

@@ -1,0 +1,151 @@
+# E-mail de compra — entregar o acesso mesmo se a aba fechar
+
+Contexto: hoje, quando alguém paga o Pix, o acesso só chega se a aba do checkout
+continuar aberta (a tela consulta o servidor a cada 4s e redireciona). Se o
+celular matar a aba, se a pessoa fechar, ou se passar dos 15 minutos, ela paga e
+fica sem nada — porque **nenhum e-mail é enviado na compra**. Isso já aconteceu
+com uma compradora real.
+
+Faça **apenas** as três partes abaixo. Não refatore nada, não mexa em layout de
+outras telas, não altere o fluxo de login existente.
+
+---
+
+## PARTE 1 — `artifacts/api-server/src/lib/brevo.ts`
+
+Esse arquivo já tem `sendEmailViaBrevo()` e `buildLoginCodeEmail()`. Adicione uma
+nova função exportada `buildPurchaseAccessEmail`, no mesmo estilo visual do
+e-mail de login:
+
+```ts
+export function buildPurchaseAccessEmail(params: {
+  buyerName: string;
+  accessUrl: string;
+  loginUrl: string;
+}) {
+  const firstName = params.buyerName.trim().split(/\s+/)[0] || "";
+  const hi = firstName ? `${firstName}, ` : "";
+  const subject = "Pronto — o baralho é de vocês";
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #17121b;">
+      <p style="font-size: 14px; color: #6b6070; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Perguntas de Conexão</p>
+      <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 16px;">Pagamento confirmado</h1>
+      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 24px;">${hi}o baralho é de vocês, pra sempre. Guarde este e-mail: é por aqui que você volta a qualquer momento.</p>
+      <a href="${params.accessUrl}" style="display: block; text-align: center; background: #8a2f4d; color: #ffffff; text-decoration: none; border-radius: 999px; padding: 15px 20px; font-size: 16px; font-weight: 600; margin: 0 0 24px;">Abrir meu baralho</a>
+      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 8px;"><strong>Agora chama ele(a).</strong></p>
+      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 24px;">Dentro do app você gera um convite. A pessoa entra sem pagar de novo.</p>
+      <div style="background: #f4f0f8; border-left: 3px solid #b1802f; border-radius: 10px; padding: 18px 20px; margin: 0 0 24px;">
+        <p style="font-size: 12px; color: #8b8290; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Comecem por esta, hoje à noite</p>
+        <p style="font-size: 17px; line-height: 1.4; color: #17121b; font-style: italic; margin: 0;">"Qual parte da nossa rotina você não trocaria por nada?"</p>
+      </div>
+      <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0 0 8px;">Este link é a sua chave — não compartilhe. Para chamar seu parceiro(a), use o convite dentro do app.</p>
+      <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0 0 8px;">Se o botão não funcionar, entre em <a href="${params.loginUrl}" style="color: #8a2f4d;">${params.loginUrl}</a> com este mesmo e-mail.</p>
+      <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0;">Você tem 7 dias de garantia. Se não mexer com vocês, é só responder este e-mail.</p>
+    </div>
+  `;
+  const textContent = `Perguntas de Conexão\n\nPagamento confirmado. O baralho é de vocês, pra sempre.\n\nAbra aqui: ${params.accessUrl}\n\nDepois chame seu parceiro(a): dentro do app você gera um convite e a pessoa entra sem pagar de novo.\n\nComecem por esta, hoje à noite:\n"Qual parte da nossa rotina você não trocaria por nada?"\n\nEste link é a sua chave — não compartilhe.\nSe não funcionar, entre em ${params.loginUrl} com este mesmo e-mail.\n\nVocê tem 7 dias de garantia. Se não mexer com vocês, é só responder este e-mail.`;
+
+  return { subject, htmlContent, textContent };
+}
+```
+
+---
+
+## PARTE 2 — `artifacts/api-server/src/routes/connection.ts`
+
+Existem duas funções já prontas: `grantSessionAccess()` e `notifyGrantedAccess()`
+(essa última já dispara a notificação push para o dono). Vamos pendurar o e-mail
+no mesmo lugar.
+
+**2.1** — Em `grantSessionAccess`, o `.returning({...})` hoje devolve só
+`buyerName`, `packageName` e `accessGranted`. Adicione dois campos:
+
+```ts
+    .returning({
+      id: sessionsTable.id,
+      buyerName: sessionsTable.buyerName,
+      buyerEmail: sessionsTable.buyerEmail,
+      packageName: sessionsTable.packageName,
+      accessGranted: sessionsTable.accessGranted,
+    });
+```
+
+**2.2** — Em `notifyGrantedAccess`, depois do bloco do push que já existe,
+adicione o envio do e-mail:
+
+```ts
+  if (session.buyerEmail) {
+    const baseUrl = process.env.PUBLIC_BASE_URL || "https://www.perguntasdeconexao.com.br";
+    const payload = buildPurchaseAccessEmail({
+      buyerName: session.buyerName,
+      accessUrl: `${baseUrl}/acesso/${encodeURIComponent(session.id)}`,
+      loginUrl: `${baseUrl}/login`,
+    });
+    void sendEmailViaBrevo({
+      to: session.buyerEmail,
+      toName: session.buyerName,
+      subject: payload.subject,
+      htmlContent: payload.htmlContent,
+      textContent: payload.textContent,
+    })
+      .then((result) => {
+        if (!result.ok) {
+          req.log.error({ error: result.error }, "Purchase access email failed");
+        }
+      })
+      .catch((error) =>
+        req.log.error({ err: error }, "Purchase access email threw"),
+      );
+  }
+```
+
+Adicione o import no topo do arquivo:
+```ts
+import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "../lib/brevo";
+```
+
+**Importante — não precisa de trava contra e-mail duplicado:** `grantSessionAccess`
+só devolve uma linha quando o acesso saiu de `false` para `true`. Se o webhook
+chegar duas vezes, a segunda não devolve nada e o e-mail não é enviado de novo.
+
+---
+
+## PARTE 3 — `artifacts/perguntas-de-conexao/src/App.tsx`
+
+Não existe rota de acesso direto hoje. Crie uma, bem simples, ao lado das outras
+(perto de `<Route path="/onboarding" ...>`):
+
+```tsx
+<Route path="/acesso/:sessionId" component={AccessLinkRoute} />
+```
+
+E o componente (pode ficar logo acima do `Router`):
+
+```tsx
+function AccessLinkRoute({ params }: { params: { sessionId: string } }) {
+  useEffect(() => {
+    if (!params.sessionId) return;
+    safeSetItem("conexao-session", params.sessionId);
+    safeSetItem("conexao-role", "owner");
+    window.location.href = "/onboarding";
+  }, [params.sessionId]);
+  return null;
+}
+```
+
+Ele só guarda a sessão no navegador (exatamente o que o checkout já faz quando o
+pagamento confirma) e manda para `/onboarding`. A verificação de acesso de
+verdade continua acontecendo no `/app`, como já acontece hoje — esta rota não
+concede nada por conta própria.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Confirme que a variável `PUBLIC_BASE_URL` existe no ambiente (se não existir,
+   o fallback do domínio já está no código).
+3. Teste: faça uma compra de teste com Pix e um e-mail seu. Assim que o pagamento
+   confirmar, o e-mail tem que chegar. Clique em "Abrir meu baralho" **numa aba
+   anônima** — tem que abrir o onboarding com o acesso liberado.
+4. Deploy.

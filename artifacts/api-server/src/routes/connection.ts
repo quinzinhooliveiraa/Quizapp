@@ -46,6 +46,7 @@ import {
   verifyStripeWebhook,
 } from "../lib/stripe";
 import { sendPurchaseNotification } from "../lib/push";
+import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "../lib/brevo";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
 
@@ -432,7 +433,9 @@ async function grantSessionAccess(
       ),
     )
     .returning({
+      id: sessionsTable.id,
       buyerName: sessionsTable.buyerName,
+      buyerEmail: sessionsTable.buyerEmail,
       packageName: sessionsTable.packageName,
       accessGranted: sessionsTable.accessGranted,
     });
@@ -454,6 +457,30 @@ function notifyGrantedAccess(
   }).catch((error) =>
     req.log.error({ err: error }, "Purchase push notification failed"),
   );
+  if (session.buyerEmail) {
+    const baseUrl =
+      process.env.PUBLIC_BASE_URL || "https://www.perguntasdeconexao.com.br";
+    const payload = buildPurchaseAccessEmail({
+      buyerName: session.buyerName,
+      accessUrl: `${baseUrl}/acesso/${encodeURIComponent(session.id)}`,
+      loginUrl: `${baseUrl}/login`,
+    });
+    void sendEmailViaBrevo({
+      to: session.buyerEmail,
+      toName: session.buyerName,
+      subject: payload.subject,
+      htmlContent: payload.htmlContent,
+      textContent: payload.textContent,
+    })
+      .then((result) => {
+        if (!result.ok) {
+          req.log.error({ error: result.error }, "Purchase access email failed");
+        }
+      })
+      .catch((error) =>
+        req.log.error({ err: error }, "Purchase access email threw"),
+      );
+  }
 }
 
 router.get("/questions/themes", (_req, res): void => {
