@@ -1,0 +1,174 @@
+# Prompt 43 — O botão morto depois que o Pix aparece
+
+Mexa só em `artifacts/perguntas-de-conexao/src/App.tsx` e no `index.css`.
+
+## O bug, confirmado no código
+
+Quando a pessoa gera o Pix, a tela continua no `checkoutState === "email"`, e o
+QR aparece dentro das abas. Mas a barra de baixo com **"Garantir meu deck"**
+continua lá.
+
+E ela virou um botão morto. No `handleSubmit` (~linha 2934):
+
+```ts
+} else {
+  if (!nativeCheckout) {
+    void createCheckout("couple", normalizedEmail, normalizedName, true);
+  }
+}
+```
+
+Como `nativeCheckout` já existe, o clique **não faz absolutamente nada**. Nem
+erro, nem carregando, nem aviso. A pessoa acabou de copiar o código, pagou no
+banco, voltou, apertou "Garantir meu deck" e não aconteceu nada.
+
+Isso não é cosmético: é o último clique antes de a pessoa desistir achando que
+pagou e perdeu o dinheiro.
+
+**Detalhe que importa:** a verificação automática já existe e funciona. Tem um
+`setInterval` de 4 em 4 segundos (~linha 2355) consultando
+`/api/access/sessions/{sessionId}`, e assim que o pagamento cai ele manda pro
+`/onboarding` sozinho. O problema é que **nada disso é visível**. A pessoa não
+sabe que o site está olhando.
+
+---
+
+## PARTE 1 — A barra de baixo some só na aba do Pix, e só depois do QR
+
+⚠️ **Leia isto com atenção, é onde dá pra quebrar o pagamento.**
+
+O formulário de cartão roda com `showSubmitButton={checkoutState !== "email"}`.
+Ou seja: **no fluxo inline o cartão NÃO tem botão próprio** — ele depende
+exatamente dessa barra de baixo para cobrar (o `handleSubmit` chama
+`cardPaymentFormRef.current?.submit()`).
+
+Então a barra **não pode** sumir de forma geral. Ela some só quando as duas
+coisas forem verdade ao mesmo tempo: a aba selecionada é o Pix **e** o QR já
+foi gerado.
+
+Envolva a `<div className="checkout-purchase-bar">` (~linha 3334) assim:
+
+```tsx
+{!(selectedPaymentMethod === "pix" && nativeCheckout) ? (
+  <div className="checkout-purchase-bar">
+    {/* …total e botão "Garantir meu deck", exatamente como estão hoje… */}
+  </div>
+) : null}
+```
+
+Assim:
+
+| Situação | Barra de baixo |
+|---|---|
+| Aba Pix, sem QR ainda | **aparece** — é ela que gera o Pix |
+| Aba Pix, QR na tela | **some** — quem paga agora é o banco, e o botão "já paguei" fica junto do Copiar |
+| Aba cartão, sempre | **aparece** — é ela que cobra |
+
+E se a pessoa gerar o Pix e depois trocar para a aba do cartão, a barra volta
+sozinha, porque a condição olha a aba selecionada.
+
+---
+
+## PARTE 2 — Um botão "já paguei" ao lado do Copiar
+
+Dentro do `pixPaymentContent`, no bloco `checkout-pix-copybox` (onde está o
+botão "Copiar"), acrescente **abaixo** um segundo botão, largura cheia:
+
+```tsx
+<button
+  className="button button-primary checkout-pix-check"
+  type="button"
+  disabled={accessChecking}
+  onClick={checkAccessNow}
+  data-testid="button-check-access"
+>
+  {accessChecking ? "Verificando seu acesso…" : "Já paguei — abrir meu baralho"}
+</button>
+{accessCheckNote ? (
+  <p className="checkout-pix-check-note" role="status" aria-live="polite">
+    {accessCheckNote}
+  </p>
+) : null}
+```
+
+Estados novos, junto dos outros do checkout:
+
+```ts
+const [accessChecking, setAccessChecking] = useState(false);
+const [accessCheckNote, setAccessCheckNote] = useState<string | null>(null);
+```
+
+E a função, ao lado das outras do checkout:
+
+```ts
+const checkAccessNow = async () => {
+  if (!nativeCheckout || accessChecking) return;
+  setAccessChecking(true);
+  setAccessCheckNote(null);
+  try {
+    const response = await fetch(
+      apiUrl(`/api/access/sessions/${encodeURIComponent(nativeCheckout.sessionId)}`),
+    );
+    if (!response.ok) throw new Error("access-check");
+    const session = (await response.json()) as { accessGranted?: boolean };
+    if (session.accessGranted) {
+      safeSetItem("conexao-session", nativeCheckout.sessionId);
+      safeSetItem("conexao-role", "owner");
+      clearCompletedCheckoutStorage();
+      window.location.href = "/onboarding";
+      return;
+    }
+    setAccessCheckNote(
+      `Ainda não caiu aqui. Se você acabou de pagar, o banco pode levar até 2 minutos — pode deixar esta tela aberta que ela abre sozinha.`,
+    );
+  } catch (error) {
+    console.error("verificação de acesso falhou", error);
+    setAccessCheckNote(
+      "Não consegui verificar agora. Tenta de novo em alguns segundos.",
+    );
+  } finally {
+    setAccessChecking(false);
+  }
+};
+```
+
+Use exatamente as mesmas três linhas que o `setInterval` já usa quando o acesso
+é liberado (`safeSetItem` × 2, `clearCompletedCheckoutStorage`, redirecionar) —
+o comportamento tem que ser idêntico, só que disparado pela pessoa em vez do
+relógio.
+
+---
+
+## PARTE 3 — Dizer que está verificando sozinho
+
+No `checkout-pix-hint`, que hoje diz *"Escaneie o QR ou copie o código.
+**Assim que cair, seu acesso abre sozinho.**"*, acrescente uma linha discreta
+abaixo do bloco do Pix, com um pontinho pulsando:
+
+> `● verificando seu pagamento a cada poucos segundos`
+
+Só aparece enquanto `checkoutState === "email" || checkoutState === "native-payment"`
+e existe `nativeCheckout`. Discreto, cinza, texto pequeno. É a prova visível de
+que o site está trabalhando — hoje ele trabalha e ninguém vê.
+
+Respeite `prefers-reduced-motion` desligando a pulsação.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Abra o checkout, escolha Pix, gere o código. Confirme:
+   - a barra de baixo com "Garantir meu deck" **sumiu**;
+   - apareceu o botão "Já paguei — abrir meu baralho" abaixo do Copiar;
+   - apareceu a linha "verificando seu pagamento…".
+3. **Sem pagar**, clique em "Já paguei". Tem que aparecer "Verificando seu
+   acesso…" e depois a mensagem de que ainda não caiu. Não pode ficar mudo.
+4. **Teste obrigatório do cartão** (é aqui que dá pra quebrar tudo):
+   - gere o Pix, confirme que a barra sumiu;
+   - **troque para a aba de cartão** — a barra tem que **voltar**;
+   - preencha um cartão de teste e confirme que "Garantir meu deck" cobra
+     normalmente. Se ele não fizer nada, a condição da PARTE 1 ficou errada.
+5. Faça um Pix de verdade de teste: o acesso tem que abrir tanto pelo botão
+   quanto sozinho, sem precisar clicar.
+6. Deploy.

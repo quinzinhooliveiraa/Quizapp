@@ -2108,6 +2108,8 @@ function useCheckout({
     null,
   );
   const [paymentError, setPaymentError] = useState("");
+  const [accessChecking, setAccessChecking] = useState(false);
+  const [accessCheckNote, setAccessCheckNote] = useState<string | null>(null);
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
   const checkoutCtaSourceRef = useRef<LandingCtaSource | null>(null);
@@ -2412,6 +2414,38 @@ function useCheckout({
     };
   }, [checkoutOpen, checkoutState, cardCheckout]);
 
+  const checkAccessNow = async () => {
+    if (!nativeCheckout || accessChecking) return;
+    setAccessChecking(true);
+    setAccessCheckNote(null);
+    try {
+      const response = await fetch(
+        apiUrl(
+          `/api/access/sessions/${encodeURIComponent(nativeCheckout.sessionId)}`,
+        ),
+      );
+      if (!response.ok) throw new Error("access-check");
+      const session = (await response.json()) as { accessGranted?: boolean };
+      if (session.accessGranted) {
+        safeSetItem("conexao-session", nativeCheckout.sessionId);
+        safeSetItem("conexao-role", "owner");
+        clearCompletedCheckoutStorage();
+        window.location.href = "/onboarding";
+        return;
+      }
+      setAccessCheckNote(
+        "Ainda não caiu aqui. Se você acabou de pagar, o banco pode levar até 2 minutos — pode deixar esta tela aberta que ela abre sozinha.",
+      );
+    } catch (error) {
+      console.error("verificação de acesso falhou", error);
+      setAccessCheckNote(
+        "Não consegui verificar agora. Tenta de novo em alguns segundos.",
+      );
+    } finally {
+      setAccessChecking(false);
+    }
+  };
+
   const checkout = async (
     packageId: "couple" | "family" = selectedPackage,
     email = buyerEmail,
@@ -2420,6 +2454,7 @@ function useCheckout({
   ) => {
     setCheckoutOpen(true);
     setPaymentError("");
+    setAccessCheckNote(null);
     if (inline) {
       setPaymentCreating("pix");
     } else {
@@ -2631,6 +2666,8 @@ function useCheckout({
     setCardError("");
     setPaymentCreating(null);
     setPaymentError("");
+    setAccessChecking(false);
+    setAccessCheckNote(null);
     setSelectedPaymentMethod("pix");
     setCopiedCode(false);
     setNameError("");
@@ -2666,6 +2703,9 @@ function useCheckout({
     paymentCreating,
     paymentError,
     setPaymentError,
+    accessChecking,
+    accessCheckNote,
+    checkAccessNow,
     confirmingLong,
     sendingLong,
     checkoutReviews,
@@ -2860,6 +2900,9 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     paymentCreating,
     paymentError,
     setPaymentError,
+    accessChecking,
+    accessCheckNote,
+    checkAccessNow,
     confirmingLong,
     sendingLong,
     checkoutReviews,
@@ -2988,6 +3031,12 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
         <br />
         <strong>Assim que cair, seu acesso abre sozinho.</strong>
       </p>
+      {checkoutState === "email" || checkoutState === "native-payment" ? (
+        <p className="checkout-pix-auto-check" role="status" aria-live="polite">
+          <span aria-hidden="true">●</span> verificando seu pagamento a cada
+          poucos segundos
+        </p>
+      ) : null}
       <div className="checkout-pix-copybox">
         <code>{nativeCheckout.brCode}</code>
         <button
@@ -3007,6 +3056,22 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           {copiedCode ? <Check size={16} /> : <Copy size={16} />}
           {copiedCode ? "Copiado!" : "Copiar"}
         </button>
+        <button
+          className="button button-primary checkout-pix-check"
+          type="button"
+          disabled={accessChecking}
+          onClick={checkAccessNow}
+          data-testid="button-check-access"
+        >
+          {accessChecking
+            ? "Verificando seu acesso…"
+            : "Já paguei — abrir meu baralho"}
+        </button>
+        {accessCheckNote ? (
+          <p className="checkout-pix-check-note" role="status" aria-live="polite">
+            {accessCheckNote}
+          </p>
+        ) : null}
       </div>
     </div>
   ) : paymentCreating === "pix" ? (
@@ -3332,26 +3397,28 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 </div>
               </section>
             </div>
-            <div className="checkout-purchase-bar">
-              <div className="checkout-purchase-total">
-                <span>Total</span>
-                <strong>R$ 47,90</strong>
+            {!(selectedPaymentMethod === "pix" && nativeCheckout) ? (
+              <div className="checkout-purchase-bar">
+                <div className="checkout-purchase-total">
+                  <span>Total</span>
+                  <strong>R$ 47,90</strong>
+                </div>
+                <button
+                  className="button button-primary checkout-purchase-button"
+                  type="submit"
+                  disabled={paymentCreating !== null}
+                  data-testid="button-continue-checkout"
+                >
+                  {paymentCreating !== null ? (
+                    "Gerando seu Pix…"
+                  ) : (
+                    <>
+                      Garantir meu deck <ArrowRight size={17} />
+                    </>
+                  )}
+                </button>
               </div>
-              <button
-                className="button button-primary checkout-purchase-button"
-                type="submit"
-                disabled={paymentCreating !== null}
-                data-testid="button-continue-checkout"
-              >
-                {paymentCreating !== null ? (
-                  "Gerando seu Pix…"
-                ) : (
-                  <>
-                    Garantir meu deck <ArrowRight size={17} />
-                  </>
-                )}
-              </button>
-            </div>
+            ) : null}
           </form>
         ) : checkoutState === "native-payment" && nativeCheckout ? (
           <div className="checkout-native-payment">

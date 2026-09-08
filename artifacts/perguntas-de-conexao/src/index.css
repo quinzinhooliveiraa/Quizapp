@@ -21629,6 +21629,7 @@ blockquote em {
 
 .checkout-pix-copybox {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   width: 100%;
@@ -21671,6 +21672,36 @@ blockquote em {
 .checkout-pix-copybox .checkout-copy-button:hover {
   background: #5b2034;
   color: #fff;
+}
+
+.checkout-pix-auto-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: -0.3rem 0 0;
+  color: #958b9f;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.checkout-pix-auto-check span {
+  color: #b8a6c2;
+  animation: checkout-auto-check-pulse 1.8s ease-in-out infinite;
+}
+
+.checkout-pix-check {
+  flex: 0 0 100%;
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+
+.checkout-pix-check-note {
+  flex: 0 0 100%;
+  margin: 0;
+  color: #6f6580;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 .checkout-card-inline {
@@ -21750,8 +21781,19 @@ blockquote em {
   }
 }
 
+@keyframes checkout-auto-check-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .checkout-pix-inline .checkout-qr-skeleton {
+  .checkout-pix-inline .checkout-qr-skeleton,
+  .checkout-pix-auto-check span {
     animation: none;
   }
 }
