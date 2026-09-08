@@ -19642,6 +19642,15 @@ blockquote em {
   overflow-wrap: anywhere;
 }
 
+.lp3-recommended-question-foot .lp3-question-proof {
+  border: 1px solid rgba(255, 197, 158, 0.32);
+  border-radius: 999px;
+  padding: 0.34rem 0.52rem;
+  background: rgba(255, 197, 158, 0.16);
+  color: var(--lp3-warm-soft);
+  font-size: 0.5rem;
+}
+
 .lp3-recommended-theme-card {
   position: relative;
   min-width: 0;

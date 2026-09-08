@@ -1,27 +1,20 @@
-import type { ConnectionQuestion } from "@workspace/connection-content";
 import { RecommendedQuestionCarousel } from "@/components/RecommendedQuestionCarousel";
+import { PERGUNTAS_VIRAIS } from "@/lib/perguntas-virais";
 
-type PlanToActionProps = {
-  recommendationBridge: string;
-  questions: ConnectionQuestion[];
-  themeTitle: string;
-};
-
-export function PlanToAction({
-  recommendationBridge,
-  questions,
-  themeTitle,
-}: PlanToActionProps) {
+export function PlanToAction() {
   return (
     <section className="lp3-plan-to-action" aria-labelledby="lp3-first-step-title">
-      <p className="lp3-recommendation-bridge">{recommendationBridge}</p>
+      <p className="lp3-mono">o que vocês vão ter em mãos</p>
       <div className="lp3-first-step">
         <h2 id="lp3-first-step-title" className="lp3-first-step-title">
-          Comecem por uma pergunta.
+          Comecem por estas.
         </h2>
+        <p className="lp3-section-intro">
+          Não são exemplos. São perguntas dos nossos vídeos — as pessoas pararam para
+          salvá-las mais de 200 mil vezes.
+        </p>
         <RecommendedQuestionCarousel
-          questions={questions}
-          themeTitle={themeTitle}
+          questions={PERGUNTAS_VIRAIS}
         />
       </div>
     </section>

@@ -1,13 +1,11 @@
-import type { ConnectionQuestion } from "@workspace/connection-content";
+import type { PerguntaViral } from "@/lib/perguntas-virais";
 
 type RecommendedQuestionCarouselProps = {
-  questions: ConnectionQuestion[];
-  themeTitle: string;
+  questions: PerguntaViral[];
 };
 
 export function RecommendedQuestionCarousel({
   questions,
-  themeTitle,
 }: RecommendedQuestionCarouselProps) {
   return (
     <div
@@ -24,7 +22,7 @@ export function RecommendedQuestionCarousel({
         >
           <div className="lp3-recommended-question-grain" aria-hidden="true" />
           <div className="lp3-recommended-question-top">
-            <span>{themeTitle}</span>
+            <span>pergunta de conexão</span>
             <strong>
               Perguntas
               <br />
@@ -35,7 +33,9 @@ export function RecommendedQuestionCarousel({
             <p>{question.text}</p>
           </div>
           <div className="lp3-recommended-question-foot">
-            <span>pergunta real</span>
+            <span className={question.saves ? "lp3-question-proof" : undefined}>
+              {question.saves ? `${question.saves} salvaram esta` : "pergunta real"}
+            </span>
             <span>
               {index + 1} / {questions.length}
             </span>

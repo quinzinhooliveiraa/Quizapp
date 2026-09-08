@@ -1,0 +1,176 @@
+# Prompt 42 (v2) — LP3: a tela vira prova, não recomendação
+
+> Se você recebeu uma versão anterior do 42 falando em "padronizar as perguntas
+> mantendo o baralho recomendado", **ignore aquela.** Esta substitui.
+
+Mexe em `pages/Lp3.tsx` e nos componentes que ela usa.
+
+## A ideia
+
+A tela "Uma direção possível" hoje é: bloco de transição → card do baralho
+recomendado → perguntas daquele baralho → toggle com outros baralhos.
+
+Vira: **título → as perguntas que viralizaram → toggle com os 15 baralhos.**
+
+O card de "baralho recomendado" sai. Motivo: se as perguntas passam a ser
+sempre as mesmas, elas não pertencem a baralho nenhum, e não dá pra colocá-las
+debaixo de um cabeçalho que diz "Porto Seguro". Esta tela deixa de ser
+personalizada e passa a ser a **prova** — a personalização já foi entregue na
+tela anterior, no diagnóstico.
+
+---
+
+## PARTE 1 — Limpar
+
+Em `renderRecommend`, apague:
+
+- `<StoryToSolution />` (e o import, e o arquivo `components/StoryToSolution.tsx`)
+- o bloco inteiro `<div className="lp3-deck" …>` com a foto e o nome do baralho
+  recomendado
+
+**Não apague** a variável `recommendedTheme` — ela continua sendo usada no
+tracking e no handoff para o app (`recommendedDeck: recommendedTheme.title`).
+
+O `useMemo` de `practiceQuestions` fica sem uso. Apague ele e o
+`fallbackQuestions`, se mais nada usar.
+
+---
+
+## PARTE 2 — As perguntas
+
+**Novo arquivo** `src/lib/perguntas-virais.ts`:
+
+```ts
+export type PerguntaViral = {
+  id: string;
+  text: string;
+  /** Salvamentos do post onde esta pergunta era o título. Só quem tem, tem. */
+  saves?: string;
+};
+
+// A ordem importa: abre morno, aperta no meio, fecha pesado. Não embaralhe.
+export const PERGUNTAS_VIRAIS: PerguntaViral[] = [
+  {
+    id: "viral-conectado",
+    text: "Em que momento você se sentiu verdadeiramente conectado a mim?",
+    saves: "25 mil",
+  },
+  {
+    id: "viral-nunca-mude",
+    text: "Qual é a única coisa em você que espera que nunca mude?",
+    saves: "51 mil",
+  },
+  {
+    id: "viral-diferente",
+    text: "O que me torna diferente de qualquer pessoa que você conheceu?",
+  },
+  {
+    id: "viral-nunca-cansa",
+    text: "Qual é a coisa que eu digo e que você nunca se cansa de ouvir?",
+  },
+  {
+    id: "viral-arrependimento-nossa-historia",
+    text: "Você se arrepende de algo sobre a nossa história até agora?",
+  },
+  {
+    id: "viral-amou-melhor",
+    text: "Você acha que alguém já te amou melhor do que eu?",
+    saves: "29 mil",
+  },
+  {
+    id: "viral-vida-sem-mim",
+    text: "Se você tivesse que imaginar sua vida sem mim, do que mais sentiria falta?",
+  },
+];
+```
+
+**Regra dos números, e é séria:** só três têm `saves`, porque só elas foram o
+título de um vídeo e o número é aferível. As outras quatro vieram de vídeos com
+várias perguntas juntas — não dá pra atribuir um número a cada uma.
+**Não invente número para as que estão sem, e não copie o número de uma para
+outra.** Se um dia mudar, muda aqui.
+
+**Não reescreva o texto das perguntas.** São as redações originais dos vídeos.
+A número 2 diz "em você", não "em mim" — é assim que ela viralizou, e o número
+de salvamentos é dessa redação.
+
+Em `components/PlanToAction.tsx`:
+
+- Não recebe mais `questions` nem `themeTitle`. Importa `PERGUNTAS_VIRAIS`.
+- Continua recebendo `recommendationBridge`? **Não** — tire também. A frase
+  dele é personalizada e não combina mais com perguntas fixas.
+- O cabeçalho da seção vira:
+
+```tsx
+<p className="lp3-mono">o que vocês vão ter em mãos</p>
+<h2 className="lp3-first-step-title">Comecem por estas.</h2>
+<p className="lp3-section-intro">
+  Não são exemplos. São perguntas dos nossos vídeos — as pessoas pararam para
+  salvá-las mais de 200 mil vezes.
+</p>
+```
+
+Em `components/RecommendedQuestionCarousel.tsx`:
+
+- Recebe `PERGUNTAS_VIRAIS` em vez de `questions` + `themeTitle`.
+- No topo do card, onde hoje está `{themeTitle}`, coloque **"pergunta de
+  conexão"**. O card não pertence mais a um baralho.
+- No rodapé, onde hoje está `pergunta real`:
+
+```tsx
+<span>{question.saves ? `${question.saves} salvaram esta` : "pergunta real"}</span>
+```
+
+- O contador `{index + 1} / {questions.length}` continua.
+
+O selo de salvamentos merece destaque: fundo levemente dourado (a cor de
+destaque que já existe no projeto), texto pequeno. É a coisa mais persuasiva da
+tela inteira e não pode passar despercebida.
+
+---
+
+## PARTE 3 — O toggle vira a vitrine dos baralhos
+
+Em `pages/Lp3.tsx`:
+
+- O `otherThemes` hoje é `libraryThemes.filter(theme => theme.id !== recommendedTheme.id).slice(0, 5)`.
+  Como não existe mais baralho recomendado, troque por **todos os 15**:
+
+```ts
+const allThemes = useMemo(() => libraryThemes, []);
+```
+
+- O texto do botão do toggle muda de **"E outros caminhos para vocês"** para
+  **"E os 15 baralhos que vêm junto"**.
+
+Como o toggle começa fechado, as 15 fotos só são baixadas quando a pessoa abre.
+Confirme que o `loading="lazy"` continua no `<img>` do carrossel.
+
+O clique num tema continua abrindo o `ThemePeekDialog` como está hoje. Não
+mexa nele.
+
+---
+
+## PARTE 4 — A ordem final da tela
+
+De cima para baixo, depois de aplicar:
+
+1. kicker "Uma direção possível" → troque para **"as perguntas"**
+2. "Comecem por estas." + a linha dos 200 mil
+3. carrossel das 7 perguntas, deslizando
+4. toggle fechado: "E os 15 baralhos que vêm junto"
+5. Voltar · **Quero começar essa conversa**
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar, sem aviso de variável sem uso.
+2. Faça o quiz duas vezes, escolhendo respostas **bem diferentes**. As duas têm
+   que chegar exatamente na mesma tela de perguntas — é isso que se espera
+   agora. (A diferença entre as duas continua aparecendo na tela anterior, no
+   diagnóstico. Confirme que ela ainda muda.)
+3. Confirme que as perguntas 1, 2 e 6 mostram o selo de salvamentos e as
+   outras quatro mostram "pergunta real".
+4. Abra o toggle: 15 baralhos com foto, deslizando. Clicar num abre o modal.
+5. Deploy.

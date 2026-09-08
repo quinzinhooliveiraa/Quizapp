@@ -2,19 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, ChevronDown, ChevronLeft } from "lucide-react";
 import { Link } from "wouter";
 import {
-  questions as libraryQuestions,
   themes as libraryThemes,
-  type ConnectionQuestion,
   type ConnectionTheme,
 } from "@workspace/connection-content";
 import {
   selectLp3Narrative,
   type Lp3Answers,
 } from "@/lib/lp3-narrative";
-import { getLp3RecommendationBridge } from "@/lib/lp3-recommendation";
 import { PlanToAction } from "@/components/PlanToAction";
 import { RecommendedThemeCarousel } from "@/components/RecommendedThemeCarousel";
-import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
@@ -101,16 +97,6 @@ const quizQuestions: QuizQuestion[] = [
   },
 ];
 
-const fallbackQuestions: ConnectionQuestion[] = [
-  {
-    id: "lp3-fallback-1",
-    themeId: "porto-seguro",
-    intensity: "gentle",
-    stage: "qualquer",
-    text: "O que alguém poderia perguntar mais vezes que faria diferença pra você?",
-  },
-];
-
 function getStoredState(): { screen: Screen; currentQuestion: number; answers: Answers } {
   if (typeof window === "undefined") {
     return { screen: "intro", currentQuestion: 0, answers: {} };
@@ -179,22 +165,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
-  const recommendationBridge = useMemo(
-    () => getLp3RecommendationBridge(result.narrativeType),
-    [result.narrativeType],
-  );
-  const practiceQuestions = useMemo(() => {
-    const preferred = libraryQuestions.filter((question) =>
-      question.themeId === result.themeId
-      || question.themeId === recommendedTheme.id
-      || question.intensity === (result.narrativeType === "intimacy" ? "deep" : "honest"),
-    );
-    return (preferred.length ? preferred : fallbackQuestions).slice(0, 8);
-  }, [recommendedTheme.id, result.narrativeType, result.themeId]);
-  const otherThemes = useMemo(
-    () => libraryThemes.filter((theme) => theme.id !== recommendedTheme.id).slice(0, 5),
-    [recommendedTheme.id],
-  );
+  const allThemes = useMemo(() => libraryThemes, []);
 
   useEffect(() => {
     window.localStorage.setItem("lp_variant", "lp3");
@@ -490,32 +461,9 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   };
 
   const renderRecommend = () => (
-    <section className="lp3-view lp3-recommend" aria-labelledby="lp3-recommend-title">
-      <div className="lp3-kicker">Uma direção possível</div>
-      <StoryToSolution />
-      <div className="lp3-deck" data-testid={`card-lp3-recommended-deck-${recommendedTheme.id}`}>
-        {recommendedTheme.backgroundUrl ? (
-          <img
-            className="lp3-deck-background"
-            src={recommendedTheme.backgroundUrl}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-          />
-        ) : null}
-        <div className="lp3-deck-info">
-          <span className="lp3-mono">Baralho recomendado</span>
-          <h2 className="lp3-deck-name">{recommendedTheme.title}</h2>
-        </div>
-        <div className="lp3-deck-description">
-          <p className="lp3-deck-copy">{recommendedTheme.description}</p>
-        </div>
-      </div>
-      <PlanToAction
-        recommendationBridge={recommendationBridge}
-        questions={practiceQuestions}
-        themeTitle={recommendedTheme.title}
-      />
+    <section className="lp3-view lp3-recommend" aria-labelledby="lp3-first-step-title">
+      <div className="lp3-kicker">as perguntas</div>
+      <PlanToAction />
       <div className="lp3-recommend-paths">
         <button
           className="lp3-recommend-paths-toggle"
@@ -524,13 +472,13 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
           aria-expanded={showOtherPaths}
           onClick={() => setShowOtherPaths((isVisible) => !isVisible)}
         >
-          <span className="lp3-mono">E outros caminhos para vocês</span>
+          <span className="lp3-mono">E os 15 baralhos que vêm junto</span>
           <ChevronDown size={18} aria-hidden="true" />
         </button>
         {showOtherPaths ? (
           <div id="lp3-other-paths" className="lp3-recommend-paths-content">
             <RecommendedThemeCarousel
-              themes={otherThemes}
+              themes={allThemes}
               onPeek={openThemePeek}
             />
           </div>
