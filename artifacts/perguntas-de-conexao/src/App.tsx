@@ -157,7 +157,9 @@ const themeBackgroundUrl = (id: string): string | null =>
 const inviteUrlFromToken = (token: string) =>
   `${window.location.origin}/invite/${token}`;
 const nativeCheckoutEnabled = true;
-const PENDING_CHECKOUT_MAX_AGE_MS = 30 * 60 * 1000;
+/** Tempo de vida de uma cobrança Pix. Precisa bater com o relógio da verificação. */
+const PIX_LIFETIME_MS = 15 * 60 * 1000;
+const PENDING_CHECKOUT_MAX_AGE_MS = PIX_LIFETIME_MS;
 const HOSTED_CHECKOUT_MAX_WAIT_MS = 3 * 60 * 1000;
 const HOSTED_CHECKOUT_POLL_INTERVAL_MS = 2000;
 const CARD_CHECKOUT_MAX_WAIT_MS = 15 * 60 * 1000;
@@ -2065,7 +2067,6 @@ type CheckoutState =
   | "card-payment"
   | "card-confirming"
   | "card-error"
-  | "expired"
   | "error"
   | "waiting-manual";
 
@@ -2107,6 +2108,7 @@ function useCheckout({
   const [paymentCreating, setPaymentCreating] = useState<"pix" | "card" | null>(
     null,
   );
+  const [pixExpired, setPixExpired] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [accessChecking, setAccessChecking] = useState(false);
   const [accessCheckNote, setAccessCheckNote] = useState<string | null>(null);
@@ -2329,8 +2331,10 @@ function useCheckout({
 
     let cancelled = false;
     const checkPayment = async () => {
-      if (Date.now() - nativeCheckout.startedAt >= 15 * 60 * 1000) {
-        setCheckoutState("expired");
+      if (Date.now() - nativeCheckout.startedAt >= PIX_LIFETIME_MS) {
+        setNativeCheckout(null);
+        setPixExpired(true);
+        clearPendingCheckoutStorage();
         return;
       }
 
@@ -2514,6 +2518,7 @@ function useCheckout({
         startedAt: checkoutStartedAt,
       };
       setNativeCheckout(pix);
+      setPixExpired(false);
       safeSetItem("conexao-pending-pix", JSON.stringify(pix));
       setSelectedPaymentMethod("pix");
       if (!inline) setCheckoutState("email");
@@ -2630,6 +2635,7 @@ function useCheckout({
     checkoutCtaSourceRef.current = ctaSource || null;
     onCtaClick?.(ctaSource);
     setSelectedPackage(packageId);
+    setPixExpired(false);
     safeSetItem("conexao-pending-source-lp", sourceLp);
     const pendingPix = safeGetItem("conexao-pending-pix");
     if (nativeCheckoutEnabled && pendingPix) {
@@ -2649,6 +2655,7 @@ function useCheckout({
           setCheckoutOpen(true);
           return;
         }
+        clearPendingCheckoutStorage();
       } catch {
         clearPendingCheckoutStorage();
       }
@@ -2662,6 +2669,7 @@ function useCheckout({
   const restartCheckout = () => {
     clearPendingCheckoutStorage();
     setNativeCheckout(null);
+    setPixExpired(false);
     setCardCheckout(null);
     setCardError("");
     setPaymentCreating(null);
@@ -2692,6 +2700,7 @@ function useCheckout({
     emailError,
     setEmailError,
     nativeCheckout,
+    pixExpired,
     cardCheckout,
     cardAvailable,
     selectedPaymentMethod,
@@ -2889,6 +2898,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     emailError,
     setEmailError,
     nativeCheckout,
+    pixExpired,
     cardCheckout,
     cardAvailable,
     selectedPaymentMethod,
@@ -3073,6 +3083,17 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           </p>
         ) : null}
       </div>
+    </div>
+  ) : pixExpired ? (
+    <div className="checkout-pix-expired" role="status" aria-live="polite">
+      <p className="checkout-pix-expired-title">O código Pix expirou.</p>
+      <p>
+        Ele vale 15 minutos. Toque em <strong>“Garantir meu deck”</strong> aqui
+        embaixo que eu gero outro na hora — seus dados continuam preenchidos.
+      </p>
+      <p className="checkout-pix-expired-alt">
+        Ou pague no <strong>cartão</strong>, na aba ao lado. Aí não tem prazo.
+      </p>
     </div>
   ) : paymentCreating === "pix" ? (
     <div className="checkout-pix-inline" role="status" aria-live="polite">
@@ -3504,26 +3525,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
               onClick={() => selectPaymentMethod("pix")}
             >
               Pagar com Pix
-            </button>
-          </div>
-        ) : checkoutState === "expired" ? (
-          <div className="checkout-error-state">
-            <p className="section-kicker">o código expirou</p>
-            <h2>
-              A cobrança expirou.
-              <br />
-              <em>Gere um novo código.</em>
-            </h2>
-            <p className="checkout-error">
-              O Pix fica disponível por 15 minutos. Você pode gerar outro agora,
-              sem preencher seus dados novamente.
-            </p>
-            <button
-              onClick={restartCheckout}
-              className="button button-primary button-full"
-              data-testid="button-regenerate-pix"
-            >
-              Gerar um novo código <ArrowRight size={16} />
             </button>
           </div>
         ) : checkoutState === "waiting-manual" ? (

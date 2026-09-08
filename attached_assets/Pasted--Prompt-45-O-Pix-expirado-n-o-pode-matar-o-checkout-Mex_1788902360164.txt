@@ -1,0 +1,143 @@
+# Prompt 45 — O Pix expirado não pode matar o checkout
+
+Mexe só em `artifacts/perguntas-de-conexao/src/App.tsx` e no `index.css`.
+**Faça este antes do 44.** É dinheiro parando na porta.
+
+## O bug, em três camadas
+
+**Camada 1 — os dois relógios não batem.**
+
+```js
+const PENDING_CHECKOUT_MAX_AGE_MS = 30 * 60 * 1000;   // linha 160
+```
+Em `startCheckout` (~2634), um Pix guardado no navegador é restaurado enquanto
+tiver menos de **30 minutos**. Mas o `setInterval` de verificação (~2330) faz:
+
+```js
+if (Date.now() - nativeCheckout.startedAt >= 15 * 60 * 1000) {
+  setCheckoutState("expired");
+}
+```
+
+Expira aos **15**. Ou seja: entre o minuto 15 e o 30, a pessoa clica em
+qualquer botão de compra, o Pix velho é restaurado, e o relógio derruba ela
+na tela de expirado **antes de ela ver o checkout**. Não é intermitente, é
+todo mundo nessa janela.
+
+**Camada 2 — expirado é um beco sem saída.**
+`checkoutState === "expired"` (~3509) troca a tela inteira por um estado que
+só oferece "Gerar um novo código".
+
+**Camada 3 — o beco assume que só existe Pix.**
+Quem ia pagar no cartão descobre que "a cobrança expirou" e é oferecido…
+outro Pix. O cartão nem é mencionado. O checkout inteiro some por causa de um
+código de um método que a pessoa talvez nem fosse usar.
+
+---
+
+## PARTE 1 — Alinhar os relógios
+
+No topo do arquivo, ao lado da constante que já existe:
+
+```ts
+/** Tempo de vida de uma cobrança Pix. Precisa bater com o relógio da verificação. */
+const PIX_LIFETIME_MS = 15 * 60 * 1000;
+const PENDING_CHECKOUT_MAX_AGE_MS = PIX_LIFETIME_MS;
+```
+
+E no `setInterval` de verificação, troque o `15 * 60 * 1000` escrito na mão por
+`PIX_LIFETIME_MS`. Faça o mesmo nos outros dois lugares que usam
+`PENDING_CHECKOUT_MAX_AGE_MS` (~2207 e ~2229).
+
+Assim um Pix vencido **nunca** é restaurado: ou ele ainda vale, ou é
+descartado e a pessoa começa limpa no passo do e-mail.
+
+---
+
+## PARTE 2 — Expirado deixa de ser tela, vira aviso
+
+Novo estado, junto dos outros do checkout:
+
+```ts
+const [pixExpired, setPixExpired] = useState(false);
+```
+
+**2.1** No `setInterval`, troque `setCheckoutState("expired")` por:
+
+```ts
+if (Date.now() - nativeCheckout.startedAt >= PIX_LIFETIME_MS) {
+  setNativeCheckout(null);
+  setPixExpired(true);
+  clearPendingCheckoutStorage();
+  return;
+}
+```
+
+O `checkoutState` **continua em `"email"`**. A pessoa segue no checkout, com
+as duas abas, o resumo e o botão. Só o Pix morreu — não a compra.
+
+**2.2** Zere o `pixExpired` sempre que um Pix novo for criado com sucesso
+(onde o `setNativeCheckout(...)` recebe os dados novos) e dentro do
+`restartCheckout`.
+
+**2.3** No `pixPaymentContent`, acrescente um ramo **antes** do
+`paymentCreating === "pix"`:
+
+```tsx
+) : pixExpired ? (
+  <div className="checkout-pix-expired" role="status" aria-live="polite">
+    <p className="checkout-pix-expired-title">O código Pix expirou.</p>
+    <p>
+      Ele vale 15 minutos. Toque em <strong>“Garantir meu deck”</strong> aqui
+      embaixo que eu gero outro na hora — seus dados continuam preenchidos.
+    </p>
+    <p className="checkout-pix-expired-alt">
+      Ou pague no <strong>cartão</strong>, na aba ao lado. Aí não tem prazo.
+    </p>
+  </div>
+) : paymentCreating === "pix" ? (
+```
+
+Visual: caixa discreta, borda suave, **sem cara de erro grave**. Não é falha,
+é um código que venceu. Nada de vermelho de alarme.
+
+**Repare que não tem botão aqui.** É de propósito: com `nativeCheckout` agora
+`null`, a barra de baixo com "Garantir meu deck" **volta sozinha** (a condição
+que o prompt 43 colocou já cuida disso) e ela é que gera o Pix novo. Dois
+botões fazendo a mesma coisa na mesma tela é confusão.
+
+---
+
+## PARTE 3 — Limpar o estado antigo
+
+O ramo `checkoutState === "expired"` (~3509) fica sem quem o acione pelo fluxo
+nativo. **Não apague o valor do tipo** — confira antes se algum outro fluxo
+(o hospedado, o de cartão) ainda usa. Se ninguém mais setar `"expired"`, aí
+sim apague o ramo do JSX e o valor do tipo.
+
+Se sobrar algum caminho que ainda precise dele, deixe como está — só garanta
+que o fluxo do Pix nativo não passa mais por ali.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. **Teste do relógio, obrigatório.** Baixe `PIX_LIFETIME_MS` temporariamente
+   para `60 * 1000` (um minuto), suba local, e:
+   - gere um Pix e espere passar de um minuto **com a tela aberta**;
+   - confirme que a tela **não muda de página** — continua o checkout, com as
+     duas abas, e o aviso "O código Pix expirou" aparece na área do Pix;
+   - confirme que a barra de baixo **voltou** com "Garantir meu deck";
+   - toque nela e confirme que um Pix novo é gerado, **sem** pedir e-mail e
+     nome de novo;
+   - troque para a aba de **cartão** e confirme que dá para pagar normalmente,
+     sem nenhum aviso de expirado atrapalhando.
+   - **Depois volte `PIX_LIFETIME_MS` para `15 * 60 * 1000`.** Não faça deploy
+     com um minuto.
+3. Teste da janela morta: gere um Pix, feche a aba, espere passar do tempo,
+   volte no site e clique num botão de compra. Tem que abrir o checkout no
+   passo do e-mail, limpo — e **não** cair em tela de expirado.
+4. Confirme na AbacatePay que os testes não deixaram cobranças penduradas
+   além das esperadas.
+5. Deploy.

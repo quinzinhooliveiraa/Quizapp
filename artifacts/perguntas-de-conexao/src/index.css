@@ -21624,6 +21624,38 @@ blockquote em {
   animation: checkout-qr-pulse 1.5s ease-in-out infinite;
 }
 
+.checkout-pix-expired {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5c8c1;
+  border-radius: 13px;
+  padding: 1rem 1.05rem;
+  background: #fff9f6;
+  color: #6f6580;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.checkout-pix-expired p {
+  margin: 0;
+}
+
+.checkout-pix-expired-title {
+  margin-bottom: 0.35rem !important;
+  color: #7a2e46;
+  font-weight: 700;
+}
+
+.checkout-pix-expired strong {
+  color: #2a2233;
+}
+
+.checkout-pix-expired-alt {
+  margin-top: 0.7rem !important;
+  padding-top: 0.7rem;
+  border-top: 1px solid #eadbd8;
+}
+
 .checkout-pix-hint {
   margin: 0;
   text-align: center;
