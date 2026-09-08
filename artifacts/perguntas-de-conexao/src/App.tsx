@@ -3284,7 +3284,13 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 disabled={paymentCreating !== null}
                 data-testid="button-continue-checkout"
               >
-                Garantir meu deck <ArrowRight size={17} />
+                {paymentCreating !== null ? (
+                  "Gerando seu Pix…"
+                ) : (
+                  <>
+                    Garantir meu deck <ArrowRight size={17} />
+                  </>
+                )}
               </button>
             </div>
           </form>
