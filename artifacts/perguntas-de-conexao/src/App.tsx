@@ -115,6 +115,7 @@ import Admin from "@/pages/Admin";
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { apiBaseUrl } from "@/config";
+import { SUPPORT_DIALOG_EVENT, openSupportDialog } from "@/lib/support";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
@@ -3520,7 +3521,185 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             >
               Tentar novamente <ArrowRight size={16} />
             </button>
+            <p className="checkout-support">
+              Deu problema no pagamento?{" "}
+              <button type="button" onClick={openSupportDialog}>
+                Fala comigo
+              </button>
+            </p>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SupportDialog() {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const handleOpen = () => {
+      setEmail(
+        safeGetItem("conexao-pending-buyer-email") ||
+          safeGetItem("conexao-login-email") ||
+          "",
+      );
+      setMessage("");
+      setStatus("idle");
+      setError("");
+      setOpen(true);
+    };
+    window.addEventListener(SUPPORT_DIALOG_EVENT, handleOpen);
+    return () => window.removeEventListener(SUPPORT_DIALOG_EVENT, handleOpen);
+  }, []);
+
+  if (!open) return null;
+
+  const sendSupportMessage = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const typedMessage = message.trim();
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError("Digite um e-mail válido.");
+      return;
+    }
+    if (!typedMessage) {
+      setError("Escreva uma mensagem antes de enviar.");
+      return;
+    }
+
+    setStatus("sending");
+    setError("");
+    const contexto = [
+      `página: ${window.location.pathname}`,
+      `sessão pendente: ${safeGetItem("conexao-pending-session") || "não"}`,
+      `acesso salvo: ${safeGetItem("conexao-session") ? "sim" : "não"}`,
+      `tela: ${window.innerWidth}x${window.innerHeight}`,
+      `navegador: ${navigator.userAgent}`,
+    ].join(" · ");
+
+    try {
+      const response = await fetch(apiUrl("/api/suggestions"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          message: `${typedMessage}\n\n---\n${contexto}`,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`support request failed: ${response.status}`);
+      }
+      setStatus("sent");
+      setMessage("");
+    } catch (requestError) {
+      console.error("Support message failed", requestError);
+      setStatus("error");
+      setError("Não consegui enviar agora. Tente de novo.");
+    }
+  };
+
+  const close = () => {
+    setOpen(false);
+    setStatus("idle");
+    setError("");
+  };
+
+  return (
+    <div
+      className="app-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="support-title"
+    >
+      <div className="app-modal">
+        <button
+          className="app-modal-close"
+          onClick={close}
+          aria-label="Fechar suporte"
+          data-testid="button-close-support"
+        >
+          <X size={18} />
+        </button>
+        {status === "sent" ? (
+          <>
+            <p className="modal-eyebrow">mensagem recebida</p>
+            <h2 id="support-title">Precisa de ajuda?</h2>
+            <p>
+              Recebi sua mensagem. Te respondo nesse e-mail, normalmente no
+              mesmo dia.
+            </p>
+            <button
+              type="button"
+              className="app-primary-button"
+              onClick={close}
+              data-testid="button-close-support-sent"
+            >
+              Fechar
+            </button>
+          </>
+        ) : (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void sendSupportMessage();
+            }}
+          >
+            <p className="modal-eyebrow">fale comigo</p>
+            <h2 id="support-title">Precisa de ajuda?</h2>
+            <p>
+              Me conta o que aconteceu que eu te respondo no e-mail. Se for
+              problema com pagamento ou acesso, escreve o e-mail que você usou
+              na compra.
+            </p>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Seu e-mail"
+              className="app-text-input"
+              autoComplete="email"
+              data-testid="input-support-email"
+            />
+            <textarea
+              required
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="O que aconteceu?"
+              className="app-textarea"
+              rows={5}
+              data-testid="input-support-message"
+            />
+            {error && (
+              <p className="checkout-error" role="alert">
+                {error}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={status === "sending"}
+              className="app-primary-button"
+              data-testid="button-send-support"
+            >
+              {status === "sending" ? "Enviando…" : "Enviar"}
+            </button>
+            {status === "error" && (
+              <button
+                type="button"
+                className="app-secondary-button"
+                onClick={() => void sendSupportMessage()}
+                data-testid="button-retry-support"
+              >
+                Tentar de novo
+              </button>
+            )}
+          </form>
         )}
       </div>
     </div>
@@ -8465,6 +8644,7 @@ function App() {
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
           <RouteAwareSplash />
+          <SupportDialog />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

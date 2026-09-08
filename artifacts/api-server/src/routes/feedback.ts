@@ -7,6 +7,7 @@ import {
   sessionsTable,
   suggestionsTable,
 } from "@workspace/db";
+import { sendSupportNotification } from "../lib/push";
 
 const router: IRouter = Router();
 
@@ -30,6 +31,7 @@ export async function isAdminSession(sessionId?: string): Promise<boolean> {
 
 router.post("/suggestions", async (req, res): Promise<void> => {
   const body = req.body as { email?: string; message?: string };
+  const email = body.email?.trim().slice(0, 200) || "";
   const message = body.message?.trim().slice(0, 2000) || "";
   if (!message) {
     res.status(400).json({ error: "Escreva sua sugestão antes de enviar." });
@@ -39,10 +41,13 @@ router.post("/suggestions", async (req, res): Promise<void> => {
     .insert(suggestionsTable)
     .values({
       id: crypto.randomUUID(),
-      email: body.email?.trim().slice(0, 200) || null,
+      email: email || null,
       message,
     })
     .returning();
+  void sendSupportNotification({ email }).catch((error) =>
+    req.log.error({ err: error }, "Support push notification failed"),
+  );
   res.status(201).json(suggestion);
 });
 

@@ -23,6 +23,7 @@ import { RecommendedThemeCarousel } from "@/components/RecommendedThemeCarousel"
 import { StoryToSolution } from "@/components/StoryToSolution";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
+import { openSupportDialog } from "@/lib/support";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
@@ -783,6 +784,7 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
         logoTestId="link-footer-logo"
         logoHref="/lp3"
         onLogoClick={returnToIntro}
+        supportAction={{ label: "Preciso de ajuda", onClick: openSupportDialog }}
       />
     </div>
   );

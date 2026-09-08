@@ -1,0 +1,101 @@
+# Canal de suporte — dar às pessoas com quem falar
+
+Contexto: hoje não existe **nenhum** lugar na página de vendas, no login ou no
+checkout onde alguém possa entrar em contato. Uma compradora real ficou 14
+minutos travada e não tinha como pedir ajuda.
+
+Boa notícia: a caixa de entrada já existe. Já temos `POST /suggestions`,
+`GET /admin/suggestions` e a seção **"Sugestões"** no painel admin. Este prompt
+só cria as **portas de entrada** e o **aviso**.
+
+Faça apenas o descrito abaixo. Não crie tabela nova, não mexa no fluxo de
+pagamento, não mexa em acesso.
+
+---
+
+## PARTE 1 — Componente de contato (front-end)
+
+Crie um componente `SupportDialog` em
+`artifacts/perguntas-de-conexao/src/App.tsx` (perto dos outros modais).
+
+Comportamento:
+
+- Abre como modal ao clicar em "Preciso de ajuda"
+- Campos: **e-mail** (obrigatório) e **mensagem** (obrigatório, textarea)
+- Se já houver e-mail conhecido no navegador
+  (`conexao-pending-buyer-email` ou o do login), preencha automaticamente
+- Botão "Enviar" fica `disabled` enquanto envia e mostra "Enviando…"
+- Ao enviar com sucesso: troca o conteúdo por
+  **"Recebi sua mensagem. Te respondo nesse e-mail, normalmente no mesmo dia."**
+- Se falhar: mensagem de erro + botão "tentar de novo" (não engolir o erro,
+  usar `console.error`)
+
+Textos do modal:
+- Título: **"Precisa de ajuda?"**
+- Apoio: *"Me conta o que aconteceu que eu te respondo no e-mail. Se for problema
+  com pagamento ou acesso, escreve o e-mail que você usou na compra."*
+
+**Envio:** faça `POST` para `/api/suggestions` com `{ email, message }`.
+
+**Contexto automático (importante, e sem alterar o banco):** antes de enviar,
+monte a mensagem final assim, para você conseguir diagnosticar sem ter que
+perguntar:
+
+```ts
+const contexto = [
+  `página: ${window.location.pathname}`,
+  `sessão pendente: ${safeGetItem("conexao-pending-session") || "não"}`,
+  `acesso salvo: ${safeGetItem("conexao-session") ? "sim" : "não"}`,
+  `tela: ${window.innerWidth}x${window.innerHeight}`,
+  `navegador: ${navigator.userAgent}`,
+].join(" · ");
+
+const message = `${textoDigitadoPelaPessoa}\n\n---\n${contexto}`;
+```
+
+---
+
+## PARTE 2 — Onde o botão aparece
+
+Coloque o gatilho **"Preciso de ajuda"** em três lugares (é onde a pessoa trava):
+
+1. **Rodapé da LP3** (`pages/Lp3.tsx`) — link discreto, junto dos outros textos
+   do rodapé.
+2. **Tela de login** (`pages/Login.tsx`) — abaixo do formulário:
+   *"Não está conseguindo entrar? **Preciso de ajuda**"*
+3. **Estado de erro do checkout** (`App.tsx`, quando
+   `checkoutState === "error"`) — este é o mais importante:
+   *"Deu problema no pagamento? **Fala comigo**"*
+
+Discreto, sem virar banner. É uma saída de emergência, não uma chamada.
+
+---
+
+## PARTE 3 — Aviso por push quando chegar mensagem
+
+Em `artifacts/api-server/src/lib/push.ts` já existe `sendPurchaseNotification`.
+Crie ao lado, no mesmo padrão, `sendSupportNotification({ email })`, com título
+**"Nova mensagem de suporte"** e corpo com o e-mail de quem escreveu.
+
+Em `artifacts/api-server/src/routes/feedback.ts`, na rota `POST /suggestions`,
+depois de gravar no banco com sucesso, dispare o push sem travar a resposta:
+
+```ts
+void sendSupportNotification({ email }).catch((error) =>
+  req.log.error({ err: error }, "Support push notification failed"),
+);
+```
+
+A rota deve continuar respondendo normalmente mesmo se o push falhar.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Teste: abra a LP anonimamente, clique em "Preciso de ajuda", envie uma
+   mensagem de teste.
+3. Confirme que ela apareceu no painel `/admin`, na seção **Sugestões**, com o
+   bloco de contexto no final da mensagem.
+4. Confirme que o push chegou no seu celular.
+5. Deploy.

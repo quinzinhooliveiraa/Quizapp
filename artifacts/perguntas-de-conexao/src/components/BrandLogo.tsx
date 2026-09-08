@@ -37,10 +37,15 @@ export function SiteFooter({
   logoTestId = "link-logo",
   logoHref = "/",
   onLogoClick,
+  supportAction,
 }: {
   logoTestId?: string;
   logoHref?: string;
   onLogoClick?: () => void;
+  supportAction?: {
+    label: string;
+    onClick: () => void;
+  };
 }) {
   return (
     <footer className="site-footer">
@@ -51,6 +56,15 @@ export function SiteFooter({
         onClick={onLogoClick}
       />
       <span>Para conversas que ficam.</span>
+      {supportAction && (
+        <button
+          type="button"
+          className="footer-support"
+          onClick={supportAction.onClick}
+        >
+          {supportAction.label}
+        </button>
+      )}
       <span className="footer-copy">
         © {new Date().getFullYear()} Perguntas de Conexão
       </span>

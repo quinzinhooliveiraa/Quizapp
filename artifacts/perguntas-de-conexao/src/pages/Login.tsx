@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowRight, Feather, Mail } from "lucide-react";
 import { apiBaseUrl } from "@/config";
+import { openSupportDialog } from "@/lib/support";
 
 const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
@@ -30,10 +31,20 @@ function safeSet(key: string, value: string) {
   }
 }
 
+function safeGet(key: string): string {
+  try {
+    return window.localStorage?.getItem(key) || "";
+  } catch {
+    return "";
+  }
+}
+
 export default function Login() {
   const [, navigate] = useLocation();
   const [stage, setStage] = useState<Stage>("email");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(
+    () => safeGet("conexao-login-email") || safeGet("conexao-pending-buyer-email"),
+  );
   const [code, setCode] = useState("");
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [invites, setInvites] = useState<InviteSummary[]>([]);
@@ -59,6 +70,7 @@ export default function Login() {
       setError("Digite um email válido.");
       return;
     }
+    safeSet("conexao-login-email", trimmed);
     setLoading(true);
     try {
       const response = await fetch(apiUrl("/api/auth/request-code"), {
@@ -424,6 +436,12 @@ export default function Login() {
             </div>
           </>
         )}
+        <p className="login-support">
+          Não está conseguindo entrar?{" "}
+          <button type="button" onClick={openSupportDialog}>
+            Preciso de ajuda
+          </button>
+        </p>
       </main>
     </div>
   );

@@ -7070,6 +7070,21 @@ blockquote em {
   margin-left: auto;
   opacity: 0.45;
 }
+.footer-support {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  opacity: 0.72;
+}
+.footer-support:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
 
 /* app */
 .experience-page {
@@ -15110,6 +15125,23 @@ blockquote em {
 .login-alt a:hover {
   text-decoration: underline;
 }
+.login-support {
+  margin: 1.2rem 0 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.82rem;
+  text-align: center;
+}
+.login-support button {
+  padding: 0;
+  border: 0;
+  color: #c4acff;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.login-support button:hover {
+  text-decoration: underline;
+}
 
 .login-picker {
   display: flex;
@@ -19719,6 +19751,23 @@ blockquote em {
 .lp3-shell .site-footer {
   width: 100%;
   padding-inline: max(34px, calc((100% - 1172px) / 2));
+}
+.checkout-support {
+  margin: 1rem 0 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.82rem;
+  text-align: center;
+}
+.checkout-support button {
+  padding: 0;
+  border: 0;
+  color: #c4acff;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.checkout-support button:hover {
+  text-decoration: underline;
 }
 
 .lp3-main {
