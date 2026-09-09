@@ -3605,6 +3605,9 @@
   border-color: rgba(112, 81, 115, 0.2);
   color: #2a2130;
 }
+.lp-main:has(.lp2-hero) .lp-price-card {
+  --ink-soft: #715c71;
+}
 .lp-main:has(.lp2-hero) .lp1-price-anchor {
   margin: 0 0 1.4rem;
   color: #715c71;
@@ -3616,12 +3619,31 @@
 .lp-main:has(.lp2-hero) .lp-price-cents {
   color: #715c71;
 }
+.lp-main:has(.lp2-hero) .lp-price-value {
+  display: block;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+}
 .lp-main:has(.lp2-hero) .lp-price-big {
   color: #2a2130;
 }
 .lp-main:has(.lp2-hero) .lp-price-installments,
 .lp-main:has(.lp2-hero) .lp-price-time {
   color: #715c71;
+}
+.lp-main:has(.lp2-hero) .lp-price-once {
+  margin: 0.15rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.lp-main:has(.lp2-hero) .lp-price-time {
+  margin: 0.2rem 0 0;
 }
 .lp-main:has(.lp2-hero) .lp1-price-steps {
   display: grid;
@@ -3652,6 +3674,11 @@
 }
 .lp-main:has(.lp2-hero) .lp-price-includes strong {
   color: #8b3553;
+}
+.lp-main:has(.lp2-hero) .lp-price-card .lp-cta-full {
+  min-height: 3.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 .lp-main:has(.lp2-hero) .lp-guarantee {
   background: rgba(112, 81, 115, 0.05);

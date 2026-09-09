@@ -1,0 +1,133 @@
+# Prompt 58 — Fechar as 4 regras de preço que faltam
+
+Medi a seção `precos` da LP1 no celular. **Três das nove regras estão certas,
+quatro faltam.** Todas as correções são nesta seção.
+
+Mexe em `App.tsx` (seção `precos` do `LandingV2Quiz`) e no `index.css`.
+
+---
+
+## O que está certo (não mexa)
+
+| Regra | Estado |
+|---|---|
+| Falar de tempo, não de dinheiro | ✅ *"459 perguntas. Uma por noite, dá mais de um ano de conversa."* |
+| Âncora numérica na seção | ✅ *"459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil vezes"* |
+| Cobrar antes do consumo | ✅ |
+
+---
+
+## O problema: a ordem dentro da seção
+
+Hoje a seção está assim, de cima pra baixo:
+
+```
+1. ACESSO VITALÍCIO
+2. "A próxima boa conversa pode ser hoje à noite."
+3. 459 · 15 · 200 mil salvamentos
+4. R$ 47,90                       ← o preço aparece AQUI
+5. "Uma por noite, dá mais de um ano de conversa"
+6. os 3 passos (paga → convida → escolhem)
+7. a lista de 6 benefícios
+8. o botão
+9. a garantia
+```
+
+**O preço aparece na posição 4 de 9** — antes dos três passos e antes da lista
+de benefícios. Isso inverte a regra do fMRI (Pricing p.50, Karmarkar, Shiv &
+Knutson 2015): quem vê o **produto primeiro** julga por benefício; quem vê o
+**preço primeiro** julga por economia. Você está fazendo a pessoa entrar no modo
+econômico antes de mostrar o que ela leva.
+
+---
+
+## Correção 1 — o preço desce
+
+Mova o bloco do preço para **depois da lista de benefícios, logo antes do
+botão**. A ordem nova:
+
+```
+1. ACESSO VITALÍCIO
+2. "A próxima boa conversa pode ser hoje à noite."
+3. 459 · 15 · 200 mil salvamentos
+4. os 3 passos
+5. a lista de 6 benefícios
+6. O PREÇO                        ← desceu pra cá
+7. o botão
+8. a garantia
+```
+
+## Correção 2 — o preço vira uma frase, não um número solto
+
+Hoje o preço é `R$` + `47` + `,90` em três pedaços, sozinho na tela. Troque o
+bloco inteiro por três linhas:
+
+```
+459 perguntas por apenas R$ 47,90
+uma vez só, pra sempre — sem mensalidade
+Uma por noite, dá mais de um ano de conversa.
+```
+
+Essa construção resolve duas regras de uma vez:
+
+- **Quantidade antes do preço** *(Pricing p.37, Bagchi & Davis 2012)* — "459
+  perguntas por R$ 47,90", nunca o contrário. Hoje o número aparece sozinho e a
+  quantidade vem numa frase separada, depois.
+- **Palavras de pequenez ao lado do número** *(Pricing p.21)* — "apenas" e "uma
+  vez só". Hoje não tem nenhuma perto do preço; o "Sem mensalidade. Paga uma
+  vez." está lá embaixo na lista, longe demais.
+
+E a linha de tempo continua logo abaixo, que é a regra mais forte do guia
+inteiro.
+
+## Correção 3 — o preço para de ser o segundo maior texto da seção
+
+Medido hoje:
+
+```
+H2 da seção ......... 32px
+preço "47" .......... 25,6px   ← segundo maior da seção
+linha de tempo ...... 15,2px
+botão ............... 14,08px  ← quase metade do preço
+benefícios .......... 13,44px
+```
+
+A regra é o oposto: **o destaque é o botão, não o número** *(Pricing p.49)*, e
+o preço deve ser pequeno *(p.10)*.
+
+```css
+.lp-price-value,
+.lp-price-big,
+.lp-price-currency,
+.lp-price-cents {
+  font-size: 1.05rem;      /* ~17px, na escala do texto */
+  font-weight: 500;
+  color: var(--ink-soft);  /* cinza do corpo, não cor de destaque */
+}
+```
+
+O botão desta seção cresce junto com o do hero (prompt 57): `1.05rem`, peso
+700, altura mínima `3.5rem`. **O botão tem que ficar maior que o preço**, não o
+contrário.
+
+---
+
+## O que eu NÃO vou pedir
+
+**Descrever os custos que o preço cobre** *(Pricing p.56, Mohan, Buell & John
+2020 — e-mail com custos discriminados aumentou vendas)*. É a regra mais
+contraintuitiva do lote e tem estudo atrás, mas num produto digital de R$ 47,90
+a lista de custos ("servidor, escrita das perguntas, ...") soa como justificação
+e enfraquece. Fica registrada como ideia, não entra agora.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. `/lp1` no celular, seção de preço. A ordem tem que ser: título → âncora →
+   3 passos → benefícios → **preço** → botão → garantia.
+3. Olhe a seção e responda: **o que salta primeiro, o botão ou o número?**
+   Tem que ser o botão. Se for o número, diminua mais o preço.
+4. Confirme que a frase é "459 perguntas por apenas R$ 47,90" — nessa ordem.
+5. Deploy.

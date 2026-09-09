@@ -1659,19 +1659,6 @@ function LandingV2Quiz({
               459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil
               vezes
             </p>
-            <div className="lp-price-main">
-              <div className="lp-price-value">
-                <span className="lp-price-currency">R$</span>
-                <span className="lp-price-big">47</span>
-                <span className="lp-price-cents">,90</span>
-              </div>
-              <span className="lp-price-installments">
-                à vista <strong>ou</strong> 5x de R$ 9,58
-              </span>
-            </div>
-            <p className="lp-price-time">
-              459 perguntas. Uma por noite, dá mais de um ano de conversa.
-            </p>
             <ol className="lp1-price-steps">
               <li>
                 <strong>Você paga.</strong> Pix cai na hora e o acesso abre
@@ -1696,6 +1683,15 @@ function LandingV2Quiz({
               <li>✓ Novos baralhos incluídos, pra sempre</li>
               <li>✓ Sem mensalidade. Paga uma vez.</li>
             </ul>
+            <div className="lp-price-main">
+              <p className="lp-price-value">459 perguntas por apenas R$ 47,90</p>
+              <p className="lp-price-once">
+                uma vez só, pra sempre — sem mensalidade
+              </p>
+              <p className="lp-price-time">
+                Uma por noite, dá mais de um ano de conversa.
+              </p>
+            </div>
             <button
               onClick={onBuy}
               className="lp-cta-primary lp-cta-full"
