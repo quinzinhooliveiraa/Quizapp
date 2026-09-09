@@ -3405,10 +3405,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 <div className="checkout-form-card checkout-details-card">
                   <div className="checkout-access-heading">
                     <h3>Pra onde eu mando o acesso?</h3>
-                    <p>
-                      Só pra liberar seu acesso e guardar sua compra. Sem spam,
-                      sem lista.
-                    </p>
                   </div>
                   <div className="checkout-fields-inline">
                     <label className="checkout-field">
@@ -3440,6 +3436,10 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                         </small>
                       )}
                     </label>
+                    <p className="checkout-access-note">
+                      Só pra liberar seu acesso e guardar sua compra. Sem spam,
+                      sem lista.
+                    </p>
                   </div>
                 </div>
                 <div className="checkout-form-card checkout-payment-card">

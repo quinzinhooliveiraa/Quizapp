@@ -21808,6 +21808,13 @@ blockquote em {
   grid-template-columns: 1fr;
   margin: 0;
 }
+.checkout-access-note {
+  grid-column: 1 / -1;
+  margin: 0.1rem 0 0;
+  color: #8c808d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
 
 .checkout-product-column {
   align-self: start;
