@@ -733,36 +733,87 @@ function selectPersonalizedQuestionIds(
 }
 const LANDING_QUIZ_STEPS = [
   {
-    key: "role",
-    label: "Vocês estão:",
+    key: "intensity",
+    label: "Quando você tenta puxar assunto de verdade, o que acontece?",
     options: [
-      ["namorando", "Namorando"],
-      ["casado", "Casados"],
-      ["longa", "Relação longa"],
+      ["gentle", 'Ele(a) responde "sei lá" e morre ali'],
+      ["honest", "A gente fala da rotina e acabou"],
+      ["deep", "A gente conversa bem — quero ir mais fundo"],
     ],
   },
   {
-    key: "phase",
-    label: "Como você descreveria a fase de vocês?",
+    key: "stage",
+    label: "Vocês estão juntos há quanto tempo?",
     options: [
-      ["inicio", "Início, descobrindo"],
-      ["anos", "Anos juntos, rotina"],
-      ["reconectar", "Precisamos reconectar"],
+      ["novo", "Estamos começando"],
+      ["anos", "Alguns anos"],
+      ["muitos-anos", "Muitos anos"],
     ],
   },
   {
     key: "theme",
-    label: "O que mais te chama agora?",
+    label: "E hoje à noite, o que vocês querem?",
     options: [
-      ["porto", "Aquecer, sem susto"],
+      ["porto-seguro", "Aquecer, sem susto"],
+      ["livro-aberto", "Ir fundo de verdade"],
       ["faisca", "Provocar, apimentar"],
-      ["livro", "Ir fundo de verdade"],
     ],
   },
 ] as const;
 
 type LandingQuizAnswerKey = (typeof LANDING_QUIZ_STEPS)[number]["key"];
 type LandingQuizAnswers = Partial<Record<LandingQuizAnswerKey, string>>;
+
+function selectLandingQuizQuestions(
+  themeId: string | undefined,
+  intensityValue: string | undefined,
+  stageValue: string | undefined,
+) {
+  const fallbackTheme = connectionThemes[0];
+  const selectedTheme =
+    connectionThemes.find((theme) => theme.id === themeId) || fallbackTheme;
+  const intensity =
+    intensityValue === "gentle" ||
+    intensityValue === "honest" ||
+    intensityValue === "deep"
+      ? intensityValue
+      : "gentle";
+  const stage = stageValue === "novo" ? "novo" : "firme";
+  const seen = new Set<string>();
+  const selected: typeof connectionQuestions = [];
+
+  const addQuestions = (
+    candidates: typeof connectionQuestions,
+  ) => {
+    candidates.forEach((question) => {
+      if (selected.length >= 3 || seen.has(question.id)) return;
+      seen.add(question.id);
+      selected.push(question);
+    });
+  };
+
+  addQuestions(
+    connectionQuestions.filter(
+      (question) =>
+        question.themeId === selectedTheme.id &&
+        question.intensity === intensity &&
+        (question.stage === stage || question.stage === "qualquer"),
+    ),
+  );
+  addQuestions(
+    connectionQuestions.filter(
+      (question) =>
+        question.themeId === selectedTheme.id &&
+        question.intensity === intensity,
+    ),
+  );
+  addQuestions(
+    connectionQuestions.filter((question) => question.themeId === selectedTheme.id),
+  );
+  addQuestions(connectionQuestions);
+
+  return { theme: selectedTheme, questions: selected };
+}
 
 function LandingQuizQuestion({
   step,
@@ -808,52 +859,31 @@ function LandingQuiz({
 }) {
   const [previewIndex, setPreviewIndex] = useState(0);
 
-  const previews: Record<string, { title: string; questions: string[] }> = {
-    porto: {
-      title: "Porto Seguro",
-      questions: [
-        "Qual foi a última vez que você se sentiu completamente em casa comigo?",
-        "O que eu faço, sem perceber, que te faz respirar mais fundo?",
-        "Se um dia esta versão nossa acabasse, do que você mais sentiria falta?",
-      ],
-    },
-    faisca: {
-      title: "Faísca",
-      questions: [
-        "O que em mim ainda te surpreende — que você não esperava?",
-        'Quando foi a última vez que você me olhou e pensou "quero de novo"?',
-        "Qual gesto meu, mesmo bobo, te desarma na hora?",
-      ],
-    },
-    livro: {
-      title: "Livro Aberto",
-      questions: [
-        "Qual medo você tem sobre nós que ainda não me disse?",
-        "O que você acha que eu deveria saber sobre você e nunca perguntei?",
-        "Existe algo que você mudaria na gente hoje, se pudesse?",
-      ],
-    },
-  };
-
   if (step === 3) {
-    const preview = previews[answers.theme || "porto"] || previews.porto;
+    const preview = selectLandingQuizQuestions(
+      answers.theme,
+      answers.intensity,
+      answers.stage,
+    );
     return (
       <div className="lp-quiz-result">
         <p className="lp-quiz-pill">Seu baralho ideal pra começar:</p>
-        <h3 className="lp-quiz-result-title">{preview.title}</h3>
+        <h3 className="lp-quiz-result-title">{preview.theme.title}</h3>
         <div
           className="lp-quiz-cards"
           style={{ "--preview-index": previewIndex } as React.CSSProperties}
         >
           {preview.questions.map((question, index) => (
             <div
-              key={question}
+              key={question.id}
               className={`lp-quiz-preview-card ${index === previewIndex ? "is-active" : ""}`}
             >
-              <span className="lp-mock-tag">{preview.title.toLowerCase()}</span>
-              <p>"{question}"</p>
+              <span className="lp-mock-tag">
+                {preview.theme.title.toLowerCase()}
+              </span>
+              <p>"{question.text}"</p>
               <span className="lp-mock-num">
-                {String(index + 1).padStart(2, "0")} / 31
+                {String(index + 1).padStart(2, "0")} / {preview.theme.count}
               </span>
             </div>
           ))}
@@ -885,8 +915,10 @@ function LandingQuiz({
           </button>
         </div>
         <p className="lp-quiz-cta-text">
-          <strong>Essas são 3 de 31.</strong> Destrave as outras + os outros 14
-          baralhos:
+          <strong>
+            Essas são 3 de {preview.theme.count}.
+          </strong>{" "}
+          Destrave as outras {preview.theme.count - 3} + os outros 14 baralhos:
         </p>
         <button
           onClick={onFinish}
@@ -1462,7 +1494,7 @@ function LandingV2Quiz({
             experimente agora, de graça
           </p>
           <h2 className="lp-h2">
-            Responda 3 perguntinhas e receba
+            Responda 3 perguntas rápidas e receba
             <br />
             <em>3 perguntas feitas pro momento de vocês.</em>
           </h2>
@@ -3939,7 +3971,7 @@ function Home({
     setLandingQuizStep((current) => Math.min(current + 1, 3));
   };
   const handleHeroQuizAnswer = (value: string, quizId: string) => {
-    setLandingQuizAnswers((current) => ({ ...current, role: value }));
+    setLandingQuizAnswers((current) => ({ ...current, intensity: value }));
     setLandingQuizStep((current) => Math.max(current, 1));
     trackCtaClick("hero_quiz");
     const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -4085,6 +4117,32 @@ function Home({
                 </div>
               </div>
             </section>
+            <section
+              className="lp-quiz-section"
+              id="lp-quiz"
+              data-section-name="quiz"
+            >
+              <div className="lp-container">
+                <p className="lp-eyebrow lp-eyebrow-center">
+                  experimente agora, de graça
+                </p>
+                <h2 className="lp-h2">
+                  Responda 3 perguntas rápidas e receba
+                  <br />
+                  <em>3 perguntas feitas pro momento de vocês.</em>
+                </h2>
+                <p className="lp-solution-lede lp2-quiz-lede">
+                  Leva menos de 1 minuto. A gente monta na hora um mini-baralho
+                  com a cara da fase que vocês estão vivendo.
+                </p>
+                <LandingQuiz
+                  onFinish={() => startCheckout("couple")}
+                  step={landingQuizStep}
+                  answers={landingQuizAnswers}
+                  onAnswer={advanceLandingQuiz}
+                />
+              </div>
+            </section>
             <section className="lp-pain" data-section-name="dor">
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">quem tá aí sabe</p>
@@ -4172,26 +4230,6 @@ function Home({
                   "me diz uma coisa profunda". O baralho faz a pergunta por você —
                   você só lê em voz alta. A pergunta é dele, o mérito é seu.
                 </p>
-              </div>
-            </section>
-            <section
-              className="lp-quiz-section"
-              id="lp-quiz"
-              data-section-name="quiz"
-            >
-              <div className="lp-container">
-                <p className="lp-eyebrow lp-eyebrow-center">teste rápido</p>
-                <h2 className="lp-h2">
-                  Veja 3 perguntas de verdade,
-                  <br />
-                  <em>feitas pra vocês.</em>
-                </h2>
-                <LandingQuiz
-                  onFinish={() => startCheckout("couple")}
-                  step={landingQuizStep}
-                  answers={landingQuizAnswers}
-                  onAnswer={advanceLandingQuiz}
-                />
               </div>
             </section>
             <section className="lp2-distance-section" data-section-name="proposta">

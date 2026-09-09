@@ -1,0 +1,209 @@
+# O quiz da LP1 — ele deve existir? E se sim, como?
+
+Não é sobre o botão coberto. É sobre se essa seção merece estar na página.
+
+---
+
+## 1. O quiz merece existir?
+
+**Merece — e o motivo é o mais forte que apareceu nos treze guias.**
+
+**Choice p.21 (Kivetz & Simonson 2002): exigir esforço ANTES de uma escolha
+emocional reduz a culpa da compra.** O esforço vira a justificativa. Quem
+respondeu três perguntas sente que mereceu gastar os R$ 47,90.
+
+Isso importa muito no seu caso, porque o seu produto é 100% hedônico. Ninguém
+*precisa* de um baralho de perguntas. A pessoa precisa de uma licença pra
+comprar uma coisa que ela quer. O quiz é essa licença.
+
+Some com:
+- **Risco funcional → teste grátis** *(Copy p.39)*. O quiz é a prova de que
+  funciona, antes de pagar.
+- **"Qual comprar" em vez de "se compro"** *(Choice p.14)*. Quem escolhe um
+  baralho já passou da decisão de comprar.
+
+**Conclusão: o quiz fica. Zero perguntas está errado.**
+
+---
+
+## 2. Mas o quiz de hoje não entrega nada disso. E dá pra provar.
+
+### Achado 1 — o resultado ignora dois terços do que a pessoa respondeu
+
+```js
+if (step === 3) {
+  const preview = previews[answers.theme || "porto"] || previews.porto;
+```
+
+**O resultado depende só da terceira resposta.** As respostas 1 (`role`) e 2
+(`phase`) são coletadas e jogadas fora. Procurei no arquivo inteiro:
+`landingQuizAnswers` aparece em três lugares, todos alimentando o próprio quiz.
+**Nada mais no site consome essas duas respostas.**
+
+Ou seja: são três perguntas de atrito para uma pergunta de informação. A
+terceira pergunta — *"O que mais te chama agora? Aquecer / Provocar / Ir
+fundo"* — é literalmente "qual baralho você quer", fantasiada de diagnóstico.
+
+E o efeito do esforço só funciona se o esforço **for pago**. Esforço que não
+muda nada não reduz culpa: gera a sensação de ter sido enrolado, que custa mais
+do que o quiz ganha.
+
+### Achado 2 — 8 das 9 perguntas do resultado não existem no produto
+
+O resultado mostra 3 perguntas do baralho recomendado. Elas estão escritas à
+mão dentro do `App.tsx`, num objeto `previews`. Comparei uma a uma com a
+biblioteca real de 459:
+
+```
+EXISTE      Qual foi a última vez que você se sentiu completamente em casa comigo?
+NAO EXISTE  O que eu faço, sem perceber, que te faz respirar mais fundo?
+NAO EXISTE  Se um dia esta versão nossa acabasse, do que você mais sentiria falta?
+NAO EXISTE  O que em mim ainda te surpreende — que você não esperava?
+NAO EXISTE  Qual gesto meu, mesmo bobo, te desarma na hora?
+NAO EXISTE  Qual medo você tem sobre nós que ainda não me disse?
+NAO EXISTE  O que você acha que eu deveria saber sobre você e nunca perguntei?
+NAO EXISTE  Existe algo que você mudaria na gente hoje, se pudesse?
+NAO EXISTE  Quando foi a última vez que você me olhou e pensou "quero de novo"?
+
+1 de 9 existem na biblioteca.
+```
+
+**A pessoa faz o quiz, se apaixona por uma pergunta, compra por causa dela — e
+nunca encontra aquela pergunta lá dentro.** Isso não é detalhe: é a amostra
+grátis não sendo do produto que ela comprou. É o mesmo problema das cinco
+estrelas e do "De R$ 97,00", só que este está acontecendo agora, no meio do
+funil principal.
+
+### Achado 3 — a copy promete exatamente o que o código descarta
+
+> "Responda 3 perguntinhas e receba **3 perguntas feitas pro momento de vocês**."
+> "A gente monta na hora um mini-baralho **com a cara da fase que vocês estão
+> vivendo**."
+
+"A fase que vocês estão vivendo" é a **pergunta 2** do quiz. É exatamente a
+resposta que o código joga fora. A copy promete a personalização que a máquina
+não faz.
+
+---
+
+## 3. A copy da seção
+
+| Elemento | Veredito |
+|---|---|
+| "EXPERIMENTE AGORA, DE GRAÇA" | **FICA.** Concreto, e "grátis" no lugar certo. Só sai da caixa alta *(Font p.19-20)*. |
+| "Responda 3 **perguntinhas**" | **MUDA.** O diminutivo desvaloriza o que você está pedindo — e, pior, desvaloriza o produto, que também é feito de perguntas. Vira "3 perguntas rápidas". |
+| "3 perguntas feitas pro momento de vocês" | **FICA** — mas só depois que virar verdade (parte 4). Hoje é promessa quebrada. |
+| "Leva menos de 1 minuto" | **FICA.** Concreto, reduz o custo percebido do esforço. |
+| "com a cara da fase que vocês estão vivendo" | **MUDA ou VIRA VERDADE.** Hoje é a promessa que o código descarta. |
+
+---
+
+## 4. Quantas perguntas? E quais?
+
+**Três. E eu tenho razão pra esse número, não é chute.**
+
+Os seus dados suportam exatamente **três dimensões** de personalização — cada
+pergunta em `connection-content` carrega:
+
+| Dimensão | Valores | Vem de qual pergunta |
+|---|---|---|
+| `themeId` | 15 baralhos | qual assunto |
+| `stage` | novo · firme · qualquer | há quanto tempo estão juntos |
+| `intensity` | gentle · honest · deep | até onde querem ir |
+
+**Três dimensões nos dados = três perguntas no quiz.** Não existe uma quarta
+dimensão pra justificar uma quarta pergunta, e cortar pra duas jogaria fora
+personalização que os dados já sustentam. É por isso que 3 é o número — não
+porque 3 é bonito.
+
+### As três perguntas que eu faria
+
+**P1 — o gancho, e é a dor deles:**
+
+> **Quando você tenta puxar assunto de verdade, o que acontece?**
+> · Ele(a) responde "sei lá" e morre ali
+> · A gente fala da rotina e acabou
+> · A gente conversa bem — quero ir mais fundo
+
+A primeira opção é literalmente o comentário mais curtido dos seus posts (505,
+569 e 419 curtidas). Quem toca ali **se sente lida**, e é isso que um quiz de
+venda existe pra fazer. Isso define a `intensity` de saída.
+
+**P2 — o tempo, que define o `stage`:**
+
+> **Vocês estão juntos há quanto tempo?**
+> · Estamos começando
+> · Alguns anos
+> · Muitos anos
+
+Repare que **"Namorando / Casados / Relação longa" sai**. Estado civil não
+mapeia pra nada nos seus dados — o `stage` é *novo* ou *firme*, que é tempo,
+não papel assinado. A pergunta atual é formulário: não faz a pessoa sentir
+nada e não alimenta nada.
+
+**P3 — o assunto, que define o baralho:**
+
+> **E hoje à noite, o que vocês querem?**
+> · Aquecer, sem susto → Porto Seguro
+> · Ir fundo de verdade → Livro Aberto
+> · Provocar, apimentar → Faísca
+
+Essa é a que já existe e já funciona. Só ganha "hoje à noite", que crava o
+prazo e prepara a promessa da oferta.
+
+### E o resultado passa a vir da biblioteca real
+
+```
+perguntas = biblioteca
+  .filter(q => q.themeId === baralhoEscolhido)
+  .filter(q => q.stage === estagio || q.stage === "qualquer")
+  .filter(q => q.intensity === intensidade)
+  .slice(0, 3)
+```
+
+Com isso, três coisas se resolvem de uma vez:
+
+1. **As três respostas passam a contar** — o esforço é pago, e o efeito do
+   Kivetz & Simonson volta a valer.
+2. **A promessa vira verdade** — "feitas pro momento de vocês" passa a ser
+   literal.
+3. **As perguntas exibidas existem no produto** — quem compra por causa de uma
+   pergunta encontra ela lá dentro.
+
+E não precisa escrever conteúdo novo. As 459 já estão classificadas.
+
+---
+
+## 5. Onde o quiz fica na página
+
+Hoje ele está na **quarta seção**, depois de 3.045px de rolagem. É longe demais
+pra uma coisa que é grátis, leva 1 minuto e é o seu melhor redutor de risco.
+
+Ele sobe: **logo depois do bloco do "sei lá"**. A sequência fica
+
+> dor → "e se ele responder sei lá?" → *prova você mesma, é grátis* → baralhos
+> → depoimentos → oferta
+
+Assim o quiz vira a resposta prática da objeção que acabou de ser levantada,
+em vez de um bloco solto no meio do caminho.
+
+---
+
+## Resumo
+
+| Pergunta que você fez | Resposta |
+|---|---|
+| O quiz faz sentido ter? | **Sim** — é a licença emocional pra comprar |
+| O texto da seção faz sentido? | Quase todo. Sai "perguntinhas", e "com a cara da fase" só fica se virar verdade |
+| O framework faz sentido? | **Não como está.** Ele coleta 3 e usa 1 |
+| Quantas perguntas? | **Três** — porque os dados têm três dimensões, nem mais nem menos |
+| As perguntas atuais servem? | A 1ª sai (é formulário), a 2ª muda de forma, a 3ª fica |
+
+**A correção não é mexer no botão. É fazer o quiz cumprir a promessa que ele já
+faz na tela.**
+
+---
+
+*Vou refazer as outras oito seções nesse mesmo formato — merece existir, o
+conteúdo está certo, quantos elementos — em vez da lista de defeitos que eu te
+mandei antes.*
