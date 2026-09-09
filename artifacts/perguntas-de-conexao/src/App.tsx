@@ -1438,21 +1438,10 @@ function QuestionCarouselSection() {
 
 function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "default" }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const activeTestimonial = landingTestimonials[activeIndex];
 
-  useEffect(() => {
-    if (!autoPlayEnabled) return;
-    const interval = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % landingTestimonials.length);
-      setIsExpanded(false);
-    }, 7000);
-    return () => window.clearInterval(interval);
-  }, [autoPlayEnabled]);
-
   const move = (direction: -1 | 1) => {
-    setAutoPlayEnabled(false);
     setIsExpanded(false);
     setActiveIndex(
       (current) =>
@@ -1462,7 +1451,6 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
   };
 
   const selectTestimonial = (index: number) => {
-    setAutoPlayEnabled(false);
     setIsExpanded(false);
     setActiveIndex(index);
   };
@@ -1507,7 +1495,6 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
               type="button"
               className="lp-testimonial-more"
               onClick={() => {
-                setAutoPlayEnabled(false);
                 setIsExpanded((current) => !current);
               }}
               aria-expanded={isExpanded}
