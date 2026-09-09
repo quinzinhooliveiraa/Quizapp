@@ -59,6 +59,7 @@ import {
   type LandingPageId,
 } from "@/lib/landing-pages";
 import { landingTestimonials } from "@/lib/testimonials";
+import { selectLp1Diagnosis } from "@/lib/lp1-diagnosis";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import {
   ArrowRight,
@@ -995,6 +996,54 @@ const LP1_QUIZ_STEPS = [
   },
 ] as const;
 
+function Lp1Diagnosis({
+  answers,
+  onContinue,
+}: {
+  answers: LandingQuizAnswers;
+  onContinue: () => void;
+}) {
+  const diagnosis = selectLp1Diagnosis(answers);
+  const preview = selectLandingQuizQuestions(
+    answers.theme,
+    answers.intensity,
+    answers.stage,
+  );
+  const firstQuestion = preview.questions[0];
+
+  return (
+    <section className="lp1-diagnosis" aria-labelledby="lp1-diagnosis-title">
+      <div className="lp1-diagnosis-card">
+        <span className="lp1-diagnosis-badge">DIAGNÓSTICO PERSONALIZADO</span>
+        <p className="lp1-diagnosis-kicker">O QUE O TESTE MOSTROU</p>
+        <h1 id="lp1-diagnosis-title" className="lp1-diagnosis-title">
+          {diagnosis.title}
+        </h1>
+        <p className="lp1-diagnosis-insight">{diagnosis.insight}</p>
+        {diagnosis.personalizations.map((personalization) => (
+          <p className="lp1-diagnosis-insight" key={personalization}>
+            {personalization}
+          </p>
+        ))}
+        {firstQuestion ? (
+          <div className="lp1-diagnosis-prompt">
+            <span>COMEÇEM POR ESTA, HOJE</span>
+            <p>{firstQuestion.text}</p>
+          </div>
+        ) : null}
+        <button
+          type="button"
+          className="lp1-diagnosis-cta"
+          onClick={onContinue}
+          data-testid="button-lp1-diagnosis-continue"
+        >
+          Ver as outras duas <ArrowRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function Lp1Quiz({
   onFinish,
 }: {
@@ -1002,8 +1051,10 @@ function Lp1Quiz({
 }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<LandingQuizAnswers>({});
+  const [showPreview, setShowPreview] = useState(false);
   const current = LP1_QUIZ_STEPS[step];
-  const footnote = "footnote" in current ? current.footnote : undefined;
+  const footnote =
+    step < 3 && current && "footnote" in current ? current.footnote : undefined;
 
   const handleAnswer = (key: LandingQuizAnswerKey, value: string) => {
     setAnswers((previous) => ({ ...previous, [key]: value }));
@@ -1032,7 +1083,13 @@ function Lp1Quiz({
         <button
           type="button"
           className="lp1-quiz-back"
-          onClick={() => setStep((previous) => Math.max(previous - 1, 0))}
+          onClick={() => {
+            if (step === 3 && showPreview) {
+              setShowPreview(false);
+              return;
+            }
+            setStep((previous) => Math.max(previous - 1, 0));
+          }}
         >
           ← Voltar
         </button>
@@ -1040,12 +1097,19 @@ function Lp1Quiz({
 
       <div className="lp1-quiz-content">
         {step === 3 ? (
-          <LandingQuiz
-            onFinish={onFinish}
-            step={3}
-            answers={answers}
-            onAnswer={handleAnswer}
-          />
+          showPreview ? (
+            <LandingQuiz
+              onFinish={onFinish}
+              step={3}
+              answers={answers}
+              onAnswer={handleAnswer}
+            />
+          ) : (
+            <Lp1Diagnosis
+              answers={answers}
+              onContinue={() => setShowPreview(true)}
+            />
+          )
         ) : (
           <>
             <h1 className="lp1-quiz-title">

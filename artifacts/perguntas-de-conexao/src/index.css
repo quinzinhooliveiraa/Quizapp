@@ -181,6 +181,106 @@
   text-align: center;
 }
 
+.lp1-diagnosis {
+  width: 100%;
+}
+
+.lp1-diagnosis-card {
+  box-sizing: border-box;
+  padding: clamp(1.35rem, 4vw, 2rem);
+  border: 1px solid rgba(196, 172, 255, 0.2);
+  border-radius: 1.45rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.lp1-diagnosis-badge {
+  display: inline-flex;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(196, 172, 255, 0.12);
+  color: #c4acff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.lp1-diagnosis-kicker {
+  margin: 2rem 0 1.1rem;
+  color: #c4acff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.lp1-diagnosis-title {
+  margin: 0;
+  color: #f7f1ef;
+  font-family: var(--app-font-serif);
+  font-size: clamp(2.05rem, 6vw, 3.6rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.03;
+  text-wrap: balance;
+}
+
+.lp1-diagnosis-insight {
+  margin: 1.6rem 0 0;
+  color: #d5cbd8;
+  font-size: clamp(1.05rem, 2.6vw, 1.28rem);
+  line-height: 1.55;
+}
+
+.lp1-diagnosis-prompt {
+  margin-top: 2rem;
+  padding: 1.35rem 1.35rem 1.45rem;
+  border: 1px solid rgba(196, 172, 255, 0.18);
+  border-left: 4px solid #c4acff;
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.lp1-diagnosis-prompt span {
+  color: #c4acff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.lp1-diagnosis-prompt p {
+  margin: 0.95rem 0 0;
+  color: #f7f1ef;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.45rem, 4vw, 2rem);
+  font-style: italic;
+  line-height: 1.12;
+}
+
+.lp1-diagnosis-cta {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 1.7rem;
+  padding: 1.05rem 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c4acff;
+  color: #17121c;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.lp1-diagnosis-cta:hover,
+.lp1-diagnosis-cta:focus-visible {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
 .lp-cta-secondary-link {
   display: block;
   margin-top: 0.9rem;
