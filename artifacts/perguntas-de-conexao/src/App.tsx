@@ -1055,18 +1055,6 @@ const LP1_OFFER_HEADLINES: Record<string, string> = {
   healthy: "Dá pra continuar escolhendo um ao outro hoje à noite.",
 };
 
-const LP1_OFFER_INTENSITY: Record<string, string> = {
-  gentle: "começando leve, sem forçar assunto",
-  honest: "saindo da logística e chegando no que importa",
-  deep: "indo mais fundo nas conversas que vocês já querem ter",
-};
-
-const LP1_OFFER_STAGE: Record<string, string> = {
-  novo: "o momento de vocês",
-  anos: "a história que vocês já construíram",
-  "muitos-anos": "a história que vocês ainda podem continuar descobrindo",
-};
-
 function Lp1Offer({
   answers,
   onFinish,
@@ -1075,11 +1063,6 @@ function Lp1Offer({
   onFinish: () => void;
 }) {
   const diagnosis = selectLp1Diagnosis(answers);
-  const preview = selectLandingQuizQuestions(
-    answers.theme,
-    answers.intensity,
-    answers.stage,
-  );
   const testimonialNameByNarrative: Record<string, string> = {
     routine: "Marina",
     discovery: "Julia",
@@ -1095,16 +1078,10 @@ function Lp1Offer({
       ({ name }) => name === testimonialNameByNarrative[diagnosis.narrativeType],
     ) ?? landingTestimonials[0];
   const testimonialExcerpt = testimonial.quote.replace(/\s+/g, " ").trim();
-  const context = [
-    `Para vocês, o melhor começo é o baralho ${preview.theme.title}`,
-    LP1_OFFER_INTENSITY[answers.intensity ?? "gentle"],
-    LP1_OFFER_STAGE[answers.stage ?? "anos"],
-  ].join(" — ");
 
   return (
     <section className="lp1-offer" aria-labelledby="lp1-offer-title">
       <div className="lp1-offer-card">
-        <span className="lp1-offer-badge">REESCRITO · OFERTA PERSONALIZADA</span>
         <p className="lp1-offer-kicker">A VERDADE QUE O TESTE MOSTROU</p>
         <h1 id="lp1-offer-title" className="lp1-offer-title">
           {diagnosis.title}
@@ -1115,11 +1092,6 @@ function Lp1Offer({
               "Dá pra resolver isso hoje à noite."}
           </em>
         </p>
-
-        <div className="lp1-offer-context">
-          <span>FEITO PARA O MOMENTO DE VOCÊS</span>
-          <p>{context}.</p>
-        </div>
 
         <div className="lp1-offer-gain-label">O QUE VOCÊS LEVAM</div>
         <ul className="lp1-offer-benefits">
@@ -1213,22 +1185,24 @@ function Lp1Quiz({
   };
 
   return (
-    <main className="lp1-quiz-screen">
-      <div
-        className="lp1-quiz-progress"
-        role="progressbar"
-        aria-label={`Progresso do quiz: pergunta ${Math.min(step + 1, 3)} de 3`}
-        aria-valuemin={1}
-        aria-valuemax={3}
-        aria-valuenow={Math.min(step + 1, 3)}
-      >
-        {LP1_QUIZ_STEPS.map((question, index) => (
-          <span
-            key={question.key}
-            className={`lp1-quiz-progress-segment ${index <= step ? "is-active" : ""}`}
-          />
-        ))}
-      </div>
+    <main className={`lp1-quiz-screen ${showOffer ? "is-offer" : ""}`}>
+      {step < 3 ? (
+        <div
+          className="lp1-quiz-progress"
+          role="progressbar"
+          aria-label={`Progresso do quiz: pergunta ${Math.min(step + 1, 3)} de 3`}
+          aria-valuemin={1}
+          aria-valuemax={3}
+          aria-valuenow={Math.min(step + 1, 3)}
+        >
+          {LP1_QUIZ_STEPS.map((question, index) => (
+            <span
+              key={question.key}
+              className={`lp1-quiz-progress-segment ${index <= step ? "is-active" : ""}`}
+            />
+          ))}
+        </div>
+      ) : null}
 
       {step > 0 && (
         <button
@@ -2137,26 +2111,6 @@ function LandingV2Quiz({
               </details>
             ))}
           </div>
-        </div>
-      </section>
-      <section className="lp-final-cta" data-section-name="final">
-        <div className="lp-container lp-final-cta-inner">
-          <h2 className="lp-h2">
-            Vocês não precisam se afastar mais.
-            <br />
-            <em>Só de uma pergunta pra recomeçar.</em>
-          </h2>
-          <button
-            onClick={onBuy}
-            className="lp-cta-primary lp-cta-big"
-            data-testid="button-final-cta-v2"
-          >
-            Começar hoje à noite <ArrowRight size={20} />
-          </button>
-          <p className="lp2-hero-security">
-            🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo. Você
-            decide.
-          </p>
         </div>
       </section>
       {showStickyCta && !peekThemeId && !checkoutOpen ? (
