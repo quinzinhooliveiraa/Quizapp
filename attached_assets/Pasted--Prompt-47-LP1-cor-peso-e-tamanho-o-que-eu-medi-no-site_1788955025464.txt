@@ -1,0 +1,224 @@
+# Prompt 47 — LP1: cor, peso e tamanho (o que eu medi no site ao vivo)
+
+Este prompt mexe **só em CSS** (`index.css`) e em duas linhas de texto de botão.
+Nenhuma copy nova. É o irmão do prompt 46 — os dois são independentes, pode
+aplicar em qualquer ordem.
+
+Abri a `/lp1` no navegador, em 420px de largura (celular), e medi. Tudo abaixo
+é número medido, não opinião.
+
+---
+
+## O que eu medi
+
+| Medida | Valor real | Regra |
+|---|---|---|
+| Fonte do preço (celular) | **56px** | |
+| Fonte do H1 (celular) | **36px** | |
+| Fonte do preço (desktop) | **72px** | |
+| Fonte do H1 (desktop) | **51px** | |
+| Peso do H1 | **300** | |
+| Cor do botão | gradiente lilás `h257 s100% l84%` | |
+| Elementos de texto usando **essa mesma cor** | **38** | |
+| Altura do hero (celular) | **944px** | |
+| Altura da tela | **683px** | |
+| Altura total da página (celular) | **9.641px** (~14 telas) | |
+
+---
+
+## Os quatro problemas, em ordem de gravidade
+
+### 1. O preço é o maior texto da página inteira
+
+56px contra 36px do título. **O preço é 56% maior que o headline** — é o
+primeiro elemento que o olho pousa na seção de compra, e provavelmente o texto
+mais destacado do site inteiro.
+
+Pricing p.10 e p.49: em produto **emocional**, o preço deve ser **pequeno e
+pouco saliente**. Preço grande e destacado desloca a avaliação da pessoa para o
+lado econômico — ela para de julgar "isso vale a pena pra nós?" e passa a
+julgar "R$ 47,90 é caro ou barato?". Para um baralho de perguntas de casal, a
+segunda pergunta é a que você perde.
+
+### 2. O botão é pintado com a cor mais comum da página
+
+Este é o achado que eu não esperava e é o mais concreto de todos.
+
+O CTA é um gradiente lilás `rgb(196,172,255) → rgb(139,107,217)`, ou seja
+`h257 s100% l84%`. Contei quantos elementos de texto da página usam
+**exatamente essa cor**:
+
+```
+rgb(196,172,255)         →  18 elementos
+rgba(196,172,255, .75)   →  20 elementos
+                            ─────────────
+                            38 elementos
+```
+
+É a **segunda e terceira cor de texto mais usada da página**, atrás só do
+branco. Os itálicos dos subtítulos são lilás. O "reaproximar" do H1 é lilás. O
+"R$" é lilás. Os ícones são lilás. E o botão também.
+
+Visual Attention p.11 e Color p.28: o CTA precisa **contrastar com o que está
+ao redor**. Hoje ele é a cor do ambiente. Ele não some — mas ele não grita, e
+ele deveria ser a única coisa gritando.
+
+### 3. O H1 tem peso 300
+
+Font p.13 (Luckiesh & Moss): **peso médio é o mais legível** — nem leve, nem
+bold. 300 é exatamente a faixa que perde legibilidade, num título de 36px sobre
+fundo quase preto (`h235 s38% l6%`).
+
+### 4. Não existe nenhum botão na primeira tela
+
+O hero tem **944px** de altura num viewport de **683px**. O botão fica abaixo
+da dobra, sempre. A pessoa que vem do TikTok cai numa tela que só tem título e
+subtítulo.
+
+Isso é literalmente o comportamento que você viu nas gravações: *"chega, desce,
+vê que não tem nada, clica no botão"*. Ela desce porque não tem nada pra fazer
+na tela em que ela caiu.
+
+---
+
+## As correções
+
+### A. O preço encolhe
+
+```css
+.lp-price-big  { font-size: 1.6rem; font-weight: 500; }
+.lp-price-currency,
+.lp-price-cents { font-size: 1.1rem; font-weight: 500; }
+```
+
+Alvo: o preço tem que ficar **menor que o H2 da seção**. Uma linha só, na mesma
+escala do texto de apoio, sem os três tamanhos diferentes que existem hoje.
+Cor: `--ink-soft` (o cinza do corpo), não a cor de destaque.
+
+E **tire o preço de dentro do botão**: o rótulo passa de
+`Começar agora por R$ 47,90` para **`Começar hoje à noite`**. Ter o número no
+botão dobra a saliência exatamente do elemento que deve ser discreto.
+
+O que ganha destaque no lugar é a linha de tempo, que fica logo abaixo:
+
+> **459 perguntas. Uma por noite, dá mais de um ano de conversa.**
+
+> Pricing p.50 (Mogilner & Aaker 2009): a placa que falava de **tempo** atraiu
+> o dobro de pessoas, que pagaram o dobro, contra a placa que falava de
+> dinheiro. É o achado mais forte do guia de preço inteiro.
+
+### B. O botão troca de família de cor
+
+O lilás sai de tudo que é clicável. O botão passa a ser **dourado/âmbar de alto
+brilho e alta saturação** — a terceira cor da sua própria marca, que hoje quase
+não aparece na página.
+
+```css
+:root {
+  --acao: #e8b13a;          /* h41 s80% l57% — quente, saturada, clara */
+  --acao-escura: #c98f1e;
+}
+.lp-cta-primary {
+  background: linear-gradient(135deg, var(--acao), var(--acao-escura));
+  color: #17121b;           /* texto escuro sobre o dourado */
+  font-weight: 600;
+  border-radius: 999px;
+}
+```
+
+Por que dourado, e não "porque é bonito":
+
+- **A matiz importa menos que brilho e saturação** — Color p.5 (Suk & Irtel
+  2009) desmente a crença comum de que o que decide é a família de cor. O que
+  decide é o quão clara e o quão saturada ela é.
+- **O botão precisa ser a única ocorrência de alto brilho + alta saturação** —
+  Color p.28, Visual Attention p.11. Dourado h41 fica a **176° do lilás h257**
+  que domina a página: é praticamente o oposto na roda. Contraste máximo.
+- **Objetivo de ação pede cor quente** — Color p.21: arousal alto inibe a
+  racionalização, a pessoa age em vez de debater. *"Liking? Use azul. Ação? Use
+  vermelho."*
+- **Cor quente também serve a contexto de sociabilidade** — Color p.16-17: o
+  cérebro confunde calor físico com calor social, e produto de casal é
+  exatamente um contexto de desejo de proximidade.
+- E o dourado **já é da marca** — o documento de branding diz "vinho, roxo e
+  dourado". Ele só nunca foi usado onde importa.
+
+**Regra que passa a valer na página inteira:** o lilás continua nos títulos,
+itálicos e ícones. Mas **nada clicável usa lilás**, e **nada que não seja
+clicável usa dourado**. Se a pessoa aprende que dourado = toca aqui, ela para
+de procurar.
+
+Adicione também um pulso discreto (Visual Attention p.15, Abrams & Christ 2003
+— o *início* do movimento captura atenção):
+
+```css
+@keyframes pulso-acao {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.02); }
+}
+.lp-cta-primary { animation: pulso-acao 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .lp-cta-primary { animation: none; }
+}
+```
+
+### C. O H1 ganha peso
+
+```css
+.lp-hero-h1 { font-weight: 500; }
+```
+
+E o mesmo para os outros títulos que estiverem em 300. Peso médio, nunca 300,
+nunca 700 (Font p.13). O corpo de texto também: 400 a 500.
+
+### D. Um botão entra na primeira tela
+
+Duas mudanças, e o objetivo é um só: quando a pessoa cair do TikTok, tem que ter
+o que tocar sem rolar.
+
+1. **Encolha o hero** para caber em ~640px no celular: reduza o `min-height` do
+   `.lp2-hero`, corte a margem acima do H1, e reduza o tamanho do H1 no celular
+   (de 36px para ~30px). O H1 tem 25 palavras — no prompt 46 ele encolhe também,
+   e as duas coisas juntas resolvem.
+2. **Botão fixo na base da tela**, no celular, aparecendo depois que a pessoa
+   passa do hero:
+
+```css
+@media (max-width: 699px) {
+  .lp-sticky-cta {
+    position: fixed; inset: auto 0 0 0; z-index: 40;
+    padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(9,10,20,0), rgba(9,10,20,.92) 32%);
+  }
+}
+```
+
+Dentro dele, o mesmo botão dourado, largura cheia, com a microlinha por baixo:
+*Acesso imediato · Pagamento seguro · Garantia de 7 dias*.
+
+> eCommerce p.26: no celular, o botão na base fica mais perto do dedo. ·
+> eCommerce p.31: afirmações positivas encostadas no botão entram na imagem
+> mental da compra.
+
+**Cuidado:** o botão fixo não pode cobrir o botão da seção de preço quando a
+pessoa chegar lá, nem tapar o rodapé. Esconda ele quando a seção `precos`
+estiver visível na tela (`IntersectionObserver`).
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Abra `/lp1` no celular (ou em 420px no navegador) e confirme, **olhando**:
+   - o preço está **menor** que o título da seção de preço;
+   - o botão é **dourado** e é o único elemento dourado da tela;
+   - nenhum outro elemento clicável ficou lilás;
+   - o H1 está mais encorpado, não fininho;
+   - existe um botão visível **sem rolar**, assim que a página abre.
+3. Role até a seção de preço: o botão fixo tem que **sumir** e não pode tapar
+   nada.
+4. Confirme que `/lp2` e `/lp3` **não mudaram de cor**. Se o `--acao` vazou pro
+   CSS global e pintou botão de outra página, escope tudo dentro de um seletor
+   da LP1.
+5. Ligue `prefers-reduced-motion` no sistema e confirme que o pulso para.
+6. Deploy.

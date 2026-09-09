@@ -3241,6 +3241,180 @@
   }
 }
 
+/* Prompt 47 — LP1 action hierarchy, scoped by its exclusive quiz anchor. */
+.lp-main:has(#lp2-quiz) {
+  --acao: #e8b13a;
+  --acao-escura: #c98f1e;
+  --ink-soft: rgba(249, 248, 251, 0.62);
+}
+.lp-main:has(#lp2-quiz) .lp-cta-primary {
+  background: linear-gradient(135deg, var(--acao), var(--acao-escura));
+  color: #17121b;
+  border-radius: 999px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(232, 177, 58, 0.26);
+  animation: pulso-acao 2.8s ease-in-out infinite;
+}
+.lp-main:has(#lp2-quiz) .lp-cta-primary:hover {
+  box-shadow: 0 12px 32px rgba(232, 177, 58, 0.38);
+}
+.lp-main:has(#lp2-quiz) .lp-cta-secondary-link:hover {
+  color: var(--acao);
+}
+.lp-main:has(#lp2-quiz) .lp-hero-h1 {
+  font-weight: 500;
+}
+.lp-main:has(#lp2-quiz) .lp-h2 {
+  font-weight: 500;
+}
+.lp-main:has(#lp2-quiz) .lp-hero-sub,
+.lp-main:has(#lp2-quiz) .lp2-story-body p,
+.lp-main:has(#lp2-quiz) .lp-solution-lede,
+.lp-main:has(#lp2-quiz) .lp-pillar p,
+.lp-main:has(#lp2-quiz) .lp-how-step p,
+.lp-main:has(#lp2-quiz) .lp-price-includes li,
+.lp-main:has(#lp2-quiz) .lp-faq-item p {
+  font-weight: 450;
+}
+.lp-main:has(#lp2-quiz) .lp-price-card {
+  padding-bottom: 2.2rem;
+}
+.lp-main:has(#lp2-quiz) .lp-price-main {
+  margin-bottom: 0.8rem;
+}
+.lp-main:has(#lp2-quiz) .lp-price-old,
+.lp-main:has(#lp2-quiz) .lp-price-installments {
+  display: none;
+}
+.lp-main:has(#lp2-quiz) .lp-price-value {
+  align-items: baseline;
+  gap: 0.15rem;
+}
+.lp-main:has(#lp2-quiz) .lp-price-currency,
+.lp-main:has(#lp2-quiz) .lp-price-cents {
+  margin-top: 0;
+  color: var(--ink-soft);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.lp-main:has(#lp2-quiz) .lp-price-big {
+  color: var(--ink-soft);
+  font-size: 1.6rem;
+  font-weight: 500;
+}
+.lp-main:has(#lp2-quiz) .lp-price-time {
+  margin: 0 0 1.7rem;
+  color: #f9f8fb;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+}
+.lp-main:has(#lp2-quiz) .lp-theme-card:hover {
+  border-color: rgba(232, 177, 58, 0.62);
+  background: rgba(232, 177, 58, 0.08);
+}
+.lp-main:has(#lp2-quiz) .lp-theme-card:focus-visible,
+.lp-main:has(#lp2-quiz) .lp-quiz-option:focus-visible {
+  outline-color: var(--acao);
+}
+.lp-main:has(#lp2-quiz) .lp-theme-card span {
+  color: rgba(249, 248, 251, 0.58);
+}
+.lp-main:has(#lp2-quiz) .lp-quiz-option:hover {
+  background: rgba(232, 177, 58, 0.1);
+  border-color: var(--acao);
+}
+.lp-main:has(#lp2-quiz) .lp-testimonial-arrow {
+  color: var(--acao);
+  background: rgba(232, 177, 58, 0.08);
+  border-color: rgba(232, 177, 58, 0.28);
+}
+.lp-main:has(#lp2-quiz) .lp-testimonial-arrow:hover {
+  background: rgba(232, 177, 58, 0.18);
+  border-color: rgba(232, 177, 58, 0.6);
+}
+.lp-main:has(#lp2-quiz) .lp-testimonial-dot.is-active {
+  background: var(--acao);
+}
+.lp-sticky-cta {
+  display: none;
+}
+@keyframes pulso-acao {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+@media (max-width: 699px) {
+  .lp-main:has(#lp2-quiz) .lp2-hero {
+    min-height: 0;
+    padding: 2rem 1.2rem 1.5rem;
+  }
+  .lp-main:has(#lp2-quiz) .lp2-hero .lp-hero-inner {
+    gap: 0.8rem;
+  }
+  .lp-main:has(#lp2-quiz) .lp2-hero .lp-hero-h1 {
+    margin-top: 0.15rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.875rem;
+    line-height: 1.12;
+  }
+  .lp-main:has(#lp2-quiz) .lp2-hero .lp-hero-sub {
+    margin-bottom: 0.8rem;
+    font-size: 0.94rem;
+  }
+  .lp-main:has(#lp2-quiz) .lp2-hero .lp-hero-mockups-photo {
+    height: 190px;
+    padding: 0;
+  }
+  .lp-main:has(#lp2-quiz) .lp2-hero .lp-mockup-photo-mac {
+    width: 94%;
+  }
+  .lp-main:has(#lp2-quiz) .lp2-hero .lp-mockup-photo-phone {
+    width: 31%;
+  }
+  .lp-sticky-cta {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+    background: linear-gradient(
+      180deg,
+      rgba(9, 10, 20, 0),
+      rgba(9, 10, 20, 0.92) 32%
+    );
+  }
+  .lp-sticky-cta-button {
+    width: 100%;
+    min-height: 3rem;
+  }
+  .lp-sticky-cta > span {
+    color: rgba(249, 248, 251, 0.68);
+    font-size: 0.68rem;
+    line-height: 1.2;
+    text-align: center;
+  }
+}
+@media (min-width: 700px) {
+  .lp-main:has(#lp2-quiz) .lp2-hero .lp-hero-h1 {
+    font-size: clamp(2.5rem, 4vw, 3.1875rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-main:has(#lp2-quiz) .lp-cta-primary {
+    animation: none;
+  }
+}
+
 /* LP1 hero product photography */
 .lp-hero-mockups-photo {
   position: relative;

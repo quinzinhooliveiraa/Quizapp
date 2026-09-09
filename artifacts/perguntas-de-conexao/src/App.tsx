@@ -1217,6 +1217,7 @@ function LandingV2Quiz({
   onHeroQuizAnswer: (value: string) => void;
 }) {
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
+  const [showStickyCta, setShowStickyCta] = useState(true);
   const themes: Array<[string, string, string, string]> = [
     ["Porto Seguro", "As conversas que parecem casa.", "31 cartas", "porto-seguro"],
     ["Livro Aberto", "Sem filtro, cara a cara.", "31 cartas", "livro-aberto"],
@@ -1234,6 +1235,19 @@ function LandingV2Quiz({
     ["Mesmo Longe", "Quando rotina ou distância afastam.", "30 cartas", "mesmo-longe"],
     ["Perto de Novo", "Esquentar o espaço entre vocês.", "30 cartas", "perto-de-novo"],
   ];
+
+  useEffect(() => {
+    const priceSection = document.getElementById("lp2-precos");
+    if (!priceSection || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyCta(!entry.isIntersecting),
+      { threshold: 0.12 },
+    );
+    observer.observe(priceSection);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <span
@@ -1549,6 +1563,9 @@ function LandingV2Quiz({
                 à vista <strong>ou</strong> 5x de R$ 9,58
               </span>
             </div>
+              <p className="lp-price-time">
+                459 perguntas. Uma por noite, dá mais de um ano de conversa.
+              </p>
             <ul className="lp-price-includes">
               <li>✓ 445+ perguntas em 16 baralhos temáticos</li>
               <li>✓ Baralho personalizado do dia, sempre novo</li>
@@ -1564,7 +1581,7 @@ function LandingV2Quiz({
               className="lp-cta-primary lp-cta-full"
               data-testid="button-price-cta-v2"
             >
-              Começar agora por R$ 47,90 <ArrowRight size={18} />
+              Começar hoje à noite <ArrowRight size={18} />
             </button>
             <div className="lp-guarantee">
               <div className="lp-guarantee-seal">✦</div>
@@ -1633,6 +1650,19 @@ function LandingV2Quiz({
           </button>
         </div>
       </section>
+      {showStickyCta ? (
+        <div className="lp-sticky-cta" aria-label="Começar agora">
+          <button
+            type="button"
+            onClick={onBuy}
+            className="lp-cta-primary lp-sticky-cta-button"
+            data-testid="button-sticky-cta-v2"
+          >
+            Começar hoje à noite <ArrowRight size={18} />
+          </button>
+          <span>Acesso imediato · Pagamento seguro · Garantia de 7 dias</span>
+        </div>
+      ) : null}
       {peekThemeId
         ? (() => {
             const peek = getThemePeek(peekThemeId);
