@@ -4580,6 +4580,34 @@
   width: 100%;
 }
 
+/* Keep the proposal pillars readable and symmetrical on narrow screens. */
+.lp-solution-pillars.lp1-two-pillars {
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.lp-solution-pillars.lp1-two-pillars .lp-pillar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  text-align: left;
+}
+
+.lp-solution-pillars.lp1-two-pillars .lp-pillar-icon {
+  width: auto;
+  margin: 0;
+}
+
+.lp-solution-pillars.lp1-two-pillars .lp-pillar-copy {
+  min-width: 0;
+}
+
+.lp-solution-pillars.lp1-two-pillars .lp-pillar strong,
+.lp-solution-pillars.lp1-two-pillars .lp-pillar p {
+  text-align: left;
+}
+
 /* Compact testimonial carousel for the sales page. */
 .lp-testimonial-carousel {
   display: grid;

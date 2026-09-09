@@ -1854,11 +1854,13 @@ function LandingV2Quiz({
               <div className="lp-pillar-icon">
                 <Timer aria-hidden="true" size={30} strokeWidth={1.6} />
               </div>
-              <strong>10 minutos por noite</strong>
-              <p>
-                Não exige terapia, retiro nem fim de semana livre. Só uma carta
-                por vez.
-              </p>
+              <div className="lp-pillar-copy">
+                <strong>10 minutos por noite</strong>
+                <p>
+                  Não exige terapia, retiro nem fim de semana livre. Só uma carta
+                  por vez.
+                </p>
+              </div>
             </div>
             <div className="lp-pillar">
               <div className="lp-pillar-icon">
@@ -1868,19 +1870,13 @@ function LandingV2Quiz({
                   strokeWidth={1.6}
                 />
               </div>
-              <img
-                className="lp-pillar-photo"
-                src="/hero/secao-distancia.webp"
-                alt="Casal conversando à distância durante a noite"
-                loading="lazy"
-                width={1200}
-                height={674}
-              />
-              <strong>Não precisam estar juntos</strong>
-              <p>
-                Namoro à distância, viagem a trabalho ou cada um no seu quarto:
-                <strong> respondam juntos, cada um no seu celular.</strong>
-              </p>
+              <div className="lp-pillar-copy">
+                <strong>Não precisam estar juntos</strong>
+                <p>
+                  Namoro à distância, viagem a trabalho ou cada um no seu quarto:
+                  <strong> respondam juntos, cada um no seu celular.</strong>
+                </p>
+              </div>
             </div>
           </div>
         </div>
