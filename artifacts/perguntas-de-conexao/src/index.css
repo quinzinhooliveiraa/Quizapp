@@ -3705,7 +3705,21 @@
   font-weight: 600;
 }
 .lp-main:has(.lp2-hero) .lp-price-includes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   color: #584b59;
+}
+.lp-main:has(.lp2-hero) .lp1-price-check {
+  flex: 0 0 auto;
+  margin-top: 0.18rem;
+  color: #2fa36b;
+  stroke-width: 2.6;
+}
+.lp-main:has(.lp2-hero) .lp1-price-benefits-card .lp-cta-full {
+  min-height: 3rem;
+  padding: 0.8rem 1.25rem;
+  font-size: 1rem;
 }
 .lp-main:has(.lp2-hero) .lp-price-includes strong {
   color: #8b3553;
@@ -3735,6 +3749,16 @@
 }
 .lp-main:has(.lp2-hero) .lp1-price-benefits-card {
   padding-top: 2rem;
+}
+.lp-main:has(.lp2-hero) .lp1-price-includes-title {
+  margin: 0 0 0.75rem;
+  color: #7a5cc4 !important;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-align: left;
+  text-transform: uppercase;
 }
 .lp-main:has(.lp2-hero) .lp1-price-proof {
   margin: 0 0 1.45rem;
@@ -3767,6 +3791,12 @@
   font-weight: 500;
 }
 .lp-main:has(.lp2-hero) .lp1-price-card .lp-guarantee-seal {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
   color: #7a5cc4;
 }
 .lp-main:has(.lp2-hero) .lp-eyebrow {

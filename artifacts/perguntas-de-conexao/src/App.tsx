@@ -1685,16 +1685,35 @@ function LandingV2Quiz({
               </ol>
             </div>
             <div className="lp-price-card lp1-price-card lp1-price-benefits-card">
+              <p className="lp1-price-includes-title">o que vocês levam</p>
               <p className="lp1-price-proof">Perguntas salvas mais de 200 mil vezes</p>
               <ul className="lp-price-includes">
-                <li>✓ Baralhos para cada momento de vocês + o bônus do dia</li>
-                <li>✓ Baralho personalizado do dia, sempre novo</li>
                 <li>
-                  ✓ Acesso pra <strong>2 pessoas</strong> (você + convite)
+                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
+                  <span>Baralhos para cada momento de vocês + o bônus do dia</span>
                 </li>
-                <li>✓ Respondam juntos, mesmo à distância</li>
-                <li>✓ Novos baralhos incluídos, pra sempre</li>
-                <li>✓ Sem mensalidade. Paga uma vez.</li>
+                <li>
+                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
+                  <span>Baralho personalizado do dia, sempre novo</span>
+                </li>
+                <li>
+                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
+                  <span>
+                    Acesso pra <strong>2 pessoas</strong> (você + convite)
+                  </span>
+                </li>
+                <li>
+                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
+                  <span>Respondam juntos, mesmo à distância</span>
+                </li>
+                <li>
+                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
+                  <span>Novos baralhos incluídos, pra sempre</span>
+                </li>
+                <li>
+                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
+                  <span>Sem mensalidade. Paga uma vez.</span>
+                </li>
               </ul>
               <div className="lp-price-main">
                 <p className="lp-price-time">
@@ -1716,7 +1735,9 @@ function LandingV2Quiz({
                 Começar hoje à noite <ArrowRight size={18} />
               </button>
               <div className="lp-guarantee">
-                <div className="lp-guarantee-seal">✦</div>
+                <div className="lp-guarantee-seal" aria-hidden="true">
+                  <ShieldCheck size={28} strokeWidth={1.8} />
+                </div>
                 <div>
                   <strong>Garantia incondicional de 7 dias.</strong>
                   <p>
