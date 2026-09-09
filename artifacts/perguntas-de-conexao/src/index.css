@@ -3946,6 +3946,10 @@
   .lp-main:has(.lp2-hero) .lp2-hero .lp2-hero-security {
     text-align: center;
   }
+  .lp-main:has(.lp2-hero) .lp2-hero .lp2-hero-cta {
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
 }
 
 /* LP1 hero product photography */
