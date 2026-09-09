@@ -80,7 +80,6 @@ import {
   LayoutTemplate,
   Link as LinkIcon,
   Menu,
-  MonitorSmartphone,
   MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
@@ -3414,15 +3413,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             onSubmit={handleInitialCheckout}
           >
             <header className="checkout-store-header">
-              <button
-                className="checkout-store-back"
-                type="button"
-                onClick={closeCheckout}
-                aria-label="Voltar"
-                data-testid="button-back-checkout"
-              >
-                <ChevronLeft size={17} />
-              </button>
               <div className="checkout-store-mark">
                 <img
                   className="checkout-store-logo"
@@ -3450,7 +3440,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     aria-hidden="true"
                   />
                   <div className="checkout-product-copy">
-                    <p className="checkout-store-kicker">SEU PRÓXIMO RITUAL</p>
                     <h2>
                       Perguntas de <em>Conexão</em>
                     </h2>
@@ -3464,46 +3453,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     >
                       R$ 47,90 · uma vez só · vitalício
                     </span>
-                  </div>
-                </div>
-                <div className="checkout-benefits-card">
-                  <div className="checkout-card-heading">
-                    <h3>O que você leva</h3>
-                  </div>
-                  <div
-                    className="checkout-benefits"
-                    data-testid="list-checkout-benefits"
-                  >
-                    {[
-                      {
-                        icon: <Layers3 size={17} strokeWidth={1.8} />,
-                        title: "459 perguntas",
-                        detail: "15 baralhos",
-                      },
-                      {
-                        icon: <MonitorSmartphone size={17} strokeWidth={1.8} />,
-                        title: "Jogo online",
-                        detail: "a dois, à distância",
-                      },
-                      {
-                        icon: <Sparkles size={17} strokeWidth={1.8} />,
-                        title: "Temas & vibes",
-                        detail: "pra cada momento",
-                      },
-                    ].map(({ icon, title, detail }) => (
-                      <div className="checkout-benefit" key={title}>
-                        <span
-                          className="checkout-benefit-icon"
-                          aria-hidden="true"
-                        >
-                          {icon}
-                        </span>
-                        <span>
-                          <strong>{title}</strong>
-                          <small>{detail}</small>
-                        </span>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </section>
