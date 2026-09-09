@@ -976,7 +976,6 @@ const LP1_QUIZ_STEPS = [
   {
     key: "stage",
     title: "E vocês estão:",
-    footnote: "Mesmos valores de sempre. Só saiu da frente.",
     options: [
       ["novo", "Namorando"],
       ["anos", "Casados"],
@@ -985,13 +984,13 @@ const LP1_QUIZ_STEPS = [
   },
   {
     key: "theme",
-    title: "E hoje à noite, o que vocês querem?",
+    title: "E hoje à noite, o que você quer?",
     footnote:
       "Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês, de graça.",
     options: [
       ["porto-seguro", "Aquecer, sem susto"],
-      ["livro-aberto", "Ir fundo de verdade"],
       ["faisca", "Provocar, apimentar"],
+      ["livro-aberto", "Ir fundo de verdade"],
     ],
   },
 ] as const;
@@ -1004,6 +1003,7 @@ function Lp1Quiz({
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<LandingQuizAnswers>({});
   const current = LP1_QUIZ_STEPS[step];
+  const footnote = "footnote" in current ? current.footnote : undefined;
 
   const handleAnswer = (key: LandingQuizAnswerKey, value: string) => {
     setAnswers((previous) => ({ ...previous, [key]: value }));
@@ -1073,13 +1073,9 @@ function Lp1Quiz({
         )}
       </div>
 
-      {step < 3 && (
-        <p
-          className={`lp1-quiz-footnote ${current.footnote === "Mesmos valores de sempre. Só saiu da frente." ? "is-italic" : ""}`}
-        >
-          {current.footnote}
-        </p>
-      )}
+      {step < 3 && footnote ? (
+        <p className="lp1-quiz-footnote">{footnote}</p>
+      ) : null}
     </main>
   );
 }
