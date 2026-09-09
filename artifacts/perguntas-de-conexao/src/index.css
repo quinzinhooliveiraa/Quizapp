@@ -3946,6 +3946,18 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.lp2-rebuild .lp2-intensity-card:nth-child(1) span,
+.lp-main:has(.lp2-hero) .lp2-intensity-card:nth-child(1) span {
+  color: #7caa83;
+}
+.lp2-rebuild .lp2-intensity-card:nth-child(2) span,
+.lp-main:has(.lp2-hero) .lp2-intensity-card:nth-child(2) span {
+  color: #d49a32;
+}
+.lp2-rebuild .lp2-intensity-card:nth-child(3) span,
+.lp-main:has(.lp2-hero) .lp2-intensity-card:nth-child(3) span {
+  color: #712f45;
+}
 .lp-main:has(.lp2-hero) .lp2-intensity-card p {
   margin: 2.3rem 0 0;
   color: #f9f8fb;
