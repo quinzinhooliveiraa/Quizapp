@@ -4058,6 +4058,27 @@
 .lp-main:has(.lp2-hero) .lp2-comparison-with p {
   color: #f9f8fb;
 }
+.lp2-comparison-section .lp2-comparison-with {
+  background: #f7f5ff;
+  border-radius: 14px;
+  padding: 18px 15px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+.lp2-comparison-section .lp2-comparison-with,
+.lp2-comparison-section .lp2-comparison-with * {
+  color: #241d33 !important;
+}
+.lp2-comparison-section .lp2-comparison-with > *:first-child {
+  color: #241d33 !important;
+  font-weight: 700;
+}
+.lp2-comparison-section .lp2-comparison-without,
+.lp2-comparison-section .lp2-comparison-without * {
+  color: rgba(249, 248, 251, 0.45) !important;
+}
+.lp2-comparison-section .lp2-comparison-without {
+  background: transparent;
+}
 .lp-main:has(.lp2-hero) .lp1-two-pillars {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   max-width: 680px;

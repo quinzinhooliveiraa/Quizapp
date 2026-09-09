@@ -1816,14 +1816,14 @@ function LandingV2Quiz({
           </h2>
           <div className="lp2-comparison">
             <div className="lp2-comparison-column lp2-comparison-without">
-              <h3>Hoje à noite, sem nada</h3>
+                <h3>Sem o baralho</h3>
               <p>"E aí, como foi o dia?" — "Normal."</p>
               <p>Cada um rolando o próprio celular</p>
               <p>Você tenta e vem o "sei lá"</p>
               <p>Amanhã é igual</p>
             </div>
             <div className="lp2-comparison-column lp2-comparison-with">
-              <h3>Hoje à noite, com o baralho</h3>
+                <h3>Com o baralho</h3>
               <p>Uma pergunta que ele nunca ouviu antes</p>
               <p>Um celular só, entre os dois</p>
               <p>A pergunta já chega com o assunto pronto</p>
@@ -4450,7 +4450,7 @@ function Home({
                 <h2 className="lp-h2">O que muda numa noite.</h2>
                 <div className="lp2-comparison" role="table" aria-label="Comparação de uma noite sem e com o baralho">
                   <div className="lp2-comparison-column lp2-comparison-without" role="rowgroup">
-                    <h3>Hoje à noite, sem nada</h3>
+                    <h3>Sem o baralho</h3>
                     {[
                       '"E aí, como foi o dia?" — "Normal."',
                       "Cada um rolando o próprio celular",
@@ -4462,7 +4462,7 @@ function Home({
                     ))}
                   </div>
                   <div className="lp2-comparison-column lp2-comparison-with" role="rowgroup">
-                    <h3>Hoje à noite, com o baralho</h3>
+                    <h3>Com o baralho</h3>
                     {[
                       "Uma pergunta que ele nunca ouviu antes",
                       "Um celular só, entre os dois",
