@@ -3662,9 +3662,8 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
-  margin: 0 0 1.8rem;
-  padding: 0 0 1.8rem 1.2rem;
-  border-bottom: 1px solid #e3dce4;
+  margin: 0;
+  padding: 0 0 0 1.2rem;
 }
 .lp-main:has(.lp2-hero) .lp1-price-steps li {
   padding-left: 0.3rem;
@@ -3697,6 +3696,29 @@
   background: #fbf9ff;
   border: 1.5px solid rgba(120, 90, 200, 0.22);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.lp-main:has(.lp2-hero) .lp1-price-stack {
+  display: grid;
+  gap: 1rem;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.lp-main:has(.lp2-hero) .lp1-price-stack .lp1-price-card {
+  max-width: none;
+  margin: 0;
+}
+.lp-main:has(.lp2-hero) .lp1-price-steps-card {
+  padding-bottom: 2.15rem;
+}
+.lp-main:has(.lp2-hero) .lp1-price-benefits-card {
+  padding-top: 2rem;
+}
+.lp-main:has(.lp2-hero) .lp1-price-proof {
+  margin: 0 0 1.45rem;
+  color: #6f6580;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: center;
 }
 .lp-main:has(.lp2-hero) .lp1-price-card,
 .lp-main:has(.lp2-hero) .lp1-price-card p,

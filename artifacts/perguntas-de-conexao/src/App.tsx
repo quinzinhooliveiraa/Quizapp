@@ -1652,62 +1652,63 @@ function LandingV2Quiz({
             Ou vocês podem estar tendo a conversa de verdade daqui a dez
             minutos. São 3 passos:
           </p>
-          <div className="lp-price-card lp1-price-card">
-            <p className="lp1-price-anchor">
-              459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil
-              vezes
-            </p>
-            <ol className="lp1-price-steps">
-              <li>
-                <strong>Você paga.</strong> Pix cai na hora e o acesso abre
-                sozinho.
-              </li>
-              <li>
-                <strong>Convida ele(a).</strong> Um link. A pessoa entra sem
-                pagar de novo.
-              </li>
-              <li>
-                <strong>Escolhem um baralho.</strong> Leem a primeira pergunta
-                em voz alta. Pronto.
-              </li>
-            </ol>
-            <ul className="lp-price-includes">
-              <li>✓ 459 perguntas em 15 baralhos + o bônus do dia</li>
-              <li>✓ Baralho personalizado do dia, sempre novo</li>
-              <li>
-                ✓ Acesso pra <strong>2 pessoas</strong> (você + convite)
-              </li>
-              <li>✓ Respondam juntos, mesmo à distância</li>
-              <li>✓ Novos baralhos incluídos, pra sempre</li>
-              <li>✓ Sem mensalidade. Paga uma vez.</li>
-            </ul>
-            <div className="lp-price-main">
-              <p className="lp-price-time">
-                Uma por noite, dá mais de um ano de conversa.
-              </p>
-              <p className="lp-price-value">
-                459 perguntas por apenas{" "}
-                <span className="lp-price-figure">R$&nbsp;47,90</span>
-              </p>
-              <p className="lp-price-once">
-                dá 10 centavos por noite — uma vez só, pra sempre, sem mensalidade
-              </p>
+          <div className="lp1-price-stack">
+            <div className="lp-price-card lp1-price-card lp1-price-steps-card">
+              <ol className="lp1-price-steps">
+                <li>
+                  <strong>Você paga.</strong> Pix cai na hora e o acesso abre
+                  sozinho.
+                </li>
+                <li>
+                  <strong>Convida ele(a).</strong> Um link. A pessoa entra sem
+                  pagar de novo.
+                </li>
+                <li>
+                  <strong>Escolhem um baralho.</strong> Leem a primeira pergunta
+                  em voz alta. Pronto.
+                </li>
+              </ol>
             </div>
-            <button
-              onClick={onBuy}
-              className="lp-cta-primary lp-cta-full"
-              data-testid="button-price-cta-v2"
-            >
-              Começar hoje à noite <ArrowRight size={18} />
-            </button>
-            <div className="lp-guarantee">
-              <div className="lp-guarantee-seal">✦</div>
-              <div>
-                <strong>Garantia incondicional de 7 dias.</strong>
-                <p>
-                  Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
-                  sem perguntas — e você decide.
+            <div className="lp-price-card lp1-price-card lp1-price-benefits-card">
+              <p className="lp1-price-proof">Perguntas salvas mais de 200 mil vezes</p>
+              <ul className="lp-price-includes">
+                <li>✓ Baralhos para cada momento de vocês + o bônus do dia</li>
+                <li>✓ Baralho personalizado do dia, sempre novo</li>
+                <li>
+                  ✓ Acesso pra <strong>2 pessoas</strong> (você + convite)
+                </li>
+                <li>✓ Respondam juntos, mesmo à distância</li>
+                <li>✓ Novos baralhos incluídos, pra sempre</li>
+                <li>✓ Sem mensalidade. Paga uma vez.</li>
+              </ul>
+              <div className="lp-price-main">
+                <p className="lp-price-time">
+                  Uma por noite, dá mais de um ano de conversa.
                 </p>
+                <p className="lp-price-value">
+                  Acesso vitalício por{" "}
+                  <span className="lp-price-figure">R$&nbsp;47,90</span>
+                </p>
+                <p className="lp-price-once">
+                  uma vez só, pra sempre, sem mensalidade
+                </p>
+              </div>
+              <button
+                onClick={onBuy}
+                className="lp-cta-primary lp-cta-full"
+                data-testid="button-price-cta-v2"
+              >
+                Começar hoje à noite <ArrowRight size={18} />
+              </button>
+              <div className="lp-guarantee">
+                <div className="lp-guarantee-seal">✦</div>
+                <div>
+                  <strong>Garantia incondicional de 7 dias.</strong>
+                  <p>
+                    Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
+                    sem perguntas — e você decide.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
