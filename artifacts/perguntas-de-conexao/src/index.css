@@ -262,6 +262,14 @@
   letter-spacing: 0.12em;
 }
 
+.lp1-diagnosis-anchor {
+  margin: 1.25rem 0 0;
+  color: #94899e;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
 .lp1-diagnosis-cta {
   display: flex;
   width: 100%;

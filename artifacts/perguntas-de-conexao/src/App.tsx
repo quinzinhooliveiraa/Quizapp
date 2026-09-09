@@ -1037,6 +1037,10 @@ function Lp1Diagnosis({
             <RecommendedQuestionCarousel questions={previewQuestions} />
           </div>
         ) : null}
+        <p className="lp1-diagnosis-anchor">
+          Isso é um gostinho: 3 de 459 perguntas. As outras 456 abrem quando o
+          baralho for de vocês.
+        </p>
         <button
           type="button"
           className="lp1-diagnosis-cta"
@@ -2040,11 +2044,14 @@ function LandingV2Quiz({
                   Uma por noite, dá mais de um ano de conversa.
                 </p>
                 <p className="lp-price-value">
-                  Acesso vitalício por{" "}
-                  <span className="lp-price-figure">R$&nbsp;47,90</span>
+                  459 perguntas por{" "}
+                  <span className="lp-price-figure" style={{ whiteSpace: "nowrap" }}>
+                    R$ 47,90
+                  </span>{" "}
+                  — dá 10 centavos cada.
                 </p>
                 <p className="lp-price-once">
-                  uma vez só, pra sempre, sem mensalidade
+                  acesso vitalício, uma vez só, sem mensalidade
                 </p>
               </div>
               <button
