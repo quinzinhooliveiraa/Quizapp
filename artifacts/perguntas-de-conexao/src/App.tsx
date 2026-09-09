@@ -1409,6 +1409,32 @@ function LandingV2Quiz({
           </div>
         </div>
       </section>
+      <section
+        className="lp-quiz-section"
+        id="lp2-quiz"
+        data-section-name="quiz"
+      >
+        <div className="lp-container">
+          <p className="lp-eyebrow lp-eyebrow-center">
+            experimente agora, de graça
+          </p>
+          <h2 className="lp-h2">
+            Responda 3 perguntas rápidas e receba
+            <br />
+            <em>3 perguntas feitas pro momento de vocês.</em>
+          </h2>
+          <p className="lp-solution-lede lp2-quiz-lede">
+            Leva menos de 1 minuto. A gente monta na hora um mini-baralho com a
+            cara da fase que vocês estão vivendo.
+          </p>
+          <LandingQuiz
+            onFinish={onBuy}
+            step={quizStep}
+            answers={quizAnswers}
+            onAnswer={onQuizAnswer}
+          />
+        </div>
+      </section>
       <section className="lp2-story" data-section-name="historia">
         <div className="lp-container lp2-story-narrow">
           <p className="lp-eyebrow">a real sobre o que acontece</p>
@@ -1530,32 +1556,6 @@ function LandingV2Quiz({
         </div>
       </section>
       <section
-        className="lp-quiz-section"
-        id="lp2-quiz"
-        data-section-name="quiz"
-      >
-        <div className="lp-container">
-          <p className="lp-eyebrow lp-eyebrow-center">
-            experimente agora, de graça
-          </p>
-          <h2 className="lp-h2">
-            Responda 3 perguntas rápidas e receba
-            <br />
-            <em>3 perguntas feitas pro momento de vocês.</em>
-          </h2>
-          <p className="lp-solution-lede lp2-quiz-lede">
-            Leva menos de 1 minuto. A gente monta na hora um mini-baralho com a
-            cara da fase que vocês estão vivendo.
-          </p>
-          <LandingQuiz
-            onFinish={onBuy}
-            step={quizStep}
-            answers={quizAnswers}
-            onAnswer={onQuizAnswer}
-          />
-        </div>
-      </section>
-      <section
         className="lp-themes lp2-themes"
         id="lp2-pacotes"
         data-section-name="pacotes"
@@ -1647,7 +1647,7 @@ function LandingV2Quiz({
               <li>
                 ✓ Acesso pra <strong>2 pessoas</strong> (você + convite)
               </li>
-              <li>✓ Salas online sincronizadas, mesmo à distância</li>
+              <li>✓ Respondam juntos, mesmo à distância</li>
               <li>✓ Novos baralhos incluídos, pra sempre</li>
               <li>✓ Sem mensalidade. Paga uma vez.</li>
             </ul>

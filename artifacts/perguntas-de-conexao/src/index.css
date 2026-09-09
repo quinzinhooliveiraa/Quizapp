@@ -3598,12 +3598,13 @@
   max-width: 680px;
 }
 .lp-main:has(.lp2-hero) .lp-social {
-  padding-top: 6rem;
-  padding-bottom: 6rem;
+  padding-top: 7rem;
+  padding-bottom: 7rem;
 }
 .lp-main:has(.lp2-hero) .lp-testimonial-quote {
-  min-height: 5.5rem;
-  font-size: 1.15rem;
+  min-height: 6.5rem;
+  font-size: 1.22rem;
+  line-height: 1.55;
 }
 .lp-main:has(.lp2-hero) .lp-price-card {
   background: #fbf8f2;
@@ -3668,6 +3669,10 @@
 .lp-main:has(.lp2-hero) .lp-guarantee p {
   color: #715c71;
 }
+.lp-main:has(.lp2-hero) .lp-final-cta {
+  padding-top: 3.5rem;
+  padding-bottom: 4.5rem;
+}
 @media (max-width: 900px) {
   .lp-main:has(.lp2-hero) .lp2-intensity-grid {
     grid-template-columns: 1fr;
@@ -3701,6 +3706,18 @@
   .lp-main:has(.lp2-hero) .lp2-story {
     padding-top: 3.5rem;
     padding-bottom: 3rem;
+  }
+  .lp-main:has(.lp2-hero) .lp-social {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+  .lp-main:has(.lp2-hero) .lp-testimonial-quote {
+    min-height: 7.5rem;
+    font-size: 1.08rem;
+  }
+  .lp-main:has(.lp2-hero) .lp-final-cta {
+    padding-top: 2.8rem;
+    padding-bottom: 3.5rem;
   }
 }
 
