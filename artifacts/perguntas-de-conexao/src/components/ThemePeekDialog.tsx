@@ -45,6 +45,17 @@ export function ThemePeekDialog({
           <X size={18} />
         </button>
 
+        {peek.backgroundUrl ? (
+          <div className="theme-peek-cover" aria-hidden="true">
+            <img
+              src={peek.backgroundUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        ) : null}
+
         <span className="theme-peek-kicker">
           baralho · {peek.count} perguntas
         </span>

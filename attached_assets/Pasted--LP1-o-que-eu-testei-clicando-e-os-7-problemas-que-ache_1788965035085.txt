@@ -1,0 +1,205 @@
+# LP1 — o que eu testei clicando, e os 7 problemas que achei
+
+Fiz o quiz até o fim, abri o modal de baralho, entrei no checkout, e conferi o
+selo dos 50 casais. Abaixo: o que funciona, o que quebra, e o prompt de
+correção.
+
+---
+
+## O que FUNCIONA (testado, não deduzido)
+
+- **O quiz vai até o fim.** Três passos, progresso avança, e o resultado
+  aparece: *"Seu baralho ideal pra começar: Livro Aberto"* com uma pergunta
+  real do baralho e o contador `01 / 31`.
+- **O modal do baralho abre.** Toquei em Porto Seguro e veio:
+  *"Em que momento recente você se sentiu cuidado por mim sem eu dizer nada?"*
+  com *"Essa é uma. As outras 30 abrem quando o baralho for de vocês."*
+  O prompt 38 funcionou.
+- **O checkout abre e está bom.** Fundo claro, nome e e-mail, Pix e cartão como
+  opções visíveis (não dropdown), resumo com a garantia listada, barra fixa com
+  o total. Isso está alinhado com o guia.
+- **O autoplay dos depoimentos está desligado.** Esperei 7,6 segundos e não
+  trocou sozinho.
+
+---
+
+## Os 7 problemas
+
+### 1. 🔴 Um terço das respostas do quiz está inalcançável
+
+A barra fixa dourada começa em **y=650**. A terceira opção de cada pergunta
+termina **abaixo disso**. Medido:
+
+```
+Namorando      → tapado: false
+Casados        → tapado: false
+Relação longa  → tapado: TRUE
+```
+
+As três perguntas do quiz têm três opções cada. **A terceira está coberta pela
+barra em todas.** Quem quer responder "Relação longa", "Precisamos reconectar"
+ou "Ir fundo de verdade" não consegue — a menos que role a página no meio do
+quiz e perceba sozinho.
+
+Isso é pior que o card morto que a gente consertou no prompt 38, porque aqui a
+pessoa está no meio de uma tarefa.
+
+### 2. 🔴 A barra fixa fica POR CIMA do modal do baralho
+
+```
+z-index da barra fixa .... 40
+z-index do overlay do modal .. 30
+```
+
+Quando o modal do baralho abre, a barra dourada continua na frente dele.
+
+### 3. 🟠 Quatro CTAs com quatro textos diferentes
+
+| Onde | Texto |
+|---|---|
+| Hero | "Quero reacender a conexão" |
+| Resultado do quiz | "Quero aprofundar meu relacionamento" |
+| Preço e barra fixa | "Começar hoje à noite" |
+| CTA final | "Quero começar agora" |
+
+Quatro promessas diferentes pro mesmo clique.
+
+### 4. 🟠 A regra do dourado quebra nos dois momentos que fecham a venda
+
+O botão do **modal do baralho** e o botão do **checkout** são vinho
+(`rgb(122,46,70)`), não dourado.
+
+A pessoa aprende na página inteira que **dourado = toca aqui**. Aí chega no
+modal e no checkout — os dois lugares onde ela decide — e a cor muda.
+
+### 5. 🟠 Três números diferentes na mesma jornada
+
+| Onde | O que diz |
+|---|---|
+| Seção proposta e baralhos | "445+ perguntas" · "16 baralhos" |
+| Resultado do quiz | "os outros **14** baralhos" |
+| Checkout | "**459** perguntas" |
+
+O checkout está certo. A LP está errada em dois lugares diferentes.
+
+### 6. 🟡 O modal do baralho não tem foto
+
+As 15 fotos existem no projeto. O prompt 41 só consertou o carrossel da LP3.
+O modal continua só texto.
+
+### 7. ⚪ O selo "50 casais" NÃO existe na LP1
+
+Procurei no texto inteiro da página: zero menção a "50 casais", zero avatares.
+
+**Eu escrevi no prompt 46 que "o selo fica, é real". Estava errado** — ele não
+está nessa página. Se existe, é em outra. Ignore aquela instrução no 46.
+
+---
+
+# As correções
+
+Mexe em `App.tsx` (`LandingV2Quiz` e `LandingQuiz`) e no `index.css`.
+
+## Correção 1 — a barra fixa não pode cobrir o quiz
+
+Junte a seção do quiz à lista de seções que escondem a barra. No
+`IntersectionObserver` do prompt 48:
+
+```tsx
+const quiz = document.querySelector('[data-section-name="quiz"]');
+// ...
+if (quiz) obsOferta.observe(quiz);
+```
+
+Ou seja, a barra some quando **hero**, **quiz**, **precos** ou **final**
+estiverem visíveis. Ela só aparece nos trechos de leitura.
+
+**Adicione também um respiro embaixo do card do quiz**, para que nenhuma opção
+fique a menos de 100px do fim da tela:
+
+```css
+@media (max-width: 699px) {
+  .lp-quiz-section { padding-bottom: 7rem; }
+}
+```
+
+## Correção 2 — o modal fica acima da barra
+
+```css
+.theme-peek-overlay { z-index: 60; }
+.lp-sticky-cta { z-index: 40; }
+```
+
+E, por segurança, esconda a barra enquanto qualquer modal estiver aberto:
+quando `peekThemeId` ou o checkout estiverem ativos, a barra não renderiza.
+
+## Correção 3 — um texto só para todos os CTAs
+
+Todos os quatro passam a dizer **"Começar hoje à noite"**.
+
+Exceção: o botão do **modal do baralho** continua **"Quero esse baralho"** —
+esse é específico e faz sentido ser diferente, porque a pessoa acabou de
+escolher um tema.
+
+## Correção 4 — o dourado vale até o fim
+
+O botão do **modal do baralho** e o botão principal do **checkout** passam a
+usar a mesma cor de ação da LP:
+
+```css
+.theme-peek-cta,
+.checkout-purchase-button {
+  background: linear-gradient(135deg, var(--acao), var(--acao-escura));
+  color: #17121b;
+}
+```
+
+**Cuidado:** o checkout é usado pelas três LPs. Se o dourado vazar pra LP2 e
+LP3, que ainda são lilás, elas ficam inconsistentes. Duas saídas, escolha uma:
+
+- **(a)** aplicar o dourado no checkout **para todas as três** — aí fica
+  consistente no site inteiro e é o que eu faria;
+- **(b)** escopar por variante, usando o `sourceLp` que o checkout já recebe.
+
+A (a) é mais simples e não deixa ninguém para trás.
+
+## Correção 5 — os números
+
+Na LP1, substitua em **todos** os lugares:
+
+- `445+ perguntas` → **459 perguntas**
+- `16 baralhos temáticos` → **15 baralhos + o bônus do dia**
+- No resultado do quiz: `os outros 14 baralhos` → **os outros 14 baralhos**
+  (esse está certo: 15 − 1 recomendado = 14. Só confirme que bate com o novo
+  texto de 15.)
+
+## Correção 6 — foto no modal do baralho
+
+`lib/theme-peek.ts` já devolve `backgroundUrl` e o `ThemePeekDialog` não usa.
+Coloque como faixa no topo do modal:
+
+```tsx
+{peek.backgroundUrl ? (
+  <div className="theme-peek-cover" aria-hidden="true">
+    <img src={peek.backgroundUrl} alt="" loading="lazy" decoding="async" />
+  </div>
+) : null}
+```
+
+Altura fixa (~8rem), `object-fit: cover`, cantos de cima arredondados, e um
+degradê escuro embaixo pro título não brigar com a foto.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. **Faça o quiz inteiro no celular, escolhendo a TERCEIRA opção nas três
+   perguntas.** Se você conseguir tocar nas três, a correção 1 funcionou.
+3. Abra um baralho: o modal tem que ficar **na frente** da barra dourada, e com
+   foto no topo.
+4. Vá até a seção de preço: a barra some e o botão de compra funciona.
+5. Entre no checkout: o botão principal tem que estar **dourado**.
+6. Confirme que o checkout da `/lp2` e da `/lp3` também abre normalmente.
+7. Procure "445" e "16 baralhos" na LP1 — não pode sobrar nenhum.
+8. Deploy.

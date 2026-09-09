@@ -3350,6 +3350,9 @@
   }
 }
 @media (max-width: 699px) {
+  .lp-quiz-section {
+    padding-bottom: 7rem;
+  }
   .lp-main:has(#lp2-quiz) .lp2-hero {
     min-height: 0;
     padding: 2rem 1.2rem 1.5rem;
@@ -8053,7 +8056,7 @@ blockquote em {
 }
 .theme-peek-overlay {
   position: fixed;
-  z-index: 30;
+  z-index: 60;
   inset: 0;
   display: grid;
   place-items: center;
@@ -8079,6 +8082,7 @@ blockquote em {
 }
 .theme-peek-close {
   position: absolute;
+  z-index: 1;
   top: 0.85rem;
   right: 0.85rem;
   display: grid;
@@ -8095,6 +8099,28 @@ blockquote em {
     color 0.2s ease,
     background 0.2s ease,
     border-color 0.2s ease;
+}
+.theme-peek-cover {
+  position: relative;
+  height: 8rem;
+  margin: -2.2rem -1.5rem 1.4rem;
+  overflow: hidden;
+  border-radius: 1.15rem 1.15rem 0 0;
+}
+.theme-peek-cover::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 58%;
+  background: linear-gradient(180deg, transparent, rgba(19, 13, 34, 0.96));
+  content: "";
+}
+.theme-peek-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .theme-peek-close:hover,
 .theme-peek-close:focus-visible {
@@ -8137,6 +8163,13 @@ blockquote em {
 }
 .theme-peek-cta {
   width: 100%;
+  background: linear-gradient(135deg, #e8b13a, #c98f1e);
+  color: #17121b;
+  box-shadow: 0 0.5rem 1rem rgba(232, 177, 58, 0.24);
+}
+.theme-peek-cta:hover {
+  background: linear-gradient(135deg, #f0c55b, #d9a02a);
+  box-shadow: 0 0.7rem 1.25rem rgba(232, 177, 58, 0.34);
 }
 .theme-peek-cta:focus-visible {
   outline: 2px solid #c4acff;
@@ -21620,9 +21653,9 @@ blockquote em {
   min-width: 15rem;
   border: 0;
   border-radius: 0.7rem;
-  background: #7a2e46;
-  color: #fff8f3;
-  box-shadow: 0 0.5rem 1rem rgba(122, 46, 70, 0.18);
+  background: linear-gradient(135deg, #e8b13a, #c98f1e);
+  color: #17121b;
+  box-shadow: 0 0.5rem 1rem rgba(232, 177, 58, 0.24);
   font-size: 0.78rem;
   transition:
     background-color 180ms ease,
@@ -21631,8 +21664,8 @@ blockquote em {
 }
 
 .checkout-purchase-button:hover {
-  background: #63243a;
-  box-shadow: 0 0.7rem 1.25rem rgba(122, 46, 70, 0.24);
+  background: linear-gradient(135deg, #f0c55b, #d9a02a);
+  box-shadow: 0 0.7rem 1.25rem rgba(232, 177, 58, 0.34);
   transform: translateY(-1px);
 }
 

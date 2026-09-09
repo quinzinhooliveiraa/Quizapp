@@ -893,7 +893,7 @@ function LandingQuiz({
           className="lp-cta-primary lp-cta-big"
           data-testid="button-quiz-cta"
         >
-          Quero aprofundar meu relacionamento <ArrowRight size={18} />
+          Começar hoje à noite <ArrowRight size={18} />
         </button>
       </div>
     );
@@ -1071,7 +1071,7 @@ function QuestionCarouselSection() {
         </p>
         <QuestionCarousel />
         <p className="lp-solution-note">
-          Mais de 445 perguntas originais esperando por vocês.
+          Mais de 459 perguntas originais esperando por vocês.
         </p>
       </div>
     </section>
@@ -1203,6 +1203,7 @@ function LandingV2Quiz({
   onBuy,
   onHeroBuy,
   onThemePeek,
+  checkoutOpen,
   quizStep,
   quizAnswers,
   onQuizAnswer,
@@ -1211,6 +1212,7 @@ function LandingV2Quiz({
   onBuy: () => void;
   onHeroBuy: () => void;
   onThemePeek: (themeId: string) => void;
+  checkoutOpen: boolean;
   quizStep: number;
   quizAnswers: LandingQuizAnswers;
   onQuizAnswer: (key: LandingQuizAnswerKey, value: string) => void;
@@ -1237,14 +1239,30 @@ function LandingV2Quiz({
   ];
 
   useEffect(() => {
-    const priceSection = document.getElementById("lp2-precos");
-    if (!priceSection || typeof IntersectionObserver === "undefined") return;
+    if (typeof IntersectionObserver === "undefined") return;
 
+    const sections = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[data-section-name="hero"], [data-section-name="quiz"], [data-section-name="precos"], [data-section-name="final"]',
+      ),
+    );
+    if (sections.length === 0) return;
+
+    const hiddenSections = new Set<HTMLElement>();
     const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyCta(!entry.isIntersecting),
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            hiddenSections.add(entry.target as HTMLElement);
+          } else {
+            hiddenSections.delete(entry.target as HTMLElement);
+          }
+        });
+        setShowStickyCta(hiddenSections.size === 0);
+      },
       { threshold: 0.12 },
     );
-    observer.observe(priceSection);
+    sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
   }, []);
 
@@ -1308,7 +1326,7 @@ function LandingV2Quiz({
             className="lp-cta-primary lp-cta-big lp2-hero-cta"
             data-testid="button-hero-cta-v2"
           >
-            Quero reacender a conexão <ArrowRight size={18} />
+            Começar hoje à noite <ArrowRight size={18} />
           </button>
           <button
             type="button"
@@ -1390,7 +1408,7 @@ function LandingV2Quiz({
             <em>incluir na rotina começando hoje.</em>
           </h2>
           <p className="lp-solution-lede">
-            445+ perguntas escritas pra tirar a conversa do automático — sem
+            459 perguntas escritas pra tirar a conversa do automático — sem
             clichê, sem "qual seu animal favorito". Vocês abrem uma carta, leem
             em voz alta e escutam. Separem 10 minutos e vejam onde a conversa
             vai.
@@ -1468,7 +1486,7 @@ function LandingV2Quiz({
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">o que tem dentro</p>
           <h2 className="lp-h2">
-            16 baralhos temáticos,
+            15 baralhos + o bônus do dia,
             <br />
             <em>para escolher o assunto da noite.</em>
           </h2>
@@ -1500,7 +1518,7 @@ function LandingV2Quiz({
             </div>
           </div>
           <p className="lp-themes-note">
-            <strong>445+ perguntas no total.</strong> Novos baralhos entram de
+            <strong>459 perguntas no total.</strong> Novos baralhos entram de
             tempos em tempos. O acesso é vitalício.
           </p>
         </div>
@@ -1567,7 +1585,7 @@ function LandingV2Quiz({
                 459 perguntas. Uma por noite, dá mais de um ano de conversa.
               </p>
             <ul className="lp-price-includes">
-              <li>✓ 445+ perguntas em 16 baralhos temáticos</li>
+              <li>✓ 459 perguntas em 15 baralhos + o bônus do dia</li>
               <li>✓ Baralho personalizado do dia, sempre novo</li>
               <li>
                 ✓ Acesso pra <strong>2 pessoas</strong> (você + convite)
@@ -1646,11 +1664,11 @@ function LandingV2Quiz({
             className="lp-cta-primary lp-cta-big"
             data-testid="button-final-cta-v2"
           >
-            Quero começar agora <ArrowRight size={20} />
+            Começar hoje à noite <ArrowRight size={20} />
           </button>
         </div>
       </section>
-      {showStickyCta ? (
+      {showStickyCta && !peekThemeId && !checkoutOpen ? (
         <div className="lp-sticky-cta" aria-label="Começar agora">
           <button
             type="button"
@@ -3941,6 +3959,7 @@ function Home({
             onBuy={() => startCheckout("couple")}
             onHeroBuy={() => startCheckout("couple", "hero_comprar")}
             onThemePeek={(themeId) => trackCtaClick(`theme_peek:${themeId}`)}
+            checkoutOpen={checkoutController.checkoutOpen}
             quizStep={landingQuizStep}
             quizAnswers={landingQuizAnswers}
             onQuizAnswer={advanceLandingQuiz}
