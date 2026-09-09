@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { landingTestimonials } from "@/lib/testimonials";
 
 export function Lp3Testimonials() {
@@ -33,7 +33,11 @@ export function Lp3Testimonials() {
   };
 
   return (
-    <section className="lp3-testimonials" aria-labelledby="lp3-testimonials-title">
+    <section
+      className="lp3-testimonials"
+      data-section-name="depoimentos"
+      aria-labelledby="lp3-testimonials-title"
+    >
       <h2 id="lp3-testimonials-title" className="lp3-testimonials-title">
         Não fomos os únicos a perceber isso.
       </h2>
@@ -61,11 +65,6 @@ export function Lp3Testimonials() {
           <footer>
             <div className="lp3-testimonial-attribution">
               <cite>{activeTestimonial.name}</cite>
-              <span className="lp3-testimonial-stars" role="img" aria-label="5 de 5 estrelas">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <Star key={index} size={14} strokeWidth={1.8} fill="currentColor" aria-hidden="true" />
-                ))}
-              </span>
             </div>
             <span className="lp3-testimonial-detail">{activeTestimonial.detail}</span>
           </footer>

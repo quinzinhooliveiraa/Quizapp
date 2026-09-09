@@ -2902,6 +2902,345 @@
   }
 }
 
+/* Prompt 44 — LP2 narrative rebuild */
+.lp2-rebuild {
+  --lp2-muted: rgba(249, 248, 251, 0.68);
+  --lp2-soft: rgba(249, 248, 251, 0.48);
+  --lp2-line: rgba(196, 172, 255, 0.18);
+}
+.lp2-rebuild .lp2-rebuild-hero {
+  padding-top: 4.8rem;
+  padding-bottom: 2rem;
+}
+.lp2-rebuild .lp2-rebuild-hero .lp-hero-inner {
+  max-width: 1160px;
+}
+.lp2-rebuild .lp2-rebuild-hero .lp-hero-copy {
+  max-width: 660px;
+}
+.lp2-rebuild .lp2-rebuild-hero .lp-hero-h1 {
+  max-width: 720px;
+  letter-spacing: -0.035em;
+}
+.lp2-rebuild .lp2-hero-emphasis {
+  display: inline-block;
+  color: #ffc59e;
+  font-size: 1.22em;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+}
+.lp2-rebuild .lp2-hero-support {
+  max-width: 520px;
+  margin: -0.7rem 0 1.3rem;
+  color: var(--lp2-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+.lp2-rebuild .lp2-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.lp2-rebuild .lp2-hero-actions .lp-cta-primary {
+  white-space: nowrap;
+}
+.lp2-rebuild .lp2-hero-actions .lp-cta-secondary-link {
+  margin-top: 0;
+}
+.lp2-rebuild .lp2-hero-security {
+  margin: 0;
+  color: var(--lp2-soft);
+  font-size: 0.76rem;
+}
+.lp2-rebuild .lp2-hero-strip {
+  max-width: 1160px;
+  margin: 1rem auto 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--lp2-soft);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+.lp2-rebuild .lp2-simple-section,
+.lp2-rebuild .lp2-comparison-section,
+.lp2-rebuild .lp2-distance-section {
+  padding: 5rem 1.4rem;
+}
+.lp2-rebuild .lp2-simple-section {
+  background: rgba(0, 0, 0, 0.15);
+}
+.lp2-rebuild .lp2-narrow {
+  max-width: 720px;
+}
+.lp2-rebuild .lp2-section-lede,
+.lp2-rebuild .lp2-offer-sub {
+  max-width: 680px;
+  margin: 0 auto;
+  color: var(--lp2-muted);
+  font-size: 1rem;
+  font-weight: 450;
+  line-height: 1.65;
+  text-align: center;
+}
+.lp2-rebuild .lp2-intensity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  max-width: 960px;
+  margin: 2.2rem auto 0;
+}
+.lp2-rebuild .lp2-intensity-card {
+  min-height: 168px;
+  padding: 1.35rem;
+  border: 1px solid var(--lp2-line);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.045);
+}
+.lp2-rebuild .lp2-intensity-card span {
+  color: #ffc59e;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lp2-rebuild .lp2-intensity-card p {
+  margin: 2.3rem 0 0;
+  color: #f9f8fb;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 1.35rem;
+  font-style: italic;
+  line-height: 1.25;
+}
+.lp2-rebuild .lp2-comparison-section {
+  background: rgba(0, 0, 0, 0.08);
+}
+.lp2-rebuild .lp2-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 960px;
+  margin: 2.2rem auto 0;
+  overflow: hidden;
+  border: 1px solid var(--lp2-line);
+  border-radius: 1rem;
+}
+.lp2-rebuild .lp2-comparison-column {
+  padding: 1.6rem;
+}
+.lp2-rebuild .lp2-comparison-column + .lp2-comparison-column {
+  border-left: 1px solid var(--lp2-line);
+}
+.lp2-rebuild .lp2-comparison-column h3 {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.lp2-rebuild .lp2-comparison-without h3 {
+  color: var(--lp2-soft);
+}
+.lp2-rebuild .lp2-comparison-with h3 {
+  color: #ffc59e;
+}
+.lp2-rebuild .lp2-comparison-column p {
+  min-height: 3.9rem;
+  margin: 0;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--lp2-muted);
+  font-size: 0.92rem;
+  font-weight: 450;
+  line-height: 1.45;
+}
+.lp2-rebuild .lp2-comparison-with p {
+  color: #f9f8fb;
+}
+.lp2-rebuild .lp2-distance-section {
+  background: #271b47;
+}
+.lp2-rebuild .lp2-distance-section .lp2-section-lede {
+  color: rgba(249, 248, 251, 0.78);
+}
+.lp2-rebuild .lp2-offer-section {
+  padding-top: 5rem;
+}
+.lp2-rebuild .lp2-offer-sub {
+  margin-bottom: 2rem;
+}
+.lp2-rebuild .lp2-offer-card {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 2.3rem 2.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 1.35rem;
+  background: #f9f8fb;
+  color: #2a2130;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+}
+.lp2-rebuild .lp2-offer-anchor {
+  margin: 0 0 1.5rem;
+  color: #715c71;
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+.lp2-rebuild .lp2-offer-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0 0 1.8rem 1.2rem;
+  border-bottom: 1px solid #e3dce4;
+}
+.lp2-rebuild .lp2-offer-steps li {
+  padding-left: 0.3rem;
+  color: #584b59;
+  font-size: 0.88rem;
+  font-weight: 450;
+  line-height: 1.45;
+}
+.lp2-rebuild .lp2-offer-steps li::marker {
+  color: #8b3553;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 1.35rem;
+}
+.lp2-rebuild .lp2-offer-steps strong {
+  display: block;
+  color: #2a2130;
+  font-weight: 600;
+}
+.lp2-rebuild .lp2-offer-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 1.6rem 0 0.2rem;
+  color: #2a2130;
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+.lp2-rebuild .lp2-offer-price span {
+  color: #715c71;
+  font-size: 0.95rem;
+  font-weight: 450;
+}
+.lp2-rebuild .lp2-offer-price-note,
+.lp2-rebuild .lp2-offer-micro {
+  color: #715c71;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.lp2-rebuild .lp2-offer-price-note {
+  margin: 0 0 1.4rem;
+}
+.lp2-rebuild .lp2-offer-cta {
+  background: linear-gradient(135deg, #d4446b, #8b2e50);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(139, 46, 80, 0.32);
+  font-weight: 600;
+  animation: lp2-cta-pulse 2.8s ease-in-out infinite;
+}
+.lp2-rebuild .lp2-offer-cta:hover {
+  box-shadow: 0 12px 32px rgba(139, 46, 80, 0.42);
+}
+.lp2-rebuild .lp2-offer-micro {
+  margin: 0.7rem 0 0;
+}
+.lp2-rebuild .lp2-offer-guarantee {
+  margin: 1.5rem 0 0;
+  padding-top: 1.2rem;
+  border-top: 1px solid #e3dce4;
+  color: #584b59;
+  font-size: 0.88rem;
+  font-weight: 450;
+  line-height: 1.55;
+  text-align: center;
+}
+.lp2-rebuild .lp2-offer-section + .lp-faq {
+  padding-top: 4rem;
+}
+@media (max-width: 900px) {
+  .lp2-rebuild .lp2-hero-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .lp2-rebuild .lp2-intensity-grid {
+    grid-template-columns: 1fr;
+  }
+  .lp2-rebuild .lp2-intensity-card {
+    min-height: 0;
+  }
+  .lp2-rebuild .lp2-intensity-card p {
+    margin-top: 1.2rem;
+  }
+}
+@media (max-width: 640px) {
+  .lp2-rebuild .lp2-rebuild-hero {
+    padding-top: 2.6rem;
+  }
+  .lp2-rebuild .lp2-rebuild-hero .lp-hero-h1 {
+    font-size: clamp(2.15rem, 10vw, 3rem);
+  }
+  .lp2-rebuild .lp2-hero-actions .lp-cta-primary {
+    width: 100%;
+  }
+  .lp2-rebuild .lp2-hero-actions {
+    width: 100%;
+  }
+  .lp2-rebuild .lp2-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lp2-rebuild .lp2-comparison-column {
+    padding: 1rem 0.85rem;
+  }
+  .lp2-rebuild .lp2-comparison-column h3 {
+    min-height: 2.4rem;
+    font-size: 0.72rem;
+  }
+  .lp2-rebuild .lp2-comparison-column p {
+    min-height: 5.5rem;
+    font-size: 0.78rem;
+  }
+  .lp2-rebuild .lp2-offer-card {
+    padding: 1.8rem 1.15rem 2rem;
+  }
+  .lp2-rebuild .lp2-offer-steps {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  .lp2-rebuild .lp2-offer-steps li {
+    min-height: 2.7rem;
+  }
+  .lp2-rebuild .lp2-offer-cta {
+    position: fixed;
+    right: 1rem;
+    bottom: max(0.85rem, env(safe-area-inset-bottom));
+    left: 1rem;
+    z-index: 30;
+    width: auto;
+    padding: 1rem;
+    border-radius: 0.9rem;
+  }
+  .lp2-rebuild .lp2-offer-card {
+    padding-bottom: 6rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp2-rebuild .lp2-offer-cta {
+    animation: none;
+  }
+}
+@keyframes lp2-cta-pulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 24px rgba(139, 46, 80, 0.28);
+  }
+  50% {
+    box-shadow: 0 10px 30px rgba(212, 68, 107, 0.48);
+  }
+}
+
 /* LP1 hero product photography */
 .lp-hero-mockups-photo {
   position: relative;

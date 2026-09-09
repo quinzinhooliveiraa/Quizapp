@@ -1,0 +1,365 @@
+# Prompt 44 (v2) — A LP2 nova, construída a partir dos guias
+
+> Substitui a versão anterior do 44. Cada bloco tem, no fim, a regra que o
+> justifica. Não é enfeite: se você precisar cortar algo depois, corte pelo que
+> tem justificativa mais fraca.
+
+## Onde é
+
+Em `App.tsx`, a função `Home` tem duas metades:
+
+```tsx
+{variant === "v2" ? ( <LandingV2Quiz … /> ) : ( <> …a LP2… </> )}
+```
+
+A metade `v2` é a **LP1** (`/lp1`) — **não encoste nela.** Tudo abaixo é sobre
+a segunda metade, a LP2 (`/lp2`). Toda a fiação (checkout, tracking, quiz,
+`peekThemeId`) já existe no `Home` e continua servindo.
+
+---
+
+## Mapa da página
+
+| Seção | Ação |
+|---|---|
+| `hero` | reescrever |
+| `sei-la` | criar |
+| `dor` | manter, com um ajuste de conexão |
+| `comparativo` | **criar** — bloco novo, e o mais importante |
+| `vergonha` | criar |
+| `quiz` | não tocar |
+| `proposta` | reescrever → vira o bloco da distância |
+| `como-funciona` | **apagar** (os 3 passos migram para a oferta) |
+| `pacotes` | manter |
+| `depoimentos` | criar |
+| `precos` | reescrever |
+| `faq` | reescrever |
+
+---
+
+## 1. `hero`
+
+```
+eyebrow:  baralho digital de perguntas · para casais
+
+H1:       Você quer a conversa.
+          Ele responde "sei lá".
+
+sub:      459 perguntas escritas pra abrir conversa de verdade — uma por vez.
+          Você abre, lê em voz alta, escuta. O resto acontece entre vocês.
+
+apoio:    Responde 3 perguntas rápidas e recebe, na hora, 3 perguntas feitas
+          pro momento de vocês. Leva 1 minuto e é grátis — você decide se
+          quer o resto depois.
+
+botão 1:  Começar o teste grátis
+botão 2 (link discreto): Já sei o que quero — comprar agora →
+
+confiança (texto pequeno, colado nos botões):
+          🔒 Pagamento seguro · 7 dias de garantia — não gostou, devolvo.
+
+faixa:    459 perguntas · 15 baralhos · jogo a distância · acesso vitalício
+```
+
+**Detalhe tipográfico que não é enfeite:** as palavras **"sei lá"** dentro do H1
+devem estar em **corpo maior** que o resto da linha. Palavras emocionais em
+fonte maior intensificam o impacto e puxam atenção para o bloco inteiro.
+
+A foto do casal no hero, se houver, deve ser **plano médio (rosto e corpo
+juntos)**, na vertical, com o casal **olhando na direção do botão**.
+
+O botão 1 rola até a seção do quiz. O botão 2 chama
+`startCheckout("couple", "hero_comprar")`. A faixa é texto, **não é clicável**.
+
+> Copywriting p.23 (abrir pela dor) · p.33 (usar as palavras exatas do cliente
+> — "sei lá" aparece em 5 comentários seus com 400+ curtidas) · p.29 (2ª
+> pessoa) · p.20 (liberdade de escolha perto do botão — quadruplicou adesão em
+> Guéguen & Pascual 2000) · Ad Psychology p.22 (fonte maior nas palavras
+> emocionais) · p.31 (frame negativo gera ação imediata) · Visual Attention
+> p.26 (rosto+corpo) e p.30 (o olhar aponta).
+
+---
+
+## 2. `sei-la` — logo abaixo do hero
+
+```
+eyebrow:  a pergunta que todo mundo faz
+H2:       E se ele responder "sei lá"?
+
+texto:    É o medo de todo mundo — e é por isso que o baralho começa leve.
+          Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
+          de responder até pra quem trava. A profundidade vem depois, quando
+          os dois já estão dentro da conversa.
+```
+
+Três cartões, com as três intensidades reais do produto:
+
+| Etiqueta | Pergunta |
+|---|---|
+| Leve | Que talento inútil você tem orgulho secreto de ter? |
+| Honesta | Tem algo que você precisa e ainda não pediu? |
+| Profunda | Que peso você carrega que nunca dividiu com ninguém? |
+
+> Copywriting p.28 (pergunta retórica) · p.21 (argumento de dois lados: assumir
+> o risco em vez de fingir que não existe) · p.35 (a expressão "é por isso que"
+> é palavra de justificação).
+
+---
+
+## 3. `dor` — manter, com um ajuste
+
+O conteúdo continua igual. **Um ajuste só:** garanta que os blocos estejam
+ligados por conectores ("por isso", "e então", "mas") em vez de frases soltas.
+
+> Copywriting p.8 (Kamalski 2007): marcadores de coerência aumentam a persuasão
+> — cortá-los para condensar piora o texto.
+
+---
+
+## 4. `comparativo` — **bloco novo, entre `dor` e `vergonha`**
+
+Este bloco não existe em nenhuma das três LPs e é o que os guias mais pedem.
+
+```
+eyebrow:  a diferença
+H2:       O que muda numa noite.
+```
+
+Tabela de duas colunas, lado a lado (empilhadas no celular, mas ainda como
+duas colunas visíveis, não uma lista):
+
+| Hoje à noite, sem nada | Hoje à noite, com o baralho |
+|---|---|
+| "E aí, como foi o dia?" — "Normal." | Uma pergunta que ele nunca ouviu antes |
+| Cada um rolando o próprio celular | Um celular só, entre os dois |
+| Você quer conversar e não sabe começar | A pergunta já está pronta, é só ler |
+| A conversa morre no "sei lá" | Começa leve, e vocês escolhem até onde vai |
+| Amanhã é igual | Amanhã tem mais 458 |
+
+> Copywriting p.36-37 (Wan, Hong & Sternthal 2009): mentalidade de **prevenção**
+> — evitar o silêncio, evitar a conversa que morre — pede **tabela comparativa
+> lado a lado**, não lista de benefícios. A dor nº1 do seu público é
+> preventiva, então este formato é o certo por evidência, não por gosto.
+
+---
+
+## 5. `vergonha`
+
+```
+eyebrow:  e antes que você pense nisso
+H2:       Não precisa ficar sem jeito.
+
+texto:    Ninguém quer parecer intenso demais, nem começar do nada com
+          "me diz uma coisa profunda". O baralho faz a pergunta por você —
+          você só lê em voz alta. A pergunta é dele, o mérito é seu.
+```
+
+Bloco curto, sem cartão, sem imagem.
+
+> É a objeção nº2 dos comentários ("me sinto egocêntrica, mesmo morrendo de
+> vontade de fazer" · "parece q virei filósofo", 1.272 curtidas), e hoje não
+> tem resposta em lugar nenhum da página.
+
+---
+
+## 6. `quiz` — não tocar
+
+Fica exatamente como está. Só uma coisa: **garanta que dá para pular.** Quem já
+decidiu comprar não pode ser obrigado a responder três perguntas — o botão
+secundário do hero já resolve isso, confirme que ele funciona.
+
+> Choice p.21 (Kivetz & Simonson 2002): exigir esforço **antes** de uma escolha
+> emocional **reduz a culpa da compra** — o esforço vira a justificativa. Esse é
+> o argumento mais forte a favor do quiz, e ele é novo. · UX p.55 (deixar adiar
+> tarefas desnecessárias).
+
+---
+
+## 7. `proposta` → bloco da distância
+
+```
+eyebrow:  longe também conta
+H2:       Respondam juntos, cada um no seu celular.
+
+texto:    Namoro à distância, viagem a trabalho, ou cada um no seu quarto:
+          você cria uma sala, manda o código, e os dois ficam na mesma
+          pergunta ao mesmo tempo.
+```
+
+> As palavras são literalmente as dos comentários ("vamo responder dps junto",
+> "vamos responder no zap amor"). Copywriting p.33: use as palavras do cliente.
+> Antes a página dizia "sala online sincronizada" — ninguém fala assim.
+
+---
+
+## 8. `como-funciona` — apagar a seção
+
+Os três passos migram para a oferta. Ter os dois é repetição, e repetição é o
+que fez as pessoas pularem tela na LP3.
+
+---
+
+## 9. `pacotes` — manter
+
+A grade dos 16 baralhos com o modal fica como está.
+
+> Choice p.30-31 (Fox, Bardolet & Lieb 2005): partir a categoria em 15 rótulos
+> **aumenta o peso percebido** da oferta. Mas — Choice p.25 — sortimento grande
+> empurra para a escolha "justificável". Por isso os baralhos são **conteúdo**,
+> nunca decisão: na hora de comprar tem **uma** opção, um preço, um botão. Não
+> crie pacotes.
+
+---
+
+## 10. `depoimentos` — criar, entre `pacotes` e `precos`
+
+Use `<Lp3Testimonials />` (`components/Lp3Testimonials.tsx`), que puxa de
+`lib/testimonials.ts`. São reais e já estão escritos. **Não crie depoimento
+novo, não invente nome, não invente nota.**
+
+Três coisas ao montar:
+
+1. **Se exibir nota, exiba a real, sem arredondar para cima.** Nota 5,0
+   persuade **menos** que 4 a 4,5.
+2. **Se algum depoimento real tiver uma ressalva** ("achei caro no começo",
+   "queria mais perguntas no baralho X"), **mantenha a ressalva.** Depoimento
+   com um defeito pequeno é mais crível que só elogio.
+3. Nome real e contexto ("Caio · 1 ano juntos") — já está certo.
+
+> eCommerce p.20 (Maslowska, Malthouse & Bernritter 2017; Doh & Hwang 2009;
+> Ein-Gar, Shiv & Tormala 2012) · p.22 (Liu & Park 2015).
+
+---
+
+## 11. `precos`
+
+```
+eyebrow:  acesso vitalício
+
+H2:       Hoje pode ser mais uma noite cada um no seu celular.
+
+sub:      Ou vocês podem estar tendo a conversa de verdade daqui a dez
+          minutos. São 3 passos:
+
+1.  Você paga. Pix cai na hora e o acesso abre sozinho.
+2.  Convida ele(a). Um link. A pessoa entra sem pagar de novo.
+3.  Escolhem um baralho. Leem a primeira pergunta em voz alta. Pronto.
+
+linha de ancoragem (acima do preço):
+    459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil vezes
+
+preço:    459 perguntas por R$ 47,90
+legenda:  uma vez, pra sempre — sem mensalidade
+
+fecho:    Uma por noite, dá mais de um ano de conversa — e fica com vocês pra
+          sempre. 7 dias de garantia: se não mexer com vocês, eu devolvo.
+          Você não arrisca nada.
+
+botão:    Começar hoje à noite
+micro:    Acesso imediato · Pagamento seguro · Garantia de 7 dias
+```
+
+### As quatro regras visuais desta seção
+
+**a) O card desta seção é CLARO, não escuro.** A página inteira é escura, mas
+o bloco de compra fica num card de fundo claro. Fundo escuro é bom para a
+narrativa (sensação de privacidade, peso, importância), mas o próprio guia
+suspeita que interface escura **atrapalha objetivos de ação**. Card claro só
+aqui resolve os dois lados.
+
+**b) O preço é pequeno.** Menor que o H2 e menor que os três passos. Peso
+normal, cor suave. Não é descuido — em produto emocional, preço grande desloca
+a avaliação para o lado econômico.
+
+**c) "459 perguntas por R$ 47,90", nunca "R$ 47,90 por 459 perguntas".**
+A quantidade vem primeiro.
+
+**d) O botão é o único elemento da página inteira com alto brilho e alta
+saturação ao mesmo tempo.** Não é sobre ser vinho ou rosa — brilho e saturação
+importam mais que a cor em si. Se o botão tiver a mesma cor que outros
+elementos, ele deixa de contrastar. Deve pulsar de leve (respeitando
+`prefers-reduced-motion`) e, no celular, ficar fixo na base da tela.
+
+**e) Nada de texto fofinho nem exclamação no botão.** "Começar hoje à noite",
+não "Bora nessa!" — texto exclamativo gera desconforto que a pessoa atribui à
+compra.
+
+> Pricing p.50 (Mogilner & Aaker 2009 — a placa que falava de **tempo** atraiu o
+> dobro de gente, que pagou o dobro) · p.10 e p.49 (preço pequeno e pouco
+> saliente em produto emocional) · p.37 (quantidade antes do preço) · p.30
+> (Ariely 2003 — qualquer número grande por perto ancora; a disposição a pagar
+> foi de $16 a $56) · p.50 (produto antes do preço, fMRI) · Color p.13/14/15 (o
+> conflito escuro/claro) · Color p.5 (valor e croma > matiz) · Color p.28
+> (contraste, não cor específica) · Visual Attention p.15 (pulsar) ·
+> eCommerce p.31 (afirmações positivas no botão) · p.26 (botão perto do dedo) ·
+> p.29 (nada de exclamação) · Copywriting p.37-39 (prevenção + "como").
+
+---
+
+## 12. `faq`
+
+```
+eyebrow:  antes que você pergunte
+H2:       Ainda em dúvida?
+
+P: Isso substitui terapia de casal?
+R: Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos —
+   não substitui acompanhamento se a relação precisa. Mas pra sair do piloto
+   automático, resolve hoje à noite.
+
+P: Por que não só "vamos conversar"?
+R: Porque "vamos conversar" trava — ninguém sabe por onde começar. O baralho
+   já traz a pergunta certa, na ordem certa, do leve ao profundo.
+
+P: E se a gente não terminar?
+R: Não tem tempo nem ordem obrigatória. Uma pergunta por noite já muda a
+   conversa. O acesso é vitalício — dá pra voltar quando quiser.
+```
+
+> Copywriting p.21 (assumir uma limitação real aumenta a confiança) · p.23 (Ge,
+> Brigden & Häubl 2015: mencionar você mesmo a alternativa evita que a pessoa
+> saia pesquisando — e o simples ato de pesquisar já faz sua solução parecer
+> pior).
+
+---
+
+## Regras que valem para a página inteira
+
+1. **Nada de "talvez", "pode ser", "não é?", "acho que".** Hedges reduzem
+   credibilidade medida. Se aparecer um, reescreva a frase.
+   *(Copywriting p.34)*
+2. **Máximo 3 palavras em CAIXA ALTA na página inteira.** Caixa mista é mais
+   legível — caixa alta não é "mais forte", é mais difícil de ler.
+   *(Font p.19-20)*
+3. **Palavras espaciais, não palavras de cor.** "No botão **abaixo**", nunca
+   "no botão dourado" — além de funcionar melhor, não quebra para daltônico.
+   *(Visual Attention p.36)*
+4. **Corpo de texto em peso 400-500.** Nunca 300, nunca 700. Peso médio é o
+   mais legível. *(Font p.13)*
+5. **Cantos arredondados** no botão e nos cards. Formas angulosas disparam viés
+   negativo. *(Font p.14, Bar & Neta 2006)*
+6. **Não invente prova social.** Nenhum número de clientes, nenhuma estrela,
+   nenhuma escassez. O selo "Já usado por 50 casais no Brasil" que já está lá
+   **fica** — é real.
+7. **Não mexa em `LandingV2Quiz`** nem em nada que a LP1 use.
+8. Toda seção nova precisa do seu `data-section-name`; os que já existem não
+   podem mudar de nome, senão o histórico do painel quebra.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Abra `/lp1` e confirme que ela está **idêntica** ao que era antes.
+3. Percorra a `/lp2` no celular. Ordem esperada: hero → "sei lá" → dor →
+   comparativo → vergonha → quiz → distância → baralhos → depoimentos →
+   oferta → FAQ.
+4. Confirme que "sei lá" no H1 está visivelmente maior que o resto da linha.
+5. Confirme que o card da oferta é claro sobre a página escura, que o preço é
+   menor que o título, e que o botão é o elemento mais brilhante e mais
+   saturado da tela inteira.
+6. Procure na página inteira por "talvez", "pode ser" e "não é?" — se achar,
+   reescreva.
+7. Confirme que a seção "como funciona" sumiu e que os 3 passos aparecem uma
+   vez só, dentro da oferta.
+8. Deploy.

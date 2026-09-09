@@ -59,6 +59,7 @@ import {
   type LandingPageId,
 } from "@/lib/landing-pages";
 import { landingTestimonials } from "@/lib/testimonials";
+import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import {
   ArrowRight,
   Bookmark,
@@ -3904,7 +3905,7 @@ function Home({
   return (
     <Shell dark>
       <StoredAccessGate />
-      <main className="lp-main">
+      <main className={`lp-main ${variant === "v1" ? "lp2-rebuild" : ""}`}>
         {variant === "v2" ? (
           <LandingV2Quiz
             onBuy={() => startCheckout("couple")}
@@ -3919,33 +3920,47 @@ function Home({
           />
         ) : (
           <>
-            <section className="lp-hero" data-section-name="hero">
+            <section className="lp-hero lp2-rebuild-hero" data-section-name="hero">
               <div className="lp-hero-inner">
                 <div className="lp-hero-copy">
                   <span className="lp-eyebrow">
                     baralho digital de perguntas · para casais
                   </span>
                   <h1 className="lp-hero-h1">
-                    Suas conversas viraram <em>logística.</em>
+                    Você quer a conversa.
                     <br />
-                    <strong>É hora de voltar a se conhecer.</strong>
+                    Ele responde <strong className="lp2-hero-emphasis">"sei lá"</strong>.
                   </h1>
                   <p className="lp-hero-sub">
-                    459 perguntas de conexão real. Sem quiz de revista, sem
-                    clichê. Uma pergunta por vez — o resto acontece entre vocês.
+                    459 perguntas escritas pra abrir conversa de verdade — uma por
+                    vez. Você abre, lê em voz alta, escuta. O resto acontece entre
+                    vocês.
                   </p>
-                  <div className="lp-hero-actions lp-hero-quiz">
-                    <p className="lp-hero-quiz-context">
-                      Responda 3 perguntas e receba 3 perguntas feitas pro
-                      momento de vocês. Leva 1 minuto, é grátis.
-                    </p>
-                    <LandingQuizQuestion
-                      step={0}
-                      onAnswer={(_, value) =>
-                        handleHeroQuizAnswer(value, "lp-quiz")
-                      }
-                      testIdPrefix="button-hero-quiz"
-                    />
+                  <p className="lp2-hero-support">
+                    Responde 3 perguntas rápidas e recebe, na hora, 3 perguntas
+                    feitas pro momento de vocês. Leva 1 minuto e é grátis — você
+                    decide se quer o resto depois.
+                  </p>
+                  <div className="lp-hero-actions lp2-hero-actions">
+                    <button
+                      type="button"
+                      className="lp-cta-primary lp-cta-big"
+                      onClick={() => {
+                        trackCtaClick("hero_quiz");
+                        document
+                          .getElementById("lp-quiz")
+                          ?.scrollIntoView({
+                            behavior: window.matchMedia(
+                              "(prefers-reduced-motion: reduce)",
+                            ).matches
+                              ? "auto"
+                              : "smooth",
+                          });
+                      }}
+                      data-testid="button-hero-quiz-start"
+                    >
+                      Começar o teste grátis <ArrowRight size={18} />
+                    </button>
                     <button
                       type="button"
                       onClick={() => startCheckout("couple", "hero_comprar")}
@@ -3955,16 +3970,9 @@ function Home({
                       Já sei o que quero — comprar agora →
                     </button>
                   </div>
-                  <div className="lp-hero-trust">
-                    <div className="lp-trust-avatars">
-                      <span className="lp-trust-avatar lp-trust-a">M</span>
-                      <span className="lp-trust-avatar lp-trust-b">L</span>
-                      <span className="lp-trust-avatar lp-trust-c">R</span>
-                    </div>
-                    <span>
-                      Já usado por <strong>50 casais</strong> no Brasil
-                    </span>
-                  </div>
+                  <p className="lp2-hero-security">
+                    🔒 Pagamento seguro · 7 dias de garantia — não gostou, devolvo.
+                  </p>
                 </div>
                 <div className="lp-hero-mockups" aria-hidden="true">
                   <div className="lp-mockup-mac">
@@ -4000,8 +4008,34 @@ function Home({
                   </div>
                 </div>
               </div>
+              <p className="lp2-hero-strip">
+                459 perguntas · 15 baralhos · jogo a distância · acesso vitalício
+              </p>
             </section>
-            <QuestionCarouselSection />
+            <section className="lp2-simple-section lp2-sei-la" data-section-name="sei-la">
+              <div className="lp-container">
+                <p className="lp-eyebrow lp-eyebrow-center">a pergunta que todo mundo faz</p>
+                <h2 className="lp-h2">E se ele responder <em>"sei lá"</em>?</h2>
+                <p className="lp2-section-lede">
+                  É o medo de todo mundo — e é por isso que o baralho começa leve.
+                  Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
+                  de responder até pra quem trava. A profundidade vem depois, quando
+                  os dois já estão dentro da conversa.
+                </p>
+                <div className="lp2-intensity-grid">
+                  {[
+                    ["Leve", "Que talento inútil você tem orgulho secreto de ter?"],
+                    ["Honesta", "Tem algo que você precisa e ainda não pediu?"],
+                    ["Profunda", "Que peso você carrega que nunca dividiu com ninguém?"],
+                  ].map(([label, question]) => (
+                    <article className="lp2-intensity-card" key={label}>
+                      <span>{label}</span>
+                      <p>“{question}”</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
             <section className="lp-pain" data-section-name="dor">
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">quem tá aí sabe</p>
@@ -4016,8 +4050,8 @@ function Home({
                     <div>
                       <strong>As conversas viraram logística.</strong>
                       <p>
-                        "Buscou pão?" "Que horas vem?" "Feriado a gente vai
-                        onde?"
+                        "Buscou pão?" "Que horas vem?" "Feriado a gente vai onde?"
+                        E então o assunto acaba.
                       </p>
                     </div>
                   </li>
@@ -4026,8 +4060,8 @@ function Home({
                     <div>
                       <strong>Cada um no próprio celular.</strong>
                       <p>
-                        Sentados no mesmo sofá, quilômetros de distância um do
-                        outro.
+                        Sentados no mesmo sofá, quilômetros de distância um do outro,
+                        por isso a noite passa sem encontro.
                       </p>
                     </div>
                   </li>
@@ -4036,8 +4070,8 @@ function Home({
                     <div>
                       <strong>Você tentou "vamos conversar".</strong>
                       <p>
-                        Deu silêncio, resposta seca, ou desviou pro Netflix. De
-                        novo.
+                        Deu silêncio, resposta seca, ou desviou pro Netflix. Mas
+                        ninguém ensinou por onde começar.
                       </p>
                     </div>
                   </li>
@@ -4048,44 +4082,47 @@ function Home({
                 </p>
               </div>
             </section>
-            <section className="lp-solution" data-section-name="proposta">
+            <section className="lp2-comparison-section" data-section-name="comparativo">
               <div className="lp-container">
-                <p className="lp-eyebrow lp-eyebrow-center">a proposta</p>
-                <h2 className="lp-h2">
-                  Um baralho digital
-                  <br />
-                  <em>que faz o trabalho pesado.</em>
-                </h2>
-                <p className="lp-solution-lede">
-                  459 perguntas escritas pra abrir espaço — sem quiz de revista,
-                  sem clichê, sem "qual seu animal favorito". Uma pergunta por
-                  vez. Você abre, lê em voz alta, escuta. O resto acontece entre
-                  vocês.
-                </p>
-                <div className="lp-solution-pillars">
-                  <div className="lp-pillar">
-                    <div className="lp-pillar-icon">◇</div>
-                    <strong>15 baralhos temáticos</strong>
-                    <p>
-                      De "Porto Seguro" até "Fogo Alto", para cada fase da
-                      conversa.
-                    </p>
+                <p className="lp-eyebrow lp-eyebrow-center">a diferença</p>
+                <h2 className="lp-h2">O que muda numa noite.</h2>
+                <div className="lp2-comparison" role="table" aria-label="Comparação de uma noite sem e com o baralho">
+                  <div className="lp2-comparison-column lp2-comparison-without" role="rowgroup">
+                    <h3>Hoje à noite, sem nada</h3>
+                    {[
+                      '"E aí, como foi o dia?" — "Normal."',
+                      "Cada um rolando o próprio celular",
+                      "Você quer conversar e não sabe começar",
+                      'A conversa morre no "sei lá"',
+                      "Amanhã é igual",
+                    ].map((item) => (
+                      <p key={item} role="row">{item}</p>
+                    ))}
                   </div>
-                  <div className="lp-pillar">
-                    <div className="lp-pillar-icon">▣</div>
-                    <strong>Roda no celular e PC</strong>
-                    <p>
-                      Abre no navegador, sem instalar app, em qualquer aparelho.
-                    </p>
-                  </div>
-                  <div className="lp-pillar">
-                    <div className="lp-pillar-icon">◎</div>
-                    <strong>Jogue junto de longe</strong>
-                    <p>
-                      Sala online sincronizada para estarem na mesma pergunta.
-                    </p>
+                  <div className="lp2-comparison-column lp2-comparison-with" role="rowgroup">
+                    <h3>Hoje à noite, com o baralho</h3>
+                    {[
+                      "Uma pergunta que ele nunca ouviu antes",
+                      "Um celular só, entre os dois",
+                      "A pergunta já está pronta, é só ler",
+                      "Começa leve, e vocês escolhem até onde vai",
+                      "Amanhã tem mais 458",
+                    ].map((item) => (
+                      <p key={item} role="row">{item}</p>
+                    ))}
                   </div>
                 </div>
+              </div>
+            </section>
+            <section className="lp2-simple-section lp2-vergonha" data-section-name="vergonha">
+              <div className="lp-container lp2-narrow">
+                <p className="lp-eyebrow lp-eyebrow-center">e antes que você pense nisso</p>
+                <h2 className="lp-h2">Não precisa ficar sem jeito.</h2>
+                <p className="lp2-section-lede">
+                  Ninguém quer parecer intenso demais, nem começar do nada com
+                  "me diz uma coisa profunda". O baralho faz a pergunta por você —
+                  você só lê em voz alta. A pergunta é dele, o mérito é seu.
+                </p>
               </div>
             </section>
             <section
@@ -4108,40 +4145,15 @@ function Home({
                 />
               </div>
             </section>
-            <section
-              className="lp-how"
-              id="como-funciona"
-              data-section-name="como-funciona"
-            >
+            <section className="lp2-distance-section" data-section-name="proposta">
               <div className="lp-container">
-                <p className="lp-eyebrow lp-eyebrow-center">como funciona</p>
-                <h2 className="lp-h2">Três passos, um ritual novo.</h2>
-                <div className="lp-how-steps">
-                  <div className="lp-how-step">
-                    <span className="lp-how-num">01</span>
-                    <strong>Escolham juntos o tema da noite</strong>
-                    <p>
-                      Comecem por Porto Seguro para aquecer ou Livro Aberto para
-                      ir mais fundo.
-                    </p>
-                  </div>
-                  <div className="lp-how-step">
-                    <span className="lp-how-num">02</span>
-                    <strong>Uma pergunta por vez</strong>
-                    <p>
-                      Vire a carta, leia em voz alta, escute a resposta. Sem
-                      pressa.
-                    </p>
-                  </div>
-                  <div className="lp-how-step">
-                    <span className="lp-how-num">03</span>
-                    <strong>Salvem os momentos que importam</strong>
-                    <p>
-                      Guarde as respostas que marcaram vocês e volte quando
-                      quiser.
-                    </p>
-                  </div>
-                </div>
+                <p className="lp-eyebrow lp-eyebrow-center">longe também conta</p>
+                <h2 className="lp-h2">Respondam juntos, cada um no seu celular.</h2>
+                <p className="lp2-section-lede">
+                  Namoro à distância, viagem a trabalho, ou cada um no seu quarto:
+                  você cria uma sala, manda o código, e os dois ficam na mesma
+                  pergunta ao mesmo tempo.
+                </p>
               </div>
             </section>
             <section
@@ -4201,100 +4213,86 @@ function Home({
                   ))}
                 </div>
                 <p className="lp-themes-note">
-                  <strong>445+ perguntas no total.</strong> Novos baralhos
+                  <strong>459 perguntas no total.</strong> Novos baralhos
                   entram de tempos em tempos — o acesso é vitalício.
                 </p>
               </div>
             </section>
-            <TestimonialCarousel />
+            <Lp3Testimonials />
             <section
-              className="lp-price"
+              className="lp-price lp2-offer-section"
               id="lp-precos"
               data-section-name="precos"
             >
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
                 <h2 className="lp-h2">
-                  Um baralho que dura
-                  <br />
-                  <em>o quanto vocês quiserem.</em>
+                  Hoje vira mais uma noite cada um no seu celular.
                 </h2>
-                <div className="lp-price-card">
-                  <div className="lp-price-badge">Oferta de lançamento</div>
-                  <div className="lp-price-main">
-                    <span className="lp-price-old">
-                      De <s>R$ 97,00</s>
-                    </span>
-                    <div className="lp-price-value">
-                      <span className="lp-price-currency">R$</span>
-                      <span className="lp-price-big">47</span>
-                      <span className="lp-price-cents">,90</span>
-                    </div>
-                    <span className="lp-price-installments">
-                      à vista <strong>ou</strong> 5x de R$ 9,58
-                    </span>
-                  </div>
-                  <ul className="lp-price-includes">
-                    <li>✓ 445+ perguntas nos 15 baralhos temáticos</li>
+                <p className="lp2-offer-sub">
+                  Ou vocês podem estar tendo a conversa de verdade daqui a dez
+                  minutos. São 3 passos:
+                </p>
+                <div className="lp2-offer-card">
+                  <p className="lp2-offer-anchor">
+                    459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil
+                    vezes
+                  </p>
+                  <ol className="lp2-offer-steps">
                     <li>
-                      ✓ Acesso pra <strong>2 pessoas</strong> (você + convite)
+                      <strong>Você paga.</strong> Pix cai na hora e o acesso abre
+                      sozinho.
                     </li>
-                    <li>✓ Salas online sincronizadas</li>
-                    <li>✓ Celular e computador</li>
-                    <li>✓ Novos baralhos incluídos, pra sempre</li>
-                    <li>✓ Sem mensalidade. Paga uma vez.</li>
-                  </ul>
+                    <li>
+                      <strong>Convida ele(a).</strong> Um link. A pessoa entra sem
+                      pagar de novo.
+                    </li>
+                    <li>
+                      <strong>Escolhem um baralho.</strong> Leem a primeira pergunta
+                      em voz alta. Pronto.
+                    </li>
+                  </ol>
+                  <p className="lp2-offer-price">
+                    <span>459 perguntas por</span> R$ 47,90
+                  </p>
+                  <p className="lp2-offer-price-note">uma vez, pra sempre — sem mensalidade</p>
                   <button
                     onClick={() => startCheckout("couple")}
-                    className="lp-cta-primary lp-cta-full"
+                    className="lp-cta-primary lp-cta-full lp2-offer-cta"
                     data-testid="button-price-cta"
                   >
-                    Começar agora por R$ 47,90 <ArrowRight size={18} />
+                    Começar hoje à noite <ArrowRight size={18} />
                   </button>
-                  <div className="lp-guarantee">
-                    <div className="lp-guarantee-seal">✦</div>
-                    <div>
-                      <strong>Garantia incondicional de 7 dias.</strong>
-                      <p>
-                        Se não fizer sentido pra vocês, devolvemos 100%. Sem
-                        drama.
-                      </p>
-                    </div>
-                  </div>
+                  <p className="lp2-offer-micro">
+                    Acesso imediato · Pagamento seguro · Garantia de 7 dias
+                  </p>
+                  <p className="lp2-offer-guarantee">
+                    Uma por noite, dá mais de um ano de conversa — e fica com vocês
+                    pra sempre. 7 dias de garantia: se não mexer com vocês, eu
+                    devolvo. Você não arrisca nada.
+                  </p>
                 </div>
               </div>
             </section>
             <section className="lp-faq" data-section-name="faq">
               <div className="lp-container">
                 <p className="lp-eyebrow lp-eyebrow-center">
-                  perguntas frequentes
+                  antes que você pergunte
                 </p>
                 <h2 className="lp-h2">Ainda em dúvida?</h2>
                 <div className="lp-faq-list">
                   {[
                     [
-                      "Precisa instalar app?",
-                      "Não. É um site que roda no navegador — abre no celular ou PC.",
+                      "Isso substitui terapia de casal?",
+                      "Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos — não substitui acompanhamento se a relação precisa. Mas pra sair do piloto automático, resolve hoje à noite.",
                     ],
                     [
-                      "Funciona pra quem tá namorando há pouco tempo?",
-                      "Funciona ainda melhor: o baralho dá o empurrão para ir mais fundo em vez de conversa de superfície.",
+                      'Por que não só "vamos conversar"?',
+                      '"Vamos conversar" trava — ninguém sabe por onde começar. O baralho já traz a pergunta certa, na ordem certa, do leve ao profundo.',
                     ],
                     [
-                      "É vitalício mesmo?",
-                      "Sim, sem mensalidade. Paga uma vez e usa o quanto quiser, incluindo baralhos novos.",
-                    ],
-                    [
-                      "Dá pra usar longe?",
-                      "Sim. Você cria uma sala, manda o código e joga sincronizado com seu parceiro.",
-                    ],
-                    [
-                      "Tem 18+?",
-                      "Sim, há três baralhos separados para acessar quando quiser.",
-                    ],
-                    [
-                      "Como recebo depois de pagar?",
-                      "Na hora. O pagamento é via Pix e o app abre automaticamente após a confirmação.",
+                      "E se a gente não terminar?",
+                      "Não tem tempo nem ordem obrigatória. Uma pergunta por noite já muda a conversa. O acesso é vitalício — dá pra voltar quando quiser.",
                     ],
                   ].map(([question, answer]) => (
                     <details key={question} className="lp-faq-item">
@@ -4303,23 +4301,6 @@ function Home({
                     </details>
                   ))}
                 </div>
-              </div>
-            </section>
-            <section className="lp-final-cta" data-section-name="final">
-              <div className="lp-container lp-final-cta-inner">
-                <h2 className="lp-h2">
-                  O próximo bom papo
-                  <br />
-                  <em>tá a uma pergunta de distância.</em>
-                </h2>
-                <p>Começa hoje. R$ 47,90 vitalício, garantia de 7 dias.</p>
-                <button
-                  onClick={() => startCheckout("couple")}
-                  className="lp-cta-primary lp-cta-big"
-                  data-testid="button-final-cta"
-                >
-                  Quero começar agora <ArrowRight size={20} />
-                </button>
               </div>
             </section>
           </>
