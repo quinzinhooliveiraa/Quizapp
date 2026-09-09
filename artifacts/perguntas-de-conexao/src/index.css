@@ -21777,6 +21777,14 @@ blockquote em {
   gap: clamp(1.5rem, 4vw, 4.25rem);
   padding: clamp(1.75rem, 4vw, 3.3rem) clamp(1.25rem, 5vw, 4.2rem) 2rem;
 }
+.checkout-store-grid-clean {
+  display: block;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+.checkout-store-grid-clean .checkout-order-column {
+  width: 100%;
+}
 
 .checkout-product-column {
   align-self: start;

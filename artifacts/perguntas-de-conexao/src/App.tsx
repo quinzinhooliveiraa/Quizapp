@@ -2881,10 +2881,6 @@ function useCheckout({
     setCheckoutOpen(true);
   };
 
-  const closeCheckout = () => {
-    setCheckoutOpen(false);
-  };
-
   return {
     checkoutOpen,
     checkoutState,
@@ -2921,7 +2917,6 @@ function useCheckout({
     handleCardPaymentSubmitted,
     startCheckout,
     restartCheckout,
-    closeCheckout,
   };
 }
 
@@ -3118,7 +3113,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     selectPaymentMethod,
     handleCardPaymentSubmitted,
     restartCheckout,
-    closeCheckout,
   } = checkout;
 
   const cardPaymentFormRef = useRef<CardPaymentFormHandle>(null);
@@ -3398,64 +3392,12 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       <div
         className={`checkout-modal ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "checkout-modal-loading" : ""}`}
       >
-        <button
-          className="modal-close"
-          type="button"
-          onClick={closeCheckout}
-          data-testid="button-close-checkout"
-          aria-label="Fechar checkout"
-        >
-          <X size={18} />
-        </button>
         {checkoutState === "email" ? (
           <form
             className="checkout-email-form checkout-store-form"
             onSubmit={handleInitialCheckout}
           >
-            <header className="checkout-store-header">
-              <div className="checkout-store-mark">
-                <img
-                  className="checkout-store-logo"
-                  src="/checkout-logo.png"
-                  alt=""
-                  aria-hidden="true"
-                />
-              </div>
-              <div>
-                <p className="checkout-store-title">Finalizar compra</p>
-                <p className="checkout-store-eyebrow">Perguntas de Conexão</p>
-                <p className="checkout-store-secure">
-                  <ShieldCheck size={14} /> checkout seguro
-                </p>
-              </div>
-            </header>
-            <div className="checkout-store-grid">
-              <section className="checkout-product-column">
-                <div
-                  className="checkout-product-card"
-                  data-testid="card-product"
-                >
-                  <div
-                    className="checkout-product-wallpaper"
-                    aria-hidden="true"
-                  />
-                  <div className="checkout-product-copy">
-                    <h2>
-                      Perguntas de <em>Conexão</em>
-                    </h2>
-                    <p className="checkout-store-intro">
-                      Um baralho digital pra sair do automático e criar
-                      conversas que ficam.
-                    </p>
-                    <span
-                      className="checkout-product-price"
-                      data-testid="text-checkout-price"
-                    >
-                      R$ 47,90 · uma vez só · vitalício
-                    </span>
-                  </div>
-                </div>
-              </section>
+            <div className="checkout-store-grid checkout-store-grid-clean">
               <section className="checkout-order-column">
                 <div className="checkout-form-card checkout-details-card">
                   <div className="checkout-card-heading">
