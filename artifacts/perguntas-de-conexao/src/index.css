@@ -4596,9 +4596,10 @@
 }
 
 /* Keep the proposal pillars readable and symmetrical on narrow screens. */
-.lp-solution-pillars.lp1-two-pillars {
+.lp-main section[data-section-name="proposta"] .lp-solution-pillars.lp1-two-pillars {
   grid-template-columns: 1fr;
   gap: 16px;
+  max-width: none;
 }
 
 .lp-solution-pillars.lp1-two-pillars .lp-pillar {
