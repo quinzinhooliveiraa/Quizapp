@@ -1211,22 +1211,6 @@ function Lp1Quiz({
         </div>
       ) : null}
 
-      {step < 3 && (
-        <button
-          type="button"
-          className="lp1-quiz-back"
-          onClick={() => {
-            if (step === 0) {
-              onBackToLanding();
-              return;
-            }
-            setStep((previous) => Math.max(previous - 1, 0));
-          }}
-        >
-          {step === 0 ? "← Voltar à LP" : "← Voltar"}
-        </button>
-      )}
-
       <div className="lp1-quiz-content">
         {step === 3 ? (
           showOffer ? (
@@ -1260,6 +1244,19 @@ function Lp1Quiz({
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              className="lp1-quiz-back"
+              onClick={() => {
+                if (step === 0) {
+                  onBackToLanding();
+                  return;
+                }
+                setStep((previous) => Math.max(previous - 1, 0));
+              }}
+            >
+              ← Voltar
+            </button>
           </>
         )}
       </div>
