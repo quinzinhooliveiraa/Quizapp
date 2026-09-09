@@ -181,6 +181,12 @@
   text-align: center;
 }
 
+.lp1-quiz-footnote.is-italic {
+  font-family: var(--app-font-serif);
+  font-size: 1.15rem;
+  font-style: italic;
+}
+
 .lp-cta-secondary-link {
   display: block;
   margin-top: 0.9rem;

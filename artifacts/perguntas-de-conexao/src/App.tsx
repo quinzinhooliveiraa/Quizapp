@@ -965,6 +965,8 @@ const LP1_QUIZ_STEPS = [
     key: "intensity",
     title: "Quando você tenta puxar assunto de verdade,",
     emphasis: "o que acontece?",
+    footnote:
+      "Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês, de graça.",
     options: [
       ["gentle", 'Ele(a) responde "sei lá" e morre ali'],
       ["honest", "A gente conversa, mas só sobre logística"],
@@ -973,16 +975,19 @@ const LP1_QUIZ_STEPS = [
   },
   {
     key: "stage",
-    title: "Vocês estão juntos há quanto tempo?",
+    title: "E vocês estão:",
+    footnote: "Mesmos valores de sempre. Só saiu da frente.",
     options: [
-      ["novo", "Estamos começando"],
-      ["anos", "Alguns anos"],
-      ["muitos-anos", "Muitos anos"],
+      ["novo", "Namorando"],
+      ["anos", "Casados"],
+      ["muitos-anos", "Juntos há muitos anos"],
     ],
   },
   {
     key: "theme",
     title: "E hoje à noite, o que vocês querem?",
+    footnote:
+      "Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês, de graça.",
     options: [
       ["porto-seguro", "Aquecer, sem susto"],
       ["livro-aberto", "Ir fundo de verdade"],
@@ -1069,9 +1074,10 @@ function Lp1Quiz({
       </div>
 
       {step < 3 && (
-        <p className="lp1-quiz-footnote">
-          Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês, de
-          graça.
+        <p
+          className={`lp1-quiz-footnote ${current.footnote === "Mesmos valores de sempre. Só saiu da frente." ? "is-italic" : ""}`}
+        >
+          {current.footnote}
         </p>
       )}
     </main>
