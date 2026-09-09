@@ -1,0 +1,50 @@
+Mexa apenas no card de preço da LP1 (.lp1-price-card, seção data-section-name="precos") e no FAQ (.lp-faq-list). Não altere nenhuma outra seção, nenhum outro texto, nenhuma outra cor da página. São 4 mudanças.
+
+1. Inverter a ordem dentro de div.lp-price-main. Hoje é preço → "uma vez só" → tempo. Passa a ser tempo → preço → equivalência diária. Substitua o conteúdo por exatamente isto:
+
+tsx
+<div className="lp-price-main">
+  <p className="lp-price-time">
+    Uma por noite, dá mais de um ano de conversa.
+  </p>
+  <p className="lp-price-value">
+    459 perguntas por apenas{" "}
+    <span className="lp-price-figure">R$&nbsp;47,90</span>
+  </p>
+  <p className="lp-price-once">
+    dá 10 centavos por noite — uma vez só, pra sempre, sem mensalidade
+  </p>
+</div>
+
+Os três textos são finais. Não reescreva, não "melhore", não acrescente exclamação. O &nbsp; é proposital.
+
+2. CSS — o tempo domina, o preço recua, o número nunca quebra:
+
+css
+.lp1-price-card .lp-price-time {
+  font-size: 1.15rem; font-weight: 600; color: #241d33; margin: 0 0 0.55rem;
+}
+.lp1-price-card .lp-price-value {
+  font-size: 0.95rem; font-weight: 500; color: #6f6580; margin: 0;
+}
+.lp1-price-card .lp-price-figure { white-space: nowrap; }
+.lp1-price-card .lp-price-once {
+  font-size: 0.88rem; font-weight: 400; color: #6f6580; margin: 0.2rem 0 0;
+}
+
+3. Remova por completo a <div className="lp1-price-costs"> — o <strong> "O que os R$ 47,90 pagam" e os três <p> abaixo. Nada pode ficar entre div.lp-price-main e o <button className="lp-cta-primary lp-cta-full">. Ordem final do card: lp1-price-anchor → lp1-price-steps → lp-price-includes → lp-price-main → botão → lp-guarantee.
+
+4. O conteúdo dos custos vira o último item do div.lp-faq-list:
+
+tsx
+<details className="lp-faq-item">
+  <summary>Por que R$ 47,90?</summary>
+  <p>
+    459 perguntas escritas e testadas uma a uma, ao longo de meses. O servidor
+    que mantém o jogo no ar e sincroniza vocês dois. E as perguntas novas que
+    entram sem você pagar de novo. Você paga uma vez e fica com tudo — dá 10
+    centavos por pergunta.
+  </p>
+</details>
+
+Confira depois, no celular: salta primeiro a linha do tempo, não o número; "R$ 47,90" numa linha só; nada entre o preço e o botão; o FAQ com 8 perguntas; e "47,90" aparecendo duas vezes na página inteira.

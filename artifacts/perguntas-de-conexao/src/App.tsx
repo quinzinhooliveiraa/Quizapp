@@ -1692,19 +1692,16 @@ function LandingV2Quiz({
               <li>✓ Sem mensalidade. Paga uma vez.</li>
             </ul>
             <div className="lp-price-main">
-              <p className="lp-price-value">459 perguntas por apenas R$ 47,90</p>
-              <p className="lp-price-once">
-                uma vez só, pra sempre — sem mensalidade
-              </p>
               <p className="lp-price-time">
                 Uma por noite, dá mais de um ano de conversa.
               </p>
-            </div>
-            <div className="lp1-price-costs">
-              <strong>O que os R$ 47,90 pagam</strong>
-              <p>459 perguntas escritas e testadas uma a uma, ao longo de meses</p>
-              <p>O servidor que mantém o jogo no ar e sincroniza vocês dois</p>
-              <p>As perguntas novas que entram sem você pagar de novo</p>
+              <p className="lp-price-value">
+                459 perguntas por apenas{" "}
+                <span className="lp-price-figure">R$&nbsp;47,90</span>
+              </p>
+              <p className="lp-price-once">
+                dá 10 centavos por noite — uma vez só, pra sempre, sem mensalidade
+              </p>
             </div>
             <button
               onClick={onBuy}
@@ -1759,6 +1756,10 @@ function LandingV2Quiz({
               [
                 "Como recebo depois de pagar?",
                 "Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega — o Pix cai na hora.",
+              ],
+              [
+                "Por que R$ 47,90?",
+                "459 perguntas escritas e testadas uma a uma, ao longo de meses. O servidor que mantém o jogo no ar e sincroniza vocês dois. E as perguntas novas que entram sem você pagar de novo. Você paga uma vez e fica com tudo — dá 10 centavos por pergunta.",
               ],
             ].map(([question, answer]) => (
               <details key={question} className="lp-faq-item">

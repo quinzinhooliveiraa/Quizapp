@@ -3709,20 +3709,6 @@
 .lp-main:has(.lp2-hero) .lp1-price-card .lp-price-value {
   color: #6f6580;
 }
-.lp-main:has(.lp2-hero) .lp1-price-costs {
-  margin: 1.2rem 0 1.4rem;
-  text-align: left;
-}
-.lp-main:has(.lp2-hero) .lp1-price-costs strong {
-  display: block;
-  font-size: 0.82rem;
-  margin-bottom: 0.4rem;
-}
-.lp-main:has(.lp2-hero) .lp1-price-costs p {
-  margin: 0.15rem 0;
-  font-size: 0.8rem;
-  line-height: 1.5;
-}
 .lp-main:has(.lp2-hero) .lp1-price-card .lp-cta-full {
   font-size: 1.12rem;
   font-weight: 700;
@@ -23271,4 +23257,26 @@ blockquote em {
   .question-card-stack {
     flex: 0 0 auto;
   }
+}
+
+.lp1-price-card .lp-price-time {
+  font-size: 1.15rem !important;
+  font-weight: 600 !important;
+  color: #241d33 !important;
+  margin: 0 0 0.55rem !important;
+}
+.lp1-price-card .lp-price-value {
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  color: #6f6580 !important;
+  margin: 0 !important;
+}
+.lp1-price-card .lp-price-figure {
+  white-space: nowrap;
+}
+.lp1-price-card .lp-price-once {
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+  color: #6f6580 !important;
+  margin: 0.2rem 0 0 !important;
 }
