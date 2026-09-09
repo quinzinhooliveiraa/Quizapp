@@ -1037,8 +1037,159 @@ function Lp1Diagnosis({
           onClick={onContinue}
           data-testid="button-lp1-diagnosis-continue"
         >
-          Ver as outras duas <ArrowRight size={18} aria-hidden="true" />
+          Ver minha oferta personalizada <ArrowRight size={18} aria-hidden="true" />
         </button>
+      </div>
+    </section>
+  );
+}
+
+const LP1_OFFER_HEADLINES: Record<string, string> = {
+  routine: "Dá pra resolver isso hoje à noite.",
+  discovery: "Dá pra descobrir algo novo hoje à noite.",
+  "waiting-conversation": "Dá pra abrir essa conversa hoje à noite.",
+  reconnection: "Dá pra começar a se reencontrar hoje à noite.",
+  beginning: "Dá pra manter essa curiosidade viva hoje à noite.",
+  distance: "Dá pra se sentir perto hoje à noite.",
+  intimacy: "Dá pra reacender essa intimidade hoje à noite.",
+  healthy: "Dá pra continuar escolhendo um ao outro hoje à noite.",
+};
+
+const LP1_OFFER_INTENSITY: Record<string, string> = {
+  gentle: "começando leve, sem forçar assunto",
+  honest: "saindo da logística e chegando no que importa",
+  deep: "indo mais fundo nas conversas que vocês já querem ter",
+};
+
+const LP1_OFFER_STAGE: Record<string, string> = {
+  novo: "o momento de vocês",
+  anos: "a história que vocês já construíram",
+  "muitos-anos": "a história que vocês ainda podem continuar descobrindo",
+};
+
+function Lp1Offer({
+  answers,
+  onFinish,
+}: {
+  answers: LandingQuizAnswers;
+  onFinish: () => void;
+}) {
+  const diagnosis = selectLp1Diagnosis(answers);
+  const preview = selectLandingQuizQuestions(
+    answers.theme,
+    answers.intensity,
+    answers.stage,
+  );
+  const testimonialNameByNarrative: Record<string, string> = {
+    routine: "Marina",
+    discovery: "Julia",
+    "waiting-conversation": "Rafael",
+    reconnection: "Marina",
+    beginning: "Caio",
+    distance: "Fernanda",
+    intimacy: "Camila",
+    healthy: "Lucas",
+  };
+  const testimonial =
+    landingTestimonials.find(
+      ({ name }) => name === testimonialNameByNarrative[diagnosis.narrativeType],
+    ) ?? landingTestimonials[0];
+  const testimonialExcerpt = testimonial.quote.replace(/\s+/g, " ").trim();
+  const context = [
+    `Para vocês, o melhor começo é o baralho ${preview.theme.title}`,
+    LP1_OFFER_INTENSITY[answers.intensity ?? "gentle"],
+    LP1_OFFER_STAGE[answers.stage ?? "anos"],
+  ].join(" — ");
+
+  return (
+    <section className="lp1-offer" aria-labelledby="lp1-offer-title">
+      <div className="lp1-offer-card">
+        <span className="lp1-offer-badge">REESCRITO · OFERTA PERSONALIZADA</span>
+        <p className="lp1-offer-kicker">A VERDADE QUE O TESTE MOSTROU</p>
+        <h1 id="lp1-offer-title" className="lp1-offer-title">
+          {diagnosis.title}
+        </h1>
+        <p className="lp1-offer-solution">
+          <em>
+            {LP1_OFFER_HEADLINES[diagnosis.narrativeType] ??
+              "Dá pra resolver isso hoje à noite."}
+          </em>
+        </p>
+
+        <div className="lp1-offer-context">
+          <span>FEITO PARA O MOMENTO DE VOCÊS</span>
+          <p>{context}.</p>
+        </div>
+
+        <div className="lp1-offer-gain-label">O QUE VOCÊS LEVAM</div>
+        <ul className="lp1-offer-benefits">
+          <li>
+            <Check aria-hidden="true" />
+            <span>
+              <strong>459 perguntas</strong> em 15 baralhos, começando pelo que
+              faz sentido para vocês
+            </span>
+          </li>
+          <li>
+            <Check aria-hidden="true" />
+            <span>
+              <strong>Começa leve e vai fundo</strong> no ritmo de vocês —
+              ninguém trava
+            </span>
+          </li>
+          <li>
+            <Check aria-hidden="true" />
+            <span>
+              <strong>Jogo a distância:</strong> respondam juntos, cada um no
+              seu celular
+            </span>
+          </li>
+          <li>
+            <Check aria-hidden="true" />
+            <span>
+              <strong>Acesso vitalício</strong> — paga uma vez, é de vocês, com
+              baralhos novos incluídos
+            </span>
+          </li>
+          <li>
+            <Check aria-hidden="true" />
+            <span>
+              <strong>Um convite</strong> pra ele(a) entrar sem pagar de novo
+            </span>
+          </li>
+        </ul>
+
+        <blockquote className="lp1-offer-testimonial">
+          <span>DEPOIMENTO REAL</span>
+          <p>“{testimonialExcerpt.slice(0, 210)}{testimonialExcerpt.length > 210 ? "…" : ""}”</p>
+          <footer>
+            <strong>{testimonial.name}</strong>
+            <small>{testimonial.detail}</small>
+          </footer>
+        </blockquote>
+
+        <div className="lp1-offer-price-card">
+          <div className="lp1-offer-price">
+            <strong>R$ 47,90</strong>
+            <span>uma vez, pra sempre — sem mensalidade</span>
+          </div>
+          <p className="lp1-offer-guarantee">
+            459 perguntas. Uma por noite, dá mais de um ano de conversa.{" "}
+            <strong>7 dias de garantia: se não mexer com vocês, eu devolvo.</strong>{" "}
+            Você não arrisca nada.
+          </p>
+          <button
+            type="button"
+            className="lp1-offer-cta"
+            onClick={onFinish}
+            data-testid="button-lp1-offer-checkout"
+          >
+            Começar hoje à noite <ArrowRight size={18} aria-hidden="true" />
+          </button>
+          <p className="lp1-offer-payment-note">
+            Pix cai na hora · cartão em uma tela só
+          </p>
+        </div>
       </div>
     </section>
   );
@@ -1051,7 +1202,7 @@ function Lp1Quiz({
 }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<LandingQuizAnswers>({});
-  const [showPreview, setShowPreview] = useState(false);
+  const [showOffer, setShowOffer] = useState(false);
   const current = LP1_QUIZ_STEPS[step];
   const footnote =
     step < 3 && current && "footnote" in current ? current.footnote : undefined;
@@ -1084,8 +1235,8 @@ function Lp1Quiz({
           type="button"
           className="lp1-quiz-back"
           onClick={() => {
-            if (step === 3 && showPreview) {
-              setShowPreview(false);
+            if (step === 3 && showOffer) {
+              setShowOffer(false);
               return;
             }
             setStep((previous) => Math.max(previous - 1, 0));
@@ -1097,17 +1248,12 @@ function Lp1Quiz({
 
       <div className="lp1-quiz-content">
         {step === 3 ? (
-          showPreview ? (
-            <LandingQuiz
-              onFinish={onFinish}
-              step={3}
-              answers={answers}
-              onAnswer={handleAnswer}
-            />
+          showOffer ? (
+            <Lp1Offer answers={answers} onFinish={onFinish} />
           ) : (
             <Lp1Diagnosis
               answers={answers}
-              onContinue={() => setShowPreview(true)}
+              onContinue={() => setShowOffer(true)}
             />
           )
         ) : (
