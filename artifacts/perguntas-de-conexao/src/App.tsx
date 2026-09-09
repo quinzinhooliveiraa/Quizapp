@@ -1238,19 +1238,13 @@ function LandingV2Quiz({
   onHeroBuy,
   onThemePeek,
   checkoutOpen,
-  quizStep,
-  quizAnswers,
-  onQuizAnswer,
-  onHeroQuizAnswer,
+  onStartQuiz,
 }: {
   onBuy: () => void;
   onHeroBuy: () => void;
   onThemePeek: (themeId: string) => void;
   checkoutOpen: boolean;
-  quizStep: number;
-  quizAnswers: LandingQuizAnswers;
-  onQuizAnswer: (key: LandingQuizAnswerKey, value: string) => void;
-  onHeroQuizAnswer: (value: string) => void;
+  onStartQuiz: () => void;
 }) {
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
   const [showStickyCta, setShowStickyCta] = useState(true);
@@ -1339,6 +1333,7 @@ function LandingV2Quiz({
         aria-hidden="true"
       />
       <span id="lp-precos" className="lp-anchor-target" aria-hidden="true" />
+      <span id="lp2-quiz" className="lp-quiz-route-marker" aria-hidden="true" />
       <section className="lp-hero lp2-hero" data-section-name="hero">
         <div className="lp-hero-inner">
           <span className="lp-eyebrow lp2-hero-eyebrow">
@@ -1371,11 +1366,7 @@ function LandingV2Quiz({
           </div>
           <button
             type="button"
-            onClick={() =>
-              document
-                .getElementById("lp2-quiz")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
+            onClick={onStartQuiz}
             className="lp-cta-primary lp-cta-big lp2-hero-cta"
             data-testid="button-hero-cta-v2"
           >
@@ -1447,32 +1438,6 @@ function LandingV2Quiz({
               <p>Que peso você carrega que nunca dividiu com ninguém?</p>
             </div>
           </div>
-        </div>
-      </section>
-      <section
-        className="lp-quiz-section"
-        id="lp2-quiz"
-        data-section-name="quiz"
-      >
-        <div className="lp-container">
-          <p className="lp-eyebrow lp-eyebrow-center">
-            experimente agora, de graça
-          </p>
-          <h2 className="lp-h2">
-            Responda 3 perguntas rápidas e receba
-            <br />
-            <em>3 perguntas feitas pro momento de vocês.</em>
-          </h2>
-          <p className="lp-solution-lede lp2-quiz-lede">
-            Leva menos de 1 minuto. A gente monta na hora um mini-baralho com a
-            cara da fase que vocês estão vivendo.
-          </p>
-          <LandingQuiz
-            onFinish={onBuy}
-            step={quizStep}
-            answers={quizAnswers}
-            onAnswer={onQuizAnswer}
-          />
         </div>
       </section>
       <section className="lp2-story" data-section-name="historia">
@@ -4083,18 +4048,6 @@ function Home({
     setLandingQuizAnswers((current) => ({ ...current, [key]: value }));
     setLandingQuizStep((current) => Math.min(current + 1, 3));
   };
-  const handleHeroQuizAnswer = (value: string, quizId: string) => {
-    setLandingQuizAnswers((current) => ({ ...current, intensity: value }));
-    setLandingQuizStep((current) => Math.max(current, 1));
-    trackCtaClick("hero_quiz");
-    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
-      .matches
-      ? "auto"
-      : "smooth";
-    window.requestAnimationFrame(() => {
-      document.getElementById(quizId)?.scrollIntoView({ behavior });
-    });
-  };
   return (
     <Shell dark>
       <StoredAccessGate />
@@ -4105,12 +4058,10 @@ function Home({
             onHeroBuy={() => startCheckout("couple", "hero_comprar")}
             onThemePeek={(themeId) => trackCtaClick(`theme_peek:${themeId}`)}
             checkoutOpen={checkoutController.checkoutOpen}
-            quizStep={landingQuizStep}
-            quizAnswers={landingQuizAnswers}
-            onQuizAnswer={advanceLandingQuiz}
-            onHeroQuizAnswer={(value) =>
-              handleHeroQuizAnswer(value, "lp2-quiz")
-            }
+            onStartQuiz={() => {
+              trackCtaClick("hero_quiz");
+              navigate("/quiz");
+            }}
           />
         ) : (
           <>
@@ -4541,6 +4492,33 @@ function TrackedLp3({
     <>
       <Lp3
         onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
+        onCheckout={() => checkout.startCheckout("couple")}
+      />
+      <CheckoutModal checkout={checkout} />
+    </>
+  );
+}
+
+function TrackedQuiz({
+  experimentAssignment,
+}: {
+  experimentAssignment?: StoredExperimentAssignment;
+}) {
+  const trackCtaClick = useLpTracking("v2", experimentAssignment);
+  const checkout = useCheckout({
+    sourceLp: "v2",
+    onCtaClick: trackCtaClick,
+    experimentAssignment,
+  });
+  const [, navigate] = useLocation();
+
+  return (
+    <>
+      <Lp3
+        initialScreen="question"
+        homeHref="/"
+        onBack={() => navigate("/")}
+        onCtaClick={trackCtaClick}
         onCheckout={() => checkout.startCheckout("couple")}
       />
       <CheckoutModal checkout={checkout} />
@@ -8945,6 +8923,9 @@ function Router() {
           <Route path="/lp3">
             <TrackedLp3 />
           </Route>
+          <Route path="/quiz">
+            <TrackedQuiz />
+          </Route>
           <Route path="/e/:experimentSlug" component={ExperimentLinkRoute} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
@@ -8970,6 +8951,7 @@ function RouteAwareSplash() {
     location === "/lp1" ||
     location === "/lp2" ||
     location === "/lp3" ||
+    location === "/quiz" ||
     location.startsWith("/e/");
 
   const isAppRoute =

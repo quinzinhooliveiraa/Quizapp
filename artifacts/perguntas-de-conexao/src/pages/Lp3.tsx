@@ -23,6 +23,8 @@ type Lp3Props = {
   onCheckout?: () => void;
   onCtaClick?: (ctaSource?: "lp3_offer") => void;
   onBack?: () => void;
+  initialScreen?: "intro" | "question";
+  homeHref?: string;
 };
 
 type Screen = "intro" | "question" | "result" | "recommend" | "offer";
@@ -154,11 +156,23 @@ function findTheme(themeId: string): ConnectionTheme {
   return libraryThemes.find((theme) => theme.id === themeId) ?? libraryThemes[0];
 }
 
-export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
+export default function Lp3({
+  onCheckout,
+  onCtaClick,
+  onBack,
+  initialScreen,
+  homeHref = "/lp3",
+}: Lp3Props) {
   const stored = useMemo(getStoredState, []);
-  const [screen, setScreen] = useState<Screen>(stored.screen);
-  const [currentQuestion, setCurrentQuestion] = useState(stored.currentQuestion);
-  const [answers, setAnswers] = useState<Answers>(stored.answers);
+  const [screen, setScreen] = useState<Screen>(
+    initialScreen ?? stored.screen,
+  );
+  const [currentQuestion, setCurrentQuestion] = useState(
+    initialScreen === "question" ? 0 : stored.currentQuestion,
+  );
+  const [answers, setAnswers] = useState<Answers>(
+    initialScreen === "question" ? {} : stored.answers,
+  );
   const [liveNote, setLiveNote] = useState("");
   const [showOtherPaths, setShowOtherPaths] = useState(false);
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
@@ -256,6 +270,10 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   const goBack = () => {
     if (screen === "question") {
       if (currentQuestion === 0) {
+        if (initialScreen === "question") {
+          onBack?.();
+          return;
+        }
         setScreen("intro");
       } else {
         setCurrentQuestion((value) => value - 1);
@@ -557,7 +575,11 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
   return (
     <div className={`site-shell shell-dark lp3-shell ${screen === "question" ? "lp3-quiz-active" : ""}`}>
       <header className="site-header">
-        <BrandLogo inverse href="/lp3" onClick={returnToIntro} />
+        <BrandLogo
+          inverse
+          href={homeHref}
+          onClick={homeHref === "/lp3" ? returnToIntro : reset}
+        />
         <Link href="/login" className="header-cta" data-testid="link-header-cta">
           Abrir meu baralho <ArrowRight size={16} />
         </Link>
@@ -568,8 +590,8 @@ export default function Lp3({ onCheckout, onCtaClick, onBack }: Lp3Props) {
       </main>
       <SiteFooter
         logoTestId="link-footer-logo"
-        logoHref="/lp3"
-        onLogoClick={returnToIntro}
+        logoHref={homeHref}
+        onLogoClick={homeHref === "/lp3" ? returnToIntro : reset}
         supportAction={{ label: "Preciso de ajuda", onClick: openSupportDialog }}
       />
     </div>

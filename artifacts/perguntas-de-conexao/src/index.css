@@ -23287,6 +23287,9 @@ blockquote em {
   color: #6f6580 !important;
   margin: 0.2rem 0 0 !important;
 }
+.lp-quiz-route-marker {
+  display: none;
+}
 
 .lp-benefit-marquee {
   position: relative;
