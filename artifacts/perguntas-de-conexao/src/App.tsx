@@ -4295,7 +4295,7 @@ function Home({
             checkoutOpen={checkoutController.checkoutOpen}
             onStartQuiz={() => {
               trackCtaClick("hero_quiz");
-              navigate("/quiz");
+              navigate("/quiz?from=lp1");
             }}
           />
         ) : (
@@ -4750,12 +4750,14 @@ function TrackedQuiz({
     experimentAssignment,
   });
   const [, navigate] = useLocation();
+  const quizOrigin = new URLSearchParams(window.location.search).get("from");
+  const quizReturnPath = quizOrigin === "lp1" ? "/lp1" : "/";
 
   return (
     <>
       <Lp1Quiz
         onFinish={() => checkout.startCheckout("couple")}
-        onBackToLanding={() => navigate("/")}
+        onBackToLanding={() => navigate(quizReturnPath)}
       />
       <CheckoutModal checkout={checkout} />
     </>
