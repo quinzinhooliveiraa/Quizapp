@@ -1644,10 +1644,14 @@ function LandingV2Quiz({
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
           <h2 className="lp-h2">
-            A próxima boa conversa
+            Hoje pode ser mais uma noite
             <br />
-            <em>pode ser hoje à noite.</em>
+            <em>cada um no seu celular.</em>
           </h2>
+          <p className="lp2-section-lede lp1-price-context">
+            Ou vocês podem estar tendo a conversa de verdade daqui a dez
+            minutos. São 3 passos:
+          </p>
           <div className="lp-price-card lp1-price-card">
             <p className="lp1-price-anchor">
               459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil
