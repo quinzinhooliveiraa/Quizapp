@@ -3,6 +3,7 @@ import {
   type FormEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type TouchEvent as ReactTouchEvent,
   forwardRef,
   lazy,
   Suspense,
@@ -1439,6 +1440,7 @@ function QuestionCarouselSection() {
 function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "default" }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const touchStartX = useRef<number | null>(null);
   const activeTestimonial = landingTestimonials[activeIndex];
 
   const move = (direction: -1 | 1) => {
@@ -1453,6 +1455,23 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
   const selectTestimonial = (index: number) => {
     setIsExpanded(false);
     setActiveIndex(index);
+  };
+
+  const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
+    touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event: ReactTouchEvent<HTMLDivElement>) => {
+    const startX = touchStartX.current;
+    const endX = event.changedTouches[0]?.clientX;
+    touchStartX.current = null;
+
+    if (startX === null || endX === undefined) return;
+
+    const distance = endX - startX;
+    if (Math.abs(distance) < 44) return;
+
+    move(distance < 0 ? 1 : -1);
   };
 
   return (
@@ -1471,6 +1490,11 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
           className="lp-testimonial-carousel"
           aria-roledescription="carrossel"
           aria-label="Depoimentos de casais"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={() => {
+            touchStartX.current = null;
+          }}
         >
           <button
             type="button"
