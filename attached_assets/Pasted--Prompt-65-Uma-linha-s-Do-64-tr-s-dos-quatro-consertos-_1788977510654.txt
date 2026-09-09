@@ -1,0 +1,80 @@
+# Prompt 65 — Uma linha só
+
+Do 64, **três dos quatro consertos entraram.** Falta um, e é o mesmo de antes:
+a frase do tempo continua invisível no card claro.
+
+---
+
+## O problema
+
+```
+.lp-price-time   color: rgb(249, 248, 251)
+card             background: rgb(251, 249, 255)
+```
+
+Diferença de luminância: **1,6 de 255.** É branco no branco.
+
+A regra do 64 (`.lp1-price-card .lp-price-time { color: #241d33 }`) **não está
+ganhando** — existe outra regra no `index.css` com especificidade maior mirando
+`.lp-price-time`. Testei ao vivo: com `!important` a cor entra na hora.
+
+## O conserto
+
+**Primeiro tente achar a regra que está ganhando.** Procure no `index.css` por
+`lp-price-time` — deve haver uma regra com prefixo grande (do tipo
+`.lp-main:has(.lp2-hero) …` ou `.lp-price-card …`) definindo `color`. Se achar,
+**troque a cor lá** e pronto, sem `!important`.
+
+Se não achar em 2 minutos, resolva assim e siga em frente:
+
+```css
+.lp1-price-card .lp-price-time {
+  color: #241d33 !important;
+  font-weight: 500;
+}
+```
+
+É a única `!important` que eu peço na página. Vale porque essa frase é a regra
+mais forte de todos os treze guias — **Pricing p.50 (Mogilner & Aaker 2009)**:
+a placa que falava de *tempo* atraiu **o dobro** de gente, e essas pagaram **o
+dobro**.
+
+## Enquanto estiver aí (opcional, 30 segundos)
+
+O selo `BÔNUS` do carrossel de baralhos está com texto branco a 58% de opacidade
+sobre um fundo pêssego claro — dá pra ler, mas é o texto mais fraco da página.
+
+```css
+.lp-theme-bonus-badge { color: rgba(60, 30, 10, 0.85); }
+```
+
+---
+
+## O que eu conferi ao vivo e está certo agora
+
+| | Medido |
+|---|---|
+| Selo da garantia | ✅ `rgb(122, 92, 196)` — o `✦` lilás claro foi corrigido |
+| Depoimento do Lucas em 1º | ✅ abre em "Lucas · 23 anos de casamento", com a ressalva "já sabíamos" |
+| Eyebrows fora do CAIXA ALTA | ✅ os 10 estão em caixa mista, espaçamento de rótulo preservado |
+| Botão do preço maior que o preço | ✅ botão **17,92px** contra preço **15,2px** |
+| Hero intacto | ✅ botão dourado começa em 537px e termina em 596px, numa tela de 699 |
+| Nenhum outro texto invisível | ✅ varri a página inteira por contraste; só sobrou a linha do tempo |
+
+**Correção da minha parte:** no 64 eu disse que o depoimento do Lucas não tinha
+ido pra frente. **Tinha.** Eu medi depois do carrossel já ter girado sozinho
+(ele troca a cada 7 segundos) e li o depoimento errado. Recarreguei e conferi:
+está certo desde o 63.
+
+**Sobre o peso do botão:** pedi 700, ficou 600 — tem outra regra com
+`!important` no `.lp-cta-primary` segurando. **Não vale mexer:** o botão já está
+maior que o preço, que é o que a regra pede (Pricing p.49). Deixa 600.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` passa.
+2. `/lp1` em 420px, seção de preço: a frase **"Uma por noite, dá mais de um ano
+   de conversa."** tem que estar legível, logo abaixo do preço.
+3. Deploy.

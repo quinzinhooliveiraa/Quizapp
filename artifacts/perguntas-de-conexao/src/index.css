@@ -3298,7 +3298,7 @@
 }
 .lp-main:has(#lp2-quiz) .lp-price-time {
   margin: 0 0 1.7rem;
-  color: #f9f8fb;
+  color: #241d33;
   font-size: 0.95rem;
   font-weight: 500;
   line-height: 1.45;
@@ -3740,6 +3740,9 @@
 }
 .lp-main:has(.lp2-hero) .lp-eyebrow {
   text-transform: none;
+}
+.lp-main:has(.lp2-hero) .lp-theme-bonus-badge {
+  color: rgba(60, 30, 10, 0.85);
 }
 .lp-main:has(.lp2-hero) .lp-theme-card-body strong,
 .lp-main:has(.lp2-hero) .lp-theme-card-body p {
