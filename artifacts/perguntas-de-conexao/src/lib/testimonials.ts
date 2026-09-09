@@ -6,23 +6,6 @@ export type LandingTestimonial = {
 
 export const landingTestimonials: LandingTestimonial[] = [
   {
-    quote: `No nosso aniversário de um ano, viajamos para uma cabana no interior. Foi aquele fim de semana perfeito: lugar tranquilo, banheira, vinho e o Perguntas de Conexão.
-
-A gente chegava a passar 20 minutos em uma única pergunta, porque sempre acabava percebendo o quanto ainda não sabíamos um sobre o outro.
-
-Até que apareceu uma pergunta: "Quando foi o momento em que você percebeu que estava apaixonado por mim?"
-
-A resposta dele me pegou completamente de surpresa. Ele disse que foi quando eu falei que amava as cicatrizes dele, as de fora e as de dentro.
-
-Nós dois ficamos emocionados.
-
-Foi uma conversa simples, mas alguma coisa mudou naquele momento.
-
-A gente continua usando até hoje. E já sei que vai estar com a gente no próximo aniversário também.`,
-    name: "Caio",
-    detail: "1 ano juntos",
-  },
-  {
     quote: `Comprei o Perguntas de Conexão para mim e minha esposa. Estamos casados há 23 anos, então achei que já conhecíamos praticamente tudo um sobre o outro.
 
 Algumas perguntas realmente eram coisas que já sabíamos e passamos rapidamente.
@@ -42,6 +25,23 @@ Porque, no final, os dois ganham.
 Toda vez.`,
     name: "Lucas",
     detail: "23 anos de casamento",
+  },
+  {
+    quote: `No nosso aniversário de um ano, viajamos para uma cabana no interior. Foi aquele fim de semana perfeito: lugar tranquilo, banheira, vinho e o Perguntas de Conexão.
+
+A gente chegava a passar 20 minutos em uma única pergunta, porque sempre acabava percebendo o quanto ainda não sabíamos um sobre o outro.
+
+Até que apareceu uma pergunta: "Quando foi o momento em que você percebeu que estava apaixonado por mim?"
+
+A resposta dele me pegou completamente de surpresa. Ele disse que foi quando eu falei que amava as cicatrizes dele, as de fora e as de dentro.
+
+Nós dois ficamos emocionados.
+
+Foi uma conversa simples, mas alguma coisa mudou naquele momento.
+
+A gente continua usando até hoje. E já sei que vai estar com a gente no próximo aniversário também.`,
+    name: "Caio",
+    detail: "1 ano juntos",
   },
   {
     quote: `Conheci minha namorada na academia. Eu nunca tinha visto ela antes. Achei ela linda, mesmo não sendo exatamente o meu tipo.

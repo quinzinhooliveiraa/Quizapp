@@ -1,0 +1,283 @@
+# Prompt 63 — LP1: tudo o que falta, num paste só
+
+Este prompt **substitui os prompts 57, 58, 59, 60 e 61.** Não cole aqueles.
+Conferi no código o que já foi aplicado e tirei da lista — o que sobrou está
+aqui, na ordem.
+
+São 15 mudanças. Todas na LP1 (`LandingV2Quiz` no `App.tsx`), no `index.css`,
+no `lib/testimonials.ts` e no `CheckoutModal`.
+
+**Não mexa na LP3.** Ela compartilha classes com a LP1 em alguns pontos — onde
+eu marquei seletor específico, use o seletor específico.
+
+---
+
+## 1. O H1 do hero vira pergunta
+
+De:
+```tsx
+<h1 className="lp-hero-h1">
+  Você quer a conversa.
+  <br />
+  Ele responde <span className="lp2-hero-emphasis">"sei lá"</span>.
+</h1>
+<p className="lp-hero-sub">
+  459 perguntas escritas pra tirar a conversa do automático. Vocês
+  abrem uma carta, leem em voz alta e escutam. O resto acontece
+  entre vocês.
+</p>
+```
+Para:
+```tsx
+<h1 className="lp-hero-h1">
+  E se ele responder{" "}
+  <span className="lp2-hero-emphasis">"sei lá"</span>?
+</h1>
+<p className="lp-hero-sub">
+  Você quer a conversa. Ele responde "sei lá" — e morre ali. São 459
+  perguntas escritas pra isso não acontecer. Vocês abrem uma carta, leem
+  em voz alta e escutam.
+</p>
+```
+
+O `lp2-hero-emphasis` continua maior que o resto do H1. Não mexa nele.
+
+## 2. A seção "sei-la" ganha um H2 novo (senão repete o hero)
+
+De: `E se ele responder <em>"sei lá"</em>?`
+Para: `Ninguém abre o jogo <em>numa pergunta pesada.</em>`
+
+## 3. A foto do hero sobe
+
+Mova o bloco `<picture className="lp-hero-foto">` para **antes** do
+`<div className="lp-hero-copy">`. Ordem final:
+
+```
+eyebrow → FOTO → H1 → subtítulo → botão → link secundário → linha de confiança
+```
+
+O eyebrow fica onde está (dentro do `lp-hero-copy`), então mova a foto pra
+**antes** do `lp-hero-copy` e tire o eyebrow de dentro dele, deixando-o acima
+da foto. Se ficar mais simples, quebre em: `<span eyebrow>` → `<picture>` →
+`<div lp-hero-copy>` com H1 e subtítulo.
+
+**O botão dourado tem que continuar acima da dobra em 420px.** Se sair, reduza:
+```css
+@media (max-width: 699px) {
+  .lp-hero-foto img { max-height: 30vh; }
+}
+```
+
+## 4. O botão do hero cresce
+
+```css
+.lp2-hero-cta {
+  margin-top: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding-block: 1.05rem;
+  min-height: 3.5rem;
+}
+```
+
+## 5. Tirar o inglês dos cards de intensidade
+
+`Leve · gentle` → `Leve`
+`Honesta · honest` → `Honesta`
+`Profunda · deep` → `Profunda`
+
+## 6. Barra de progresso no quiz
+
+Em `LandingQuizStep`, acima do `<p className="lp-quiz-question">`:
+
+```tsx
+<div className="lp-quiz-progress">
+  <span>Pergunta {step + 1} de 3</span>
+  <div className="lp-quiz-progress-track" aria-hidden="true">
+    <div
+      className="lp-quiz-progress-fill"
+      style={{ width: `${25 + step * 25}%` }}
+    />
+  </div>
+</div>
+```
+
+```css
+.lp-quiz-progress { max-width: 520px; margin: 0 auto 1.4rem; }
+.lp-quiz-progress > span {
+  display: block; margin-bottom: 0.5rem;
+  font-size: 0.78rem; color: rgba(255, 255, 255, 0.7);
+}
+.lp-quiz-progress-track {
+  height: 4px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.lp-quiz-progress-fill {
+  height: 100%; border-radius: 999px;
+  background: #c4acff; transition: width 0.35s ease;
+}
+```
+
+**A barra é lilás, nunca dourada.** Dourado é só compra.
+
+## 7. Fecho da história
+
+De: `É exatamente isso que a gente construiu.`
+Para:
+```tsx
+<p>
+  <strong>Vocês não são um casal que parou de conversar.</strong>
+</p>
+<p>São um casal que ficou sem as perguntas certas. É isso que a gente construiu.</p>
+```
+
+## 8. Cards de baralho fora do CAIXA ALTA
+
+O culpado é `.lp-theme-card span` (linha ~2641), que põe `uppercase` no
+`<span className="lp-theme-card-body">` e tudo dentro herda.
+
+```css
+.lp-theme-card-body strong,
+.lp-theme-card-body p {
+  text-transform: none;
+}
+```
+
+A contagem ("31 cartas") **fica** em caixa alta — é rótulo curto. Os
+`lp-eyebrow` também ficam.
+
+## 9. O depoimento do Lucas vira o primeiro
+
+Em `lib/testimonials.ts`, mova o objeto do **Lucas** ("23 anos de casamento")
+para a **primeira posição** do array `landingTestimonials`. **Nenhum texto
+muda** — só a ordem.
+
+## 10. O card de preço fica claro
+
+```css
+.lp1-price-card {
+  background: #fbf9ff;
+  border: 1.5px solid rgba(120, 90, 200, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.lp1-price-card,
+.lp1-price-card p,
+.lp1-price-card li,
+.lp1-price-card strong { color: #241d33; }
+.lp1-price-card .lp1-price-anchor,
+.lp1-price-card .lp-price-once { color: #6f6580; }
+```
+
+**Confira texto por texto dentro do card depois de aplicar.** Se algo ficar
+branco no branco, corrija. A garantia, os 3 passos e os 6 benefícios estão
+todos aí dentro.
+
+## 11. O preço encolhe, o botão cresce
+
+```css
+.lp-price-value {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #6f6580;
+}
+.lp1-price-card .lp-cta-full {
+  font-size: 1.05rem;
+  font-weight: 700;
+  min-height: 3.5rem;
+}
+```
+
+## 12. Os custos que o preço cobre
+
+Logo **abaixo** do `<div className="lp-price-main">` e **antes** do botão:
+
+```tsx
+<div className="lp1-price-costs">
+  <strong>O que os R$ 47,90 pagam</strong>
+  <p>459 perguntas escritas e testadas uma a uma, ao longo de meses</p>
+  <p>O servidor que mantém o jogo no ar e sincroniza vocês dois</p>
+  <p>As perguntas novas que entram sem você pagar de novo</p>
+</div>
+```
+
+```css
+.lp1-price-costs { margin: 1.2rem 0 1.4rem; text-align: left; }
+.lp1-price-costs strong { display: block; font-size: 0.82rem; margin-bottom: 0.4rem; }
+.lp1-price-costs p { margin: 0.15rem 0; font-size: 0.8rem; line-height: 1.5; }
+```
+
+## 13. Serifada nos títulos
+
+```css
+.lp-hero-h1,
+.lp-h2 {
+  font-family: "Instrument Serif", Georgia, serif;
+}
+```
+
+**Atenção:** existe override específico da LP1 mais abaixo no arquivo
+(`.lp-main:has(.lp2-hero) .lp2-hero .lp-hero-h1`, ~linha 3412). Ponha a
+`font-family` **lá também**. Só H1 e H2 — corpo, botão, eyebrow e depoimentos
+continuam na Plus Jakarta Sans.
+
+## 14. Corrigir a resposta do FAQ sobre pagamento
+
+De: `"Na hora. O pagamento é via Pix e o acesso abre automaticamente após a confirmação."`
+Para: `"Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega — o Pix cai na hora."`
+
+## 15. Linha de confiança no botão do fecho
+
+Na seção `final`, abaixo do botão:
+
+```tsx
+<p className="lp2-hero-security">
+  🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo. Você decide.
+</p>
+```
+
+## 16. O erro do checkout deixa de ser só cor
+
+Nos dois `<input>` do `CheckoutModal`:
+```tsx
+aria-invalid={nameError ? true : undefined}
+```
+```tsx
+aria-invalid={emailError ? true : undefined}
+```
+
+```css
+.checkout-email-input[aria-invalid="true"] {
+  border-color: #a2384b;
+  background: rgba(162, 56, 75, 0.05);
+}
+.checkout-email-error { font-weight: 600; }
+.checkout-email-error::before {
+  content: "!";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem; height: 1rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  background: #a2384b; color: #fff;
+  font-size: 0.68rem; font-weight: 700;
+  vertical-align: -2px;
+}
+```
+
+---
+
+## Conferência obrigatória depois de aplicar
+
+1. `pnpm run build` passa.
+2. **`/lp1` em 420px:** foto em cima, H1 "E se ele responder 'sei lá'?" em
+   serifada, e o **botão dourado ainda acima da dobra**.
+3. **Quiz:** "Pergunta 1 de 3" e a barra lilás começando já com um pedaço cheio.
+4. **Baralhos:** nomes e descrições em caixa mista, contagem pode ficar em CAPS.
+5. **Depoimentos:** abre no do Lucas (23 anos de casamento).
+6. **Preço:** card claro, **todo texto legível**, e o que salta é o **botão**,
+   não o número.
+7. **Checkout: teste o pagamento com cartão de ponta a ponta.** Toda vez que se
+   mexe nesse formulário, isso é obrigatório.
+8. **`/lp3` não pode ter quebrado.**
+9. Deploy.

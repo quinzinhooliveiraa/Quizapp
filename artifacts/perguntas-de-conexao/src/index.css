@@ -2498,19 +2498,25 @@
   text-align: center;
 }
 .lp-quiz-progress {
-  display: flex;
-  justify-content: center;
-  gap: 0.4rem;
-  margin-bottom: 2rem;
+  max-width: 520px;
+  margin: 0 auto 1.4rem;
 }
-.lp-quiz-progress span {
-  width: 40px;
+.lp-quiz-progress > span {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+.lp-quiz-progress-track {
   height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
 }
-.lp-quiz-progress span.is-active {
+.lp-quiz-progress-fill {
+  height: 100%;
+  border-radius: 999px;
   background: #c4acff;
+  transition: width 0.35s ease;
 }
 .lp-quiz-question {
   font-size: 1.25rem;
@@ -3393,6 +3399,7 @@
 
 /* Prompt 57 — hero CTA hierarchy and non-purchase controls. */
 .lp-main:has(#lp2-quiz) .lp2-hero-cta {
+  margin-top: 0;
   min-height: 3.5rem;
   padding-block: 1.05rem;
   font-size: 1.05rem;
@@ -3426,6 +3433,9 @@
 .lp-main:has(.lp2-hero) .lp2-hero .lp-hero-copy {
   position: relative;
   z-index: 2;
+}
+.lp-main:has(.lp2-hero) .lp2-hero .lp2-hero-eyebrow {
+  margin-bottom: 0;
 }
 .lp-main:has(.lp2-hero) .lp2-hero .lp-hero-sub {
   max-width: 620px;
@@ -3683,21 +3693,50 @@
   font-size: 1.05rem;
   font-weight: 700;
 }
-.lp-main:has(.lp2-hero) .lp-price-costs {
-  margin: 1.5rem 0 0;
-  color: var(--ink-soft);
-  font-size: 0.8rem;
-  line-height: 1.45;
+.lp-main:has(.lp2-hero) .lp1-price-card {
+  background: #fbf9ff;
+  border: 1.5px solid rgba(120, 90, 200, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.lp-main:has(.lp2-hero) .lp1-price-card,
+.lp-main:has(.lp2-hero) .lp1-price-card p,
+.lp-main:has(.lp2-hero) .lp1-price-card li,
+.lp-main:has(.lp2-hero) .lp1-price-card strong {
+  color: #241d33;
+}
+.lp-main:has(.lp2-hero) .lp1-price-card .lp1-price-anchor,
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-price-once,
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-price-value {
+  color: #6f6580;
+}
+.lp-main:has(.lp2-hero) .lp1-price-costs {
+  margin: 1.2rem 0 1.4rem;
   text-align: left;
 }
-.lp-main:has(.lp2-hero) .lp-price-costs p {
-  margin: 0;
+.lp-main:has(.lp2-hero) .lp1-price-costs strong {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 0.4rem;
 }
-.lp-main:has(.lp2-hero) .lp-price-costs p + p {
-  margin-top: 0.35rem;
+.lp-main:has(.lp2-hero) .lp1-price-costs p {
+  margin: 0.15rem 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
-.lp-main:has(.lp2-hero) .lp-price-costs-title {
-  font-weight: 600;
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-cta-full {
+  font-size: 1.05rem;
+  font-weight: 700;
+  min-height: 3.5rem;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-body strong,
+.lp-main:has(.lp2-hero) .lp-theme-card-body p {
+  text-transform: none;
+}
+.lp-main:has(.lp2-hero) .lp-final-cta .lp2-hero-security {
+  margin: 1rem 0 0;
+  color: var(--lp1-muted);
+  font-size: 0.76rem;
+  text-align: center;
 }
 .lp-main:has(.lp2-hero) .lp-guarantee {
   background: rgba(112, 81, 115, 0.05);
@@ -3866,9 +3905,14 @@
 }
 
 @media (min-width: 901px) {
-  .lp-main:has(.lp2-hero) .lp2-hero .lp-hero-copy {
+  .lp-main:has(.lp2-hero) .lp2-hero .lp2-hero-eyebrow {
     grid-column: 1;
     grid-row: 1;
+    align-self: end;
+  }
+  .lp-main:has(.lp2-hero) .lp2-hero .lp-hero-copy {
+    grid-column: 1;
+    grid-row: 2;
   }
   .lp-main:has(.lp2-hero) .lp2-hero .lp-hero-foto {
     grid-column: 2;
@@ -3878,18 +3922,24 @@
   }
   .lp-main:has(.lp2-hero) .lp2-hero .lp2-hero-cta {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 3;
     justify-self: start;
   }
   .lp-main:has(.lp2-hero) .lp2-hero .lp-cta-secondary-link {
     grid-column: 1;
-    grid-row: 3;
+    grid-row: 4;
     justify-self: start;
   }
   .lp-main:has(.lp2-hero) .lp2-hero .lp2-hero-security {
     grid-column: 1;
-    grid-row: 4;
+    grid-row: 5;
     justify-self: start;
+  }
+}
+@media (max-width: 699px) {
+  .lp-main:has(.lp2-hero) .lp2-hero .lp-hero-foto img {
+    max-height: 30vh;
+    object-fit: cover;
   }
 }
 
@@ -21900,11 +21950,33 @@ blockquote em {
   box-shadow: 0 0 0 3px rgba(122, 46, 70, 0.12);
 }
 
+.checkout-email-input[aria-invalid="true"] {
+  border-color: #a2384b;
+  background: rgba(162, 56, 75, 0.05);
+}
+
 .checkout-email-error {
   margin: 0;
   color: #a2384b;
   font-size: 0.64rem;
   line-height: 1.35;
+  font-weight: 600;
+}
+
+.checkout-email-error::before {
+  content: "!";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  background: #a2384b;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: -2px;
 }
 
 .checkout-payment-heading {

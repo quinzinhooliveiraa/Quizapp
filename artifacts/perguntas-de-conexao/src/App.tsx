@@ -932,9 +932,13 @@ function LandingQuiz({
   return (
     <div className="lp-quiz">
       <div className="lp-quiz-progress">
-        {LANDING_QUIZ_STEPS.map((item, index) => (
-          <span key={item.key} className={step >= index ? "is-active" : ""} />
-        ))}
+        <span>Pergunta {step + 1} de 3</span>
+        <div className="lp-quiz-progress-track" aria-hidden="true">
+          <div
+            className="lp-quiz-progress-fill"
+            style={{ width: `${25 + step * 25}%` }}
+          />
+        </div>
       </div>
       <LandingQuizQuestion
         step={step as 0 | 1 | 2}
@@ -1337,22 +1341,9 @@ function LandingV2Quiz({
       <span id="lp-precos" className="lp-anchor-target" aria-hidden="true" />
       <section className="lp-hero lp2-hero" data-section-name="hero">
         <div className="lp-hero-inner">
-          <div className="lp-hero-copy">
-            <span className="lp-eyebrow">
-              baralho digital de perguntas · para casais
-            </span>
-            <h1 className="lp-hero-h1">
-              Você quer a conversa.
-              <br />
-              Ele responde{" "}
-              <span className="lp2-hero-emphasis">"sei lá"</span>.
-            </h1>
-            <p className="lp-hero-sub">
-              459 perguntas escritas pra tirar a conversa do automático. Vocês
-              abrem uma carta, leem em voz alta e escutam. O resto acontece
-              entre vocês.
-            </p>
-          </div>
+          <span className="lp-eyebrow lp2-hero-eyebrow">
+            baralho digital de perguntas · para casais
+          </span>
           <picture className="lp-hero-foto">
             <source
               media="(min-width: 700px)"
@@ -1367,6 +1358,17 @@ function LandingV2Quiz({
               loading="eager"
             />
           </picture>
+          <div className="lp-hero-copy">
+            <h1 className="lp-hero-h1">
+              E se ele responder{" "}
+              <span className="lp2-hero-emphasis">"sei lá"</span>?
+            </h1>
+            <p className="lp-hero-sub">
+              Você quer a conversa. Ele responde "sei lá" — e morre ali. São 459
+              perguntas escritas pra isso não acontecer. Vocês abrem uma carta,
+              leem em voz alta e escutam.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() =>
@@ -1402,7 +1404,7 @@ function LandingV2Quiz({
             a pergunta que todo mundo faz
           </p>
           <h2 className="lp-h2">
-            E se ele responder <em>"sei lá"</em>?
+            Ninguém abre o jogo <em>numa pergunta pesada.</em>
           </h2>
           <p className="lp2-section-lede">
             É o medo de todo mundo — e é por isso que o baralho começa leve.
@@ -1412,15 +1414,15 @@ function LandingV2Quiz({
           </p>
           <div className="lp2-intensity-grid">
             <div className="lp2-intensity-card">
-              <span>Leve · gentle</span>
+              <span>Leve</span>
               <p>Que talento inútil você tem orgulho secreto de ter?</p>
             </div>
             <div className="lp2-intensity-card">
-              <span>Honesta · honest</span>
+              <span>Honesta</span>
               <p>Tem algo que você precisa e ainda não pediu?</p>
             </div>
             <div className="lp2-intensity-card">
-              <span>Profunda · deep</span>
+              <span>Profunda</span>
               <p>Que peso você carrega que nunca dividiu com ninguém?</p>
             </div>
           </div>
@@ -1496,7 +1498,13 @@ function LandingV2Quiz({
             <p>
               <strong>O problema nunca foi ele. Era a pergunta.</strong>
             </p>
-            <p>É exatamente isso que a gente construiu.</p>
+            <p>
+              <strong>Vocês não são um casal que parou de conversar.</strong>
+            </p>
+            <p>
+              São um casal que ficou sem as perguntas certas. É isso que a gente
+              construiu.
+            </p>
           </div>
         </div>
       </section>
@@ -1692,8 +1700,8 @@ function LandingV2Quiz({
                 Uma por noite, dá mais de um ano de conversa.
               </p>
             </div>
-            <div className="lp-price-costs">
-              <p className="lp-price-costs-title">O que os R$ 47,90 pagam</p>
+            <div className="lp1-price-costs">
+              <strong>O que os R$ 47,90 pagam</strong>
               <p>459 perguntas escritas e testadas uma a uma, ao longo de meses</p>
               <p>O servidor que mantém o jogo no ar e sincroniza vocês dois</p>
               <p>As perguntas novas que entram sem você pagar de novo</p>
@@ -1750,7 +1758,7 @@ function LandingV2Quiz({
               ],
               [
                 "Como recebo depois de pagar?",
-                "Na hora. O pagamento é via Pix e o acesso abre automaticamente após a confirmação.",
+                "Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega — o Pix cai na hora.",
               ],
             ].map(([question, answer]) => (
               <details key={question} className="lp-faq-item">
@@ -1775,6 +1783,10 @@ function LandingV2Quiz({
           >
             Começar hoje à noite <ArrowRight size={20} />
           </button>
+          <p className="lp2-hero-security">
+            🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo. Você
+            decide.
+          </p>
         </div>
       </section>
       {showStickyCta && !peekThemeId && !checkoutOpen ? (
@@ -3483,6 +3495,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                         autoComplete="name"
                         placeholder="Como a gente te chama"
                         value={buyerName}
+                        aria-invalid={nameError ? true : undefined}
                         onChange={(event) => {
                           setBuyerName(event.target.value);
                           safeSetItem(
@@ -3511,6 +3524,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                         autoComplete="email"
                         placeholder="pra enviar seu acesso"
                         value={buyerEmail}
+                        aria-invalid={emailError ? true : undefined}
                         onChange={(event) => {
                           setBuyerEmail(event.target.value);
                           safeSetItem(
