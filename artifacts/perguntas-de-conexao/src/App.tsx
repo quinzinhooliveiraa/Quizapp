@@ -61,6 +61,7 @@ import {
 import { landingTestimonials } from "@/lib/testimonials";
 import { selectLp1Diagnosis } from "@/lib/lp1-diagnosis";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
+import { RecommendedQuestionCarousel } from "@/components/RecommendedQuestionCarousel";
 import {
   ArrowRight,
   Bookmark,
@@ -1009,7 +1010,10 @@ function Lp1Diagnosis({
     answers.intensity,
     answers.stage,
   );
-  const firstQuestion = preview.questions[0];
+  const previewQuestions = preview.questions.slice(0, 3).map((question) => ({
+    id: question.id,
+    text: question.text,
+  }));
 
   return (
     <section className="lp1-diagnosis" aria-labelledby="lp1-diagnosis-title">
@@ -1025,10 +1029,12 @@ function Lp1Diagnosis({
             {personalization}
           </p>
         ))}
-        {firstQuestion ? (
-          <div className="lp1-diagnosis-prompt">
-            <span>COMEÇEM POR ESTA, HOJE</span>
-            <p>{firstQuestion.text}</p>
+        {previewQuestions.length > 0 ? (
+          <div className="lp1-diagnosis-questions">
+            <p className="lp1-diagnosis-questions-label">
+              UM GOSTINHO DO QUE VEM POR AÍ
+            </p>
+            <RecommendedQuestionCarousel questions={previewQuestions} />
           </div>
         ) : null}
         <button
@@ -1037,7 +1043,7 @@ function Lp1Diagnosis({
           onClick={onContinue}
           data-testid="button-lp1-diagnosis-continue"
         >
-          Ver minha oferta personalizada <ArrowRight size={18} aria-hidden="true" />
+          Começar hoje à noite <ArrowRight size={18} aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -1132,7 +1138,6 @@ function Lp1Offer({
         </ul>
 
         <blockquote className="lp1-offer-testimonial">
-          <span>DEPOIMENTO REAL</span>
           <p>“{testimonialExcerpt.slice(0, 210)}{testimonialExcerpt.length > 210 ? "…" : ""}”</p>
           <footer>
             <strong>{testimonial.name}</strong>
@@ -1204,7 +1209,7 @@ function Lp1Quiz({
         </div>
       ) : null}
 
-      {step > 0 && (
+      {step > 0 && step < 3 && (
         <button
           type="button"
           className="lp1-quiz-back"

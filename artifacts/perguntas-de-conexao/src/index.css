@@ -248,29 +248,16 @@
   line-height: 1.55;
 }
 
-.lp1-diagnosis-prompt {
+.lp1-diagnosis-questions {
   margin-top: 2rem;
-  padding: 1.35rem 1.35rem 1.45rem;
-  border: 1px solid rgba(196, 172, 255, 0.18);
-  border-left: 4px solid #c4acff;
-  border-radius: 1.1rem;
-  background: rgba(255, 255, 255, 0.025);
 }
 
-.lp1-diagnosis-prompt span {
+.lp1-diagnosis-questions-label {
+  margin: 0 0 0.8rem;
   color: #c4acff;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-}
-
-.lp1-diagnosis-prompt p {
-  margin: 0.95rem 0 0;
-  color: #f7f1ef;
-  font-family: var(--app-font-serif);
-  font-size: clamp(1.45rem, 4vw, 2rem);
-  font-style: italic;
-  line-height: 1.12;
 }
 
 .lp1-diagnosis-cta {
@@ -283,11 +270,13 @@
   padding: 1.05rem 1.25rem;
   border: 0;
   border-radius: 999px;
-  background: #c4acff;
+  background: linear-gradient(135deg, #e8b13a, #c98f1e);
   color: #17121c;
+  box-shadow: 0 0.5rem 1.1rem rgba(232, 177, 58, 0.28);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  animation: lp1-yellow-cta-pulse 2.8s ease-in-out infinite;
   transition:
     filter 180ms ease,
     transform 180ms ease;
@@ -296,6 +285,7 @@
 .lp1-diagnosis-cta:hover,
 .lp1-diagnosis-cta:focus-visible {
   filter: brightness(1.08);
+  box-shadow: 0 0.75rem 1.5rem rgba(232, 177, 58, 0.4);
   transform: translateY(-1px);
 }
 
@@ -468,13 +458,13 @@
   padding: 1rem 1.15rem;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(135deg, #7a2e46, #5b2034);
-  color: #fff;
-  box-shadow: 0 0.5rem 1.5rem rgba(91, 32, 52, 0.28);
+  background: linear-gradient(135deg, #e8b13a, #c98f1e);
+  color: #17121c;
+  box-shadow: 0 0.5rem 1.1rem rgba(232, 177, 58, 0.28);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
-  animation: lp1-offer-cta-pulse 2.8s ease-in-out infinite;
+  animation: lp1-yellow-cta-pulse 2.8s ease-in-out infinite;
   transition:
     filter 180ms ease,
     transform 180ms ease;
@@ -483,7 +473,7 @@
 .lp1-offer-cta:hover,
 .lp1-offer-cta:focus-visible {
   filter: brightness(1.1);
-  box-shadow: 0 0.75rem 1.9rem rgba(91, 32, 52, 0.4);
+  box-shadow: 0 0.75rem 1.5rem rgba(232, 177, 58, 0.4);
   transform: translateY(-1px);
 }
 
@@ -492,17 +482,18 @@
   text-align: center;
 }
 
-@keyframes lp1-offer-cta-pulse {
+@keyframes lp1-yellow-cta-pulse {
   0%,
   100% {
-    box-shadow: 0 0.5rem 1.5rem rgba(91, 32, 52, 0.24);
+    box-shadow: 0 0.5rem 1.1rem rgba(232, 177, 58, 0.24);
   }
   50% {
-    box-shadow: 0 0.75rem 1.9rem rgba(122, 46, 70, 0.42);
+    box-shadow: 0 0.75rem 1.8rem rgba(232, 177, 58, 0.48);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .lp1-diagnosis-cta,
   .lp1-offer-cta {
     animation: none;
   }
