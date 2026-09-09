@@ -3943,6 +3943,9 @@
     max-height: 30vh;
     object-fit: cover;
   }
+  .lp-main:has(.lp2-hero) .lp2-hero .lp2-hero-security {
+    text-align: center;
+  }
 }
 
 /* LP1 hero product photography */
