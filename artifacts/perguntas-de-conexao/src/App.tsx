@@ -966,27 +966,27 @@ const LP1_QUIZ_STEPS = [
     title: "Quando você tenta puxar assunto de verdade,",
     emphasis: "o que acontece?",
     options: [
-      ["gentle", 'Ele(a) responde "sei lá" e morre ali', "VALOR: ANOS"],
-      ["honest", "A gente conversa, mas só sobre logística", "VALOR: RECONECTAR"],
-      ["deep", "A gente conversa bem — quero ir mais fundo", "VALOR: INÍCIO"],
+      ["gentle", 'Ele(a) responde "sei lá" e morre ali'],
+      ["honest", "A gente conversa, mas só sobre logística"],
+      ["deep", "A gente conversa bem — quero ir mais fundo"],
     ],
   },
   {
     key: "stage",
     title: "Vocês estão juntos há quanto tempo?",
     options: [
-      ["novo", "Estamos começando", "VALOR: NOVO"],
-      ["anos", "Alguns anos", "VALOR: ANOS"],
-      ["muitos-anos", "Muitos anos", "VALOR: FIRME"],
+      ["novo", "Estamos começando"],
+      ["anos", "Alguns anos"],
+      ["muitos-anos", "Muitos anos"],
     ],
   },
   {
     key: "theme",
     title: "E hoje à noite, o que vocês querem?",
     options: [
-      ["porto-seguro", "Aquecer, sem susto", "VALOR: PORTO SEGURO"],
-      ["livro-aberto", "Ir fundo de verdade", "VALOR: LIVRO ABERTO"],
-      ["faisca", "Provocar, apimentar", "VALOR: FAÍSCA"],
+      ["porto-seguro", "Aquecer, sem susto"],
+      ["livro-aberto", "Ir fundo de verdade"],
+      ["faisca", "Provocar, apimentar"],
     ],
   },
 ] as const;
@@ -1050,7 +1050,7 @@ function Lp1Quiz({
               ) : null}
             </h1>
             <div className="lp1-quiz-options">
-              {current.options.map(([value, label, meta]) => (
+              {current.options.map(([value, label]) => (
                 <button
                   key={value}
                   type="button"
@@ -1061,7 +1061,6 @@ function Lp1Quiz({
                   data-testid={`button-lp1-quiz-${current.key}-${value}`}
                 >
                   <span className="lp1-quiz-option-label">{label}</span>
-                  <span className="lp1-quiz-option-value">{meta}</span>
                 </button>
               ))}
             </div>
@@ -1071,7 +1070,7 @@ function Lp1Quiz({
 
       {step < 3 && (
         <p className="lp1-quiz-footnote">
-          Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês — de
+          Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês, de
           graça.
         </p>
       )}
