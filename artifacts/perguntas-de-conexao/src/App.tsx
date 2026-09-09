@@ -1174,8 +1174,10 @@ function Lp1Offer({
 
 function Lp1Quiz({
   onFinish,
+  onBackToLanding,
 }: {
   onFinish: () => void;
+  onBackToLanding: () => void;
 }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<LandingQuizAnswers>({});
@@ -1209,19 +1211,19 @@ function Lp1Quiz({
         </div>
       ) : null}
 
-      {step > 0 && step < 3 && (
+      {step < 3 && (
         <button
           type="button"
           className="lp1-quiz-back"
           onClick={() => {
-            if (step === 3 && showOffer) {
-              setShowOffer(false);
+            if (step === 0) {
+              onBackToLanding();
               return;
             }
             setStep((previous) => Math.max(previous - 1, 0));
           }}
         >
-          ← Voltar
+          {step === 0 ? "← Voltar à LP" : "← Voltar"}
         </button>
       )}
 
@@ -4712,6 +4714,7 @@ function TrackedQuiz({
     <>
       <Lp1Quiz
         onFinish={() => checkout.startCheckout("couple")}
+        onBackToLanding={() => navigate("/")}
       />
       <CheckoutModal checkout={checkout} />
     </>
