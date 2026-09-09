@@ -1395,6 +1395,27 @@ function LandingV2Quiz({
           </p>
         </div>
       </section>
+        <div className="lp-benefit-marquee" aria-label="Destaques do baralho">
+          <div className="lp-benefit-marquee-track">
+            <div className="lp-benefit-marquee-group">
+              <span className="lp-benefit-marquee-item">459 perguntas</span>
+              <span className="lp-benefit-marquee-item">15 baralhos</span>
+              <span className="lp-benefit-marquee-item">jogo a distância</span>
+              <span className="lp-benefit-marquee-item">acesso vitalício</span>
+              <span className="lp-benefit-marquee-item">garantia 7 dias</span>
+            </div>
+            <div
+              className="lp-benefit-marquee-group"
+              aria-hidden="true"
+            >
+              <span className="lp-benefit-marquee-item">459 perguntas</span>
+              <span className="lp-benefit-marquee-item">15 baralhos</span>
+              <span className="lp-benefit-marquee-item">jogo a distância</span>
+              <span className="lp-benefit-marquee-item">acesso vitalício</span>
+              <span className="lp-benefit-marquee-item">garantia 7 dias</span>
+            </div>
+          </div>
+        </div>
       <section
         className="lp2-simple-section lp2-sei-la"
         data-section-name="sei-la"
