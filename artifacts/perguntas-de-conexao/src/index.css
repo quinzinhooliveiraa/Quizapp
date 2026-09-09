@@ -68,6 +68,130 @@
 }
 
 /* LP1 refinements */
+.lp1-quiz-screen {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  padding: 1rem clamp(1.1rem, 5vw, 4rem) 1.6rem;
+  background: #17121c;
+  color: #f7f1ef;
+}
+
+.lp1-quiz-progress {
+  display: grid;
+  width: min(100%, 560px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0 auto;
+}
+
+.lp1-quiz-progress-segment {
+  display: block;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background-color 180ms ease;
+}
+
+.lp1-quiz-progress-segment.is-active {
+  background: #d83d85;
+}
+
+.lp1-quiz-back {
+  align-self: flex-start;
+  margin: 1.1rem auto -0.8rem;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.58);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.lp1-quiz-back:hover,
+.lp1-quiz-back:focus-visible {
+  color: #f0a0c5;
+}
+
+.lp1-quiz-content {
+  width: min(100%, 560px);
+  margin: 3.2rem auto 0;
+}
+
+.lp1-quiz-title {
+  margin: 0 0 2.2rem;
+  color: #f7f1ef;
+  font-family: var(--app-font-serif);
+  font-size: clamp(2.45rem, 7vw, 4.2rem);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+}
+
+.lp1-quiz-title em {
+  color: #e5488f;
+  font-style: italic;
+}
+
+.lp1-quiz-options {
+  display: grid;
+  gap: 1rem;
+}
+
+.lp1-quiz-option {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.7rem 2rem;
+  border: 1px solid rgba(196, 172, 255, 0.18);
+  border-radius: 1.35rem;
+  background: rgba(255, 255, 255, 0.025);
+  color: #f7f1ef;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.lp1-quiz-option:hover,
+.lp1-quiz-option:focus-visible {
+  border-color: #e5488f;
+  background: rgba(229, 72, 143, 0.06);
+  transform: translateY(-1px);
+}
+
+.lp1-quiz-option-label {
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  line-height: 1.25;
+}
+
+.lp1-quiz-option-value {
+  margin-top: 0.75rem;
+  color: #94899e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.lp1-quiz-footnote {
+  width: min(100%, 560px);
+  margin: auto auto 0;
+  padding-top: 2rem;
+  color: #94899e;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.lp1-quiz-footnote,
+.lp1-quiz-footnote + * {
+  text-align: left;
+}
+
 .lp-cta-secondary-link {
   display: block;
   margin-top: 0.9rem;

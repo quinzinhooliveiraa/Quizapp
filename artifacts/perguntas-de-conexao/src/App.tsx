@@ -960,6 +960,125 @@ function LandingQuiz({
   );
 }
 
+const LP1_QUIZ_STEPS = [
+  {
+    key: "intensity",
+    title: "Quando você tenta puxar assunto de verdade,",
+    emphasis: "o que acontece?",
+    options: [
+      ["gentle", 'Ele(a) responde "sei lá" e morre ali', "VALOR: ANOS"],
+      ["honest", "A gente conversa, mas só sobre logística", "VALOR: RECONECTAR"],
+      ["deep", "A gente conversa bem — quero ir mais fundo", "VALOR: INÍCIO"],
+    ],
+  },
+  {
+    key: "stage",
+    title: "Vocês estão juntos há quanto tempo?",
+    options: [
+      ["novo", "Estamos começando", "VALOR: NOVO"],
+      ["anos", "Alguns anos", "VALOR: ANOS"],
+      ["muitos-anos", "Muitos anos", "VALOR: FIRME"],
+    ],
+  },
+  {
+    key: "theme",
+    title: "E hoje à noite, o que vocês querem?",
+    options: [
+      ["porto-seguro", "Aquecer, sem susto", "VALOR: PORTO SEGURO"],
+      ["livro-aberto", "Ir fundo de verdade", "VALOR: LIVRO ABERTO"],
+      ["faisca", "Provocar, apimentar", "VALOR: FAÍSCA"],
+    ],
+  },
+] as const;
+
+function Lp1Quiz({
+  onFinish,
+}: {
+  onFinish: () => void;
+}) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<LandingQuizAnswers>({});
+  const current = LP1_QUIZ_STEPS[step];
+
+  const handleAnswer = (key: LandingQuizAnswerKey, value: string) => {
+    setAnswers((previous) => ({ ...previous, [key]: value }));
+    setStep((previous) => Math.min(previous + 1, 3));
+  };
+
+  return (
+    <main className="lp1-quiz-screen">
+      <div
+        className="lp1-quiz-progress"
+        role="progressbar"
+        aria-label={`Progresso do quiz: pergunta ${Math.min(step + 1, 3)} de 3`}
+        aria-valuemin={1}
+        aria-valuemax={3}
+        aria-valuenow={Math.min(step + 1, 3)}
+      >
+        {LP1_QUIZ_STEPS.map((question, index) => (
+          <span
+            key={question.key}
+            className={`lp1-quiz-progress-segment ${index <= step ? "is-active" : ""}`}
+          />
+        ))}
+      </div>
+
+      {step > 0 && (
+        <button
+          type="button"
+          className="lp1-quiz-back"
+          onClick={() => setStep((previous) => Math.max(previous - 1, 0))}
+        >
+          ← Voltar
+        </button>
+      )}
+
+      <div className="lp1-quiz-content">
+        {step === 3 ? (
+          <LandingQuiz
+            onFinish={onFinish}
+            step={3}
+            answers={answers}
+            onAnswer={handleAnswer}
+          />
+        ) : (
+          <>
+            <h1 className="lp1-quiz-title">
+              {current.title}{" "}
+              {"emphasis" in current && current.emphasis ? (
+                <em>{current.emphasis}</em>
+              ) : null}
+            </h1>
+            <div className="lp1-quiz-options">
+              {current.options.map(([value, label, meta]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="lp1-quiz-option"
+                  onClick={() =>
+                    handleAnswer(current.key as LandingQuizAnswerKey, value)
+                  }
+                  data-testid={`button-lp1-quiz-${current.key}-${value}`}
+                >
+                  <span className="lp1-quiz-option-label">{label}</span>
+                  <span className="lp1-quiz-option-value">{meta}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {step < 3 && (
+        <p className="lp1-quiz-footnote">
+          Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês — de
+          graça.
+        </p>
+      )}
+    </main>
+  );
+}
+
 const CAROUSEL_ROUNDS: {
   theme: string;
   kind: "tema" | "vibe";
@@ -4413,22 +4532,16 @@ function TrackedQuiz({
 }: {
   experimentAssignment?: StoredExperimentAssignment;
 }) {
-  const trackCtaClick = useLpTracking("v2", experimentAssignment);
   const checkout = useCheckout({
     sourceLp: "v2",
-    onCtaClick: trackCtaClick,
     experimentAssignment,
   });
   const [, navigate] = useLocation();
 
   return (
     <>
-      <Lp3
-        initialScreen="question"
-        homeHref="/"
-        onBack={() => navigate("/")}
-        onCtaClick={trackCtaClick}
-        onCheckout={() => checkout.startCheckout("couple")}
+      <Lp1Quiz
+        onFinish={() => checkout.startCheckout("couple")}
       />
       <CheckoutModal checkout={checkout} />
     </>
