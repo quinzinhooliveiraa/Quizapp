@@ -3484,13 +3484,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   <strong>o acesso abre sozinho nesta tela.</strong> Não
                   precisa mandar comprovante nem esperar e-mail.
                 </p>
-                <div className="checkout-security-note">
-                  <ShieldCheck size={17} />
-                  <span>
-                    Pagamento <strong>seguro</strong>
-                    <i> · seus dados são protegidos</i>
-                  </span>
-                </div>
               </section>
             </div>
             {!(selectedPaymentMethod === "pix" && nativeCheckout) ? (
