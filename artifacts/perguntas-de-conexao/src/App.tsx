@@ -1656,16 +1656,31 @@ function LandingV2Quiz({
             <div className="lp-price-card lp1-price-card lp1-price-steps-card">
               <ol className="lp1-price-steps">
                 <li>
-                  <strong>Você paga.</strong> Pix cai na hora e o acesso abre
-                  sozinho.
+                  <span className="lp1-price-step-number" aria-hidden="true">
+                    1
+                  </span>
+                  <span className="lp1-price-step-copy">
+                    <strong>Você paga.</strong> Pix cai na hora e o acesso abre
+                    sozinho.
+                  </span>
                 </li>
                 <li>
-                  <strong>Convida ele(a).</strong> Um link. A pessoa entra sem
-                  pagar de novo.
+                  <span className="lp1-price-step-number" aria-hidden="true">
+                    2
+                  </span>
+                  <span className="lp1-price-step-copy">
+                    <strong>Convida ele(a).</strong> Um link. A pessoa entra sem
+                    pagar de novo.
+                  </span>
                 </li>
                 <li>
-                  <strong>Escolhem um baralho.</strong> Leem a primeira pergunta
-                  em voz alta. Pronto.
+                  <span className="lp1-price-step-number" aria-hidden="true">
+                    3
+                  </span>
+                  <span className="lp1-price-step-copy">
+                    <strong>Escolhem um baralho.</strong> Leem a primeira
+                    pergunta em voz alta. Pronto.
+                  </span>
                 </li>
               </ol>
             </div>

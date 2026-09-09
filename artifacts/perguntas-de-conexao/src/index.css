@@ -3479,6 +3479,11 @@
   line-height: 1.65;
   text-align: center;
 }
+.lp-main:has(.lp2-hero) .lp1-price-context {
+  margin: -0.75rem auto 1.3rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
 .lp-main:has(.lp2-hero) .lp2-intensity-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3663,18 +3668,36 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin: 0;
-  padding: 0 0 0 1.2rem;
+  padding: 0;
+  list-style: none;
 }
 .lp-main:has(.lp2-hero) .lp1-price-steps li {
-  padding-left: 0.3rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding-left: 0;
   color: #584b59;
   font-size: 0.88rem;
   line-height: 1.45;
 }
-.lp-main:has(.lp2-hero) .lp1-price-steps li::marker {
+.lp-main:has(.lp2-hero) .lp1-price-step-number {
+  display: inline-flex;
+  flex: 0 0 1.8rem;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin-top: 0.05rem;
+  border-radius: 50%;
+  background: rgba(139, 53, 83, 0.12);
   color: #8b3553;
   font-family: "Instrument Serif", Georgia, serif;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.lp-main:has(.lp2-hero) .lp1-price-step-copy {
+  display: block;
+  flex: 1;
 }
 .lp-main:has(.lp2-hero) .lp1-price-steps strong {
   display: block;
