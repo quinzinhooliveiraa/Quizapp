@@ -23289,6 +23289,19 @@ blockquote em {
   font-size: 1.35rem;
 }
 
+.checkout-payment-access-note {
+  margin: 0.15rem auto 0;
+  max-width: 34rem;
+  color: #817589;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.checkout-payment-access-note strong {
+  color: #2fa36b;
+}
+
 .checkout-security-note {
   display: flex;
   align-items: center;

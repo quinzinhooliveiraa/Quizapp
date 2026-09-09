@@ -3479,6 +3479,11 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     </div>
                   </div>
                 </div>
+                <p className="checkout-payment-access-note">
+                  Assim que o pagamento cair,{" "}
+                  <strong>o acesso abre sozinho nesta tela.</strong> Não
+                  precisa mandar comprovante nem esperar e-mail.
+                </p>
                 <div className="checkout-security-note">
                   <ShieldCheck size={17} />
                   <span>
