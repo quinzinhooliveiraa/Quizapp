@@ -1110,7 +1110,7 @@ function QuestionCarouselSection() {
   );
 }
 
-function TestimonialCarousel() {
+function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "default" }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -1142,7 +1142,10 @@ function TestimonialCarousel() {
   };
 
   return (
-    <section className="lp-social">
+    <section
+      className="lp-social"
+      data-section-name={variant === "lp1" ? "depoimentos" : undefined}
+    >
       <div className="lp-container">
         <p className="lp-eyebrow lp-eyebrow-center">o que dizem</p>
         <h2 className="lp-h2">
@@ -1168,9 +1171,11 @@ function TestimonialCarousel() {
             className="lp-testimonial lp-testimonial-active"
             aria-live="polite"
           >
-            <div className="lp-testimonial-stars" aria-label="5 de 5 estrelas">
-              ★★★★★
-            </div>
+            {variant !== "lp1" ? (
+              <div className="lp-testimonial-stars" aria-label="5 de 5 estrelas">
+                ★★★★★
+              </div>
+            ) : null}
             <p
               id="active-testimonial-quote"
               className={`lp-testimonial-quote ${isExpanded ? "is-expanded" : ""}`}
@@ -1313,17 +1318,15 @@ function LandingV2Quiz({
               baralho digital de perguntas · para casais
             </span>
             <h1 className="lp-hero-h1">
-              Descubra perguntas para{" "}
-              <span className="lp-hl-salmon">reacender a chama</span> do seu
-              relacionamento e se{" "}
-              <span className="lp-hl-lilac">reaproximar</span> do seu parceiro
-              em uma noite
+              Você quer a conversa.
+              <br />
+              Ele responde{" "}
+              <span className="lp2-hero-emphasis">"sei lá"</span>.
             </h1>
             <p className="lp-hero-sub">
-              Tenha acesso a perguntas de conexão que abrem conversa de verdade
-              entre você e seu parceiro.{" "}
-              <strong>Pare de ter conversas monótonas</strong> e reaproxime-se
-              da pessoa que você ama.
+              459 perguntas escritas pra tirar a conversa do automático. Vocês
+              abrem uma carta, leem em voz alta e escutam. O resto acontece
+              entre vocês.
             </p>
           </div>
           <div
@@ -1358,20 +1361,52 @@ function LandingV2Quiz({
             className="lp-cta-primary lp-cta-big lp2-hero-cta"
             data-testid="button-hero-cta-v2"
           >
-            Começar hoje à noite <ArrowRight size={18} />
+            Fazer o teste grátis de 1 minuto <ArrowRight size={18} />
           </button>
           <button
             type="button"
-            onClick={() =>
-              document
-                .getElementById("lp2-quiz")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
+            onClick={onHeroBuy}
             className="lp-cta-secondary-link"
             data-testid="link-hero-quiz"
           >
-            Prefere ver um exemplo antes? Responda 3 perguntas rápidas →
+            Já sei o que quero — comprar agora →
           </button>
+          <p className="lp2-hero-security">
+            🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo.
+          </p>
+        </div>
+      </section>
+      <section
+        className="lp2-simple-section lp2-sei-la"
+        data-section-name="sei-la"
+      >
+        <div className="lp-container lp2-narrow">
+          <p className="lp-eyebrow lp-eyebrow-center">
+            a pergunta que todo mundo faz
+          </p>
+          <h2 className="lp-h2">
+            E se ele responder <em>"sei lá"</em>?
+          </h2>
+          <p className="lp2-section-lede">
+            É o medo de todo mundo — e é por isso que o baralho começa leve.
+            Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
+            de responder até pra quem trava. A profundidade vem depois, quando
+            os dois já estão dentro da conversa.
+          </p>
+          <div className="lp2-intensity-grid">
+            <div className="lp2-intensity-card">
+              <span>Leve · gentle</span>
+              <p>Que talento inútil você tem orgulho secreto de ter?</p>
+            </div>
+            <div className="lp2-intensity-card">
+              <span>Honesta · honest</span>
+              <p>Tem algo que você precisa e ainda não pediu?</p>
+            </div>
+            <div className="lp2-intensity-card">
+              <span>Profunda · deep</span>
+              <p>Que peso você carrega que nunca dividiu com ninguém?</p>
+            </div>
+          </div>
         </div>
       </section>
       <section className="lp2-story" data-section-name="historia">
@@ -1379,52 +1414,73 @@ function LandingV2Quiz({
           <p className="lp-eyebrow">a real sobre o que acontece</p>
           <div className="lp2-story-body">
             <p className="lp2-story-lead">
-              Ninguém acorda um dia e decide se afastar da pessoa que ama.
+              <strong>Você já tentou.</strong>
             </p>
             <p>
-              Acontece devagar. Um mês corrido no trabalho. Uma briga que ficou
-              sem resolver. Uma semana em que vocês mal se cruzaram. E, sem
-              perceber, vocês trocaram as conversas que faziam vocês{" "}
-              <strong>se conhecerem</strong> por conversas que só existem porque
-              viraram rotina.
+              Você escolheu a hora, criou coragem e disse: "vamos conversar."
             </p>
             <p>
-              "Foi na academia?" "Que horas você chega?" "Tô indo trabalhar."
-            </p>
-            <p>
-              Até que chega uma fase em que vocês percebem que não sobrou tempo
-              pra vocês mesmos. Sobra pro trabalho, pro celular, pra todo mundo
-              — menos pros dois. E quando finalmente sobra, cada um vai pro
-              próprio mundo: no mesmo sofá ou a quilômetros de distância. Não
-              tem briga. Não tem grito. Só um silêncio que ninguém tem coragem
-              de nomear.
+              E veio o <strong>"sei lá"</strong>. Ou o "sobre o quê?". Ou o
+              "tá tudo bem, por quê?". Ou o silêncio de quem não entendeu que
+              era pra ser sério.
             </p>
             <div className="lp2-story-pull">
-              "Eu amo essa pessoa. Então por que a gente não tem mais nada pra
-              conversar?"
+              "Nem precisei ler pra saber que a resposta dele pra todas seria:
+              não sei."
             </div>
             <p>
-              E quando você finalmente cria coragem e diz{" "}
-              <strong>"vamos conversar"</strong>, sabe o que costuma acontecer?{" "}
-              <strong>Você não tem assunto.</strong> A outra pessoa trava,
-              responde seco — e vocês voltam ao silêncio. Só que agora a
-              sensação fica pior do que antes.
+              Aí você desiste um pouco. Da próxima vez você já não tenta,
+              porque sabe como termina. E o silêncio deixa de ser uma noite ruim
+              e vira o normal de vocês.
             </p>
             <p>
-              O problema não é falta de amor.{" "}
-              <strong>O problema é a pergunta.</strong>
+              <strong>Só que ele não estava fugindo de você.</strong>
             </p>
             <p>
-              "Vamos conversar" não é uma pergunta — é uma cobrança. Ela pede
-              que o outro traga alguma coisa sem dizer o quê. Já{" "}
-              <em>
-                "você se arrepende de algo sobre a nossa história até aqui?"
-              </em>{" "}
-              é diferente. Ela é específica. Ela já chega com o assunto pronto,
-              então ninguém precisa inventar por onde começar. E ela abre uma
-              porta que os dois queriam abrir há meses, sem saber como.
+              "Vamos conversar" não é uma pergunta — <strong>é uma cobrança</strong>.
+              Ela pede que o outro traga alguma coisa sem dizer o quê. Ninguém
+              sabe responder isso. Nem você saberia, se ele perguntasse primeiro.
+            </p>
+            <p>Agora repara na diferença:</p>
+            <p className="lp2-story-example">
+              <em>"Você se arrepende de algo sobre a nossa história até aqui?"</em>
+            </p>
+            <p>
+              Essa tem resposta. Ela chega com o assunto pronto, ninguém precisa
+              inventar por onde começar, e ela abre uma porta que os dois
+              queriam abrir há meses.
+            </p>
+            <p>
+              <strong>O problema nunca foi ele. Era a pergunta.</strong>
             </p>
             <p>É exatamente isso que a gente construiu.</p>
+          </div>
+        </div>
+      </section>
+      <section
+        className="lp2-comparison-section"
+        data-section-name="comparativo"
+      >
+        <div className="lp-container">
+          <p className="lp-eyebrow lp-eyebrow-center">a diferença</p>
+          <h2 className="lp-h2">
+            O que muda <em>numa noite.</em>
+          </h2>
+          <div className="lp2-comparison">
+            <div className="lp2-comparison-column lp2-comparison-without">
+              <h3>Hoje à noite, sem nada</h3>
+              <p>"E aí, como foi o dia?" — "Normal."</p>
+              <p>Cada um rolando o próprio celular</p>
+              <p>Você tenta e vem o "sei lá"</p>
+              <p>Amanhã é igual</p>
+            </div>
+            <div className="lp2-comparison-column lp2-comparison-with">
+              <h3>Hoje à noite, com o baralho</h3>
+              <p>Uma pergunta que ele nunca ouviu antes</p>
+              <p>Um celular só, entre os dois</p>
+              <p>A pergunta já chega com o assunto pronto</p>
+              <p>Amanhã tem mais 458</p>
+            </div>
           </div>
         </div>
       </section>
@@ -1445,7 +1501,7 @@ function LandingV2Quiz({
             em voz alta e escutam. Separem 10 minutos e vejam onde a conversa
             vai.
           </p>
-          <div className="lp-solution-pillars">
+          <div className="lp-solution-pillars lp1-two-pillars">
             <div className="lp-pillar">
               <div className="lp-pillar-icon">
                 <Timer aria-hidden="true" size={30} strokeWidth={1.6} />
@@ -1458,17 +1514,6 @@ function LandingV2Quiz({
             </div>
             <div className="lp-pillar">
               <div className="lp-pillar-icon">
-                <MonitorSmartphone
-                  aria-hidden="true"
-                  size={30}
-                  strokeWidth={1.6}
-                />
-              </div>
-              <strong>Celular ou computador</strong>
-              <p>Abre no navegador, sem instalar nada, em qualquer aparelho.</p>
-            </div>
-            <div className="lp-pillar">
-              <div className="lp-pillar-icon">
                 <HeartHandshake
                   aria-hidden="true"
                   size={30}
@@ -1478,7 +1523,7 @@ function LandingV2Quiz({
               <strong>Não precisam estar juntos</strong>
               <p>
                 Namoro à distância, viagem a trabalho ou cada um no seu quarto:
-                a sala online deixa vocês na mesma pergunta, ao mesmo tempo.
+                <strong> respondam juntos, cada um no seu celular.</strong>
               </p>
             </div>
           </div>
@@ -1555,41 +1600,7 @@ function LandingV2Quiz({
           </p>
         </div>
       </section>
-      <section
-        className="lp-how"
-        id="lp2-como-funciona"
-        data-section-name="como-funciona"
-      >
-        <div className="lp-container">
-          <p className="lp-eyebrow lp-eyebrow-center">como funciona</p>
-          <h2 className="lp-h2">
-            Três passos. <em>Uma conversa que começa.</em>
-          </h2>
-          <div className="lp-how-steps">
-            <div className="lp-how-step">
-              <span className="lp-how-num">01</span>
-              <strong>Escolham um baralho</strong>
-              <p>
-                15 temas fixos + o bônus do dia, montado pelo que vocês estão
-                sentindo.
-              </p>
-            </div>
-            <div className="lp-how-step">
-              <span className="lp-how-num">02</span>
-              <strong>Abram uma carta</strong>
-              <p>
-                Leiam em voz alta, sem pressa, e vejam o que a pergunta traz.
-              </p>
-            </div>
-            <div className="lp-how-step">
-              <span className="lp-how-num">03</span>
-              <strong>Conversem de verdade</strong>
-              <p>Uma pergunta por vez. Vocês decidem até onde ir.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <TestimonialCarousel />
+      <TestimonialCarousel variant="lp1" />
       <section className="lp-price" id="lp2-precos" data-section-name="precos">
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">acesso vitalício</p>
@@ -1598,12 +1609,12 @@ function LandingV2Quiz({
             <br />
             <em>pode ser hoje à noite.</em>
           </h2>
-          <div className="lp-price-card">
-            <div className="lp-price-badge">Oferta de lançamento</div>
+          <div className="lp-price-card lp1-price-card">
+            <p className="lp1-price-anchor">
+              459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil
+              vezes
+            </p>
             <div className="lp-price-main">
-              <span className="lp-price-old">
-                De <s>R$ 97,00</s>
-              </span>
               <div className="lp-price-value">
                 <span className="lp-price-currency">R$</span>
                 <span className="lp-price-big">47</span>
@@ -1613,9 +1624,23 @@ function LandingV2Quiz({
                 à vista <strong>ou</strong> 5x de R$ 9,58
               </span>
             </div>
-              <p className="lp-price-time">
-                459 perguntas. Uma por noite, dá mais de um ano de conversa.
-              </p>
+            <p className="lp-price-time">
+              459 perguntas. Uma por noite, dá mais de um ano de conversa.
+            </p>
+            <ol className="lp1-price-steps">
+              <li>
+                <strong>Você paga.</strong> Pix cai na hora e o acesso abre
+                sozinho.
+              </li>
+              <li>
+                <strong>Convida ele(a).</strong> Um link. A pessoa entra sem
+                pagar de novo.
+              </li>
+              <li>
+                <strong>Escolhem um baralho.</strong> Leem a primeira pergunta
+                em voz alta. Pronto.
+              </li>
+            </ol>
             <ul className="lp-price-includes">
               <li>✓ 459 perguntas em 15 baralhos + o bônus do dia</li>
               <li>✓ Baralho personalizado do dia, sempre novo</li>
@@ -1639,7 +1664,7 @@ function LandingV2Quiz({
                 <strong>Garantia incondicional de 7 dias.</strong>
                 <p>
                   Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
-                  sem perguntas.
+                  sem perguntas — e você decide.
                 </p>
               </div>
             </div>
@@ -1649,9 +1674,17 @@ function LandingV2Quiz({
       <section className="lp-faq" id="lp2-faq" data-section-name="faq">
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">dúvidas frequentes</p>
-          <h2 className="lp-h2">Ainda em dúvida?</h2>
+          <h2 className="lp-h2">Antes que você pergunte</h2>
           <div className="lp-faq-list">
             {[
+              [
+                "Isso substitui terapia de casal?",
+                "Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos — não substitui acompanhamento se a relação precisa. Mas pra sair do piloto automático, resolve hoje à noite.",
+              ],
+              [
+                'Por que não só "vamos conversar"?',
+                'Porque "vamos conversar" trava — ninguém sabe por onde começar. O baralho já traz a pergunta certa, na ordem certa, do leve ao profundo.',
+              ],
               [
                 "Precisa instalar algum aplicativo?",
                 "Não. É 100% online, roda no navegador do celular ou do computador.",
@@ -1688,9 +1721,6 @@ function LandingV2Quiz({
             <br />
             <em>Só de uma pergunta pra recomeçar.</em>
           </h2>
-          <p>
-            Comece hoje por R$ 47,90, com acesso vitalício e 7 dias de garantia.
-          </p>
           <button
             onClick={onBuy}
             className="lp-cta-primary lp-cta-big"

@@ -1,0 +1,297 @@
+# Prompt 54 — A reescrita da LP1
+
+Mexe **só** no componente `LandingV2Quiz` em `App.tsx` (rota `/lp1`) e no
+`index.css`. **Não encoste na LP3.** A LP2 foi cancelada — não mexa nela também,
+ela fica no ar como está.
+
+Aplique **depois** dos prompts 50 e 51.
+
+---
+
+## A nova ordem das seções
+
+| # | `data-section-name` | Ação |
+|---|---|---|
+| 1 | `hero` | reescrever |
+| 2 | `sei-la` | **criar** |
+| 3 | `quiz` | **mover para cá** (hoje é a 4ª) |
+| 4 | `historia` | **reescrever inteira** |
+| 5 | `comparativo` | **criar** |
+| 6 | `proposta` | reduzir para 2 pilares |
+| 7 | `pacotes` | vira carrossel (prompt 55) |
+| — | `como-funciona` | **apagar a seção** |
+| 8 | `depoimentos` | tirar estrelas, ganhar nome de seção |
+| 9 | `precos` | ajustes |
+| 10 | `faq` | novo título + 2 perguntas |
+| 11 | `final` | encolher |
+
+**Não renomeie** os `data-section-name` que já existem — o histórico do painel
+quebra. Só `sei-la` e `comparativo` são nomes novos.
+
+---
+
+## Para onde cada botão leva
+
+| Onde | Destino |
+|---|---|
+| Hero, botão principal | rola até `#lp2-quiz` |
+| Hero, link secundário | **`onHeroBuy()`** — checkout direto |
+| Resultado do quiz | checkout |
+| Modal do baralho | checkout |
+| Oferta e CTA final | checkout |
+
+Um botão só da página inteira vai pro quiz. O resto vai pro checkout.
+
+---
+
+## 1. `hero`
+
+```
+eyebrow:  baralho digital de perguntas · para casais
+
+H1:       Você quer a conversa.
+          Ele responde "sei lá".
+
+sub:      459 perguntas escritas pra tirar a conversa do automático. Vocês
+          abrem uma carta, leem em voz alta e escutam. O resto acontece
+          entre vocês.
+
+botão:    Fazer o teste grátis de 1 minuto
+link:     Já sei o que quero — comprar agora →
+
+confiança: 🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo.
+```
+
+**"sei lá" tem que estar em corpo maior** que o resto do H1 — palavras
+emocionais em fonte maior intensificam o impacto e puxam atenção pro bloco.
+
+O link secundário é **texto sublinhado discreto**, nunca um segundo botão. Ele
+chama `onHeroBuy()`, que já existe como prop e já está ligada ao checkout.
+
+Os mockups ficam, mas garanta que não cobrem o subtítulo (prompt 48).
+
+---
+
+## 2. `sei-la` — nova, logo abaixo do hero
+
+```
+eyebrow:  a pergunta que todo mundo faz
+H2:       E se ele responder "sei lá"?
+
+texto:    É o medo de todo mundo — e é por isso que o baralho começa leve.
+          Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
+          de responder até pra quem trava. A profundidade vem depois, quando
+          os dois já estão dentro da conversa.
+```
+
+Três cartões lado a lado (empilhados no celular):
+
+| Etiqueta | Pergunta |
+|---|---|
+| Leve | Que talento inútil você tem orgulho secreto de ter? |
+| Honesta | Tem algo que você precisa e ainda não pediu? |
+| Profunda | Que peso você carrega que nunca dividiu com ninguém? |
+
+As três etiquetas são as intensidades reais do produto (`gentle`, `honest`,
+`deep`). Não invente uma quarta.
+
+---
+
+## 3. `quiz` — só mudar de lugar
+
+A seção inteira sobe: passa a vir logo depois do `sei-la`. **Não mexa no
+conteúdo dela aqui** — isso é o prompt 51.
+
+Uma coisa só de texto: `"Responda 3 perguntinhas"` vira
+**`"Responda 3 perguntas rápidas"`**. O diminutivo desvaloriza justo aquilo que
+você vende.
+
+---
+
+## 4. `historia` — reescrever inteira
+
+O conteúdo atual sai **todo**. Ele foi escrito antes da análise dos
+comentários e está numa dor diferente: ele fala de um casal que se afastou
+junto, e o público fala de **uma pessoa que tenta e não é correspondida**.
+
+Texto novo:
+
+```
+eyebrow:  a real sobre o que acontece
+```
+
+> **Você já tentou.**
+>
+> Você escolheu a hora, criou coragem e disse: "vamos conversar."
+>
+> E veio o **"sei lá"**.
+>
+> Ou o "sobre o quê?". Ou o "tá tudo bem, por quê?". Ou o silêncio de quem não
+> entendeu que era pra ser sério.
+>
+> *"Nem precisei ler pra saber que a resposta dele pra todas seria: não sei."*
+>
+> Aí você desiste um pouco. Da próxima vez você já não tenta, porque sabe como
+> termina. E o silêncio deixa de ser uma noite ruim e vira o normal de vocês.
+>
+> **Só que ele não estava fugindo de você.**
+>
+> "Vamos conversar" não é uma pergunta — **é uma cobrança**. Ela pede que o
+> outro traga alguma coisa sem dizer o quê. Ninguém sabe responder isso. Nem
+> você saberia, se ele perguntasse primeiro.
+>
+> Agora repara na diferença:
+>
+> *"Você se arrepende de algo sobre a nossa história até aqui?"*
+>
+> Essa tem resposta. Ela chega com o assunto pronto, ninguém precisa inventar
+> por onde começar, e ela abre uma porta que os dois queriam abrir há meses.
+>
+> **O problema nunca foi ele. Era a pergunta.**
+>
+> É exatamente isso que a gente construiu.
+
+Formatação: a linha em itálico entre aspas (`"Nem precisei ler..."`) é uma
+**citação real de comentário** — trate como citação, com o mesmo destaque
+visual que o `lp2-story-pull` tem hoje. A pergunta de exemplo também em
+itálico, mas em estilo diferente da citação, pra não confundir as duas.
+
+Parágrafos curtos, bastante respiro entre eles. Esse bloco tinha 1.220px; o
+novo deve ficar em torno de 600px.
+
+---
+
+## 5. `comparativo` — nova, entre `historia` e `proposta`
+
+```
+eyebrow:  a diferença
+H2:       O que muda numa noite.
+```
+
+Duas colunas lado a lado. **No celular continuam duas colunas**, mais
+estreitas — não vire uma lista.
+
+| Hoje à noite, sem nada | Hoje à noite, com o baralho |
+|---|---|
+| "E aí, como foi o dia?" — "Normal." | Uma pergunta que ele nunca ouviu antes |
+| Cada um rolando o próprio celular | Um celular só, entre os dois |
+| Você tenta e vem o "sei lá" | A pergunta já chega com o assunto pronto |
+| Amanhã é igual | Amanhã tem mais 458 |
+
+---
+
+## 6. `proposta` — de 3 pilares para 2
+
+**Apague o pilar do meio**, "Celular ou computador — abre no navegador, sem
+instalar nada". Ninguém tem essa objeção para produto web hoje, e **o FAQ já
+responde exatamente isso** ("Precisa instalar algum aplicativo?"). É duplicata
+dentro da mesma página.
+
+Ficam dois:
+
+- **10 minutos por noite** — texto atual, sem mudança
+- **Não precisam estar juntos** — o texto muda para:
+  > Namoro à distância, viagem a trabalho ou cada um no seu quarto:
+  > **respondam juntos, cada um no seu celular.**
+
+  ("sala online sincronizada" sai — ninguém fala assim; essa é a frase que o
+  público usa nos comentários.)
+
+E o lede: `445+ perguntas` → **`459 perguntas`**.
+
+---
+
+## 7. `como-funciona` — apagar a seção inteira
+
+Os três passos migram para a oferta, reescritos pro momento da compra:
+
+```
+1.  Você paga. Pix cai na hora e o acesso abre sozinho.
+2.  Convida ele(a). Um link. A pessoa entra sem pagar de novo.
+3.  Escolhem um baralho. Leem a primeira pergunta em voz alta. Pronto.
+```
+
+---
+
+## 8. `depoimentos` (o `TestimonialCarousel`)
+
+1. **Apague as cinco estrelas `★★★★★`.** Elas são texto fixo, iguais nos sete
+   depoimentos, e não existe campo de nota em `lib/testimonials.ts`.
+   Representam uma avaliação que ninguém deu.
+2. Adicione `data-section-name="depoimentos"` na `<section className="lp-social">`.
+3. Dê mais respiro à seção — mais altura por depoimento, texto maior. É o único
+   bloco da página escrito por outra pessoa que não você.
+
+Não mexa nos textos dos depoimentos.
+
+---
+
+## 9. `precos`
+
+- **Apague** o bloco `De ~~R$ 97,00~~` (`lp-price-old`).
+- No lugar, uma linha de ancoragem acima do preço:
+  > 459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil vezes
+- **Entram os 3 passos** da parte 7, antes da lista de inclusos.
+- Lista de inclusos: `445+ perguntas em 16 baralhos temáticos` vira
+  **`459 perguntas em 15 baralhos + o bônus do dia`**.
+- Depois do preço, a linha de tempo:
+  > **459 perguntas. Uma por noite, dá mais de um ano de conversa.**
+- No fecho da garantia, acrescente **"e você decide"**.
+- O card desta seção fica **claro** sobre a página escura.
+
+---
+
+## 10. `faq`
+
+Título: `Ainda em dúvida?` → **`Antes que você pergunte`**.
+
+As cinco atuais ficam. Entram duas, **no começo da lista**:
+
+```
+Isso substitui terapia de casal?
+Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos — não
+substitui acompanhamento se a relação precisa. Mas pra sair do piloto
+automático, resolve hoje à noite.
+
+Por que não só "vamos conversar"?
+Porque "vamos conversar" trava — ninguém sabe por onde começar. O baralho já
+traz a pergunta certa, na ordem certa, do leve ao profundo.
+```
+
+---
+
+## 11. `final` — encolher
+
+Fica o título (*"Vocês não precisam se afastar mais. Só de uma pergunta pra
+recomeçar."*) e o botão.
+
+**Sai** a linha "Comece hoje por R$ 47,90, com acesso vitalício e 7 dias de
+garantia" — a oferta disse isso tudo 1.300px antes.
+
+---
+
+## Regras da página inteira
+
+1. **Nenhum "445+" e nenhum "16 baralhos" pode sobrar.** São 459 e 15 + bônus.
+2. Nada de "talvez", "pode ser", "não é?".
+3. Máximo 3 palavras em CAIXA ALTA na página toda.
+4. Não invente prova social, nota, estrela ou escassez.
+5. Todos os CTAs de compra dizem **"Começar hoje à noite"** — menos o do modal
+   do baralho, que continua "Quero esse baralho".
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Abra `/lp3` e confirme que **não mudou**.
+3. Percorra `/lp1` no celular. Ordem: hero → "sei lá" → quiz → história →
+   comparativo → proposta → baralhos → depoimentos → oferta → FAQ → final.
+4. A seção "como funciona" **sumiu**, e os 3 passos aparecem uma vez só, dentro
+   da oferta.
+5. Toque no link "Já sei o que quero" do hero: **abre o checkout direto**.
+6. Procure na página por `445`, `16 baralhos`, `★` e `R$ 97` — nenhum pode
+   aparecer.
+7. Meça a altura total (`document.body.scrollHeight`). Era 9.350px. Tem que ter
+   caído bastante — me diga quanto deu.
+8. Deploy.
