@@ -3673,6 +3673,100 @@
   padding-top: 3.5rem;
   padding-bottom: 4.5rem;
 }
+.lp-main:has(.lp2-hero) .lp-themes-carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 84%);
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto 1.4rem;
+  overflow-x: auto;
+  padding: 0.2rem 0.1rem 0.85rem;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+.lp-main:has(.lp2-hero) .lp-themes-carousel::-webkit-scrollbar {
+  display: none;
+}
+.lp-main:has(.lp2-hero) .lp-themes-carousel > * {
+  scroll-snap-align: start;
+}
+.lp-main:has(.lp2-hero) .lp-themes-scroll-hint {
+  margin: -0.6rem auto 1.2rem;
+  color: rgba(255, 197, 158, 0.78);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.lp-main:has(.lp2-hero) .lp-themes-carousel .lp-theme-card {
+  position: relative;
+  min-height: 19rem;
+  padding: 0;
+  overflow: hidden;
+  isolation: isolate;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #24183e;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-photo,
+.lp-main:has(.lp2-hero) .lp-theme-card-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-photo {
+  z-index: -2;
+  object-fit: cover;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-shade {
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.42) 40%,
+    rgba(0, 0, 0, 0.78) 100%
+  );
+  pointer-events: none;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 1.35rem;
+  text-align: left;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-body strong {
+  color: #fff;
+  font-size: 1.08rem;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-body p {
+  flex: 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card-body > span {
+  color: #ffd0b5;
+  font-size: 0.72rem;
+}
+.lp-main:has(.lp2-hero) .lp-theme-card:hover {
+  background: #24183e;
+}
+.lp-main:has(.lp2-hero) .lp-theme-bonus {
+  background:
+    radial-gradient(circle at 75% 20%, rgba(255, 197, 158, 0.25), transparent 42%),
+    linear-gradient(145deg, #4c3299, #2b1a5c);
+}
+.lp-main:has(.lp2-hero) .lp-theme-bonus .lp-theme-card-body {
+  padding-top: 3.4rem;
+}
 @media (max-width: 900px) {
   .lp-main:has(.lp2-hero) .lp2-intensity-grid {
     grid-template-columns: 1fr;
@@ -3718,6 +3812,11 @@
   .lp-main:has(.lp2-hero) .lp-final-cta {
     padding-top: 2.8rem;
     padding-bottom: 3.5rem;
+  }
+}
+@media (min-width: 700px) {
+  .lp-main:has(.lp2-hero) .lp-themes-carousel {
+    grid-auto-columns: minmax(17rem, 31%);
   }
 }
 

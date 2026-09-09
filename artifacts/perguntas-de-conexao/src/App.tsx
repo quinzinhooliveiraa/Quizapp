@@ -1257,6 +1257,11 @@ function LandingV2Quiz({
 }) {
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
   const [showStickyCta, setShowStickyCta] = useState(true);
+  const themePointerRef = useRef<{
+    x: number;
+    y: number;
+    dragged: boolean;
+  } | null>(null);
   const themes: Array<[string, string, string, string]> = [
     ["Porto Seguro", "As conversas que parecem casa.", "31 cartas", "porto-seguro"],
     ["Livro Aberto", "Sem filtro, cara a cara.", "31 cartas", "livro-aberto"],
@@ -1274,6 +1279,32 @@ function LandingV2Quiz({
     ["Mesmo Longe", "Quando rotina ou distância afastam.", "30 cartas", "mesmo-longe"],
     ["Perto de Novo", "Esquentar o espaço entre vocês.", "30 cartas", "perto-de-novo"],
   ];
+  const handleThemePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    themePointerRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      dragged: false,
+    };
+  };
+  const handleThemePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const pointer = themePointerRef.current;
+    if (!pointer || pointer.dragged) return;
+    if (
+      Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) >= 8
+    ) {
+      pointer.dragged = true;
+    }
+  };
+  const openThemePeek = (themeId: string) => {
+    if (themePointerRef.current?.dragged) {
+      themePointerRef.current = null;
+      return;
+    }
+    themePointerRef.current = null;
+    setPeekThemeId(themeId);
+    onThemePeek(themeId);
+  };
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
@@ -1567,31 +1598,51 @@ function LandingV2Quiz({
             <br />
             <em>para escolher o assunto da noite.</em>
           </h2>
-          <div className="lp-themes-grid">
+          <p className="lp-themes-scroll-hint" aria-hidden="true">
+            Deslize para ver todos os baralhos →
+          </p>
+          <div
+            className="lp-themes-carousel"
+            aria-label="Baralhos disponíveis"
+            onPointerDown={handleThemePointerDown}
+            onPointerMove={handleThemePointerMove}
+          >
             {themes.map(([name, description, count, themeId], index) => (
               <button
                 key={name}
                 type="button"
                 className={`lp-theme-card ${index > 8 ? "lp-theme-vibe" : ""}`}
-                onClick={() => {
-                  setPeekThemeId(themeId);
-                  onThemePeek(themeId);
-                }}
+                onClick={() => openThemePeek(themeId)}
                 data-testid={`button-lp-theme-${themeId}`}
               >
-                <strong>{name}</strong>
-                <p>{description}</p>
-                <span>{count}</span>
+                <img
+                  className="lp-theme-card-photo"
+                  src={themeBackgroundUrl(themeId) ?? ""}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  width="736"
+                  height="920"
+                />
+                <span className="lp-theme-card-shade" aria-hidden="true" />
+                <span className="lp-theme-card-body">
+                  <strong>{name}</strong>
+                  <p>{description}</p>
+                  <span>{count}</span>
+                </span>
               </button>
             ))}
             <div className="lp-theme-card lp-theme-bonus">
               <span className="lp-theme-bonus-badge">bônus</span>
-              <strong>Baralho do Dia</strong>
-              <p>
-                Um baralho montado na hora, de acordo com o que vocês estão
-                sentindo hoje.
-              </p>
-              <span>todo dia um novo</span>
+              <span className="lp-theme-card-body">
+                <strong>Baralho do Dia</strong>
+                <p>
+                  Um baralho montado na hora, de acordo com o que vocês estão
+                  sentindo hoje.
+                </p>
+                <span>todo dia um novo</span>
+              </span>
             </div>
           </div>
           <p className="lp-themes-note">

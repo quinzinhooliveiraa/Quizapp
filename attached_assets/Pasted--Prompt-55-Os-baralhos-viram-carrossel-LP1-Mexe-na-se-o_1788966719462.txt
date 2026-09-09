@@ -1,0 +1,122 @@
+# Prompt 55 — Os baralhos viram carrossel (LP1)
+
+Mexe na seção `pacotes` do `LandingV2Quiz` em `App.tsx` e no `index.css`.
+Pode aplicar antes ou depois do 54 — é independente.
+
+## Por que
+
+Hoje a grade dos 16 baralhos tem **2.321px** — é **um quarto da página
+inteira**, maior que a história, o quiz e o preço somados. E é rolagem em nomes,
+que é atrito puro.
+
+O carrossel horizontal já existe e funciona no projeto: é o
+`RecommendedThemeCarousel` da LP3, com `scroll-snap` nativo, que desliza no
+celular sem precisar de seta. Nas gravações ele se mostrou o formato mais
+efetivo.
+
+Isso leva a seção de **2.321px para ~700px**.
+
+---
+
+## O que fazer
+
+**1.** Troque a `<div className="lp-themes-grid">` por um carrossel horizontal
+com o mesmo CSS que a LP3 usa:
+
+```css
+.lp-themes-carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 84%);
+  gap: 0.85rem;
+  width: 100%;
+  overflow-x: auto;
+  padding: 0.2rem 0.1rem 0.85rem;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+.lp-themes-carousel::-webkit-scrollbar { display: none; }
+.lp-themes-carousel > * { scroll-snap-align: start; }
+
+@media (min-width: 700px) {
+  .lp-themes-carousel { grid-auto-columns: minmax(17rem, 31%); }
+}
+```
+
+**2.** Cada card ganha **foto de fundo**. As 15 fotos já existem em
+`public/theme-backgrounds/`. O card vira:
+
+```tsx
+<button
+  key={name}
+  type="button"
+  className={`lp-theme-card ${index > 8 ? "lp-theme-vibe" : ""}`}
+  onClick={() => { setPeekThemeId(themeId); onThemePeek(themeId); }}
+  data-testid={`button-lp-theme-${themeId}`}
+>
+  <img
+    className="lp-theme-card-photo"
+    src={`/theme-backgrounds/${themeId}.jpg`}
+    alt=""
+    aria-hidden="true"
+    loading="lazy"
+    decoding="async"
+    width="736"
+    height="920"
+  />
+  <span className="lp-theme-card-shade" aria-hidden="true" />
+  <span className="lp-theme-card-body">
+    <strong>{name}</strong>
+    <p>{description}</p>
+    <span>{count}</span>
+  </span>
+</button>
+```
+
+Três coisas obrigatórias, não são detalhe:
+
+- **`loading="lazy"`** — 15 fotos abaixo da dobra não podem entrar no
+  carregamento inicial.
+- **`width` e `height` explícitos** — sem eles o card muda de altura quando a
+  foto chega, e isso conta como deslocamento de layout na medição do Clarity.
+- **A `.lp-theme-card-shade`** tem que ser escura o bastante para o nome do
+  baralho continuar legível em cima de **qualquer** uma das 15 fotos, inclusive
+  as claras. Um degradê de `rgba(0,0,0,.15)` no topo para `rgba(0,0,0,.78)`
+  embaixo resolve. **Olhe Viagens e Modo Leve** — são as duas mais claras.
+
+**3.** O card bônus "Baralho do Dia" continua no carrossel, como último item,
+sem foto.
+
+**4.** O rodapé da seção: `445+ perguntas no total` vira
+**`459 perguntas no total`**.
+
+**5.** Como o carrossel esconde o que não está na tela, acrescente uma pista de
+que dá pra deslizar — um fade na borda direita, ou o próximo card aparecendo
+cortado (o `84%` de largura já faz isso). Sem pista, quem não desliza vê dois
+baralhos e acha que são só dois.
+
+---
+
+## O que NÃO muda
+
+- O clique continua abrindo o `ThemePeekDialog` (prompt 38).
+- O tracking `onThemePeek(themeId)` continua — é ele que vai te dizer, em uma
+  semana, quais baralhos as pessoas mais abrem.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. No celular, deslize o carrossel de ponta a ponta: os 16 cards têm que
+   aparecer, todos com foto (menos o bônus).
+3. **Olhe o texto em cima das fotos claras** — Viagens e Modo Leve. Se não
+   estiver legível, escureça mais o degradê.
+4. Toque num card: o modal abre.
+5. **Arrastar não pode abrir o modal.** Se abrir, aplique a mesma trava de 8px
+   que o carrossel da LP3 já usa.
+6. Confirme que a página **não ficou mais lenta** — as fotos são lazy.
+7. Meça a altura da seção. Era 2.321px; me diga quanto ficou.
+8. Deploy.
