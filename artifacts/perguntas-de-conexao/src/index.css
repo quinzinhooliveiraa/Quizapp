@@ -9380,9 +9380,6 @@ blockquote em {
     flex-shrink: 0;
     font-size: 9px;
   }
-  .menu-toggle {
-    display: block;
-  }
   .hero {
     display: flex;
     flex-direction: column;
