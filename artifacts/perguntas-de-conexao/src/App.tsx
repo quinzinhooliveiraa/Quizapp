@@ -3467,7 +3467,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                       <span>Perguntas de Conexão</span>
                       <span>R$ 47,90</span>
                     </div>
-                    <div className="checkout-summary-row">
+                    <div className="checkout-summary-row checkout-summary-row-guarantee">
                       <span>Garantia de 7 dias</span>
                       <span className="checkout-summary-included">
                         incluída
