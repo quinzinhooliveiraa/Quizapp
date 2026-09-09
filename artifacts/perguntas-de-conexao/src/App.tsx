@@ -121,8 +121,6 @@ import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { apiBaseUrl } from "@/config";
 import { SUPPORT_DIALOG_EVENT, openSupportDialog } from "@/lib/support";
 import { getThemePeek } from "@/lib/theme-peek";
-import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
-import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -1171,11 +1169,6 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
             className="lp-testimonial lp-testimonial-active"
             aria-live="polite"
           >
-            {variant !== "lp1" ? (
-              <div className="lp-testimonial-stars" aria-label="5 de 5 estrelas">
-                ★★★★★
-              </div>
-            ) : null}
             <p
               id="active-testimonial-quote"
               className={`lp-testimonial-quote ${isExpanded ? "is-expanded" : ""}`}
@@ -1360,28 +1353,20 @@ function LandingV2Quiz({
               entre vocês.
             </p>
           </div>
-          <div
-            className="lp-hero-mockups lp-hero-mockups-photo"
-            aria-hidden="true"
-          >
+          <picture className="lp-hero-foto">
+            <source
+              media="(min-width: 700px)"
+              srcSet="/hero/hero-desktop.webp"
+            />
             <img
-              src={heroMockupMac}
-              alt=""
-              className="lp-mockup-photo lp-mockup-photo-mac"
-              width={1400}
-              height={933}
+              src="/hero/hero-mobile.webp"
+              alt="Um casal conversando à noite, com o baralho aberto no celular"
+              width={900}
+              height={852}
               fetchPriority="high"
               loading="eager"
             />
-            <img
-              src={heroMockupPhone}
-              alt=""
-              className="lp-mockup-photo lp-mockup-photo-phone"
-              width={360}
-              height={778}
-              loading="eager"
-            />
-          </div>
+          </picture>
           <button
             type="button"
             onClick={() =>
@@ -1577,6 +1562,14 @@ function LandingV2Quiz({
                   strokeWidth={1.6}
                 />
               </div>
+              <img
+                className="lp-pillar-photo"
+                src="/hero/secao-distancia.webp"
+                alt="Casal conversando à distância durante a noite"
+                loading="lazy"
+                width={1200}
+                height={674}
+              />
               <strong>Não precisam estar juntos</strong>
               <p>
                 Namoro à distância, viagem a trabalho ou cada um no seu quarto:

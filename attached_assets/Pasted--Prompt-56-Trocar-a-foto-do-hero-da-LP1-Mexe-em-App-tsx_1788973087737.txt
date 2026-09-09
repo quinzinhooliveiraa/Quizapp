@@ -1,0 +1,108 @@
+# Prompt 56 — Trocar a foto do hero da LP1
+
+Mexe em `App.tsx` (`LandingV2Quiz` e `TestimonialCarousel`) e no `index.css`.
+Faça só o descrito abaixo.
+
+---
+
+## PARTE 1 — Colocar os arquivos
+
+Vão junto três `.webp`. Coloque em
+`artifacts/perguntas-de-conexao/public/hero/`:
+
+```
+hero-mobile.webp        900×852   67 KB
+hero-desktop.webp       1200×800  77 KB
+secao-distancia.webp    1200×674  51 KB
+```
+
+## PARTE 2 — Trocar os mockups pela foto
+
+No hero da LP1, **apague** o bloco inteiro:
+
+```tsx
+<div className="lp-hero-mockups lp-hero-mockups-photo" aria-hidden="true">
+  <img src={heroMockupMac} … />
+  <img src={heroMockupPhone} … />
+</div>
+```
+
+E ponha no lugar:
+
+```tsx
+<picture className="lp-hero-foto">
+  <source media="(min-width: 700px)" srcSet="/hero/hero-desktop.webp" />
+  <img
+    src="/hero/hero-mobile.webp"
+    alt="Um casal conversando à noite, com o baralho aberto no celular"
+    width={900}
+    height={852}
+    fetchPriority="high"
+    loading="eager"
+  />
+</picture>
+```
+
+```css
+.lp-hero-foto img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+}
+@media (max-width: 699px) {
+  .lp-hero-foto img { max-height: 40vh; object-fit: cover; object-position: center 40%; }
+}
+```
+
+**Três coisas obrigatórias:**
+
+1. `fetchPriority="high"` e `loading="eager"` — é a imagem do topo, entra na
+   conta do LCP. Não pode ser lazy.
+2. `width` e `height` explícitos — sem eles a página pula quando a foto chega, e
+   isso conta como deslocamento de layout na medição do Clarity.
+3. **A foto fica entre o subtítulo e o botão.** Nunca depois do botão. O casal
+   olha um para o outro e o braço dele aponta para baixo — isso leva o olho pro
+   botão logo abaixo.
+
+Ordem final do hero:
+
+```
+eyebrow → H1 → subtítulo → FOTO → botão dourado → link "já sei o que quero" → linha de confiança
+```
+
+**O botão dourado tem que continuar acima da dobra.** Se a foto empurrar ele
+pra fora da tela, reduza o `max-height` dela. Melhor cortar a foto do que perder
+o botão.
+
+## PARTE 3 — Limpar o que sobrou dos mockups
+
+- Apague os imports `heroMockupMac` e `heroMockupPhone` do topo do `App.tsx`,
+  **se mais nada usar** (a LP3 também importa esses dois — confira antes).
+- Apague o CSS de `.lp-hero-mockups`, `.lp-mockup-photo-mac` e
+  `.lp-mockup-photo-phone` se ficarem sem uso.
+
+## PARTE 4 — A foto da distância
+
+Na seção `proposta`, no pilar **"Não precisam estar juntos"**, coloque
+`secao-distancia.webp` acima do texto, com `loading="lazy"` (essa está abaixo da
+dobra) e `width={1200} height={674}`.
+
+## PARTE 5 — Tirar a estrela que sobrou
+
+Em `App.tsx`, **linha 1176**, apague a linha com `★★★★★`.
+
+Elas são texto fixo, iguais nos sete depoimentos, e não existe campo de nota em
+`lib/testimonials.ts`. Se sobrar CSS de estrela sem uso, apague também.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. `/lp1` em 420px: a foto aparece, os dois rostos visíveis, e o **botão dourado
+   continua acima da dobra**.
+3. Em desktop: a versão larga carrega.
+4. `/lp3` não pode ter quebrado (ela usa os mesmos mockups antigos).
+5. Procure `★` no `App.tsx` — não pode sobrar nenhuma.
+6. Deploy.

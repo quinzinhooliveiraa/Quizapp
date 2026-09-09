@@ -1,0 +1,97 @@
+# Prompt 56 — As fotos reais no hero (e tirar a estrela que sobrou)
+
+Duas coisas pequenas. Mexe em `App.tsx` (`LandingV2Quiz` e `TestimonialCarousel`)
+e no `index.css`.
+
+---
+
+## PARTE 1 — A estrela que sobrou
+
+O prompt 54 pedia pra tirar as `★★★★★` dos depoimentos e isso não foi aplicado.
+Elas continuam lá, em `App.tsx` **linha 1176**.
+
+Apague a linha. Elas são texto fixo, iguais nos sete depoimentos, e **não
+existe campo de nota em `lib/testimonials.ts`** — representam uma avaliação que
+ninguém deu.
+
+Se sobrar CSS de estrela sem uso, apague também.
+
+---
+
+## PARTE 2 — As fotos do hero
+
+Vão junto três arquivos `.webp`. Coloque em
+`artifacts/perguntas-de-conexao/public/hero/`:
+
+| Arquivo | Onde | Tamanho |
+|---|---|---|
+| `hero-mobile.webp` | hero, até 699px | 900×684 · 58 KB |
+| `hero-desktop.webp` | hero, 700px pra cima | 1200×675 · 76 KB |
+| `secao-distancia.webp` | seção `proposta`, no pilar "Não precisam estar juntos" | 1200×674 · 51 KB |
+
+**Substitua os dois mockups do hero** (`lp-mockup-photo-mac` e
+`lp-mockup-photo-phone`) por uma foto só, com `<picture>` pra servir a versão
+certa por tamanho de tela:
+
+```tsx
+<picture className="lp-hero-foto">
+  <source media="(min-width: 700px)" srcSet="/hero/hero-desktop.webp" />
+  <img
+    src="/hero/hero-mobile.webp"
+    alt="Um casal conversando à noite, com o baralho aberto no celular"
+    width={900}
+    height={684}
+    fetchPriority="high"
+    loading="eager"
+  />
+</picture>
+```
+
+Três coisas obrigatórias:
+
+1. **`fetchPriority="high"` e `loading="eager"`** — essa é a imagem do topo, ela
+   entra na conta do LCP. Não pode ser lazy.
+2. **`width` e `height` explícitos** — sem eles a página pula quando a foto
+   chega, e isso conta como deslocamento de layout na medição do Clarity.
+3. **`alt` descritivo**, não vazio — a foto carrega significado aqui.
+
+E o CSS antigo dos mockups (`.lp-hero-mockups`, `.lp-mockup-photo-mac`,
+`.lp-mockup-photo-phone`) pode sair, junto com o import dos dois `.webp` antigos
+no topo do `App.tsx` se mais nada usar.
+
+### A foto fica ABAIXO do texto e ACIMA do botão
+
+Ordem no hero, de cima pra baixo:
+
+```
+eyebrow → H1 → subtítulo → FOTO → botão dourado → link "já sei o que quero" → linha de confiança
+```
+
+O casal está olhando um para o outro, e o braço dele com o celular aponta para
+baixo. Isso leva o olho naturalmente para o botão logo abaixo. **Não coloque a
+foto depois do botão** — aí o vetor do olhar trabalha contra.
+
+### Cuidado com a altura
+
+O hero tem que continuar cabendo numa tela de celular (~660px). Se a foto
+estourar isso, reduza a altura dela com `max-height` + `object-fit: cover`,
+mantendo os dois rostos no enquadramento. **Melhor cortar a foto do que empurrar
+o botão pra fora da tela** — o botão acima da dobra foi conquista do prompt 47.
+
+### Uma regra sobre onde essa foto NÃO pode aparecer
+
+**Nunca perto da seção de depoimentos.** Ali ela passaria a ler como sendo o
+Caio, a Fernanda ou a Marina — e vira prova social falsa por acidente.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. Abra `/lp1` em 420px: a foto aparece inteira, os dois rostos visíveis, e o
+   **botão dourado continua acima da dobra**.
+3. Abra em desktop: a versão larga carrega.
+4. Procure `★` no `App.tsx` — não pode sobrar nenhuma.
+5. Confirme que a página não ficou mais lenta: a foto do hero tem 58 KB, é
+   menor que os dois mockups que saíram juntos (93 KB).
+6. Deploy.
