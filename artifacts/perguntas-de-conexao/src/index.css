@@ -3724,9 +3724,22 @@
   line-height: 1.5;
 }
 .lp-main:has(.lp2-hero) .lp1-price-card .lp-cta-full {
-  font-size: 1.05rem;
+  font-size: 1.12rem;
   font-weight: 700;
   min-height: 3.5rem;
+}
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-price-value {
+  font-size: 0.95rem;
+}
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-price-time {
+  color: #241d33;
+  font-weight: 500;
+}
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-guarantee-seal {
+  color: #7a5cc4;
+}
+.lp-main:has(.lp2-hero) .lp-eyebrow {
+  text-transform: none;
 }
 .lp-main:has(.lp2-hero) .lp-theme-card-body strong,
 .lp-main:has(.lp2-hero) .lp-theme-card-body p {

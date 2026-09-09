@@ -1,0 +1,133 @@
+# Prompt 64 — Os quatro consertos depois do 63
+
+Medi a LP1 ao vivo em 359×699 (celular). **Doze das dezesseis mudanças do 63
+entraram certas.** Este prompt conserta as quatro que faltaram.
+
+O item 1 é urgente: **a linha mais importante da página está branca no branco.**
+
+---
+
+## 1. A linha do tempo sumiu dentro do card claro
+
+```
+.lp-price-time  →  color: rgb(249, 248, 251)   sobre fundo  #fbf9ff
+```
+
+É a frase **"Uma por noite, dá mais de um ano de conversa."** — que é a regra
+mais forte de todos os treze guias (**Pricing p.50, Mogilner & Aaker 2009**: a
+placa que falava de *tempo* atraiu **o dobro** de gente, e essas pagaram **o
+dobro**). Ela está invisível desde que o card ficou claro.
+
+```css
+.lp1-price-card .lp-price-time {
+  color: #241d33;
+  font-weight: 500;
+}
+```
+
+**Enquanto estiver nisso, o selo da garantia também está fraco** — o `✦` está
+lilás claro (`#c4acff`) sobre branco:
+
+```css
+.lp1-price-card .lp-guarantee-seal { color: #7a5cc4; }
+```
+
+## 2. O depoimento do Lucas não foi pra frente
+
+O carrossel continua abrindo no **Caio**. Em `lib/testimonials.ts`, o objeto do
+**Lucas** (`detail: "23 anos de casamento"`) tem que ser o **primeiro** do array
+`landingTestimonials`. Nenhum texto muda — só a posição.
+
+Ele é o único depoimento que traz uma ressalva honesta ("algumas perguntas
+realmente eram coisas que já sabíamos"), e **eCom p.20** (Doh & Hwang 2009;
+Ein-Gar, Shiv & Tormala 2012) diz que é justamente o depoimento com um defeito
+pequeno que puxa a credibilidade dos outros.
+
+## 3. O botão do preço empatou com o preço
+
+Medido: preço **16,8px** · botão **16,8px peso 600**. A regra (**Pricing p.49**)
+é o botão **acima** do número, não empatado.
+
+```css
+.lp1-price-card .lp-cta-full {
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+.lp1-price-card .lp-price-value {
+  font-size: 0.95rem;
+}
+```
+
+## 4. Os eyebrows são frases inteiras em CAIXA ALTA
+
+**Font p.19-20** (Garvey, Pietrucha & Meeker 1997) 🟩: caixa mista é mais
+legível, e a regra prática do playbook é **no máximo 3 palavras em CAPS**.
+Quatro eyebrows estouram:
+
+| Hoje | Palavras |
+|---|---|
+| BARALHO DIGITAL DE PERGUNTAS · PARA CASAIS | 7 |
+| A PERGUNTA QUE TODO MUNDO FAZ | 6 |
+| A REAL SOBRE O QUE ACONTECE | 6 |
+| EXPERIMENTE AGORA, DE GRAÇA | 4 |
+| O QUE TEM DENTRO | 4 |
+
+Os outros cinco (A DIFERENÇA, A PROPOSTA, O QUE DIZEM, ACESSO VITALÍCIO,
+DÚVIDAS FREQUENTES) têm 2-3 palavras e **ficam como estão**.
+
+Duas saídas — escolha uma e aplique na página toda:
+
+**(a) mais simples:** tirar o CAPS de todos os eyebrows, mantendo o espaçamento
+entre letras que dá o ar de rótulo:
+
+```css
+.lp-main:has(.lp2-hero) .lp-eyebrow { text-transform: none; }
+```
+
+**(b) encurtar os cinco longos** e deixar o CAPS:
+
+```
+baralho digital · para casais       (era: BARALHO DIGITAL DE PERGUNTAS · PARA CASAIS)
+o medo de todo mundo                (era: A PERGUNTA QUE TODO MUNDO FAZ)
+a real                              (era: A REAL SOBRE O QUE ACONTECE)
+teste grátis                        (era: EXPERIMENTE AGORA, DE GRAÇA)
+o que tem dentro                    (fica — 4 palavras curtas, passa)
+```
+
+**Faça a (a).** É uma linha de CSS, não mexe em copy nenhuma, e o livro está do
+lado dela.
+
+---
+
+## O que eu conferi e está certo (não mexa)
+
+| # do 63 | Medido ao vivo |
+|---|---|
+| 1. H1 vira pergunta | ✅ "E se ele responder "sei lá"?" |
+| 3. Foto antes do texto | ✅ ordem: eyebrow → foto → copy → botão |
+| 4. Botão do hero cresceu | ✅ 16,8px peso 700, altura 59px |
+| — Botão acima da dobra | ✅ topo em 555px numa tela de 699px |
+| 13. Serifada nos títulos | ✅ H1 e H2 em Instrument Serif; corpo e botão continuam Plus Jakarta |
+| — "sei lá" maior que o resto | ✅ 38,4px contra 30px |
+| 2. H2 novo da seção 2 | ✅ "Ninguém abre o jogo numa pergunta pesada." |
+| 5. Inglês fora | ✅ Leve · Honesta · Profunda |
+| 6. Barra de progresso | ✅ "Pergunta 1 de 3", barra lilás já começando com 1/4 |
+| 7. Fecho da história | ✅ "Vocês não são um casal que parou de conversar." |
+| 8. Baralhos fora do CAPS | ✅ "Porto Seguro / As conversas que parecem casa. / 31 CARTAS" |
+| 10. Card de preço claro | ✅ `#fbf9ff`, texto `#241d33` — **menos a linha do item 1** |
+| 12. Os custos | ✅ os três estão lá |
+| 14. FAQ do pagamento | ✅ "Você paga com Pix ou cartão…" |
+| 15. Linha de confiança no fecho | ✅ |
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` passa.
+2. **Seção de preço em 420px:** a frase *"Uma por noite, dá mais de um ano de
+   conversa."* tem que estar **legível** — é o teste principal deste prompt.
+3. **Depoimentos:** o primeiro é o do Lucas, "23 anos de casamento".
+4. Olhe a seção de preço e responda: salta o **botão** ou o número? Tem que ser
+   o botão.
+5. Role a página: nenhum eyebrow em caixa alta (se escolheu a opção **a**).
+6. Deploy.
