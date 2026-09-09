@@ -2081,6 +2081,7 @@
   text-align: center;
 }
 .lp-h2 {
+  font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 400;
   line-height: 1.2;
@@ -2161,6 +2162,7 @@
   z-index: 1;
 }
 .lp-hero-h1 {
+  font-family: "Instrument Serif", Georgia, serif;
   font-size: clamp(2rem, 4.5vw, 3.2rem);
   font-weight: 300;
   line-height: 1.15;
@@ -3410,6 +3412,7 @@
   --lp1-line: rgba(196, 172, 255, 0.18);
 }
 .lp-main:has(.lp2-hero) .lp2-hero .lp-hero-h1 {
+  font-family: "Instrument Serif", Georgia, serif;
   max-width: 720px;
   letter-spacing: -0.035em;
 }
@@ -3679,6 +3682,22 @@
   min-height: 3.5rem;
   font-size: 1.05rem;
   font-weight: 700;
+}
+.lp-main:has(.lp2-hero) .lp-price-costs {
+  margin: 1.5rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: left;
+}
+.lp-main:has(.lp2-hero) .lp-price-costs p {
+  margin: 0;
+}
+.lp-main:has(.lp2-hero) .lp-price-costs p + p {
+  margin-top: 0.35rem;
+}
+.lp-main:has(.lp2-hero) .lp-price-costs-title {
+  font-weight: 600;
 }
 .lp-main:has(.lp2-hero) .lp-guarantee {
   background: rgba(112, 81, 115, 0.05);

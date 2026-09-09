@@ -1,0 +1,78 @@
+# Prompt 61 — As regras do livro que eu tinha cortado por conta própria
+
+Você mandou seguir o livro cegamente. Eu não segui em três lugares. Voltei,
+achei todos, e este prompt aplica os dois que são regra de livro.
+
+Mexe no `index.css` e no `App.tsx` (seção `precos` do `LandingV2Quiz`).
+
+---
+
+## 1. A fonte serifada nos títulos
+
+**Font p.15 — Pocheptsova, Labroo & Dhar 2010.** Fonte mais difícil de ler
+aumenta a compra em produto de **ocasião especial**. Seu produto é exatamente
+isso: um ritual de noite a dois, não uma compra utilitária.
+
+Eu tinha recusado dizendo que a serifada já marcava as perguntas do baralho.
+Isso é raciocínio meu, não do livro. O livro manda pôr, então põe.
+
+```css
+.lp-hero-h1,
+.lp-h2 {
+  font-family: "Instrument Serif", Georgia, serif;
+}
+```
+
+**Cuidado com dois detalhes:**
+
+- `.lp-hero-h1` tem **override específico da LP1** mais abaixo no arquivo
+  (`.lp-main:has(.lp2-hero) .lp2-hero .lp-hero-h1`, por volta da linha 3412).
+  Coloque a `font-family` **lá também**, senão a regra genérica perde.
+- Serifada em corpo pequeno pesa. **Só H1 e H2.** Não mexa em `.lp-eyebrow`,
+  botão, benefícios, depoimentos, nem no texto corrido.
+- O peso do H1 continua **500** e o tamanho continua o de hoje (30px no celular).
+  Não deixe a troca de fonte reverter o que o prompt 47 acertou.
+
+## 2. Descrever os custos que o preço cobre
+
+**Pricing p.56 — Mohan, Buell & John 2020.** Mostrar o que está por trás do
+preço aumentou vendas em teste de campo. Eu tinha cortado dizendo que "soa como
+justificação". De novo: intuição minha contra estudo do livro.
+
+Na seção `precos`, **logo abaixo do bloco de preço** (que o prompt 58 move pra
+antes do botão), acrescente:
+
+```
+O que os R$ 47,90 pagam
+459 perguntas escritas e testadas uma a uma, ao longo de meses
+O servidor que mantém o jogo no ar e sincroniza vocês dois
+As perguntas novas que entram sem você pagar de novo
+```
+
+Estilo: texto pequeno (`0.8rem`), cor `var(--ink-soft)`, alinhado à esquerda,
+sem ícone e sem card. É informação, não vitrine — não pode competir com o botão.
+
+> **Quinzinho, confere estas três linhas antes de colar.** Elas têm que ser
+> verdade sobre o seu produto. Se as perguntas novas não entram de graça, tira
+> essa linha. Não invento custo.
+
+---
+
+## 3. O que eu continuo não fazendo — e por quê
+
+O **R$ 97 riscado** como âncora. Não é intuição minha contra o livro: é que o
+preço nunca foi R$ 97, e preço riscado falso é infração do art. 37 do CDC.
+Pricing p.30 dá âncora honesta que funciona igual — e é o que a LP já usa
+("459 perguntas · 15 baralhos"). Esse é o único item em que eu seguro, e não
+volto a discutir.
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. `/lp1` em 420px: **H1 e H2 em serifada**, H1 ainda com peso 500 e ~30px, e o
+   botão dourado **ainda acima da dobra**.
+3. Corpo, botão, eyebrow e depoimentos **continuam** na Plus Jakarta Sans.
+4. Na seção de preço: bloco de preço → "O que os R$ 47,90 pagam" → botão.
+5. Deploy.

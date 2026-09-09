@@ -1692,6 +1692,12 @@ function LandingV2Quiz({
                 Uma por noite, dá mais de um ano de conversa.
               </p>
             </div>
+            <div className="lp-price-costs">
+              <p className="lp-price-costs-title">O que os R$ 47,90 pagam</p>
+              <p>459 perguntas escritas e testadas uma a uma, ao longo de meses</p>
+              <p>O servidor que mantém o jogo no ar e sincroniza vocês dois</p>
+              <p>As perguntas novas que entram sem você pagar de novo</p>
+            </div>
             <button
               onClick={onBuy}
               className="lp-cta-primary lp-cta-full"
