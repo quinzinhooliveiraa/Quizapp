@@ -1,0 +1,109 @@
+# Prompt 57 — Fechar as três camadas que faltam no botão do hero
+
+Conferi as 13 camadas do playbook no site ao vivo. **Oito estão certas.**
+Este prompt fecha as três que valem a pena.
+
+Mexe em `App.tsx` (`LandingV2Quiz` e `TestimonialCarousel`) e no `index.css`.
+
+---
+
+## 1. Falta "e você decide" perto do botão
+
+**Esta é a mais importante das três, e é a mais barata.**
+
+Copy p.20 (Guéguen & Pascual 2000, replicado em 42 estudos): enfatizar a
+liberdade de escolher perto do pedido **quadruplicou** a adesão. É o maior
+efeito medido do livro inteiro, e são três palavras.
+
+A linha de confiança do hero, que hoje é:
+
+```
+🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo.
+```
+
+vira:
+
+```
+🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo. Você decide.
+```
+
+E faça o mesmo na seção `precos`, no fecho da garantia.
+
+---
+
+## 2. O botão é o menor texto em destaque do hero
+
+Medido:
+
+```
+"sei lá" no H1 ....... 38,4px
+resto do H1 .......... 30px
+botão ................ 14,72px   ← o menor
+```
+
+O botão está ganhando atenção **só pela cor**. Visual Attention p.13 diz que
+tamanho é um gatilho próprio, e p.54 diz que os gatilhos **se somam** — cor +
+tamanho valem mais que cor sozinha.
+
+```css
+.lp2-hero-cta {
+  font-size: 1.05rem;   /* ~17px */
+  font-weight: 700;
+  padding-block: 1.05rem;
+  min-height: 3.5rem;
+}
+```
+
+**Cuidado:** o botão hoje está a 282px do topo, numa tela de 723px. Ele tem que
+**continuar acima da dobra** depois de crescer. Se o hero estourar, reduza o
+`max-height` da foto, nunca empurre o botão pra fora.
+
+---
+
+## 3. O dourado está vazando para onde não é compra
+
+O dourado aparece em **6 elementos**. Três são CTAs de compra — certo. Mas os
+outros três são as **setas e o pontinho do carrossel de depoimentos**:
+
+```
+lp-cta-primary lp-cta-big lp2-hero-cta   ← compra, ok
+lp-testimonial-arrow                     ← não é compra
+lp-testimonial-arrow                     ← não é compra
+lp-testimonial-dot is-active             ← não é compra
+lp-cta-primary lp-cta-full               ← compra, ok
+lp-cta-primary lp-cta-big                ← compra, ok
+```
+
+A regra é: **dourado = comprar.** Se navegação de carrossel também é dourada, a
+pessoa para de aprender o código.
+
+Troque a cor de `.lp-testimonial-arrow` e `.lp-testimonial-dot.is-active` para
+o lilás ou o branco suave que o resto da página usa.
+
+---
+
+## O que já está certo (não mexa)
+
+| Camada | Estado |
+|---|---|
+| Valor e croma altos | ✅ h41 s79% l57% |
+| Contraste com o entorno | ✅ dourado h41 vs página lilás h257 — 176° de distância |
+| Pulsar | ✅ `pulso-acao 2.8s` |
+| Foto antes do botão | ✅ |
+| Afirmações positivas encostadas | ✅ Pix · garantia |
+| Sem exclamação nem texto fofinho | ✅ zero "!" |
+| Linguagem assertiva | ✅ "Fazer o teste grátis de 1 minuto" |
+| Botão acima da dobra | ✅ 282px numa tela de 723 |
+
+---
+
+## Depois de aplicar
+
+1. `pnpm run build` tem que passar.
+2. `/lp1` em 420px: o botão dourado **continua acima da dobra** depois de
+   crescer.
+3. Role até os depoimentos: as setas e o pontinho **não podem mais ser
+   dourados**.
+4. Confirme que "Você decide" aparece na linha embaixo do botão do hero e no
+   fecho da garantia.
+5. Deploy.

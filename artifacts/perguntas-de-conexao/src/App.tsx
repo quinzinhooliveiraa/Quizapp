@@ -1388,7 +1388,8 @@ function LandingV2Quiz({
             Já sei o que quero — comprar agora →
           </button>
           <p className="lp2-hero-security">
-            🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo.
+            🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo. Você
+            decide.
           </p>
         </div>
       </section>
