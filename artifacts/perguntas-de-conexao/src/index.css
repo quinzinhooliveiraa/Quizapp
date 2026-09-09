@@ -4098,6 +4098,21 @@
 .lp2-comparison-section .lp2-comparison-with p {
   border-top-color: rgba(36, 29, 51, 0.14) !important;
 }
+.lp2-comparison-section .lp2-comparison-column p {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+.lp2-comparison-section .lp2-comparison-mark {
+  flex: 0 0 auto;
+}
+.lp2-comparison-section .lp2-comparison-without .lp2-comparison-mark {
+  color: #b38fa2;
+}
+.lp2-comparison-section .lp2-comparison-with .lp2-comparison-mark {
+  color: #4d9b88;
+}
 .lp2-comparison-section .lp2-comparison-without p:nth-of-type(even) {
   background: rgba(255, 255, 255, 0.025);
 }

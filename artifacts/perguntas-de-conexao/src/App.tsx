@@ -1817,17 +1817,41 @@ function LandingV2Quiz({
           <div className="lp2-comparison">
             <div className="lp2-comparison-column lp2-comparison-without">
                 <h3>Sem o baralho</h3>
-              <p>"E aí, como foi o dia?" — "Normal."</p>
-              <p>Cada um rolando o próprio celular</p>
-              <p>Você tenta e vem o "sei lá"</p>
-              <p>Amanhã é igual</p>
+                <p>
+                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>"E aí, como foi o dia?" — "Normal."</span>
+                </p>
+                <p>
+                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>Cada um rolando o próprio celular</span>
+                </p>
+                <p>
+                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>Você tenta e vem o "sei lá"</span>
+                </p>
+                <p>
+                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>Amanhã é igual</span>
+                </p>
             </div>
             <div className="lp2-comparison-column lp2-comparison-with">
                 <h3>Com o baralho</h3>
-              <p>Uma pergunta que ele nunca ouviu antes</p>
-              <p>Um celular só, entre os dois</p>
-              <p>A pergunta já chega com o assunto pronto</p>
-              <p>Amanhã tem mais 458</p>
+                <p>
+                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>Uma pergunta que ele nunca ouviu antes</span>
+                </p>
+                <p>
+                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>Um celular só, entre os dois</span>
+                </p>
+                <p>
+                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>A pergunta já chega com o assunto pronto</span>
+                </p>
+                <p>
+                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                  <span>Amanhã tem mais 458</span>
+                </p>
             </div>
           </div>
         </div>
@@ -4454,7 +4478,10 @@ function Home({
                       'A conversa morre no "sei lá"',
                       "Amanhã é igual",
                     ].map((item) => (
-                      <p key={item} role="row">{item}</p>
+                      <p key={item} role="row">
+                        <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                        <span>{item}</span>
+                      </p>
                     ))}
                   </div>
                   <div className="lp2-comparison-column lp2-comparison-with" role="rowgroup">
@@ -4466,7 +4493,10 @@ function Home({
                       "Começa leve, e vocês escolhem até onde vai",
                       "Amanhã tem mais 458",
                     ].map((item) => (
-                      <p key={item} role="row">{item}</p>
+                      <p key={item} role="row">
+                        <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
+                        <span>{item}</span>
+                      </p>
                     ))}
                   </div>
                 </div>
