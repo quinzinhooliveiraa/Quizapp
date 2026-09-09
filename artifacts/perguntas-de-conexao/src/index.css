@@ -4074,10 +4074,35 @@
 }
 .lp2-comparison-section .lp2-comparison-without,
 .lp2-comparison-section .lp2-comparison-without * {
-  color: rgba(249, 248, 251, 0.45) !important;
+  color: rgba(249, 248, 251, 0.62) !important;
 }
 .lp2-comparison-section .lp2-comparison-without {
   background: transparent;
+}
+.lp2-comparison-section .lp2-comparison-column {
+  box-sizing: border-box;
+  padding: 18px 15px;
+}
+.lp2-comparison-section .lp2-comparison-column + .lp2-comparison-column {
+  border-left: 1px solid rgba(196, 172, 255, 0.32);
+}
+.lp2-comparison-section .lp2-comparison-column p {
+  box-sizing: border-box;
+  min-height: 5.9rem;
+  border-top: 1px solid rgba(196, 172, 255, 0.2) !important;
+  border-bottom: 0 !important;
+}
+.lp2-comparison-section .lp2-comparison-without p {
+  border-top-color: rgba(255, 255, 255, 0.18) !important;
+}
+.lp2-comparison-section .lp2-comparison-with p {
+  border-top-color: rgba(36, 29, 51, 0.14) !important;
+}
+.lp2-comparison-section .lp2-comparison-without p:nth-of-type(even) {
+  background: rgba(255, 255, 255, 0.025);
+}
+.lp2-comparison-section .lp2-comparison-with p:nth-of-type(even) {
+  background: rgba(36, 29, 51, 0.025);
 }
 .lp-main:has(.lp2-hero) .lp1-two-pillars {
   grid-template-columns: repeat(2, minmax(0, 1fr));
