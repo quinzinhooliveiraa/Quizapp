@@ -576,6 +576,19 @@ function safeSetItem(key: string, value: string): void {
   }
 }
 
+function getCheckoutBuyerName(email: string, name?: string): string {
+  const normalizedName = name?.trim();
+  if (normalizedName) return normalizedName;
+
+  const emailName = email
+    .trim()
+    .split("@")[0]
+    ?.replace(/[._-]+/g, " ")
+    .trim();
+
+  return emailName || "Cliente";
+}
+
 function safeRemoveItem(key: string): void {
   try {
     localStorage.removeItem(key);
@@ -2663,8 +2676,8 @@ function useCheckout({
     }
     try {
       syncInternalTrackingFromUrl();
-      const normalizedName = name.trim();
       const normalizedEmail = email.trim().toLowerCase();
+      const normalizedName = getCheckoutBuyerName(normalizedEmail, name);
       const response = await fetch(apiUrl("/api/checkout/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2752,8 +2765,8 @@ function useCheckout({
     }
     try {
       syncInternalTrackingFromUrl();
-      const normalizedName = buyerName.trim();
       const normalizedEmail = buyerEmail.trim().toLowerCase();
+      const normalizedName = getCheckoutBuyerName(normalizedEmail, buyerName);
       const response = await fetch(apiUrl("/api/checkout/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3118,7 +3131,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
   const cardPaymentFormRef = useRef<CardPaymentFormHandle>(null);
 
   const hasValidBuyerDetails =
-    buyerName.trim().length > 0 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
 
   const handlePaymentMethodSelect = (method: "pix" | "card") => {
@@ -3130,11 +3142,10 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       return;
     }
 
-    const normalizedName = buyerName.trim();
     const normalizedEmail = buyerEmail.trim().toLowerCase();
 
     if (method === "pix" && !nativeCheckout && !paymentCreating) {
-      void createCheckout("couple", normalizedEmail, normalizedName, true);
+      void createCheckout("couple", normalizedEmail, "", true);
     } else if (
       method === "card" &&
       cardAvailable &&
@@ -3155,11 +3166,10 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       return;
     }
 
-    const normalizedName = buyerName.trim();
     const normalizedEmail = buyerEmail.trim().toLowerCase();
 
     if (selectedPaymentMethod === "pix" && !nativeCheckout) {
-      void createCheckout("couple", normalizedEmail, normalizedName, true);
+      void createCheckout("couple", normalizedEmail, "", true);
     } else if (
       selectedPaymentMethod === "card" &&
       cardAvailable &&
@@ -3184,23 +3194,16 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
 
   const handleInitialCheckout = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalizedName = buyerName.trim();
     const normalizedEmail = buyerEmail.trim().toLowerCase();
     let valid = true;
 
-    if (!normalizedName) {
-      setNameError("Digite seu nome para continuar.");
-      valid = false;
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       setEmailError("Confira o e-mail — parece que falta alguma coisa.");
       valid = false;
     }
     if (!valid) return;
 
-    setNameError("");
     setEmailError("");
-    setBuyerName(normalizedName);
     setBuyerEmail(normalizedEmail);
     if (selectedPaymentMethod === "card") {
       if (cardCheckout) {
@@ -3210,7 +3213,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       }
     } else {
       if (!nativeCheckout) {
-        void createCheckout("couple", normalizedEmail, normalizedName, true);
+        void createCheckout("couple", normalizedEmail, "", true);
       }
     }
   };
@@ -3400,49 +3403,25 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             <div className="checkout-store-grid checkout-store-grid-clean">
               <section className="checkout-order-column">
                 <div className="checkout-form-card checkout-details-card">
-                  <div className="checkout-card-heading">
-                    <h3>Seus dados</h3>
-                    <p>Para liberar o acesso e enviar o recibo.</p>
+                  <div className="checkout-access-heading">
+                    <h3>Pra onde eu mando o acesso?</h3>
+                    <p>
+                      Só pra liberar seu acesso e guardar sua compra. Sem spam,
+                      sem lista.
+                    </p>
                   </div>
                   <div className="checkout-fields-inline">
                     <label className="checkout-field">
-                      <span>Nome</span>
-                      <input
-                        id="checkout-buyer-name"
-                        className="checkout-email-input"
-                        type="text"
-                        autoComplete="name"
-                        placeholder="Como a gente te chama"
-                        value={buyerName}
-                        aria-invalid={nameError ? true : undefined}
-                        onChange={(event) => {
-                          setBuyerName(event.target.value);
-                          safeSetItem(
-                            "conexao-pending-buyer-name",
-                            event.target.value,
-                          );
-                          if (nameError) setNameError("");
-                        }}
-                        autoFocus
-                        required
-                        data-testid="input-checkout-name"
-                      />
-                      {nameError && (
-                        <small className="checkout-email-error" role="alert">
-                          {nameError}
-                        </small>
-                      )}
-                    </label>
-                    <label className="checkout-field">
-                      <span>E-mail</span>
+                      <span className="sr-only">E-mail</span>
                       <input
                         id="checkout-email"
                         className="checkout-email-input"
                         type="email"
                         inputMode="email"
                         autoComplete="email"
-                        placeholder="pra enviar seu acesso"
+                        placeholder="seu@email.com"
                         value={buyerEmail}
+                        autoFocus
                         aria-invalid={emailError ? true : undefined}
                         onChange={(event) => {
                           setBuyerEmail(event.target.value);

@@ -21785,6 +21785,29 @@ blockquote em {
 .checkout-store-grid-clean .checkout-order-column {
   width: 100%;
 }
+.checkout-access-heading {
+  margin: 0 0 1.2rem;
+}
+.checkout-access-heading h3 {
+  margin: 0;
+  color: #2a2233;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.checkout-access-heading p {
+  max-width: 34rem;
+  margin: 0.85rem 0 0;
+  color: #8c808d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.checkout-details-card .checkout-fields-inline {
+  grid-template-columns: 1fr;
+  margin: 0;
+}
 
 .checkout-product-column {
   align-self: start;
