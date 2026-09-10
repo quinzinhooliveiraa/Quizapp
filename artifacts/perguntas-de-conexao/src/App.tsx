@@ -1497,7 +1497,7 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
   return (
     <section
       className="lp-social"
-      data-section-name={variant === "lp1" ? "depoimentos" : undefined}
+      data-section-name="depoimentos"
     >
       <div className="lp-container">
         <p className="lp-eyebrow lp-eyebrow-center">o que dizem</p>
