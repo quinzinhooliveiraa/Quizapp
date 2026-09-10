@@ -1694,9 +1694,9 @@ function LandingV2Quiz({
               <span className="lp2-hero-emphasis">"sei lá"</span>?
             </h1>
             <p className="lp-hero-sub">
-              Você quer a conversa. Ele responde "sei lá" — e morre ali. São 459
-              perguntas escritas pra isso não acontecer. Vocês abrem uma carta,
-              leem em voz alta e escutam.
+              Você quer a conversa. Ele responde "sei lá", e morre ali. O problema
+              nunca foi ele: era a pergunta. São 459 perguntas escritas pra abrir
+              sozinhas. Vocês leem uma carta em voz alta e escutam.
             </p>
           </div>
           <button
@@ -1758,6 +1758,11 @@ function LandingV2Quiz({
             Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
             de responder até pra quem trava. A profundidade vem depois, quando
             os dois já estão dentro da conversa.
+          </p>
+          <p className="lp2-section-lede">
+            E ninguém vai achar que você virou filósofo: quem faz a pergunta é
+            a carta, não você. Vale pros dois, aliás. Você também não precisa
+            chegar com resposta pronta: "nunca pensei nisso" já é um começo.
           </p>
           <div className="lp2-intensity-grid">
             <div className="lp2-intensity-card">
@@ -1825,6 +1830,11 @@ function LandingV2Quiz({
             <p>
               São um casal que ficou sem as perguntas certas. É isso que a gente
               construiu.
+            </p>
+            <p>
+              E quando a pergunta certa aparece, a conversa volta. Depois dela
+              costuma sobrar uma paz meio esquisita de boa: a de quem foi
+              escutado de verdade.
             </p>
           </div>
         </div>
@@ -2114,6 +2124,10 @@ function LandingV2Quiz({
           <h2 className="lp-h2">Antes que você pergunte</h2>
           <div className="lp-faq-list">
             {[
+              [
+                "E se eu é que não souber responder?",
+                'Acontece com todo mundo, e é por isso que a primeira carta de cada baralho é leve. Você não precisa de resposta pronta: pode dizer "nunca pensei nisso" e pensar em voz alta junto. Metade das boas conversas nasce aí.',
+              ],
               [
                 "Isso substitui terapia de casal?",
                 "Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos — não substitui acompanhamento se a relação precisa. Mas pra sair do piloto automático, resolve hoje à noite.",
