@@ -8529,14 +8529,20 @@ a {
 }
 .header-cta {
   font-family: var(--app-font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: 0.015em;
   font-size: 10px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid currentColor;
   padding: 7px 0;
+  opacity: 0.58;
+  transition: opacity 0.2s ease;
+}
+.header-cta:hover,
+.header-cta:focus-visible {
+  opacity: 0.9;
 }
 .menu-toggle {
   display: none;
