@@ -1020,7 +1020,7 @@ function Lp1Diagnosis({
     <section className="lp1-diagnosis" aria-labelledby="lp1-diagnosis-title">
       <div className="lp1-diagnosis-card">
         <span className="lp1-diagnosis-badge">DIAGNÓSTICO PERSONALIZADO</span>
-        <p className="lp1-diagnosis-kicker">O QUE O TESTE MOSTROU</p>
+        <p className="lp1-diagnosis-kicker">O que o teste mostrou</p>
         <h1 id="lp1-diagnosis-title" className="lp1-diagnosis-title">
           {diagnosis.title}
         </h1>
@@ -1033,7 +1033,7 @@ function Lp1Diagnosis({
         {previewQuestions.length > 0 ? (
           <div className="lp1-diagnosis-questions">
             <p className="lp1-diagnosis-questions-label">
-              UM GOSTINHO DO QUE VEM POR AÍ
+              Um gostinho do que vem por aí
             </p>
             <RecommendedQuestionCarousel questions={previewQuestions} />
           </div>
@@ -1994,7 +1994,7 @@ function LandingV2Quiz({
                   Um baralho montado na hora, de acordo com o que vocês estão
                   sentindo hoje.
                 </p>
-                <span>todo dia um novo</span>
+                <span>novo todo dia</span>
               </span>
             </div>
           </div>
@@ -2050,7 +2050,7 @@ function LandingV2Quiz({
               </ol>
             </div>
             <div className="lp-price-card lp1-price-card lp1-price-benefits-card">
-              <p className="lp1-price-includes-title">o que vocês levam</p>
+              <p className="lp1-price-includes-title">O que vocês levam</p>
               <p className="lp1-price-proof">Perguntas salvas mais de 200 mil vezes</p>
               <ul className="lp-price-includes">
                 <li>
