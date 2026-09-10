@@ -2112,11 +2112,10 @@ function LandingV2Quiz({
                   459 perguntas por{" "}
                   <span className="lp-price-figure" style={{ whiteSpace: "nowrap" }}>
                     R$ 47,90
-                  </span>{" "}
-                  — dá 10 centavos cada.
+                  </span>
                 </p>
                 <p className="lp-price-once">
-                  acesso vitalício, uma vez só, sem mensalidade
+                  dá 10 centavos por pergunta
                 </p>
               </div>
               <button
