@@ -3110,7 +3110,13 @@ function useCheckout({
   };
 
   const createCardCheckout = async (inline = false) => {
-    if (!cardAvailable || !stripePromise) return;
+    if (!cardAvailable || !stripePromise) {
+      const message =
+        "O pagamento com cartão está indisponível agora. Tente o Pix ou recarregue a página.";
+      setCardError(message);
+      setPaymentError(message);
+      return;
+    }
     if (cardCheckout) {
       setCardError("");
       setSelectedPaymentMethod("card");
@@ -3496,12 +3502,25 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
   const hasValidBuyerDetails =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
 
+  const focusCheckoutEmail = () => {
+    window.requestAnimationFrame(() => {
+      document.getElementById("checkout-email")?.focus();
+    });
+  };
+
   const handlePaymentMethodSelect = (method: "pix" | "card") => {
     setCardError("");
     setPaymentError("");
     setSelectedPaymentMethod(method);
 
-    if (!checkoutOpen || checkoutState !== "email" || !hasValidBuyerDetails) {
+    if (!checkoutOpen || checkoutState !== "email") {
+      return;
+    }
+
+    if (!hasValidBuyerDetails) {
+      setEmailError("Digite seu e-mail para abrir o pagamento.");
+      setPaymentError("Digite seu e-mail para abrir o pagamento.");
+      focusCheckoutEmail();
       return;
     }
 
@@ -3789,6 +3808,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                             event.target.value,
                           );
                           if (emailError) setEmailError("");
+                          if (paymentError) setPaymentError("");
                         }}
                         required
                         data-testid="input-checkout-email"
@@ -3800,6 +3820,9 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                       )}
                     </label>
                     <p className="checkout-access-note">
+                      <strong>
+                        Digite seu e-mail acima para liberar Pix e cartão.
+                      </strong>
                       Só pra liberar seu acesso e guardar sua compra. Sem spam,
                       sem lista.
                     </p>
@@ -3808,7 +3831,11 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 <div className="checkout-form-card checkout-payment-card">
                   <div className="checkout-card-heading checkout-payment-heading">
                     <h3>Como você prefere pagar?</h3>
-                    <p>Uma única cobrança. Sem assinatura.</p>
+                    <p>
+                      {hasValidBuyerDetails
+                        ? "Uma única cobrança. Sem assinatura."
+                        : "Digite seu e-mail acima para abrir as opções de pagamento."}
+                    </p>
                   </div>
                   <CheckoutPaymentTabs
                     selectedPaymentMethod={selectedPaymentMethod}

@@ -22603,6 +22603,12 @@ blockquote em {
   font-size: 0.9rem;
   line-height: 1.5;
 }
+.checkout-access-note strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: #7a2e46;
+  font-weight: 800;
+}
 
 .checkout-product-column {
   align-self: start;
