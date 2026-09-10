@@ -3905,7 +3905,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     "Gerando seu Pix…"
                   ) : (
                     <>
-                      Garantir meu baralho <ArrowRight size={17} />
+                      Começar hoje à noite <ArrowRight size={17} />
                     </>
                   )}
                 </button>
