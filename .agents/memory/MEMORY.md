@@ -18,3 +18,4 @@
 - [Fixed landing routes](fixed-landing-routes.md) — every public landing path must be whitelisted by the route-aware splash layer or it renders hidden behind the splash.
 - [Admin destructive actions](admin-destructive-actions.md) — scope cleanup to visible filters and require an explicit confirmation phrase before irreversible mutations.
 - [Artifact build environment](artifact-build-environment.md) — manual Vite builds need PORT and BASE_PATH; aggregate builds may also include unrelated artifact requirements.
+- [LP1 diagnosis narrative guard](lp1-diagnosis-narrative-guard.md) — positive beginning/healthy narratives must suppress negative LP3 personalization tails when reused by LP1.

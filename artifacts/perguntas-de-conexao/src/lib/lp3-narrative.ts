@@ -227,15 +227,23 @@ Significa continuar descobrindo.`,
   },
 };
 
-function getPersonalizations(answers: Lp3Answers): string[] {
+function getPersonalizations(
+  answers: Lp3Answers,
+  narrativeType: Lp3NarrativeType,
+): string[] {
   const personalizations: string[] = [];
+  const isPositive =
+    narrativeType === "beginning" || narrativeType === "healthy";
 
   if (answers.routine === "Cada um acaba no celular") {
     personalizations.push(
       "Mesmo quando finalmente existe tempo, parte desse tempo parece escapar para as telas.",
     );
   }
-  if (answers.routine === "A gente fala principalmente da rotina") {
+  if (
+    answers.routine === "A gente fala principalmente da rotina"
+    && !isPositive
+  ) {
     personalizations.push(
       "As conversas continuam acontecendo, mas muitas delas parecem precisar resolver alguma coisa.",
     );
@@ -255,7 +263,7 @@ function getPersonalizations(answers: Lp3Answers): string[] {
       "E existe pelo menos uma coisa que você ainda está carregando sozinho.",
     );
   }
-  if (answers.vulnerability === "Algumas coisas") {
+  if (answers.vulnerability === "Algumas coisas" && !isPositive) {
     personalizations.push(
       "Talvez não seja uma única conversa. Talvez sejam pequenas coisas acumuladas.",
     );
@@ -335,10 +343,11 @@ function getNarrativeKey(answers: Lp3Answers): Lp3NarrativeType {
 }
 
 export function selectLp3Narrative(answers: Lp3Answers): Lp3Narrative {
-  const narrative = narrativeDefinitions[getNarrativeKey(answers)];
+  const narrativeType = getNarrativeKey(answers);
+  const narrative = narrativeDefinitions[narrativeType];
 
   return {
     ...narrative,
-    personalizations: getPersonalizations(answers),
+    personalizations: getPersonalizations(answers, narrativeType),
   };
 }

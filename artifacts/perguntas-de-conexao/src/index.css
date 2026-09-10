@@ -270,6 +270,16 @@
   text-align: center;
 }
 
+.lp1-diagnosis-recommendation {
+  margin: 0.4rem 0 0;
+  color: #c4acff;
+  font-size: 1rem;
+}
+
+.lp1-diagnosis-recommendation strong {
+  color: #f9f8fb;
+}
+
 .lp1-diagnosis-cta {
   display: flex;
   width: 100%;

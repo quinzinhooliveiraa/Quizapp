@@ -998,6 +998,20 @@ const LP1_QUIZ_STEPS = [
   },
 ] as const;
 
+const LP1_THEME_NAMES: Record<string, string> = {
+  "porto-seguro": "Porto Seguro",
+  "livro-aberto": "Livro Aberto",
+  "voce-nao-sabia": "Você Não Sabia",
+  "em-voz-alta": "Em Voz Alta",
+  "la-atras": "Lá Atrás",
+  "modo-leve": "Modo Leve",
+  viagens: "Viagens",
+  "carreira-dinheiro": "Carreira & Dinheiro",
+  "depois-da-tempestade": "Depois da Tempestade",
+  faisca: "Faísca",
+  "mesmo-longe": "Mesmo Longe",
+};
+
 function Lp1Diagnosis({
   answers,
   onContinue,
@@ -1038,6 +1052,12 @@ function Lp1Diagnosis({
             <RecommendedQuestionCarousel questions={previewQuestions} />
           </div>
         ) : null}
+        <p className="lp1-diagnosis-recommendation">
+          Seu baralho pra começar:{" "}
+          <strong>
+            {LP1_THEME_NAMES[diagnosis.themeId] ?? "Porto Seguro"}
+          </strong>
+        </p>
         <p className="lp1-diagnosis-anchor">
           Isso é um gostinho: 3 de 459 perguntas. As outras 456 abrem quando o
           baralho for de vocês.
