@@ -2868,7 +2868,7 @@ function useCheckout({
             safeSetItem("conexao-session", sessionId);
             safeSetItem("conexao-role", "owner");
             clearCompletedCheckoutStorage();
-            window.location.href = "/onboarding";
+            window.location.href = "/post-purchase";
             return;
           }
         }
@@ -2923,7 +2923,7 @@ function useCheckout({
           safeSetItem("conexao-session", nativeCheckout.sessionId);
           safeSetItem("conexao-role", "owner");
           clearCompletedCheckoutStorage();
-          window.location.href = "/onboarding";
+          window.location.href = "/post-purchase";
         }
       } catch {
         // The next interval retries while the payment provider settles.
@@ -2968,7 +2968,7 @@ function useCheckout({
             safeSetItem("conexao-session", cardCheckout.sessionId);
             safeSetItem("conexao-role", "owner");
             clearCompletedCheckoutStorage();
-            window.location.href = "/onboarding";
+            window.location.href = "/post-purchase";
             return;
           }
         }
@@ -3007,7 +3007,7 @@ function useCheckout({
         safeSetItem("conexao-session", nativeCheckout.sessionId);
         safeSetItem("conexao-role", "owner");
         clearCompletedCheckoutStorage();
-        window.location.href = "/onboarding";
+        window.location.href = "/post-purchase";
         return;
       }
       setAccessCheckNote(
@@ -8937,6 +8937,183 @@ function AppExperienceReference() {
   );
 }
 
+function PostPurchaseInvite() {
+  const [, navigate] = useLocation();
+  const queryClientRef = useQueryClient();
+  const sessionId = safeGetItem("conexao-session")?.trim() || "";
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [inviteResult, setInviteResult] = useState<{
+    token?: string;
+    guestName?: string;
+  } | null>(null);
+  const [copiedInvite, setCopiedInvite] = useState(false);
+  const createInvite = useCreateInvite();
+
+  const makeInvite = () => {
+    const normalizedGuestName = guestName.trim();
+    if (!sessionId || !normalizedGuestName) return;
+
+    createInvite.mutate(
+      { sessionId, data: { guestName: normalizedGuestName } },
+      {
+        onSuccess: (result) => {
+          setInviteResult(result);
+          queryClientRef.invalidateQueries({
+            queryKey: getGetQuestionSessionQueryKey(sessionId),
+          });
+          queryClientRef.invalidateQueries({
+            queryKey: getListInvitesQueryKey(sessionId),
+          });
+        },
+      },
+    );
+  };
+
+  const inviteUrl = inviteResult?.token
+    ? inviteUrlFromToken(inviteResult.token)
+    : "";
+
+  const copyInvite = async () => {
+    if (!inviteUrl || !navigator.clipboard?.writeText) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopiedInvite(true);
+      window.setTimeout(() => setCopiedInvite(false), 2000);
+    } catch {
+      setCopiedInvite(false);
+    }
+  };
+
+  const shareInvite = async () => {
+    if (!inviteUrl) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Perguntas de Conexão",
+          text: "Vem abrir esse baralho comigo.",
+          url: inviteUrl,
+        });
+      } else {
+        await copyInvite();
+      }
+    } catch {
+      // Sharing can be dismissed without an error state.
+    }
+  };
+
+  return (
+    <main className="post-purchase-shell">
+      <section className="post-purchase-content" aria-labelledby="post-purchase-title">
+        <span className="post-purchase-badge">BARALHO LIBERADO</span>
+        <h1 id="post-purchase-title">
+          Pronto. O baralho de vocês foi liberado.
+        </h1>
+        <p className="post-purchase-lead">
+          Acesso vitalício liberado. Agora falta uma coisa só: chamar ele ou
+          ela.
+        </p>
+
+        {!inviteOpen && !inviteResult ? (
+          <button
+            type="button"
+            className="post-purchase-invite-button"
+            onClick={() => setInviteOpen(true)}
+            data-testid="button-post-purchase-invite"
+          >
+            Convidar ele(a) <Send size={18} aria-hidden="true" />
+          </button>
+        ) : null}
+
+        {inviteOpen && !inviteResult ? (
+          <div className="post-purchase-invite-form">
+            <label htmlFor="post-purchase-guest-name">
+              Nome de quem vai receber
+            </label>
+            <input
+              id="post-purchase-guest-name"
+              value={guestName}
+              onChange={(event) => setGuestName(event.target.value)}
+              className="text-input"
+              placeholder="Ex: Ana"
+              autoComplete="name"
+              data-testid="input-post-purchase-guest-name"
+            />
+            <button
+              type="button"
+              className="post-purchase-invite-button"
+              onClick={makeInvite}
+              disabled={!guestName.trim() || createInvite.isPending}
+              data-testid="button-post-purchase-create-invite"
+            >
+              {createInvite.isPending ? "Criando convite…" : "Gerar convite"}{" "}
+              <ArrowRight size={18} aria-hidden="true" />
+            </button>
+            {createInvite.isError ? (
+              <p className="post-purchase-invite-error">
+                Não foi possível gerar o convite agora. Tente novamente.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {inviteResult && inviteUrl ? (
+          <div className="post-purchase-invite-result">
+            <p>
+              Convite criado para{" "}
+              <strong>{inviteResult.guestName || "ele(a)"}</strong>.
+            </p>
+            <div className="post-purchase-invite-actions">
+              <button
+                type="button"
+                className="post-purchase-share-button"
+                onClick={() => void copyInvite()}
+                data-testid="button-post-purchase-copy-invite"
+              >
+                <Copy size={17} aria-hidden="true" />
+                {copiedInvite ? "Link copiado!" : "Copiar link"}
+              </button>
+              <button
+                type="button"
+                className="post-purchase-share-button"
+                onClick={() => void shareInvite()}
+                data-testid="button-post-purchase-share-invite"
+              >
+                <Send size={17} aria-hidden="true" />
+                Compartilhar
+              </button>
+            </div>
+            <details className="post-purchase-invite-link">
+              <summary>Ver o link do convite</summary>
+              <input
+                readOnly
+                value={inviteUrl}
+                onFocus={(event) => event.currentTarget.select()}
+                className="text-input"
+                data-testid="input-post-purchase-invite-url"
+              />
+            </details>
+          </div>
+        ) : null}
+
+        <div className="post-purchase-question-card">
+          <span>COMEÇEM POR ESTA, HOJE À NOITE</span>
+          <p>Qual parte da nossa rotina você não trocaria por nada?</p>
+        </div>
+
+        <button
+          type="button"
+          className="post-purchase-later"
+          onClick={() => navigate("/onboarding")}
+          data-testid="button-post-purchase-later"
+        >
+          Convidar depois <ArrowRight size={16} aria-hidden="true" />
+        </button>
+      </section>
+    </main>
+  );
+}
+
 function InvitePage() {
   const { token = "" } = useParams<{ token: string }>();
   const inviteQuery = useGetInvite(token, {
@@ -9203,6 +9380,7 @@ function Router() {
           </Route>
           <Route path="/e/:experimentSlug" component={ExperimentLinkRoute} />
           <Route path="/onboarding" component={Onboarding} />
+          <Route path="/post-purchase" component={PostPurchaseInvite} />
           <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
           <Route path="/login" component={Login} />
           <Route path="/play" component={Play} />
@@ -9233,6 +9411,7 @@ function RouteAwareSplash() {
     location === "/admin" ||
     location === "/login" ||
     location === "/onboarding" ||
+    location === "/post-purchase" ||
     location.startsWith("/acesso/") ||
     location === "/play" ||
     location === "/app" ||
