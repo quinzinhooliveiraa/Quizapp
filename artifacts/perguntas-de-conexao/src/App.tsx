@@ -3645,7 +3645,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     <div className="checkout-pix-expired" role="status" aria-live="polite">
       <p className="checkout-pix-expired-title">O código Pix expirou.</p>
       <p>
-        Ele vale 15 minutos. Toque em <strong>“Garantir meu deck”</strong> aqui
+        Ele vale 15 minutos. Toque em <strong>“Garantir meu baralho”</strong> aqui
         embaixo que eu gero outro na hora — seus dados continuam preenchidos.
       </p>
       <p className="checkout-pix-expired-alt">
@@ -3688,7 +3688,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     </div>
   ) : (
     <p className="checkout-payment-preview">
-      Toque em “Garantir meu deck” que o QR aparece aqui.
+      Toque em “Garantir meu baralho” que o QR aparece aqui.
     </p>
   );
 
@@ -3865,7 +3865,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     "Gerando seu Pix…"
                   ) : (
                     <>
-                      Garantir meu deck <ArrowRight size={17} />
+                      Garantir meu baralho <ArrowRight size={17} />
                     </>
                   )}
                 </button>

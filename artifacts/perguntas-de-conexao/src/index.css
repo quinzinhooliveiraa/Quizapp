@@ -22892,6 +22892,11 @@ blockquote em {
 .checkout-payment-heading {
   margin-bottom: 0.8rem;
 }
+.checkout-payment-heading h3 {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+}
 
 .checkout-payment-tabs {
   display: grid;
