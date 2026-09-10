@@ -23076,6 +23076,7 @@ blockquote em {
   z-index: 3;
   bottom: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 1.4rem;
@@ -23085,6 +23086,15 @@ blockquote em {
   background: rgba(255, 253, 251, 0.94);
   box-shadow: 0 -0.8rem 1.8rem rgba(83, 47, 65, 0.06);
   backdrop-filter: blur(12px);
+}
+
+.checkout-purchase-error {
+  flex: 0 0 100%;
+  margin: 0 0 0.5rem;
+  color: #c0392b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 .checkout-purchase-total {

@@ -3580,7 +3580,14 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     let valid = true;
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setEmailError("Confira o e-mail — parece que falta alguma coisa.");
+      setEmailError(
+        buyerEmail.trim()
+          ? "Confira o e-mail — parece que falta alguma coisa."
+          : "Falta o e-mail pra liberar seu acesso.",
+      );
+      const emailField = document.getElementById("checkout-email");
+      emailField?.scrollIntoView({ behavior: "smooth", block: "center" });
+      (emailField as HTMLInputElement | null)?.focus({ preventScroll: true });
       valid = false;
     }
     if (!valid) return;
@@ -3781,6 +3788,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           <form
             className="checkout-email-form checkout-store-form"
             onSubmit={handleInitialCheckout}
+            noValidate
           >
             <div className="checkout-store-grid checkout-store-grid-clean">
               <section className="checkout-order-column">
@@ -3878,6 +3886,11 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             </div>
             {!(selectedPaymentMethod === "pix" && nativeCheckout) ? (
               <div className="checkout-purchase-bar">
+                {emailError ? (
+                  <p className="checkout-purchase-error" role="alert">
+                    ↑ Preencha o e-mail ali em cima pra continuar.
+                  </p>
+                ) : null}
                 <div className="checkout-purchase-total">
                   <span>Total</span>
                   <strong>R$ 47,90</strong>
