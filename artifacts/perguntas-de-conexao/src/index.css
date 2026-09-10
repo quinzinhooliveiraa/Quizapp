@@ -23742,6 +23742,7 @@ blockquote em {
   flex: 0 0 100%;
   width: 100%;
   justify-content: center;
+  text-align: center;
   margin-top: 0.1rem;
 }
 
