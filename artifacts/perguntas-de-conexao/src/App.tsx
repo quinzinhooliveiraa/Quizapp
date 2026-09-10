@@ -2237,15 +2237,6 @@ function Shell({
       <header className="site-header">
         <BrandLogo inverse={dark} />
         <nav className={`main-nav ${menuOpen ? "nav-open" : ""}`}>
-          <Link href="/app" data-testid="link-experience">
-            Experiência
-          </Link>
-          <a href="#como-funciona" data-testid="link-how-it-works">
-            Como funciona
-          </a>
-          <a href="#lp-precos" data-testid="link-packages">
-            Pacotes
-          </a>
         </nav>
         <Link
           href="/login"
