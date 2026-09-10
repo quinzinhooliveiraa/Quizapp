@@ -1922,10 +1922,14 @@ function LandingV2Quiz({
             <em>incluir na rotina começando hoje.</em>
           </h2>
           <p className="lp-solution-lede">
-            459 perguntas escritas pra tirar a conversa do automático, sem
-            clichê, sem "qual seu animal favorito". Vocês abrem uma carta, leem
-            em voz alta e escutam. Separem 10 minutos e vejam onde a conversa
-            vai.
+            459 perguntas escritas pra tirar a conversa do automático. Sem
+            clichê, sem "qual seu animal favorito".
+          </p>
+          <p className="lp-solution-lede">
+            Vocês abrem uma carta, leem em voz alta e escutam.
+          </p>
+          <p className="lp-solution-lede">
+            Separem 10 minutos e vejam onde a conversa vai.
           </p>
           <div className="lp-solution-pillars lp1-two-pillars">
             <div className="lp-pillar">

@@ -3923,12 +3923,25 @@
   max-width: 720px;
 }
 .lp-main:has(.lp2-hero) .lp2-section-lede {
-  max-width: 680px;
-  margin: 0 auto;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
   color: var(--lp1-muted);
   font-size: 1rem;
   line-height: 1.65;
-  text-align: center;
+  text-align: left;
+}
+.lp-main:has(.lp2-hero) .lp2-section-lede + .lp2-section-lede {
+  margin-top: 1rem;
+}
+.lp-main:has(.lp2-hero) .lp-solution-lede {
+  max-width: 560px;
+  margin: 0 auto 1rem;
+  text-align: left;
+  line-height: 1.65;
+}
+.lp-main:has(.lp2-hero) .lp-solution-lede:last-of-type {
+  margin-bottom: 3rem;
 }
 .lp-main:has(.lp2-hero) .lp1-price-context {
   margin: -0.75rem auto 1.3rem;
