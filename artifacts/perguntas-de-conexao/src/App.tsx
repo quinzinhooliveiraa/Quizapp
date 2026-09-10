@@ -3714,7 +3714,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     </div>
   ) : (
     <p className="checkout-payment-preview">
-      Toque em “Começar hoje à noite” que o QR aparece aqui.
+      Preencha seu e-mail acima e o QR aparece aqui.
     </p>
   );
 
