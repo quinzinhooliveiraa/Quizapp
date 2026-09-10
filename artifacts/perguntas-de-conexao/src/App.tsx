@@ -1713,10 +1713,10 @@ function LandingV2Quiz({
             className="lp-cta-secondary-link"
             data-testid="link-hero-quiz"
           >
-            Já sei o que quero — comprar agora →
+            Já sei o que quero: comprar agora →
           </button>
           <p className="lp2-hero-security">
-            🔒 Pix e cartão · 7 dias de garantia — não gostou, devolvo. Você
+            🔒 Pix e cartão · 7 dias de garantia. Não gostou, devolvo. Você
             decide.
           </p>
         </div>
@@ -1754,7 +1754,7 @@ function LandingV2Quiz({
             Ninguém abre o jogo <em>numa pergunta pesada.</em>
           </h2>
           <p className="lp2-section-lede">
-            É o medo de todo mundo — e é por isso que o baralho começa leve.
+            É o medo de todo mundo. É por isso que o baralho começa leve.
             Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
             de responder até pra quem trava. A profundidade vem depois, quando
             os dois já estão dentro da conversa.
@@ -1902,7 +1902,7 @@ function LandingV2Quiz({
             <em>incluir na rotina começando hoje.</em>
           </h2>
           <p className="lp-solution-lede">
-            459 perguntas escritas pra tirar a conversa do automático — sem
+            459 perguntas escritas pra tirar a conversa do automático, sem
             clichê, sem "qual seu animal favorito". Vocês abrem uma carta, leem
             em voz alta e escutam. Separem 10 minutos e vejam onde a conversa
             vai.
@@ -2110,7 +2110,7 @@ function LandingV2Quiz({
                   <strong>Garantia incondicional de 7 dias.</strong>
                   <p>
                     Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
-                    sem perguntas — e você decide.
+                    sem perguntas. E você decide.
                   </p>
                 </div>
               </div>
@@ -2130,11 +2130,11 @@ function LandingV2Quiz({
               ],
               [
                 "Isso substitui terapia de casal?",
-                "Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos — não substitui acompanhamento se a relação precisa. Mas pra sair do piloto automático, resolve hoje à noite.",
+                "Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos. Não substitui acompanhamento se a relação precisa. Mas pra sair do piloto automático, resolve hoje à noite.",
               ],
               [
                 'Por que não só "vamos conversar"?',
-                'Porque "vamos conversar" trava — ninguém sabe por onde começar. O baralho já traz a pergunta certa, na ordem certa, do leve ao profundo.',
+                'Porque "vamos conversar" trava: ninguém sabe por onde começar. O baralho já traz a pergunta certa, na ordem certa, do leve ao profundo.',
               ],
               [
                 "Precisa instalar algum aplicativo?",
@@ -2142,7 +2142,7 @@ function LandingV2Quiz({
               ],
               [
                 "E se meu parceiro achar estranho?",
-                "É o mais comum. Por isso os baralhos começam leves — você escolhe o clima. Ninguém é obrigado a abrir nada antes de querer.",
+                "É o mais comum. Por isso os baralhos começam leves: você escolhe o clima. Ninguém é obrigado a abrir nada antes de querer.",
               ],
               [
                 "Funciona à distância?",
@@ -2150,15 +2150,15 @@ function LandingV2Quiz({
               ],
               [
                 "É vitalício mesmo?",
-                "Sim. Paga uma vez, usa pra sempre — incluindo os baralhos novos que entram depois.",
+                "Sim. Paga uma vez, usa pra sempre, incluindo os baralhos novos que entram depois.",
               ],
               [
                 "Como recebo depois de pagar?",
-                "Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega — o Pix cai na hora.",
+                "Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega. O Pix cai na hora.",
               ],
               [
                 "Por que R$ 47,90?",
-                "459 perguntas escritas e testadas uma a uma, ao longo de meses. O servidor que mantém o jogo no ar e sincroniza vocês dois. E as perguntas novas que entram sem você pagar de novo. Você paga uma vez e fica com tudo — dá 10 centavos por pergunta.",
+                "459 perguntas escritas e testadas uma a uma, ao longo de meses. O servidor que mantém o jogo no ar e sincroniza vocês dois. E as perguntas novas que entram sem você pagar de novo. Você paga uma vez e fica com tudo. Dá 10 centavos por pergunta.",
               ],
             ].map(([question, answer]) => (
               <details key={question} className="lp-faq-item">
@@ -4361,11 +4361,11 @@ function Home({
                       className="lp-cta-secondary-link"
                       data-testid="link-hero-buy"
                     >
-                      Já sei o que quero — comprar agora →
+                      Já sei o que quero: comprar agora →
                     </button>
                   </div>
                   <p className="lp2-hero-security">
-                    🔒 Pagamento seguro · 7 dias de garantia — não gostou, devolvo.
+                    🔒 Pagamento seguro · 7 dias de garantia. Não gostou, devolvo.
                   </p>
                 </div>
                 <div className="lp-hero-mockups" aria-hidden="true">
@@ -4411,7 +4411,7 @@ function Home({
                 <p className="lp-eyebrow lp-eyebrow-center">a pergunta que todo mundo faz</p>
                 <h2 className="lp-h2">E se ele responder <em>"sei lá"</em>?</h2>
                 <p className="lp2-section-lede">
-                  É o medo de todo mundo — e é por isso que o baralho começa leve.
+                  É o medo de todo mundo. É por isso que o baralho começa leve.
                   Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
                   de responder até pra quem trava. A profundidade vem depois, quando
                   os dois já estão dentro da conversa.
@@ -4690,11 +4690,11 @@ function Home({
                   {[
                     [
                       "Isso substitui terapia de casal?",
-                      "Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos — não substitui acompanhamento se a relação precisa. Mas pra sair do piloto automático, resolve hoje à noite.",
+                      "Não, e nem promete isso. É um empurrão pra vocês conversarem sozinhos. Não substitui acompanhamento se a relação precisa. Mas pra sair do piloto automático, resolve hoje à noite.",
                     ],
                     [
                       'Por que não só "vamos conversar"?',
-                      '"Vamos conversar" trava — ninguém sabe por onde começar. O baralho já traz a pergunta certa, na ordem certa, do leve ao profundo.',
+                      '"Vamos conversar" trava: ninguém sabe por onde começar. O baralho já traz a pergunta certa, na ordem certa, do leve ao profundo.',
                     ],
                     [
                       "E se a gente não terminar?",
