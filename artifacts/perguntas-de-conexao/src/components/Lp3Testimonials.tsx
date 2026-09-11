@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { landingTestimonials } from "@/lib/testimonials";
+import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
 
 export function Lp3Testimonials() {
   const testimonials = landingTestimonials.filter(
@@ -61,13 +61,16 @@ export function Lp3Testimonials() {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <p>“{activeTestimonial.quote}”</p>
-          <footer>
-            <div className="lp3-testimonial-attribution">
-              <cite>{activeTestimonial.name}</cite>
-            </div>
-            <span className="lp3-testimonial-detail">{activeTestimonial.detail}</span>
-          </footer>
+          <img
+            className="lp3-testimonial-image"
+            src={
+              testimonialImages[
+                Math.max(0, landingTestimonials.indexOf(activeTestimonial)) %
+                  testimonialImages.length
+              ]
+            }
+            alt={`Depoimento de casal ${activeTestimonial.name ?? activeIndex + 1}`}
+          />
         </blockquote>
         <button
           type="button"

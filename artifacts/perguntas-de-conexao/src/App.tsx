@@ -59,7 +59,7 @@ import {
   getLandingPageByPath,
   type LandingPageId,
 } from "@/lib/landing-pages";
-import { landingTestimonials } from "@/lib/testimonials";
+import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
 import { selectLp1Diagnosis } from "@/lib/lp1-diagnosis";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { RecommendedQuestionCarousel } from "@/components/RecommendedQuestionCarousel";
@@ -1108,7 +1108,8 @@ function Lp1Offer({
     landingTestimonials.find(
       ({ name }) => name === testimonialNameByNarrative[diagnosis.narrativeType],
     ) ?? landingTestimonials[0];
-  const testimonialExcerpt = testimonial.quote.replace(/\s+/g, " ").trim();
+  const testimonialImageIndex =
+    Math.max(0, landingTestimonials.indexOf(testimonial)) % testimonialImages.length;
 
   return (
     <section className="lp1-offer" aria-labelledby="lp1-offer-title">
@@ -1162,13 +1163,13 @@ function Lp1Offer({
           </li>
         </ul>
 
-        <blockquote className="lp1-offer-testimonial">
-          <p>“{testimonialExcerpt.slice(0, 210)}{testimonialExcerpt.length > 210 ? "…" : ""}”</p>
-          <footer>
-            <strong>{testimonial.name}</strong>
-            <small>{testimonial.detail}</small>
-          </footer>
-        </blockquote>
+        <div className="lp1-offer-testimonial" aria-label="Depoimento de cliente">
+          <img
+            className="lp1-offer-testimonial-image"
+            src={testimonialImages[testimonialImageIndex]}
+            alt="Depoimento de casal"
+          />
+        </div>
 
         <div className="lp1-offer-price-card">
           <div className="lp1-offer-price">
@@ -1459,21 +1460,16 @@ function QuestionCarouselSection() {
 
 function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "default" }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const activeTestimonial = landingTestimonials[activeIndex];
 
   const move = (direction: -1 | 1) => {
-    setIsExpanded(false);
     setActiveIndex(
       (current) =>
-        (current + direction + landingTestimonials.length) %
-        landingTestimonials.length,
+        (current + direction + testimonialImages.length) % testimonialImages.length,
     );
   };
 
   const selectTestimonial = (index: number) => {
-    setIsExpanded(false);
     setActiveIndex(index);
   };
 
@@ -1497,6 +1493,7 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
   return (
     <section
       className="lp-social"
+      id={variant === "lp1" ? "lp1-depoimentos" : undefined}
       data-section-name="depoimentos"
     >
       <div className="lp-container">
@@ -1525,33 +1522,16 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
           >
             <ChevronLeft size={20} />
           </button>
-          <blockquote
+          <div
             className="lp-testimonial lp-testimonial-active"
             aria-live="polite"
           >
-            <p
-              id="active-testimonial-quote"
-              className={`lp-testimonial-quote ${isExpanded ? "is-expanded" : ""}`}
-            >
-              “{activeTestimonial.quote}”
-            </p>
-            <button
-              type="button"
-              className="lp-testimonial-more"
-              onClick={() => {
-                setIsExpanded((current) => !current);
-              }}
-              aria-expanded={isExpanded}
-              aria-controls="active-testimonial-quote"
-              data-testid="button-testimonial-more"
-            >
-              {isExpanded ? "Ver menos" : "Ver mais"}
-            </button>
-            <footer>
-              {activeTestimonial.name && <>{activeTestimonial.name} </>}
-              <span>{activeTestimonial.detail}</span>
-            </footer>
-          </blockquote>
+            <img
+              className="lp-testimonial-image"
+              src={testimonialImages[activeIndex]}
+              alt={`Depoimento de casal ${activeIndex + 1}`}
+            />
+          </div>
           <button
             type="button"
             className="lp-testimonial-arrow"
@@ -1567,9 +1547,9 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
           role="tablist"
           aria-label="Escolher depoimento"
         >
-          {landingTestimonials.map((testimonial, index) => (
+          {testimonialImages.map((image, index) => (
             <button
-              key={`${testimonial.name ?? "depoimento"}-${testimonial.detail}`}
+              key={image}
               type="button"
               className={`lp-testimonial-dot ${index === activeIndex ? "is-active" : ""}`}
               onClick={() => selectTestimonial(index)}

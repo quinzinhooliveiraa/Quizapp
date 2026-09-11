@@ -4,6 +4,15 @@ export type LandingTestimonial = {
   detail: string;
 };
 
+export const testimonialImages = [
+  "/testimonials/testimonial-1.png",
+  "/testimonials/testimonial-2.png",
+  "/testimonials/testimonial-3.png",
+  "/testimonials/testimonial-4.png",
+  "/testimonials/testimonial-5.png",
+  "/testimonials/testimonial-6.png",
+] as const;
+
 export const landingTestimonials: LandingTestimonial[] = [
   {
     quote: `Comprei o Perguntas de Conexão para mim e minha esposa. Estamos casados há 23 anos, então achei que já conhecíamos praticamente tudo um sobre o outro.
