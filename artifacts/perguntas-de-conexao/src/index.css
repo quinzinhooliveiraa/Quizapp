@@ -4824,7 +4824,7 @@
   width: min(100%, 260px);
   aspect-ratio: auto;
   border: 0;
-  border-radius: 0;
+  border-radius: 1rem;
   object-fit: contain;
 }
 .lp-testimonial-active::before,
