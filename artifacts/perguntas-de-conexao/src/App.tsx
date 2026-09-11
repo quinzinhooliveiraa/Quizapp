@@ -1697,13 +1697,13 @@ function LandingV2Quiz({
           <picture className="lp-hero-foto">
             <source
               media="(min-width: 700px)"
-              srcSet="/hero/hero-desktop.webp"
+              srcSet="/hero/hero-casal-novo.png"
             />
             <img
-              src="/hero/hero-mobile.webp"
+              src="/hero/hero-casal-novo.png"
               alt="Um casal conversando à noite, com o baralho aberto no celular"
-              width={900}
-              height={852}
+              width={1536}
+              height={1024}
               fetchPriority="high"
               loading="eager"
             />
