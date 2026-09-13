@@ -2086,7 +2086,7 @@ function LandingV2Quiz({
               </ul>
               <div className="lp-price-main">
                 <p className="lp-price-time">
-                  Uma por noite, dá mais de um ano de conversa.
+                  Uma pergunta por noite, dá mais de um ano de conversa.
                 </p>
                 <p className="lp-price-value">
                   459 perguntas por{" "}
@@ -2095,7 +2095,7 @@ function LandingV2Quiz({
                   </span>
                 </p>
                 <p className="lp-price-once">
-                  dá 10 centavos por pergunta
+                  dá 10 centavos por noite
                 </p>
               </div>
               <button
@@ -2105,6 +2105,9 @@ function LandingV2Quiz({
               >
                 Começar hoje à noite <ArrowRight size={18} />
               </button>
+              <p className="lp-price-freedom">
+                🔒 7 dias de garantia. Você decide.
+              </p>
               <div className="lp-guarantee">
                 <div className="lp-guarantee-seal" aria-hidden="true">
                   <ShieldCheck size={28} strokeWidth={1.8} />
@@ -2113,7 +2116,7 @@ function LandingV2Quiz({
                   <strong>Garantia incondicional de 7 dias.</strong>
                   <p>
                     Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
-                    sem perguntas. E você decide.
+                    sem perguntas.
                   </p>
                 </div>
               </div>

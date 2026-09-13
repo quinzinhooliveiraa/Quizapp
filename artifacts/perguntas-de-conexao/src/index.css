@@ -4467,9 +4467,10 @@
   color: #6f6580;
 }
 .lp-main:has(.lp2-hero) .lp1-price-card .lp-cta-full {
-  font-size: 1.12rem;
+  font-size: clamp(0.95rem, 4vw, 1.12rem);
   font-weight: 700;
   min-height: 3.5rem;
+  white-space: nowrap;
 }
 .lp-main:has(.lp2-hero) .lp1-price-card .lp-price-value {
   font-size: 0.95rem;
@@ -24172,6 +24173,12 @@ blockquote em {
   font-weight: 400 !important;
   color: #6f6580 !important;
   margin: 0.2rem 0 0 !important;
+}
+.lp1-price-card .lp-price-freedom {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #6f6580;
 }
 .lp-quiz-route-marker {
   display: none;

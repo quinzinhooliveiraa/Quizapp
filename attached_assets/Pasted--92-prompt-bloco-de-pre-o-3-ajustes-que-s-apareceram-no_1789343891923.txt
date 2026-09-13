@@ -1,0 +1,153 @@
+# 92 — prompt: bloco de preço (3 ajustes que só apareceram no print)
+
+> ⚠️ A mudança de `"dá 10 centavos por pergunta"` → `"por noite"` está no item 3
+> do doc **90** e é do mesmo bloco. Se você colar os dois prompts, é a mesma
+> mudança — não faça duas vezes. Ela está incluída aqui como item 2 pra você
+> poder colar só este arquivo, se preferir.
+
+---
+
+## O QUE FAZER
+
+Arquivo: `artifacts/perguntas-de-conexao/src/App.tsx`
+
+### 1. Resolver o "Uma" sem referente (linha ~2089)
+
+Localizar:
+```jsx
+                <p className="lp-price-time">
+                  Uma por noite, dá mais de um ano de conversa.
+                </p>
+```
+Trocar por:
+```jsx
+                <p className="lp-price-time">
+                  Uma pergunta por noite, dá mais de um ano de conversa.
+                </p>
+```
+
+### 2. Unidade temporal na 3ª linha (linha ~2098)
+
+Localizar:
+```jsx
+                <p className="lp-price-once">
+                  dá 10 centavos por pergunta
+                </p>
+```
+Trocar por:
+```jsx
+                <p className="lp-price-once">
+                  dá 10 centavos por noite
+                </p>
+```
+
+### 3. Subir o "você decide" pra junto do botão
+
+**3a.** Localizar o botão e a caixa de garantia (linhas ~2101-2119) e inserir
+uma linha nova **entre** o `</button>` e a `<div className="lp-guarantee">`:
+
+```jsx
+              </button>
+              <p className="lp-price-freedom">
+                🔒 7 dias de garantia. Você decide.
+              </p>
+              <div className="lp-guarantee">
+```
+
+**3b.** Na caixa de garantia logo abaixo, tirar o "E você decide." do fim do
+parágrafo (pra não repetir duas vezes em três linhas). Localizar:
+
+```jsx
+                  <p>
+                    Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
+                    sem perguntas. E você decide.
+                  </p>
+```
+Trocar por:
+```jsx
+                  <p>
+                    Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
+                    sem perguntas.
+                  </p>
+```
+
+---
+
+Arquivo: `artifacts/perguntas-de-conexao/src/index.css`
+
+### 4. CSS da linha nova
+
+Adicionar junto das outras regras do card de preço (perto da linha ~24170,
+onde estão `.lp1-price-card .lp-price-once` etc.):
+
+```css
+.lp1-price-card .lp-price-freedom {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #6f6580;
+}
+```
+
+### 5. Impedir que o botão quebre em duas linhas
+
+Localizar (linha ~4469):
+```css
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-cta-full {
+  font-size: 1.12rem;
+  font-weight: 700;
+  min-height: 3.5rem;
+}
+```
+Trocar por:
+```css
+.lp-main:has(.lp2-hero) .lp1-price-card .lp-cta-full {
+  font-size: clamp(0.95rem, 4vw, 1.12rem);
+  font-weight: 700;
+  min-height: 3.5rem;
+  white-space: nowrap;
+}
+```
+
+---
+
+## POR QUÊ
+
+**Item 1** — no print dá pra ver que a frase mais destacada do card começa com
+um pronome sem antecedente: *"Uma por noite…"*. Uma o quê? E o que vem
+imediatamente acima dela na lista é *"Sem mensalidade. Paga uma vez."* — ou
+seja, o referente mais próximo do "Uma" acaba sendo **"uma vez"**, de pagamento.
+O "459 perguntas" está vários itens acima. Uma palavra resolve, e resolve sem
+mexer na ordem "459 perguntas por R$ 47,90", que precisa continuar nessa
+sequência (*Pricing p.37*, Bagchi & Davis 2012: a quantidade grande antes do
+preço faz o preço parecer menor).
+
+**Item 2** — *Pricing p.19*, Gourville (1998): a tática é **daily equivalence**,
+enquadramento temporal. Como a página já estabelece uma pergunta por noite, os
+dois números são idênticos (R$ 47,90 ÷ 459 = R$ 0,104) — trocar "pergunta" por
+"noite" custa uma palavra e passa a seguir o livro em vez de tangenciar. Também
+deixa o bloco inteiro falando de tempo, coerente com a 1ª linha.
+
+**Item 3** — *Copywriting p.20*, BYAF (Carpenter 2013): *"With more freedom,
+your readers will develop a stronger genuine desire to **complete your
+call-to-action**."* O gatilho é ligado ao CTA. No código ele estava logo depois
+do botão, mas visualmente estava enterrado: dentro de outra caixa, na última
+linha, na cor mais apagada, depois de três frases. Quem lê o botão e clica
+nunca chegava nele. O hero já faz certo — botão, e logo abaixo a linha solta
+*"🔒 Pix e cartão · 7 dias de garantia. Não gostou, devolvo. Você decide."*
+Este item só replica esse padrão no bloco de preço.
+
+**Item 5** — no print o botão quebra em *"Começar hoje à / noite"* com a seta
+boiando sozinha à direita. Causa: `font-size: 1.12rem` + peso 700 + padding de
+1.1rem não cabem na largura do card no celular. O `clamp()` faz a fonte encolher
+só o necessário em tela estreita (mínimo 0.95rem) e o `nowrap` garante uma linha
+só. Em tela larga nada muda.
+
+---
+
+## DEPOIS DE COLAR, CONFERIR
+
+- O botão numa linha só no celular (375px de largura).
+- A linha "🔒 7 dias de garantia. Você decide." aparecendo entre o botão e a
+  caixa cinza — e o "E você decide" **não** aparecendo mais dentro da caixa.
+- As três linhas do preço na ordem: tempo (grande) → preço → centavos.
