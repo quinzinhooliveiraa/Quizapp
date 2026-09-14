@@ -1051,18 +1051,20 @@ const LP1_SCREENS: Lp1Screen[] = [
   {
     id: "s03-sei-la",
     kind: "question",
-    key: "s03-sei-la",
-    title: "Quando uma conversa começa a ficar de verdade, o que costuma acontecer?",
-    why: "Perguntamos para entender o espaço que existe para uma conversa nova.",
+    key: "pain",
+    title: "Quando você tenta puxar assunto de verdade, o que acontece?",
+    why: "Perguntamos para entender o que mais trava a conversa hoje.",
     format: "wide",
     options: [
-      { value: "evita", label: "Alguém muda de assunto" },
+      { value: "sei-la", label: 'Ele(a) responde "sei lá"' },
       {
-        value: "quase",
+        value: "eu-travo",
         label: "Sim, quase sempre",
         expand: "Essa é a resposta mais comum aqui. Não é desinteresse.",
       },
-      { value: "fica", label: "A gente consegue ficar na conversa" },
+      { value: "como-comecar", label: "Eu não sei por onde começar" },
+      { value: "medo", label: "Tenho medo de perguntar" },
+      { value: "afastamento", label: "A gente se afastou sem perceber" },
     ],
   },
   {
@@ -1172,14 +1174,15 @@ const LP1_SCREENS: Lp1Screen[] = [
   {
     id: "s13-lembranca",
     kind: "question",
-    key: "s13-lembranca",
-    title: "Qual dessas cenas parece mais com um momento bom de vocês?",
-    format: "cards",
-    emoji: true,
+    key: "objecao",
+    title: "O que mais poderia fazer você deixar isso para depois?",
+    subtitle: "Escolha a frase que mais parece com o que passa pela sua cabeça.",
+    format: "list",
     options: [
-      { value: "rindo", label: "Rindo de uma coisa boba", icon: "☼" },
-      { value: "conversando", label: "Conversando sem pressa", icon: "◌" },
-      { value: "juntos", label: "Só ficando perto", icon: "♡" },
+      { value: "ele-nao-topa", label: "Ele(a) não vai topar" },
+      { value: "nao-vai-mudar", label: "Não sei se isso muda alguma coisa" },
+      { value: "sem-tempo", label: "A gente não tem tempo" },
+      { value: "nao-sei-comecar", label: "Eu não sei como começar" },
     ],
   },
   {
@@ -1197,47 +1200,25 @@ const LP1_SCREENS: Lp1Screen[] = [
     ],
   },
   {
-    id: "s15-oferece",
-    kind: "question",
-    key: "s15-oferece",
-    title: "E o que você gostaria de oferecer mais?",
-    format: "clima",
-    emoji: true,
-    options: [
-      { value: "presenca", label: "Presença", icon: "◌" },
-      { value: "coragem", label: "Coragem para falar", icon: "✦" },
-      { value: "carinho", label: "Carinho", icon: "♡" },
-    ],
+    id: "s15-loading",
+    kind: "loading",
+    title: "Estamos juntando as peças do que você contou.",
+    body: ["O seu resultado começa a aparecer."],
+    cta: "Continuar",
   },
   {
-    id: "s16-proximidade",
-    kind: "question",
-    key: "s16-proximidade",
-    title: "Hoje, quão perto você se sente dessa pessoa?",
-    subtitle: "Responda pelo corpo, antes de pensar demais.",
-    format: "slider",
-    options: [
-      { value: "1", label: "Muito longe" },
-      { value: "2", label: "Um pouco longe" },
-      { value: "3", label: "No meio" },
-      { value: "4", label: "Perto" },
-      { value: "5", label: "Muito perto" },
-    ],
+    id: "s16-diagnostico",
+    kind: "summary",
+    title: "O clima de vocês agora",
+    body: ["Aqui vai aparecer o retrato do momento de vocês."],
+    cta: "Continuar",
   },
   {
-    id: "s17-conversa",
-    kind: "question",
-    key: "s17-conversa",
-    title: "Qual conversa você gostaria que ficasse mais fácil?",
-    format: "multi",
-    emoji: true,
-    options: [
-      { value: "sentimentos", label: "Sentimentos", icon: "♡" },
-      { value: "futuro", label: "Futuro", icon: "⌁" },
-      { value: "desejo", label: "Desejo", icon: "✦" },
-      { value: "conflitos", label: "Conflitos", icon: "◐" },
-      { value: "sonhos", label: "Sonhos", icon: "☼" },
-    ],
+    id: "s17-plano",
+    kind: "summary",
+    title: "As próximas três noites de vocês",
+    body: ["O plano personalizado entra na próxima fase."],
+    cta: "Continuar",
   },
   {
     id: "s18-amostra",
@@ -1273,7 +1254,14 @@ const LP1_SCREENS: Lp1Screen[] = [
     ],
   },
   {
-    id: "s21-contato",
+    id: "s21-amostra",
+    kind: "sample",
+    title: "3 perguntas feitas para vocês.",
+    body: ["Pode usar hoje à noite — são de graça, e são suas."],
+    cta: "Continuar",
+  },
+  {
+    id: "s22-contato",
     kind: "capture",
     key: "email",
     title: "Quer receber o seu resultado?",
@@ -1281,18 +1269,11 @@ const LP1_SCREENS: Lp1Screen[] = [
     cta: "Continuar",
   },
   {
-    id: "s22-organizando",
+    id: "s23-organizando",
     kind: "loading",
     title: "Seu diagnóstico está quase pronto.",
     body: ["Estamos escolhendo o ponto de partida que mais combina com vocês."],
     cta: "Ver meu resultado",
-  },
-  {
-    id: "s23-resumo",
-    kind: "summary",
-    title: "Pronto. Agora dá para começar do lugar certo.",
-    body: ["Veja o que o teste encontrou sobre o momento de vocês."],
-    cta: "Ver meu diagnóstico",
   },
 ];
 
@@ -1505,91 +1486,263 @@ function Lp1Quiz({
   onBackToLanding: () => void;
 }) {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<LandingQuizAnswers>({});
+  const [answers, setAnswers] = useState<Lp1Answers>({});
   const [showOffer, setShowOffer] = useState(false);
-  const current = LP1_QUIZ_STEPS[step];
-  const footnote =
-    step < 3 && current && "footnote" in current ? current.footnote : undefined;
+  const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
+  const isLastScreen = step === LP1_SCREENS.length - 1;
+  const selectedValue =
+    current.kind === "question" && current.key
+      ? answers[current.key] ?? ""
+      : "";
 
-  const handleAnswer = (key: LandingQuizAnswerKey, value: string) => {
+  const selectAnswer = (key: string, value: string) => {
     setAnswers((previous) => ({ ...previous, [key]: value }));
-    setStep((previous) => Math.min(previous + 1, 3));
+    if (typeof navigator !== "undefined") navigator.vibrate?.(10);
+  };
+
+  const advance = (nextAnswers = answers) => {
+    if (isLastScreen) {
+      const score = computeLp1Score(nextAnswers);
+      console.info("[lp1] score", score);
+      setShowOffer(false);
+      setStep(LP1_SCREENS.length);
+      return;
+    }
+    setStep((previous) => Math.min(previous + 1, LP1_SCREENS.length - 1));
+  };
+
+  const handleNext = () => {
+    if (current.kind === "question") {
+      if (!selectedValue) return;
+      const score = computeLp1Score(answers);
+      console.info("[lp1] score", score);
+    }
+    if (current.kind === "capture") {
+      const email = answers.email?.trim();
+      if (email && !email.includes("@")) return;
+    }
+    advance();
+  };
+
+  const handleMultiSelect = (value: string) => {
+    if (current.kind !== "question") return;
+    const currentValues = selectedValue ? selectedValue.split(",") : [];
+    const nextValues = currentValues.includes(value)
+      ? currentValues.filter((item) => item !== value)
+      : [...currentValues, value];
+    selectAnswer(current.key, nextValues.join(","));
+  };
+
+  const goBack = () => {
+    if (step === 0) {
+      onBackToLanding();
+      return;
+    }
+    setStep((previous) => Math.max(previous - 1, 0));
   };
 
   return (
     <main className={`lp1-quiz-screen ${showOffer ? "is-offer" : ""}`}>
-      {step < 3 ? (
+      {step > 0 && step < LP1_SCREENS.length ? (
         <div
           className="lp1-quiz-progress"
           role="progressbar"
-          aria-label={`Progresso do quiz: pergunta ${Math.min(step + 1, 3)} de 3`}
-          aria-valuemin={1}
-          aria-valuemax={3}
-          aria-valuenow={Math.min(step + 1, 3)}
+          aria-label={`Progresso do quiz: tela ${step + 1} de ${LP1_SCREENS.length}`}
+          aria-valuemin={0}
+          aria-valuemax={LP1_SCREENS.length}
+          aria-valuenow={step}
         >
-          {LP1_QUIZ_STEPS.map((question, index) => (
+          <span className="lp1-quiz-progress-label">
+            Tela {step + 1} de {LP1_SCREENS.length}
+          </span>
+          <span className="lp1-quiz-progress-track" aria-hidden="true">
             <span
-              key={question.key}
-              className={`lp1-quiz-progress-segment ${index <= step ? "is-active" : ""}`}
+              className="lp1-quiz-progress-fill"
+              style={{ width: `${(step / LP1_SCREENS.length) * 100}%` }}
             />
-          ))}
+          </span>
         </div>
       ) : null}
 
       <div className="lp1-quiz-content">
-        {step === 3 ? (
+        {step === LP1_SCREENS.length ? (
           showOffer ? (
-            <Lp1Offer answers={answers} onFinish={onFinish} />
+            <Lp1Offer
+              answers={answers as LandingQuizAnswers}
+              onFinish={onFinish}
+            />
           ) : (
             <Lp1Diagnosis
-              answers={answers}
+              answers={answers as LandingQuizAnswers}
               onContinue={() => setShowOffer(true)}
             />
           )
-        ) : (
-          <>
-            <h1 className="lp1-quiz-title">
-              {current.title}{" "}
-              {"emphasis" in current && current.emphasis ? (
-                <em>{current.emphasis}</em>
-              ) : null}
-            </h1>
-            <div className="lp1-quiz-options">
-              {current.options.map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className="lp1-quiz-option"
-                  onClick={() =>
-                    handleAnswer(current.key as LandingQuizAnswerKey, value)
-                  }
-                  data-testid={`button-lp1-quiz-${current.key}-${value}`}
-                >
-                  <span className="lp1-quiz-option-label">{label}</span>
-                </button>
-              ))}
+        ) : current.kind === "question" ? (
+          <section data-section-name={current.id}>
+            <h1 className="lp1-quiz-title">{current.title}</h1>
+            {current.subtitle ? (
+              <p className="lp1-quiz-subtitle">{current.subtitle}</p>
+            ) : null}
+            {current.why ? <p className="lp1-quiz-why">{current.why}</p> : null}
+            <Lp1QuestionOptions
+              question={current}
+              selectedValue={selectedValue}
+              onSelect={(value) =>
+                current.format === "multi"
+                  ? handleMultiSelect(value)
+                  : selectAnswer(current.key, value)
+              }
+            />
+            {current.format === "multi" ? (
+              <p className="lp1-quiz-count">
+                {selectedValue ? selectedValue.split(",").filter(Boolean).length : 0}{" "}
+                de 5 marcadas
+              </p>
+            ) : null}
+            <div className="lp1-quiz-actions">
+              <button
+                type="button"
+                className="lp1-quiz-next"
+                disabled={!selectedValue}
+                onClick={handleNext}
+                data-testid={`button-lp1-quiz-next-${current.id}`}
+              >
+                Continuar <ArrowRight size={17} aria-hidden="true" />
+              </button>
+              <button type="button" className="lp1-quiz-back" onClick={goBack}>
+                ← Voltar
+              </button>
             </div>
+          </section>
+        ) : (
+          <section data-section-name={current.id}>
+            <h1 className="lp1-quiz-title">{current.title}</h1>
+            {current.body?.map((paragraph) => (
+              <p className="lp1-quiz-card-body" key={paragraph}>
+                {paragraph}
+              </p>
+            ))}
+            {current.kind === "capture" ? (
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                className="lp1-quiz-capture-input"
+                placeholder="seu melhor e-mail"
+                value={answers.email ?? ""}
+                onChange={(event) =>
+                  setAnswers((previous) => ({
+                    ...previous,
+                    email: event.target.value,
+                  }))
+                }
+                onFocus={(event) =>
+                  window.setTimeout(
+                    () =>
+                      event.currentTarget.scrollIntoView({
+                        block: "center",
+                        behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                          .matches
+                          ? "auto"
+                          : "smooth",
+                      }),
+                    100,
+                  )
+                }
+                aria-label="Seu e-mail"
+                data-testid="input-lp1-quiz-email"
+              />
+            ) : null}
             <button
               type="button"
-              className="lp1-quiz-back"
-              onClick={() => {
-                if (step === 0) {
-                  onBackToLanding();
-                  return;
-                }
-                setStep((previous) => Math.max(previous - 1, 0));
-              }}
+              className="lp1-quiz-next"
+              onClick={handleNext}
+              data-testid={`button-lp1-quiz-next-${current.id}`}
             >
+              {current.cta} <ArrowRight size={17} aria-hidden="true" />
+            </button>
+            {step === 0 ? (
+              <button
+                type="button"
+                className="lp1-quiz-skip"
+                onClick={onFinish}
+                data-testid="button-lp1-quiz-existing-checkout"
+              >
+                Já fiz o teste — quero o baralho →
+              </button>
+            ) : null}
+            <button type="button" className="lp1-quiz-back" onClick={goBack}>
               ← Voltar
             </button>
-          </>
+          </section>
         )}
       </div>
-
-      {step < 3 && footnote ? (
-        <p className="lp1-quiz-footnote">{footnote}</p>
-      ) : null}
     </main>
+  );
+}
+
+function Lp1QuestionOptions({
+  question,
+  selectedValue,
+  onSelect,
+}: {
+  question: Lp1Question;
+  selectedValue: string;
+  onSelect: (value: string) => void;
+}) {
+  const selectedValues = selectedValue.split(",").filter(Boolean);
+  const isMulti = question.format === "multi";
+
+  return (
+    <div className={`lp1-quiz-options lp1-quiz-format-${question.format}`}>
+      {question.format === "slider" ? (
+        <>
+          <input
+            type="range"
+            min={1}
+            max={question.options.length}
+            step={1}
+            value={selectedValue || 3}
+            className="lp1-quiz-slider"
+            onChange={(event) => onSelect(event.target.value)}
+            aria-label={question.title}
+          />
+          <div className="lp1-quiz-slider-labels">
+            <span>{question.options[0]?.label}</span>
+            <span>{question.options[question.options.length - 1]?.label}</span>
+          </div>
+        </>
+      ) : (
+        question.options.map((option) => {
+          const isSelected = isMulti
+            ? selectedValues.includes(option.value)
+            : selectedValue === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`lp1-quiz-option ${isSelected ? "is-selected" : ""}`}
+              onClick={() => onSelect(option.value)}
+              data-testid={`button-lp1-quiz-${question.key}-${option.value}`}
+              aria-pressed={isSelected}
+            >
+              {question.emoji && option.icon ? (
+                <span className="lp1-quiz-option-icon" aria-hidden="true">
+                  {option.icon}
+                </span>
+              ) : null}
+              <span className="lp1-quiz-option-label">{option.label}</span>
+              {isSelected ? (
+                <Check className="lp1-quiz-option-check" size={18} aria-hidden="true" />
+              ) : null}
+              {isSelected && option.expand ? (
+                <span className="lp1-quiz-option-expand">{option.expand}</span>
+              ) : null}
+            </button>
+          );
+        })
+      )}
+    </div>
   );
 }
 
@@ -2901,9 +3054,20 @@ function useLpTracking(
       },
       { threshold: 0.25 },
     );
-    document
-      .querySelectorAll("[data-section-name]")
-      .forEach((element) => observer.observe(element));
+    const observedSections = new WeakSet<Element>();
+    const observeSections = () => {
+      document.querySelectorAll("[data-section-name]").forEach((element) => {
+        if (observedSections.has(element)) return;
+        observedSections.add(element);
+        observer.observe(element);
+      });
+    };
+    observeSections();
+    const sectionMutationObserver = new MutationObserver(observeSections);
+    sectionMutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
     const sendExit = () => {
       if (exitSentRef.current) return;
       exitSentRef.current = true;
@@ -2920,6 +3084,7 @@ function useLpTracking(
     window.addEventListener("pagehide", sendExit);
     return () => {
       observer.disconnect();
+      sectionMutationObserver.disconnect();
       lcpObserver?.disconnect();
       window.clearInterval(clarityPoll);
       window.clearTimeout(viewFallback);
@@ -5195,8 +5360,10 @@ function TrackedQuiz({
 }: {
   experimentAssignment?: StoredExperimentAssignment;
 }) {
+  const trackCtaClick = useLpTracking("v2", experimentAssignment);
   const checkout = useCheckout({
     sourceLp: "v2",
+    onCtaClick: trackCtaClick,
     experimentAssignment,
   });
   const [, navigate] = useLocation();

@@ -1,0 +1,337 @@
+# 108 — Prompts do Replit · Fases 2 e 3
+
+Fase 1 já subiu. Aqui estão as duas que faltam, prontas pra colar em sequência.
+Cola a 2, testa, cola a 3.
+
+Referências do código, já conferidas no repositório:
+`App.tsx` → `Lp1Quiz`, `Lp1Diagnosis`, `Lp1Offer`, `LP1_THEME_NAMES`,
+`LP1_OFFER_HEADLINES`, `RecommendedQuestionCarousel`, `usePricing()`,
+`selectLandingQuizQuestions(theme, intensity, stage)` ·
+`lib/lp1-diagnosis.ts` → `selectLp1Diagnosis`, `Lp1QuizAnswers` ·
+`lib/lp3-narrative.ts` → `selectLp3Narrative` · `lib/testimonials.ts`.
+
+---
+
+# FASE 2 — diagnóstico, plano, loading e amostra
+
+> **Tarefa:** substituir o `Lp1Diagnosis` atual por uma sequência de quatro
+> telas — loading, diagnóstico com medidor, plano de 3 noites e amostra — e
+> ligar o campo `pain` que a Fase 1 passou a coletar.
+>
+> Não mexer no `Lp1Offer` nesta fase; ele continua sendo a tela final.
+
+## 1. O campo `pain` — ele nunca existiu no código
+
+Em `lib/lp1-diagnosis.ts`, estender o tipo:
+
+```ts
+export type Lp1QuizAnswers = {
+  pain?: string;        // NOVO — vem da tela 3
+  objecao?: string;     // NOVO — vem da tela 13
+  intensity?: string;
+  stage?: string;
+  theme?: string;
+};
+```
+
+Adicionar o mapa de pitch por dor, com título, insight, ponte e baralho:
+
+```ts
+type PainPitch = { title: string; insight: string; ponte: string; themeId: string };
+
+const PAIN_PITCH: Record<string, PainPitch> = {
+  "sei-la": {
+    title: 'Ele responde "sei lá" — e não é falta de amor. É a pergunta.',
+    insight: '"Vamos conversar" é uma cobrança: pede que ele traga algo sem dizer o quê. Ninguém sabe responder isso.',
+    ponte: "É pra isso que o baralho existe. A pergunta já chega pronta e começa leve — ele responde sem travar, porque agora tem o quê responder.",
+    themeId: "porto-seguro",
+  },
+  "eu-travo": {
+    title: "Não é só ele. Você também trava — e tá tudo bem.",
+    insight: 'Ninguém chega com resposta pronta. "Nunca pensei nisso" já é uma resposta, e costuma ser o começo da melhor parte.',
+    ponte: "As primeiras cartas são leves até pra quem se conhece pouco. Você pensa em voz alta, e a conversa descobre vocês dois junto.",
+    themeId: "voce-nao-sabia",
+  },
+  "como-comecar": {
+    title: "O problema nunca foi ter o que falar. Foi por onde começar.",
+    insight: "Você espera o momento certo, ele não vem, e vira outra semana. A conversa não começa sozinha.",
+    ponte: "O baralho é a primeira pergunta pronta. Você abre uma carta, lê em voz alta, e o assunto já está na mesa.",
+    themeId: "porto-seguro",
+  },
+  medo: {
+    title: "Dá medo perguntar. Por isso o baralho começa leve.",
+    insight: "Ninguém abre o jogo numa pergunta pesada. A profundidade vem depois, quando os dois já estão dentro.",
+    ponte: "Você escolhe o clima. Começa no leve e só vai fundo quando quiser — ninguém é obrigado a abrir nada antes da hora.",
+    themeId: "porto-seguro",
+  },
+  afastamento: {
+    title: "Vocês não brigaram. Só pararam de perguntar.",
+    insight: 'A rotina foi trocando "como foi o dia?" por "chegou?" até isso virar o normal de vocês.',
+    ponte: "Uma pergunta que ele nunca ouviu antes quebra o piloto automático — hoje à noite, em 10 minutos.",
+    themeId: "depois-da-tempestade",
+  },
+};
+```
+
+E no `selectLp1Diagnosis`, **priorizar a dor**, mantendo a lógica antiga como
+fallback:
+
+```ts
+export type Lp1Diagnosis = Lp3Narrative & { title: string; ponte?: string };
+
+export function selectLp1Diagnosis(answers: Lp1QuizAnswers): Lp1Diagnosis {
+  const narrative = selectLp3Narrative(toLp3Answers(answers));
+  const p = answers.pain ? PAIN_PITCH[answers.pain] : undefined;
+  if (p) {
+    return { ...narrative, title: p.title, insight: p.insight, ponte: p.ponte,
+             themeId: p.themeId, personalizations: [] };
+  }
+  return { ...narrative, title: diagnosisTitles[narrative.narrativeType] };
+}
+```
+
+## 2. Tela 15 — `Lp1Loading`
+
+Componente novo. Dura **5 segundos**, com:
+
+- Título que muda a cada ~1,7s: `"Lendo o que trava a conversa de vocês…"` →
+  `"Cruzando com 459 perguntas…"` → `"Montando o diagnóstico de vocês…"`
+- Um **checklist de 3 linhas** que vão sendo marcadas com ✓ conforme o tempo passa,
+  a linha atual mostrando a porcentagem.
+- Um depoimento por baixo. Usar o texto do print nº 2 (doc 107), como citação.
+- **Um modal por cima aos ~2,5s**, que pausa a barra:
+  > **Vocês já tentaram um jogo de perguntas antes?** [ Já ] [ Nunca ]
+
+  Responder grava em `answers.jaTentou` e retoma a barra. Não tem como fechar
+  sem responder — é assim que o Spartan e o Luvly fazem.
+- `prefers-reduced-motion`: pula direto pro fim da barra, mas **mantém o modal**.
+
+## 3. Tela 16 — `Lp1Diagnosis` reescrito
+
+Usa `computeLp1Score` (criado na Fase 1) e o `PAIN_PITCH`.
+
+```
+┌────────────────────────────────┐
+│  O clima de vocês agora        │
+│                                │
+│  Distância na conversa   Alta  │
+│        ┌ "Vocês estão aqui"    │
+│  ▓▓▓▓▓▓▓●──────────            │
+│  Perto    Morno    Distante    │
+│                                │
+│  Calculado a partir das 5      │  ← literal, em cinza
+│  respostas que você deu.       │
+│                                │
+│  Facilidade de começar  ↓ Baixa│
+│  Vontade dos dois       ↑ Alta │
+│  Ponto de partida    Porto Seg.│
+│                                │
+│  {PAIN_PITCH.title}            │
+│  Como você respondeu X e Y…    │
+│  {PAIN_PITCH.insight}          │
+│  {PAIN_PITCH.ponte}            │
+└────────────────────────────────┘
+```
+
+Regras:
+
+- O marcador do medidor **anima** da esquerda até a posição em ~800ms.
+- Faixa: 0-30 perto · 31-60 morno · 61-100 distante.
+- A linha cinza embaixo do medidor é obrigatória e literal:
+  *"Calculado a partir das 5 respostas que você deu. Não é diagnóstico clínico —
+  é o retrato do que você acabou de contar."*
+- O parágrafo de insight **cita as respostas dela**, no molde
+  *"Como você respondeu que tenta e vem o 'sei lá', e que a rotina apertou:"*.
+  Se faltar resposta, cai pro insight puro sem a citação.
+- **Nada de porcentagem de sucesso, chance, ou previsão.** Só o índice.
+- Ilustração: `/testimonials/…` não — usar `/dx/dx-{pain}.png` (as 5 do lote 2).
+  Se o arquivo não existir, o bloco some sem quebrar o layout.
+
+## 4. Tela 17 — `Lp1Plan`
+
+```
+As próximas três noites de vocês
+
+HOJE      {baralho leve}  — 3 perguntas fáceis. Ele responde sem travar.
+AMANHÃ    {baralho da dor} — a conversa que vocês vêm adiando.
+DEPOIS    {baralho do desejo} — o assunto que ainda não existiu.
+
+E depois disso ainda sobram 456 perguntas.
+Uma por noite, dá mais de um ano de conversa.
+
+A conversa que vocês não tiveram essa semana não volta.
+Ela só vira outra semana.
+```
+
+As três linhas aparecem em cascata (150ms entre elas). Os baralhos vêm de
+`PAIN_PITCH.themeId`, de `answers.theme` e do desejo da tela 7 — sem repetir.
+
+## 5. Tela 21 — `Lp1Sample`
+
+Reaproveita `selectLandingQuizQuestions(answers.theme, answers.intensity,
+answers.stage)` e o `RecommendedQuestionCarousel`, que já existem.
+
+- **Confirmar que as 3 perguntas exibidas existem mesmo na biblioteca de 459.**
+  Se `selectLandingQuizQuestions` devolver menos de 3, logar um aviso e completar
+  com perguntas reais do mesmo `themeId` — nunca inventar texto.
+- Confete **uma vez só**, quando as 3 cartas entram. Respeitar
+  `prefers-reduced-motion`.
+- Copy: *"3 perguntas feitas pra vocês. Pode usar hoje à noite — são de graça, e
+  são suas."*
+
+## 6. Tela 22 — `Lp1Capture`
+
+Nome + e-mail + botão, e **um link "Pular e ver o baralho →"** que segue sem
+gravar nada. O nome volta nas telas seguintes (`answers.nome`).
+
+## 7. Encaixe no `Lp1Quiz`
+
+A máquina de estados passa a ter, depois da última pergunta:
+`loading → diagnostico → plano → sim1 → sim2 → sim3 → amostra → captura →
+loading2 → Lp1Offer` (o atual, ainda).
+
+Cada uma com seu `data-section-name` (`s15-loading`, `s16-diagnostico`, …).
+
+## 8. Conferir
+
+1. As 5 dores dão 5 diagnósticos diferentes — testa uma a uma.
+2. O medidor bate com o score: todas leves → "perto"; todas pesadas → "distante".
+3. O modal do loading aparece e não dá pra pular.
+4. As 3 perguntas da amostra existem na biblioteca.
+5. O link "pular" da captura funciona e não trava.
+6. Nada quebrou: o `Lp1Offer` atual ainda abre no fim.
+
+---
+
+# FASE 3 — as duas telas de oferta
+
+> **Tarefa:** substituir o `Lp1Offer` atual por duas telas: `Lp1OfferA`
+> (reconhecimento, **sem preço**) e `Lp1OfferB` (preço).
+
+## 1. `Lp1OfferA` — nenhum preço, nenhum botão de comprar
+
+```
+{nome}, o baralho de vocês está pronto.
+Com base no que você respondeu, a gente montou um ponto de partida.
+
+VOCÊ SE RECONHECE EM ALGUMA DESSAS?
+🔹 {linha da dor da tela 3}
+🔹 {linha da objeção da tela 13}
+🔹 Vocês dormem na mesma cama e não se contam mais nada?
+🔹 Já desistiu de perguntar porque achou que ele não ia levar a sério?
+
+Não é falta de amor. E não é culpa sua.
+Ninguém ensinou vocês a fazer a pergunta — e "vamos conversar" nunca foi
+uma pergunta.
+
+[print nº 6 — dep-06-ja-conversa.png]
+
+✅ A primeira pergunta pronta: você abre a carta, lê em voz alta, e a
+   conversa começa sem você ter que puxar.
+✅ Começa leve: as primeiras cartas são fáceis de responder até pra quem trava.
+✅ Funciona mesmo se ele não entrar de cara: você começa sozinha, com as
+   perguntas leves. Ele entra quando a conversa já estiver boa.
+✅ 459 perguntas em 15 baralhos: do "morri de rir" ao "nunca te contei isso".
+✅ Paga uma vez, é de vocês pra sempre: sem mensalidade, sem renovação.
+✅ 7 dias de garantia: não gostou, devolve. Sem pergunta.
+
+Hoje à noite. Dez minutos. Uma pergunta.
+Não precisa de clima, não precisa avisar, não precisa marcar.
+
+Você já salvou perguntas antes. Elas continuam salvas.
+Não é falta de vontade. É que pergunta salva não vira conversa —
+ela só vira uma pasta que você não abre.
+A diferença de hoje é que a primeira já está pronta.
+
+[ Ver o baralho de vocês ]
+Nada é cobrado aqui — você só vê o baralho.
+```
+
+**Regra dura: nesta tela não existe preço, valor, "comprar", nem checkout.**
+As duas primeiras linhas do "você se reconhece" vêm das respostas dela; as
+outras duas são fixas.
+
+## 2. `Lp1OfferB` — preço
+
+```
+Nunca foi falta de amor. Era só a pergunta.
+
+Hoje            →  Depois
+Conversa        Só logística   →  De verdade, toda semana
+Descoberta      Parada         →  Algo novo que você não sabia
+Puxar assunto   Trava          →  Sai sozinha
+
+459 perguntas · 15 baralhos · salvas mais de 200 mil vezes
+
+┌──────────────────────────────────┐
+│  Perguntas de Conexão            │
+│  {pricing.display}               │
+│  uma vez. pra sempre.            │
+│  Sem assinatura, sem renovação,  │
+│  sem "cancele antes de 4 semanas"│
+│                                  │
+│  [ Quero o baralho de vocês ]    │
+│  Pix ou cartão · acesso na hora  │
+│  7 dias de garantia, sem condição│
+└──────────────────────────────────┘
+
+[print nº 1 — dep-01-so-perguntas.png]
+
+Assim que o pagamento passa, o baralho abre. Vocês podem jogar hoje à noite.
+
+— tabela Terapia × Perguntas de Conexão —
+                          Terapia   Aqui
+Fala sobre o problema        ✓       ✓
+Feito por profissionais      ✓       ✓
+Dá a pergunta pronta                 ✓
+Exige só um dos dois                 ✓
+A qualquer hora, no celular          ✓
+Pagamento único                      ✓
+
+— os 6 prints, juntos —
+
+— garantia, bloco completo —
+
+— FAQ (as 5 atuais + "isso substitui terapia?" + "por que não só
+  'vamos conversar'?") —
+
+— O BLOCO DE PREÇO REPETIDO, idêntico ao de cima —
+
+[ Quero o baralho de vocês ]
+```
+
+## 3. Os prints
+
+Copiar os 6 arquivos pra `public/testimonials/` com estes nomes:
+`dep-01-so-perguntas.png` · `dep-02-conhecer-de-novo.png` ·
+`dep-03-4-anos.png` · `dep-04-vergonha.png` · `dep-05-sei-la.png` ·
+`dep-06-ja-conversa.png`.
+
+Componente `<PrintDepoimento src alt />`: largura total, cantos arredondados
+(14px 14px 14px 4px, como balão), sem moldura, sem sombra pesada. O `alt`
+leva a transcrição completa — está no doc 107.
+
+Onde cada um entra (já definido no doc 107): **5** na tela 19, **4** na tela 14,
+**3** na tela 8, **2** na tela 17, **6** na tela A, **1** na tela B.
+
+## 4. O que NÃO fazer
+
+- Nenhum timer, contagem regressiva, cupom, "vagas restantes" ou preço riscado.
+- Nenhuma porcentagem de chance de sucesso.
+- Nenhum depoimento sem print real por trás.
+
+## 5. Conferir
+
+1. Tela A não tem preço em lugar nenhum — busca por `R$` no componente e não
+   acha nada.
+2. O `{nome}` aparece se foi preenchido, e a frase funciona sem ele se foi pulado.
+3. O bloco de preço de baixo é idêntico ao de cima.
+4. Os 6 prints carregam; se um faltar, o layout não quebra.
+5. O botão leva ao checkout que já existe, com o mesmo `ctaSource` de antes.
+6. No celular: o botão de compra alcança o polegar sem rolar de volta.
+
+---
+
+*Escrito sobre o código real do repositório, conferido em 14/09/2026. Copy dos
+docs 101, 104, 105 e 107; pitches por dor do doc 86, que até agora nunca tinha
+sido aplicado.*
