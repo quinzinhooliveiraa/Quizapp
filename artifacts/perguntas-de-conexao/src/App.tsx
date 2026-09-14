@@ -1047,7 +1047,7 @@ function Lp1Diagnosis({
         {previewQuestions.length > 0 ? (
           <div className="lp1-diagnosis-questions">
             <p className="lp1-diagnosis-questions-label">
-              Um gostinho do que vem por aí
+              Uma prévia do que vem por aí
             </p>
             <RecommendedQuestionCarousel questions={previewQuestions} />
           </div>
@@ -1059,7 +1059,7 @@ function Lp1Diagnosis({
           </strong>
         </p>
         <p className="lp1-diagnosis-anchor">
-          Isso é um gostinho: 3 de 459 perguntas. As outras 456 abrem quando o
+          É uma prévia: 3 de 459 perguntas. As outras 456 abrem quando o
           baralho for de vocês.
         </p>
         <button
