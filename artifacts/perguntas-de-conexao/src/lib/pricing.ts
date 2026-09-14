@@ -21,7 +21,44 @@ export const FALLBACK_PRICING: Pricing = {
   pixAvailable: true,
 };
 
-let pricingRequest: Promise<Pricing> | null = null;
+const PRICING_REGION_COOKIE = "pdc-pricing-region";
+const PRICING_REGION_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
+const pricingRequests = new Map<string, Promise<Pricing>>();
+
+function parseRegion(value: string | null | undefined): PricingRegion | null {
+  const normalized = value?.trim().toUpperCase();
+  return normalized === "BR" || normalized === "PT" ? normalized : null;
+}
+
+function readRegionCookie(): PricingRegion | null {
+  if (typeof document === "undefined") return null;
+  const cookie = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith(`${PRICING_REGION_COOKIE}=`));
+  return parseRegion(cookie?.split("=")[1]);
+}
+
+function persistRegion(region: PricingRegion): void {
+  if (typeof document === "undefined") return;
+  document.cookie = `${PRICING_REGION_COOKIE}=${region}; path=/; max-age=${PRICING_REGION_COOKIE_MAX_AGE}; samesite=lax`;
+}
+
+export function getPreferredPricingRegion(): PricingRegion | null {
+  if (typeof window === "undefined") return null;
+  const queryRegion = parseRegion(
+    new URLSearchParams(window.location.search).get("regiao"),
+  );
+  if (queryRegion) {
+    persistRegion(queryRegion);
+    return queryRegion;
+  }
+  return readRegionCookie();
+}
+
+export function getPricingRegionQuery(): string {
+  const region = getPreferredPricingRegion();
+  return region ? `?regiao=${region}` : "";
+}
 
 function isPricing(value: unknown): value is Pricing {
   if (!value || typeof value !== "object") return false;
@@ -37,8 +74,12 @@ function isPricing(value: unknown): value is Pricing {
 }
 
 function loadPricing(): Promise<Pricing> {
-  if (!pricingRequest) {
-    pricingRequest = fetch(`${apiBaseUrl}/api/pricing`)
+  const regionQuery = getPricingRegionQuery();
+  const requestKey = regionQuery || "automatic";
+  const existingRequest = pricingRequests.get(requestKey);
+  if (existingRequest) return existingRequest;
+
+  const request = fetch(`${apiBaseUrl}/api/pricing${regionQuery}`)
       .then(async (response) => {
         if (!response.ok) throw new Error("pricing request failed");
         const data: unknown = await response.json();
@@ -46,8 +87,8 @@ function loadPricing(): Promise<Pricing> {
         return data;
       })
       .catch(() => FALLBACK_PRICING);
-  }
-  return pricingRequest;
+  pricingRequests.set(requestKey, request);
+  return request;
 }
 
 export function usePricing(): Pricing {

@@ -17,6 +17,7 @@ import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { openSupportDialog } from "@/lib/support";
 import { usePricing } from "@/lib/pricing";
 import { getThemePeek } from "@/lib/theme-peek";
+import { PricingRegionSwitch } from "@/components/PricingRegionSwitch";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
@@ -548,6 +549,7 @@ export default function Lp3({
         <strong>{pricing.display}</strong>
         <span>pagamento único · sem mensalidade</span>
       </div>
+      <PricingRegionSwitch region={pricing.region} />
       <div className="lp3-actions">
         <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-checkout-intent">
           Quero resolver isso hoje <ArrowRight size={15} aria-hidden="true" />

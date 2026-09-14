@@ -120,8 +120,12 @@ const Admin = lazy(() => import("@/pages/Admin"));
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
+import { PricingRegionSwitch } from "@/components/PricingRegionSwitch";
 import { apiBaseUrl } from "@/config";
-import { usePricing } from "@/lib/pricing";
+import {
+  getPricingRegionQuery,
+  usePricing,
+} from "@/lib/pricing";
 import { SUPPORT_DIALOG_EVENT, openSupportDialog } from "@/lib/support";
 import { getThemePeek } from "@/lib/theme-peek";
 
@@ -1194,6 +1198,7 @@ function Lp1Offer({
           <p className="lp1-offer-payment-note">
             Pix cai na hora · cartão em uma tela só
           </p>
+          <PricingRegionSwitch region={pricing.region} />
         </div>
       </div>
     </section>
@@ -2112,7 +2117,7 @@ function LandingV2Quiz({
                   </span>
                 </p>
                 <p className="lp-price-once">
-                  dá 10 centavos por noite
+                  {pricing.unitNote}
                 </p>
               </div>
               <button
@@ -2125,6 +2130,7 @@ function LandingV2Quiz({
               <p className="lp-price-freedom">
                 🔒 7 dias de garantia. Você decide.
               </p>
+              <PricingRegionSwitch region={pricing.region} />
               <div className="lp-guarantee">
                 <div className="lp-guarantee-seal" aria-hidden="true">
                   <ShieldCheck size={28} strokeWidth={1.8} />
@@ -2645,6 +2651,7 @@ function useCheckout({
   onCtaClick?: (ctaSource?: LandingCtaSource) => void;
   experimentAssignment?: StoredExperimentAssignment;
 }) {
+  const pricing = usePricing();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
     "couple",
@@ -2679,6 +2686,12 @@ function useCheckout({
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
   const checkoutCtaSourceRef = useRef<LandingCtaSource | null>(null);
+
+  useEffect(() => {
+    if (!pricing.pixAvailable) {
+      setSelectedPaymentMethod("card");
+    }
+  }, [pricing.pixAvailable]);
   const checkoutReviewsQuery = useListPublicReviews({
     query: {
       enabled:
@@ -3032,7 +3045,9 @@ function useCheckout({
       syncInternalTrackingFromUrl();
       const normalizedEmail = email.trim().toLowerCase();
       const normalizedName = getCheckoutBuyerName(normalizedEmail, name);
-      const response = await fetch(apiUrl("/api/checkout/create"), {
+      const response = await fetch(
+        apiUrl(`/api/checkout/create${getPricingRegionQuery()}`),
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3052,7 +3067,8 @@ function useCheckout({
               }
             : {}),
         }),
-      });
+        },
+      );
       const data = (await response.json()) as {
         sessionId?: string;
         brCode?: string;
@@ -3127,7 +3143,9 @@ function useCheckout({
       syncInternalTrackingFromUrl();
       const normalizedEmail = buyerEmail.trim().toLowerCase();
       const normalizedName = getCheckoutBuyerName(normalizedEmail, buyerName);
-      const response = await fetch(apiUrl("/api/checkout/create"), {
+      const response = await fetch(
+        apiUrl(`/api/checkout/create${getPricingRegionQuery()}`),
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3146,7 +3164,8 @@ function useCheckout({
               }
             : {}),
         }),
-      });
+        },
+      );
       const data = (await response.json()) as {
         sessionId?: string;
         clientSecret?: string;
@@ -3184,6 +3203,7 @@ function useCheckout({
   };
 
   const selectPaymentMethod = (method: "pix" | "card") => {
+    if (method === "pix" && !pricing.pixAvailable) return;
     if (method === "card") {
       void createCardCheckout();
       return;
@@ -3298,12 +3318,14 @@ type CheckoutController = ReturnType<typeof useCheckout>;
 function CheckoutPaymentTabs({
   selectedPaymentMethod,
   cardAvailable,
+  pixAvailable = true,
   onSelect,
   pixContent,
   cardContent,
 }: {
   selectedPaymentMethod: "pix" | "card";
   cardAvailable: boolean;
+  pixAvailable?: boolean;
   onSelect: (method: "pix" | "card") => void;
   pixContent?: ReactNode;
   cardContent?: ReactNode;
@@ -3316,7 +3338,8 @@ function CheckoutPaymentTabs({
     content?: ReactNode,
   ) => {
     const selected = selectedPaymentMethod === method;
-    const disabled = method === "card" && !cardAvailable;
+    const disabled =
+      method === "card" ? !cardAvailable : !pixAvailable;
 
     return (
       <div className={`checkout-payment-item ${selected ? "is-selected" : ""}`}>
@@ -3362,7 +3385,7 @@ function CheckoutPaymentTabs({
         "pix",
         <QrCode size={18} strokeWidth={1.8} />,
         "Pix",
-        "cai na hora · acesso imediato",
+        pixAvailable ? "cai na hora · acesso imediato" : "indisponível nesta região",
         pixContent,
       )}
       {renderPaymentItem(
@@ -3844,6 +3867,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   <CheckoutPaymentTabs
                     selectedPaymentMethod={selectedPaymentMethod}
                     cardAvailable={cardAvailable}
+                    pixAvailable={pricing.pixAvailable}
                     onSelect={handlePaymentMethodSelect}
                     pixContent={pixPaymentContent}
                     cardContent={cardPaymentContent}
@@ -3913,6 +3937,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             <CheckoutPaymentTabs
               selectedPaymentMethod={selectedPaymentMethod}
               cardAvailable={cardAvailable}
+              pixAvailable={pricing.pixAvailable}
               onSelect={selectPaymentMethod}
               pixContent={pixPaymentContent}
               cardContent={cardPaymentContent}
@@ -3923,6 +3948,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             <CheckoutPaymentTabs
               selectedPaymentMethod={selectedPaymentMethod}
               cardAvailable={cardAvailable}
+              pixAvailable={pricing.pixAvailable}
               onSelect={selectPaymentMethod}
               pixContent={pixPaymentContent}
               cardContent={cardPaymentContent}
@@ -3968,6 +3994,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             <CheckoutPaymentTabs
               selectedPaymentMethod="card"
               cardAvailable={cardAvailable}
+              pixAvailable={pricing.pixAvailable}
               onSelect={selectPaymentMethod}
             />
             <p className="section-kicker">pagamento indisponível</p>
@@ -4722,6 +4749,7 @@ function Home({
                     <span>459 perguntas por</span> {pricing.display}
                   </p>
                   <p className="lp2-offer-price-note">uma vez, pra sempre — sem mensalidade</p>
+                  <PricingRegionSwitch region={pricing.region} />
                   <button
                     onClick={() => startCheckout("couple")}
                     className="lp-cta-primary lp-cta-full lp2-offer-cta"

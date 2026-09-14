@@ -694,6 +694,29 @@
   text-align: center;
 }
 
+.pricing-region-switch {
+  display: block;
+  width: fit-content;
+  margin: 0.8rem auto 0;
+  color: #7a2e46;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: underline;
+  text-decoration-color: rgba(122, 46, 70, 0.35);
+  text-underline-offset: 0.16em;
+  transition:
+    color 180ms ease,
+    text-decoration-color 180ms ease;
+}
+
+.pricing-region-switch:hover,
+.pricing-region-switch:focus-visible {
+  color: #4f1e31;
+  text-decoration-color: currentColor;
+}
+
 @keyframes lp1-yellow-cta-pulse {
   0%,
   100% {
