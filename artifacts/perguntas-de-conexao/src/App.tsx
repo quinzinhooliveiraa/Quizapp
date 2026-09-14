@@ -1462,10 +1462,11 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
   const [activeIndex, setActiveIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
 
-  const move = (direction: -1 | 1) => {
+  const move = (direction: -1 | 1, step = 1) => {
     setActiveIndex(
       (current) =>
-        (current + direction + testimonialImages.length) % testimonialImages.length,
+        (current + direction * step + testimonialImages.length) %
+        testimonialImages.length,
     );
   };
 
@@ -1489,6 +1490,11 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
 
     move(distance < 0 ? 1 : -1);
   };
+
+  const visibleIndexes = [
+    activeIndex,
+    (activeIndex + 1) % testimonialImages.length,
+  ];
 
   return (
     <section
@@ -1516,26 +1522,30 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
           <button
             type="button"
             className="lp-testimonial-arrow"
-            onClick={() => move(-1)}
+            onClick={() => move(-1, 2)}
             aria-label="Depoimento anterior"
             data-testid="button-testimonial-previous"
           >
             <ChevronLeft size={20} />
           </button>
           <div
-            className="lp-testimonial lp-testimonial-active"
+            className="lp-testimonial-slides"
             aria-live="polite"
           >
-            <img
-              className="lp-testimonial-image"
-              src={testimonialImages[activeIndex]}
-              alt={`Depoimento de casal ${activeIndex + 1}`}
-            />
+            {visibleIndexes.map((index) => (
+              <div className="lp-testimonial lp-testimonial-active" key={index}>
+                <img
+                  className="lp-testimonial-image"
+                  src={testimonialImages[index]}
+                  alt={`Depoimento de casal ${index + 1}`}
+                />
+              </div>
+            ))}
           </div>
           <button
             type="button"
             className="lp-testimonial-arrow"
-            onClick={() => move(1)}
+            onClick={() => move(1, 2)}
             aria-label="Próximo depoimento"
             data-testid="button-testimonial-next"
           >
@@ -1677,13 +1687,17 @@ function LandingV2Quiz({
           <picture className="lp-hero-foto">
             <source
               media="(min-width: 700px)"
-              srcSet="/hero/hero-casal-novo.png"
+              srcSet="/hero/hero-casal-novo-desktop.webp"
+            />
+            <source
+              media="(max-width: 699px)"
+              srcSet="/hero/hero-casal-novo-mobile.webp"
             />
             <img
-              src="/hero/hero-casal-novo.png"
+              src="/hero/hero-casal-novo-mobile.webp"
               alt="Um casal conversando à noite, com o baralho aberto no celular"
-              width={1536}
-              height={1024}
+              width={900}
+              height={600}
               fetchPriority="high"
               loading="eager"
             />

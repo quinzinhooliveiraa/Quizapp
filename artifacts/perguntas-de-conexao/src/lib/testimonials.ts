@@ -5,12 +5,12 @@ export type LandingTestimonial = {
 };
 
 export const testimonialImages = [
-  "/testimonials/testimonial-1.png",
-  "/testimonials/testimonial-2.png",
-  "/testimonials/testimonial-3.png",
-  "/testimonials/testimonial-4.png",
-  "/testimonials/testimonial-5.png",
-  "/testimonials/testimonial-6.png",
+  "/testimonials/testimonial-1@2x.webp",
+  "/testimonials/testimonial-2@2x.webp",
+  "/testimonials/testimonial-3@2x.webp",
+  "/testimonials/testimonial-4@2x.webp",
+  "/testimonials/testimonial-5@2x.webp",
+  "/testimonials/testimonial-6@2x.webp",
 ] as const;
 
 export const landingTestimonials: LandingTestimonial[] = [
