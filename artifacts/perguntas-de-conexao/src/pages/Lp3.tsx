@@ -15,6 +15,7 @@ import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { openSupportDialog } from "@/lib/support";
+import { usePricing } from "@/lib/pricing";
 import { getThemePeek } from "@/lib/theme-peek";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
@@ -163,6 +164,7 @@ export default function Lp3({
   initialScreen,
   homeHref = "/lp3",
 }: Lp3Props) {
+  const pricing = usePricing();
   const stored = useMemo(getStoredState, []);
   const [screen, setScreen] = useState<Screen>(
     initialScreen ?? stored.screen,
@@ -543,7 +545,7 @@ export default function Lp3({
       </ul>
       <Lp3Testimonials />
       <div className="lp3-price">
-        <strong>R$47,90</strong>
+        <strong>{pricing.display}</strong>
         <span>pagamento único · sem mensalidade</span>
       </div>
       <div className="lp3-actions">

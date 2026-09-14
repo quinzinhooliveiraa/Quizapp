@@ -1,0 +1,136 @@
+FASE 1 — fonte única do preço (nada muda visualmente)
+
+Objetivo: tirar o preço de 10 lugares hardcoded e passar tudo a ler de um só lugar, no servidor. No fim desta fase o site continua exatamente igual, em reais.
+
+1.1 Criar o módulo de preço no backend
+
+Criar artifacts/api-server/src/lib/pricing.ts:
+
+ts
+export type PricingRegion = "BR" | "PT";
+
+export type Pricing = {
+  region: PricingRegion;
+  currency: "brl" | "eur";
+  amountCents: number;
+  display: string;
+  unitNote: string;
+  pixAvailable: boolean;
+};
+
+const PRICING: Record<PricingRegion, Pricing> = {
+  BR: {
+    region: "BR",
+    currency: "brl",
+    amountCents: 4790,
+    display: "R$ 47,90",
+    unitNote: "dá 10 centavos por noite",
+    pixAvailable: true,
+  },
+  PT: {
+    region: "PT",
+    currency: "eur",
+    amountCents: 1490,
+    display: "14,90 €",
+    unitNote: "dá 3 cêntimos por noite",
+    pixAvailable: false,
+  },
+};
+
+export function getPricing(region: PricingRegion): Pricing {
+  return PRICING[region];
+}
+
+/**
+ * Resolve a região SEMPRE a partir do request, nunca do corpo enviado
+ * pelo cliente. Retorna "BR" em caso de dúvida.
+ */
+export function resolveRegion(req: {
+  headers: Record<string, unknown>;
+  query?: Record<string, unknown>;
+}): PricingRegion {
+  // 1. Override explícito do usuário (só escolhe entre as regiões fixas,
+  //    nunca um valor arbitrário — seguro por construção).
+  const forced = String(req.query?.regiao ?? "").toUpperCase();
+  if (forced === "PT" || forced === "BR") return forced;
+
+  // 2. Header de país do proxy, se existir neste ambiente.
+  const country = String(
+    req.headers["cf-ipcountry"] ??
+      req.headers["x-vercel-ip-country"] ??
+      req.headers["x-country"] ??
+      "",
+  ).toUpperCase();
+  if (country === "PT") return "PT";
+  if (country === "BR") return "BR";
+
+  // 3. Idioma do navegador.
+  const lang = String(req.headers["accept-language"] ?? "").toLowerCase();
+  if (lang.includes("pt-pt")) return "PT";
+
+  // 4. Padrão.
+  return "BR";
+}
+
+Tarefa para você, Replit: no passo 2 acima eu listei nomes de header por palpite. Descubra quais headers de geolocalização este deploy realmente recebe (logue req.headers uma vez numa rota e veja) e ajuste a lista para os que existirem de fato. Se nenhum existir, o passo 3 vira a detecção principal — registre isso num comentário no arquivo.
+
+1.2 Expor num endpoint
+
+Em artifacts/api-server/src/routes/, adicionar uma rota pública:
+
+GET /api/pricing
+
+que responde getPricing(resolveRegion(req)) como JSON. Sem autenticação, sem cache (ou cache curto), porque a resposta varia por visitante.
+
+1.3 Stripe passa a receber o preço
+
+Em artifacts/api-server/src/lib/stripe.ts, remover as duas constantes PAYMENT_AMOUNT_CENTS e PAYMENT_CURRENCY, e mudar a assinatura:
+
+ts
+export async function createStripePaymentIntent({
+  sessionId,
+  buyerEmail,
+  pricing,
+}: {
+  sessionId: string;
+  buyerEmail?: string | null;
+  pricing: Pricing;
+}): Promise<{ id: string; clientSecret: string }> {
+  const paymentIntent = await getStripeClient().paymentIntents.create({
+    amount: pricing.amountCents,
+    currency: pricing.currency,
+    automatic_payment_methods: { enabled: true },
+    metadata: { sessionId, region: pricing.region },
+    ...(buyerEmail ? { receipt_email: buyerEmail } : {}),
+  });
+  ...
+}
+
+No route handler que chama essa função, o pricing tem que vir de getPricing(resolveRegion(req)). Nunca do corpo da requisição — se o cliente puder mandar valor ou moeda, dá pra comprar por um cêntimo.
+
+Mesma coisa para o amount: 4790 em artifacts/api-server/src/routes/connection.ts (linha ~670).
+
+1.4 Frontend passa a ler do servidor
+
+Em artifacts/perguntas-de-conexao/src/App.tsx, criar um contexto (ou um hook simples com estado global) que busca /api/pricing uma vez na montagem e guarda o resultado. Fallback obrigatório: enquanto não responder, ou se der erro, usar os valores de BR (R$ 47,90, Pix disponível). A página nunca pode ficar sem preço.
+
+Trocar os hardcoded por esse valor:
+
+linha	onde	trocar
+2108	bloco de preço LP1	R$ 47,90 → pricing.display
+2112	3ª linha do preço	dá 10 centavos por noite → pricing.unitNote
+2180	FAQ "Por que R$ 47,90?"	título e corpo → pricing.display
+3439	botão do checkout	Pagar R$ 47,90 → Pagar ${pricing.display}
+3857, 3867, 3887	resumo/total do checkout	→ pricing.display
+4716	Home (LP2)	→ pricing.display
+1176	Lp1Offer	→ pricing.display
+
+E em artifacts/perguntas-de-conexao/src/pages/Lp3.tsx, linha ~546: R$47,90 → pricing.display.
+
+Obs: Lp1Offer (1176) e Home (4716) hoje não são renderizados na LP1, mas troque mesmo assim — senão viram duas cópias que divergem depois.
+
+✅ Teste da fase 1 (antes de seguir)
+A página continua mostrando R$ 47,90 em todos os lugares.
+GET /api/pricing responde o objeto de BR.
+Uma compra de teste em Pix e uma em cartão continuam funcionando.
+Com a rede desligada no meio do carregamento, a página ainda mostra R$ 47,90 (o fallback funciona).

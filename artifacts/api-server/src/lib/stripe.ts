@@ -1,7 +1,5 @@
 import Stripe from "stripe";
-
-const PAYMENT_AMOUNT_CENTS = 4790;
-const PAYMENT_CURRENCY = "brl";
+import type { Pricing } from "./pricing";
 
 export function isStripeConfigured(): boolean {
   return Boolean(
@@ -21,15 +19,17 @@ function getStripeClient(): Stripe {
 export async function createStripePaymentIntent({
   sessionId,
   buyerEmail,
+  pricing,
 }: {
   sessionId: string;
   buyerEmail?: string | null;
+  pricing: Pricing;
 }): Promise<{ id: string; clientSecret: string }> {
   const paymentIntent = await getStripeClient().paymentIntents.create({
-    amount: PAYMENT_AMOUNT_CENTS,
-    currency: PAYMENT_CURRENCY,
+    amount: pricing.amountCents,
+    currency: pricing.currency,
     automatic_payment_methods: { enabled: true },
-    metadata: { sessionId },
+    metadata: { sessionId, region: pricing.region },
     ...(buyerEmail ? { receipt_email: buyerEmail } : {}),
   });
 

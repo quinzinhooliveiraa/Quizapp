@@ -19,3 +19,4 @@
 - [Admin destructive actions](admin-destructive-actions.md) — scope cleanup to visible filters and require an explicit confirmation phrase before irreversible mutations.
 - [Artifact build environment](artifact-build-environment.md) — manual Vite builds need PORT and BASE_PATH; aggregate builds may also include unrelated artifact requirements.
 - [LP1 diagnosis narrative guard](lp1-diagnosis-narrative-guard.md) — positive beginning/healthy narratives must suppress negative LP3 personalization tails when reused by LP1.
+- [Pricing region resolution](pricing-region-resolution.md) — the proxy exposes no country header; use Accept-Language with BR as the safe default.

@@ -49,6 +49,7 @@ import { sendPurchaseNotification } from "../lib/push";
 import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "../lib/brevo";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
+import { getPricing, resolveRegion } from "../lib/pricing";
 
 type Theme = {
   id: string;
@@ -590,6 +591,12 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
 
   const mode = parsed.data.mode ?? "native";
   const method = parsed.data.method ?? "pix";
+  const pricing = getPricing(
+    resolveRegion({
+      headers: req.headers,
+      query: req.query as Record<string, unknown>,
+    }),
+  );
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
   if (
     Boolean(parsed.data.experimentId) !==
@@ -605,6 +612,12 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       : undefined;
 
   const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;
+  if (method === "pix" && !pricing.pixAvailable) {
+    res.status(400).json({
+      error: "Pix não está disponível para esta região.",
+    });
+    return;
+  }
   if (method === "card" && !isStripeConfigured()) {
     res.status(503).json({
       error: "Pagamento com cartão indisponível no momento.",
@@ -650,6 +663,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       const paymentIntent = await createStripePaymentIntent({
         sessionId,
         buyerEmail,
+        pricing,
       });
       await db
         .update(sessionsTable)
@@ -667,7 +681,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     if (mode === "native") {
       const charge = await createAbacatePixCharge({
         sessionId,
-        amount: 4790,
+        amount: pricing.amountCents,
         description: "Perguntas de Conexão — Pacote Casal",
       });
       await db

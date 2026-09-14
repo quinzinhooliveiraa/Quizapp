@@ -121,6 +121,7 @@ import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { apiBaseUrl } from "@/config";
+import { usePricing } from "@/lib/pricing";
 import { SUPPORT_DIALOG_EVENT, openSupportDialog } from "@/lib/support";
 import { getThemePeek } from "@/lib/theme-peek";
 
@@ -1094,6 +1095,7 @@ function Lp1Offer({
   onFinish: () => void;
 }) {
   const diagnosis = selectLp1Diagnosis(answers);
+  const pricing = usePricing();
   const testimonialNameByNarrative: Record<string, string> = {
     routine: "Marina",
     discovery: "Julia",
@@ -1173,7 +1175,7 @@ function Lp1Offer({
 
         <div className="lp1-offer-price-card">
           <div className="lp1-offer-price">
-            <strong>R$ 47,90</strong>
+            <strong>{pricing.display}</strong>
             <span>uma vez, pra sempre — sem mensalidade</span>
           </div>
           <p className="lp1-offer-guarantee">
@@ -1591,6 +1593,7 @@ function LandingV2Quiz({
   checkoutOpen: boolean;
   onStartQuiz: () => void;
 }) {
+  const pricing = usePricing();
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
   const [showStickyCta, setShowStickyCta] = useState(true);
   const themePointerRef = useRef<{
@@ -2105,7 +2108,7 @@ function LandingV2Quiz({
                 <p className="lp-price-value">
                   459 perguntas por{" "}
                   <span className="lp-price-figure" style={{ whiteSpace: "nowrap" }}>
-                    R$ 47,90
+                    {pricing.display}
                   </span>
                 </p>
                 <p className="lp-price-once">
@@ -2177,8 +2180,8 @@ function LandingV2Quiz({
                 "Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega. O Pix cai na hora.",
               ],
               [
-                "Por que R$ 47,90?",
-                "459 perguntas escritas e testadas uma a uma, ao longo de meses. O servidor que mantém o jogo no ar e sincroniza vocês dois. E as perguntas novas que entram sem você pagar de novo. Você paga uma vez e fica com tudo. Dá 10 centavos por pergunta.",
+                `Por que ${pricing.display}?`,
+                `459 perguntas escritas e testadas uma a uma, ao longo de meses. O servidor que mantém o jogo no ar e sincroniza vocês dois. E as perguntas novas que entram sem você pagar de novo. Você paga uma vez e fica com tudo. ${pricing.unitNote}.`,
               ],
             ].map(([question, answer]) => (
               <details key={question} className="lp-faq-item">
@@ -3391,6 +3394,7 @@ const CardPaymentForm = forwardRef<
 ) {
   const stripe = useStripe();
   const elements = useElements();
+  const pricing = usePricing();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -3436,7 +3440,7 @@ const CardPaymentForm = forwardRef<
           onClick={() => void handleSubmit()}
           disabled={!stripe || !elements || submitting}
         >
-          {submitting ? "Confirmando pagamento…" : "Pagar R$ 47,90"}
+          {submitting ? "Confirmando pagamento…" : `Pagar ${pricing.display}`}
           {!submitting && <ArrowRight size={16} />}
         </button>
       )}
@@ -3448,6 +3452,7 @@ const CardPaymentForm = forwardRef<
 });
 
 function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
+  const pricing = usePricing();
   const {
     checkoutOpen,
     checkoutState,
@@ -3854,7 +3859,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   <div>
                     <div className="checkout-summary-row">
                       <span>Perguntas de Conexão</span>
-                      <span>R$ 47,90</span>
+                      <span>{pricing.display}</span>
                     </div>
                     <div className="checkout-summary-row checkout-summary-row-guarantee">
                       <span>Garantia de 7 dias</span>
@@ -3864,7 +3869,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     </div>
                     <div className="checkout-summary-total">
                       <strong>Total</strong>
-                      <strong>R$ 47,90</strong>
+                      <strong>{pricing.display}</strong>
                     </div>
                   </div>
                 </div>
@@ -3884,7 +3889,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 ) : null}
                 <div className="checkout-purchase-total">
                   <span>Total</span>
-                  <strong>R$ 47,90</strong>
+                  <strong>{pricing.display}</strong>
                 </div>
                 <button
                   className="button button-primary checkout-purchase-button"
@@ -4310,6 +4315,7 @@ function Home({
   variant?: "v1" | "v2";
   experimentAssignment?: StoredExperimentAssignment;
 }) {
+  const pricing = usePricing();
   const trackCtaClick = useLpTracking(variant, experimentAssignment);
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
   const sourceFromUrl = new URLSearchParams(window.location.search).get(
@@ -4713,7 +4719,7 @@ function Home({
                     </li>
                   </ol>
                   <p className="lp2-offer-price">
-                    <span>459 perguntas por</span> R$ 47,90
+                    <span>459 perguntas por</span> {pricing.display}
                   </p>
                   <p className="lp2-offer-price-note">uma vez, pra sempre — sem mensalidade</p>
                   <button
