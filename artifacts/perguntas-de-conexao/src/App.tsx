@@ -1738,8 +1738,8 @@ function LandingV2Quiz({
             Já sei o que quero: comprar agora →
           </button>
           <p className="lp2-hero-security">
-            🔒 Pix e cartão · 7 dias de garantia. Não gostou, devolvo. Você
-            decide.
+            🔒 {pricing.pixAvailable ? "Pix e cartão" : "Cartão"} · 7 dias de
+            garantia. Não gostou, devolvo. Você decide.
           </p>
         </div>
       </section>
@@ -2051,8 +2051,10 @@ function LandingV2Quiz({
                     1
                   </span>
                   <span className="lp1-price-step-copy">
-                    <strong>Você paga.</strong> Pix cai na hora e o acesso abre
-                    sozinho.
+                    <strong>Você paga.</strong>{" "}
+                    {pricing.pixAvailable
+                      ? "Pix cai na hora e o acesso abre sozinho."
+                      : "O acesso abre sozinho, na hora."}
                   </span>
                 </li>
                 <li>
@@ -2183,7 +2185,9 @@ function LandingV2Quiz({
               ],
               [
                 "Como recebo depois de pagar?",
-                "Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega. O Pix cai na hora.",
+                pricing.pixAvailable
+                  ? "Na hora. Você paga com Pix ou cartão, e o acesso abre automaticamente assim que a confirmação chega. O Pix cai na hora."
+                  : "Na hora. Você paga com cartão e o acesso abre automaticamente assim que a confirmação chega.",
               ],
               [
                 `Por que ${pricing.display}?`,
@@ -2771,7 +2775,7 @@ function useCheckout({
 
   useEffect(() => {
     const pendingPix = safeGetItem("conexao-pending-pix");
-    if (pendingPix) {
+    if (pendingPix && pricing.pixAvailable) {
       try {
         const parsed = JSON.parse(pendingPix) as NativeCheckoutData;
         if (
@@ -2795,6 +2799,12 @@ function useCheckout({
       } catch {
         clearPendingCheckoutStorage();
       }
+    } else if (pendingPix) {
+      safeRemoveItem("conexao-pending-pix");
+      setNativeCheckout(null);
+      setPixExpired(false);
+      setCheckoutState("idle");
+      setCheckoutOpen(false);
     }
 
     const pendingCard = safeGetItem("conexao-pending-card");
@@ -2818,6 +2828,8 @@ function useCheckout({
         clearPendingCheckoutStorage();
       }
     }
+
+    if (!pricing.pixAvailable) return;
 
     const params = new URLSearchParams(window.location.search);
     const sessionIdFromUrl = params.get("session");
@@ -2896,7 +2908,7 @@ function useCheckout({
       cancelled = true;
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [pricing.pixAvailable]);
 
   useEffect(() => {
     if (
@@ -3036,6 +3048,10 @@ function useCheckout({
     setCheckoutOpen(true);
     setPaymentError("");
     setAccessCheckNote(null);
+    if (!pricing.pixAvailable) {
+      await createCardCheckout(inline);
+      return;
+    }
     if (inline) {
       setPaymentCreating("pix");
     } else {
@@ -3119,7 +3135,9 @@ function useCheckout({
   const createCardCheckout = async (inline = false) => {
     if (!cardAvailable || !stripePromise) {
       const message =
-        "O pagamento com cartão está indisponível agora. Tente o Pix ou recarregue a página.";
+        pricing.pixAvailable
+          ? "O pagamento com cartão está indisponível agora. Tente o Pix ou recarregue a página."
+          : "O pagamento com cartão está indisponível agora. Recarregue a página e tente de novo.";
       setCardError(message);
       setPaymentError(message);
       return;
@@ -3190,7 +3208,9 @@ function useCheckout({
       if (!inline) setCheckoutState("email");
     } catch {
       const message =
-        "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha o Pix.";
+        pricing.pixAvailable
+          ? "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha o Pix."
+          : "Não foi possível abrir o pagamento com cartão. Tente novamente.";
       setCardError(message);
       if (inline) {
         setPaymentError(message);
@@ -3228,7 +3248,7 @@ function useCheckout({
     setPixExpired(false);
     safeSetItem("conexao-pending-source-lp", sourceLp);
     const pendingPix = safeGetItem("conexao-pending-pix");
-    if (nativeCheckoutEnabled && pendingPix) {
+    if (nativeCheckoutEnabled && pricing.pixAvailable && pendingPix) {
       try {
         const parsed = JSON.parse(pendingPix) as NativeCheckoutData;
         if (
@@ -3250,6 +3270,9 @@ function useCheckout({
         clearPendingCheckoutStorage();
       }
     }
+    if (!pricing.pixAvailable && pendingPix) {
+      safeRemoveItem("conexao-pending-pix");
+    }
     setNameError("");
     setEmailError("");
     setCheckoutState("email");
@@ -3266,7 +3289,7 @@ function useCheckout({
     setPaymentError("");
     setAccessChecking(false);
     setAccessCheckNote(null);
-    setSelectedPaymentMethod("pix");
+    setSelectedPaymentMethod(pricing.pixAvailable ? "pix" : "card");
     setCopiedCode(false);
     setNameError("");
     setEmailError("");
@@ -3381,13 +3404,15 @@ function CheckoutPaymentTabs({
       aria-label="Método de pagamento"
       data-testid="payment-method-selector"
     >
-      {renderPaymentItem(
-        "pix",
-        <QrCode size={18} strokeWidth={1.8} />,
-        "Pix",
-        pixAvailable ? "cai na hora · acesso imediato" : "indisponível nesta região",
-        pixContent,
-      )}
+      {pixAvailable
+        ? renderPaymentItem(
+            "pix",
+            <QrCode size={18} strokeWidth={1.8} />,
+            "Pix",
+            "cai na hora · acesso imediato",
+            pixContent,
+          )
+        : null}
       {renderPaymentItem(
         "card",
         <CreditCard size={18} strokeWidth={1.8} />,
@@ -3848,7 +3873,8 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     </label>
                     <p className="checkout-access-note">
                       <strong>
-                        Digite seu e-mail acima para liberar Pix e cartão.
+                        Digite seu e-mail acima para liberar{" "}
+                        {pricing.pixAvailable ? "Pix e cartão" : "o cartão"}.
                       </strong>
                       Só pra liberar seu acesso e guardar sua compra. Sem spam,
                       sem lista.
@@ -3922,7 +3948,9 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   data-testid="button-continue-checkout"
                 >
                   {paymentCreating !== null ? (
-                    "Gerando seu Pix…"
+                    pricing.pixAvailable && selectedPaymentMethod === "pix"
+                      ? "Gerando seu Pix…"
+                      : "Abrindo pagamento…"
                   ) : (
                     <>
                       Começar hoje à noite <ArrowRight size={17} />
@@ -4013,13 +4041,15 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             >
               Tentar novamente <ArrowRight size={16} />
             </button>
-            <button
-              type="button"
-              className="checkout-secondary-action"
-              onClick={() => selectPaymentMethod("pix")}
-            >
-              Pagar com Pix
-            </button>
+            {pricing.pixAvailable ? (
+              <button
+                type="button"
+                className="checkout-secondary-action"
+                onClick={() => selectPaymentMethod("pix")}
+              >
+                Pagar com Pix
+              </button>
+            ) : null}
           </div>
         ) : checkoutState === "waiting-manual" ? (
           <div className="checkout-confirming">
@@ -4733,8 +4763,10 @@ function Home({
                   </p>
                   <ol className="lp2-offer-steps">
                     <li>
-                      <strong>Você paga.</strong> Pix cai na hora e o acesso abre
-                      sozinho.
+                      <strong>Você paga.</strong>{" "}
+                      {pricing.pixAvailable
+                        ? "Pix cai na hora e o acesso abre sozinho."
+                        : "O acesso abre sozinho, na hora."}
                     </li>
                     <li>
                       <strong>Convida ele(a).</strong> Um link. A pessoa entra sem

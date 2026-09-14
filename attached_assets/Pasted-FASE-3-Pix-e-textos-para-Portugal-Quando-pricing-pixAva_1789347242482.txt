@@ -1,0 +1,25 @@
+FASE 3 — Pix e textos para Portugal
+
+Quando pricing.pixAvailable === false:
+
+3.1 Checkout — não renderizar a aba/opção de Pix nem chamar o Abacate Pay. Cartão passa a ser o único método (o automatic_payment_methods do Stripe já ajusta os métodos europeus sozinho, então pode aparecer outra coisa além de cartão — isso é desejável, deixe).
+
+3.2 Textos da LP1 — três lugares mencionam Pix:
+
+L1733 (hero): 🔒 Pix e cartão · 7 dias de garantia... → 🔒 Cartão · 7 dias de garantia...
+L2046 (passo 1): Você paga. Pix cai na hora e o acesso abre sozinho. → Você paga. O acesso abre sozinho, na hora.
+L2177 (FAQ "Como recebo depois de pagar?"): tirar as duas menções a Pix, deixando Na hora. Você paga com cartão e o acesso abre automaticamente assim que a confirmação chega.
+
+3.3 Ortografia — se quiser ir a fundo depois, "acesso vitalício" e o resto do texto funcionam igual em PT-PT. O único termo que destoa de verdade é "celular" (em Portugal é "telemóvel"). Não é urgente e mexe em muitos lugares — deixa como um passo separado, depois de validar que a venda em euro funciona.
+
+POR QUE 14,90 €
+
+Pricing p.16 — "Reduce the Left Digit By One" (Thomas & Morwitz, 2005): "Your brain encodes prices before you finish reading the numerals." O dígito da esquerda é o que ancora. 14,90 ancora no 1 e fica abaixo da barreira dos 20.
+
+Pricing p.14 — "Choose Prices With Fewer Syllables" (Coulter, Choi & Monroe, 2012): "Prices seem cheaper with fewer syllables (…) your brain encodes the phonetic version regardless." "Catorze noventa" = 6 sílabas, contra 7 de "dezanove noventa".
+
+Pricing p.19 (Gourville, 1998) continua valendo em euro: 14,90 € ÷ 459 = 3,2 cêntimos, daí o unitNote de PT.
+
+Formato 14,90 € (número, espaço, símbolo depois) é a convenção portuguesa. €14,90 é formato americano e sinaliza site estrangeiro — de graça e tira atrito.
+
+Não é conversão de câmbio: 14,90 € é cerca do dobro do câmbio direto de R$ 47,90, capturando o poder de compra local. Converter literalmente daria perto de 7,50 €, que além de deixar dinheiro na mesa sinalizaria produto barato demais.
