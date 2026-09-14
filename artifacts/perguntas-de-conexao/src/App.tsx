@@ -3568,10 +3568,13 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     let valid = true;
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      const digitado = buyerEmail.trim();
       setEmailError(
-        buyerEmail.trim()
-          ? "Confira o e-mail — parece que falta alguma coisa."
-          : "Falta o e-mail pra liberar seu acesso.",
+        !digitado
+          ? "Falta o e-mail pra liberar seu acesso."
+          : !digitado.includes("@")
+            ? "Falta o @ no e-mail."
+            : "Falta o final do e-mail, depois do @ (ex.: gmail.com).",
       );
       const emailField = document.getElementById("checkout-email");
       emailField?.scrollIntoView({ behavior: "smooth", block: "center" });
