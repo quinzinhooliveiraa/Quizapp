@@ -21,6 +21,15 @@ export const FALLBACK_PRICING: Pricing = {
   pixAvailable: true,
 };
 
+const FALLBACK_PT_PRICING: Pricing = {
+  region: "PT",
+  currency: "eur",
+  amountCents: 1490,
+  display: "14,90 €",
+  unitNote: "dá 3 cêntimos por noite",
+  pixAvailable: false,
+};
+
 const PRICING_REGION_COOKIE = "pdc-pricing-region";
 const PRICING_REGION_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
 const pricingRequests = new Map<string, Promise<Pricing>>();
@@ -74,7 +83,8 @@ function isPricing(value: unknown): value is Pricing {
 }
 
 function loadPricing(): Promise<Pricing> {
-  const regionQuery = getPricingRegionQuery();
+  const preferredRegion = getPreferredPricingRegion();
+  const regionQuery = preferredRegion ? `?regiao=${preferredRegion}` : "";
   const requestKey = regionQuery || "automatic";
   const existingRequest = pricingRequests.get(requestKey);
   if (existingRequest) return existingRequest;
@@ -86,13 +96,17 @@ function loadPricing(): Promise<Pricing> {
         if (!isPricing(data)) throw new Error("invalid pricing response");
         return data;
       })
-      .catch(() => FALLBACK_PRICING);
+      .catch(() =>
+        preferredRegion === "PT" ? FALLBACK_PT_PRICING : FALLBACK_PRICING,
+      );
   pricingRequests.set(requestKey, request);
   return request;
 }
 
 export function usePricing(): Pricing {
-  const [pricing, setPricing] = useState(FALLBACK_PRICING);
+  const [pricing, setPricing] = useState<Pricing>(() =>
+    getPreferredPricingRegion() === "PT" ? FALLBACK_PT_PRICING : FALLBACK_PRICING,
+  );
 
   useEffect(() => {
     let mounted = true;
