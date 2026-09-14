@@ -1911,9 +1911,9 @@ function LandingV2Quiz({
         <div className="lp-container">
           <p className="lp-eyebrow lp-eyebrow-center">a proposta</p>
           <h2 className="lp-h2">
-            São perguntas simples que vocês podem
+            São perguntas prontas que vocês podem
             <br />
-            <em>incluir na rotina começando hoje.</em>
+            <em>transformar em ritual começando hoje.</em>
           </h2>
           <p className="lp-solution-lede">
             459 perguntas escritas pra tirar a conversa do automático. Sem
@@ -1947,10 +1947,10 @@ function LandingV2Quiz({
                 />
               </div>
               <div className="lp-pillar-copy">
-                <strong>Não precisam estar juntos</strong>
+                <strong>Funciona à distância</strong>
                 <p>
-                  Namoro à distância, viagem a trabalho ou cada um no seu quarto:
-                  <strong> respondam juntos, cada um no seu celular.</strong>
+                  Namoro à distância, viagem a trabalho ou cada um no seu canto:
+                  <strong> vocês respondem ao mesmo tempo, cada um no seu celular.</strong>
                 </p>
               </div>
             </div>
