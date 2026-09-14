@@ -61,6 +61,7 @@ import {
 } from "@/lib/landing-pages";
 import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
 import { selectLp1Diagnosis } from "@/lib/lp1-diagnosis";
+import { computeLp1Score } from "@/lib/lp1-score";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { RecommendedQuestionCarousel } from "@/components/RecommendedQuestionCarousel";
 import {
@@ -969,40 +970,331 @@ function LandingQuiz({
   );
 }
 
-const LP1_QUIZ_STEPS = [
+type Lp1ScreenBase = {
+  id: string;
+  kind: "question" | "card" | "loading" | "summary" | "sample" | "capture";
+};
+
+type Lp1Question = Lp1ScreenBase & {
+  kind: "question";
+  key: string;
+  title: string;
+  subtitle?: string;
+  why?: string;
+  format: "list" | "cards" | "wide" | "scale" | "multi" | "clima" | "slider";
+  emoji?: boolean;
+  options: {
+    value: string;
+    label: string;
+    expand?: string;
+    icon?: string;
+  }[];
+};
+
+type Lp1Card = Lp1ScreenBase & {
+  kind: "card";
+  title: string;
+  body: string[];
+  cta: string;
+};
+
+type Lp1Placeholder = Lp1ScreenBase & {
+  kind: "loading" | "summary" | "sample" | "capture";
+  title: string;
+  body?: string[];
+  cta: string;
+  key?: string;
+};
+
+type Lp1Screen = Lp1Question | Lp1Card | Lp1Placeholder;
+type Lp1Answers = Record<string, string>;
+
+const LP1_SCREENS: Lp1Screen[] = [
   {
-    key: "intensity",
-    title: "Quando você tenta puxar assunto de verdade,",
-    emphasis: "o que acontece?",
-    footnote:
-      "Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês, de graça.",
-    options: [
-      ["gentle", 'Ele(a) responde "sei lá" e morre ali'],
-      ["honest", "A gente conversa, mas só sobre logística"],
-      ["deep", "A gente conversa bem — quero ir mais fundo"],
+    id: "s00-capa",
+    kind: "card",
+    title: "Duas pessoas. 24 telas. Uma conversa que pode mudar a noite.",
+    body: [
+      "Responda algumas perguntas sobre vocês e descubra por onde começar.",
+      "Leva 2 minutos. No fim, você recebe um diagnóstico feito para o momento de vocês.",
     ],
+    cta: "Começar o teste",
   },
   {
+    id: "s01-fase",
+    kind: "question",
     key: "stage",
-    title: "E vocês estão:",
+    title: "Em que fase vocês estão?",
+    subtitle: "Não existe resposta certa. Só a que parece mais com vocês hoje.",
+    format: "cards",
+    emoji: true,
     options: [
-      ["novo", "Namorando"],
-      ["anos", "Casados"],
-      ["muitos-anos", "Juntos há muitos anos"],
+      { value: "novo", label: "Estamos começando", icon: "✦" },
+      { value: "anos", label: "Já construímos uma história", icon: "◌" },
+      { value: "muitos-anos", label: "Estamos juntos há muitos anos", icon: "∞" },
     ],
   },
   {
+    id: "s02-o-que-busca",
+    kind: "question",
     key: "theme",
-    title: "E hoje à noite, o que você quer?",
-    footnote:
-      "Leva 1 minuto. No fim, 3 perguntas feitas pro momento de vocês, de graça.",
+    title: "O que você gostaria de sentir mais entre vocês?",
+    subtitle: "Escolha o que mais faria diferença hoje.",
+    format: "list",
+    emoji: true,
     options: [
-      ["porto-seguro", "Aquecer, sem susto"],
-      ["faisca", "Provocar, apimentar"],
-      ["livro-aberto", "Ir fundo de verdade"],
+      { value: "porto-seguro", label: "Acolhimento e proximidade", icon: "♡" },
+      { value: "faisca", label: "Desejo e provocação", icon: "✦" },
+      { value: "livro-aberto", label: "Profundidade e verdade", icon: "◐" },
     ],
   },
-] as const;
+  {
+    id: "s03-sei-la",
+    kind: "question",
+    key: "s03-sei-la",
+    title: "Quando uma conversa começa a ficar de verdade, o que costuma acontecer?",
+    why: "Perguntamos para entender o espaço que existe para uma conversa nova.",
+    format: "wide",
+    options: [
+      { value: "evita", label: "Alguém muda de assunto" },
+      {
+        value: "quase",
+        label: "Sim, quase sempre",
+        expand: "Essa é a resposta mais comum aqui. Não é desinteresse.",
+      },
+      { value: "fica", label: "A gente consegue ficar na conversa" },
+    ],
+  },
+  {
+    id: "s04-rotina",
+    kind: "question",
+    key: "s04-rotina",
+    title: "Quanto da conversa de vocês hoje é sobre a rotina?",
+    subtitle: "Pense na última semana, não no relacionamento inteiro.",
+    format: "scale",
+    options: [
+      { value: "pouco", label: "Quase nada" },
+      { value: "alguma", label: "Um pouco" },
+      { value: "metade", label: "Metade" },
+      { value: "muito", label: "Quase tudo" },
+      { value: "tudo", label: "Tudo vira logística" },
+    ],
+  },
+  {
+    id: "s05-silencio",
+    kind: "question",
+    key: "s05-silencio",
+    title: "Quando fica um silêncio entre vocês, ele parece…",
+    format: "clima",
+    emoji: true,
+    options: [
+      { value: "calmo", label: "Confortável", icon: "☼" },
+      { value: "neutro", label: "Normal", icon: "◌" },
+      { value: "pesado", label: "Difícil de atravessar", icon: "∿" },
+    ],
+  },
+  {
+    id: "s06-pausa",
+    kind: "card",
+    title: "Nem toda distância começa com uma briga.",
+    body: [
+      "Às vezes ela aparece quando as perguntas vão ficando para depois.",
+      "Vamos olhar para o que ainda está vivo entre vocês.",
+    ],
+    cta: "Continuar",
+  },
+  {
+    id: "s07-perguntas",
+    kind: "question",
+    key: "s07-perguntas",
+    title: "Com que frequência vocês perguntam algo que não cabe na resposta “tudo bem”?",
+    format: "list",
+    emoji: true,
+    options: [
+      { value: "raramente", label: "Raramente", icon: "·" },
+      { value: "as-vezes", label: "Às vezes", icon: "◌" },
+      { value: "frequente", label: "Com frequência", icon: "✦" },
+    ],
+  },
+  {
+    id: "s08-respiro",
+    kind: "card",
+    title: "Você não precisa ter a conversa perfeita.",
+    body: [
+      "Precisa só de uma pergunta que abra espaço para a próxima resposta.",
+    ],
+    cta: "Abrir esse espaço",
+  },
+  {
+    id: "s09-intensidade",
+    kind: "question",
+    key: "intensity",
+    title: "Até onde você quer ir hoje?",
+    subtitle: "O baralho acompanha o ritmo de vocês.",
+    format: "cards",
+    emoji: true,
+    options: [
+      { value: "gentle", label: "Começar leve", icon: "☼" },
+      { value: "honest", label: "Ter uma conversa honesta", icon: "◐" },
+      { value: "deep", label: "Ir fundo de verdade", icon: "✦" },
+    ],
+  },
+  {
+    id: "s10-mudanca",
+    kind: "question",
+    key: "s10-mudanca",
+    title: "Se algo mudasse entre vocês esta semana, o que você escolheria?",
+    format: "wide",
+    emoji: true,
+    options: [
+      { value: "tempo", label: "Mais tempo de qualidade", icon: "⌁" },
+      { value: "escuta", label: "Mais escuta", icon: "◌" },
+      { value: "toque", label: "Mais carinho e desejo", icon: "♡" },
+      { value: "leveza", label: "Mais leveza", icon: "✦" },
+    ],
+  },
+  {
+    id: "s11-pausa",
+    kind: "loading",
+    title: "Estamos juntando as peças do que você contou.",
+    body: ["Ainda faltam algumas perguntas. O resultado começa a aparecer."],
+    cta: "Continuar",
+  },
+  {
+    id: "s12-ritmo",
+    kind: "card",
+    title: "O ritmo também é uma resposta.",
+    body: [
+      "Não vamos empurrar vocês para um lugar que não combina com a noite de hoje.",
+    ],
+    cta: "Escolher meu ritmo",
+  },
+  {
+    id: "s13-lembranca",
+    kind: "question",
+    key: "s13-lembranca",
+    title: "Qual dessas cenas parece mais com um momento bom de vocês?",
+    format: "cards",
+    emoji: true,
+    options: [
+      { value: "rindo", label: "Rindo de uma coisa boba", icon: "☼" },
+      { value: "conversando", label: "Conversando sem pressa", icon: "◌" },
+      { value: "juntos", label: "Só ficando perto", icon: "♡" },
+    ],
+  },
+  {
+    id: "s14-falta",
+    kind: "question",
+    key: "s14-falta",
+    title: "O que você sente falta de receber?",
+    why: "A resposta ajuda a separar desejo de expectativa.",
+    format: "list",
+    options: [
+      { value: "atenção", label: "Atenção sem eu precisar pedir" },
+      { value: "curiosidade", label: "Curiosidade sobre o meu mundo" },
+      { value: "iniciativa", label: "Iniciativa para estarmos juntos" },
+      { value: "nada", label: "Não sinto falta de nada específico" },
+    ],
+  },
+  {
+    id: "s15-oferece",
+    kind: "question",
+    key: "s15-oferece",
+    title: "E o que você gostaria de oferecer mais?",
+    format: "clima",
+    emoji: true,
+    options: [
+      { value: "presenca", label: "Presença", icon: "◌" },
+      { value: "coragem", label: "Coragem para falar", icon: "✦" },
+      { value: "carinho", label: "Carinho", icon: "♡" },
+    ],
+  },
+  {
+    id: "s16-proximidade",
+    kind: "question",
+    key: "s16-proximidade",
+    title: "Hoje, quão perto você se sente dessa pessoa?",
+    subtitle: "Responda pelo corpo, antes de pensar demais.",
+    format: "slider",
+    options: [
+      { value: "1", label: "Muito longe" },
+      { value: "2", label: "Um pouco longe" },
+      { value: "3", label: "No meio" },
+      { value: "4", label: "Perto" },
+      { value: "5", label: "Muito perto" },
+    ],
+  },
+  {
+    id: "s17-conversa",
+    kind: "question",
+    key: "s17-conversa",
+    title: "Qual conversa você gostaria que ficasse mais fácil?",
+    format: "multi",
+    emoji: true,
+    options: [
+      { value: "sentimentos", label: "Sentimentos", icon: "♡" },
+      { value: "futuro", label: "Futuro", icon: "⌁" },
+      { value: "desejo", label: "Desejo", icon: "✦" },
+      { value: "conflitos", label: "Conflitos", icon: "◐" },
+      { value: "sonhos", label: "Sonhos", icon: "☼" },
+    ],
+  },
+  {
+    id: "s18-amostra",
+    kind: "sample",
+    title: "Uma boa pergunta não exige uma resposta pronta.",
+    body: ["Ela só faz a outra pessoa querer continuar falando."],
+    cta: "Ver a próxima",
+  },
+  {
+    id: "s19-medida",
+    kind: "question",
+    key: "s19-medida",
+    title: "O que faria esta experiência valer a pena para você?",
+    format: "wide",
+    options: [
+      { value: "rir", label: "Rir juntos de novo" },
+      { value: "descobrir", label: "Descobrir algo que eu não sabia" },
+      { value: "aproximar", label: "Me sentir mais perto" },
+      { value: "coragem", label: "Conseguir falar do que importa" },
+    ],
+  },
+  {
+    id: "s20-hoje",
+    kind: "question",
+    key: "s20-hoje",
+    title: "Quando vocês poderiam começar?",
+    format: "cards",
+    emoji: true,
+    options: [
+      { value: "agora", label: "Hoje à noite", icon: "☼" },
+      { value: "semana", label: "Nos próximos dias", icon: "⌁" },
+      { value: "quando-der", label: "Quando a rotina deixar", icon: "◌" },
+    ],
+  },
+  {
+    id: "s21-contato",
+    kind: "capture",
+    key: "email",
+    title: "Quer receber o seu resultado?",
+    body: ["Deixe seu e-mail para não perder o diagnóstico e a sua primeira pergunta."],
+    cta: "Continuar",
+  },
+  {
+    id: "s22-organizando",
+    kind: "loading",
+    title: "Seu diagnóstico está quase pronto.",
+    body: ["Estamos escolhendo o ponto de partida que mais combina com vocês."],
+    cta: "Ver meu resultado",
+  },
+  {
+    id: "s23-resumo",
+    kind: "summary",
+    title: "Pronto. Agora dá para começar do lugar certo.",
+    body: ["Veja o que o teste encontrou sobre o momento de vocês."],
+    cta: "Ver meu diagnóstico",
+  },
+];
 
 const LP1_THEME_NAMES: Record<string, string> = {
   "porto-seguro": "Porto Seguro",

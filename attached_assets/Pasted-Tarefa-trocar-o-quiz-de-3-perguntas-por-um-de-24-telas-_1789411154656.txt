@@ -1,0 +1,94 @@
+Tarefa: trocar o quiz de 3 perguntas por um de 24 telas, sem quebrar o diagnóstico e a oferta que já existem.
+
+Esta é a Fase 1: só o motor e as telas de pergunta. O diagnóstico novo e as duas telas de oferta vêm em prompts separados. Ao final desta fase, o fluxo tem que continuar funcionando de ponta a ponta com o Lp1Diagnosis e o Lp1Offer atuais.
+
+1. Regra que não pode quebrar
+
+As respostas continuam produzindo as três chaves que o código já usa: stage, theme e intensity. Sem isso o selectLp1Diagnosis e o selectLandingQuizQuestions param de funcionar.
+
+tela 1 → stage
+tela 2 → theme
+tela 9 → intensity
+
+As demais telas gravam chaves novas e não são lidas por nada ainda.
+
+2. Novo modelo de tela
+
+Em App.tsx, substituir LP1_QUIZ_STEPS por LP1_SCREENS, com tipos:
+
+ts
+type Lp1ScreenBase = {
+  id: string;              // "s03-sei-la" — vira o data-section-name
+  kind: "question" | "card" | "loading" | "summary" | "sample" | "capture";
+};
+
+type Lp1Question = Lp1ScreenBase & {
+  kind: "question";
+  key: string;                       // chave gravada nas respostas
+  title: string;
+  subtitle?: string;
+  why?: string;                      // linha cinza "por que perguntamos"
+  format: "list" | "cards" | "wide" | "scale" | "multi" | "clima" | "slider";
+  emoji?: boolean;                   // só onde o doc 103 autoriza
+  options: { value: string; label: string; expand?: string; icon?: string }[];
+};
+
+type Lp1Card = Lp1ScreenBase & {
+  kind: "card";
+  title: string;
+  body: string[];                    // parágrafos
+  cta: string;
+};
+
+As telas loading, summary, sample e capture entram como placeholders nesta fase — renderizam título e um botão de avançar. Serão preenchidas na Fase 2.
+
+3. As 24 telas
+
+A copy exata está no doc 101 e as mudanças confirmadas nos docs 102, 104 e 105. Pontos que costumam sair errado, então estão explícitos:
+
+Tela 0 (capa): o texto diz "2 minutos", não 1 minuto. Mantém o link secundário "Já fiz o teste — quero o baralho →" indo direto pro checkout.
+Tela 3: a opção "Sim, quase sempre" tem expand com o texto "Essa é a resposta mais comum aqui. Não é desinteresse." — o card cresce quando marcado.
+Telas 3, 4, 6, 14, 16 e 19: sem emoji. As outras seguem o doc 103.
+Telas 6, 8 e 12 são kind: "card" — não têm opção, só um botão.
+4. Renderização
+
+Um componente por format. Regras que valem pra todos:
+
+A opção selecionada preenche em dourado, mostra um tique, e só então o botão de avançar acende.
+navigator.vibrate?.(10) em cada seleção.
+multi mostra um contador "2 de 5 marcadas".
+prefers-reduced-motion desliga as transições.
+Botão "← Voltar" em toda tela; na tela 0 ele volta pra landing.
+5. Progresso
+
+Barra contínua, (indiceAtual / totalDeTelas). Nada de segmentos como hoje. Aparece a partir da tela 1.
+
+6. Tracking — sem mexer no backend
+
+O App.tsx já tem um IntersectionObserver que lê data-section-name e guarda em lastSectionRef, e o evento exit já manda lastSection pra /api/track/page-event.
+
+Então: cada tela do quiz renderiza com data-section-name={screen.id}. Drop-off por tela passa a sair de graça do pipeline que já existe, sem endpoint novo, sem migração. Confirme que o observer é re-registrado quando a tela troca (hoje ele observa uma vez no mount).
+
+7. O índice de distância
+
+Criar src/lib/lp1-score.ts:
+
+ts
+export type Lp1Score = { value: number; band: "perto" | "morno" | "distante" };
+export function computeLp1Score(answers: Record<string, string>): Lp1Score
+
+Pesos exatamente como na tabela do doc 106. Soma, normaliza para 0-100 (Math.round(total / 101 * 100)), e devolve a faixa. Sem acesso à rede, função pura, e um teste unitário cobrindo: todas as respostas mais leves → "perto"; todas as mais pesadas → "distante"; respostas faltando → não quebra.
+
+Nesta fase o score é só calculado e logado no console. A tela 16 usa na Fase 2.
+
+8. O que NÃO fazer nesta fase
+Não mexer em Lp1Diagnosis, Lp1Offer, lp1-diagnosis.ts nem em lp3-narrative.ts.
+Não adicionar imagem nenhuma ainda — deixar os espaços com um bloco vazio de proporção correta e um comentário com o nome do arquivo que vai entrar (trava-celular.jpg etc., lista no doc 103).
+Não criar timer, contagem regressiva, cupom nem preço riscado. Em lugar nenhum.
+9. Conferir antes de dizer que terminou
+O quiz vai da tela 0 até o fim e cai no diagnóstico atual sem erro.
+stage, theme e intensity chegam preenchidas no selectLp1Diagnosis.
+Voltar funciona em todas as telas e não perde resposta.
+Cada tela tem um data-section-name único, e o lastSection do evento de exit muda conforme você avança.
+computeLp1Score passa nos testes.
+No celular: nada estoura a largura, o botão de avançar fica alcançável com o polegar, e o teclado não cobre o campo na tela de captura.
