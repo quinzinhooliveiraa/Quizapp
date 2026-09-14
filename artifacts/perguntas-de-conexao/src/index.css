@@ -202,6 +202,39 @@
 }
 
 /* LP1 long-form quiz */
+.lp1-img {
+  filter: brightness(1.28) contrast(1.04) saturate(1.06);
+}
+
+.lp1-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+  filter: brightness(1.32) contrast(1.06);
+}
+
+/* Recortes por imagem: mantém o elemento principal no centro do thumb. */
+.lp1-thumb[src*="trava-cama"] {
+  object-position: 50% 62%;
+}
+
+.lp1-thumb[src*="trava-celular"] {
+  object-position: 50% 45%;
+}
+
+.lp1-thumb[src*="dx-afastamento"] {
+  object-position: 50% 58%;
+}
+
+.lp1-thumb[src*="dx-sei-la"] {
+  object-position: 50% 40%;
+}
+
+.lp1-thumb[src*="dx-eu-travo"] {
+  object-position: 50% 38%;
+}
+
 .lp1-quiz-progress {
   display: flex;
   width: min(100%, 560px);
