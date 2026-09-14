@@ -23136,6 +23136,91 @@ blockquote em {
   background: linear-gradient(135deg, #f0c55b, #d9a02a);
 }
 
+.lp-footer {
+  padding: 2.5rem 0 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.lp-footer-brand {
+  margin: 0 0 0.4rem;
+  color: rgba(249, 248, 251, 0.8);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lp-footer-legal {
+  margin: 0 0 1rem;
+  color: rgba(249, 248, 251, 0.45);
+  font-size: 0.75rem;
+}
+
+.lp-footer-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.lp-footer-links a {
+  color: rgba(249, 248, 251, 0.6);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lp-footer-links a:hover {
+  color: var(--lp1-accent);
+}
+
+.legal-page {
+  min-height: 100vh;
+  padding: 3rem 1rem 5rem;
+  background: #14101c;
+  color: rgba(249, 248, 251, 0.82);
+}
+
+.legal-container {
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.legal-container h1 {
+  margin: 0 0 0.3rem;
+  color: #f9f8fb;
+  font-size: 1.8rem;
+}
+
+.legal-updated {
+  margin: 0 0 2.5rem;
+  color: rgba(249, 248, 251, 0.45);
+  font-size: 0.82rem;
+}
+
+.legal-container h2 {
+  margin: 2.2rem 0 0.7rem;
+  color: #f9f8fb;
+  font-size: 1.05rem;
+}
+
+.legal-container p,
+.legal-container li {
+  font-size: 0.92rem;
+}
+
+.legal-container ul {
+  padding-left: 1.2rem;
+}
+
+.legal-container li {
+  margin-bottom: 0.5rem;
+}
+
+.legal-container a {
+  color: var(--lp1-accent, #e8b13a);
+}
+
 .checkout-native-payment,
 .checkout-card-payment,
 .checkout-error-state,

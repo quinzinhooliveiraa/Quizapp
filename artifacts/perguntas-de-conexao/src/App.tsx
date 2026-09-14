@@ -117,6 +117,8 @@ const Onboarding = lazy(() => import("@/pages/Onboarding"));
 const Login = lazy(() => import("@/pages/Login"));
 const Play = lazy(() => import("@/pages/Play"));
 const Admin = lazy(() => import("@/pages/Admin"));
+const Termos = lazy(() => import("@/pages/Termos"));
+const Privacidade = lazy(() => import("@/pages/Privacidade"));
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
@@ -2209,6 +2211,19 @@ function LandingV2Quiz({
           </div>
         </div>
       </section>
+      <footer className="lp-footer">
+        <div className="lp-container">
+          <p className="lp-footer-brand">Perguntas de Conexão</p>
+          <p className="lp-footer-legal">
+            Perguntas de Conexão · CNPJ 57.412.420/0001-00
+          </p>
+          <nav className="lp-footer-links" aria-label="Links legais">
+            <Link href="/termos">Termos de uso</Link>
+            <Link href="/privacidade">Privacidade</Link>
+            <a href="mailto:perguntasdeconexao@gmail.com">Contato</a>
+          </nav>
+        </div>
+      </footer>
       {showStickyCta && !peekThemeId && !checkoutOpen ? (
         <div className="lp-sticky-cta" aria-label="Começar agora">
           <button
@@ -2244,9 +2259,11 @@ function LandingV2Quiz({
 function Shell({
   children,
   dark = false,
+  showSiteFooter = true,
 }: {
   children: ReactNode;
   dark?: boolean;
+  showSiteFooter?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -2272,9 +2289,11 @@ function Shell({
         </button>
       </header>
       {children}
-      <SiteFooter
-        supportAction={{ label: "Preciso de ajuda", onClick: openSupportDialog }}
-      />
+      {showSiteFooter ? (
+        <SiteFooter
+          supportAction={{ label: "Preciso de ajuda", onClick: openSupportDialog }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -4422,7 +4441,7 @@ function Home({
     setLandingQuizStep((current) => Math.min(current + 1, 3));
   };
   return (
-    <Shell dark>
+    <Shell dark showSiteFooter={variant !== "v2"}>
       <StoredAccessGate />
       <main className={`lp-main ${variant === "v1" ? "lp2-rebuild" : ""}`}>
         {variant === "v2" ? (
@@ -9489,6 +9508,8 @@ function Router() {
           <Route path="/app" component={ProtectedExperienceRoute} />
           <Route path="/invite/:token" component={InvitePage} />
           <Route path="/admin" component={Admin} />
+          <Route path="/termos" component={Termos} />
+          <Route path="/privacidade" component={Privacidade} />
           <Route component={NotFound} />
         </Switch>
       </Suspense>
@@ -9519,7 +9540,9 @@ function RouteAwareSplash() {
     location === "/app" ||
     location.startsWith("/invite/");
 
-  return isLandingPage || isAppRoute ? null : <SplashScreen />;
+  const isLegalRoute = location === "/termos" || location === "/privacidade";
+
+  return isLandingPage || isAppRoute || isLegalRoute ? null : <SplashScreen />;
 }
 function App() {
   return (
