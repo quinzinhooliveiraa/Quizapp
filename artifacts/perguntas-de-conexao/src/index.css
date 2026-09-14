@@ -23126,6 +23126,16 @@ blockquote em {
   transform: translateY(-1px);
 }
 
+.checkout-modal .button-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--acao), var(--acao-escura));
+  color: #17121b;
+}
+
+.checkout-modal .button-primary:hover {
+  background: linear-gradient(135deg, #f0c55b, #d9a02a);
+}
+
 .checkout-native-payment,
 .checkout-card-payment,
 .checkout-error-state,

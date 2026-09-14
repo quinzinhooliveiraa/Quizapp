@@ -1875,7 +1875,7 @@ function LandingV2Quiz({
                 </p>
                 <p>
                   <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>Um celular só, entre os dois</span>
+                  <span>Um celular entre os dois — ou cada um no seu</span>
                 </p>
                 <p>
                   <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
@@ -2041,6 +2041,7 @@ function LandingV2Quiz({
             Ou vocês podem estar tendo a conversa de verdade daqui a dez
             minutos. São 3 passos:
           </p>
+          <p className="lp1-price-proof">212 mil salvamentos no TikTok</p>
           <div className="lp1-price-stack">
             <div className="lp-price-card lp1-price-card lp1-price-steps-card">
               <ol className="lp1-price-steps">
@@ -2077,7 +2078,6 @@ function LandingV2Quiz({
             </div>
             <div className="lp-price-card lp1-price-card lp1-price-benefits-card">
               <p className="lp1-price-includes-title">O que vocês levam</p>
-              <p className="lp1-price-proof">Perguntas salvas mais de 200 mil vezes</p>
               <ul className="lp-price-includes">
                 <li>
                   <Check className="lp1-price-check" size={16} aria-hidden="true" />
@@ -4650,7 +4650,7 @@ function Home({
                     <h3>Com o baralho</h3>
                     {[
                       "Uma pergunta que ele nunca ouviu antes",
-                      "Um celular só, entre os dois",
+                      "Um celular entre os dois — ou cada um no seu",
                       "A pergunta já está pronta, é só ler",
                       "Começa leve, e vocês escolhem até onde vai",
                       "Amanhã tem mais 458",
@@ -4765,8 +4765,7 @@ function Home({
                 </p>
                 <div className="lp2-offer-card">
                   <p className="lp2-offer-anchor">
-                    459 perguntas · 15 baralhos · perguntas salvas mais de 200 mil
-                    vezes
+                    459 perguntas · 15 baralhos · 212 mil salvamentos no TikTok
                   </p>
                   <ol className="lp2-offer-steps">
                     <li>

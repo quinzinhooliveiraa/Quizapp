@@ -1,0 +1,140 @@
+# 99 — prompt: as pendências que sobraram do doc 63
+
+*Tudo aqui foi verificado no código antes de escrever. O 4º item do doc 63 eu
+acabei descartando — explicação no fim.*
+
+---
+
+## 1. 🔴 Botões vinho dentro do checkout (o cartão é o mais grave)
+
+Na LP inteira o botão de ação é dourado. Dentro do checkout, dois botões
+ganharam regra própria dourada (`.checkout-purchase-button`, que gera o Pix, e
+`.theme-peek-cta`, do modal do baralho), mas os outros herdam
+`.button-primary`, que é `background: var(--wine)` — vinho.
+
+O pior deles é o **`checkout-card-submit`**: é o botão de pagar com cartão. Quem
+paga por Pix clica em dourado, quem paga com cartão clica em vinho, na mesma
+tela.
+
+Arquivo: `artifacts/perguntas-de-conexao/src/index.css`
+
+Adicionar (pode ser logo depois da regra `.checkout-purchase-button`, por volta
+da linha 23125):
+
+```css
+.checkout-modal .button-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--acao), var(--acao-escura));
+  color: #17121b;
+}
+.checkout-modal .button-primary:hover {
+  background: linear-gradient(135deg, #f0c55b, #d9a02a);
+}
+```
+
+Isso pega de uma vez o botão de cartão, o "já paguei — verificar de novo", o
+"verificar Pix" e os três de "tentar novamente". O `.checkout-purchase-button`
+continua com a regra dele, que já é dourada, então nada muda lá.
+
+> Conferir depois de aplicar: nenhum botão dentro do checkout pode continuar
+> vinho. Abrir o checkout, olhar a aba de cartão **e** a de Pix.
+
+---
+
+## 2. 🟡 A prova social está no lugar errado
+
+Em `App.tsx`, linha ~2079-2080:
+
+```jsx
+              <p className="lp1-price-includes-title">O que vocês levam</p>
+              <p className="lp1-price-proof">Perguntas salvas mais de 200 mil vezes</p>
+```
+
+"O que vocês levam" é uma lista de coisas inclusas no produto. Salvamento no
+TikTok não é uma coisa que a pessoa leva — é prova social. Fica torto como
+primeira linha da lista.
+
+**Trocar o texto e mover** essa linha para fora do card de inclusos, colocando-a
+como âncora junto do bloco de preço (perto de onde aparece "459 perguntas"),
+com o texto:
+
+```jsx
+              <p className="lp1-price-proof">212 mil salvamentos no TikTok</p>
+```
+
+Se mover for complicado, o mínimo é **trocar o texto** onde está: "212 mil
+salvamentos no TikTok" em vez de "Perguntas salvas mais de 200 mil vezes".
+
+**Por quê:** "salvas mais de 200 mil vezes", lido numa página de compra, parece
+salvamento dentro do produto — ambíguo. O número real são os salvamentos dos
+posts no TikTok, que é maior, específico, verificável e prova social de
+verdade. *(Copywriting p.12 — transformar afirmação genérica em termo concreto)*
+
+Fazer a mesma troca de texto na linha ~4758 (`lp2-offer-anchor`), que tem a
+mesma frase.
+
+---
+
+## 3. 🟡 A página se contradiz sobre a mecânica
+
+Duas frases distantes uma da outra dizem coisas diferentes sobre como se joga:
+
+- Tabela comparativa (linha ~1878): *"Um celular só, entre os dois"*
+- Seção proposta: *"vocês respondem ao mesmo tempo, cada um no seu celular"*
+
+As duas são verdade — são dois modos de uso — mas juntas, sem explicação, leem
+como descuido.
+
+Em `App.tsx`, linha ~1878, trocar:
+
+```jsx
+                  <span>Um celular só, entre os dois</span>
+```
+
+por:
+
+```jsx
+                  <span>Um celular entre os dois — ou cada um no seu</span>
+```
+
+Fazer a mesma troca na linha ~4643, que repete a frase na `Home`.
+
+> Esse é o único travessão que vale manter na página, junto com o do diálogo
+> "E aí, como foi o dia?" — "Normal." Aqui ele separa duas alternativas, não é
+> travessão conector de IA.
+
+---
+
+## 4. O item que eu descartei (e por quê)
+
+O doc 63 pedia a palavra "apenas" colada no preço, citando *Pricing p.21*. Fui
+reler a página antes de escrever, e ela diz:
+
+> *"Be careful with any words near your price. Choose words that depict a small
+> size (e.g., 'low', 'small', 'tiny'). In one study, an inline skate seemed
+> cheaper when 'Low Friction' appeared near the price."* (Coulter & Coulter, 2005)
+
+Duas razões pra não fazer:
+
+**A tática já está cumprida.** A palavra de tamanho pequeno que o estudo pede já
+está lá, na linha logo abaixo do preço: *"dá 11 centavos por noite"*. "Centavos"
+é literalmente uma palavra de magnitude pequena colada no preço. Adicionar
+"apenas" seria ganho marginal em cima de algo que já funciona.
+
+**E vai contra o resto do trabalho.** A gente passou a semana tirando
+minimizadores da página — "gostinho" virou "prévia", "perguntas simples" virou
+"perguntas prontas" — porque encolhiam o produto. "Apenas R$ 50" tem o risco de
+soar promocional demais num produto que estamos posicionando por valor.
+
+(A distinção que salva a p.21 é que minimizar o **preço** é bom e minimizar o
+**produto** é ruim — por isso "centavos" funciona e "gostinho" não. Mas como o
+"centavos" já ocupa esse papel, o "apenas" não acrescenta.)
+
+---
+
+## CONFERIR NO FIM
+
+- Nenhum botão vinho dentro do checkout, nas duas abas de pagamento.
+- A frase dos 200 mil não aparece mais dentro da lista "O que vocês levam".
+- Nenhum lugar da página diz "200 mil" — só "212 mil salvamentos no TikTok".
+- A tabela comparativa diz "Um celular entre os dois — ou cada um no seu".
