@@ -591,11 +591,13 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
 
   const mode = parsed.data.mode ?? "native";
   const method = parsed.data.method ?? "pix";
-  const pricing = getPricing(
+  const visitorKey = parsed.data.visitorKey?.trim().slice(0, 120) || null;
+  const pricing = await getPricing(
     resolveRegion({
       headers: req.headers,
       query: req.query as Record<string, unknown>,
     }),
+    visitorKey,
   );
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
   if (
@@ -605,13 +607,16 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Associação de experimento inválida" });
     return;
   }
-  const visitorKey = parsed.data.visitorKey?.trim().slice(0, 120) || null;
   const assignment =
     visitorKey && !parsed.data.experimentId && !parsed.data.experimentVariantId
       ? await getActiveAssignmentForVisitor(visitorKey)
       : undefined;
 
   const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;
+  // ATENÇÃO: o modo "hosted" cobra o preço cadastrado no produto da Abacate Pay,
+  // ignorando o pricing.amountCents daqui. O site usa mode "native", que manda o
+  // valor direto — por isso trocar o preço no pricing.ts basta. Se algum dia o
+  // modo "hosted" voltar a ser usado, o produto lá precisa ser atualizado junto.
   if (method === "pix" && !pricing.pixAvailable) {
     res.status(400).json({
       error: "Pix não está disponível para esta região.",

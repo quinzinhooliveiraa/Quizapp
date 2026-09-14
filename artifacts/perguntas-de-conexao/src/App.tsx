@@ -2113,7 +2113,17 @@ function LandingV2Quiz({
                 <p className="lp-price-value">
                   459 perguntas por{" "}
                   <span className="lp-price-figure" style={{ whiteSpace: "nowrap" }}>
-                    {pricing.display}
+                    {pricing.symbolPosition === "before" ? (
+                      <>
+                        <span className="lp-price-symbol">{pricing.symbol}</span>{" "}
+                        {pricing.amount}
+                      </>
+                    ) : (
+                      <>
+                        {pricing.amount}{" "}
+                        <span className="lp-price-symbol">{pricing.symbol}</span>
+                      </>
+                    )}
                   </span>
                 </p>
                 <p className="lp-price-once">

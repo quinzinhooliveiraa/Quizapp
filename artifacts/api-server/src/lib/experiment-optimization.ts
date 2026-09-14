@@ -18,6 +18,7 @@ import {
   type ExperimentVariant,
 } from "@workspace/db";
 import { logger } from "./logger";
+import { BR_PRICE_VARIANTS } from "./pricing";
 
 export const OPTIMIZATION_INTERVAL_MS = 15 * 60 * 1000;
 export const OPTIMIZATION_STEP = 10;
@@ -35,6 +36,7 @@ export type OptimizationVariantMetrics = {
   visitors: number;
   purchases: number;
   conversionRate: number;
+  revenuePerVisitor: number;
 };
 
 export type OptimizationHistoryEntry = {
@@ -94,16 +96,21 @@ export function calculateMinimumSampleSize(
     Number.isInteger(customValue) &&
     customValue >= 2
   ) {
-    return Math.min(customValue, 100_000);
+    return Math.min(Math.max(customValue, variantCount * 1_000), 100_000);
   }
-  return Math.max(200, variantCount * 100);
+  return Math.max(200, variantCount * 1_000);
 }
 
 export function hasReachedMinimumSampleSize(
   totalVisitors: number,
   minimumSampleSize: number,
+  visitorsByVariant: number[] = [],
 ) {
-  return totalVisitors >= minimumSampleSize;
+  return (
+    totalVisitors >= minimumSampleSize &&
+    (visitorsByVariant.length === 0 ||
+      visitorsByVariant.every((visitors) => visitors >= 1_000))
+  );
 }
 
 export function calculateConversionRate(purchases: number, visitors: number) {
@@ -111,13 +118,20 @@ export function calculateConversionRate(purchases: number, visitors: number) {
 }
 
 export function hasSufficientEvidence(
-  winner: Pick<OptimizationVariantMetrics, "visitors" | "purchases" | "conversionRate">,
-  runnerUp: Pick<OptimizationVariantMetrics, "visitors" | "purchases" | "conversionRate">,
+  winner: Pick<
+    OptimizationVariantMetrics,
+    "visitors" | "purchases" | "conversionRate" | "revenuePerVisitor"
+  >,
+  runnerUp: Pick<
+    OptimizationVariantMetrics,
+    "visitors" | "purchases" | "conversionRate" | "revenuePerVisitor"
+  >,
+  metric: "conversionRate" | "revenuePerVisitor" = "conversionRate",
 ) {
   if (
     winner.visitors < 30 ||
     runnerUp.visitors < 30 ||
-    winner.conversionRate <= runnerUp.conversionRate
+    winner[metric] <= runnerUp[metric]
   ) {
     return false;
   }
@@ -282,7 +296,9 @@ async function getVariants(experimentId: string) {
 async function getVariantMetrics(
   experimentId: string,
   variants: ExperimentVariant[],
+  experimentSlug: string,
 ) {
+  const isPriceExperiment = experimentSlug.toLowerCase().startsWith("preco");
   return Promise.all(
     variants.map(async (variant): Promise<OptimizationVariantMetrics> => {
       const [visitorResult, purchaseResult] = await Promise.all([
@@ -313,6 +329,18 @@ async function getVariantMetrics(
       ]);
       const visitors = Number(visitorResult[0]?.value || 0);
       const purchases = Number(purchaseResult[0]?.value || 0);
+      const variantKey = [
+        variant.name.trim().toLowerCase(),
+        variant.path.split("/").filter(Boolean).pop()?.toLowerCase(),
+      ].find(
+        (candidate): candidate is keyof typeof BR_PRICE_VARIANTS =>
+          candidate === "a" || candidate === "b" || candidate === "c",
+      );
+      const priceCents = isPriceExperiment
+        ? variantKey
+          ? BR_PRICE_VARIANTS[variantKey].amountCents
+          : 0
+        : 1;
       return {
         variantId: variant.id,
         name: variant.name,
@@ -321,6 +349,8 @@ async function getVariantMetrics(
         visitors,
         purchases,
         conversionRate: calculateConversionRate(purchases, visitors),
+        revenuePerVisitor:
+          visitors > 0 ? (purchases * priceCents) / visitors : 0,
       };
     }),
   );
@@ -342,7 +372,7 @@ export async function getExperimentOptimizationSummary(
   const experiment = await getExperiment(experimentId);
   if (!experiment) return undefined;
   const variants = await getVariants(experimentId);
-  const metrics = await getVariantMetrics(experimentId, variants);
+  const metrics = await getVariantMetrics(experimentId, variants, experiment.slug);
   const history = await getHistory(experimentId);
   const mode: OptimizationMode =
     experiment.optimizationMode === "automatic" ? "automatic" : "manual";
@@ -388,11 +418,14 @@ async function setNextEvaluation(experimentId: string, now: Date) {
     .where(eq(experimentsTable.id, experimentId));
 }
 
-function findWinner(metrics: OptimizationVariantMetrics[]) {
+function findWinner(
+  metrics: OptimizationVariantMetrics[],
+  metric: "conversionRate" | "revenuePerVisitor",
+) {
   const active = metrics.filter((variant) => variant.weight > 0);
   return [...active].sort(
     (a, b) =>
-      b.conversionRate - a.conversionRate ||
+      b[metric] - a[metric] ||
       b.purchases - a.purchases ||
       b.visitors - a.visitors,
   )[0];
@@ -453,6 +486,9 @@ export async function runExperimentOptimization(
     !hasReachedMinimumSampleSize(
       summary.totalVisitors,
       summary.minimumSampleSizeUsed,
+      summary.variants
+        .filter((variant) => variant.weight > 0)
+        .map((variant) => variant.visitors),
     )
   ) {
     await setNextEvaluation(experimentId, now);
@@ -480,9 +516,18 @@ export async function runExperimentOptimization(
     };
   }
 
-  const metrics = await getVariantMetrics(experimentId, variants);
+  const isPriceExperiment = experiment.slug.toLowerCase().startsWith("preco");
+  const decisionMetric = isPriceExperiment
+    ? "revenuePerVisitor"
+    : "conversionRate";
+  const metrics = await getVariantMetrics(
+    experimentId,
+    variants,
+    experiment.slug,
+  );
   const winner = findWinner(
     metrics.filter((variant) => variant.weight > 0),
+    decisionMetric,
   );
   if (!winner) {
     await setNextEvaluation(experimentId, now);
@@ -494,8 +539,8 @@ export async function runExperimentOptimization(
   }
   const runnerUp = metrics
     .filter((variant) => variant.variantId !== winner.variantId)
-    .sort((a, b) => b.conversionRate - a.conversionRate)[0];
-  if (!runnerUp || !hasSufficientEvidence(winner, runnerUp)) {
+    .sort((a, b) => b[decisionMetric] - a[decisionMetric])[0];
+  if (!runnerUp || !hasSufficientEvidence(winner, runnerUp, decisionMetric)) {
     await setNextEvaluation(experimentId, now);
     return {
       changed: false,

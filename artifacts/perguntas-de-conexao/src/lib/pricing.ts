@@ -8,6 +8,9 @@ export type Pricing = {
   currency: "brl" | "eur";
   amountCents: number;
   display: string;
+  symbol: string;
+  amount: string;
+  symbolPosition: "before" | "after";
   unitNote: string;
   pixAvailable: boolean;
 };
@@ -15,17 +18,23 @@ export type Pricing = {
 export const FALLBACK_PRICING: Pricing = {
   region: "BR",
   currency: "brl",
-  amountCents: 4790,
-  display: "R$ 47,90",
-  unitNote: "dá 10 centavos por noite",
+  amountCents: 5000,
+  display: "R$ 50",
+  symbol: "R$",
+  amount: "50",
+  symbolPosition: "before",
+  unitNote: "dá 11 centavos por noite",
   pixAvailable: true,
 };
 
 const FALLBACK_PT_PRICING: Pricing = {
   region: "PT",
   currency: "eur",
-  amountCents: 1490,
-  display: "14,90 €",
+  amountCents: 1500,
+  display: "15 €",
+  symbol: "€",
+  amount: "15",
+  symbolPosition: "after",
   unitNote: "dá 3 cêntimos por noite",
   pixAvailable: false,
 };
@@ -77,19 +86,41 @@ function isPricing(value: unknown): value is Pricing {
     (pricing.currency === "brl" || pricing.currency === "eur") &&
     typeof pricing.amountCents === "number" &&
     typeof pricing.display === "string" &&
+    typeof pricing.symbol === "string" &&
+    typeof pricing.amount === "string" &&
+    (pricing.symbolPosition === "before" ||
+      pricing.symbolPosition === "after") &&
     typeof pricing.unitNote === "string" &&
     typeof pricing.pixAvailable === "boolean"
   );
 }
 
+function getStoredVisitorKey(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return (
+      window.sessionStorage.getItem("pdc-visitor-key") ||
+      window.localStorage.getItem("pdc-visitor-key") ||
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
+
 function loadPricing(): Promise<Pricing> {
   const preferredRegion = getPreferredPricingRegion();
-  const regionQuery = preferredRegion ? `?regiao=${preferredRegion}` : "";
-  const requestKey = regionQuery || "automatic";
+  const visitorKey = getStoredVisitorKey();
+  const params = new URLSearchParams();
+  if (preferredRegion) params.set("regiao", preferredRegion);
+  if (visitorKey) params.set("visitorKey", visitorKey);
+  const query = params.toString();
+  const requestQuery = query ? `?${query}` : "";
+  const requestKey = requestQuery || "automatic";
   const existingRequest = pricingRequests.get(requestKey);
   if (existingRequest) return existingRequest;
 
-  const request = fetch(`${apiBaseUrl}/api/pricing${regionQuery}`)
+  const request = fetch(`${apiBaseUrl}/api/pricing${requestQuery}`)
       .then(async (response) => {
         if (!response.ok) throw new Error("pricing request failed");
         const data: unknown = await response.json();

@@ -1,0 +1,182 @@
+# 98 — prompt: preço novo (R$ 50 / 15 €) + ajustes do bloco
+
+## PARTE 1 — trocar o preço
+
+Arquivo: `artifacts/api-server/src/lib/pricing.ts`
+
+Acrescentar três campos no tipo `Pricing` (`symbol`, `amount`,
+`symbolPosition`) e trocar o objeto `PRICING` inteiro:
+
+```ts
+export type Pricing = {
+  region: PricingRegion;
+  currency: "brl" | "eur";
+  amountCents: number;
+  display: string;
+  symbol: string;
+  amount: string;
+  symbolPosition: "before" | "after";
+  unitNote: string;
+  pixAvailable: boolean;
+};
+
+const PRICING: Record<PricingRegion, Pricing> = {
+  BR: {
+    region: "BR",
+    currency: "brl",
+    amountCents: 5000,
+    display: "R$ 50",
+    symbol: "R$",
+    amount: "50",
+    symbolPosition: "before",
+    unitNote: "dá 11 centavos por noite",
+    pixAvailable: true,
+  },
+  PT: {
+    region: "PT",
+    currency: "eur",
+    amountCents: 1500,
+    display: "15 €",
+    symbol: "€",
+    amount: "15",
+    symbolPosition: "after",
+    unitNote: "dá 3 cêntimos por noite",
+    pixAvailable: false,
+  },
+};
+```
+
+Atualizar também o validador `isPricing()` e os fallbacks
+`FALLBACK_PRICING` / `FALLBACK_PT_PRICING` no frontend
+(`artifacts/perguntas-de-conexao/src/lib/pricing.ts`) com os mesmos campos e
+valores.
+
+**Conferir:** procurar no projeto por `47,90`, `4790` e `14,90`. Não pode
+sobrar nenhum.
+
+---
+
+## PARTE 2 — símbolo da moeda mais apagado que o número
+
+Só no bloco de preço principal da LP1 (`App.tsx`, por volta da linha 2115).
+Localizar:
+
+```jsx
+                  <span className="lp-price-figure" style={{ whiteSpace: "nowrap" }}>
+                    {pricing.display}
+                  </span>
+```
+
+Trocar por:
+
+```jsx
+                  <span className="lp-price-figure" style={{ whiteSpace: "nowrap" }}>
+                    {pricing.symbolPosition === "before" ? (
+                      <>
+                        <span className="lp-price-symbol">{pricing.symbol}</span>
+                        {" "}
+                        {pricing.amount}
+                      </>
+                    ) : (
+                      <>
+                        {pricing.amount}
+                        {" "}
+                        <span className="lp-price-symbol">{pricing.symbol}</span>
+                      </>
+                    )}
+                  </span>
+```
+
+E no `index.css`, junto das outras regras do card de preço:
+
+```css
+.lp1-price-card .lp-price-symbol {
+  opacity: 0.5;
+  font-size: 0.85em;
+}
+```
+
+> Nos outros lugares (botão do checkout, total, FAQ) **continua usando
+> `pricing.display` normalmente** — não mexer neles.
+
+---
+
+## PARTE 3 — linha fina acima do botão
+
+No `index.css`, junto das outras regras do card de preço:
+
+```css
+.lp1-price-card .lp-price-main {
+  padding-bottom: 1.3rem;
+  border-bottom: 1px solid rgba(36, 29, 51, 0.10);
+  margin-bottom: 1.3rem;
+}
+```
+
+---
+
+## PARTE 4 — variantes de preço pro teste A/B
+
+O projeto já tem as tabelas `experiments`, `experiment_variants` e
+`experiment_assignments`. Estender para variante de preço **dentro da mesma
+região**, sem duplicar landing page nenhuma.
+
+1. No `lib/pricing.ts` do backend:
+
+```ts
+export const BR_PRICE_VARIANTS = {
+  a: { amountCents: 3000, display: "R$ 30", symbol: "R$", amount: "30",
+       unitNote: "dá 7 centavos por noite" },
+  b: { amountCents: 5000, display: "R$ 50", symbol: "R$", amount: "50",
+       unitNote: "dá 11 centavos por noite" },
+  c: { amountCents: 7000, display: "R$ 70", symbol: "R$", amount: "70",
+       unitNote: "dá 15 centavos por noite" },
+} as const;
+```
+
+2. Quando o visitante estiver atribuído a uma variante do experimento de preço,
+   `getPricing()` devolve os valores dela em vez do padrão.
+
+3. **Regra que não pode ser quebrada:** a variante é resolvida **no servidor**,
+   a partir da atribuição já gravada em `experiment_assignments` para aquele
+   `visitorKey`. Nunca aceitar preço, moeda ou id de variante vindo do corpo da
+   requisição.
+
+4. A mesma variante vale na LP **e** na criação do pagamento. Quem viu R$ 30
+   tem que ter o pagamento criado com 3000.
+
+5. O `unitNote` acompanha a variante — a terceira linha não pode dizer "11
+   centavos" numa página que mostra R$ 30.
+
+**Configuração:** peso igual entre as três, e subir o mínimo de amostra (hoje é
+`max(200, variantes × 100)`, baixo demais para preço) para pelo menos **1.000
+visitantes por variante** antes de qualquer otimização automática.
+
+**Métrica que decide:** faturamento por visitante (conversão × preço), não taxa
+de conversão.
+
+---
+
+## PARTE 5 — comentário de aviso no Abacate Pay
+
+Em `artifacts/api-server/src/routes/connection.ts`, na linha do
+`const productId = process.env.ABACATEPAY_PRODUCT_ID_CASAL;`, adicionar:
+
+```ts
+  // ATENÇÃO: o modo "hosted" cobra o preço cadastrado no produto da Abacate Pay,
+  // ignorando o pricing.amountCents daqui. O site usa mode "native", que manda o
+  // valor direto — por isso trocar o preço no pricing.ts basta. Se algum dia o
+  // modo "hosted" voltar a ser usado, o produto lá precisa ser atualizado junto.
+```
+
+---
+
+## CONFERIR NO FIM
+
+- A LP mostra `R$ 50` com o "R$" mais apagado que o "50".
+- A terceira linha diz "dá 11 centavos por noite".
+- `?regiao=PT` mostra `15 €` (símbolo depois, apagado) e "3 cêntimos por noite",
+  sem Pix.
+- Nenhum lugar do site diz R$ 47,90.
+- Um Pix de teste gera QR de **R$ 50**.
+- Um cartão de teste cria PaymentIntent de **5000 BRL**.

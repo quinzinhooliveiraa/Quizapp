@@ -24208,6 +24208,15 @@ blockquote em {
 .lp1-price-card .lp-price-figure {
   white-space: nowrap;
 }
+.lp1-price-card .lp-price-symbol {
+  opacity: 0.5;
+  font-size: 0.85em;
+}
+.lp1-price-card .lp-price-main {
+  padding-bottom: 1.3rem;
+  border-bottom: 1px solid rgba(36, 29, 51, 0.1);
+  margin-bottom: 1.3rem;
+}
 .lp1-price-card .lp-price-once {
   font-size: 0.88rem !important;
   font-weight: 400 !important;

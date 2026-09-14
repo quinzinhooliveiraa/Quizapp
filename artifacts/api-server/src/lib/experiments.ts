@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import {
   db,
   experimentAssignmentsTable,
@@ -122,6 +122,43 @@ export async function getActiveAssignmentForVisitor(visitorKey: string) {
       and(
         eq(experimentAssignmentsTable.visitorKey, visitorKey),
         eq(experimentsTable.status, ACTIVE_STATUS),
+      ),
+    )
+    .orderBy(desc(experimentAssignmentsTable.assignedAt))
+    .limit(1);
+
+  return assignment;
+}
+
+/**
+ * Price experiments are opt-in by slug so unrelated landing experiments never
+ * change the amount charged. Variant names or paths a/b/c are resolved later
+ * by the pricing module on the server.
+ */
+export async function getActivePriceAssignmentForVisitor(visitorKey: string) {
+  const [assignment] = await db
+    .select({
+      experimentVariantId: experimentAssignmentsTable.experimentVariantId,
+      experimentVariantName: experimentVariantsTable.name,
+      experimentVariantPath: experimentVariantsTable.path,
+    })
+    .from(experimentAssignmentsTable)
+    .innerJoin(
+      experimentsTable,
+      eq(experimentsTable.id, experimentAssignmentsTable.experimentId),
+    )
+    .innerJoin(
+      experimentVariantsTable,
+      eq(
+        experimentVariantsTable.id,
+        experimentAssignmentsTable.experimentVariantId,
+      ),
+    )
+    .where(
+      and(
+        eq(experimentAssignmentsTable.visitorKey, visitorKey),
+        eq(experimentsTable.status, ACTIVE_STATUS),
+        sql`${experimentsTable.slug} like 'preco%'`,
       ),
     )
     .orderBy(desc(experimentAssignmentsTable.assignedAt))
