@@ -120,7 +120,6 @@ const Admin = lazy(() => import("@/pages/Admin"));
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
-import { PricingRegionSwitch } from "@/components/PricingRegionSwitch";
 import { apiBaseUrl } from "@/config";
 import {
   getPricingRegionQuery,
@@ -3921,7 +3920,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     </div>
                   </div>
                 </div>
-                <PricingRegionSwitch region={pricing.region} />
                 <p className="checkout-payment-access-note">
                   Assim que o pagamento cair,{" "}
                   <strong>o acesso abre sozinho nesta tela.</strong> Não

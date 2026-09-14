@@ -1,0 +1,89 @@
+# 94 — prompt: remover o seletor de região da interface
+
+> Decisão: o `PricingRegionSwitch` sai de **todos** os lugares visíveis — LPs e
+> checkout. A mecânica de `?regiao=` e o cookie continuam funcionando por baixo,
+> só não ocupam mais pixel nenhum.
+
+---
+
+## O QUE FAZER
+
+### 1. Remover o componente das 4 landing pages
+
+**`artifacts/perguntas-de-conexao/src/App.tsx`** — apagar estas três linhas,
+cada uma no seu contexto:
+
+- linha ~1201 (dentro de `Lp1Offer`): `<PricingRegionSwitch region={pricing.region} />`
+- linha ~2135 (bloco de preço da LP1): `<PricingRegionSwitch region={pricing.region} />`
+- linha ~4784 (dentro de `Home`): `<PricingRegionSwitch region={pricing.region} />`
+
+Apagar também o import na linha ~123:
+```jsx
+import { PricingRegionSwitch } from "@/components/PricingRegionSwitch";
+```
+
+**`artifacts/perguntas-de-conexao/src/pages/Lp3.tsx`** — apagar a linha ~552
+(`<PricingRegionSwitch region={pricing.region} />`) e o import na linha ~20.
+
+### 2. Não adicionar em lugar nenhum
+
+Nada de colocar no checkout. A interface fica sem seletor de região.
+
+### 3. O que NÃO mexer (importante)
+
+Manter intactos:
+
+- `artifacts/perguntas-de-conexao/src/lib/pricing.ts` inteiro — o
+  `getPreferredPricingRegion()`, o cookie `pdc-pricing-region`, o
+  `getPricingRegionQuery()` e o `usePricing()`.
+- As duas chamadas `apiUrl(\`/api/checkout/create${getPricingRegionQuery()}\`)`
+  (linhas ~3065 e ~3165). **Continuam exatamente como estão** — é o que garante
+  que a região escolhida chegue no servidor na hora de cobrar.
+- Todo o backend (`lib/pricing.ts`, `routes/pricing.ts`, `lib/stripe.ts`).
+
+O arquivo `components/PricingRegionSwitch.tsx` pode ficar no repositório sem
+uso, ou ser apagado — tanto faz, desde que nada mais o importe.
+
+**Resultado:** abrir a página com `?regiao=PT` na URL continua trocando a moeda
+e gravando o cookie, exatamente como hoje. Só não existe mais um link na
+interface oferecendo isso.
+
+---
+
+## POR QUÊ
+
+**Tem evidência real de que o checkout brasileiro não bloqueia a venda
+portuguesa:** já houve uma compra de Portugal com a tela em reais e Pix. Isso
+vale mais que qualquer suposição sobre atrito.
+
+**O link é assimétrico contra o negócio.** Para um português, ele sempre aponta
+para o preço maior (14,90 € contra R$ 47,90 no câmbio). Ninguém clica em um
+link para pagar mais. Ou seja, o público para quem ele foi feito nunca o usaria
+— sobrava apenas o caso do brasileiro detectado como português, que é raro
+porque a detecção exige `pt-PT` explícito no navegador e o Brasil usa `pt-BR`.
+
+**No checkout, ruído custa mais caro que em qualquer outro lugar.** É a tela
+onde a pessoa já decidiu e só precisa concluir. Qualquer elemento que abra uma
+pergunta nova ("será que estou no lugar certo?", "será que tem preço melhor?")
+trabalha contra a conclusão. *Pricing p.49* trata da saliência do preço em
+produto emocional, e a mesma lógica vale aqui: quanto menos atenção o preço e a
+moeda puxarem nesse momento, melhor.
+
+**E menos interface é menos superfície para quebrar** — num fluxo que já custou
+venda uma vez por um detalhe silencioso.
+
+**O escape não desaparece, só fica invisível.** Se algum dia alguém escrever
+dizendo que está vendo a moeda errada, basta mandar o link com `?regiao=PT` (ou
+`BR`) — funciona, grava o cookie e resolve aquele caso. A capacidade continua
+existindo sem custar espaço na tela.
+
+---
+
+## DEPOIS DE COLAR, CONFERIR
+
+- Nenhuma das páginas (LP1, LP3, home, checkout) mostra link de região.
+- Abrir a LP com `?regiao=PT` ainda troca tudo para `14,90 €` e esconde o Pix.
+- Depois de abrir com `?regiao=PT` uma vez, recarregar **sem** a query mantém
+  o euro (o cookie está funcionando).
+- Um checkout iniciado nesse estado cria o pagamento em EUR — confirmar no
+  painel do Stripe.
