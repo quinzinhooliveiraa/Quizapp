@@ -12,8 +12,8 @@ export function PricingRegionSwitch({ region }: { region: PricingRegion }) {
       href={`${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`}
     >
       {region === "BR"
-        ? "Está em Portugal? Ver preço em euros →"
-        : "Está no Brasil? Ver preço em reais →"}
+        ? "Está em Portugal? Pagar em euros →"
+        : "Está no Brasil? Pagar em reais e Pix →"}
     </a>
   );
 }

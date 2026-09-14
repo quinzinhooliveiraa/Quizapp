@@ -696,16 +696,14 @@
 
 .pricing-region-switch {
   display: block;
-  width: fit-content;
-  margin: 0.8rem auto 0;
-  color: #7a2e46;
-  font-size: 0.78rem;
-  font-weight: 700;
-  line-height: 1.35;
+  margin: 0.6rem 0 0;
   text-align: center;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #6f6580;
+  line-height: 1.35;
   text-decoration: underline;
-  text-decoration-color: rgba(122, 46, 70, 0.35);
-  text-underline-offset: 0.16em;
+  text-underline-offset: 3px;
   transition:
     color 180ms ease,
     text-decoration-color 180ms ease;

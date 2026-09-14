@@ -1198,7 +1198,6 @@ function Lp1Offer({
           <p className="lp1-offer-payment-note">
             Pix cai na hora · cartão em uma tela só
           </p>
-          <PricingRegionSwitch region={pricing.region} />
         </div>
       </div>
     </section>
@@ -2132,7 +2131,6 @@ function LandingV2Quiz({
               <p className="lp-price-freedom">
                 🔒 7 dias de garantia. Você decide.
               </p>
-              <PricingRegionSwitch region={pricing.region} />
               <div className="lp-guarantee">
                 <div className="lp-guarantee-seal" aria-hidden="true">
                   <ShieldCheck size={28} strokeWidth={1.8} />
@@ -3923,6 +3921,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     </div>
                   </div>
                 </div>
+                <PricingRegionSwitch region={pricing.region} />
                 <p className="checkout-payment-access-note">
                   Assim que o pagamento cair,{" "}
                   <strong>o acesso abre sozinho nesta tela.</strong> Não
@@ -4781,7 +4780,6 @@ function Home({
                     <span>459 perguntas por</span> {pricing.display}
                   </p>
                   <p className="lp2-offer-price-note">uma vez, pra sempre — sem mensalidade</p>
-                  <PricingRegionSwitch region={pricing.region} />
                   <button
                     onClick={() => startCheckout("couple")}
                     className="lp-cta-primary lp-cta-full lp2-offer-cta"

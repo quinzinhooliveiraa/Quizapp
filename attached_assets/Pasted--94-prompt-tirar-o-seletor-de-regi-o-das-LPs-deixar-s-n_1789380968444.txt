@@ -1,0 +1,117 @@
+# 94 — prompt: tirar o seletor de região das LPs, deixar só no checkout
+
+> Contexto: o `PricingRegionSwitch` hoje está em **4 landing pages e em nenhum
+> checkout** — exatamente o contrário de onde ele é útil. Este prompt inverte isso.
+
+---
+
+## O QUE FAZER
+
+### 1. Remover o seletor das landing pages (4 lugares)
+
+**`artifacts/perguntas-de-conexao/src/App.tsx`** — apagar estas três linhas,
+cada uma no seu contexto:
+
+- linha ~1201 (dentro de `Lp1Offer`): `<PricingRegionSwitch region={pricing.region} />`
+- linha ~2135 (bloco de preço da LP1): `<PricingRegionSwitch region={pricing.region} />`
+- linha ~4784 (dentro de `Home`): `<PricingRegionSwitch region={pricing.region} />`
+
+**`artifacts/perguntas-de-conexao/src/pages/Lp3.tsx`** — apagar a linha ~552:
+`<PricingRegionSwitch region={pricing.region} />`
+
+Remover também o `import { PricingRegionSwitch }` do `Lp3.tsx` (linha 20), já
+que não sobra uso nesse arquivo. **Manter** o import no `App.tsx` (linha 123),
+porque o passo 2 vai usar o componente lá.
+
+> Não apagar o arquivo `components/PricingRegionSwitch.tsx` nem a lógica de
+> `?regiao=` / cookie no `lib/pricing.ts`. Tudo isso continua sendo usado.
+
+### 2. Colocar o seletor dentro do checkout
+
+No `App.tsx`, dentro do modal de checkout, renderizar o seletor **uma vez**,
+logo abaixo do bloco que mostra o total (perto das linhas ~3857-3887, onde
+aparece `pricing.display` no resumo do pedido):
+
+```jsx
+              <PricingRegionSwitch region={pricing.region} />
+```
+
+### 3. Ajustar o texto do seletor para o contexto de pagamento
+
+Em `artifacts/perguntas-de-conexao/src/components/PricingRegionSwitch.tsx`,
+trocar os dois textos:
+
+```jsx
+      {region === "BR"
+        ? "Está em Portugal? Ver preço em euros →"
+        : "Está no Brasil? Ver preço em reais →"}
+```
+
+por:
+
+```jsx
+      {region === "BR"
+        ? "Está em Portugal? Pagar em euros →"
+        : "Está no Brasil? Pagar em reais e Pix →"}
+```
+
+### 4. Deixar o seletor discreto
+
+Em `index.css`, a classe `.pricing-region-switch` deve ficar visualmente
+secundária dentro do checkout — texto pequeno, sem negrito, sem sublinhado
+pesado. Se hoje ela está grande e sublinhada (como aparece na LP), ajustar para
+algo na linha de:
+
+```css
+.pricing-region-switch {
+  display: block;
+  margin: 0.6rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #6f6580;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+```
+
+---
+
+## POR QUÊ
+
+**Na landing page o seletor só tem lado ruim.** Pensa nos três cenários reais:
+
+1. **Português com navegador em pt-PT** (o caso comum): é detectado certo, vê
+   14,90 € do começo ao fim e nunca precisa do link. Pra ele, o link é só ruído
+   no meio do bloco de preço.
+2. **Português com navegador em pt-BR**: vê R$ 47,90, que no câmbio é *mais
+   barato* que 14,90 €. Ninguém clica num link para pagar mais. Ou seja, o link
+   não conserta esse caso — só te faz perder margem se por acaso alguém clicar.
+3. **Brasileiro detectado como PT** (raro, exige navegador em pt-PT): esse sim
+   precisa corrigir — e é o único caso em que o link trabalha a teu favor.
+
+Um elemento que atrapalha em dois cenários de três, bem no bloco onde a pessoa
+está decidindo comprar, não paga o espaço que ocupa. Some isso ao que o livro
+diz sobre reduzir a saliência do preço em produto emocional (*Pricing p.49*) e
+ao princípio de não introduzir dúvida perto do CTA: um "Está em Portugal?"
+ali planta uma pergunta que a pessoa não tinha.
+
+**No checkout ele passa a ter função.** É o único ponto da jornada em que a
+moeda e o método de pagamento importam de fato. Um português que chega lá
+vendo "R$" e "Pix" pode concluir que o site não atende Portugal e fechar a aba
+— e aí o link deixa de ser ruído e vira resgate de venda. É a mesma lógica do
+"e você decide": o gatilho certo, no momento em que ele decide.
+
+**E o cookie faz o resto do trabalho.** Como o `lib/pricing.ts` já persiste a
+escolha em cookie por 180 dias, quem trocar no checkout uma vez vai ver a
+moeda certa na LP inteira nas próximas visitas — sem nunca precisar de um link
+na página de vendas.
+
+---
+
+## DEPOIS DE COLAR, CONFERIR
+
+- A LP1, a LP3 e o bloco de preço **não** mostram mais nenhum link de região.
+- O checkout mostra o link uma vez, discreto, embaixo do total.
+- Clicar nele troca a moeda **do total e do botão de pagar**, não só de um.
+- Recarregar a página depois de clicar mantém a moeda escolhida (cookie).
