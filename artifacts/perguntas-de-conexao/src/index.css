@@ -517,6 +517,37 @@
   font-size: 0.78rem;
   font-weight: 600;
 }
+.support-field-hint {
+  margin: 0.35rem 0 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.72rem;
+}
+.support-topic-options {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+.support-topic-option {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.7rem;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.045);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+.support-topic-option:hover,
+.support-topic-option.is-selected {
+  border-color: rgba(232, 201, 138, 0.68);
+  color: #fff;
+  background: rgba(232, 201, 138, 0.12);
+}
 .support-select {
   appearance: none;
   cursor: pointer;
@@ -535,7 +566,7 @@
 }
 .admin-pending-access-card {
   display: grid;
-  grid-template-columns: 1.3fr 1fr auto;
+  grid-template-columns: 1.3fr 1fr auto auto;
   gap: 1rem;
   align-items: center;
   padding: 0.85rem 1rem;
@@ -555,6 +586,16 @@
 .admin-pending-access-card time {
   color: rgba(255, 255, 255, 0.56);
   font-size: 0.76rem;
+}
+.admin-pending-access-badge {
+  width: fit-content;
+  padding: 0.28rem 0.5rem;
+  border-radius: 99px;
+  color: #ffc2c2 !important;
+  background: rgba(220, 70, 70, 0.16);
+  font-size: 0.65rem !important;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .admin-support-card {
   display: grid;
@@ -590,6 +631,22 @@
 .admin-access-badge.is-convidado-com-acesso {
   color: #b9f0cf;
   background: rgba(86, 204, 133, 0.12);
+}
+.admin-access-badge.is-tem_acesso {
+  color: #b9f0cf;
+  background: rgba(86, 204, 133, 0.12);
+}
+.admin-access-badge.is-so_convite {
+  color: #bcdcff;
+  background: rgba(70, 145, 220, 0.16);
+}
+.admin-access-badge.is-sem_acesso {
+  color: #ffc2c2;
+  background: rgba(220, 70, 70, 0.16);
+}
+.admin-access-badge.is-desconhecido {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.08);
 }
 .admin-access-badge.is-sem-acesso-confirmado {
   color: #f7d891;

@@ -349,18 +349,24 @@ function formatDate(value: string) {
 
 function feedbackTopicLabel(topic: string | null) {
   const labels: Record<string, string> = {
-    compra: "Compra e acesso",
+    sem_acesso: "Comprei e não consigo entrar",
+    email_nao_chegou: "Paguei e não recebi o e-mail",
     pagamento: "Pagamento",
     convite: "Convite",
-    outro: "Outra dúvida",
+    outro: "Outro assunto / sugestão",
+    compra: "Compra e acesso",
   };
   return topic ? labels[topic] || topic : "Suporte";
 }
 
 function accessStatusLabel(status: string | null) {
   const labels: Record<string, string> = {
-    "dono com acesso": "Dono com acesso",
-    "convidado com acesso": "Convidado com acesso",
+    tem_acesso: "Tem acesso",
+    so_convite: "Só convite",
+    sem_acesso: "Sem acesso",
+    desconhecido: "Não verificado",
+    "dono com acesso": "Tem acesso",
+    "convidado com acesso": "Só convite",
     "sem acesso confirmado": "Sem acesso",
     "não verificado": "Não verificado",
   };
@@ -370,7 +376,20 @@ function accessStatusLabel(status: string | null) {
 function paymentMethodLabel(method: string | null) {
   if (method === "pix") return "Pix";
   if (method === "card") return "Cartão";
+  if (method === "unknown") return "Não lembro";
   return method || "Não informado";
+}
+
+function sortSuggestions(entries: SuggestionEntry[]): SuggestionEntry[] {
+  return [...entries].sort((left, right) => {
+    const leftResolved = left.status === "resolvido" ? 1 : 0;
+    const rightResolved = right.status === "resolvido" ? 1 : 0;
+    if (leftResolved !== rightResolved) return leftResolved - rightResolved;
+    return (
+      new Date(right.createdAt).getTime() -
+      new Date(left.createdAt).getTime()
+    );
+  });
 }
 
 function formatDuration(seconds: number | null) {
@@ -1138,7 +1157,7 @@ function BuyersTab({
       <div className="admin-section-heading">
         <div>
           <p className="admin-eyebrow">últimos 30 dias</p>
-          <h2 id="pending-access-title">Pagamentos sem acesso confirmado</h2>
+          <h2 id="pending-access-title">Pagamentos não confirmados</h2>
         </div>
         <span className="admin-count">{pendingAccess.length}</span>
       </div>
@@ -1156,6 +1175,7 @@ function BuyersTab({
                 <span>{entry.packageName}</span>
                 <span>{paymentMethodLabel(entry.paymentMethod)}</span>
               </div>
+              <span className="admin-pending-access-badge">Não confirmado</span>
               <time dateTime={entry.createdAt}>{formatDate(entry.createdAt)}</time>
             </article>
           ))}
@@ -1414,7 +1434,10 @@ function FeedbackTab({
   const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
-  useEffect(() => setVisibleSuggestions(suggestions), [suggestions]);
+  useEffect(
+    () => setVisibleSuggestions(sortSuggestions(suggestions)),
+    [suggestions],
+  );
 
   const toggleSuggestionStatus = async (entry: SuggestionEntry) => {
     const sessionId = safeGetItem("conexao-session")?.trim();
@@ -1434,7 +1457,9 @@ function FeedbackTab({
       if (!response.ok) throw new Error("update-feedback");
       const updated = (await response.json()) as SuggestionEntry;
       setVisibleSuggestions((current) =>
-        current.map((item) => (item.id === updated.id ? updated : item)),
+        sortSuggestions(
+          current.map((item) => (item.id === updated.id ? updated : item)),
+        ),
       );
     } finally {
       setUpdatingId(null);
@@ -1529,7 +1554,7 @@ function FeedbackTab({
                   <span>
                     {entry.email || "Sem e-mail"}
                     {entry.purchaseEmail && entry.purchaseEmail !== entry.email
-                      ? ` · compra: ${entry.purchaseEmail}`
+                      ? ` · e-mail do pagamento: ${entry.purchaseEmail}`
                       : ""}
                   </span>
                   {(entry.email || entry.purchaseEmail) && (
@@ -1555,6 +1580,8 @@ function FeedbackTab({
                     <dd>{entry.screen || "Não informado"}</dd>
                     <dt>Navegador</dt>
                     <dd>{entry.userAgent || "Não informado"}</dd>
+                    <dt>Data</dt>
+                    <dd>{formatDate(entry.createdAt)}</dd>
                   </dl>
                 </details>
                 <div className="admin-support-card-footer">

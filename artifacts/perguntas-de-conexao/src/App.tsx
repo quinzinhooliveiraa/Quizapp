@@ -4734,6 +4734,26 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
   );
 }
 
+const SUPPORT_TOPIC_OPTIONS = [
+  { value: "sem_acesso", label: "Comprei e não consigo entrar" },
+  { value: "email_nao_chegou", label: "Paguei e não recebi o e-mail" },
+  { value: "convite", label: "Recebi um convite e não abre" },
+  { value: "pagamento", label: "Problema no pagamento" },
+  { value: "outro", label: "Outro assunto / sugestão" },
+] as const;
+
+function supportTopicNeedsPurchaseEmail(topic: string): boolean {
+  return (
+    topic === "sem_acesso" ||
+    topic === "email_nao_chegou" ||
+    topic === "pagamento"
+  );
+}
+
+function isSupportEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 function SupportDialog() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -4777,6 +4797,13 @@ function SupportDialog() {
 
   if (!open) return null;
 
+  const purchaseEmailRequired = supportTopicNeedsPurchaseEmail(topic);
+  const canSubmit =
+    isSupportEmail(email) &&
+    Boolean(topic) &&
+    (!purchaseEmailRequired || isSupportEmail(purchaseEmail)) &&
+    (topic !== "outro" || Boolean(message.trim()));
+
   const sendSupportMessage = async () => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPurchaseEmail = purchaseEmail.trim().toLowerCase();
@@ -4784,7 +4811,7 @@ function SupportDialog() {
     const emailForAccessCheck = normalizedPurchaseEmail || normalizedEmail;
     if (
       !normalizedEmail ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+      !isSupportEmail(normalizedEmail)
     ) {
       setError("Digite um e-mail válido.");
       return;
@@ -4795,21 +4822,11 @@ function SupportDialog() {
       return;
     }
     if (
-      (topic === "compra" || topic === "pagamento") &&
+      purchaseEmailRequired &&
       (!normalizedPurchaseEmail ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPurchaseEmail))
+        !isSupportEmail(normalizedPurchaseEmail))
     ) {
       setError("Digite o e-mail usado na compra.");
-      setStep(2);
-      return;
-    }
-    if (topic === "pagamento" && !paymentMethod) {
-      setError("Escolha o método de pagamento.");
-      setStep(2);
-      return;
-    }
-    if (topic === "convite" && !inviteLink.trim()) {
-      setError("Cole o link do convite.");
       setStep(2);
       return;
     }
@@ -4822,28 +4839,34 @@ function SupportDialog() {
     setStatus("sending");
     setError("");
 
+    let resolvedAccessStatus:
+      | "tem_acesso"
+      | "so_convite"
+      | "sem_acesso"
+      | "desconhecido" = "desconhecido";
     try {
       const accessResponse = await fetch(
         apiUrl(
           `/api/access/check-email?email=${encodeURIComponent(emailForAccessCheck)}`,
         ),
       );
-      let resolvedAccessStatus = "não verificado";
       if (accessResponse.ok) {
         const access = (await accessResponse.json()) as {
-          exists?: boolean;
           asOwner?: boolean;
           asGuest?: boolean;
         };
         resolvedAccessStatus = access.asOwner
-          ? "dono com acesso"
+          ? "tem_acesso"
           : access.asGuest
-            ? "convidado com acesso"
-            : "sem acesso confirmado";
-        setAccessStatus(resolvedAccessStatus);
-      } else {
-        setAccessStatus("não verificado");
+            ? "so_convite"
+            : "sem_acesso";
       }
+    } catch {
+      resolvedAccessStatus = "desconhecido";
+    }
+    setAccessStatus(resolvedAccessStatus);
+
+    try {
       const response = await fetch(apiUrl("/api/suggestions"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4888,19 +4911,11 @@ function SupportDialog() {
     if (step === 2) {
       const normalizedPurchaseEmail = purchaseEmail.trim().toLowerCase();
       if (
-        (topic === "compra" || topic === "pagamento") &&
+        purchaseEmailRequired &&
         (!normalizedPurchaseEmail ||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPurchaseEmail))
+          !isSupportEmail(normalizedPurchaseEmail))
       ) {
         setError("Digite o e-mail usado na compra.");
-        return;
-      }
-      if (topic === "pagamento" && !paymentMethod) {
-        setError("Escolha o método de pagamento.");
-        return;
-      }
-      if (topic === "convite" && !inviteLink.trim()) {
-        setError("Cole o link do convite.");
         return;
       }
     }
@@ -4953,22 +4968,23 @@ function SupportDialog() {
             {step === 1 && (
               <>
                 <p>Escolha o assunto para eu te encaminhar mais rápido.</p>
-                <label className="support-field-label" htmlFor="support-topic">
-                  Assunto
-                </label>
-                <select
-                  id="support-topic"
-                  value={topic}
-                  onChange={(event) => setTopic(event.target.value)}
-                  className="app-text-input support-select"
-                  data-testid="select-support-topic"
-                >
-                  <option value="">Selecione uma opção</option>
-                  <option value="compra">Comprei e não consegui acessar</option>
-                  <option value="pagamento">Meu pagamento deu problema</option>
-                  <option value="convite">Meu convite não funciona</option>
-                  <option value="outro">Outra dúvida</option>
-                </select>
+                 <div className="support-topic-options" role="group" aria-label="Assunto">
+                   {SUPPORT_TOPIC_OPTIONS.map((option) => (
+                     <button
+                       key={option.value}
+                       type="button"
+                       className={`support-topic-option ${topic === option.value ? "is-selected" : ""}`}
+                       aria-pressed={topic === option.value}
+                       onClick={() => {
+                         setTopic(option.value);
+                         setError("");
+                       }}
+                       data-testid={`button-support-topic-${option.value}`}
+                     >
+                       {option.label}
+                     </button>
+                   ))}
+                 </div>
               </>
             )}
             {step === 2 && (
@@ -4988,7 +5004,7 @@ function SupportDialog() {
                   autoComplete="email"
                   data-testid="input-support-email"
                 />
-                {(topic === "compra" || topic === "pagamento") && (
+                 {purchaseEmailRequired && (
                   <>
                     <label
                       className="support-field-label"
@@ -5004,17 +5020,21 @@ function SupportDialog() {
                       placeholder="E-mail da compra"
                       className="app-text-input"
                       autoComplete="email"
+                       required
                       data-testid="input-support-purchase-email"
                     />
+                     <p className="support-field-hint">
+                       Pode ser diferente do seu e-mail de contato.
+                     </p>
                   </>
                 )}
-                {topic === "pagamento" && (
+                 {purchaseEmailRequired && (
                   <>
                     <label
                       className="support-field-label"
                       htmlFor="support-payment-method"
                     >
-                      Método de pagamento
+                      Como você pagou?
                     </label>
                     <select
                       id="support-payment-method"
@@ -5025,7 +5045,8 @@ function SupportDialog() {
                     >
                       <option value="">Selecione uma opção</option>
                       <option value="pix">Pix</option>
-                      <option value="card">Cartão</option>
+                       <option value="card">Cartão</option>
+                       <option value="unknown">Não lembro</option>
                     </select>
                   </>
                 )}
@@ -5035,11 +5056,11 @@ function SupportDialog() {
                       className="support-field-label"
                       htmlFor="support-invite-link"
                     >
-                      Link do convite
+                      Cole aqui o link do convite que te mandaram (opcional)
                     </label>
                     <input
                       id="support-invite-link"
-                      type="url"
+                       type="text"
                       value={inviteLink}
                       onChange={(event) => setInviteLink(event.target.value)}
                       placeholder="Cole o link que recebeu"
@@ -5058,13 +5079,14 @@ function SupportDialog() {
                     : "Se quiser, deixe mais detalhes. Os dados acima já ajudam a localizar seu caso."}
                 </p>
                 <label className="support-field-label" htmlFor="support-message">
-                  Mensagem {topic === "outro" ? "(obrigatória)" : "(opcional)"}
+                  Me conta com suas palavras{" "}
+                  {topic === "outro" ? "(obrigatório)" : "(opcional)"}
                 </label>
                 <textarea
                   required={topic === "outro"}
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
-                  placeholder="O que aconteceu?"
+                   placeholder="O que apareceu na tela?"
                   className="app-textarea"
                   rows={5}
                   data-testid="input-support-message"
@@ -5102,7 +5124,7 @@ function SupportDialog() {
               ) : (
                 <button
                   type="submit"
-                  disabled={status === "sending"}
+                   disabled={status === "sending" || !canSubmit}
                   className="app-primary-button"
                   data-testid="button-send-support"
                 >

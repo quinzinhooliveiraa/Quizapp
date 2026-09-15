@@ -11,6 +11,30 @@ import { sendSupportNotification } from "../lib/push";
 
 const router: IRouter = Router();
 
+const SUPPORT_TOPICS_WITH_OPTIONAL_MESSAGE = new Set([
+  "sem_acesso",
+  "email_nao_chegou",
+  "convite",
+  "pagamento",
+  "compra",
+]);
+
+const ACCESS_STATUS_ALIASES: Record<string, string> = {
+  tem_acesso: "tem_acesso",
+  so_convite: "so_convite",
+  sem_acesso: "sem_acesso",
+  desconhecido: "desconhecido",
+  "dono com acesso": "tem_acesso",
+  "convidado com acesso": "so_convite",
+  "sem acesso confirmado": "sem_acesso",
+  "não verificado": "desconhecido",
+};
+
+function normalizeAccessStatus(value: string | undefined): string | null {
+  const normalized = value?.trim().toLowerCase() || "";
+  return ACCESS_STATUS_ALIASES[normalized] || null;
+}
+
 function getAdminEmails(): string[] {
   return (process.env.ADMIN_EMAILS || "")
     .split(",")
@@ -45,10 +69,11 @@ router.post("/suggestions", async (req, res): Promise<void> => {
   const email = body.email?.trim().slice(0, 200) || "";
   const message = body.message?.trim().slice(0, 2000) || "";
   const topic = body.topic?.trim().slice(0, 80) || "";
-  if (!message && !["compra", "pagamento", "convite"].includes(topic)) {
+  if (!message && !SUPPORT_TOPICS_WITH_OPTIONAL_MESSAGE.has(topic)) {
     res.status(400).json({ error: "Escreva sua sugestão antes de enviar." });
     return;
   }
+  const accessStatus = normalizeAccessStatus(body.accessStatus);
   const [suggestion] = await db
     .insert(suggestionsTable)
     .values({
@@ -59,7 +84,7 @@ router.post("/suggestions", async (req, res): Promise<void> => {
       purchaseEmail: body.purchaseEmail?.trim().toLowerCase().slice(0, 200) || null,
       paymentMethod: body.paymentMethod?.trim().slice(0, 40) || null,
       inviteLink: body.inviteLink?.trim().slice(0, 500) || null,
-      accessStatus: body.accessStatus?.trim().slice(0, 40) || null,
+      accessStatus,
       page: body.page?.trim().slice(0, 300) || null,
       userAgent: body.userAgent?.trim().slice(0, 500) || null,
       screen: body.screen?.trim().slice(0, 80) || null,
@@ -69,7 +94,7 @@ router.post("/suggestions", async (req, res): Promise<void> => {
   void sendSupportNotification({
     email,
     topic: topic || "suporte",
-    accessStatus: body.accessStatus?.trim().slice(0, 40) || "não verificado",
+    accessStatus: accessStatus || "desconhecido",
   }).catch((error) =>
     req.log.error({ err: error }, "Support push notification failed"),
   );

@@ -14,6 +14,26 @@ type SupportNotification = {
   accessStatus?: string;
 };
 
+const SUPPORT_TOPIC_LABELS: Record<string, string> = {
+  sem_acesso: "comprei e não consigo entrar",
+  email_nao_chegou: "paguei e não recebi o e-mail",
+  convite: "recebi um convite e não abre",
+  pagamento: "problema no pagamento",
+  outro: "outro assunto / sugestão",
+  compra: "compra e acesso",
+};
+
+const ACCESS_STATUS_LABELS: Record<string, string> = {
+  tem_acesso: "tem acesso",
+  so_convite: "só convite",
+  sem_acesso: "sem acesso",
+  desconhecido: "não verificado",
+  "dono com acesso": "tem acesso",
+  "convidado com acesso": "só convite",
+  "sem acesso confirmado": "sem acesso",
+  "não verificado": "não verificado",
+};
+
 function isConfigured() {
   return Boolean(
     process.env.VAPID_PUBLIC_KEY &&
@@ -90,9 +110,15 @@ export async function sendSupportNotification({
   );
 
   const subscriptions = await db.select().from(pushSubscriptionsTable);
+  const topicLabel =
+    SUPPORT_TOPIC_LABELS[topic || ""] || topic || "suporte";
+  const accessLabel =
+    ACCESS_STATUS_LABELS[accessStatus || ""] ||
+    accessStatus ||
+    "não verificado";
   const payload = JSON.stringify({
     title: "Nova mensagem de suporte",
-    body: `${topic || "Suporte"} · ${email || "sem e-mail"} · acesso: ${accessStatus || "não verificado"}`,
+    body: `Suporte: ${topicLabel} — ${accessLabel} (${email || "sem e-mail"})`,
   });
 
   await Promise.all(

@@ -1,0 +1,48 @@
+5) O CARD DO PAINEL TEM QUE SE EXPLICAR SOZINHO
+
+Não me mostre o texto cru do cliente como informação principal. No topo de cada card da aba Feedback, montar por regra (função pura em artifacts/perguntas-de-conexao/src/lib/support-diagnosis.ts, sem IA, sem chamada externa) duas linhas geradas a partir de topic + access_status:
+
+  - TRADUÇÃO: uma frase dizendo o que está acontecendo.
+  - O QUE FAZER: uma frase dizendo a minha próxima ação.
+
+Tabela de regras (topic × access_status):
+
+sem_acesso + sem_acesso
+  Tradução: "Diz que comprou, mas esse e-mail não tem nada no sistema."
+  O que fazer: "Procurar o pagamento no Abacate/Stripe pelo nome dela. Se achar, liberar o acesso na mão. Se não achar, ela não chegou a pagar."
+
+sem_acesso + tem_acesso
+  Tradução: "O acesso está liberado — ela só não está conseguindo entrar."
+  O que fazer: "Mandar o link direto /acesso/<sessionId>. Pedir pra conferir o spam se o código não chega."
+
+sem_acesso + so_convite
+  Tradução: "Ela é convidada, não compradora. O acesso dela é pelo link do convite, não pelo login."
+  O que fazer: "Reenviar o link do convite. Quem compra é o parceiro."
+
+email_nao_chegou + tem_acesso
+  Tradução: "Pagou, tem acesso, mas o e-mail não chegou (spam ou falha do Brevo)."
+  O que fazer: "Mandar o link direto /acesso/<sessionId> e conferir o log do Brevo."
+
+email_nao_chegou + sem_acesso
+  Tradução: "Diz que pagou, mas não existe compra confirmada com esse e-mail."
+  O que fazer: "Conferir Abacate/Stripe. Pagamento não confirmado ou e-mail diferente."
+
+convite + qualquer
+  Tradução: "Problema com link de convite."
+  O que fazer: "Conferir se o token ainda é válido e pedir pra quem comprou gerar um novo."
+
+pagamento + qualquer
+  Tradução: "Travou no checkout, antes de pagar."
+  O que fazer: "Ver se ficou sessão pendente no nome dela e qual erro apareceu."
+
+outro + qualquer
+  Tradução: "Assunto geral / sugestão."
+  O que fazer: "Só ler e responder."
+
+access_status "desconhecido" em qualquer topic: tradução "Não consegui verificar o e-mail dela automaticamente." / o que fazer: "Conferir na mão na aba Compradores."
+
+Regras de exibição:
+- Essas duas linhas ficam em cima, com destaque. O texto do cliente vem depois, entre aspas, com o rótulo "ela escreveu:". Se a pessoa não escreveu nada, não mostrar bloco vazio.
+- Nunca mais colar o rodapé técnico dentro do texto da mensagem — página, tela e navegador só dentro do <details> "detalhes técnicos".
+- Sugestões antigas (sem topic) continuam mostrando só o texto cru, sem tradução, sem quebrar.
+- Mesma frase de tradução vai no título da notificação push.
