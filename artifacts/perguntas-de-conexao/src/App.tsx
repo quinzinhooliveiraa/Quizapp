@@ -246,6 +246,12 @@ type CheckoutOfferState = {
   offer: CheckoutOfferPrice;
 };
 
+function formatOfferRemaining(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 type CheckoutReview = {
   id: string;
   displayName: string | null;
@@ -5290,6 +5296,15 @@ function useCheckout({
     checkoutOfferState?.discountActive &&
       new Date(checkoutOfferState.deadline).getTime() > checkoutOfferNow,
   );
+  const checkoutOfferRemainingSeconds = checkoutOfferState
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(checkoutOfferState.deadline).getTime() - checkoutOfferNow) /
+            1000,
+        ),
+      )
+    : 0;
   const checkoutPricing =
     checkoutOfferState && checkoutDiscountActive
       ? checkoutOfferState.offer
@@ -5906,6 +5921,7 @@ function useCheckout({
     checkoutState,
     checkoutPricing,
     checkoutDiscountActive,
+    checkoutOfferRemainingSeconds,
     checkoutFullPrice: checkoutOfferState?.full ?? null,
     buyerName,
     setBuyerName,
@@ -6112,6 +6128,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     checkoutState,
     checkoutPricing,
     checkoutDiscountActive,
+    checkoutOfferRemainingSeconds,
     checkoutFullPrice,
     buyerName,
     setBuyerName,
@@ -6438,6 +6455,16 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       <div
         className={`checkout-modal ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "checkout-modal-loading" : ""}`}
       >
+        {checkoutOfferRemainingSeconds > 0 &&
+        checkoutState !== "sending" &&
+        checkoutState !== "confirming" &&
+        checkoutState !== "card-sending" &&
+        checkoutState !== "card-confirming" ? (
+          <div className="checkout-offer-bar" role="status" aria-live="polite">
+            <span>Seu preço especial termina em</span>
+            <strong>{formatOfferRemaining(checkoutOfferRemainingSeconds)}</strong>
+          </div>
+        ) : null}
         {checkoutState === "email" ? (
           <form
             className="checkout-email-form checkout-store-form"

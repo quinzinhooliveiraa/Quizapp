@@ -79,12 +79,16 @@
 }
 
 .lp1-quiz-screen.is-offer {
-  background: #fffdfb;
-  color: #2a2233;
+  padding: 0;
+  background: #16111c;
+  color: #f4efe9;
 }
 
 .lp1-quiz-screen.is-offer .lp1-quiz-content {
-  margin-top: 1.5rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 .lp1-quiz-screen.is-offer .lp1-quiz-back {
@@ -608,6 +612,25 @@
   margin-top: 3rem;
 }
 
+.lp1-sale-personalized-body {
+  max-width: 40rem;
+  margin: 1.35rem 0 0;
+  color: #b9adbf;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.lp1-sale-signal {
+  display: inline-flex;
+  margin-top: 1.2rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(232, 201, 138, 0.3);
+  border-radius: 999px;
+  background: rgba(232, 201, 138, 0.07);
+  color: #e8c98a;
+  font: 400 0.68rem/1.2 var(--app-font-mono);
+}
+
 .lp1-sale-meter-column {
   padding: 1.4rem;
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -688,9 +711,11 @@
   max-width: 680px;
   margin: 0 auto;
   padding: clamp(1.4rem, 4vw, 3rem);
-  border: 1px solid #e8c98a;
+  border: 1.5px solid rgba(196, 172, 255, 0.35);
   border-radius: 1.25rem;
-  background: #211827;
+  background:
+    linear-gradient(150deg, rgba(196, 172, 255, 0.09), rgba(120, 90, 200, 0.045)),
+    #211827;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
   text-align: center;
 }
@@ -713,9 +738,28 @@
 .lp1-sale-urgency {
   margin: 2rem -1rem 1.5rem;
   padding: 0.75rem;
-  background: linear-gradient(90deg, #7a2e46, #5b1230);
+  background: linear-gradient(90deg, #5b1230, #7a2e46);
   color: #f7d8c5;
   font: 400 0.78rem/1.2 var(--app-font-mono);
+}
+
+.checkout-offer-bar {
+  display: flex;
+  min-height: 3.2rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(90deg, #5b1230, #7a2e46);
+  color: #f4efe9;
+  font: 400 0.72rem/1.2 var(--app-font-mono);
+  text-align: center;
+}
+
+.checkout-offer-bar strong {
+  color: #e8c98a;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .lp1-sale-urgency strong {

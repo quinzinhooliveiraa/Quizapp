@@ -130,6 +130,9 @@ function formatRemaining(totalSeconds: number): string {
 
 function getClimateName(answers: SaleAnswers): string {
   const climate = String(answers.clima ?? "");
+  const blockers = String(answers.travas ?? "")
+    .split(",")
+    .filter(Boolean);
   const names: Record<string, string> = {
     leve: "Modo Leve",
     conexao: "Porto Seguro",
@@ -137,8 +140,74 @@ function getClimateName(answers: SaleAnswers): string {
     divertido: "Modo Leve",
     intimo: "Faísca",
     distancia: "Mesmo Longe",
+    normal: "Porto Seguro",
+    honesto: "Depois da Tempestade",
   };
+  if (blockers.includes("distancia")) return "Mesmo Longe";
   return names[climate] ?? "Porto Seguro";
+}
+
+function getAnswer(answers: SaleAnswers, keys: string[]): string {
+  for (const key of keys) {
+    const value = String(answers[key] ?? "").trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+function getPersonalizedCopy(answers: SaleAnswers) {
+  const pain = getAnswer(answers, ["dor", "pain", "s02-dor"]);
+  const routine = getAnswer(answers, ["rotina", "s04-rotina"]);
+  const climate = getAnswer(answers, ["clima", "s05-silencio"]);
+  const timing = getAnswer(answers, ["quando", "urgencia"]);
+  const recommendedDeck = getClimateName(answers);
+  const tonight = timing === "hoje" ? "hoje à noite" : "quando vocês abrirem";
+
+  if (pain === "afastamento" || String(answers.travas ?? "").includes("distancia")) {
+    return {
+      title: "Vocês não perderam a conexão. Só deixaram algumas perguntas para depois.",
+      body:
+        "Foi isso que apareceu nas suas respostas: ainda existe vontade, mas o silêncio começou a ocupar espaços demais.",
+      signal: "Sinal encontrado: proximidade que precisa de espaço para voltar",
+      offerHeadline: `O primeiro passo de vocês pode começar ${tonight}.`,
+      epiphany:
+        "A distância não precisa virar o normal de vocês.",
+    };
+  }
+
+  if (routine === "tudo" || routine === "muito") {
+    return {
+      title: "A rotina está falando por vocês — e a curiosidade ficou para depois.",
+      body:
+        "Vocês continuam conversando. O que diminuiu foi o espaço para descobrir o que ainda está acontecendo por dentro.",
+      signal: "Sinal encontrado: muita logística, pouco espaço para novidade",
+      offerHeadline: `Uma pergunta certa pode mudar ${tonight}.`,
+      epiphany:
+        "Não é conversar mais. É sair do automático por alguns minutos.",
+    };
+  }
+
+  if (climate === "honesto" || climate === "pesado") {
+    return {
+      title: "Ainda existe vontade de falar. O que faltou foi um jeito seguro de começar.",
+      body:
+        "Suas respostas mostram que não falta assunto — falta uma pergunta que não transforme a conversa em cobrança.",
+      signal: "Sinal encontrado: vontade de proximidade com cuidado para não pesar",
+      offerHeadline: `A pergunta certa chega antes da conversa ${tonight}.`,
+      epiphany:
+        "Quando o assunto já vem pronto, ninguém precisa inventar por onde começar.",
+    };
+  }
+
+  return {
+    title: "Vocês não precisam de mais conversa. Precisam da pergunta certa.",
+    body:
+      "O seu resultado aponta para um começo leve, com espaço suficiente para a conversa ficar mais profunda sem forçar nada.",
+    signal: `Sinal encontrado: começar por ${recommendedDeck} e deixar a conversa crescer`,
+    offerHeadline: `Dá para criar esse espaço ${tonight}.`,
+    epiphany:
+      "Uma boa pergunta tira a conversa do automático sem deixar o clima pesado.",
+  };
 }
 
 function getRecapBars(answers: SaleAnswers) {
@@ -185,12 +254,14 @@ function OfferCard({
   offerState,
   remainingSeconds,
   recommendedDeck,
+  offerHeadline,
   onCheckout,
   compact = false,
 }: {
   offerState: OfferState | null;
   remainingSeconds: number;
   recommendedDeck: string;
+  offerHeadline: string;
   onCheckout: () => void;
   compact?: boolean;
 }) {
@@ -201,7 +272,7 @@ function OfferCard({
     <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
       <div className="lp1-sale-offer-heading">
         <p className="lp1-sale-kicker">ACESSO VITALÍCIO</p>
-        <h2>Seu acesso está pronto.</h2>
+        <h2>{offerHeadline}</h2>
         <span className="lp1-sale-recommended">
           Baralho recomendado: {recommendedDeck}
         </span>
@@ -268,6 +339,7 @@ export function Lp1SalePage({
   const visitorKey = useMemo(() => getVisitorKey(), []);
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
   const recommendedDeck = getClimateName(answers);
+  const personalizedCopy = useMemo(() => getPersonalizedCopy(answers), [answers]);
 
   useEffect(() => {
     let cancelled = false;
@@ -334,8 +406,10 @@ export function Lp1SalePage({
       </div>
 
       <section className="lp1-sale-section lp1-sale-recap" data-section-name="sale-recap">
-        <p className="lp1-sale-kicker">O RETRATO DE AGORA</p>
-        <h1>O que muda quando a pergunta já vem pronta.</h1>
+        <p className="lp1-sale-kicker">SEU RESULTADO PERSONALIZADO</p>
+        <h1>{personalizedCopy.title}</h1>
+        <p className="lp1-sale-personalized-body">{personalizedCopy.body}</p>
+        <span className="lp1-sale-signal">{personalizedCopy.signal}</span>
         <div className="lp1-sale-recap-grid">
           <div className="lp1-sale-meter-column">
             <h2>Hoje</h2>
@@ -364,8 +438,8 @@ export function Lp1SalePage({
 
       <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
         <p className="lp1-sale-kicker">A DIFERENÇA</p>
-        <h2>Talvez vocês não precisem conversar mais.</h2>
-        <h3>Precisem conversar melhor.</h3>
+        <h2>{personalizedCopy.epiphany}</h2>
+        <h3>Precisem da pergunta que abre espaço.</h3>
         <p>
           “Como foi seu dia?” é fácil responder “normal”. Mas quando alguém
           pergunta algo que você nunca pensou em responder, a conversa muda. É
@@ -382,6 +456,7 @@ export function Lp1SalePage({
           offerState={offerState}
           remainingSeconds={remainingSeconds}
           recommendedDeck={recommendedDeck}
+            offerHeadline={personalizedCopy.offerHeadline}
           onCheckout={onCheckout}
         />
         {offerError ? (
@@ -494,6 +569,7 @@ export function Lp1SalePage({
           offerState={offerState}
           remainingSeconds={remainingSeconds}
           recommendedDeck={recommendedDeck}
+          offerHeadline={personalizedCopy.offerHeadline}
           onCheckout={onCheckout}
           compact
         />
