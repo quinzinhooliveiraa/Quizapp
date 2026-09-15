@@ -2039,15 +2039,6 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     cta: "",
   },
   {
-    id: "s23-resultado",
-    kind: "capture",
-    eyebrow: "SEU RESULTADO",
-    key: "email",
-    title: "Seu resultado está pronto ❤️ Quer receber uma cópia?",
-    body: ["Sem spam. Só o seu resultado e, se fizer sentido, algumas dicas."],
-    cta: "Ver meu resultado",
-  },
-  {
     id: "s24-clima",
     kind: "result",
     eyebrow: "O MOMENTO DAS CONVERSAS DE VOCÊS",
@@ -3061,7 +3052,6 @@ function Lp1LoadingScreen({
   useEffect(() => {
     if (
       modalIndex !== null ||
-      affirmativeAnswers >= LP1_LOADING_MODALS.length ||
       completedRef.current
     ) {
       return;
@@ -3112,11 +3102,6 @@ function Lp1LoadingScreen({
     const nextAffirmativeAnswers = affirmativeAnswers + 1;
     setAffirmativeAnswers(nextAffirmativeAnswers);
     setModalIndex(null);
-    if (nextAffirmativeAnswers >= LP1_LOADING_MODALS.length) {
-      completedRef.current = true;
-      setElapsed(LP1_LOADING_DURATION_MS);
-      onComplete();
-    }
   };
 
   const percentage = Math.round(
@@ -3210,11 +3195,15 @@ const LP1_ROUTINE_POINTS: Record<string, number> = {
 };
 
 function getLp1DistanceResult(answers: Lp1Answers) {
+  const urgencyBias = 36;
   const routinePoints = LP1_ROUTINE_POINTS[answers.rotina ?? ""] ?? 0;
   const climatePoints =
     answers.clima === "honesto" ? 20 : answers.clima === "normal" ? 10 : 0;
   const travaCount = (answers.travas ?? "").split(",").filter(Boolean).length;
-  const score = Math.min(100, travaCount * 12 + routinePoints + climatePoints);
+  const score = Math.min(
+    100,
+    urgencyBias + travaCount * 12 + routinePoints + climatePoints,
+  );
   const label = score <= 30 ? "Perto" : score <= 60 ? "Morno" : "Distante";
   const routineValue =
     routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
