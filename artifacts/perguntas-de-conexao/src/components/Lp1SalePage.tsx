@@ -10,6 +10,7 @@ import { apiBaseUrl } from "@/config";
 import { computeLp1DistanceResult } from "@/lib/lp1-score";
 import { testimonialImages } from "@/lib/testimonials";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
+import { Lp1MechanismSection } from "@/components/Lp1MechanismSection";
 import { getPricingRegionQuery, type Pricing } from "@/lib/pricing";
 import { themes as connectionThemes } from "@workspace/connection-content";
 
@@ -460,27 +461,7 @@ export function Lp1SalePage({
         </blockquote>
       </section>
 
-      <section className="lp1-sale-section lp1-sale-mechanism" data-section-name="sale-mechanism">
-        <p className="lp1-sale-kicker">O MECANISMO</p>
-        <h2>Ninguém abre o jogo numa pergunta pesada.</h2>
-        <p>As cartas conduzem a conversa até a profundidade, sem transformar o começo em cobrança.</p>
-        <div className="lp1-sale-mechanism-cards">
-          {[
-            ["LEVE", "“Qual programa simples sempre melhora o seu dia?”", "A conversa entra sem resistência."],
-            ["HONESTA", "“O que você gostaria que eu perguntasse mais vezes?”", "O que estava quieto começa a aparecer."],
-            ["PROFUNDA", "“Que parte sua você só mostra quando se sente seguro?”", "A proximidade vem no ritmo de vocês."],
-          ].map(([label, question, body]) => (
-            <article key={label}>
-              <span>{label}</span>
-              <strong>{question}</strong>
-              <p>{body}</p>
-            </article>
-          ))}
-        </div>
-        <p className="lp1-sale-mechanism-close">
-          Quem faz a pergunta é a carta, não você.
-        </p>
-      </section>
+      <Lp1MechanismSection />
 
       <section className="lp1-sale-section lp1-sale-table-section" data-section-name="sale-table">
         <p className="lp1-sale-kicker">A DIFERENÇA NA PRÁTICA</p>

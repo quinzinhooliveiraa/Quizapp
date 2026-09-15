@@ -127,6 +127,7 @@ import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { Lp1SalePage } from "@/components/Lp1SalePage";
+import { Lp1MechanismSection } from "@/components/Lp1MechanismSection";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
 import { apiBaseUrl } from "@/config";
 import {
@@ -4387,44 +4388,7 @@ function LandingV2Quiz({
           </p>
         </div>
       </section>
-      <section
-        className="lp2-simple-section lp2-sei-la"
-        data-section-name="sei-la"
-      >
-        <div className="lp-container lp2-narrow">
-          <p className="lp-eyebrow lp-eyebrow-center">
-            a pergunta que todo mundo faz
-          </p>
-          <h2 className="lp-h2">
-            Ninguém abre o jogo <em>numa pergunta pesada.</em>
-          </h2>
-          <p className="lp2-section-lede">
-            É o medo de todo mundo. É por isso que o baralho começa leve.
-            Ninguém abre o jogo numa pergunta pesada. As primeiras são fáceis
-            de responder até pra quem trava. A profundidade vem depois, quando
-            os dois já estão dentro da conversa.
-          </p>
-          <p className="lp2-section-lede">
-            E ninguém vai achar que você virou filósofo: quem faz a pergunta é
-            a carta, não você. Vale pros dois, aliás. Você também não precisa
-            chegar com resposta pronta: "nunca pensei nisso" já é um começo.
-          </p>
-          <div className="lp2-intensity-grid">
-            <div className="lp2-intensity-card">
-              <span>Leve</span>
-              <p>Que talento inútil você tem orgulho secreto de ter?</p>
-            </div>
-            <div className="lp2-intensity-card">
-              <span>Honesta</span>
-              <p>Tem algo que você precisa e ainda não pediu?</p>
-            </div>
-            <div className="lp2-intensity-card">
-              <span>Profunda</span>
-              <p>Que peso você carrega que nunca dividiu com ninguém?</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Lp1MechanismSection />
       <section className="lp2-story" data-section-name="historia">
         <div className="lp-container lp2-story-narrow">
           <p className="lp-eyebrow">a real sobre o que acontece</p>
