@@ -544,8 +544,7 @@
   top: 0;
   z-index: 30;
   padding: 0.45rem clamp(0.55rem, 3vw, 1.5rem);
-  border-bottom: 1px solid rgba(91, 18, 48, 0.14);
-  background: #f8f3e9;
+  background: transparent;
 }
 
 .lp1-sale-sticky-card {
@@ -556,9 +555,12 @@
   justify-content: space-between;
   gap: 1rem;
   margin: 0 auto;
-  padding: 0.35rem 0;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  background: #f8f3e9;
   color: #2a1f14;
   font: 400 0.72rem/1.2 var(--app-font-mono);
+  box-shadow: 0 8px 24px rgba(27, 8, 20, 0.16);
 }
 
 .lp1-sale-sticky-copy {
@@ -1633,7 +1635,7 @@
 
   .lp1-sale-sticky-card {
     gap: 0.55rem;
-    padding: 0.25rem 0;
+    padding: 0.35rem 0.7rem;
     font-size: 0.62rem;
   }
 
