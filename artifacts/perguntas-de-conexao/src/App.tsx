@@ -3637,9 +3637,51 @@ function Lp1ClimatePicker({
   onVerdict: (climateValue: string, verdict: Lp1CartaVerdict) => void;
 }) {
   const option = question.options[cardIndex] ?? question.options[0];
+  const [direction, setDirection] = useState<"left" | "right" | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const pointerStart = useRef<number | null>(null);
+
+  useEffect(() => {
+    setDirection(null);
+    setDragX(0);
+    setShowConfetti(false);
+  }, [option?.value]);
+
   if (!option) return null;
 
   const verdict = verdicts[option.value];
+  const choose = (nextVerdict: Lp1CartaVerdict) => {
+    if (direction) return;
+    setDirection(nextVerdict === "nao" ? "left" : "right");
+    if (nextVerdict === "sim") {
+      navigator.vibrate?.(12);
+      setShowConfetti(true);
+      window.setTimeout(() => setShowConfetti(false), 420);
+    }
+    window.setTimeout(() => onVerdict(option.value, nextVerdict), 220);
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (direction) return;
+    pointerStart.current = event.clientX;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (pointerStart.current === null || direction) return;
+    setDragX(event.clientX - pointerStart.current);
+  };
+
+  const handlePointerUp = () => {
+    if (pointerStart.current === null || direction) return;
+    const currentDrag = dragX;
+    pointerStart.current = null;
+    setDragX(0);
+    if (Math.abs(currentDrag) >= 56) {
+      choose(currentDrag < 0 ? "nao" : "sim");
+    }
+  };
 
   return (
     <section className="lp1-climate-screen" data-section-name={question.id}>
@@ -3650,7 +3692,22 @@ function Lp1ClimatePicker({
       {question.subtitle ? (
         <p className="lp1-quiz-subtitle">{question.subtitle}</p>
       ) : null}
-      <div className="lp1-climate-card">
+      <div
+        className={`lp1-climate-card ${
+          direction ? `is-leaving-${direction}` : ""
+        }`}
+        style={
+          dragX
+            ? {
+                transform: `translateX(${dragX}px) rotate(${dragX / 22}deg)`,
+              }
+            : undefined
+        }
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
         {option.imageSrc ? (
           <img
             className="lp1-climate-card-image"
@@ -3691,7 +3748,7 @@ function Lp1ClimatePicker({
             className={`lp1-climate-verdict ${
               verdict === value ? "is-selected" : ""
             }`}
-            onClick={() => onVerdict(option.value, value)}
+            onClick={() => choose(value)}
             aria-pressed={verdict === value}
           >
             {label}
@@ -3701,6 +3758,7 @@ function Lp1ClimatePicker({
       <p className="lp1-climate-count">
         {cardIndex + 1} de {question.options.length} climas
       </p>
+      {showConfetti ? <Lp1Confetti /> : null}
     </section>
   );
 }
