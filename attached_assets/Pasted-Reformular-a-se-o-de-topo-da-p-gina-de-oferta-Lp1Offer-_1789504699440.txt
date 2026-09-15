@@ -1,0 +1,47 @@
+Reformular a seção de topo da página de oferta (Lp1Offer) — a parte do "resultado
+/ Agora → Depois". Substituir o que existe hoje (o bloco de barras "Hoje/Com o
+baralho" e o card "CHANCE DE COMEÇAR BEM: Alta") por esta estrutura nova, nesta
+ordem. Manter a paleta da LP1 (vinho #7a2e46 / fundo #16111c / dourado #d8b66d).
+
+1. BARRA DE DESCONTO (topo, fixa):
+   - Dentro da janela de 5 min: "o desconto acaba em MM:SS" + botão "PEGAR -40% OFF".
+     Preço R$ 50 → R$ 30 (40% OFF). Timer server-side (/api/offer/state), NÃO reinicia
+     no reload; quando zera, some o desconto e volta pra R$ 50.
+   - Fora da janela: "Preço normal".
+
+2. RÓTULOS "Agora | Depois":
+   - Dois rótulos centralizados lado a lado, com um divisor no meio. "Agora" em tom
+     apagado (card escuro), "Depois" destacado em dourado.
+
+3. IMAGEM ÚNICA HORIZONTAL (antes/depois):
+   - UMA imagem só, largura total, cantos superiores arredondados, SEM texto sobreposto.
+     Usar o asset que vou subir (casal distante → casal conectado). Proporção ~16:10.
+   - NÃO dividir em duas imagens; é uma ilustração só.
+
+4. CARD DE GAP (logo abaixo da imagem, colado nela — cantos inferiores arredondados),
+   dividido em DUAS COLUNAS alinhadas com as duas metades da imagem:
+
+   COLUNA ESQUERDA — "Agora" (urgência, tom quente/avermelhado suave):
+   - Tag no topo: "No modo colega de quarto"
+   - Conversa → "Virou só logística"
+   - Perguntas → "Morrem no 'sei lá'"
+   - Vontade de puxar assunto → "Some antes de sair"
+   (cada linha com o rótulo do eixo + o valor + uma barra BAIXA)
+
+   COLUNA DIREITA — "Com as cartas" (potencial, verde/dourado):
+   - Tag no topo: "Conexão de verdade"
+   - Conversa → "Sai do automático"
+   - Perguntas → "Puxam resposta de verdade"
+   - Vontade de puxar assunto → "Vem pronta, sem forçar"
+   (cada linha com barra ALTA)
+
+REGRAS HONESTAS (não quebrar):
+- As barras da coluna "Agora" saem do score real do medidor do quiz (result.score),
+  não de número fixo inventado. As da direita representam o potencial (altas).
+- NÃO colocar "chance de sucesso", "% de sucesso" nem nota tipo "Alta". Isso sai de vez.
+- Nenhum texto dentro da imagem.
+
+Responsivo: no celular a imagem ocupa a largura toda e o card fica logo abaixo, com as
+duas colunas lado a lado (nunca empilhar as colunas — elas têm que ficar em paralelo,
+alinhadas com as metades da imagem). No desktop, centralizar tudo num container de até
+~520px, mesma disposição.

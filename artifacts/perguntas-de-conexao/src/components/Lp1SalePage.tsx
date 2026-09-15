@@ -230,30 +230,28 @@ function getPersonalizedCopy(answers: SaleAnswers) {
 
 function getRecapBars(answers: SaleAnswers) {
   const score = computeLp1Score(answers).value;
-  const todayLevel = Math.max(18, Math.min(52, 18 + Math.round(score * 0.34)));
-  const afterLevel = Math.max(88, Math.min(96, 96 - Math.round(score * 0.08)));
 
   return [
     {
       label: "Conversa",
-      today: todayLevel,
-      deck: afterLevel,
-      todayCopy: "Só logística",
-      afterCopy: "De verdade, toda semana",
+      today: score,
+      deck: 92,
+      todayCopy: "Virou só logística",
+      afterCopy: "Sai do automático",
     },
     {
-      label: "Descoberta",
-      today: Math.max(16, todayLevel - 4),
-      deck: Math.max(86, afterLevel - 2),
-      todayCopy: "Parada",
-      afterCopy: "Algo novo que você não sabia",
+      label: "Perguntas",
+      today: score,
+      deck: 96,
+      todayCopy: "Morrem no “sei lá”",
+      afterCopy: "Puxam resposta de verdade",
     },
     {
-      label: "Vontade de perguntar",
-      today: Math.max(14, todayLevel - 7),
-      deck: Math.min(98, afterLevel + 2),
-      todayCopy: "Trava",
-      afterCopy: "Sai sozinha",
+      label: "Vontade de puxar assunto",
+      today: score,
+      deck: 98,
+      todayCopy: "Some antes de sair",
+      afterCopy: "Vem pronta, sem forçar",
     },
   ];
 }
@@ -437,85 +435,79 @@ export function Lp1SalePage({
 
   return (
     <main className="lp1-sale-page">
-      {discountActive ? (
-        <div className="lp1-sale-sticky-bar">
-          <div className="lp1-sale-sticky-card is-active" aria-live="polite">
-            <div className="lp1-sale-sticky-copy">
+      <div className="lp1-sale-sticky-bar">
+        <div
+          className={`lp1-sale-sticky-card ${discountActive ? "is-active" : ""}`}
+          aria-live="polite"
+        >
+          <div className="lp1-sale-sticky-copy">
+            {discountActive ? (
               <strong>
-                Desconto ativo ·{" "}
+                O desconto acaba em{" "}
                 <b aria-label={`${formatRemaining(remainingSeconds)} restantes`}>
                   {formatRemaining(remainingSeconds)}
                 </b>
+                <span className="lp1-sale-sticky-price">
+                  {offerState?.full.display ?? "R$ 50"} →{" "}
+                  {offerState?.offer.display ?? "R$ 30"} · 40% OFF
+                </span>
               </strong>
-            </div>
-            <button type="button" onClick={scrollToOffer}>
-              Quero começar <ArrowRight size={15} aria-hidden="true" />
-            </button>
+            ) : (
+              <strong>Preço normal · {offerState?.full.display ?? "R$ 50"}</strong>
+            )}
           </div>
+          {discountActive ? (
+            <button type="button" onClick={scrollToOffer}>
+              PEGAR -40% OFF <ArrowRight size={15} aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
-      ) : null}
+      </div>
 
       <section className="lp1-sale-section lp1-sale-recap" data-section-name="sale-recap">
-        <p className="lp1-sale-kicker">SEU RESULTADO PERSONALIZADO</p>
-        <h1>{personalizedCopy.title}</h1>
-        <p className="lp1-sale-personalized-body">{personalizedCopy.body}</p>
-        <span className="lp1-sale-signal">{personalizedCopy.signal}</span>
-        <div className="lp1-sale-recap-grid">
-          <div className="lp1-sale-meter-column">
-            <div className="lp1-sale-meter-visual is-now">
-              <img
-                src="/hero/secao-distancia.webp"
-                alt="Hoje: um casal sentindo mais distância na conversa"
-              />
-            </div>
-            <h2>Hoje</h2>
+        <div className="lp1-sale-now-after-labels" aria-label="Agora e depois">
+          <span>Agora</span>
+          <i aria-hidden="true" />
+          <strong>Depois</strong>
+        </div>
+        <figure className="lp1-sale-now-after-image">
+          <img
+            src="/hero/lp1-agora-depois.png"
+            alt="Um casal distante agora e conectado depois"
+          />
+        </figure>
+        <div className="lp1-sale-gap-card">
+          <div className="lp1-sale-gap-column is-now">
+            <span className="lp1-sale-gap-column-title">Agora</span>
+            <span className="lp1-sale-gap-tag">No modo colega de quarto</span>
             {recapBars.map((bar) => (
-              <div className="lp1-sale-meter-row" key={`today-${bar.label}`}>
-                <span>{bar.todayCopy}</span>
+              <div className="lp1-sale-gap-row" key={`today-${bar.label}`}>
+                <span>{bar.label}</span>
+                <strong>{bar.todayCopy}</strong>
                 <i>
                   <b
                     style={{ width: `${bar.today}%` }}
-                    aria-label={`${bar.label}: ${bar.today} de 100`}
+                    aria-label={`${bar.label}: score ${bar.today} de 100`}
                   />
                 </i>
               </div>
             ))}
           </div>
-          <div className="lp1-sale-meter-column is-deck">
-            <div className="lp1-sale-meter-visual is-deck">
-              <img
-                src="/hero/hero-casal-novo-desktop.webp"
-                alt="Com o baralho: um casal criando espaço para conversar"
-              />
-            </div>
-            <h2>Depois</h2>
+          <div className="lp1-sale-gap-column is-deck">
+            <span className="lp1-sale-gap-column-title">Com as cartas</span>
+            <span className="lp1-sale-gap-tag">Conexão de verdade</span>
             {recapBars.map((bar) => (
-              <div className="lp1-sale-meter-row" key={`deck-${bar.label}`}>
-                <span>{bar.afterCopy}</span>
+              <div className="lp1-sale-gap-row" key={`deck-${bar.label}`}>
+                <span>{bar.label}</span>
+                <strong>{bar.afterCopy}</strong>
                 <i>
                   <b
                     style={{ width: `${bar.deck}%` }}
-                    aria-label={`${bar.label}: ${bar.deck} de 100`}
+                    aria-label={`${bar.label}: potencial ${bar.deck} de 100`}
                   />
                 </i>
               </div>
             ))}
-          </div>
-        </div>
-        <div className="lp1-sale-recap-promo">
-          <div className="lp1-sale-recap-signal-stack">
-            <article className="lp1-sale-recap-signal-card is-gap">
-              <p>O GAP QUE APARECEU NAS SUAS RESPOSTAS</p>
-              <strong>{personalizedCopy.gapTitle}</strong>
-              <span>
-                {personalizedCopy.gapBody}
-              </span>
-            </article>
-            <article className="lp1-sale-recap-signal-card is-urgency">
-              <p>POR QUE VOCÊS DEVEM COMEÇAR AGORA?</p>
-              <strong>{personalizedCopy.whyNow}</strong>
-              <span>{personalizedCopy.body}</span>
-            </article>
           </div>
         </div>
       </section>
