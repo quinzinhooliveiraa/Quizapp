@@ -1,0 +1,119 @@
+Substituir as telas 11 a 22 da LP1. Chrome, tipos e tokens são os mesmos da
+Fase A. Tipos novos: card, chart, table, capture, loading, result.
+
+11–15 card · key:"cartas" · eyebrow:"UMA CARTA DE VERDADE"
+   "É pra vocês?"
+   Estrutura: um card único, radius 16px, overflow hidden, fundo
+   linear-gradient(160deg,#5B1230,#2A1638). Dentro: o nome do baralho em mono
+   9.5px #e8c98a no topo, a pergunta em Instrument Serif 21px lh 1.25 centralizada
+   com padding 24px, e no rodapé do card "CARTA REAL · {i} de 5" em mono 9px.
+   Abaixo do card, 3 ladrilhos iguais (grid 3 col, gap 8px, h 76px, radius 12px,
+   fundo #221a2b, borda #332a3e): 👎 "Não é pra nós" · 😐 "Talvez" · 👍 "É pra nós"
+   Ao tocar: o ladrilho acende em #e8c98a, o card sai para o lado (translateX
+   ±40px + fade, 220ms) e a próxima entra. Grava em answers.cartas[id].
+
+   AS 5 CARTAS TÊM QUE VIR DA BIBLIOTECA REAL DE 459. Selecione uma de cada
+   baralho que a resposta "travas" da tela 2 apontou (mesmo mapa da tela 9),
+   em ordem crescente de profundidade: a primeira leve, a última honesta.
+   Se um baralho não tiver sido apontado, completar com Porto Seguro e Modo Leve.
+   NÃO invente pergunta. Se não achar a biblioteca no código, pare e me avise.
+
+16 chart · eyebrow:"O QUE VOCÊS ESCOLHERAM"
+   "{s} das 5 são pra vocês."
+   Desenho: as 5 cartas viradas em miniatura, 44x60 radius 6px, em linha.
+   As marcadas "sim" em gradiente vinho→dourado com ✓; "talvez" em #3a2b20;
+   "não" em #221a2b com opacidade .45. Abaixo de cada uma, o nome do baralho
+   em 8.5px. Entrada em cascata, 80ms.
+   Corpo: "Vieram de {b} baralhos diferentes. Tem mais {c} cartas só nesses."
+   ({b} e {c} calculados de verdade a partir da biblioteca)
+
+17 table · eyebrow:"A DIFERENÇA"
+   "Vocês já tentaram conversar. Não é disso que falta."
+   Tabela 3 colunas, primeira sem cabeçalho. Cabeçalhos: "\"Vamos conversar\"" e
+   "Perguntas de Conexão" (essa em #e8c98a, bold).
+   Linhas (✓ dourado / ✗ vinho #7a2e46):
+     Nomeia o problema                              ✓ | ✓
+     Faz a pessoa se sentir ouvida                  ✓ | ✓
+     Já chega com o assunto pronto                  ✗ | ✓
+     Funciona mesmo se só um teve a ideia           ✗ | ✓
+     Respondem juntos, cada um no seu celular       ✗ | ✓
+     Tem mais 458 pra amanhã                        ✗ | ✓
+   As duas primeiras linhas vêm com ✓ dos dois lados de propósito — não mexer.
+   Fundo da coluna nossa levemente dourado rgba(232,201,138,.07).
+
+18 single · key:"profundidade" · eyebrow:"O RITMO DE HOJE"
+   "Até onde vocês querem ir hoje?"
+   🌤️ Começar leve · 🌗 Ter uma conversa honesta · 🌑 Ir fundo de verdade
+
+19 single · key:"quando" · eyebrow:"QUANDO COMEÇA"
+   "Quando vocês leem a primeira?"
+   🌙 Hoje à noite · 📅 Nos próximos dias · 🤷 Quando der
+
+20 capture · eyebrow:"SEU RESULTADO"
+   "Pra onde eu mando o resultado?"
+   sub: "O diagnóstico e as 3 primeiras cartas, de graça."
+   Campo e-mail: altura 52px, radius 12px, fundo #221a2b, borda #332a3e,
+   placeholder "seu melhor e-mail" #6d6172. Foco: borda #e8c98a.
+   Valida formato. Se inválido, mensagem em 11.5px #c8695f abaixo do campo.
+   Abaixo do botão, link discreto "ver meu resultado sem e-mail →" 12px #6d6172
+   que avança do mesmo jeito. NÃO bloquear.
+
+21 loading · 9 segundos, três etapas de 3s
+   Barra circular 84px no centro, traço 5px, preenchimento #e8c98a, número da
+   porcentagem no meio em mono 20px.
+   Títulos que trocam: "Lendo as suas respostas…" → "Cruzando com os 15
+   baralhos…" → "Montando as 3 primeiras cartas…"
+   Checklist de 3 linhas abaixo, cada uma ganha um ✓ dourado ao completar.
+   Depoimento rotativo embaixo, trocando a cada 3s, com o print real:
+   /testimonials/dep-05-sei-la.png, dep-02-conhecer-de-novo.png,
+   dep-06-ja-conversa.png — largura total, radius 14px 14px 14px 4px.
+   TRÊS MODAIS bloqueantes, aos 2s, 5s e 8s. Cada um: fundo escurecido, card
+   radius 18px, pergunta em serif 19px e dois botões lado a lado.
+     1. "Se a pergunta já viesse pronta, você leria uma hoje à noite?"
+        [ Sim ] [ Ainda não sei ]
+     2. "Dez minutos, uma carta, sem precisar marcar nada. Serve pra vocês?"
+        [ Serve ] [ Talvez ]
+     3. "Topa começar por uma pergunta leve, não pela mais pesada?"
+        [ Topo ] [ Prefiro ir direto ]
+   As duas opções são reais e ambas avançam. Nenhuma é bloqueada.
+
+22 result · eyebrow:"O CLIMA DE VOCÊS AGORA"
+   Título vindo do mapa DOR_ESPELHO da tela 5 (mesmo título, sem a foto).
+
+   MEDIDOR, no padrão do Spartan:
+   Card branco-escuro #221a2b radius 16px padding 18px.
+   Linha 1: "Distância na conversa" à esquerda + pílula com a faixa à direita
+     (fundo rgba(122,46,70,.22), texto #cf93a8, mono 10px uppercase).
+   Trilho 9px radius 999px, gradiente #3d6b57 → #b99a52 → #8e4356.
+   Botão branco 19px com borda 3px #e8c98a, animando de 0% até a posição em 900ms
+   (ease-out). Balão escuro "vocês estão aqui" acima do botão, seta pra baixo.
+   Rótulos embaixo: Perto · Morno · Distante.
+   Caixa de contexto abaixo, fundo rgba(122,46,70,.12), borda-left 3px #7a2e46,
+   com ⓘ e o parágrafo da dor dela (corpo do DOR_ESPELHO).
+
+   PONTUAÇÃO, honesta e calculada:
+     travas marcadas × 12 (máx 60) + rotina (1..5 → 0,5,10,15,20) +
+     clima (leve 0 / neutro 10 / pesado 20) = 0 a 100
+     0–30 "Perto" · 31–60 "Morno" · 61–100 "Distante"
+
+   LINHA OBRIGATÓRIA, 10.5px #7d7386, logo abaixo do card:
+   "Calculado a partir das respostas que você deu neste teste. Não é diagnóstico
+   clínico — é o retrato do que você acabou de contar."
+
+   DUAS FICHAS abaixo, cards #221a2b radius 12px, ícone 34px à esquerda:
+     📉 "Conversa além da rotina"  → valor: alta / média / baixa (inverso da rotina)
+     🌱 "Espaço para começar hoje" → valor: alto / médio (de clima + quando)
+
+   PLANO DAS 3 NOITES: três linhas numeradas, cada uma com o nome do baralho e a
+   pergunta real que abre a noite, tiradas da biblioteca conforme as travas.
+   Se answers.quando === "hoje", a linha 1 começa com "Hoje à noite —".
+
+   Botão: "Ver o baralho de vocês" → leva à tela de oferta.
+   NENHUM preço, nenhuma menção a comprar, nenhum checkout nesta tela.
+
+═══ CONFERIR E COLAR ═══
+1. As 5 cartas existem na biblioteca de 459 — cole as 5 perguntas no resultado
+2. Os números das telas 16 e 22 mudam conforme as respostas
+3. A linha "não é diagnóstico clínico" aparece na tela 22
+4. grep "R$" no componente da tela 22 → zero
+5. Percorra as 22 telas sem erro de console

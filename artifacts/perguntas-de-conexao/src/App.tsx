@@ -989,6 +989,10 @@ type Lp1ScreenBase = {
   kind:
     | "question"
     | "card"
+    | "trial-card"
+    | "trial-chart"
+    | "table"
+    | "result"
     | "loading"
     | "summary"
     | "sample"
@@ -1027,6 +1031,30 @@ type Lp1Question = Lp1ScreenBase & {
   scaleEnds?: [string, string];
 };
 
+type Lp1TrialCardScreen = Lp1ScreenBase & {
+  kind: "trial-card";
+  key: "cartas";
+  title: string;
+};
+
+type Lp1TrialChartScreen = Lp1ScreenBase & {
+  kind: "trial-chart";
+  title: string;
+  cta: string;
+};
+
+type Lp1TableScreen = Lp1ScreenBase & {
+  kind: "table";
+  title: string;
+  cta: string;
+};
+
+type Lp1ResultScreen = Lp1ScreenBase & {
+  kind: "result";
+  title: string;
+  cta: string;
+};
+
 type Lp1Card = Lp1ScreenBase & {
   kind: "card";
   title: string;
@@ -1051,8 +1079,35 @@ type Lp1Placeholder = Lp1ScreenBase & {
   key?: string;
 };
 
-type Lp1Screen = Lp1Question | Lp1Card | Lp1NarrativeScreen | Lp1Placeholder;
-type Lp1Answers = Record<string, string>;
+type Lp1Screen =
+  | Lp1Question
+  | Lp1Card
+  | Lp1TrialCardScreen
+  | Lp1TrialChartScreen
+  | Lp1TableScreen
+  | Lp1ResultScreen
+  | Lp1NarrativeScreen
+  | Lp1Placeholder;
+type Lp1CartaVerdict = "nao" | "talvez" | "sim";
+type Lp1AnswerKey =
+  | "intensity"
+  | "stage"
+  | "theme"
+  | "fase"
+  | "travas"
+  | "dor"
+  | "rotina"
+  | "clima"
+  | "objecao"
+  | "pain"
+  | "s04-rotina"
+  | "s05-silencio"
+  | "profundidade"
+  | "quando"
+  | "email";
+type Lp1Answers = Partial<Record<Lp1AnswerKey, string>> & {
+  cartas?: Record<string, Lp1CartaVerdict>;
+};
 
 const LP1_LEGACY_SCREENS: Lp1Screen[] = [
   {
@@ -1518,9 +1573,85 @@ const LP1_SCREEN_ONE_TO_TEN: Lp1Screen[] = [
   },
 ];
 
+const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
+  ...Array.from({ length: 5 }, (_, index): Lp1TrialCardScreen => ({
+    id: `s${String(index + 11).padStart(2, "0")}-carta`,
+    kind: "trial-card",
+    key: "cartas",
+    eyebrow: "UMA CARTA DE VERDADE",
+    title: "É pra vocês?",
+  })),
+  {
+    id: "s16-escolhas",
+    kind: "trial-chart",
+    eyebrow: "O QUE VOCÊS ESCOLHERAM",
+    title: "",
+    cta: "Continuar",
+  },
+  {
+    id: "s17-diferenca",
+    kind: "table",
+    eyebrow: "A DIFERENÇA",
+    title: "Vocês já tentaram conversar. Não é disso que falta.",
+    cta: "Continuar",
+  },
+  {
+    id: "s18-profundidade",
+    kind: "question",
+    eyebrow: "O RITMO DE HOJE",
+    key: "profundidade",
+    title: "Até onde vocês querem ir hoje?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "leve", label: "Começar leve", icon: "🌤️" },
+      { value: "honesta", label: "Ter uma conversa honesta", icon: "🌗" },
+      { value: "fundo", label: "Ir fundo de verdade", icon: "🌑" },
+    ],
+  },
+  {
+    id: "s19-quando",
+    kind: "question",
+    eyebrow: "QUANDO COMEÇA",
+    key: "quando",
+    title: "Quando vocês leem a primeira?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "hoje", label: "Hoje à noite", icon: "🌙" },
+      { value: "dias", label: "Nos próximos dias", icon: "📅" },
+      { value: "quando", label: "Quando der", icon: "🤷" },
+    ],
+  },
+  {
+    id: "s20-resultado",
+    kind: "capture",
+    eyebrow: "SEU RESULTADO",
+    key: "email",
+    title: "Pra onde eu mando o resultado?",
+    body: ["O diagnóstico e as 3 primeiras cartas, de graça."],
+    cta: "Continuar",
+  },
+  {
+    id: "s21-carregando",
+    kind: "loading",
+    eyebrow: "SEU RESULTADO",
+    title: "Lendo as suas respostas…",
+    body: [],
+    cta: "",
+  },
+  {
+    id: "s22-clima",
+    kind: "result",
+    eyebrow: "O CLIMA DE VOCÊS AGORA",
+    title: "",
+    cta: "Ver o baralho de vocês",
+  },
+];
+
 const LP1_SCREENS: Lp1Screen[] = [
   ...LP1_SCREEN_ONE_TO_TEN,
-  ...LP1_LEGACY_SCREENS.slice(12),
+  ...LP1_SCREEN_ELEVEN_TO_TWENTY_TWO,
 ];
 
 const LP1_DOR_ESPELHO: Record<
@@ -1566,6 +1697,67 @@ const LP1_TRAVA_DECKS: Record<string, string[]> = {
   cama: ["faisca", "luzes-baixas"],
   distancia: ["mesmo-longe", "em-voz-alta"],
 };
+
+const LP1_TRIAL_DEPTHS = [
+  "gentle",
+  "gentle",
+  "honest",
+  "honest",
+  "honest",
+] as const;
+
+type Lp1TrialCard = {
+  id: string;
+  deckId: string;
+  deckName: string;
+  question: string;
+};
+
+function getLp1TrialCards(answers: Lp1Answers): Lp1TrialCard[] {
+  const selectedTravas = (answers.travas ?? "").split(",").filter(Boolean);
+  const pointedDecks = selectedTravas.flatMap(
+    (trava) => LP1_TRAVA_DECKS[trava] ?? [],
+  );
+  const deckIds: string[] = [];
+  const addDeck = (deckId: string) => {
+    if (!deckIds.includes(deckId)) deckIds.push(deckId);
+  };
+
+  pointedDecks.forEach(addDeck);
+  addDeck("porto-seguro");
+  addDeck("modo-leve");
+  const deckSlots = [...deckIds];
+  while (deckSlots.length < 5) {
+    deckSlots.push(deckSlots.length % 2 === 0 ? "porto-seguro" : "modo-leve");
+  }
+
+  const usedQuestionIds = new Set<string>();
+  return deckSlots.slice(0, 5).map((deckId, index) => {
+    const candidates = connectionQuestions
+      .filter((question) => question.themeId === deckId)
+      .sort((first, second) => {
+        const firstRank =
+          first.intensity === LP1_TRIAL_DEPTHS[index] ? 0 : 1;
+        const secondRank =
+          second.intensity === LP1_TRIAL_DEPTHS[index] ? 0 : 1;
+        return firstRank - secondRank;
+      });
+    const question =
+      candidates.find((candidate) => !usedQuestionIds.has(candidate.id)) ??
+      candidates[0];
+    if (!question) {
+      throw new Error(`No questions found for LP1 trial deck: ${deckId}`);
+    }
+    usedQuestionIds.add(question.id);
+    return {
+      id: question.id,
+      deckId,
+      deckName:
+        connectionThemes.find((theme) => theme.id === deckId)?.title ?? deckId,
+      question: question.text,
+    };
+  });
+}
 
 function lp1AnswersWithAliases(
   previous: Lp1Answers,
@@ -1807,13 +1999,15 @@ function Lp1Quiz({
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Lp1Answers>({});
   const [showOffer, setShowOffer] = useState(false);
+  const [captureAttempted, setCaptureAttempted] = useState(false);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
-  const selectedValue =
+  const selectedAnswer =
     current.kind === "question" && current.key
-      ? answers[current.key] ?? ""
+      ? answers[current.key as Lp1AnswerKey]
       : "";
+  const selectedValue = typeof selectedAnswer === "string" ? selectedAnswer : "";
   const visualStep = Math.min(step + 1, 22);
 
   useEffect(() => {
@@ -1829,9 +2023,27 @@ function Lp1Quiz({
     if (typeof navigator !== "undefined") navigator.vibrate?.(10);
   };
 
+  const selectTrialCard = (cardId: string, verdict: Lp1CartaVerdict) => {
+    const nextAnswers: Lp1Answers = {
+      ...answers,
+      cartas: {
+        ...(answers.cartas ?? {}),
+        [cardId]: verdict,
+      },
+    };
+    setAnswers(nextAnswers);
+    if (singleAdvanceTimer.current !== null) {
+      clearTimeout(singleAdvanceTimer.current);
+    }
+    singleAdvanceTimer.current = setTimeout(() => {
+      singleAdvanceTimer.current = null;
+      advance(nextAnswers);
+    }, 220);
+  };
+
   const advance = (nextAnswers = answers) => {
     if (isLastScreen) {
-      const score = computeLp1Score(nextAnswers);
+      const score = computeLp1Score(nextAnswers as LandingQuizAnswers);
       console.info("[lp1] score", score);
       setShowOffer(false);
       setStep(LP1_SCREENS.length);
@@ -1855,9 +2067,16 @@ function Lp1Quiz({
   };
 
   const handleNext = () => {
+    if (current.kind === "capture") {
+      const email = answers.email?.trim() ?? "";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setCaptureAttempted(true);
+        return;
+      }
+    }
     if (current.kind === "question") {
       if (!selectedValue) return;
-      const score = computeLp1Score(answers);
+      const score = computeLp1Score(answers as LandingQuizAnswers);
       console.info("[lp1] score", score);
     }
     advance();
@@ -1882,7 +2101,7 @@ function Lp1Quiz({
 
   return (
     <main className={`lp1-quiz-screen ${showOffer ? "is-offer" : ""}`}>
-      {step < LP1_SCREENS.length ? (
+      {!showOffer && step < LP1_SCREENS.length ? (
         <>
           <header className="lp1-quiz-header">
             <button
@@ -1921,18 +2140,16 @@ function Lp1Quiz({
       ) : null}
 
       <div className="lp1-quiz-content">
-        {step === LP1_SCREENS.length ? (
-          showOffer ? (
-            <Lp1Offer
-              answers={answers as LandingQuizAnswers}
-              onFinish={onFinish}
-            />
-          ) : (
-            <Lp1Diagnosis
-              answers={answers as LandingQuizAnswers}
-              onContinue={() => setShowOffer(true)}
-            />
-          )
+        {showOffer ? (
+          <Lp1Offer
+            answers={answers as LandingQuizAnswers}
+            onFinish={onFinish}
+          />
+        ) : step === LP1_SCREENS.length ? (
+          <Lp1Diagnosis
+            answers={answers as LandingQuizAnswers}
+            onContinue={() => setShowOffer(true)}
+          />
         ) : current.kind === "question" ? (
           <section data-section-name={current.id}>
             {current.eyebrow ? <p className="lp1-quiz-eyebrow">{current.eyebrow}</p> : null}
@@ -1987,6 +2204,29 @@ function Lp1Quiz({
               </div>
             ) : null}
           </section>
+        ) : current.kind === "trial-card" ? (
+          <Lp1TrialCardScreen
+            card={getLp1TrialCards(answers)[step - 10]}
+            cardIndex={step - 10}
+            answer={answers.cartas?.[getLp1TrialCards(answers)[step - 10]?.id ?? ""]}
+            onSelect={selectTrialCard}
+          />
+        ) : current.kind === "trial-chart" ? (
+          <Lp1TrialChartScreen
+            cards={getLp1TrialCards(answers)}
+            answers={answers}
+            onContinue={handleNext}
+          />
+        ) : current.kind === "table" ? (
+          <Lp1ComparisonScreen screen={current} onContinue={handleNext} />
+        ) : current.kind === "loading" ? (
+          <Lp1LoadingScreen onComplete={handleNext} />
+        ) : current.kind === "result" ? (
+          <Lp1ResultScreen
+            answers={answers}
+            cards={getLp1TrialCards(answers)}
+            onContinue={() => setShowOffer(true)}
+          />
         ) : current.kind === "chart" ? (
           <Lp1ChartScreen
             screen={current}
@@ -2019,10 +2259,13 @@ function Lp1Quiz({
                 placeholder="seu melhor e-mail"
                 value={answers.email ?? ""}
                 onChange={(event) =>
-                  setAnswers((previous) => ({
-                    ...previous,
-                    email: event.target.value,
-                  }))
+                  {
+                    setCaptureAttempted(false);
+                    setAnswers((previous) => ({
+                      ...previous,
+                      email: event.target.value,
+                    }));
+                  }
                 }
                 onFocus={(event) =>
                   window.setTimeout(
@@ -2040,6 +2283,11 @@ function Lp1Quiz({
                 aria-label="Seu e-mail"
                 data-testid="input-lp1-quiz-email"
               />
+            ) : null}
+            {current.kind === "capture" && captureAttempted ? (
+              <p className="lp1-capture-error">
+                Digite um e-mail válido ou veja seu resultado sem e-mail.
+              </p>
             ) : null}
             {current.kind === "card" ? (
               <div className="lp1-quiz-actions">
@@ -2062,15 +2310,17 @@ function Lp1Quiz({
                 >
                   {current.cta} <ArrowRight size={17} aria-hidden="true" />
                 </button>
-                {"key" in current && current.kind === "capture" &&
-                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email?.trim() ?? "") ? (
+                {"key" in current && current.kind === "capture" ? (
                   <button
                     type="button"
                     className="lp1-quiz-skip"
-                    onClick={handleNext}
+                    onClick={() => {
+                      setCaptureAttempted(false);
+                      advance();
+                    }}
                     data-testid="button-lp1-quiz-skip-email"
                   >
-                    pular por agora →
+                    ver meu resultado sem e-mail →
                   </button>
                 ) : null}
                 {step === 0 ? (
@@ -2089,6 +2339,385 @@ function Lp1Quiz({
         )}
       </div>
     </main>
+  );
+}
+
+function Lp1TrialCardScreen({
+  card,
+  cardIndex,
+  answer,
+  onSelect,
+}: {
+  card?: Lp1TrialCard;
+  cardIndex: number;
+  answer?: Lp1CartaVerdict;
+  onSelect: (cardId: string, verdict: Lp1CartaVerdict) => void;
+}) {
+  const [direction, setDirection] = useState<"left" | "right" | null>(null);
+
+  useEffect(() => {
+    setDirection(null);
+  }, [card?.id]);
+
+  if (!card) return null;
+
+  const choose = (verdict: Lp1CartaVerdict) => {
+    if (direction) return;
+    setDirection(verdict === "nao" ? "left" : "right");
+    window.setTimeout(() => onSelect(card.id, verdict), 220);
+  };
+
+  return (
+    <section
+      className="lp1-trial-card-screen"
+      data-section-name={`s${String(cardIndex + 11).padStart(2, "0")}-carta`}
+    >
+      <div
+        className={`lp1-trial-card ${direction ? `is-leaving-${direction}` : ""}`}
+      >
+        <span className="lp1-trial-card-deck">{card.deckName}</span>
+        <p>{card.question}</p>
+        <span className="lp1-trial-card-footer">
+          CARTA REAL · {cardIndex + 1} de 5
+        </span>
+      </div>
+      <div className="lp1-trial-verdicts" aria-label="Avaliar esta carta">
+        {(
+          [
+            ["nao", "👎", "Não é pra nós"],
+            ["talvez", "😐", "Talvez"],
+            ["sim", "👍", "É pra nós"],
+          ] as const
+        ).map(([value, icon, label]) => (
+          <button
+            type="button"
+            key={value}
+            className={`lp1-trial-verdict ${
+              answer === value ? "is-selected" : ""
+            }`}
+            onClick={() => choose(value)}
+            aria-pressed={answer === value}
+          >
+            <span aria-hidden="true">{icon}</span>
+            <strong>{label}</strong>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Lp1TrialChartScreen({
+  cards,
+  answers,
+  onContinue,
+}: {
+  cards: Lp1TrialCard[];
+  answers: Lp1Answers;
+  onContinue: () => void;
+}) {
+  const verdicts = answers.cartas ?? {};
+  const simCount = cards.filter((card) => verdicts[card.id] === "sim").length;
+  const deckIds = Array.from(new Set(cards.map((card) => card.deckId)));
+  const availableCards = new Set(
+    connectionQuestions
+      .filter((question) => deckIds.includes(question.themeId))
+      .map((question) => question.id),
+  ).size;
+  const remainingCards = Math.max(0, availableCards - cards.length);
+
+  return (
+    <section className="lp1-trial-chart-screen" data-section-name="s16-escolhas">
+      <p className="lp1-quiz-eyebrow">O QUE VOCÊS ESCOLHERAM</p>
+      <h1 className="lp1-quiz-title">{simCount} das 5 são pra vocês.</h1>
+      <div className="lp1-trial-mini-cards" aria-label="Resumo das cinco cartas">
+        {cards.map((card, index) => {
+          const verdict = verdicts[card.id] ?? "nao";
+          return (
+            <div
+              className={`lp1-trial-mini-card is-${verdict}`}
+              key={`${card.id}-${index}`}
+              style={{ animationDelay: `${index * 80}ms` }}
+            >
+              <span>{verdict === "sim" ? "✓" : ""}</span>
+              <small>{card.deckName}</small>
+            </div>
+          );
+        })}
+      </div>
+      <p className="lp1-chart-copy">
+        Vieram de {deckIds.length} baralhos diferentes. Tem mais{" "}
+        {remainingCards} cartas só nesses.
+      </p>
+      <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
+        Continuar <ArrowRight size={17} aria-hidden="true" />
+      </button>
+    </section>
+  );
+}
+
+function Lp1ComparisonScreen({
+  screen,
+  onContinue,
+}: {
+  screen: Lp1TableScreen;
+  onContinue: () => void;
+}) {
+  const rows = [
+    ["Nomeia o problema", true, true],
+    ["Faz a pessoa se sentir ouvida", true, true],
+    ["Já chega com o assunto pronto", false, true],
+    ["Funciona mesmo se só um teve a ideia", false, true],
+    ["Respondem juntos, cada um no seu celular", false, true],
+    ["Tem mais 458 pra amanhã", false, true],
+  ] as const;
+
+  return (
+    <section className="lp1-comparison-screen" data-section-name="s17-diferenca">
+      <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p>
+      <h1 className="lp1-quiz-title">{screen.title}</h1>
+      <div className="lp1-comparison-table" role="table">
+        <div className="lp1-comparison-row is-header" role="row">
+          <span />
+          <strong>“Vamos conversar”</strong>
+          <strong>Perguntas de Conexão</strong>
+        </div>
+        {rows.map(([label, generic, connection]) => (
+          <div className="lp1-comparison-row" role="row" key={label}>
+            <span>{label}</span>
+            <span className={generic ? "is-yes" : "is-no"} aria-label={generic ? "Sim" : "Não"}>
+              {generic ? "✓" : "✗"}
+            </span>
+            <span
+              className={`is-ours ${connection ? "is-yes" : "is-no"}`}
+              aria-label={connection ? "Sim" : "Não"}
+            >
+              {connection ? "✓" : "✗"}
+            </span>
+          </div>
+        ))}
+      </div>
+      <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
+        {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+      </button>
+    </section>
+  );
+}
+
+const LP1_LOADING_MODALS = [
+  {
+    question: "Se a pergunta já viesse pronta, você leria uma hoje à noite?",
+    options: ["Sim", "Ainda não sei"],
+  },
+  {
+    question: "Dez minutos, uma carta, sem precisar marcar nada. Serve pra vocês?",
+    options: ["Serve", "Talvez"],
+  },
+  {
+    question: "Topa começar por uma pergunta leve, não pela mais pesada?",
+    options: ["Topo", "Prefiro ir direto"],
+  },
+] as const;
+
+const LP1_LOADING_TESTIMONIALS = [
+  testimonialImages[4],
+  testimonialImages[1],
+  testimonialImages[5],
+] as const;
+
+function Lp1LoadingScreen({ onComplete }: { onComplete: () => void }) {
+  const [elapsed, setElapsed] = useState(0);
+  const [modalIndex, setModalIndex] = useState<number | null>(null);
+  const [shownModals, setShownModals] = useState<number[]>([]);
+  const completedRef = useRef(false);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsed(Math.min(9000, Date.now() - startedAt));
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (modalIndex !== null) return;
+    const thresholds = [2000, 5000, 8000];
+    const nextModal = thresholds.findIndex(
+      (threshold, index) => elapsed >= threshold && !shownModals.includes(index),
+    );
+    if (nextModal >= 0) {
+      setShownModals((current) => [...current, nextModal]);
+      setModalIndex(nextModal);
+    }
+  }, [elapsed, modalIndex, shownModals]);
+
+  useEffect(() => {
+    if (elapsed < 9000 || modalIndex !== null || completedRef.current) return;
+    completedRef.current = true;
+    onComplete();
+  }, [elapsed, modalIndex, onComplete]);
+
+  const percentage = Math.round((elapsed / 9000) * 100);
+  const title =
+    elapsed < 3000
+      ? "Lendo as suas respostas…"
+      : elapsed < 6000
+        ? "Cruzando com os 15 baralhos…"
+        : "Montando as 3 primeiras cartas…";
+
+  return (
+    <section className="lp1-loading-screen" data-section-name="s21-carregando">
+      <p className="lp1-quiz-eyebrow">SEU RESULTADO</p>
+      <h1 className="lp1-quiz-title">{title}</h1>
+      <div className="lp1-loading-circle" style={{ "--loading-progress": `${percentage}%` } as CSSProperties}>
+        <span>{percentage}%</span>
+      </div>
+      <div className="lp1-loading-checklist">
+        {["Lendo as suas respostas", "Cruzando com os 15 baralhos", "Montando as 3 primeiras cartas"].map(
+          (label, index) => (
+            <p key={label} className={elapsed >= (index + 1) * 3000 ? "is-complete" : ""}>
+              <span aria-hidden="true">{elapsed >= (index + 1) * 3000 ? "✓" : "○"}</span>
+              {label}
+            </p>
+          ),
+        )}
+      </div>
+      <img
+        className="lp1-loading-testimonial"
+        src={LP1_LOADING_TESTIMONIALS[Math.min(2, Math.floor(elapsed / 3000))]}
+        alt="Depoimento de cliente"
+      />
+      {modalIndex !== null ? (
+        <div className="lp1-loading-modal-backdrop" role="presentation">
+          <div className="lp1-loading-modal" role="dialog" aria-modal="true">
+            <p>{LP1_LOADING_MODALS[modalIndex].question}</p>
+            <div className="lp1-loading-modal-actions">
+              {LP1_LOADING_MODALS[modalIndex].options.map((option) => (
+                <button
+                  type="button"
+                  key={option}
+                  onClick={() => setModalIndex(null)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+const LP1_ROUTINE_POINTS: Record<string, number> = {
+  pouco: 0,
+  alguma: 5,
+  metade: 10,
+  muito: 15,
+  tudo: 20,
+};
+
+function getLp1DistanceResult(answers: Lp1Answers) {
+  const routinePoints = LP1_ROUTINE_POINTS[answers.rotina ?? ""] ?? 0;
+  const climatePoints =
+    answers.clima === "honesto" ? 20 : answers.clima === "normal" ? 10 : 0;
+  const travaCount = (answers.travas ?? "").split(",").filter(Boolean).length;
+  const score = Math.min(100, travaCount * 12 + routinePoints + climatePoints);
+  const label = score <= 30 ? "Perto" : score <= 60 ? "Morno" : "Distante";
+  const routineValue =
+    routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
+  const spaceValue =
+    (answers.clima === "leve" || answers.clima === "normal") &&
+    (answers.quando === "hoje" || answers.quando === "dias")
+      ? "alto"
+      : "médio";
+  return { score, label, routineValue, spaceValue };
+}
+
+function Lp1ResultScreen({
+  answers,
+  cards,
+  onContinue,
+}: {
+  answers: Lp1Answers;
+  cards: Lp1TrialCard[];
+  onContinue: () => void;
+}) {
+  const result = getLp1DistanceResult(answers);
+  const mirror = LP1_DOR_ESPELHO[answers.dor ?? "sei-la"] ?? LP1_DOR_ESPELHO["sei-la"];
+  const [meterPosition, setMeterPosition] = useState("0%");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setMeterPosition(`${result.score}%`);
+    }, 40);
+    return () => window.clearTimeout(timer);
+  }, [result.score]);
+
+  return (
+    <section className="lp1-result-screen" data-section-name="s22-clima">
+      <p className="lp1-quiz-eyebrow">O CLIMA DE VOCÊS AGORA</p>
+      <h1 className="lp1-quiz-title">{mirror.title}</h1>
+      <div className="lp1-result-meter-card">
+        <div className="lp1-result-meter-heading">
+          <span>Distância na conversa</span>
+          <strong>{result.label}</strong>
+        </div>
+        <div className="lp1-result-meter">
+          <span
+            className="lp1-result-meter-balloon"
+            style={{ left: meterPosition }}
+          >
+            vocês estão aqui
+          </span>
+          <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
+        </div>
+        <div className="lp1-result-meter-labels">
+          <span>Perto</span>
+          <span>Morno</span>
+          <span>Distante</span>
+        </div>
+        <div className="lp1-result-context">
+          <span aria-hidden="true">ⓘ</span>
+          <p>{mirror.body[0]}</p>
+        </div>
+      </div>
+      <p className="lp1-result-disclaimer">
+        Calculado a partir das respostas que você deu neste teste. Não é diagnóstico
+        clínico — é o retrato do que você acabou de contar.
+      </p>
+      <div className="lp1-result-insights">
+        <div className="lp1-result-insight">
+          <span aria-hidden="true">📉</span>
+          <p>
+            Conversa além da rotina <strong>{result.routineValue}</strong>
+          </p>
+        </div>
+        <div className="lp1-result-insight">
+          <span aria-hidden="true">🌱</span>
+          <p>
+            Espaço para começar hoje <strong>{result.spaceValue}</strong>
+          </p>
+        </div>
+      </div>
+      <div className="lp1-result-plan">
+        <p className="lp1-result-plan-label">PLANO DAS 3 NOITES</p>
+        {cards.slice(0, 3).map((card, index) => (
+          <div className="lp1-result-plan-row" key={`${card.id}-${index}`}>
+            <span>{index + 1}</span>
+            <p>
+              {index === 0 && answers.quando === "hoje" ? "Hoje à noite — " : ""}
+              <strong>{card.deckName}</strong>
+              <br />
+              {card.question}
+            </p>
+          </div>
+        ))}
+      </div>
+      <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
+        Ver o baralho de vocês <ArrowRight size={17} aria-hidden="true" />
+      </button>
+    </section>
   );
 }
 
