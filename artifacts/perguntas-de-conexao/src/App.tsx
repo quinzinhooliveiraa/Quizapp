@@ -1037,6 +1037,7 @@ type Lp1Question = Lp1ScreenBase & {
   options: {
     value: string;
     label: string;
+    description?: string;
     expand?: string;
     icon?: string;
     imageSrc?: string;
@@ -1121,6 +1122,7 @@ type Lp1AnswerKey =
   | "email";
 type Lp1Answers = Partial<Record<Lp1AnswerKey, string>> & {
   cartas?: Record<string, Lp1CartaVerdict>;
+  climaVerdicts?: Record<string, Lp1CartaVerdict>;
 };
 
 const LP1_LEGACY_SCREENS: Lp1Screen[] = [
@@ -1932,15 +1934,48 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     key: "clima",
     eyebrow: "ESCOLHA PELO FEELING",
     title: "Qual clima combina mais com vocês?",
+    subtitle: "Como vocês gostariam que a próxima conversa começasse?",
     format: "clima",
     emoji: true,
     options: [
-      { value: "leve", label: "Leve", icon: "🌿", imageSrc: "/quiz/clima-leve.png" },
-      { value: "conexao", label: "Conexão", icon: "❤️" },
-      { value: "profundo", label: "Profundo", icon: "🧠" },
-      { value: "divertido", label: "Divertido", icon: "😂" },
-      { value: "intimo", label: "Mais íntimo", icon: "🔥" },
-      { value: "distancia", label: "À distância", icon: "🌎" },
+      {
+        value: "leve",
+        label: "Leve",
+        description: "para respirar juntos e sair do automático",
+        icon: "🌿",
+        imageSrc: "/quiz/clima-leve.png",
+      },
+      {
+        value: "conexao",
+        label: "Conexão",
+        description: "para falar do que existe entre vocês",
+        icon: "❤️",
+      },
+      {
+        value: "profundo",
+        label: "Profundo",
+        description: "para descobrir um ao outro de outro jeito",
+        icon: "🌊",
+        imageSrc: "/quiz/clima-honesto.png",
+      },
+      {
+        value: "divertido",
+        label: "Divertido",
+        description: "para rir e deixar a noite mais leve",
+        icon: "😂",
+      },
+      {
+        value: "intimo",
+        label: "Mais íntimo",
+        description: "para reacender a faísca entre vocês",
+        icon: "🔥",
+      },
+      {
+        value: "distancia",
+        label: "À distância",
+        description: "para se sentir perto, mesmo de longe",
+        icon: "🌎",
+      },
     ],
   },
   {
@@ -2370,6 +2405,7 @@ function Lp1Quiz({
   const [showOffer, setShowOffer] = useState(false);
   const [captureAttempted, setCaptureAttempted] = useState(false);
   const [trialCardIndex, setTrialCardIndex] = useState(0);
+  const [climateIndex, setClimateIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
@@ -2393,6 +2429,10 @@ function Lp1Quiz({
       setTrialCardIndex(0);
     }
   }, [current.kind, step]);
+
+  useEffect(() => {
+    setClimateIndex(0);
+  }, [step]);
 
   const selectAnswer = (key: string, value: string) => {
     setAnswers((previous) => lp1AnswersWithAliases(previous, key, value));
@@ -2420,6 +2460,49 @@ function Lp1Quiz({
         advance(nextAnswers);
       }
     }, 220);
+  };
+
+  const selectClimateVerdict = (
+    climateValue: string,
+    verdict: Lp1CartaVerdict,
+  ) => {
+    const climateVerdicts = {
+      ...(answers.climaVerdicts ?? {}),
+      [climateValue]: verdict,
+    };
+    const nextAnswers: Lp1Answers = {
+      ...answers,
+      climaVerdicts: climateVerdicts,
+    };
+    const climateQuestion =
+      current.kind === "question" && current.id === "s18-clima"
+        ? current
+        : null;
+
+    if (!climateQuestion) return;
+
+    if (climateIndex < climateQuestion.options.length - 1) {
+      setAnswers(nextAnswers);
+      setClimateIndex((index) => index + 1);
+      if (typeof navigator !== "undefined") navigator.vibrate?.(10);
+      return;
+    }
+
+    const preferredClimate =
+      climateQuestion.options.find(
+        (option) => climateVerdicts[option.value] === "sim",
+      ) ??
+      climateQuestion.options.find(
+        (option) => climateVerdicts[option.value] === "talvez",
+      ) ??
+      climateQuestion.options[0];
+
+    if (preferredClimate) {
+      nextAnswers.clima = preferredClimate.value;
+    }
+    setAnswers(nextAnswers);
+    if (typeof navigator !== "undefined") navigator.vibrate?.(10);
+    advance(nextAnswers);
   };
 
   const advance = (nextAnswers = answers) => {
@@ -2530,6 +2613,13 @@ function Lp1Quiz({
           <Lp1Diagnosis
             answers={answers as LandingQuizAnswers}
             onContinue={() => setShowOffer(true)}
+          />
+        ) : current.kind === "question" && current.id === "s18-clima" ? (
+          <Lp1ClimatePicker
+            question={current}
+            cardIndex={climateIndex}
+            verdicts={answers.climaVerdicts ?? {}}
+            onVerdict={selectClimateVerdict}
           />
         ) : current.kind === "question" ? (
           <section
@@ -3452,6 +3542,86 @@ function Lp1InfoScreen({
         {isEducationScreen ? "Faz sentido" : screen.cta}{" "}
         <ArrowRight size={17} aria-hidden="true" />
       </button>
+    </section>
+  );
+}
+
+function Lp1ClimatePicker({
+  question,
+  cardIndex,
+  verdicts,
+  onVerdict,
+}: {
+  question: Lp1Question;
+  cardIndex: number;
+  verdicts: Record<string, Lp1CartaVerdict>;
+  onVerdict: (climateValue: string, verdict: Lp1CartaVerdict) => void;
+}) {
+  const option = question.options[cardIndex] ?? question.options[0];
+  if (!option) return null;
+
+  const verdict = verdicts[option.value];
+
+  return (
+    <section className="lp1-climate-screen" data-section-name={question.id}>
+      {question.eyebrow ? (
+        <p className="lp1-quiz-eyebrow">{question.eyebrow}</p>
+      ) : null}
+      <h1 className="lp1-quiz-title">{question.title}</h1>
+      {question.subtitle ? (
+        <p className="lp1-quiz-subtitle">{question.subtitle}</p>
+      ) : null}
+      <div className="lp1-climate-card">
+        {option.imageSrc ? (
+          <img
+            className="lp1-climate-card-image"
+            src={option.imageSrc}
+            alt=""
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        ) : null}
+        <div
+          className={`lp1-climate-card-fallback ${
+            option.imageSrc ? "has-image" : ""
+          }`}
+          aria-hidden="true"
+        >
+          <span>{option.icon}</span>
+        </div>
+        <div className="lp1-climate-card-scrim" aria-hidden="true" />
+        <div className="lp1-climate-card-copy">
+          <strong>
+            {option.icon} {option.label}
+          </strong>
+          <span>{option.description}</span>
+        </div>
+      </div>
+      <div className="lp1-climate-verdicts" aria-label={`Avaliar clima ${option.label}`}>
+        {(
+          [
+            ["nao", "← Outro clima"],
+            ["talvez", "Talvez"],
+            ["sim", "Esse clima →"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={`lp1-climate-verdict ${
+              verdict === value ? "is-selected" : ""
+            }`}
+            onClick={() => onVerdict(option.value, value)}
+            aria-pressed={verdict === value}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="lp1-climate-count">
+        {cardIndex + 1} de {question.options.length} climas
+      </p>
     </section>
   );
 }
