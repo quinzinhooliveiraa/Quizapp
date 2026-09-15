@@ -1350,11 +1350,12 @@ const LP1_LEGACY_SCREENS: Lp1Screen[] = [
     key: "s19-medida",
     title: "O que faria esta experiência valer a pena para você?",
     format: "wide",
+    emoji: true,
     options: [
-      { value: "rir", label: "Rir juntos de novo" },
-      { value: "descobrir", label: "Descobrir algo que eu não sabia" },
-      { value: "aproximar", label: "Me sentir mais perto" },
-      { value: "coragem", label: "Conseguir falar do que importa" },
+      { value: "rir", label: "Rir juntos de novo", icon: "😂" },
+      { value: "descobrir", label: "Descobrir algo que eu não sabia", icon: "🧠" },
+      { value: "aproximar", label: "Me sentir mais perto", icon: "❤️" },
+      { value: "coragem", label: "Conseguir falar do que importa", icon: "💬" },
     ],
   },
   {
@@ -1365,9 +1366,9 @@ const LP1_LEGACY_SCREENS: Lp1Screen[] = [
     format: "cards",
     emoji: true,
     options: [
-      { value: "agora", label: "Hoje à noite", icon: "☼" },
-      { value: "semana", label: "Nos próximos dias", icon: "⌁" },
-      { value: "quando-der", label: "Quando a rotina deixar", icon: "◌" },
+      { value: "agora", label: "Hoje à noite", icon: "🌙" },
+      { value: "semana", label: "Nos próximos dias", icon: "📅" },
+      { value: "quando-der", label: "Quando a rotina deixar", icon: "⏳" },
     ],
   },
   {
