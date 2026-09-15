@@ -1780,14 +1780,13 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
   {
     id: "s08-prova",
     kind: "proof",
-    eyebrow: "VOCÊ NÃO É A ÚNICA",
-    title: "Você não é a única pessoa que sente isso.",
+    eyebrow: "+500 CASAIS",
+    title: "já encontraram novas formas de se conectar.",
     body: [
-      '“Eu já sabia que ele ia responder "não sei" pra tudo 😂”',
-      "“A gente parou de conversar sem perceber.”",
-      "“Salvei essas perguntas há meses e nunca usei.”",
-      "É justamente por isso que as perguntas precisam ser boas.",
+      "Casais que reservaram alguns minutos para conversar relataram mais proximidade depois de usar nossas perguntas.",
+      "Talvez essa seja a conversa que estava faltando para vocês.",
     ],
+    source: "Dados de uma pesquisa com casais que usaram o baralho.",
     cta: "Continuar",
   },
   {
@@ -3263,10 +3262,27 @@ function Lp1InfoScreen({
   screen: Lp1NarrativeScreen;
   onContinue: () => void;
 }) {
+  const isProofScreen = screen.id === "s08-prova";
+
   return (
-    <section className="lp1-info-screen" data-section-name={screen.id}>
-      {screen.eyebrow ? <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p> : null}
+    <section
+      className={`lp1-info-screen ${isProofScreen ? "lp1-proof-screen" : ""}`}
+      data-section-name={screen.id}
+    >
+      {isProofScreen ? (
+        <div className="lp1-proof-stat">{screen.eyebrow}</div>
+      ) : screen.eyebrow ? (
+        <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p>
+      ) : null}
       <h1 className="lp1-quiz-title">{screen.title}</h1>
+      {isProofScreen ? (
+        <div className="lp1-proof-art">
+          <img
+            src="/proof-couples-orbits.png"
+            alt="Casais conectados em círculos ao redor de um casal"
+          />
+        </div>
+      ) : null}
       {screen.body?.map((paragraph) => (
         <p className="lp1-info-body" key={paragraph}>
           {paragraph}
