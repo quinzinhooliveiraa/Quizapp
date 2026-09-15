@@ -492,6 +492,9 @@ export function Lp1SalePage({
           melhor lugar para começar. Depois, os outros baralhos ficam abertos
           para cada fase, clima e vontade.
         </p>
+        <p className="lp1-sale-deck-scroll-hint" aria-hidden="true">
+          Deslize para ver todos os baralhos →
+        </p>
         <div className="lp1-sale-deck-grid">
           {connectionThemes.map((theme) => (
             <article

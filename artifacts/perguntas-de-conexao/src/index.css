@@ -1409,15 +1409,43 @@
 
 .lp1-sale-deck-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8rem;
-  margin-top: 2.5rem;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 84%);
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0.35rem auto 0;
+  overflow-x: auto;
+  padding: 0.2rem 0.1rem 0.85rem;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.lp1-sale-deck-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.lp1-sale-deck-scroll-hint {
+  margin: 1.6rem auto -0.9rem;
+  color: #e8c98a;
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+@media (min-width: 700px) {
+  .lp1-sale-deck-grid {
+    grid-auto-columns: minmax(17rem, 31%);
+  }
 }
 
 .lp1-sale-deck-card {
   position: relative;
-  min-height: 12rem;
+  min-height: 19rem;
   overflow: hidden;
+  scroll-snap-align: start;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.9rem;
   background: #211827;
@@ -1449,7 +1477,7 @@
   position: relative;
   z-index: 1;
   display: flex;
-  min-height: 12rem;
+  min-height: 19rem;
   flex-direction: column;
   justify-content: flex-end;
   padding: 1rem;
@@ -1893,8 +1921,7 @@
   }
 
   .lp1-sale-recap-grid,
-  .lp1-sale-benefit-grid,
-  .lp1-sale-deck-grid {
+  .lp1-sale-benefit-grid {
     grid-template-columns: 1fr;
   }
 
