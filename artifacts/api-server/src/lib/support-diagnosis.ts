@@ -22,14 +22,14 @@ export function getSupportDiagnosis(
   if (!normalizedTopic) return null;
 
   const normalizedAccessStatus = normalizeAccessStatus(accessStatus);
-  if (normalizedAccessStatus === "desconhecido") {
-    return {
-      translation: "Não consegui verificar o e-mail dela automaticamente.",
-      action: "Conferir na mão na aba Compradores.",
-    };
-  }
 
   if (normalizedTopic === "sem_acesso") {
+    if (normalizedAccessStatus === "desconhecido") {
+      return {
+        translation: "Não consegui verificar o e-mail dela automaticamente.",
+        action: "Conferir na mão na aba Compradores.",
+      };
+    }
     if (normalizedAccessStatus === "tem_acesso") {
       return {
         translation: "O acesso está liberado — ela só não está conseguindo entrar.",
@@ -52,6 +52,12 @@ export function getSupportDiagnosis(
   }
 
   if (normalizedTopic === "email_nao_chegou") {
+    if (normalizedAccessStatus === "desconhecido") {
+      return {
+        translation: "Não consegui verificar o e-mail dela automaticamente.",
+        action: "Conferir na mão na aba Compradores.",
+      };
+    }
     if (normalizedAccessStatus === "tem_acesso") {
       return {
         translation:

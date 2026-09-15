@@ -245,6 +245,7 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
       .where(
         and(
           eq(sessionsTable.accessGranted, false),
+          eq(sessionsTable.internal, false),
           gte(sessionsTable.createdAt, since),
         ),
       )

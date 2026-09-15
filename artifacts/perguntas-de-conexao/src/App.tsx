@@ -4798,12 +4798,6 @@ function SupportDialog() {
   if (!open) return null;
 
   const purchaseEmailRequired = supportTopicNeedsPurchaseEmail(topic);
-  const canSubmit =
-    isSupportEmail(email) &&
-    Boolean(topic) &&
-    (!purchaseEmailRequired || isSupportEmail(purchaseEmail)) &&
-    (topic !== "outro" || Boolean(message.trim()));
-
   const sendSupportMessage = async () => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPurchaseEmail = purchaseEmail.trim().toLowerCase();
@@ -4813,7 +4807,7 @@ function SupportDialog() {
       !normalizedEmail ||
       !isSupportEmail(normalizedEmail)
     ) {
-      setError("Digite um e-mail válido.");
+      setError("Digite um e-mail válido para eu te responder.");
       return;
     }
     if (!topic) {
@@ -4909,6 +4903,11 @@ function SupportDialog() {
       return;
     }
     if (step === 2) {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!normalizedEmail || !isSupportEmail(normalizedEmail)) {
+        setError("Digite um e-mail válido para eu te responder.");
+        return;
+      }
       const normalizedPurchaseEmail = purchaseEmail.trim().toLowerCase();
       if (
         purchaseEmailRequired &&
@@ -4957,6 +4956,7 @@ function SupportDialog() {
           </>
         ) : (
           <form
+            noValidate
             onSubmit={(event) => {
               event.preventDefault();
               void sendSupportMessage();
@@ -5124,7 +5124,7 @@ function SupportDialog() {
               ) : (
                 <button
                   type="submit"
-                   disabled={status === "sending" || !canSubmit}
+                  disabled={status === "sending"}
                   className="app-primary-button"
                   data-testid="button-send-support"
                 >
