@@ -1987,6 +1987,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     title: "O que você gostaria de conseguir com essa experiência?",
     subtitle: "Escolha tudo que fizer sentido.",
     format: "multi",
+    emoji: true,
     options: [
       { value: "proximo", label: "Me sentir mais próximo", icon: "❤️" },
       { value: "novas", label: "Conhecer coisas novas", icon: "🧠" },
@@ -2003,11 +2004,16 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     key: "urgencia",
     title: "Quando você gostaria de ter uma noite diferente com ele?",
     format: "single",
+    emoji: true,
     options: [
-      { value: "hoje", label: "Hoje" },
-      { value: "proximos-dias", label: "Nos próximos dias" },
-      { value: "essa-semana", label: "Essa semana" },
-      { value: "oportunidade", label: "Quando surgir uma oportunidade" },
+      { value: "hoje", label: "Hoje", icon: "🌙" },
+      { value: "proximos-dias", label: "Nos próximos dias", icon: "📅" },
+      { value: "essa-semana", label: "Essa semana", icon: "🗓️" },
+      {
+        value: "oportunidade",
+        label: "Quando surgir uma oportunidade",
+        icon: "⏳",
+      },
     ],
   },
   {
