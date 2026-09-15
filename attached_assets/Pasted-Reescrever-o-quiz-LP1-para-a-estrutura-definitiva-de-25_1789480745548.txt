@@ -1,0 +1,128 @@
+Reescrever o quiz LP1 para a estrutura definitiva de 25 telas (quiz) abaixo.
+Substituir o array LP1_SCREENS inteiro. Reaproveitar os tipos de tela que já
+existem (single, multi, cards, clima, photo, chart, loading, result, capture) e
+o design system atual (fundo #16111c, dourado #e8c98a, serif Instrument, mono
+Space). Manter data-section-name={id} em cada tela para o tracking.
+
+REGRAS DE DESIGN (valem para todas — vieram de feedback e não podem faltar):
+- Emojis/ícones SEMPRE alinhados: num flex com o label, align-items:center, o
+  emoji num span de largura fixa 34px text-align:center. Nunca desalinhado.
+- Tela com TEXTO pra ler (card/educação/social/epifania) tem BOTÃO "Continuar".
+  NUNCA auto-avança. Só tela de escolha única simples auto-avança (280ms).
+- Multi-select: checkbox à direita, botão "Continuar" no rodapé (min 1).
+- Onde houver imagem, usar imagem real (public/quiz/…), não só emoji.
+- Barra do loading PAUSA quando um modal aparece e retoma depois de responder.
+
+═══ T1 — ABERTURA (kind:"photo", é a 1ª tela do quiz) ═══
+Foto sangrando a tela (public/quiz/capa.jpg — casal intimista, vinho/roxo/dourado).
+Título: "Chega de "sei lá"." (— "sei lá" em itálico dourado)
+Corpo: "Descubra em menos de 2 minutos o que pode estar faltando pra vocês se
+sentirem mais próximos — e veja como começar uma conversa diferente ainda hoje."
+Botão: "Quero descobrir"
+Nota abaixo (mono 11px #9d92a6): "É grátis. Não precisa escrever nada."
+
+═══ T2 single "momento" — "Hoje, vocês estão em qual momento?" (cards)
+❤️ Namorando · 💍 Casados · 🌎 À distância · ✨ Começando agora · 🫶 Em reconexão
+
+═══ T3 single "tempo" — "Há quanto tempo vocês estão juntos?" (cards)
+Menos de 6 meses · 6 meses a 1 ano · 1 a 3 anos · 3 a 5 anos · 5 a 10 anos · Mais de 10 anos
+
+═══ T4 multi "conversas" — "Quando vocês conversam, é mais sobre…" (multi, min 1)
+💼 Trabalho/estudos · 🏠 Rotina/casa · 😂 Besteira e brincadeiras · ❤️ Nós dois ·
+🧠 Coisas pessoais · 🔥 Intimidade · 📱 Um pouco de tudo
+
+═══ T5 single "sei-la" — "Quando você tenta puxar uma conversa diferente, o que
+normalmente acontece?"
+😶 "Sei lá." · 🤷 "Não sei." · 😐 Responde, mas fica superficial · 🔄 Muda de assunto ·
+💬 Às vezes rende · 🔥 Quando começa, vai longe
+
+═══ T6 single "inicia" — "Quem normalmente começa essas conversas?"
+🙋 Eu quase sempre · 🙂 Geralmente eu · 🫶 Os dois · 😅 Geralmente meu parceiro · 🤐 Nenhum dos dois
+
+═══ T7 single "celular" — "E o celular? Quanto ele entra no meio dos momentos de vocês?"
+📱 Muito · 🙂 Às vezes · 😌 Pouco · ❤️ Quase nunca
+
+═══ T8 proof (kind:"proof", COM botão) — "Você não é a única pessoa que sente isso."
+Mostrar 3 balões estilo DM/comentário real:
+  "Eu já sabia que ele ia responder 'não sei' pra tudo 😂"
+  "A gente parou de conversar sem perceber."
+  "Salvei essas perguntas há meses e nunca usei."
+Fecho: "É justamente por isso que as perguntas precisam ser boas." Sem venda. Botão "Continuar".
+
+═══ T9 cards-imagem "desejo_noite" — "Se pudesse escolher uma dessas noites pra
+vocês, qual seria?" (grid 2x2 de IMAGENS, seleção única)
+public/quiz/noite-proximos.jpg "Ficar mais próximos" ·
+public/quiz/noite-rir.jpg "Rir juntos" ·
+public/quiz/noite-conversar.jpg "Conversar de verdade" ·
+public/quiz/noite-quimica.jpg "Reacender a química"
+(se a imagem faltar, cai no emoji ❤️😂🧠🔥 — não quebra)
+
+═══ T10 single "sentir" — "O que você mais gostaria de sentir depois dessa conversa?"
+❤️ "Parece que a gente se encontrou de novo." · 🫶 "Sinto que ele me entende melhor." ·
+😂 "A gente riu muito." · 🧠 "Descobri algo que não sabia." · 🔥 "A gente voltou a ter química."
+
+═══ T11 single "conhece" — "Você sente que ainda conhece seu parceiro tão bem quanto antes?"
+❤️ Sim · 🙂 Mais ou menos · 🤔 Às vezes sinto que não · 😶 Não muito
+
+═══ T12 single "nunca-perguntou" — "Existe algo que você gostaria de perguntar pra
+ele, mas nunca perguntou?"
+❤️ Várias · 🙂 Algumas · 🤔 Nem sei o que perguntar · 😬 Tenho vergonha · 🙅 Não
+
+═══ T13 multi "atrapalha" — "O que mais dificulta vocês terem conversas diferentes?"
+(multi, min 1) Não sei como começar · Não sei o que perguntar · Meu parceiro não
+entra na conversa · A rotina toma conta · Tenho vergonha · Tenho medo da resposta ·
+A gente não para pra isso
+
+═══ T14 info (COM botão) — EDUCAÇÃO — "Talvez o problema não seja vocês."
+Corpo: "Uma conversa boa não depende de alguém ser 'bom de conversa'. Às vezes
+vocês só precisam de uma pergunta que dê vontade de responder." Visual minimalista.
+Sem venda. Botão "Continuar".
+
+═══ T15 single "objecao" — "E se ele responder 'sei lá'? Escolha o que mais parece
+com o que você pensa:"
+😶 "Ele vai responder sei lá mesmo." · 😅 "Ele vai achar estranho." ·
+🤔 "Talvez funcione." · ❤️ "Se a pergunta for boa, ele entra."
+
+═══ T16 single "experimentar" — "Se as perguntas começassem leves e fossem ficando
+mais profundas conforme vocês se sentissem à vontade, você gostaria de experimentar?"
+❤️ Sim · 🙂 Com certeza · 🤔 Acho que sim · 😬 Talvez
+
+═══ T17 single "clima" — "Qual clima combina mais com vocês hoje?" (usa imagens se houver)
+🌿 Leve · ❤️ Conexão · 🧠 Profundo · 😂 Divertido · 🔥 Mais íntimo · 🌎 À distância
+
+═══ T18 multi "encontrar" — "O que você gostaria de encontrar nas perguntas?" (multi)
+❤️ Me sentir mais próximo · 🧠 Conhecer coisas novas · 😂 Rir mais · 🫶 Falar de
+sentimentos · 🔥 Reacender o desejo · 🌎 Me conectar à distância · ✨ Sair da rotina
+
+═══ T19 single "urgencia" — "Quando você gostaria de ter uma noite diferente com ele?"
+❤️ Hoje · Nos próximos dias · Essa semana · Quando surgir uma oportunidade
+
+═══ T20 single "ultimo" — "Se você pudesse começar essa conversa hoje, gostaria de
+ter as perguntas certas na mão?"
+❤️ Sim, quero · 🥺 Muito · 🙂 Seria ótimo · 🤔 Acho que ajudaria
+
+═══ T21–T23 LOADING (3 etapas, barra circular). A barra PAUSA nos modais.
+T21 23% — "Analisando suas respostas…" ✓ Entendendo o momento de vocês ✓ Identificando o que trava as conversas
+T22 57% — "Encontrando o melhor caminho pra vocês…" ✓ Seu tipo de conexão ✓ O que você quer mudar ✓ O que mais dificulta
+T23 89% — "Seu resultado está quase pronto…" + depoimento:
+  "Achei que ele ia responder 'sei lá'… no final a gente ficou um tempão conversando 😂❤️"
+Depoimentos passando durante; a barra só completa depois que o depoimento aparece.
+
+═══ T24 capture — "Seu resultado está pronto ❤️ Quer receber uma cópia?"
+Campo e-mail (id estável, valida formato), botão "Ver meu resultado". Abaixo:
+"ver sem e-mail →" (link discreto que avança). Nota: "Sem spam. Só o seu resultado
+e, se fizer sentido, algumas dicas."
+
+═══ T25 result — "O momento das conversas de vocês" (NÃO chamar de diagnóstico
+psicológico). Título dinâmico + medidor honroso já existente. Resumo em fichas a
+partir das respostas reais (❤️ Conexão / 💬 Conversas / 📱 Distração / 😶 Obstáculo /
+✨ Desejo). Disclaimer: "Não é diagnóstico clínico — é o retrato do que você contou."
+Imagem no quadrinho do resultado. Botão: "Ver o que preparei pra vocês" → inicia a VENDA (T26+).
+
+CONFERIR E COLAR:
+1. Percorrer as 25 telas no preview sem erro de console.
+2. Emojis alinhados em toda opção (nenhum torto).
+3. Telas T8/T14 têm botão e não auto-avançam.
+4. A barra do loading para quando o modal aparece.
+5. grep "scrollIntoView" — o do onFocus do e-mail captura o nó antes do setTimeout
+   (const el = event.currentTarget) pra não estourar null.

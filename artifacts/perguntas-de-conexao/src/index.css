@@ -331,6 +331,22 @@
   text-align: center;
 }
 
+.lp1-quiz-format-cards .lp1-thumb {
+  display: block;
+  width: 100%;
+  max-height: 7rem;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.lp1-image-fallback {
+  display: none;
+  min-height: 5rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .lp1-quiz-format-scale,
 .lp1-quiz-format-clima {
   grid-template-columns: repeat(5, minmax(0, 1fr));

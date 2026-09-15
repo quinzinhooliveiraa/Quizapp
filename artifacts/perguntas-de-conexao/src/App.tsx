@@ -1096,6 +1096,7 @@ type Lp1AnswerKey =
   | "fase"
   | "travas"
   | "dor"
+  | "sei-la-mapeado"
   | "rotina"
   | "clima"
   | "objecao"
@@ -1574,29 +1575,38 @@ const LP1_SCREEN_ONE_TO_TEN: Lp1Screen[] = [
 ];
 
 const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
+  {
+    id: "s16-experimentar",
+    kind: "question",
+    eyebrow: "O RITMO DE VOCÊS",
+    key: "profundidade",
+    title:
+      "Se as perguntas começassem leves e fossem ficando mais profundas conforme vocês se sentissem à vontade, você gostaria de experimentar?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "leve", label: "Sim", icon: "❤️" },
+      { value: "honesta", label: "Com certeza", icon: "🙂" },
+      { value: "fundo", label: "Acho que sim", icon: "🤔" },
+      { value: "talvez", label: "Talvez", icon: "😬" },
+    ],
+  },
   ...Array.from({ length: 5 }, (_, index): Lp1TrialCardScreen => ({
-    id: `s${String(index + 11).padStart(2, "0")}-carta`,
+    id: `s${String(index + 17).padStart(2, "0")}-carta`,
     kind: "trial-card",
     key: "cartas",
     eyebrow: "UMA CARTA DE VERDADE",
     title: "É pra vocês?",
   })),
   {
-    id: "s16-escolhas",
-    kind: "trial-chart",
-    eyebrow: "O QUE VOCÊS ESCOLHERAM",
-    title: "",
-    cta: "Continuar",
-  },
-  {
-    id: "s17-diferenca",
+    id: "s22-diferenca",
     kind: "table",
     eyebrow: "A DIFERENÇA",
     title: "Vocês já tentaram conversar. Não é disso que falta.",
     cta: "Continuar",
   },
   {
-    id: "s18-profundidade",
+    id: "s23-profundidade",
     kind: "question",
     eyebrow: "O RITMO DE HOJE",
     key: "profundidade",
@@ -1610,7 +1620,7 @@ const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
     ],
   },
   {
-    id: "s19-quando",
+    id: "s24-quando",
     kind: "question",
     eyebrow: "QUANDO COMEÇA",
     key: "quando",
@@ -1624,7 +1634,7 @@ const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
     ],
   },
   {
-    id: "s20-resultado",
+    id: "s25-resultado",
     kind: "capture",
     eyebrow: "SEU RESULTADO",
     key: "email",
@@ -1633,7 +1643,7 @@ const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
     cta: "Continuar",
   },
   {
-    id: "s21-carregando",
+    id: "s26-carregando",
     kind: "loading",
     eyebrow: "SEU RESULTADO",
     title: "Lendo as suas respostas…",
@@ -1641,7 +1651,7 @@ const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
     cta: "",
   },
   {
-    id: "s22-clima",
+    id: "s27-clima",
     kind: "result",
     eyebrow: "O CLIMA DE VOCÊS AGORA",
     title: "",
@@ -1649,10 +1659,362 @@ const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
   },
 ];
 
-const LP1_SCREENS: Lp1Screen[] = [
+const LP1_SCREENS_LEGACY: Lp1Screen[] = [
   ...LP1_SCREEN_ONE_TO_TEN,
   ...LP1_SCREEN_ELEVEN_TO_TWENTY_TWO,
 ];
+
+const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
+  {
+    id: "s01-abertura",
+    kind: "photo",
+    image: "/hero/hero-casal-novo-mobile.webp",
+    title: 'Chega de "sei lá".',
+    body: [
+      "Descubra em menos de 2 minutos o que pode estar faltando pra vocês se sentirem mais próximos — e veja como começar uma conversa diferente ainda hoje.",
+      "É grátis. Não precisa escrever nada.",
+    ],
+    cta: "Quero descobrir",
+  },
+  {
+    id: "s02-momento",
+    kind: "question",
+    key: "momento",
+    title: "Hoje, vocês estão em qual momento?",
+    format: "cards",
+    emoji: true,
+    options: [
+      { value: "namorando", label: "Namorando", icon: "❤️" },
+      { value: "casados", label: "Casados", icon: "💍" },
+      { value: "distancia", label: "À distância", icon: "🌎" },
+      { value: "comecando", label: "Começando agora", icon: "✨" },
+      { value: "reconexao", label: "Em reconexão", icon: "🫶" },
+    ],
+  },
+  {
+    id: "s03-tempo",
+    kind: "question",
+    key: "tempo",
+    title: "Há quanto tempo vocês estão juntos?",
+    format: "cards",
+    options: [
+      { value: "menos-seis", label: "Menos de 6 meses" },
+      { value: "seis-um", label: "6 meses a 1 ano" },
+      { value: "um-tres", label: "1 a 3 anos" },
+      { value: "tres-cinco", label: "3 a 5 anos" },
+      { value: "cinco-dez", label: "5 a 10 anos" },
+      { value: "mais-dez", label: "Mais de 10 anos" },
+    ],
+  },
+  {
+    id: "s04-conversas",
+    kind: "question",
+    key: "conversas",
+    title: "Quando vocês conversam, é mais sobre…",
+    format: "multi",
+    emoji: true,
+    options: [
+      { value: "trabalho", label: "Trabalho/estudos", icon: "💼" },
+      { value: "rotina", label: "Rotina/casa", icon: "🏠" },
+      { value: "besteira", label: "Besteira e brincadeiras", icon: "😂" },
+      { value: "nos-dois", label: "Nós dois", icon: "❤️" },
+      { value: "pessoal", label: "Coisas pessoais", icon: "🧠" },
+      { value: "intimidade", label: "Intimidade", icon: "🔥" },
+      { value: "tudo", label: "Um pouco de tudo", icon: "📱" },
+    ],
+  },
+  {
+    id: "s05-sei-la",
+    kind: "question",
+    key: "sei-la-mapeado",
+    title: "Quando você tenta puxar uma conversa diferente, o que normalmente acontece?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "sei-la", label: '"Sei lá."', icon: "😶" },
+      { value: "nao-sei", label: '"Não sei."', icon: "🤷" },
+      { value: "superficial", label: "Responde, mas fica superficial", icon: "😐" },
+      { value: "muda-assunto", label: "Muda de assunto", icon: "🔄" },
+      { value: "rende", label: "Às vezes rende", icon: "💬" },
+      { value: "vai-longe", label: "Quando começa, vai longe", icon: "🔥" },
+    ],
+  },
+  {
+    id: "s05b-dor-espelho",
+    kind: "photo",
+    eyebrow: "O QUE TRAVA",
+    title: "",
+    body: [],
+    cta: "Continuar",
+  },
+  {
+    id: "s06-inicia",
+    kind: "question",
+    key: "inicia",
+    title: "Quem normalmente começa essas conversas?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "eu-quase", label: "Eu quase sempre", icon: "🙋" },
+      { value: "eu-geralmente", label: "Geralmente eu", icon: "🙂" },
+      { value: "os-dois", label: "Os dois", icon: "🫶" },
+      { value: "parceiro", label: "Geralmente meu parceiro", icon: "😅" },
+      { value: "nenhum", label: "Nenhum dos dois", icon: "🤐" },
+    ],
+  },
+  {
+    id: "s07-celular",
+    kind: "question",
+    key: "celular",
+    title: "E o celular? Quanto ele entra no meio dos momentos de vocês?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "muito", label: "Muito", icon: "📱" },
+      { value: "as-vezes", label: "Às vezes", icon: "🙂" },
+      { value: "pouco", label: "Pouco", icon: "😌" },
+      { value: "quase-nunca", label: "Quase nunca", icon: "❤️" },
+    ],
+  },
+  {
+    id: "s08-prova",
+    kind: "proof",
+    eyebrow: "VOCÊ NÃO É A ÚNICA",
+    title: "Você não é a única pessoa que sente isso.",
+    body: [
+      '“Eu já sabia que ele ia responder "não sei" pra tudo 😂”',
+      "“A gente parou de conversar sem perceber.”",
+      "“Salvei essas perguntas há meses e nunca usei.”",
+      "É justamente por isso que as perguntas precisam ser boas.",
+    ],
+    cta: "Continuar",
+  },
+  {
+    id: "s09-desejo-noite",
+    kind: "question",
+    key: "desejo_noite",
+    title: "Se pudesse escolher uma dessas noites pra vocês, qual seria?",
+    format: "cards",
+    options: [
+      {
+        value: "proximos",
+        label: "Ficar mais próximos",
+        icon: "❤️",
+        imageSrc: "/quiz/noite-proximos.jpg",
+      },
+      {
+        value: "rir",
+        label: "Rir juntos",
+        icon: "😂",
+        imageSrc: "/quiz/noite-rir.jpg",
+      },
+      {
+        value: "conversar",
+        label: "Conversar de verdade",
+        icon: "🧠",
+        imageSrc: "/quiz/noite-conversar.jpg",
+      },
+      {
+        value: "quimica",
+        label: "Reacender a química",
+        icon: "🔥",
+        imageSrc: "/quiz/noite-quimica.jpg",
+      },
+    ],
+  },
+  {
+    id: "s10-sentir",
+    kind: "question",
+    key: "sentir",
+    title: "O que você mais gostaria de sentir depois dessa conversa?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "encontrou", label: "Parece que a gente se encontrou de novo.", icon: "❤️" },
+      { value: "entende", label: "Sinto que ele me entende melhor.", icon: "🫶" },
+      { value: "riu", label: "A gente riu muito.", icon: "😂" },
+      { value: "descobriu", label: "Descobri algo que não sabia.", icon: "🧠" },
+      { value: "quimica", label: "A gente voltou a ter química.", icon: "🔥" },
+    ],
+  },
+  {
+    id: "s11-conhece",
+    kind: "question",
+    key: "conhece",
+    title: "Você sente que ainda conhece seu parceiro tão bem quanto antes?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "sim", label: "Sim", icon: "❤️" },
+      { value: "mais-ou-menos", label: "Mais ou menos", icon: "🙂" },
+      { value: "as-vezes-nao", label: "Às vezes sinto que não", icon: "🤔" },
+      { value: "nao-muito", label: "Não muito", icon: "😶" },
+    ],
+  },
+  {
+    id: "s12-nunca-perguntou",
+    kind: "question",
+    key: "nunca-perguntou",
+    title: "Existe algo que você gostaria de perguntar pra ele, mas nunca perguntou?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "varias", label: "Várias", icon: "❤️" },
+      { value: "algumas", label: "Algumas", icon: "🙂" },
+      { value: "nem-sei", label: "Nem sei o que perguntar", icon: "🤔" },
+      { value: "vergonha", label: "Tenho vergonha", icon: "😬" },
+      { value: "nao", label: "Não", icon: "🙅" },
+    ],
+  },
+  {
+    id: "s13-atrapalha",
+    kind: "question",
+    key: "atrapalha",
+    title: "O que mais dificulta vocês terem conversas diferentes?",
+    subtitle: "Marque tudo que fizer sentido.",
+    format: "multi",
+    options: [
+      { value: "comecar", label: "Não sei como começar" },
+      { value: "perguntar", label: "Não sei o que perguntar" },
+      { value: "nao-entra", label: "Meu parceiro não entra na conversa" },
+      { value: "rotina", label: "A rotina toma conta" },
+      { value: "vergonha", label: "Tenho vergonha" },
+      { value: "medo", label: "Tenho medo da resposta" },
+      { value: "nao-para", label: "A gente não para pra isso" },
+    ],
+  },
+  {
+    id: "s14-educacao",
+    kind: "info",
+    eyebrow: "UMA IDEIA IMPORTANTE",
+    title: "Talvez o problema não seja vocês.",
+    body: [
+      "Uma conversa boa não depende de alguém ser “bom de conversa”. Às vezes vocês só precisam de uma pergunta que dê vontade de responder.",
+    ],
+    cta: "Continuar",
+  },
+  {
+    id: "s15-objecao",
+    kind: "question",
+    key: "objecao",
+    title: 'E se ele responder "sei lá"? Escolha o que mais parece com o que você pensa:',
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "ele-sei-la", label: 'Ele vai responder "sei lá" mesmo.', icon: "😶" },
+      { value: "estranho", label: "Ele vai achar estranho.", icon: "😅" },
+      { value: "talvez-funcione", label: "Talvez funcione.", icon: "🤔" },
+      { value: "se-boa", label: "Se a pergunta for boa, ele entra.", icon: "❤️" },
+    ],
+  },
+  {
+    id: "s16-experimentar",
+    kind: "question",
+    key: "profundidade",
+    title:
+      "Se as perguntas começassem leves e fossem ficando mais profundas conforme vocês se sentissem à vontade, você gostaria de experimentar?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "sim", label: "Sim", icon: "❤️" },
+      { value: "com-certeza", label: "Com certeza", icon: "🙂" },
+      { value: "acho-que-sim", label: "Acho que sim", icon: "🤔" },
+      { value: "talvez", label: "Talvez", icon: "😬" },
+    ],
+  },
+  {
+    id: "s17-cartas",
+    kind: "trial-card",
+    key: "cartas",
+    eyebrow: "UMA CARTA DE VERDADE",
+    title: "É pra vocês?",
+  },
+  {
+    id: "s18-clima",
+    kind: "question",
+    key: "clima",
+    title: "Qual clima combina mais com vocês hoje?",
+    format: "clima",
+    emoji: true,
+    options: [
+      { value: "leve", label: "Leve", icon: "🌿", imageSrc: "/quiz/clima-leve.png" },
+      { value: "conexao", label: "Conexão", icon: "❤️" },
+      { value: "profundo", label: "Profundo", icon: "🧠" },
+      { value: "divertido", label: "Divertido", icon: "😂" },
+      { value: "intimo", label: "Mais íntimo", icon: "🔥" },
+      { value: "distancia", label: "À distância", icon: "🌎" },
+    ],
+  },
+  {
+    id: "s19-encontrar",
+    kind: "question",
+    key: "encontrar",
+    title: "O que você gostaria de encontrar nas perguntas?",
+    format: "multi",
+    options: [
+      { value: "proximo", label: "Me sentir mais próximo" },
+      { value: "novas", label: "Conhecer coisas novas" },
+      { value: "rir", label: "Rir mais" },
+      { value: "sentimentos", label: "Falar de sentimentos" },
+      { value: "desejo", label: "Reacender o desejo" },
+      { value: "distancia", label: "Me conectar à distância" },
+      { value: "rotina", label: "Sair da rotina" },
+    ],
+  },
+  {
+    id: "s20-urgencia",
+    kind: "question",
+    key: "urgencia",
+    title: "Quando você gostaria de ter uma noite diferente com ele?",
+    format: "single",
+    options: [
+      { value: "hoje", label: "Hoje" },
+      { value: "proximos-dias", label: "Nos próximos dias" },
+      { value: "essa-semana", label: "Essa semana" },
+      { value: "oportunidade", label: "Quando surgir uma oportunidade" },
+    ],
+  },
+  {
+    id: "s21-ultimo",
+    kind: "question",
+    key: "ultimo",
+    title: "Se você pudesse começar essa conversa hoje, gostaria de ter as perguntas certas na mão?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "sim-quero", label: "Sim, quero", icon: "❤️" },
+      { value: "muito", label: "Muito", icon: "🥺" },
+      { value: "otimo", label: "Seria ótimo", icon: "🙂" },
+      { value: "ajudaria", label: "Acho que ajudaria", icon: "🤔" },
+    ],
+  },
+  {
+    id: "s22-carregando",
+    kind: "loading",
+    eyebrow: "SEU RESULTADO",
+    title: "Seu resultado está quase pronto…",
+    body: [],
+    cta: "",
+  },
+  {
+    id: "s23-resultado",
+    kind: "capture",
+    eyebrow: "SEU RESULTADO",
+    key: "email",
+    title: "Seu resultado está pronto ❤️ Quer receber uma cópia?",
+    body: ["Sem spam. Só o seu resultado e, se fizer sentido, algumas dicas."],
+    cta: "Ver meu resultado",
+  },
+  {
+    id: "s24-clima",
+    kind: "result",
+    eyebrow: "O MOMENTO DAS CONVERSAS DE VOCÊS",
+    title: "",
+    cta: "Ver o que preparei pra vocês",
+  },
+];
+
+const LP1_SCREENS: Lp1Screen[] = LP1_DEFINITIVE_SCREENS;
 
 const LP1_DOR_ESPELHO: Record<
   string,
@@ -1706,6 +2068,12 @@ const LP1_TRIAL_DEPTHS = [
   "honest",
 ] as const;
 
+const LP1_CLIMA_DECKS: Record<string, string[]> = {
+  leve: ["modo-leve", "perto-de-novo"],
+  normal: ["porto-seguro", "voce-nao-sabia"],
+  honesto: ["livro-aberto", "depois-da-tempestade"],
+};
+
 type Lp1TrialCard = {
   id: string;
   deckId: string;
@@ -1715,9 +2083,10 @@ type Lp1TrialCard = {
 
 function getLp1TrialCards(answers: Lp1Answers): Lp1TrialCard[] {
   const selectedTravas = (answers.travas ?? "").split(",").filter(Boolean);
-  const pointedDecks = selectedTravas.flatMap(
-    (trava) => LP1_TRAVA_DECKS[trava] ?? [],
-  );
+  const pointedDecks = [
+    ...selectedTravas.flatMap((trava) => LP1_TRAVA_DECKS[trava] ?? []),
+    ...(LP1_CLIMA_DECKS[answers.clima ?? ""] ?? []),
+  ];
   const deckIds: string[] = [];
   const addDeck = (deckId: string) => {
     if (!deckIds.includes(deckId)) deckIds.push(deckId);
@@ -1770,8 +2139,10 @@ function lp1AnswersWithAliases(
     next.theme = value === "perdidos" ? "porto-seguro" : "livro-aberto";
     next.intensity = value === "perdidos" ? "deep" : "gentle";
   }
-  if (key === "dor") {
+  if (key === "dor" || key === "sei-la-mapeado") {
+    next.dor = value;
     next.pain = value;
+    next["sei-la-mapeado"] = value;
     next.intensity =
       value === "medo" || value === "afastamento" ? "deep" : "honest";
     next.theme = value === "afastamento" ? "porto-seguro" : "livro-aberto";
@@ -2000,6 +2371,7 @@ function Lp1Quiz({
   const [answers, setAnswers] = useState<Lp1Answers>({});
   const [showOffer, setShowOffer] = useState(false);
   const [captureAttempted, setCaptureAttempted] = useState(false);
+  const [trialCardIndex, setTrialCardIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
@@ -2008,7 +2380,7 @@ function Lp1Quiz({
       ? answers[current.key as Lp1AnswerKey]
       : "";
   const selectedValue = typeof selectedAnswer === "string" ? selectedAnswer : "";
-  const visualStep = Math.min(step + 1, 22);
+  const visualStep = Math.min(step + 1, LP1_SCREENS.length);
 
   useEffect(() => {
     return () => {
@@ -2017,6 +2389,12 @@ function Lp1Quiz({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (current.kind !== "trial-card") {
+      setTrialCardIndex(0);
+    }
+  }, [current.kind, step]);
 
   const selectAnswer = (key: string, value: string) => {
     setAnswers((previous) => lp1AnswersWithAliases(previous, key, value));
@@ -2037,7 +2415,12 @@ function Lp1Quiz({
     }
     singleAdvanceTimer.current = setTimeout(() => {
       singleAdvanceTimer.current = null;
-      advance(nextAnswers);
+      const cards = getLp1TrialCards(nextAnswers);
+      if (trialCardIndex < cards.length - 1) {
+        setTrialCardIndex((index) => index + 1);
+      } else {
+        advance(nextAnswers);
+      }
     }, 220);
   };
 
@@ -2112,27 +2495,27 @@ function Lp1Quiz({
             >
               <span aria-hidden="true">←</span>
             </button>
-            <p className="lp1-quiz-counter" aria-label={`Tela ${visualStep} de 22`}>
+             <p className="lp1-quiz-counter" aria-label={`Tela ${visualStep} de ${LP1_SCREENS.length}`}>
               <span>{visualStep}</span>
-              <span>/22</span>
+               <span>/{LP1_SCREENS.length}</span>
             </p>
           </header>
           <div
             className="lp1-quiz-progress"
             role="progressbar"
-            aria-label={`Progresso do quiz: tela ${visualStep} de 22`}
+             aria-label={`Progresso do quiz: tela ${visualStep} de ${LP1_SCREENS.length}`}
             aria-valuemin={1}
-            aria-valuemax={22}
+             aria-valuemax={LP1_SCREENS.length}
             aria-valuenow={visualStep}
           >
             <span className="lp1-quiz-progress-track" aria-hidden="true">
               <span
                 className="lp1-quiz-progress-fill"
-                style={{ width: `${(visualStep / 22) * 100}%` }}
+                 style={{ width: `${(visualStep / LP1_SCREENS.length) * 100}%` }}
               />
               <span
                 className="lp1-quiz-progress-dot"
-                style={{ left: `${(visualStep / 22) * 100}%` }}
+                 style={{ left: `${(visualStep / LP1_SCREENS.length) * 100}%` }}
               />
             </span>
           </div>
@@ -2206,9 +2589,14 @@ function Lp1Quiz({
           </section>
         ) : current.kind === "trial-card" ? (
           <Lp1TrialCardScreen
-            card={getLp1TrialCards(answers)[step - 10]}
-            cardIndex={step - 10}
-            answer={answers.cartas?.[getLp1TrialCards(answers)[step - 10]?.id ?? ""]}
+            cardIndex={trialCardIndex}
+            sectionId={current.id}
+            card={getLp1TrialCards(answers)[trialCardIndex]}
+            answer={
+              answers.cartas?.[
+                getLp1TrialCards(answers)[trialCardIndex]?.id ?? ""
+              ]
+            }
             onSelect={selectTrialCard}
           />
         ) : current.kind === "trial-chart" ? (
@@ -2220,11 +2608,13 @@ function Lp1Quiz({
         ) : current.kind === "table" ? (
           <Lp1ComparisonScreen screen={current} onContinue={handleNext} />
         ) : current.kind === "loading" ? (
-          <Lp1LoadingScreen onComplete={handleNext} />
+          <Lp1LoadingScreen sectionId={current.id} onComplete={handleNext} />
         ) : current.kind === "result" ? (
           <Lp1ResultScreen
             answers={answers}
             cards={getLp1TrialCards(answers)}
+            sectionId={current.id}
+            cta={current.cta}
             onContinue={() => setShowOffer(true)}
           />
         ) : current.kind === "chart" ? (
@@ -2235,7 +2625,7 @@ function Lp1Quiz({
           />
         ) : current.kind === "photo" ? (
           <Lp1PhotoScreen
-            dor={answers.dor ?? "sei-la"}
+            dor={answers["sei-la-mapeado"] ?? answers.dor ?? "sei-la"}
             screen={current}
             onContinue={handleNext}
           />
@@ -2268,17 +2658,20 @@ function Lp1Quiz({
                   }
                 }
                 onFocus={(event) =>
-                  window.setTimeout(
-                    () =>
-                      event.currentTarget.scrollIntoView({
+                   (() => {
+                     const el = event.currentTarget;
+                     window.setTimeout(
+                       () =>
+                         el.scrollIntoView({
                         block: "center",
                         behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
                           .matches
                           ? "auto"
                           : "smooth",
-                      }),
-                    100,
-                  )
+                         }),
+                       100,
+                     );
+                   })()
                 }
                 aria-label="Seu e-mail"
                 data-testid="input-lp1-quiz-email"
@@ -2320,7 +2713,7 @@ function Lp1Quiz({
                     }}
                     data-testid="button-lp1-quiz-skip-email"
                   >
-                    ver meu resultado sem e-mail →
+                   ver sem e-mail →
                   </button>
                 ) : null}
                 {step === 0 ? (
@@ -2345,11 +2738,13 @@ function Lp1Quiz({
 function Lp1TrialCardScreen({
   card,
   cardIndex,
+  sectionId,
   answer,
   onSelect,
 }: {
   card?: Lp1TrialCard;
   cardIndex: number;
+  sectionId: string;
   answer?: Lp1CartaVerdict;
   onSelect: (cardId: string, verdict: Lp1CartaVerdict) => void;
 }) {
@@ -2370,7 +2765,7 @@ function Lp1TrialCardScreen({
   return (
     <section
       className="lp1-trial-card-screen"
-      data-section-name={`s${String(cardIndex + 11).padStart(2, "0")}-carta`}
+      data-section-name={sectionId}
     >
       <div
         className={`lp1-trial-card ${direction ? `is-leaving-${direction}` : ""}`}
@@ -2473,7 +2868,7 @@ function Lp1ComparisonScreen({
   ] as const;
 
   return (
-    <section className="lp1-comparison-screen" data-section-name="s17-diferenca">
+      <section className="lp1-comparison-screen" data-section-name={screen.id}>
       <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p>
       <h1 className="lp1-quiz-title">{screen.title}</h1>
       <div className="lp1-comparison-table" role="table">
@@ -2514,7 +2909,7 @@ const LP1_LOADING_MODALS = [
     options: ["Serve", "Talvez"],
   },
   {
-    question: "Topa começar por uma pergunta leve, não pela mais pesada?",
+    question: "Topa começar por uma leve, não pela mais pesada?",
     options: ["Topo", "Prefiro ir direto"],
   },
 ] as const;
@@ -2525,23 +2920,28 @@ const LP1_LOADING_TESTIMONIALS = [
   testimonialImages[5],
 ] as const;
 
-function Lp1LoadingScreen({ onComplete }: { onComplete: () => void }) {
+function Lp1LoadingScreen({
+  sectionId,
+  onComplete,
+}: {
+  sectionId: string;
+  onComplete: () => void;
+}) {
   const [elapsed, setElapsed] = useState(0);
   const [modalIndex, setModalIndex] = useState<number | null>(null);
   const [shownModals, setShownModals] = useState<number[]>([]);
   const completedRef = useRef(false);
 
   useEffect(() => {
-    const startedAt = Date.now();
     const timer = window.setInterval(() => {
-      setElapsed(Math.min(9000, Date.now() - startedAt));
+      setElapsed((current) => Math.min(9000, current + 100));
     }, 100);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [modalIndex]);
 
   useEffect(() => {
     if (modalIndex !== null) return;
-    const thresholds = [2000, 5000, 8000];
+    const thresholds = [2070, 5130, 8010];
     const nextModal = thresholds.findIndex(
       (threshold, index) => elapsed >= threshold && !shownModals.includes(index),
     );
@@ -2566,7 +2966,7 @@ function Lp1LoadingScreen({ onComplete }: { onComplete: () => void }) {
         : "Montando as 3 primeiras cartas…";
 
   return (
-    <section className="lp1-loading-screen" data-section-name="s21-carregando">
+    <section className="lp1-loading-screen" data-section-name={sectionId}>
       <p className="lp1-quiz-eyebrow">SEU RESULTADO</p>
       <h1 className="lp1-quiz-title">{title}</h1>
       <div className="lp1-loading-circle" style={{ "--loading-progress": `${percentage}%` } as CSSProperties}>
@@ -2637,10 +3037,14 @@ function getLp1DistanceResult(answers: Lp1Answers) {
 function Lp1ResultScreen({
   answers,
   cards,
+  sectionId,
+  cta,
   onContinue,
 }: {
   answers: Lp1Answers;
   cards: Lp1TrialCard[];
+  sectionId: string;
+  cta: string;
   onContinue: () => void;
 }) {
   const result = getLp1DistanceResult(answers);
@@ -2655,7 +3059,7 @@ function Lp1ResultScreen({
   }, [result.score]);
 
   return (
-    <section className="lp1-result-screen" data-section-name="s22-clima">
+    <section className="lp1-result-screen" data-section-name={sectionId}>
       <p className="lp1-quiz-eyebrow">O CLIMA DE VOCÊS AGORA</p>
       <h1 className="lp1-quiz-title">{mirror.title}</h1>
       <div className="lp1-result-meter-card">
@@ -2715,7 +3119,7 @@ function Lp1ResultScreen({
         ))}
       </div>
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-        Ver o baralho de vocês <ArrowRight size={17} aria-hidden="true" />
+        {cta} <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
   );
@@ -2811,11 +3215,14 @@ function Lp1PhotoScreen({
   onContinue: () => void;
 }) {
   const mirror = LP1_DOR_ESPELHO[dor] ?? LP1_DOR_ESPELHO["sei-la"];
+  const isMirror = screen.id === "s05b-dor-espelho";
+  const title = isMirror ? mirror.title : screen.title;
+  const body = isMirror ? mirror.body : screen.body ?? [];
   return (
     <section className="lp1-photo-screen" data-section-name={screen.id}>
       <img
         className="lp1-photo-image"
-        src={`/quiz/dx-${dor}.png`}
+        src={screen.image ?? `/quiz/dx-${dor}.png`}
         alt=""
         aria-hidden="true"
         onError={(event) => {
@@ -2825,8 +3232,8 @@ function Lp1PhotoScreen({
       <div className="lp1-photo-scrim" aria-hidden="true" />
       <div className="lp1-photo-copy">
         {screen.eyebrow ? <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p> : null}
-        <h1 className="lp1-quiz-title">{mirror.title}</h1>
-        {mirror.body.map((paragraph) => (
+        <h1 className="lp1-quiz-title">{title}</h1>
+        {body.map((paragraph) => (
           <p className="lp1-quiz-card-body" key={paragraph}>
             {paragraph}
           </p>
@@ -2937,14 +3344,27 @@ function Lp1QuestionOptions({
               aria-pressed={isSelected}
             >
               {option.imageSrc ? (
-                <img
-                  className="lp1-thumb"
-                  src={option.imageSrc}
-                  alt=""
-                  onError={(event) => {
-                    event.currentTarget.style.visibility = "hidden";
-                  }}
-                />
+                <>
+                  <img
+                    className="lp1-thumb"
+                    src={option.imageSrc}
+                    alt=""
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                      const fallback = event.currentTarget
+                        .nextElementSibling as HTMLElement | null;
+                      if (fallback) fallback.style.display = "grid";
+                    }}
+                  />
+                  {option.icon ? (
+                    <span
+                      className="lp1-quiz-option-icon lp1-image-fallback"
+                      aria-hidden="true"
+                    >
+                      {option.icon}
+                    </span>
+                  ) : null}
+                </>
               ) : question.emoji && option.icon ? (
                 <span className="lp1-quiz-option-icon" aria-hidden="true">
                   {option.icon}
