@@ -21,6 +21,7 @@ import {
   type LandingPageId,
   type LandingPage as LandingEntry,
 } from "@/lib/landing-pages";
+import { getSupportDiagnosis } from "@/lib/support-diagnosis";
 import {
   getGetAdminFunnelAnalyticsQueryKey,
   useDeleteAdminAnalyticsData,
@@ -1528,12 +1529,17 @@ function FeedbackTab({
           <p className="admin-footnote">Nenhuma sugestão ainda.</p>
         ) : (
           <div className="admin-feedback-list">
-            {visibleSuggestions.map((entry) => (
-              <article
-                key={entry.id}
-                className={`admin-feedback-card admin-support-card is-${entry.status || "aberto"}`}
-                data-testid={`card-suggestion-${entry.id}`}
-              >
+            {visibleSuggestions.map((entry) => {
+              const diagnosis = getSupportDiagnosis(
+                entry.topic,
+                entry.accessStatus,
+              );
+              return (
+                <article
+                  key={entry.id}
+                  className={`admin-feedback-card admin-support-card is-${entry.status || "aberto"}`}
+                  data-testid={`card-suggestion-${entry.id}`}
+                >
                 <div className="admin-feedback-top">
                   <div className="admin-support-card-heading">
                     <strong>{feedbackTopicLabel(entry.topic)}</strong>
@@ -1547,9 +1553,22 @@ function FeedbackTab({
                     {formatDate(entry.createdAt)}
                   </span>
                 </div>
-                <p className="admin-feedback-message">
-                  {entry.message || "Sem mensagem adicional."}
-                </p>
+                {diagnosis && (
+                  <div className="admin-support-diagnosis">
+                    <p>
+                      <strong>TRADUÇÃO:</strong> {diagnosis.translation}
+                    </p>
+                    <p>
+                      <strong>O QUE FAZER:</strong> {diagnosis.action}
+                    </p>
+                  </div>
+                )}
+                {entry.message ? (
+                  <div className="admin-support-customer-message">
+                    <span>ela escreveu:</span>
+                    <blockquote>“{entry.message}”</blockquote>
+                  </div>
+                ) : null}
                 <p className="admin-feedback-meta">
                   <span>
                     {entry.email || "Sem e-mail"}
@@ -1601,8 +1620,9 @@ function FeedbackTab({
                         : "Marcar como resolvido"}
                   </button>
                 </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

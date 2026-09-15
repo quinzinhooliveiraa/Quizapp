@@ -2,6 +2,7 @@ import webpush from "web-push";
 import { db, pushSubscriptionsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
+import { getSupportDiagnosis } from "./support-diagnosis";
 
 type PurchaseNotification = {
   buyerName: string;
@@ -110,6 +111,7 @@ export async function sendSupportNotification({
   );
 
   const subscriptions = await db.select().from(pushSubscriptionsTable);
+  const diagnosis = getSupportDiagnosis(topic, accessStatus);
   const topicLabel =
     SUPPORT_TOPIC_LABELS[topic || ""] || topic || "suporte";
   const accessLabel =
@@ -117,7 +119,7 @@ export async function sendSupportNotification({
     accessStatus ||
     "não verificado";
   const payload = JSON.stringify({
-    title: "Nova mensagem de suporte",
+    title: diagnosis?.translation || "Nova mensagem de suporte",
     body: `Suporte: ${topicLabel} — ${accessLabel} (${email || "sem e-mail"})`,
   });
 

@@ -615,6 +615,44 @@
   color: #e8c98a;
   font-size: 0.82rem;
 }
+.admin-support-diagnosis {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.8rem 0.9rem;
+  border-left: 3px solid #e8c98a;
+  border-radius: 0.45rem;
+  background: rgba(232, 201, 138, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.admin-support-diagnosis p {
+  margin: 0;
+}
+.admin-support-diagnosis strong {
+  color: #e8c98a;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+.admin-support-customer-message {
+  display: grid;
+  gap: 0.3rem;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.8rem;
+}
+.admin-support-customer-message > span {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin-support-customer-message blockquote {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-style: italic;
+  line-height: 1.45;
+}
 .admin-access-badge,
 .admin-status-badge {
   display: inline-flex;
