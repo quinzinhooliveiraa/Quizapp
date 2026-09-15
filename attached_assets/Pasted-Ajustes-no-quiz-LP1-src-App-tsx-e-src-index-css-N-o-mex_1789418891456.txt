@@ -1,0 +1,48 @@
+Ajustes no quiz LP1 (src/App.tsx e src/index.css). Não mexa na lógica de
+navegação, que está funcionando.
+
+1. PROGRESSO: remova o total. O texto "Tela X de 24" some da tela; fica só a
+   barra. Mantenha o aria-label completo para acessibilidade.
+
+2. COPY DUPLICADA: a tela s11 (id que hoje mostra "Estamos juntando as peças do
+   que você contou") e a tela s15 têm título idêntico. Troque o título da
+   segunda para "Falta pouco para o seu resultado." e o corpo para "Mais duas
+   perguntas e a gente fecha o retrato."
+
+3. LAYOUT: o botão "← Voltar" está sobrepondo o CTA dourado em todas as telas
+   kind:"card". Coloque os dois num flex container com justify-content:
+   space-between, align-items: center e gap mínimo de 1rem, e garanta que o CTA
+   não tenha largura fixa que force overflow.
+
+4. COR: troque TODA ocorrência de #c4acff por #e8c98a no index.css (anel de
+   foco, selo do diagnóstico, kickers, "Seu baralho pra começar"). O quiz é
+   dourado, igual à landing. grep "#c4acff" tem que voltar zero no final.
+
+5. AVANÇO AUTOMÁTICO: em telas kind:"question" de escolha única, ao clicar numa
+   opção, aguarde 280ms (para a animação do tique aparecer) e avance sozinho.
+   Remova o botão "Continuar" dessas telas. Mantenha o "Continuar" só nas telas
+   kind:"card" e na de e-mail.
+
+6. IMAGENS: adicione o campo opcional image?: string em Lp1ScreenBase e
+   imageSrc?: string em cada option, e renderize:
+     screen.image   -> <img className="lp1-img" src={screen.image} alt=""/>
+                       acima do título
+     option.imageSrc-> <img className="lp1-thumb" src={option.imageSrc} alt=""/>
+                       dentro do card, no lugar do ícone de texto
+   CSS:
+     .lp1-img  { width:100%; border-radius:16px; aspect-ratio:4/5;
+                 object-fit:cover; filter:brightness(1.28) contrast(1.04); }
+     .lp1-thumb{ width:72px; height:72px; border-radius:12px;
+                 object-fit:cover; filter:brightness(1.32) contrast(1.06); }
+   Se o campo estiver vazio, cai no ícone de texto atual — nada quebra.
+   Os arquivos ficam em public/quiz/ e são referenciados como "/quiz/nome.jpg".
+
+7. E-MAIL: o campo da tela de captura aceita vazio e avança. Valide formato de
+   e-mail e, se estiver vazio ou inválido, NÃO bloqueie — mostre um link
+   discreto "pular por agora →" que avança mesmo assim.
+
+Provas antes de dizer que terminou:
+- grep "#c4acff" no index.css retorna zero
+- grep "de 24" no App.tsx não aparece em texto visível
+- percorra o quito inteiro no preview: nenhum "Voltar" sobreposto, escolha única
+  avança sozinha, nenhum título repetido

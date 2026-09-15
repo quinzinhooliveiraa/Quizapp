@@ -973,6 +973,7 @@ function LandingQuiz({
 type Lp1ScreenBase = {
   id: string;
   kind: "question" | "card" | "loading" | "summary" | "sample" | "capture";
+  image?: string;
 };
 
 type Lp1Question = Lp1ScreenBase & {
@@ -988,6 +989,7 @@ type Lp1Question = Lp1ScreenBase & {
     label: string;
     expand?: string;
     icon?: string;
+    imageSrc?: string;
   }[];
 };
 
@@ -1202,8 +1204,8 @@ const LP1_SCREENS: Lp1Screen[] = [
   {
     id: "s15-loading",
     kind: "loading",
-    title: "Estamos juntando as peças do que você contou.",
-    body: ["O seu resultado começa a aparecer."],
+    title: "Falta pouco para o seu resultado.",
+    body: ["Mais duas perguntas e a gente fecha o retrato."],
     cta: "Continuar",
   },
   {
@@ -1488,12 +1490,21 @@ function Lp1Quiz({
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Lp1Answers>({});
   const [showOffer, setShowOffer] = useState(false);
+  const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
   const selectedValue =
     current.kind === "question" && current.key
       ? answers[current.key] ?? ""
       : "";
+
+  useEffect(() => {
+    return () => {
+      if (singleAdvanceTimer.current !== null) {
+        clearTimeout(singleAdvanceTimer.current);
+      }
+    };
+  }, []);
 
   const selectAnswer = (key: string, value: string) => {
     setAnswers((previous) => ({ ...previous, [key]: value }));
@@ -1511,15 +1522,22 @@ function Lp1Quiz({
     setStep((previous) => Math.min(previous + 1, LP1_SCREENS.length - 1));
   };
 
+  const handleSingleSelect = (key: string, value: string) => {
+    selectAnswer(key, value);
+    if (singleAdvanceTimer.current !== null) {
+      clearTimeout(singleAdvanceTimer.current);
+    }
+    singleAdvanceTimer.current = setTimeout(() => {
+      singleAdvanceTimer.current = null;
+      advance({ ...answers, [key]: value });
+    }, 280);
+  };
+
   const handleNext = () => {
     if (current.kind === "question") {
       if (!selectedValue) return;
       const score = computeLp1Score(answers);
       console.info("[lp1] score", score);
-    }
-    if (current.kind === "capture") {
-      const email = answers.email?.trim();
-      if (email && !email.includes("@")) return;
     }
     advance();
   };
@@ -1552,9 +1570,6 @@ function Lp1Quiz({
           aria-valuemax={LP1_SCREENS.length}
           aria-valuenow={step}
         >
-          <span className="lp1-quiz-progress-label">
-            Tela {step + 1} de {LP1_SCREENS.length}
-          </span>
           <span className="lp1-quiz-progress-track" aria-hidden="true">
             <span
               className="lp1-quiz-progress-fill"
@@ -1579,6 +1594,9 @@ function Lp1Quiz({
           )
         ) : current.kind === "question" ? (
           <section data-section-name={current.id}>
+            {current.image ? (
+              <img className="lp1-img" src={current.image} alt="" />
+            ) : null}
             <h1 className="lp1-quiz-title">{current.title}</h1>
             {current.subtitle ? (
               <p className="lp1-quiz-subtitle">{current.subtitle}</p>
@@ -1590,7 +1608,7 @@ function Lp1Quiz({
               onSelect={(value) =>
                 current.format === "multi"
                   ? handleMultiSelect(value)
-                  : selectAnswer(current.key, value)
+                  : handleSingleSelect(current.key, value)
               }
             />
             {current.format === "multi" ? (
@@ -1599,23 +1617,32 @@ function Lp1Quiz({
                 de 5 marcadas
               </p>
             ) : null}
-            <div className="lp1-quiz-actions">
-              <button
-                type="button"
-                className="lp1-quiz-next"
-                disabled={!selectedValue}
-                onClick={handleNext}
-                data-testid={`button-lp1-quiz-next-${current.id}`}
-              >
-                Continuar <ArrowRight size={17} aria-hidden="true" />
-              </button>
+            {current.format === "multi" ? (
+              <div className="lp1-quiz-actions">
+                <button
+                  type="button"
+                  className="lp1-quiz-next"
+                  disabled={!selectedValue}
+                  onClick={handleNext}
+                  data-testid={`button-lp1-quiz-next-${current.id}`}
+                >
+                  Continuar <ArrowRight size={17} aria-hidden="true" />
+                </button>
+                <button type="button" className="lp1-quiz-back" onClick={goBack}>
+                  ← Voltar
+                </button>
+              </div>
+            ) : (
               <button type="button" className="lp1-quiz-back" onClick={goBack}>
                 ← Voltar
               </button>
-            </div>
+            )}
           </section>
         ) : (
           <section data-section-name={current.id}>
+            {current.image ? (
+              <img className="lp1-img" src={current.image} alt="" />
+            ) : null}
             <h1 className="lp1-quiz-title">{current.title}</h1>
             {current.body?.map((paragraph) => (
               <p className="lp1-quiz-card-body" key={paragraph}>
@@ -1653,27 +1680,56 @@ function Lp1Quiz({
                 data-testid="input-lp1-quiz-email"
               />
             ) : null}
-            <button
-              type="button"
-              className="lp1-quiz-next"
-              onClick={handleNext}
-              data-testid={`button-lp1-quiz-next-${current.id}`}
-            >
-              {current.cta} <ArrowRight size={17} aria-hidden="true" />
-            </button>
-            {step === 0 ? (
-              <button
-                type="button"
-                className="lp1-quiz-skip"
-                onClick={onFinish}
-                data-testid="button-lp1-quiz-existing-checkout"
-              >
-                Já fiz o teste — quero o baralho →
-              </button>
-            ) : null}
-            <button type="button" className="lp1-quiz-back" onClick={goBack}>
-              ← Voltar
-            </button>
+            {current.kind === "card" ? (
+              <div className="lp1-quiz-actions">
+                <button
+                  type="button"
+                  className="lp1-quiz-next"
+                  onClick={handleNext}
+                  data-testid={`button-lp1-quiz-next-${current.id}`}
+                >
+                  {current.cta} <ArrowRight size={17} aria-hidden="true" />
+                </button>
+                <button type="button" className="lp1-quiz-back" onClick={goBack}>
+                  ← Voltar
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="lp1-quiz-next"
+                  onClick={handleNext}
+                  data-testid={`button-lp1-quiz-next-${current.id}`}
+                >
+                  {current.cta} <ArrowRight size={17} aria-hidden="true" />
+                </button>
+                {current.kind === "capture" &&
+                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email?.trim() ?? "") ? (
+                  <button
+                    type="button"
+                    className="lp1-quiz-skip"
+                    onClick={handleNext}
+                    data-testid="button-lp1-quiz-skip-email"
+                  >
+                    pular por agora →
+                  </button>
+                ) : null}
+                {step === 0 ? (
+                  <button
+                    type="button"
+                    className="lp1-quiz-skip"
+                    onClick={onFinish}
+                    data-testid="button-lp1-quiz-existing-checkout"
+                  >
+                    Já fiz o teste — quero o baralho →
+                  </button>
+                ) : null}
+                <button type="button" className="lp1-quiz-back" onClick={goBack}>
+                  ← Voltar
+                </button>
+              </>
+            )}
           </section>
         )}
       </div>
@@ -1726,7 +1782,9 @@ function Lp1QuestionOptions({
               data-testid={`button-lp1-quiz-${question.key}-${option.value}`}
               aria-pressed={isSelected}
             >
-              {question.emoji && option.icon ? (
+              {option.imageSrc ? (
+                <img className="lp1-thumb" src={option.imageSrc} alt="" />
+              ) : question.emoji && option.icon ? (
                 <span className="lp1-quiz-option-icon" aria-hidden="true">
                   {option.icon}
                 </span>
