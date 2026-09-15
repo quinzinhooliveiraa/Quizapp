@@ -1,0 +1,60 @@
+Ajustes no quiz LP1. NÃO TOCAR nas telas 1, 2, 5, 8, 9, 14, 20, 22, 23 nem na
+página de oferta. Fazer só o que está abaixo.
+
+── REESCREVER a copy destas perguntas (mesmo tipo, 2ª pessoa) ──
+
+Tela 3 (multi) · "Hoje, a conversa de vocês é mais sobre o quê?"
+  Rotina e contas · Trabalho · Besteira e risada · Vocês dois · Intimidade · Planos
+Tela 4 (single) · "Você tenta puxar uma conversa de verdade. E aí?"
+  Vem o "sei lá" · Vem o "não sei" · Responde, mas fica raso · Muda de assunto ·
+  Às vezes rende · Quando engata, vai longe
+Tela 6 (single) · "Quando trava, o que mais pesa?"
+  Ele(a) não entra · Eu não sei o que perguntar · A gente só não senta pra isso ·
+  O clima nunca ajuda
+Tela 7 (single) · "O celular senta com vocês?"
+  Sempre · Às vezes · Quase nunca
+Tela 10 (single) · "No fim de uma noite dessas, o que você queria sentir?"
+  Que ele(a) me entende de novo · Que a gente se reencontrou · Leveza, rir junto ·
+  Aquela paz de ter sido ouvido(a) · Desejo de volta
+Tela 11 (single) · "Você ainda sente que conhece ele(a) de verdade?"
+  Sim, bastante · Mais ou menos · Às vezes sinto que não · Sinto que já sei tudo
+Tela 12 (single) · "Tem uma pergunta que você queria fazer pra ele(a) e nunca fez?"
+  Várias · Uma ou outra · Nem sei qual seria · Tenho, mas dá medo · Não
+Tela 13 (multi) · "O que mais te faz empurrar essa conversa pra depois?"
+  Cansaço e rotina · O celular · Não sei como começar · Vou parecer forçado(a) ·
+  Medo da resposta · Sinto que a gente já falou de tudo
+
+── INSERIR novo card de CRENÇA + OBJEÇÃO logo depois da Tela 13 ──
+(mesmo estilo da tela de educação 14, com botão "Faz sentido →")
+  eyebrow: "A VERDADE"
+  título: "Você não vai virar 'aquela pessoa intensa'."
+  corpo (linhas curtas):
+   • Quem faz a pergunta é a carta — não você. Ninguém precisa chegar com assunto pronto.
+   • Não tem obrigação de responder. Começa leve; só vai fundo quando os dois quiserem.
+   • Funciona mesmo se só um de vocês topar hoje.
+   • E você não precisa ter a resposta perfeita — "nunca pensei nisso" já é um começo.
+  (mata de uma vez: "parecer forçado", "medo da resposta", "pesado demais",
+   "ele não vai topar" e a dor "não sei responder nem por mim")
+
+── GAMIFICAR (swipe/Tinder, com dopamina) ──
+Tela 17 · swipe Tinder de 5 PERGUNTAS REAIS. Uma carta por vez, arrasta/toca
+  👎 "não é pra nós" / 😐 "talvez" / 👍 "é pra nós". No 👍: confete curto +
+  navigator.vibrate(12) + a carta desliza pro lado (220ms). As 5, em ordem:
+   1. "Qual é o nosso 'programa de preguiça' perfeito?"
+   2. "O que te faz sentir 'cheguei em casa' quando me vê?"
+   3. "Qual foi o momento em que você mais me amou até hoje?"
+   4. "Quando foi a última vez que você fingiu estar bem perto de mim?"
+   5. "O que passa pela sua cabeça quando você se sente distante de mim?"
+Tela 18 · swipe de CLIMA (leve · honesto · profundo · íntimo), cartas arrastáveis,
+  define o baralho recomendado no resultado. Mesma dopamina.
+
+── REMOVER (redundantes) ──
+✗ Tela 15 ("E se ele responder sei lá?") — já está na 4 e o Tinder responde
+✗ Tela 16 ("gostaria de experimentar?") — os 3 sins do loading já fazem isso
+✗ Tela 19 ("o que gostaria de conseguir?") — é a mesma da 10
+
+── CONFERIR ──
+1. Telas travadas (1,2,5,8,9,14,20,22,23 e oferta) intactas.
+2. O card novo aparece depois da 13, com botão.
+3. 17 e 18 arrastam, com confete/vibração no 👍.
+4. Quiz roda sem erro de console; nenhuma pergunta repetida.

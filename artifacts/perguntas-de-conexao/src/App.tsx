@@ -1720,34 +1720,33 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s04-conversas",
     kind: "question",
     key: "conversas",
-    title: "Sobre o que vocês mais conversam hoje?",
+    title: "Hoje, a conversa de vocês é mais sobre o quê?",
     subtitle: "Pode escolher mais de uma.",
     format: "multi",
     emoji: true,
     options: [
-      { value: "rotina", label: "Rotina e compromissos", icon: "📅" },
-      { value: "trabalho", label: "Trabalho e dinheiro", icon: "💰" },
-      { value: "besteira", label: "Coisas engraçadas", icon: "😂" },
-      { value: "nos-dois", label: "A relação de vocês", icon: "❤️" },
+      { value: "rotina", label: "Rotina e contas", icon: "🏠" },
+      { value: "trabalho", label: "Trabalho", icon: "💼" },
+      { value: "besteira", label: "Besteira e risada", icon: "😂" },
+      { value: "nos-dois", label: "Vocês dois", icon: "❤️" },
       { value: "intimidade", label: "Intimidade", icon: "🔥" },
-      { value: "pessoal", label: "Planos e sonhos", icon: "🌎" },
-      { value: "tudo", label: "Um pouco de tudo", icon: "📱" },
+      { value: "pessoal", label: "Planos", icon: "🌎" },
     ],
   },
   {
     id: "s05-sei-la",
     kind: "question",
     key: "sei-la-mapeado",
-    title: "Quando você tenta puxar uma conversa diferente, o que normalmente acontece?",
+    title: "Você tenta puxar uma conversa de verdade. E aí?",
     format: "single",
     emoji: true,
     options: [
-      { value: "sei-la", label: '"Sei lá."', icon: "😶" },
-      { value: "nao-sei", label: '"Não sei."', icon: "🤷" },
-      { value: "superficial", label: "Responde, mas fica superficial", icon: "😐" },
+      { value: "sei-la", label: 'Vem o "sei lá"', icon: "🙄" },
+      { value: "nao-sei", label: 'Vem o "não sei"', icon: "😶" },
+      { value: "superficial", label: "Responde, mas fica raso", icon: "😐" },
       { value: "muda-assunto", label: "Muda de assunto", icon: "🔄" },
       { value: "rende", label: "Às vezes rende", icon: "💬" },
-      { value: "vai-longe", label: "Quando começa, vai longe", icon: "🔥" },
+      { value: "vai-longe", label: "Quando engata, vai longe", icon: "✨" },
     ],
   },
   {
@@ -1762,28 +1761,35 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s06-inicia",
     kind: "question",
     key: "inicia",
-    title: "Quem normalmente começa essas conversas?",
+    title: "Quando trava, o que mais pesa?",
     format: "single",
     emoji: true,
     options: [
-      { value: "eu-quase", label: "Eu quase sempre", icon: "🙋" },
-      { value: "os-dois", label: "Os dois", icon: "🫶" },
-      { value: "parceiro", label: "Geralmente meu parceiro", icon: "😅" },
-      { value: "nenhum", label: "Nenhum dos dois", icon: "🤐" },
+      { value: "ele-nao-entra", label: "Ele(a) não entra", icon: "🤐" },
+      {
+        value: "nao-sei-perguntar",
+        label: "Eu não sei o que perguntar",
+        icon: "😕",
+      },
+      {
+        value: "nao-senta",
+        label: "A gente só não senta pra isso",
+        icon: "⏳",
+      },
+      { value: "clima", label: "O clima nunca ajuda", icon: "🌧️" },
     ],
   },
   {
     id: "s07-celular",
     kind: "question",
     key: "celular",
-    title: "E o celular? Quanto ele entra no meio dos momentos de vocês?",
+    title: "O celular senta com vocês?",
     format: "single",
     emoji: true,
     options: [
-      { value: "muito", label: "Muito", icon: "📱" },
+      { value: "sempre", label: "Sempre", icon: "📱" },
       { value: "as-vezes", label: "Às vezes", icon: "🙂" },
-      { value: "pouco", label: "Pouco", icon: "😌" },
-      { value: "quase-nunca", label: "Quase nunca", icon: "❤️" },
+      { value: "quase-nunca", label: "Quase nunca", icon: "🌙" },
     ],
   },
   {
@@ -1833,62 +1839,76 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s10-sentir",
     kind: "question",
     key: "sentir",
-    title: "O que você gostaria de sentir mais quando vocês conversam?",
+    title: "No fim de uma noite dessas, o que você queria sentir?",
     format: "multi",
-    emoji: true,
     options: [
-      { value: "encontrou", label: "Proximidade", icon: "🥰" },
-      { value: "riu", label: "Leveza", icon: "😂" },
-      { value: "entende", label: "Segurança", icon: "🫶" },
-      { value: "quimica", label: "Desejo", icon: "🔥" },
-      { value: "intimidade", label: "Intimidade", icon: "🤍" },
-      { value: "descobriu", label: "Curiosidade", icon: "✨" },
+      { value: "entende", label: "Que ele(a) me entende de novo" },
+      { value: "encontrou", label: "Que a gente se reencontrou" },
+      { value: "leveza", label: "Leveza, rir junto" },
+      { value: "ouvido", label: "Aquela paz de ter sido ouvido(a)" },
+      { value: "desejo", label: "Desejo de volta" },
     ],
   },
   {
     id: "s11-conhece",
     kind: "question",
     key: "conhece",
-    title: "Você sente que ainda conhece seu parceiro tão bem quanto antes?",
+    title: "Você ainda sente que conhece ele(a) de verdade?",
     format: "single",
     emoji: true,
     options: [
-      { value: "sim", label: "Sim", icon: "❤️" },
+      { value: "sim", label: "Sim, bastante", icon: "💯" },
       { value: "mais-ou-menos", label: "Mais ou menos", icon: "🙂" },
       { value: "as-vezes-nao", label: "Às vezes sinto que não", icon: "🤔" },
-      { value: "nao-muito", label: "Não muito", icon: "😶" },
+      { value: "sei-tudo", label: "Sinto que já sei tudo", icon: "😶" },
     ],
   },
   {
     id: "s12-nunca-perguntou",
     kind: "question",
     key: "nunca-perguntou",
-    title: "Existe algo que você gostaria de perguntar pra ele, mas nunca perguntou?",
+    title: "Tem uma pergunta que você queria fazer pra ele(a) e nunca fez?",
     format: "single",
-    emoji: true,
     options: [
-      { value: "varias", label: "Várias", icon: "❤️" },
-      { value: "algumas", label: "Algumas", icon: "🙂" },
-      { value: "nem-sei", label: "Nem sei o que perguntar", icon: "🤔" },
-      { value: "vergonha", label: "Tenho vergonha", icon: "😬" },
-      { value: "nao", label: "Não", icon: "🙅" },
+      { value: "varias", label: "Várias" },
+      { value: "algumas", label: "Uma ou outra" },
+      { value: "nem-sei", label: "Nem sei qual seria" },
+      { value: "vergonha", label: "Tenho, mas dá medo" },
+      { value: "nao", label: "Não" },
     ],
   },
   {
     id: "s13-atrapalha",
     kind: "question",
     key: "atrapalha",
-    title: "O que mais atrapalha vocês de terem conversas melhores?",
+    title: "O que mais te faz empurrar essa conversa pra depois?",
     format: "multi",
     emoji: true,
     options: [
-      { value: "rotina", label: "Falta de tempo", icon: "⏰" },
-      { value: "celular", label: "Celular / distrações", icon: "📱" },
-      { value: "comecar", label: "Não saber por onde começar", icon: "🤷" },
-      { value: "medo", label: "Medo de deixar o clima pesado", icon: "😬" },
-      { value: "cansaco", label: "Cansaço", icon: "😴" },
-      { value: "nao-para", label: "A sensação de que já falamos de tudo", icon: "💭" },
+      { value: "cansaco", label: "Cansaço e rotina", icon: "😴" },
+      { value: "celular", label: "O celular", icon: "📱" },
+      { value: "comecar", label: "Não sei como começar", icon: "🤷" },
+      { value: "medo", label: "Vou parecer forçado(a)", icon: "😬" },
+      { value: "medo-resposta", label: "Medo da resposta", icon: "😨" },
+      {
+        value: "nao-para",
+        label: "Sinto que a gente já falou de tudo",
+        icon: "💭",
+      },
     ],
+  },
+  {
+    id: "s13b-crenca",
+    kind: "info",
+    eyebrow: "A VERDADE",
+    title: "Você não vai virar “aquela pessoa intensa”.",
+    body: [
+      "Quem faz a pergunta é a carta — não você. Ninguém precisa chegar com assunto pronto.",
+      "Não tem obrigação de responder. Começa leve; só vai fundo quando os dois quiserem.",
+      "Funciona mesmo se só um de vocês topar hoje.",
+      "E você não precisa ter a resposta perfeita — “nunca pensei nisso” já é um começo.",
+    ],
+    cta: "Faz sentido",
   },
   {
     id: "s14-educacao",
@@ -1900,40 +1920,11 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     cta: "Faz sentido",
   },
   {
-    id: "s15-objecao",
-    kind: "question",
-    key: "objecao",
-    title: 'E se ele responder "sei lá"? Escolha o que mais parece com o que você pensa:',
-    format: "single",
-    emoji: true,
-    options: [
-      { value: "ele-sei-la", label: 'Ele vai responder "sei lá" mesmo.', icon: "😶" },
-      { value: "estranho", label: "Ele vai achar estranho.", icon: "😅" },
-      { value: "talvez-funcione", label: "Talvez funcione.", icon: "🤔" },
-      { value: "se-boa", label: "Se a pergunta for boa, ele entra.", icon: "❤️" },
-    ],
-  },
-  {
-    id: "s16-experimentar",
-    kind: "question",
-    key: "profundidade",
-    title:
-      "Se as perguntas começassem leves e fossem ficando mais profundas conforme vocês se sentissem à vontade, você gostaria de experimentar?",
-    format: "single",
-    emoji: true,
-    options: [
-      { value: "sim", label: "Sim", icon: "❤️" },
-      { value: "com-certeza", label: "Com certeza", icon: "🙂" },
-      { value: "acho-que-sim", label: "Acho que sim", icon: "🤔" },
-      { value: "talvez", label: "Talvez", icon: "😬" },
-    ],
-  },
-  {
     id: "s17-cartas",
     kind: "trial-card",
     key: "cartas",
-    eyebrow: "ESCOLHA PELO FEELING",
-    title: "Qual pergunta combina mais com vocês?",
+    eyebrow: "5 PERGUNTAS REAIS",
+    title: "Qual dessas perguntas é pra vocês?",
   },
   {
     id: "s18-clima",
@@ -1953,8 +1944,8 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         imageSrc: "/quiz/clima-leve.png",
       },
       {
-        value: "conexao",
-        label: "Conexão",
+        value: "honesto",
+        label: "Honesto",
         description: "para falar do que existe entre vocês",
         icon: "❤️",
       },
@@ -1962,46 +1953,15 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         value: "profundo",
         label: "Profundo",
         description: "para descobrir um ao outro de outro jeito",
-        icon: "🌊",
+        icon: "🧠",
         imageSrc: "/quiz/clima-honesto.png",
       },
       {
-        value: "divertido",
-        label: "Divertido",
-        description: "para rir e deixar a noite mais leve",
-        icon: "😂",
-      },
-      {
         value: "intimo",
-        label: "Mais íntimo",
+        label: "Íntimo",
         description: "para reacender a faísca entre vocês",
         icon: "🔥",
       },
-      {
-        value: "distancia",
-        label: "À distância",
-        description: "para se sentir perto, mesmo de longe",
-        icon: "🌎",
-      },
-    ],
-  },
-  {
-    id: "s19-encontrar",
-    kind: "question",
-    key: "encontrar",
-    eyebrow: "ESCOLHA O QUE FAZ SENTIDO",
-    title: "O que você gostaria de conseguir com essa experiência?",
-    subtitle: "Escolha tudo que fizer sentido.",
-    format: "multi",
-    emoji: true,
-    options: [
-      { value: "proximo", label: "Me sentir mais próximo", icon: "❤️" },
-      { value: "novas", label: "Conhecer coisas novas", icon: "🧠" },
-      { value: "rir", label: "Rir mais", icon: "😂" },
-      { value: "sentimentos", label: "Falar de sentimentos", icon: "💬" },
-      { value: "desejo", label: "Reacender o desejo", icon: "🔥" },
-      { value: "distancia", label: "Me conectar à distância", icon: "🌎" },
-      { value: "rotina", label: "Sair da rotina", icon: "🔄" },
     ],
   },
   {
@@ -2109,8 +2069,9 @@ const LP1_TRIAL_DEPTHS = [
 
 const LP1_CLIMA_DECKS: Record<string, string[]> = {
   leve: ["modo-leve", "perto-de-novo"],
-  normal: ["porto-seguro", "voce-nao-sabia"],
-  honesto: ["livro-aberto", "depois-da-tempestade"],
+  honesto: ["porto-seguro", "voce-nao-sabia"],
+  profundo: ["livro-aberto", "depois-da-tempestade"],
+  intimo: ["faisca", "luzes-baixas"],
 };
 
 type Lp1TrialCard = {
@@ -2119,6 +2080,14 @@ type Lp1TrialCard = {
   deckName: string;
   question: string;
 };
+
+const LP1_TRIAL_QUESTIONS = [
+  "Qual é o nosso “programa de preguiça” perfeito?",
+  "O que te faz sentir “cheguei em casa” quando me vê?",
+  "Qual foi o momento em que você mais me amou até hoje?",
+  "Quando foi a última vez que você fingiu estar bem perto de mim?",
+  "O que passa pela sua cabeça quando você se sente distante de mim?",
+] as const;
 
 function getLp1TrialCards(answers: Lp1Answers): Lp1TrialCard[] {
   const selectedTravas = (answers.travas ?? "").split(",").filter(Boolean);
@@ -2134,35 +2103,15 @@ function getLp1TrialCards(answers: Lp1Answers): Lp1TrialCard[] {
   pointedDecks.forEach(addDeck);
   addDeck("porto-seguro");
   addDeck("modo-leve");
-  const deckSlots = [...deckIds];
-  while (deckSlots.length < 5) {
-    deckSlots.push(deckSlots.length % 2 === 0 ? "porto-seguro" : "modo-leve");
-  }
-
-  const usedQuestionIds = new Set<string>();
-  return deckSlots.slice(0, 5).map((deckId, index) => {
-    const candidates = connectionQuestions
-      .filter((question) => question.themeId === deckId)
-      .sort((first, second) => {
-        const firstRank =
-          first.intensity === LP1_TRIAL_DEPTHS[index] ? 0 : 1;
-        const secondRank =
-          second.intensity === LP1_TRIAL_DEPTHS[index] ? 0 : 1;
-        return firstRank - secondRank;
-      });
-    const question =
-      candidates.find((candidate) => !usedQuestionIds.has(candidate.id)) ??
-      candidates[0];
-    if (!question) {
-      throw new Error(`No questions found for LP1 trial deck: ${deckId}`);
-    }
-    usedQuestionIds.add(question.id);
+  const deckSlots = deckIds.length > 0 ? deckIds : ["porto-seguro"];
+  return LP1_TRIAL_QUESTIONS.map((question, index) => {
+    const deckId = deckSlots[index % deckSlots.length] ?? "porto-seguro";
     return {
-      id: question.id,
+      id: `lp1-trial-${index + 1}`,
       deckId,
       deckName:
         connectionThemes.find((theme) => theme.id === deckId)?.title ?? deckId,
-      question: question.text,
+      question,
     };
   });
 }
@@ -2866,9 +2815,14 @@ function Lp1TrialCardScreen({
   onSelect: (cardId: string, verdict: Lp1CartaVerdict) => void;
 }) {
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const pointerStart = useRef<number | null>(null);
 
   useEffect(() => {
     setDirection(null);
+    setDragX(0);
+    setShowConfetti(false);
   }, [card?.id]);
 
   if (!card) return null;
@@ -2876,7 +2830,33 @@ function Lp1TrialCardScreen({
   const choose = (verdict: Lp1CartaVerdict) => {
     if (direction) return;
     setDirection(verdict === "nao" ? "left" : "right");
+    if (verdict === "sim") {
+      navigator.vibrate?.(12);
+      setShowConfetti(true);
+      window.setTimeout(() => setShowConfetti(false), 420);
+    }
     window.setTimeout(() => onSelect(card.id, verdict), 220);
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (direction) return;
+    pointerStart.current = event.clientX;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (pointerStart.current === null || direction) return;
+    setDragX(event.clientX - pointerStart.current);
+  };
+
+  const handlePointerUp = () => {
+    if (pointerStart.current === null || direction) return;
+    const currentDrag = dragX;
+    pointerStart.current = null;
+    setDragX(0);
+    if (Math.abs(currentDrag) >= 56) {
+      choose(currentDrag < 0 ? "nao" : "sim");
+    }
   };
 
   return (
@@ -2888,6 +2868,17 @@ function Lp1TrialCardScreen({
       <h1 className="lp1-quiz-title">{title}</h1>
       <div
         className={`lp1-trial-card ${direction ? `is-leaving-${direction}` : ""}`}
+        style={
+          dragX
+            ? {
+                transform: `translateX(${dragX}px) rotate(${dragX / 22}deg)`,
+              }
+            : undefined
+        }
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
         <span className="lp1-trial-card-deck">{card.deckName}</span>
         <p>{card.question}</p>
@@ -2917,7 +2908,18 @@ function Lp1TrialCardScreen({
           </button>
         ))}
       </div>
+      {showConfetti ? <Lp1Confetti /> : null}
     </section>
+  );
+}
+
+function Lp1Confetti() {
+  return (
+    <div className="lp1-confetti" aria-hidden="true">
+      {Array.from({ length: 12 }, (_, index) => (
+        <i key={index} />
+      ))}
+    </div>
   );
 }
 
@@ -3539,6 +3541,7 @@ function Lp1InfoScreen({
 }) {
   const isProofScreen = screen.id === "s08-prova";
   const isEducationScreen = screen.id === "s14-educacao";
+  const isBeliefScreen = screen.id === "s13b-crenca";
   const educationInsight = isEducationScreen
     ? getLp1EducationInsight(answers)
     : null;
@@ -3546,7 +3549,7 @@ function Lp1InfoScreen({
   return (
     <section
       className={`lp1-info-screen ${isProofScreen ? "lp1-proof-screen" : ""} ${
-        isEducationScreen ? "lp1-education-screen" : ""
+        isEducationScreen || isBeliefScreen ? "lp1-education-screen" : ""
       }`}
       data-section-name={screen.id}
     >
@@ -3587,6 +3590,15 @@ function Lp1InfoScreen({
             ))}
           </div>
         </div>
+      ) : isBeliefScreen ? (
+        <div className="lp1-education-panel lp1-belief-panel">
+          <p className="lp1-education-panel-title">O QUE ISSO TIRA DO CAMINHO</p>
+          <ul className="lp1-belief-list">
+            {screen.body?.map((paragraph) => (
+              <li key={paragraph}>{paragraph}</li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <>
           {screen.body?.map((paragraph) => (
@@ -3606,7 +3618,7 @@ function Lp1InfoScreen({
         </>
       )}
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-        {isEducationScreen ? "Faz sentido" : screen.cta}{" "}
+        {isEducationScreen || isBeliefScreen ? "Faz sentido" : screen.cta}{" "}
         <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
