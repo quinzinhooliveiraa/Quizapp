@@ -1,14 +1,34 @@
-import { Router, type IRouter } from "express";
-import { getOfferPricing, getOrCreateOfferWindow } from "../lib/offers";
+import { Router, type IRouter, type Request, type Response } from "express";
+import { getOfferPricing, getOfferWindow, startOfferWindow } from "../lib/offers";
 import { resolveRegion } from "../lib/pricing";
 
 const router: IRouter = Router();
 
+function readVisitorKey(req: Request): string {
+  return typeof req.body?.visitorKey === "string"
+    ? req.body.visitorKey.trim().slice(0, 120)
+    : "";
+}
+
+async function sendOfferState(
+  res: Response,
+  visitorKey: string,
+  region: ReturnType<typeof resolveRegion>,
+): Promise<void> {
+  const window = await getOfferWindow(visitorKey);
+  const pricing = getOfferPricing(region);
+  const active = Boolean(window);
+  res.set("Cache-Control", "no-store");
+  res.json({
+    discountActive: active,
+    deadline: window?.deadline.toISOString() ?? new Date(0).toISOString(),
+    full: pricing.full,
+    offer: pricing.offer,
+  });
+}
+
 router.post("/offer/state", async (req, res): Promise<void> => {
-  const visitorKey =
-    typeof req.body?.visitorKey === "string"
-      ? req.body.visitorKey.trim().slice(0, 120)
-      : "";
+  const visitorKey = readVisitorKey(req);
   if (!visitorKey) {
     res.status(400).json({ error: "visitorKey é obrigatório" });
     return;
@@ -18,21 +38,27 @@ router.post("/offer/state", async (req, res): Promise<void> => {
     headers: req.headers,
     query: req.query as Record<string, unknown>,
   });
-  const window = await getOrCreateOfferWindow(visitorKey, region);
+  await sendOfferState(res, visitorKey, region);
+});
+
+router.post("/offer/start", async (req, res): Promise<void> => {
+  const visitorKey = readVisitorKey(req);
+  if (!visitorKey) {
+    res.status(400).json({ error: "visitorKey é obrigatório" });
+    return;
+  }
+
+  const region = resolveRegion({
+    headers: req.headers,
+    query: req.query as Record<string, unknown>,
+  });
+  const window = await startOfferWindow(visitorKey, region);
   if (!window) {
     res.status(500).json({ error: "Não foi possível abrir a oferta" });
     return;
   }
 
-  const pricing = getOfferPricing(region);
-  const deadline = window.deadline.toISOString();
-  res.set("Cache-Control", "no-store");
-  res.json({
-    discountActive: window.deadline.getTime() > Date.now(),
-    deadline,
-    full: pricing.full,
-    offer: pricing.offer,
-  });
+  await sendOfferState(res, visitorKey, region);
 });
 
 export default router;

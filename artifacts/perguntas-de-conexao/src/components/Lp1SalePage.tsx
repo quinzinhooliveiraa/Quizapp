@@ -309,7 +309,7 @@ export function Lp1SalePage({
   useEffect(() => {
     let cancelled = false;
     setOfferError("");
-    fetch(API_URL(`/api/offer/state${getPricingRegionQuery()}`), {
+    fetch(API_URL(`/api/offer/start${getPricingRegionQuery()}`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ visitorKey }),

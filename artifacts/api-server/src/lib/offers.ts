@@ -90,16 +90,19 @@ export async function getOfferWindow(visitorKey: string) {
     .then(([window]) => window ?? null);
 }
 
-export async function getOrCreateOfferWindow(
+export async function startOfferWindow(
   visitorKey: string,
   region: PricingRegion,
 ) {
+  const now = new Date();
   const existing = await db
     .select()
     .from(offerWindowsTable)
     .where(eq(offerWindowsTable.visitorKey, visitorKey))
     .limit(1)
     .then(([window]) => window ?? null);
+  // A visitor gets one window. A reload or a second visit to the offer must
+  // not silently restart an expired countdown.
   if (existing) return existing;
 
   const [created] = await db
@@ -107,16 +110,11 @@ export async function getOrCreateOfferWindow(
     .values({
       visitorKey,
       region,
-      deadline: new Date(Date.now() + 5 * 60 * 1000),
+      deadline: new Date(now.getTime() + 5 * 60 * 1000),
     })
     .onConflictDoNothing()
     .returning();
 
   if (created) return created;
-  return db
-    .select()
-    .from(offerWindowsTable)
-    .where(eq(offerWindowsTable.visitorKey, visitorKey))
-    .limit(1)
-    .then(([window]) => window ?? null);
+  return getOfferWindow(visitorKey);
 }

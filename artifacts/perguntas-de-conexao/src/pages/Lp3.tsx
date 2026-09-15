@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, ChevronDown, ChevronLeft } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -16,6 +16,8 @@ import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { openSupportDialog } from "@/lib/support";
 import { usePricing } from "@/lib/pricing";
+import { getPricingRegionQuery } from "@/lib/pricing";
+import { apiBaseUrl } from "@/config";
 import { getThemePeek } from "@/lib/theme-peek";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
@@ -180,6 +182,7 @@ export default function Lp3({
   const [liveNote, setLiveNote] = useState("");
   const [showOtherPaths, setShowOtherPaths] = useState(false);
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
+  const offerStartRef = useRef<Promise<void> | null>(null);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
@@ -233,6 +236,32 @@ export default function Lp3({
     if (screen !== "recommend") {
       setShowOtherPaths(false);
     }
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen !== "offer") {
+      offerStartRef.current = null;
+      return;
+    }
+
+    const visitorKey = getVisitorId();
+    const request = fetch(
+      `${apiBaseUrl}/api/offer/start${getPricingRegionQuery()}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorKey }),
+      },
+    ).then((response) => {
+      if (!response.ok) throw new Error("offer start failed");
+    });
+    offerStartRef.current = request;
+
+    return () => {
+      if (offerStartRef.current === request) {
+        offerStartRef.current = null;
+      }
+    };
   }, [screen]);
 
   const moveTo = (nextScreen: Screen) => {
@@ -312,9 +341,17 @@ export default function Lp3({
 
   const checkout = () => {
     trackLp3("checkout_intent", { source: "lp3_offer" });
-    onCtaClick?.("lp3_offer");
-    setLiveNote("Vamos continuar essa conversa.");
-    onCheckout?.();
+    const continueCheckout = () => {
+      onCtaClick?.("lp3_offer");
+      setLiveNote("Vamos continuar essa conversa.");
+      onCheckout?.();
+    };
+    const offerStart = offerStartRef.current;
+    if (offerStart) {
+      void offerStart.catch(() => undefined).finally(continueCheckout);
+    } else {
+      continueCheckout();
+    }
   };
 
   const openThemePeek = (themeId: string) => {

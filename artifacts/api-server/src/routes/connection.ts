@@ -51,7 +51,7 @@ import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "../lib/brevo";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
 import { resolveRegion } from "../lib/pricing";
-import { getOfferPricing } from "../lib/offers";
+import { getOfferPricing, getOfferWindow } from "../lib/offers";
 
 type Theme = {
   id: string;
@@ -600,17 +600,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
   });
   const offerPricing = getOfferPricing(region);
   const activeOfferWindow = visitorKey
-    ? await db
-        .select({ deadline: offerWindowsTable.deadline })
-        .from(offerWindowsTable)
-        .where(
-          and(
-            eq(offerWindowsTable.visitorKey, visitorKey),
-            gt(offerWindowsTable.deadline, new Date()),
-          ),
-        )
-        .limit(1)
-        .then(([window]) => window ?? null)
+    ? await getOfferWindow(visitorKey)
     : null;
   const pricing = activeOfferWindow ? offerPricing.offer : offerPricing.full;
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
