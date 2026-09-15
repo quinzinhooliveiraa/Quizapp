@@ -28112,3 +28112,62 @@ blockquote em {
     display: none;
   }
 }
+
+/* LP1 option alignment: every emoji and label shares the same left edge. */
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-icon {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-visual {
+  display: contents;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option .lp1-quiz-option-check,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-check {
+  position: static;
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  margin-left: auto;
+  padding: 0;
+  transform: none;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-format-multi {
+  grid-template-columns: 1fr;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-format-multi .lp1-quiz-option {
+  min-height: 62px;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-format-multi .lp1-multi-label-bar {
+  display: none;
+}
