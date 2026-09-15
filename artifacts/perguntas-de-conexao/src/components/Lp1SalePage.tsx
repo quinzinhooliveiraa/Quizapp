@@ -490,7 +490,6 @@ export function Lp1SalePage({
               <img src={`/theme-backgrounds/${theme.id}.jpg`} alt="" loading="lazy" />
               <div className="lp1-sale-deck-shade" aria-hidden="true" />
               <div className="lp1-sale-deck-copy">
-                {theme.title === recommendedDeck ? <span>Recomendado pra vocês</span> : null}
                 <strong>{theme.title}</strong>
                 <p>{theme.description}</p>
                 <small>{theme.count} perguntas</small>

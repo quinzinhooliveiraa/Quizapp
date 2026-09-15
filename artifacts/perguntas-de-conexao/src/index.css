@@ -1447,13 +1447,13 @@
   overflow: hidden;
   scroll-snap-align: start;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.9rem;
-  background: #211827;
+  border-radius: 1.25rem;
+  background: transparent;
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.25);
 }
 
 .lp1-sale-deck-card.is-recommended {
-  border-color: rgba(216, 182, 109, 0.85);
-  box-shadow: 0 0 0 1px rgba(216, 182, 109, 0.2), 0 14px 30px rgba(15, 7, 20, 0.28);
+  border-color: rgba(196, 172, 255, 0.45);
 }
 
 .lp1-sale-deck-card > img,
@@ -1466,11 +1466,16 @@
 
 .lp1-sale-deck-card > img {
   object-fit: cover;
-  opacity: 0.72;
+  opacity: 0.86;
 }
 
 .lp1-sale-deck-shade {
-  background: linear-gradient(180deg, rgba(22, 17, 28, 0.08), rgba(22, 17, 28, 0.95));
+  background: linear-gradient(
+    180deg,
+    rgba(22, 17, 28, 0.06),
+    rgba(22, 17, 28, 0.9) 68%,
+    rgba(22, 17, 28, 0.98)
+  );
 }
 
 .lp1-sale-deck-copy {
@@ -1480,37 +1485,27 @@
   min-height: 19rem;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 1rem;
-}
-
-.lp1-sale-deck-copy > span {
-  align-self: flex-start;
-  margin-bottom: auto;
-  padding: 0.35rem 0.5rem;
-  border-radius: 999px;
-  background: #d8b66d;
-  color: #3d1d2c;
-  font: 700 0.57rem/1.2 var(--app-font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  padding: 1.35rem;
 }
 
 .lp1-sale-deck-copy strong {
-  color: #f9ebc9;
-  font: 400 1.25rem/1.05 var(--app-font-serif);
+  color: #fff;
+  font: 700 1.35rem/1.05 var(--app-font-sans);
 }
 
 .lp1-sale-deck-copy p {
-  min-height: 2.3rem;
-  margin: 0.35rem 0 0.55rem;
-  color: #d7ccd9;
-  font-size: 0.74rem;
-  line-height: 1.35;
+  min-height: 0;
+  margin: 0.55rem 0 0.9rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.94rem;
+  line-height: 1.4;
 }
 
 .lp1-sale-deck-copy small {
-  color: #d8b66d;
-  font: 400 0.63rem/1.2 var(--app-font-mono);
+  color: #e8c98a;
+  font: 400 0.72rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .lp1-sale-benefit-grid {
@@ -1955,7 +1950,7 @@
 
   .lp1-sale-deck-card,
   .lp1-sale-deck-copy {
-    min-height: 10rem;
+    min-height: 19rem;
   }
 
   .lp1-sale-mechanism-cards {
