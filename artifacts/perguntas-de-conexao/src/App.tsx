@@ -1636,7 +1636,7 @@ const LP1_SCREEN_ELEVEN_TO_TWENTY_TWO: Lp1Screen[] = [
   {
     id: "s22-diferenca",
     kind: "table",
-    eyebrow: "A DIFERENÇA",
+    eyebrow: "a diferença",
     title: "Vocês já tentaram conversar. Não é disso que falta.",
     cta: "Continuar",
   },

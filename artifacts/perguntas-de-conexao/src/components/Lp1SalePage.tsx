@@ -263,10 +263,10 @@ function OfferCard({
     <>
       <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
         <div className="lp1-sale-offer-heading">
-          <p className="lp1-sale-kicker">ACESSO VITALÍCIO</p>
+          <p className="lp1-sale-kicker">acesso vitalício</p>
           <h2>{offerHeadline}</h2>
           <span className="lp1-sale-recommended">
-            Baralho recomendado: {recommendedDeck}
+            baralho recomendado: {recommendedDeck}
           </span>
         </div>
         {offerState ? (
@@ -445,7 +445,7 @@ export function Lp1SalePage({
       </section>
 
       <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
-        <p className="lp1-sale-kicker">A VIRADA</p>
+        <p className="lp1-sale-kicker">a virada</p>
         <p className="lp1-sale-epiphany-agitation">
           Você escolheu a hora, criou coragem e disse “vamos conversar”. E veio
           o “sei lá”.
@@ -467,7 +467,7 @@ export function Lp1SalePage({
       <Lp1ComparisonSection className="lp1-sale-comparison-section" />
 
       <section className="lp1-sale-section lp1-sale-benefits" data-section-name="sale-benefits">
-        <p className="lp1-sale-kicker">O QUE TEM DENTRO</p>
+        <p className="lp1-sale-kicker">o que tem dentro</p>
         <h2>Um começo recomendado pra vocês. E mais 14 caminhos para continuar.</h2>
         <p className="lp1-sale-library-intro">
           Pelo que você respondeu, <strong>{recommendedDeck}</strong> é o
@@ -493,7 +493,7 @@ export function Lp1SalePage({
               <img src={`/theme-backgrounds/${theme.id}.jpg`} alt="" loading="lazy" />
               <div className="lp1-sale-deck-shade" aria-hidden="true" />
               {theme.title === recommendedDeck ? (
-                <span className="lp1-sale-deck-badge">Baralho recomendado</span>
+                <span className="lp1-sale-deck-badge">baralho recomendado</span>
               ) : null}
               <div className="lp1-sale-deck-copy">
                 <strong>{theme.title}</strong>
@@ -506,7 +506,7 @@ export function Lp1SalePage({
       </section>
 
       <section className="lp1-sale-section lp1-sale-proof" data-section-name="sale-proof">
-        <p className="lp1-sale-kicker">O QUE ACONTECE DEPOIS</p>
+        <p className="lp1-sale-kicker">o que acontece depois</p>
         <p className="lp1-sale-proof-anchor">
           212 mil pessoas já salvaram essas perguntas no TikTok
         </p>
@@ -548,7 +548,7 @@ export function Lp1SalePage({
       </section>
 
       <section className="lp1-sale-section lp1-sale-faq" data-section-name="sale-faq">
-        <p className="lp1-sale-kicker">PERGUNTAS FREQUENTES</p>
+        <p className="lp1-sale-kicker">perguntas frequentes</p>
         <h2>Antes de começar.</h2>
         <div>
           {faqs.map(([question, answer]) => (

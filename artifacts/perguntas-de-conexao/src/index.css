@@ -28879,9 +28879,9 @@ blockquote em {
 .lp1-sale-page .lp1-sale-kicker,
 .lp1-sale-page .lp-eyebrow {
   color: rgba(243, 233, 227, 0.68);
-  font: 500 0.68rem/1.2 var(--app-font-mono);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font: 500 0.68rem/1.2 var(--app-font-sans);
+  letter-spacing: 0.08em;
+  text-transform: none;
 }
 
 .lp1-sale-page .lp1-sale-gap-column.is-deck {
