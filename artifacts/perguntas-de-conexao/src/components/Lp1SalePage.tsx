@@ -445,7 +445,7 @@ export function Lp1SalePage({
       </section>
 
       <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
-        <p className="lp1-sale-kicker">a virada</p>
+        <p className="lp1-sale-kicker">A VIRADA</p>
         <p className="lp1-sale-epiphany-agitation">
           Você escolheu a hora, criou coragem e disse “vamos conversar”. E veio
           o “sei lá”.
@@ -458,7 +458,20 @@ export function Lp1SalePage({
         </p>
         <h3>O problema nunca foi ele. Era a pergunta.</h3>
         <blockquote>
-          “{realClientQuote}”
+          <p className="lp1-sale-epiphany-quote">“{realClientQuote}”</p>
+          <footer className="lp1-sale-epiphany-attribution">
+            <span>Cliente real do Perguntas de Conexão</span>
+            <span className="lp1-sale-epiphany-verified">
+              <ShieldCheck size={12} aria-hidden="true" />
+              VERIFICADO
+            </span>
+          </footer>
+          <img
+            className="lp1-sale-epiphany-print"
+            src={testimonialImages[5]}
+            alt="Print real do depoimento de um cliente"
+            loading="lazy"
+          />
         </blockquote>
       </section>
 
