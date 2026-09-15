@@ -26,6 +26,7 @@ type Lp3Props = {
   onBack?: () => void;
   initialScreen?: "intro" | "question";
   homeHref?: string;
+  showSupportAction?: boolean;
 };
 
 type Screen = "intro" | "question" | "result" | "recommend" | "offer";
@@ -163,6 +164,7 @@ export default function Lp3({
   onBack,
   initialScreen,
   homeHref = "/lp3",
+  showSupportAction = true,
 }: Lp3Props) {
   const pricing = usePricing();
   const stored = useMemo(getStoredState, []);
@@ -594,7 +596,11 @@ export default function Lp3({
         logoTestId="link-footer-logo"
         logoHref={homeHref}
         onLogoClick={homeHref === "/lp3" ? returnToIntro : reset}
-        supportAction={{ label: "Preciso de ajuda", onClick: openSupportDialog }}
+        supportAction={
+          showSupportAction
+            ? { label: "Preciso de ajuda", onClick: openSupportDialog }
+            : undefined
+        }
       />
     </div>
   );

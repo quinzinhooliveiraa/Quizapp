@@ -4912,10 +4912,15 @@ function Shell({
   children,
   dark = false,
   showSiteFooter = true,
+  supportAction,
 }: {
   children: ReactNode;
   dark?: boolean;
   showSiteFooter?: boolean;
+  supportAction?: {
+    label: string;
+    onClick: () => void;
+  };
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -4942,9 +4947,7 @@ function Shell({
       </header>
       {children}
       {showSiteFooter ? (
-        <SiteFooter
-          supportAction={{ label: "Preciso de ajuda", onClick: openSupportDialog }}
-        />
+        <SiteFooter supportAction={supportAction} />
       ) : null}
     </div>
   );
@@ -7427,7 +7430,15 @@ function Home({
     setLandingQuizStep((current) => Math.min(current + 1, 3));
   };
   return (
-    <Shell dark showSiteFooter={variant !== "v2"}>
+    <Shell
+      dark
+      showSiteFooter={variant !== "v2"}
+      supportAction={
+        variant !== "v2" && !checkoutController.checkoutOpen
+          ? { label: "Preciso de ajuda", onClick: openSupportDialog }
+          : undefined
+      }
+    >
       <StoredAccessGate />
       <main className={`lp-main ${variant === "v1" ? "lp2-rebuild" : ""}`}>
         {variant === "v2" ? (
@@ -7878,6 +7889,7 @@ function TrackedLp3({
       <Lp3
         onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
         onCheckout={() => checkout.startCheckout("couple")}
+        showSupportAction={!checkout.checkoutOpen}
       />
       <CheckoutModal checkout={checkout} />
     </>
