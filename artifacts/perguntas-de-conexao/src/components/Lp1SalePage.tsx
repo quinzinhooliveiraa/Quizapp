@@ -512,9 +512,6 @@ export function Lp1SalePage({
             </article>
           ))}
         </div>
-        <p className="lp1-sale-disclaimer">
-          Prints reais de clientes. Nenhum nome ou foto foi trocado.
-        </p>
       </section>
 
       <section
