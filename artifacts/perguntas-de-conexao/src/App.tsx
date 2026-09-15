@@ -1869,17 +1869,16 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s13-atrapalha",
     kind: "question",
     key: "atrapalha",
-    title: "O que mais dificulta vocês terem conversas diferentes?",
-    subtitle: "Marque tudo que fizer sentido.",
+    title: "O que mais atrapalha vocês de terem conversas melhores?",
     format: "multi",
+    emoji: true,
     options: [
-      { value: "comecar", label: "Não sei como começar" },
-      { value: "perguntar", label: "Não sei o que perguntar" },
-      { value: "nao-entra", label: "Meu parceiro não entra na conversa" },
-      { value: "rotina", label: "A rotina toma conta" },
-      { value: "vergonha", label: "Tenho vergonha" },
-      { value: "medo", label: "Tenho medo da resposta" },
-      { value: "nao-para", label: "A gente não para pra isso" },
+      { value: "rotina", label: "Falta de tempo", icon: "⏰" },
+      { value: "celular", label: "Celular / distrações", icon: "📱" },
+      { value: "comecar", label: "Não saber por onde começar", icon: "🤷" },
+      { value: "medo", label: "Medo de deixar o clima pesado", icon: "😬" },
+      { value: "cansaco", label: "Cansaço", icon: "😴" },
+      { value: "nao-para", label: "A sensação de que já falamos de tudo", icon: "💭" },
     ],
   },
   {
@@ -2543,7 +2542,9 @@ function Lp1Quiz({
                     ? "lp1-night-question"
                   : current.id === "s10-sentir"
                     ? "lp1-feeling-question"
-                    : undefined
+                    : current.id === "s13-atrapalha"
+                      ? "lp1-obstacle-question"
+                      : undefined
             }
             data-section-name={current.id}
           >
