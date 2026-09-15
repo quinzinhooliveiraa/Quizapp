@@ -1456,16 +1456,12 @@
 }
 
 .lp1-quiz-title {
-  display: -webkit-box;
   max-width: 34rem;
   margin: 0 0 1.5rem;
-  overflow: hidden;
   color: #f4efe9;
   font: 400 clamp(1.72rem, 7vw, 2.4rem)/1.16 var(--app-font-serif);
   letter-spacing: -0.025em;
   text-wrap: balance;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .lp1-quiz-subtitle {
