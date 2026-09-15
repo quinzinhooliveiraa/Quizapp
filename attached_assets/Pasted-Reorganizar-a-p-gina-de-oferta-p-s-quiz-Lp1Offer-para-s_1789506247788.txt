@@ -1,0 +1,64 @@
+Reorganizar a página de oferta pós-quiz (Lp1Offer) para seguir a mesma espinha
+narrativa da LP1 e os gatilhos do ebook. A oferta hoje está fraca: joga um
+resultado genérico e o preço na cara. Tem que contar história e matar objeção
+ANTES de pedir dinheiro, igual a LP1. Manter a paleta da LP1 (vinho #7a2e46 /
+fundo #16111c / dourado #d8b66d). Ordem das seções, de cima pra baixo:
+
+SEÇÃO 1 — DIAGNÓSTICO AGORA → DEPOIS (gancho personalizado)
+- Barra de desconto: "Termina em MM:SS" + botão "PEGAR -40% OFF". Timer
+  server-side (/api/offer/state), não reinicia no reload; quando zera volta pra R$50.
+- Uma IMAGEM ÚNICA horizontal (casal distante → conectado), largura total, sem texto.
+- Card dividido em 2 colunas alinhadas com as metades da imagem:
+  ESQUERDA "Agora" (urgência): tag "No modo colega de quarto" · Conversa "Virou só
+  logística" · Perguntas "Morrem no 'sei lá'" · Vontade de puxar assunto "Some antes
+  de sair" (barras BAIXAS, saídas do score real do medidor).
+  DIREITA "Com as cartas" (potencial): tag "Conexão de verdade" · Conversa "Sai do
+  automático" · Perguntas "Puxam resposta de verdade" · Vontade "Vem pronta, sem
+  forçar" (barras ALTAS).
+- Fechar com a ABSOLVIÇÃO: "Não é falta de amor. Faltava a pergunta certa."
+- REMOVER o card "CHANCE DE COMEÇAR BEM: Alta" e qualquer nota/% de sucesso.
+
+SEÇÃO 2 — A VIRADA (reframe + história, igual LP1)
+- Texto curto: "'Vamos conversar' não é pergunta — é cobrança. Ela pede que o outro
+  traga algo sem dizer o quê." + o exemplo concreto: uma pergunta que já chega com o
+  assunto pronto. Reenquadrar: "O problema nunca foi ele. Era a pergunta."
+- Incluir UMA frase real de cliente (usar as já existentes, nada inventado).
+
+SEÇÃO 3 — O MECANISMO LEVE → HONESTA → PROFUNDA
+- "Ninguém abre o jogo numa pergunta pesada." Com 3 cartas de exemplo (LEVE,
+  HONESTA, PROFUNDA), igual à LP1. "Quem faz a pergunta é a carta, não você."
+
+SEÇÃO 4 — A DIFERENÇA (tabela)
+- Tabela "Sem o baralho" × "Com as cartas" (a mesma da LP1).
+
+SEÇÃO 5 — O QUE TEM DENTRO
+- Destacar o BARALHO RECOMENDADO pela dor da pessoa + mostrar os 15 baralhos.
+
+SEÇÃO 6 — PROVA SOCIAL REAL
+- "212 mil salvamentos no TikTok" + depoimentos com os prints REAIS (dep-01..06),
+  formato tipo Trustpilot. Nada inventado, nenhuma foto trocada.
+
+SEÇÃO 7 — CARD DE PREÇO (IDÊNTICO à LP1 — reusar o mesmo componente)
+- "459 perguntas por R$ 50 · dá 11 centavos por noite" · CTA "Começar hoje à noite"
+  · "🔒 7 dias de garantia. Você decide." + bloco de garantia incondicional (uma vez).
+- Com desconto (dentro da janela): "~~R$ 50~~ R$ 30 · dá 7 centavos por noite".
+- BR: Pix/cartão. PT: 15 €→10 €, cêntimos por noite, cartão. MESMO componente nos dois.
+- Frase grande: "Paga uma vez. Pra sempre. Sem assinatura."
+- REMOVER da oferta: a faixa "Preço normal", o parágrafo "R$ 50. Uma vez. Pra
+  sempre..." solto, o "pagamento único" e a garantia DUPLICADA.
+- Por fora do card (não dentro dele): a linha "Sem pagamento neste passo — você
+  revisa e confirma no próximo", a linha "✓ Funciona mesmo se ele não entrar de cara:
+  você começa sozinha, pelas perguntas leves" e o bônus "🎁 Leva 3 perguntas de
+  amostra pra usar hoje à noite".
+
+SEÇÃO 8 — FAQ
+- Cabeçalho em PORTUGUÊS (trocar "PEOPLE OFTEN ASK"). Mesmas perguntas da LP1 +
+  responder direto "é pra mim?" (serve pra qualquer casal, namoro novo ou anos juntos).
+
+SEÇÃO 9 — FECHAMENTO
+- CTA final + bloco de oferta repetido (preço + contador), como no fim da LP1.
+
+REGRAS QUE NÃO PODEM QUEBRAR: sem nota de sucesso, sem escassez falsa, sem preço
+riscado inventado (o único strike é o R$ 50 real dentro da janela real), sem
+depoimento/foto inventados, contador que não reinicia no reload, preço validado no
+servidor (cliente nunca envia valor). Tudo na paleta da LP1.

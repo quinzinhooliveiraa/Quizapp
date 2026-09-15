@@ -673,7 +673,7 @@
 }
 
 .lp1-sale-recap {
-  width: min(100% - 2rem, 520px);
+  width: min(100% - 2rem, 980px);
   padding-top: clamp(5rem, 12vw, 9rem);
 }
 
@@ -875,6 +875,17 @@
 
 .lp1-sale-gap-column.is-deck .lp1-sale-gap-row b {
   background: linear-gradient(90deg, #b58d4d, #e8c98a);
+}
+
+.lp1-sale-absolution {
+  max-width: 42rem;
+  margin: 2rem auto 0;
+  color: #f6e1ad;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.5rem, 4vw, 2.45rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  text-align: center;
 }
 
 @keyframes lp1-gap-card-in {
@@ -1137,8 +1148,29 @@
   line-height: 1.75;
 }
 
+.lp1-sale-epiphany blockquote {
+  max-width: 35rem;
+  margin: 2.5rem auto 0;
+  padding: 1.25rem 1.4rem;
+  border-left: 2px solid #d8b66d;
+  color: #f6e1ad;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.15rem, 2.7vw, 1.55rem);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.lp1-sale-epiphany blockquote cite {
+  display: block;
+  margin-top: 0.8rem;
+  color: #9d92a6;
+  font: 400 0.68rem/1.3 var(--app-font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .lp1-sale-offer-section {
-  padding-top: 2rem;
+  padding-top: 4.5rem;
   padding-bottom: 5rem;
 }
 
@@ -1168,6 +1200,25 @@
   background: rgba(232, 201, 138, 0.12);
   color: #e8c98a;
   font: 400 0.68rem/1.2 var(--app-font-mono);
+}
+
+.lp1-sale-lifetime {
+  margin: 1.25rem auto 0;
+  color: #f6e1ad;
+  font: 400 clamp(1.05rem, 2.4vw, 1.35rem)/1.25 var(--app-font-serif);
+}
+
+.lp1-sale-inline-timer {
+  margin: 0.85rem auto 0;
+  color: #d8b66d;
+  font: 700 0.7rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp1-sale-offer-notes {
+  max-width: 680px;
+  margin: 0 auto;
 }
 
 .lp1-sale-urgency {
@@ -1342,6 +1393,96 @@
   max-width: 38rem;
 }
 
+.lp1-sale-library-intro {
+  max-width: 38rem;
+  margin: 1.15rem 0 0;
+  color: #b9adbf;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.lp1-sale-library-intro strong {
+  color: #f6e1ad;
+}
+
+.lp1-sale-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 2.5rem;
+}
+
+.lp1-sale-deck-card {
+  position: relative;
+  min-height: 12rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+  background: #211827;
+}
+
+.lp1-sale-deck-card.is-recommended {
+  border-color: rgba(216, 182, 109, 0.85);
+  box-shadow: 0 0 0 1px rgba(216, 182, 109, 0.2), 0 14px 30px rgba(15, 7, 20, 0.28);
+}
+
+.lp1-sale-deck-card > img,
+.lp1-sale-deck-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lp1-sale-deck-card > img {
+  object-fit: cover;
+  opacity: 0.72;
+}
+
+.lp1-sale-deck-shade {
+  background: linear-gradient(180deg, rgba(22, 17, 28, 0.08), rgba(22, 17, 28, 0.95));
+}
+
+.lp1-sale-deck-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.lp1-sale-deck-copy > span {
+  align-self: flex-start;
+  margin-bottom: auto;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  background: #d8b66d;
+  color: #3d1d2c;
+  font: 700 0.57rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lp1-sale-deck-copy strong {
+  color: #f9ebc9;
+  font: 400 1.25rem/1.05 var(--app-font-serif);
+}
+
+.lp1-sale-deck-copy p {
+  min-height: 2.3rem;
+  margin: 0.35rem 0 0.55rem;
+  color: #d7ccd9;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.lp1-sale-deck-copy small {
+  color: #d8b66d;
+  font: 400 0.63rem/1.2 var(--app-font-mono);
+}
+
 .lp1-sale-benefit-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1416,6 +1557,59 @@
   margin: 1.2rem auto 0;
   color: #b9adbf;
   line-height: 1.7;
+}
+
+.lp1-sale-mechanism-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 2.5rem;
+  text-align: left;
+}
+
+.lp1-sale-mechanism-cards article {
+  display: flex;
+  min-height: 14rem;
+  flex-direction: column;
+  padding: 1.2rem;
+  border: 1px solid rgba(216, 182, 109, 0.25);
+  border-radius: 0.9rem;
+  background: rgba(216, 182, 109, 0.055);
+}
+
+.lp1-sale-mechanism-cards article:nth-child(2) {
+  border-color: rgba(180, 102, 124, 0.4);
+  background: rgba(122, 46, 70, 0.18);
+}
+
+.lp1-sale-mechanism-cards article:nth-child(3) {
+  border-color: rgba(216, 182, 109, 0.5);
+  background: linear-gradient(150deg, rgba(122, 46, 70, 0.24), rgba(216, 182, 109, 0.12));
+}
+
+.lp1-sale-mechanism-cards span {
+  color: #d8b66d;
+  font: 700 0.64rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.16em;
+}
+
+.lp1-sale-mechanism-cards strong {
+  margin-top: auto;
+  color: #f9ebc9;
+  font: 400 1.25rem/1.15 var(--app-font-serif);
+}
+
+.lp1-sale-mechanism-cards p {
+  margin: 0.8rem 0 0;
+  color: #b9adbf;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.lp1-sale-mechanism-close {
+  color: #f6e1ad !important;
+  font-family: var(--app-font-serif);
+  font-size: 1.25rem;
 }
 
 .lp1-sale-steps {
@@ -1697,7 +1891,8 @@
   }
 
   .lp1-sale-recap-grid,
-  .lp1-sale-benefit-grid {
+  .lp1-sale-benefit-grid,
+  .lp1-sale-deck-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1727,6 +1922,19 @@
 
   .lp1-sale-steps i {
     font-size: 1.05rem;
+  }
+
+  .lp1-sale-deck-card,
+  .lp1-sale-deck-copy {
+    min-height: 10rem;
+  }
+
+  .lp1-sale-mechanism-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .lp1-sale-mechanism-cards article {
+    min-height: 11rem;
   }
 }
 

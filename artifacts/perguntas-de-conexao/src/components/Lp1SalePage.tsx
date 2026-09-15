@@ -8,9 +8,10 @@ import {
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
 import { computeLp1Score } from "@/lib/lp1-score";
-import { testimonialImages } from "@/lib/testimonials";
+import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
 import { getPricingRegionQuery, type Pricing } from "@/lib/pricing";
+import { themes as connectionThemes } from "@workspace/connection-content";
 
 type SaleAnswers = Record<string, unknown>;
 
@@ -23,46 +24,11 @@ type OfferState = {
 
 const API_URL = (path: string) => `${apiBaseUrl}${path}`;
 
-const benefitCards = [
-  {
-    title: "459 perguntas",
-    body: "em 15 baralhos, do leve ao profundo.",
-    mark: "459",
-    image: "/quiz/clima-leve.png",
-  },
-  {
-    title: "Do leve ao profundo",
-    body: "A profundidade chega no ritmo de vocês.",
-    mark: "→",
-    image: "/quiz/dx-como-comecar.png",
-  },
-  {
-    title: "Acesso pra 2 pessoas",
-    body: "Você + convite, sem pagar de novo.",
-    mark: "2",
-    image: "/quiz/dx-eu-travo.png",
-  },
-  {
-    title: "Cada um no seu celular",
-    body: "Respondem juntos, mesmo à distância.",
-    mark: "↗",
-    image: "/quiz/dx-afastamento.png",
-  },
-  {
-    title: "Novos baralhos",
-    body: "Incluídos para sempre, sem mensalidade.",
-    mark: "∞",
-    image: "/quiz/clima-honesto.png",
-  },
-  {
-    title: "7 dias de garantia",
-    body: "Se não fizer sentido, devolvemos.",
-    mark: "✓",
-    image: "/quiz/dx-sei-la.png",
-  },
-] as const;
-
 const faqs = [
+  [
+    "É pra mim?",
+    "Sim. Funciona para qualquer casal — namoro novo, muitos anos juntos ou uma relação à distância. Vocês começam pelo nível que fizer sentido hoje.",
+  ],
   [
     "E se eu é que não souber responder?",
     'Tudo bem. A primeira pergunta de cada baralho é leve, e "nunca pensei nisso" já é um começo.',
@@ -92,6 +58,10 @@ const faqs = [
     "Na hora. Assim que o pagamento for confirmado, o acesso abre automaticamente.",
   ],
 ] as const;
+
+const realClientLine =
+  landingTestimonials[0]?.quote.split("\n\n")[2] ??
+  "Mas outras fizeram a gente conversar sobre coisas que nunca tínhamos compartilhado antes.";
 
 function getVisitorKey(): string {
   try {
@@ -222,25 +192,26 @@ function getPersonalizedCopy(answers: SaleAnswers) {
 
 function getRecapBars(answers: SaleAnswers) {
   const score = computeLp1Score(answers).value;
+  const currentLevel = Math.max(12, Math.min(44, Math.round(score * 0.6)));
 
   return [
     {
       label: "Conversa",
-      today: score,
+      today: currentLevel,
       deck: 92,
       todayCopy: "Virou só logística",
       afterCopy: "Sai do automático",
     },
     {
       label: "Perguntas",
-      today: score,
+      today: Math.max(10, currentLevel - 3),
       deck: 96,
       todayCopy: "Morrem no “sei lá”",
       afterCopy: "Puxam resposta de verdade",
     },
     {
       label: "Vontade de puxar assunto",
-      today: score,
+      today: Math.max(8, currentLevel - 7),
       deck: 98,
       todayCopy: "Some antes de sair",
       afterCopy: "Vem pronta, sem forçar",
@@ -255,6 +226,7 @@ function OfferCard({
   offerHeadline,
   onCheckout,
   compact = false,
+  showCountdown = false,
 }: {
   offerState: OfferState | null;
   remainingSeconds: number;
@@ -262,47 +234,60 @@ function OfferCard({
   offerHeadline: string;
   onCheckout: () => void;
   compact?: boolean;
+  showCountdown?: boolean;
 }) {
   const active = Boolean(offerState?.discountActive && remainingSeconds > 0);
 
   return (
-    <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
-      <div className="lp1-sale-offer-heading">
-        <p className="lp1-sale-kicker">ACESSO VITALÍCIO</p>
-        <h2>{offerHeadline}</h2>
-        <span className="lp1-sale-recommended">
-          Baralho recomendado: {recommendedDeck}
-        </span>
+    <>
+      <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
+        <div className="lp1-sale-offer-heading">
+          <p className="lp1-sale-kicker">ACESSO VITALÍCIO</p>
+          <h2>{offerHeadline}</h2>
+          <span className="lp1-sale-recommended">
+            Baralho recomendado: {recommendedDeck}
+          </span>
+          <p className="lp1-sale-lifetime">
+            Paga uma vez. Pra sempre. Sem assinatura.
+          </p>
+          {showCountdown && active ? (
+            <p className="lp1-sale-inline-timer" aria-live="polite">
+              Termina em {formatRemaining(remainingSeconds)}
+            </p>
+          ) : null}
+        </div>
+        {offerState ? (
+          <Lp1PriceCard
+            fullPricing={offerState.full}
+            offerPricing={offerState.offer}
+            discountActive={active}
+            onBuy={onCheckout}
+            testId={
+              compact
+                ? "button-lp1-sale-checkout-bottom"
+                : "button-lp1-sale-checkout"
+            }
+            className="lp1-sale-shared-price-card"
+          />
+        ) : (
+          <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
+        )}
       </div>
-      {offerState ? (
-        <Lp1PriceCard
-          fullPricing={offerState.full}
-          offerPricing={offerState.offer}
-          discountActive={active}
-          onBuy={onCheckout}
-          testId={
-            compact
-              ? "button-lp1-sale-checkout-bottom"
-              : "button-lp1-sale-checkout"
-          }
-          className="lp1-sale-shared-price-card"
-        />
-      ) : (
-        <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
-      )}
-      <p className="lp1-sale-fear-note">
-        Sem pagamento neste passo — você revisa e confirma no próximo.
-      </p>
-      <p className="lp1-sale-objection">
-        <Check size={16} aria-hidden="true" /> Funciona mesmo se ele não entrar
-        de cara: você começa sozinha, pelas perguntas leves. Ele entra quando a
-        conversa já estiver boa.
-      </p>
-      <p className="lp1-sale-bonus">
-        <span aria-hidden="true">🎁</span> Leva 3 perguntas de amostra pra usar
-        hoje à noite, agora.
-      </p>
-    </div>
+      <div className="lp1-sale-offer-notes">
+        <p className="lp1-sale-fear-note">
+          Sem pagamento neste passo — você revisa e confirma no próximo.
+        </p>
+        <p className="lp1-sale-objection">
+          <Check size={16} aria-hidden="true" /> Funciona mesmo se ele não
+          entrar de cara: você começa sozinha, pelas perguntas leves. Ele entra
+          quando a conversa já estiver boa.
+        </p>
+        <p className="lp1-sale-bonus">
+          <span aria-hidden="true">🎁</span> Leva 3 perguntas de amostra pra
+          usar hoje à noite.
+        </p>
+      </div>
+    </>
   );
 }
 
@@ -436,75 +421,45 @@ export function Lp1SalePage({
             ))}
           </div>
         </div>
-      </section>
-
-      <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
-        <p className="lp1-sale-kicker">A DIFERENÇA</p>
-        <h2>{personalizedCopy.epiphany}</h2>
-        <h3>Precisem da pergunta que abre espaço.</h3>
-        <p>
-          “Como foi seu dia?” é fácil responder “normal”. Mas quando alguém
-          pergunta algo que você nunca pensou em responder, a conversa muda. É
-          isso que o Perguntas de Conexão faz.
+        <p className="lp1-sale-absolution">
+          Não é falta de amor. Faltava a pergunta certa.
         </p>
       </section>
 
-      <section
-        className="lp1-sale-section lp1-sale-offer-section"
-        id="lp1-sale-offer"
-        data-section-name="sale-offer"
-      >
-        <OfferCard
-          offerState={offerState}
-          remainingSeconds={remainingSeconds}
-          recommendedDeck={recommendedDeck}
-          offerHeadline={personalizedCopy.offerHeadline}
-          onCheckout={onCheckout}
-        />
-        {offerError ? (
-          <button
-            type="button"
-            className="lp1-sale-retry"
-            onClick={() => window.location.reload()}
-          >
-            {offerError} Tentar novamente
-          </button>
-        ) : null}
-      </section>
-
-      <section className="lp1-sale-section lp1-sale-benefits" data-section-name="sale-benefits">
-        <p className="lp1-sale-kicker">O QUE VOCÊS LEVAM</p>
-        <h2>Uma pergunta boa para cada noite que vocês quiserem lembrar.</h2>
-        <div className="lp1-sale-benefit-grid">
-          {benefitCards.map(({ title, body, mark, image }, index) => (
-            <article className="lp1-sale-benefit-card" key={title}>
-              <div className={`lp1-sale-benefit-image is-${index + 1}`}>
-                <img src={image} alt="" loading="lazy" />
-                <span>{mark}</span>
-              </div>
-              <div>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+      <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
+        <p className="lp1-sale-kicker">A VIRADA</p>
+        <h2>“Vamos conversar” não é pergunta — é cobrança.</h2>
+        <p>
+          Ela pede que o outro traga algo sem dizer o quê. Uma pergunta como
+          “qual foi uma coisa pequena que te fez sorrir hoje?” já chega com o
+          assunto pronto, sem exigir que ninguém descubra por onde começar.
+        </p>
+        <h3>O problema nunca foi ele. Era a pergunta.</h3>
+        <blockquote>
+          “{realClientLine}”
+          <cite>— Lucas, 23 anos de casamento</cite>
+        </blockquote>
       </section>
 
       <section className="lp1-sale-section lp1-sale-mechanism" data-section-name="sale-mechanism">
         <p className="lp1-sale-kicker">O MECANISMO</p>
-        <h2>“Mas e se ele responder sei lá?”</h2>
-        <p>É justamente por isso que o jogo não começa nas perguntas pesadas.</p>
-        <div className="lp1-sale-steps">
-          <span><b>🌿</b> LEVE</span>
-          <i>→</i>
-          <span><b>❤️</b> HONESTA</span>
-          <i>→</i>
-          <span><b>🧠</b> PROFUNDA</span>
+        <h2>Ninguém abre o jogo numa pergunta pesada.</h2>
+        <p>As cartas conduzem a conversa até a profundidade, sem transformar o começo em cobrança.</p>
+        <div className="lp1-sale-mechanism-cards">
+          {[
+            ["LEVE", "“Qual programa simples sempre melhora o seu dia?”", "A conversa entra sem resistência."],
+            ["HONESTA", "“O que você gostaria que eu perguntasse mais vezes?”", "O que estava quieto começa a aparecer."],
+            ["PROFUNDA", "“Que parte sua você só mostra quando se sente seguro?”", "A proximidade vem no ritmo de vocês."],
+          ].map(([label, question, body]) => (
+            <article key={label}>
+              <span>{label}</span>
+              <strong>{question}</strong>
+              <p>{body}</p>
+            </article>
+          ))}
         </div>
-        <p>
-          Não tem pontuação, nem vencedor, nem obrigação de responder. E
-          funciona à distância — cada um no seu celular, na mesma pergunta.
+        <p className="lp1-sale-mechanism-close">
+          Quem faz a pergunta é a carta, não você.
         </p>
       </section>
 
@@ -525,6 +480,33 @@ export function Lp1SalePage({
               <b>{generic}</b>
               <b className="is-ours">{deck}</b>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-benefits" data-section-name="sale-benefits">
+        <p className="lp1-sale-kicker">O QUE TEM DENTRO</p>
+        <h2>Um começo recomendado pra vocês. E mais 14 caminhos para continuar.</h2>
+        <p className="lp1-sale-library-intro">
+          Pelo que você respondeu, <strong>{recommendedDeck}</strong> é o
+          melhor lugar para começar. Depois, os outros baralhos ficam abertos
+          para cada fase, clima e vontade.
+        </p>
+        <div className="lp1-sale-deck-grid">
+          {connectionThemes.map((theme) => (
+            <article
+              className={`lp1-sale-deck-card ${theme.title === recommendedDeck ? "is-recommended" : ""}`}
+              key={theme.id}
+            >
+              <img src={`/theme-backgrounds/${theme.id}.jpg`} alt="" loading="lazy" />
+              <div className="lp1-sale-deck-shade" aria-hidden="true" />
+              <div className="lp1-sale-deck-copy">
+                {theme.title === recommendedDeck ? <span>Recomendado pra vocês</span> : null}
+                <strong>{theme.title}</strong>
+                <p>{theme.description}</p>
+                <small>{theme.count} perguntas</small>
+              </div>
+            </article>
           ))}
         </div>
       </section>
@@ -555,6 +537,29 @@ export function Lp1SalePage({
         <p className="lp1-sale-disclaimer">
           Prints reais de clientes. Nenhum nome ou foto foi trocado.
         </p>
+      </section>
+
+      <section
+        className="lp1-sale-section lp1-sale-offer-section"
+        id="lp1-sale-offer"
+        data-section-name="sale-offer"
+      >
+        <OfferCard
+          offerState={offerState}
+          remainingSeconds={remainingSeconds}
+          recommendedDeck={recommendedDeck}
+          offerHeadline={personalizedCopy.offerHeadline}
+          onCheckout={onCheckout}
+        />
+        {offerError ? (
+          <button
+            type="button"
+            className="lp1-sale-retry"
+            onClick={() => window.location.reload()}
+          >
+            {offerError} Tentar novamente
+          </button>
+        ) : null}
       </section>
 
       <section className="lp1-sale-section lp1-sale-faq" data-section-name="sale-faq">
@@ -589,6 +594,7 @@ export function Lp1SalePage({
           offerHeadline={personalizedCopy.offerHeadline}
           onCheckout={onCheckout}
           compact
+          showCountdown
         />
         <p className="lp1-sale-last-line">
           Hoje à noite pode ser só mais uma noite. Ou a noite em que vocês
