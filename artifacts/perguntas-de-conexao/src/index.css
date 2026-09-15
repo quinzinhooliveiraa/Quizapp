@@ -669,6 +669,115 @@
   margin-top: 3rem;
 }
 
+.lp1-sale-recap-promo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.lp1-sale-recap-image-slot {
+  position: relative;
+  display: flex;
+  min-height: 18rem;
+  align-items: flex-end;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(232, 201, 138, 0.28);
+  border-radius: 1rem;
+  background: #5b1230;
+}
+
+.lp1-sale-recap-image-slot::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(22, 17, 28, 0.03) 20%,
+    rgba(22, 17, 28, 0.9) 100%
+  );
+  content: "";
+}
+
+.lp1-sale-recap-image-slot img {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lp1-sale-recap-image-slot span {
+  max-width: 18rem;
+  padding: 1.3rem;
+  color: #fff6e8;
+  font: 400 clamp(1.5rem, 4vw, 2.4rem)/0.98 var(--app-font-serif);
+  letter-spacing: -0.04em;
+}
+
+.lp1-sale-recap-signal-stack {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.lp1-sale-recap-signal-card {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.lp1-sale-recap-signal-card.is-success {
+  border-color: rgba(232, 201, 138, 0.5);
+  background: #f5eddf;
+  color: #31222a;
+}
+
+.lp1-sale-recap-signal-card.is-urgency {
+  border-color: rgba(143, 47, 80, 0.52);
+  background: linear-gradient(145deg, #5b1230, #321a2b);
+}
+
+.lp1-sale-recap-signal-card p {
+  margin: 0 0 0.7rem;
+  color: #c9a55e;
+  font: 400 0.62rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lp1-sale-recap-signal-card.is-success p {
+  color: #8a5a35;
+}
+
+.lp1-sale-recap-signal-card strong {
+  color: #f9ebc9;
+  font: 400 clamp(1.7rem, 4vw, 2.6rem)/0.98 var(--app-font-serif);
+  letter-spacing: -0.04em;
+}
+
+.lp1-sale-recap-signal-card.is-success strong {
+  color: #5b1230;
+}
+
+.lp1-sale-recap-signal-card span {
+  margin-top: 0.75rem;
+  color: #b9adbf;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.lp1-sale-recap-signal-card.is-success span {
+  color: #765d65;
+}
+
 .lp1-sale-personalized-body {
   max-width: 40rem;
   margin: 1.35rem 0 0;
@@ -792,147 +901,12 @@
   font: 400 0.68rem/1.2 var(--app-font-mono);
 }
 
-.lp1-sale-offer-story {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 0.75rem;
-  margin: 1.6rem 0 1.25rem;
-  text-align: left;
-}
-
-.lp1-sale-offer-image-slot,
-.lp1-sale-offer-signal {
-  min-height: 14rem;
-  overflow: hidden;
-  border-radius: 0.95rem;
-}
-
-.lp1-sale-offer-image-slot {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  isolation: isolate;
-  background: #5b1230;
-}
-
-.lp1-sale-offer-image-slot::after {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(22, 17, 28, 0.04) 25%,
-    rgba(22, 17, 28, 0.9) 100%
-  );
-  content: "";
-}
-
-.lp1-sale-offer-image-slot img {
-  position: absolute;
-  z-index: -2;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.lp1-sale-offer-image-slot > span {
-  max-width: 14rem;
-  padding: 1rem;
-  color: #fff6e8;
-  font: 400 1.45rem/1.05 var(--app-font-serif);
-  letter-spacing: -0.03em;
-}
-
-.lp1-sale-offer-signal {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 1.2rem;
-  border: 1px solid rgba(232, 201, 138, 0.56);
-  background: #f5eddf;
-  color: #2e2024;
-}
-
-.lp1-sale-offer-signal-kicker {
-  margin: 0 0 0.8rem;
-  color: #8a5a35;
-  font: 400 0.62rem/1.2 var(--app-font-mono);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.lp1-sale-offer-signal h3 {
-  margin: 0;
-  color: #3d2730;
-  font: 400 clamp(1.45rem, 3vw, 2rem)/1.02 var(--app-font-serif);
-  letter-spacing: -0.035em;
-}
-
-.lp1-sale-offer-signal > p:not(.lp1-sale-offer-signal-kicker) {
-  margin: 0.8rem 0 0;
-  color: #765d65;
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.lp1-sale-offer-meter {
-  height: 0.45rem;
-  margin-top: 1.1rem;
-  overflow: hidden;
-  border-radius: 99px;
-  background: #dfd3cb;
-}
-
-.lp1-sale-offer-meter span {
-  display: block;
-  width: 86%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #8f2f50, #e8c98a);
-}
-
-.lp1-sale-offer-signal small {
-  display: block;
-  margin-top: 0.65rem;
-  color: #8a7278;
-  font-size: 0.66rem;
-  line-height: 1.35;
-}
-
 .lp1-sale-urgency {
   margin: 2rem -1rem 1.5rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgba(232, 201, 138, 0.52);
-  border-radius: 0.85rem;
-  background: linear-gradient(105deg, #f1dca8, #e8c98a);
-  color: #3c202c;
-  text-align: left;
-}
-
-.lp1-sale-urgency > div {
-  display: grid;
-  gap: 0.3rem;
-}
-
-.lp1-sale-urgency span {
-  color: #855031;
-  font: 400 0.6rem/1.2 var(--app-font-mono);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.lp1-sale-urgency strong {
-  color: #5b1230;
-  font: 700 clamp(1.15rem, 3vw, 1.65rem)/1.05 var(--app-font-mono);
-  letter-spacing: -0.04em;
-}
-
-.lp1-sale-urgency p {
-  margin: 0.55rem 0 0;
-  color: #67404c;
-  font-size: 0.75rem;
-  line-height: 1.4;
+  padding: 0.75rem;
+  background: linear-gradient(90deg, #5b1230, #7a2e46);
+  color: #f7d8c5;
+  font: 400 0.78rem/1.2 var(--app-font-mono);
 }
 
 .checkout-offer-bar {
@@ -1327,25 +1301,22 @@
     font-size: 0.58rem;
   }
 
-  .lp1-sale-offer-story {
+  .lp1-sale-recap-promo {
     grid-template-columns: 1fr;
   }
 
-  .lp1-sale-offer-image-slot,
-  .lp1-sale-offer-signal {
-    min-height: 11.5rem;
+  .lp1-sale-recap-image-slot {
+    min-height: 14rem;
   }
 
-  .lp1-sale-offer-image-slot > span {
+  .lp1-sale-recap-image-slot span {
     max-width: 12rem;
     font-size: 1.35rem;
   }
 
-  .lp1-sale-urgency {
-    margin-right: -0.35rem;
-    margin-left: -0.35rem;
+  .lp1-sale-recap-signal-card {
+    min-height: 10rem;
   }
-
   .lp1-sale-section {
     width: min(100% - 2rem, 980px);
     padding: 4.5rem 0;
