@@ -1666,17 +1666,6 @@ const LP1_SCREENS_LEGACY: Lp1Screen[] = [
 
 const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
   {
-    id: "s01-abertura",
-    kind: "photo",
-    image: "/hero/hero-casal-novo-mobile.webp",
-    title: 'Chega de "sei lá".',
-    body: [
-      "Descubra em menos de 2 minutos o que pode estar faltando pra vocês se sentirem mais próximos — e veja como começar uma conversa diferente ainda hoje.",
-      "É grátis. Não precisa escrever nada.",
-    ],
-    cta: "Quero descobrir",
-  },
-  {
     id: "s02-momento",
     kind: "question",
     key: "momento",
