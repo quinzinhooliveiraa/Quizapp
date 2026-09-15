@@ -3025,11 +3025,11 @@ const LP1_LOADING_MODALS = [
   },
   {
     question: "Dez minutos, uma carta, sem precisar marcar nada. Serve pra vocês?",
-    options: ["Sim", "Talvez"],
+    options: ["Sim", "Ainda não sei"],
   },
   {
     question: "Topa começar por uma leve, não pela mais pesada?",
-    options: ["Sim", "Prefiro ir direto"],
+    options: ["Sim", "Ainda não sei"],
   },
 ] as const;
 
@@ -3051,7 +3051,7 @@ function Lp1LoadingScreen({
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [modalIndex, setModalIndex] = useState<number | null>(null);
-  const [affirmativeAnswers, setAffirmativeAnswers] = useState(0);
+  const [answeredModals, setAnsweredModals] = useState(0);
   const [modalFeedback, setModalFeedback] = useState("");
   const completedRef = useRef(false);
 
@@ -3068,45 +3068,38 @@ function Lp1LoadingScreen({
       );
     }, 100);
     return () => window.clearInterval(timer);
-  }, [affirmativeAnswers, modalIndex]);
+  }, [answeredModals, modalIndex]);
 
   useEffect(() => {
     if (
       modalIndex !== null ||
-      affirmativeAnswers >= LP1_LOADING_MODALS.length
+      answeredModals >= LP1_LOADING_MODALS.length
     ) {
       return;
     }
-    const nextModal = affirmativeAnswers;
+    const nextModal = answeredModals;
     if (elapsed >= LP1_LOADING_MODAL_THRESHOLDS[nextModal]) {
       setModalIndex(nextModal);
       setModalFeedback("");
     }
-  }, [affirmativeAnswers, elapsed, modalIndex]);
+  }, [answeredModals, elapsed, modalIndex]);
 
   useEffect(() => {
     if (
       elapsed < LP1_LOADING_DURATION_MS ||
       modalIndex !== null ||
-      affirmativeAnswers < LP1_LOADING_MODALS.length ||
+      answeredModals < LP1_LOADING_MODALS.length ||
       completedRef.current
     ) {
       return;
     }
     completedRef.current = true;
     onComplete();
-  }, [affirmativeAnswers, elapsed, modalIndex, onComplete]);
+  }, [answeredModals, elapsed, modalIndex, onComplete]);
 
-  const handleModalOption = (optionIndex: number) => {
-    if (optionIndex !== 0) {
-      setModalFeedback(
-        "Para continuar montando suas cartas, confirme que essa proposta faz sentido para vocês.",
-      );
-      return;
-    }
+  const handleModalOption = () => {
     setModalFeedback("");
-    const nextAffirmativeAnswers = affirmativeAnswers + 1;
-    setAffirmativeAnswers(nextAffirmativeAnswers);
+    setAnsweredModals((current) => current + 1);
     setModalIndex(null);
   };
 
@@ -3164,7 +3157,7 @@ function Lp1LoadingScreen({
         <div className="lp1-loading-modal-backdrop" role="presentation">
           <div className="lp1-loading-modal" role="dialog" aria-modal="true">
             <p className="lp1-loading-modal-progress">
-              Pergunta {modalIndex + 1} de {LP1_LOADING_MODALS.length}
+              Para continuar, especifique
             </p>
             <p>{LP1_LOADING_MODALS[modalIndex].question}</p>
             <div className="lp1-loading-modal-actions">
@@ -3172,9 +3165,7 @@ function Lp1LoadingScreen({
                 <button
                   type="button"
                   key={option}
-                  onClick={() =>
-                    handleModalOption(optionIndex)
-                  }
+                  onClick={() => handleModalOption()}
                 >
                   {option}
                 </button>
