@@ -518,8 +518,15 @@
 @media (prefers-reduced-motion: reduce) {
   .lp1-quiz-progress-fill,
   .lp1-quiz-option,
-  .lp1-quiz-next {
+  .lp1-quiz-next,
+  .lp1-sale-gap-card,
+  .lp1-sale-gap-column,
+  .lp1-sale-gap-row,
+  .lp1-sale-gap-row b {
     transition: none;
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -732,11 +739,17 @@
   border-radius: 0 0 1rem 1rem;
   background: #211824;
   box-shadow: 0 18px 42px rgba(10, 5, 14, 0.28);
+  animation: lp1-gap-card-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .lp1-sale-gap-column {
   min-width: 0;
   padding: clamp(1rem, 3vw, 1.35rem) clamp(0.8rem, 3vw, 1.25rem) 1.2rem;
+  animation: lp1-gap-column-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lp1-sale-gap-column.is-deck {
+  animation-delay: 120ms;
 }
 
 .lp1-sale-gap-column.is-now {
@@ -777,6 +790,32 @@
   display: grid;
   gap: 0.27rem;
   margin-top: 0.95rem;
+  opacity: 0;
+  animation: lp1-gap-row-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lp1-sale-gap-column.is-now .lp1-sale-gap-row:nth-of-type(1) {
+  animation-delay: 220ms;
+}
+
+.lp1-sale-gap-column.is-now .lp1-sale-gap-row:nth-of-type(2) {
+  animation-delay: 340ms;
+}
+
+.lp1-sale-gap-column.is-now .lp1-sale-gap-row:nth-of-type(3) {
+  animation-delay: 460ms;
+}
+
+.lp1-sale-gap-column.is-deck .lp1-sale-gap-row:nth-of-type(1) {
+  animation-delay: 340ms;
+}
+
+.lp1-sale-gap-column.is-deck .lp1-sale-gap-row:nth-of-type(2) {
+  animation-delay: 460ms;
+}
+
+.lp1-sale-gap-column.is-deck .lp1-sale-gap-row:nth-of-type(3) {
+  animation-delay: 580ms;
 }
 
 .lp1-sale-gap-row > span {
@@ -809,10 +848,79 @@
   height: 100%;
   border-radius: inherit;
   background: #a55a68;
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: lp1-gap-bar-fill 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lp1-sale-gap-column.is-now .lp1-sale-gap-row:nth-of-type(1) b {
+  animation-delay: 520ms;
+}
+
+.lp1-sale-gap-column.is-now .lp1-sale-gap-row:nth-of-type(2) b {
+  animation-delay: 640ms;
+}
+
+.lp1-sale-gap-column.is-now .lp1-sale-gap-row:nth-of-type(3) b {
+  animation-delay: 760ms;
+}
+
+.lp1-sale-gap-column.is-deck .lp1-sale-gap-row:nth-of-type(1) b {
+  animation-delay: 640ms;
+}
+
+.lp1-sale-gap-column.is-deck .lp1-sale-gap-row:nth-of-type(2) b {
+  animation-delay: 760ms;
+}
+
+.lp1-sale-gap-column.is-deck .lp1-sale-gap-row:nth-of-type(3) b {
+  animation-delay: 880ms;
 }
 
 .lp1-sale-gap-column.is-deck .lp1-sale-gap-row b {
   background: linear-gradient(90deg, #b58d4d, #e8c98a);
+}
+
+@keyframes lp1-gap-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lp1-gap-column-in {
+  from {
+    opacity: 0;
+    transform: translateX(-0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes lp1-gap-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.55rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lp1-gap-bar-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .lp1-sale-recap-grid {
