@@ -9,6 +9,9 @@ export type Lp1Score = {
  * zero instead of inventing a diagnosis.
  */
 const ANSWER_WEIGHTS: Record<string, number> = {
+  "fase:historia": 4,
+  "fase:muitos-anos": 8,
+  "fase:perdidos": 18,
   "stage:muitos-anos": 8,
   "stage:anos": 4,
   "theme:livro-aberto": 8,
@@ -18,12 +21,23 @@ const ANSWER_WEIGHTS: Record<string, number> = {
   "pain:eu-travo": 12,
   "pain:como-comecar": 8,
   "pain:sei-la": 4,
+  "dor:afastamento": 18,
+  "dor:medo": 15,
+  "dor:eu-travo": 12,
+  "dor:como-comecar": 8,
+  "dor:sei-la": 4,
+  "rotina:tudo": 12,
+  "rotina:muito": 9,
+  "rotina:metade": 6,
+  "rotina:alguma": 3,
   "s04-rotina:tudo": 12,
   "s04-rotina:muito": 9,
   "s04-rotina:metade": 6,
   "s04-rotina:alguma": 3,
   "s05-silencio:pesado": 10,
   "s05-silencio:neutro": 5,
+  "clima:honesto": 10,
+  "clima:normal": 5,
   "s07-perguntas:raramente": 8,
   "s07-perguntas:as-vezes": 4,
   "s10-mudanca:tempo": 2,
@@ -34,6 +48,7 @@ const ANSWER_WEIGHTS: Record<string, number> = {
   "objecao:nao-vai-mudar": 6,
   "objecao:sem-tempo": 4,
   "objecao:nao-sei-comecar": 3,
+  "objecao:intenso-demais": 5,
   "s14-falta:atenção": 3,
   "s14-falta:curiosidade": 5,
   "s14-falta:iniciativa": 4,
@@ -50,7 +65,19 @@ const ANSWER_WEIGHTS: Record<string, number> = {
 const MAX_SCORE = 101;
 
 export function computeLp1Score(answers: Record<string, string>): Lp1Score {
+  const canonicalAliases: Record<string, string[]> = {
+    fase: ["stage"],
+    dor: ["pain"],
+    rotina: ["s04-rotina"],
+    clima: ["s05-silencio"],
+  };
+  const skippedAliases = new Set(
+    Object.entries(canonicalAliases).flatMap(([canonical, aliases]) =>
+      answers[canonical] ? aliases : [],
+    ),
+  );
   const total = Object.entries(answers).reduce((sum, [key, rawValue]) => {
+    if (skippedAliases.has(key)) return sum;
     const values = rawValue.split(",").filter(Boolean);
     return (
       sum +

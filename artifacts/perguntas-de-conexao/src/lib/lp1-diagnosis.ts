@@ -9,6 +9,12 @@ export type Lp1QuizAnswers = {
   intensity?: string;
   stage?: string;
   theme?: string;
+  fase?: string;
+  travas?: string;
+  dor?: string;
+  rotina?: string;
+  clima?: string;
+  objecao?: string;
 };
 
 const diagnosisTitles: Record<Lp3NarrativeType, string> = {
@@ -27,26 +33,33 @@ const diagnosisTitles: Record<Lp3NarrativeType, string> = {
 };
 
 function toLp3Answers(answers: Lp1QuizAnswers): Lp3Answers {
+  const stage = answers.stage ?? answers.fase;
+  const pain = answers.dor;
+  const climate = answers.clima;
   const time =
-    answers.stage === "novo"
+    stage === "novo"
       ? "Ainda estamos nos conhecendo"
-      : answers.stage === "muitos-anos"
+      : stage === "muitos-anos"
         ? "Mais de 3 anos"
         : "1–3 anos";
   const routine =
+    answers.rotina === "tudo" ||
+    answers.rotina === "muito" ||
     answers.intensity === "deep"
       ? "Conversamos bastante"
       : "A gente fala principalmente da rotina";
   const curiosity =
-    answers.theme === "faisca"
+    answers.theme === "faisca" || pain === "medo"
       ? "Hoje"
-      : answers.theme === "livro-aberto"
+      : answers.theme === "livro-aberto" || climate === "honesto"
         ? "Há alguns meses"
         : "Nas últimas semanas";
   const vulnerability =
-    answers.intensity === "gentle" ? "Algumas coisas" : "Acho que não";
+    answers.intensity === "gentle" || climate === "leve"
+      ? "Algumas coisas"
+      : "Acho que não";
   const desire =
-    answers.theme === "faisca"
+    answers.theme === "faisca" || answers.objecao === "intenso-demais"
       ? "Reacender a intimidade"
       : answers.theme === "porto-seguro"
         ? "Voltar a sentir mais proximidade"

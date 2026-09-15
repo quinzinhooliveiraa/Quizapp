@@ -782,7 +782,21 @@ const LANDING_QUIZ_STEPS = [
 ] as const;
 
 type LandingQuizAnswerKey = (typeof LANDING_QUIZ_STEPS)[number]["key"];
-type LandingQuizAnswers = Partial<Record<LandingQuizAnswerKey, string>>;
+type LandingQuizAnswers = Partial<
+  Record<
+    | LandingQuizAnswerKey
+    | "fase"
+    | "travas"
+    | "dor"
+    | "rotina"
+    | "clima"
+    | "objecao"
+    | "pain"
+    | "s04-rotina"
+    | "s05-silencio",
+    string
+  >
+>;
 
 function selectLandingQuizQuestions(
   themeId: string | undefined,
@@ -972,8 +986,19 @@ function LandingQuiz({
 
 type Lp1ScreenBase = {
   id: string;
-  kind: "question" | "card" | "loading" | "summary" | "sample" | "capture";
+  kind:
+    | "question"
+    | "card"
+    | "loading"
+    | "summary"
+    | "sample"
+    | "capture"
+    | "photo"
+    | "chart"
+    | "info"
+    | "proof";
   image?: string;
+  eyebrow?: string;
 };
 
 type Lp1Question = Lp1ScreenBase & {
@@ -982,7 +1007,15 @@ type Lp1Question = Lp1ScreenBase & {
   title: string;
   subtitle?: string;
   why?: string;
-  format: "list" | "cards" | "wide" | "scale" | "multi" | "clima" | "slider";
+  format:
+    | "single"
+    | "list"
+    | "cards"
+    | "wide"
+    | "scale"
+    | "multi"
+    | "clima"
+    | "slider";
   emoji?: boolean;
   options: {
     value: string;
@@ -991,6 +1024,7 @@ type Lp1Question = Lp1ScreenBase & {
     icon?: string;
     imageSrc?: string;
   }[];
+  scaleEnds?: [string, string];
 };
 
 type Lp1Card = Lp1ScreenBase & {
@@ -998,6 +1032,15 @@ type Lp1Card = Lp1ScreenBase & {
   title: string;
   body: string[];
   cta: string;
+};
+
+type Lp1NarrativeScreen = Lp1ScreenBase & {
+  kind: "photo" | "chart" | "info" | "proof";
+  title: string;
+  body?: string[];
+  cta: string;
+  source?: string;
+  chartKind?: "travas" | "baralhos";
 };
 
 type Lp1Placeholder = Lp1ScreenBase & {
@@ -1008,10 +1051,10 @@ type Lp1Placeholder = Lp1ScreenBase & {
   key?: string;
 };
 
-type Lp1Screen = Lp1Question | Lp1Card | Lp1Placeholder;
+type Lp1Screen = Lp1Question | Lp1Card | Lp1NarrativeScreen | Lp1Placeholder;
 type Lp1Answers = Record<string, string>;
 
-const LP1_SCREENS: Lp1Screen[] = [
+const LP1_LEGACY_SCREENS: Lp1Screen[] = [
   {
     id: "s00-capa",
     kind: "card",
@@ -1025,6 +1068,7 @@ const LP1_SCREENS: Lp1Screen[] = [
   {
     id: "s01-fase",
     kind: "question",
+    eyebrow: "SOBRE VOCÊS",
     key: "stage",
     title: "Em que fase vocês estão?",
     subtitle: "Não existe resposta certa. Só a que parece mais com vocês hoje.",
@@ -1279,6 +1323,279 @@ const LP1_SCREENS: Lp1Screen[] = [
   },
 ];
 
+const LP1_SCREEN_ONE_TO_TEN: Lp1Screen[] = [
+  {
+    id: "s01-fase",
+    kind: "question",
+    key: "fase",
+    title: "Em que fase vocês estão?",
+    subtitle: "Não existe resposta certa. Só a que parece mais com vocês hoje.",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "novo", label: "Estamos começando", icon: "🌱" },
+      { value: "historia", label: "Já temos uma história", icon: "🏡" },
+      { value: "muitos-anos", label: "Muitos anos juntos", icon: "♾️" },
+      { value: "perdidos", label: "A gente meio que se perdeu", icon: "🌙" },
+    ],
+  },
+  {
+    id: "s02-travas",
+    kind: "question",
+    eyebrow: "ONDE ACONTECE",
+    key: "travas",
+    title: "Onde a conversa de vocês costuma travar?",
+    subtitle: "Marque todos que acontecem.",
+    format: "multi",
+    options: [
+      {
+        value: "correria",
+        label: "Na correria — só sobra logística",
+        imageSrc: "/quiz/trava-correria.jpg",
+      },
+      {
+        value: "celular",
+        label: "Cada um no celular, lado a lado",
+        imageSrc: "/quiz/trava-celular.jpg",
+      },
+      {
+        value: "briga",
+        label: "Depois de uma briga mal resolvida",
+        imageSrc: "/quiz/trava-briga.jpg",
+      },
+      {
+        value: "cama",
+        label: "Na cama — virou automático",
+        imageSrc: "/quiz/trava-cama.jpg",
+      },
+      {
+        value: "distancia",
+        label: "Na distância — cada um no seu canto",
+        imageSrc: "/quiz/trava-distancia.jpg",
+      },
+    ],
+  },
+  {
+    id: "s03-mapa-travas",
+    kind: "chart",
+    eyebrow: "O MAPA DE VOCÊS",
+    chartKind: "travas",
+    title: "Você marcou momentos específicos.",
+    body: [
+      "Não é o relacionamento inteiro que trava. São momentos específicos — e é neles que a pergunta certa entra.",
+    ],
+    cta: "Continuar",
+  },
+  {
+    id: "s04-dor",
+    kind: "question",
+    eyebrow: "O QUE TRAVA",
+    key: "dor",
+    title: "Quando você tenta puxar assunto de verdade, o que acontece?",
+    format: "single",
+    emoji: true,
+    options: [
+      { value: "sei-la", label: 'Ele(a) responde "sei lá"', icon: "🙄" },
+      { value: "eu-travo", label: "Eu travo — não sei nem o que dizer", icon: "😶" },
+      {
+        value: "como-comecar",
+        label: "Como é que a gente chega nesse tipo de conversa?",
+        icon: "🤷",
+      },
+      { value: "medo", label: "Tenho medo da resposta", icon: "😬" },
+      {
+        value: "afastamento",
+        label: "A gente se afastou sem perceber",
+        icon: "🫥",
+      },
+    ],
+  },
+  {
+    id: "s05-dor-espelho",
+    kind: "photo",
+    eyebrow: "O QUE TRAVA",
+    title: "",
+    body: [],
+    cta: "Continuar",
+  },
+  {
+    id: "s06-rotina",
+    kind: "question",
+    eyebrow: "O RITMO",
+    key: "rotina",
+    title: "Na última semana, quanto da conversa de vocês foi só logística?",
+    subtitle: "Conta, mercado, horário, o que falta em casa.",
+    format: "scale",
+    scaleEnds: ["Quase nada", "Praticamente tudo"],
+    options: [
+      { value: "pouco", label: "Quase nada" },
+      { value: "alguma", label: "Pouco" },
+      { value: "metade", label: "Metade" },
+      { value: "muito", label: "Bastante" },
+      { value: "tudo", label: "Praticamente tudo" },
+    ],
+  },
+  {
+    id: "s07-clima",
+    kind: "question",
+    eyebrow: "O CLIMA",
+    key: "clima",
+    title: "Quando fica um silêncio entre vocês, ele parece…",
+    format: "clima",
+    emoji: true,
+    options: [
+      {
+        value: "leve",
+        label: "Confortável",
+        imageSrc: "/quiz/clima-leve.png",
+      },
+      { value: "normal", label: "Normal", icon: "◌" },
+      {
+        value: "honesto",
+        label: "Difícil de atravessar",
+        imageSrc: "/quiz/clima-honesto.png",
+      },
+    ],
+  },
+  {
+    id: "s08-pergunta-importa",
+    kind: "info",
+    eyebrow: "POR QUE A PERGUNTA IMPORTA",
+    title: "Não é conversa. É a pergunta ser específica.",
+    body: [
+      "Em 1997 o psicólogo Arthur Aron colocou estranhos para responderem 36 perguntas em ordem crescente de profundidade. Dois deles se casaram. O que o estudo mostrou não foi sobre amor: foi que a intimidade não depende de vontade, depende da pergunta ter resposta.",
+      "“Vamos conversar” não é uma pergunta. É uma cobrança.",
+    ],
+    source: "Aron et al., Personality and Social Psychology Bulletin, 1997.",
+    cta: "Continuar",
+  },
+  {
+    id: "s09-baralhos",
+    kind: "chart",
+    eyebrow: "O QUE JÁ EXISTE PRONTO",
+    chartKind: "baralhos",
+    title: "Já existe um ponto de partida para vocês.",
+    body: [],
+    cta: "Continuar",
+  },
+  {
+    id: "s10-objecao",
+    kind: "question",
+    key: "objecao",
+    title: "O que mais te faria deixar isso pra depois?",
+    eyebrow: "O QUE ATRAPALHA",
+    format: "single",
+    options: [
+      {
+        value: "intenso-demais",
+        label: "Vou parecer intenso demais",
+        icon: "🫣",
+        expand:
+          "Quem faz a pergunta é a carta, não você. Ninguém precisa chegar com assunto pronto — nem você.",
+      },
+      {
+        value: "ele-nao-topa",
+        label: "Ele(a) não vai topar",
+        icon: "🤨",
+        expand:
+          "É o medo de todo mundo. Por isso começa leve: as primeiras são fáceis de responder até pra quem trava.",
+      },
+      {
+        value: "sem-tempo",
+        label: "A gente não tem tempo",
+        icon: "⏳",
+        expand:
+          "Uma carta por noite. Dez minutos, sem marcar nada, sem clima.",
+      },
+      {
+        value: "nao-vai-mudar",
+        label: "Não sei se muda alguma coisa",
+        icon: "🤔",
+        expand:
+          "Não precisa acreditar. Vê as três de hoje à noite e julga depois.",
+      },
+    ],
+  },
+];
+
+const LP1_SCREENS: Lp1Screen[] = [
+  ...LP1_SCREEN_ONE_TO_TEN,
+  ...LP1_LEGACY_SCREENS.slice(11),
+];
+
+const LP1_DOR_ESPELHO: Record<
+  string,
+  { title: string; body: string[] }
+> = {
+  "sei-la": {
+    title: "Ele não estava fugindo de você.",
+    body: [
+      "“Vamos conversar” pede que o outro traga alguma coisa sem dizer o quê. Ninguém sabe responder isso. Nem você, se ele perguntasse primeiro.",
+    ],
+  },
+  "eu-travo": {
+    title: "O problema nunca foi você não ter o que dizer.",
+    body: [
+      "É que ninguém chega com a pergunta pronta. Quando a carta faz a pergunta, você só responde.",
+    ],
+  },
+  "como-comecar": {
+    title: "“Como é que a gente chega nesse tipo de conversa?”",
+    body: [
+      "É a pergunta que mais aparece. E a resposta é sem graça: alguém chega com uma pergunta na mão e lê em voz alta. É isso.",
+    ],
+  },
+  medo: {
+    title: "Você tem medo da resposta. Faz sentido.",
+    body: [
+      "Por isso o baralho começa leve. Ninguém abre o jogo numa pergunta pesada — a profundidade vem depois, quando os dois já estão dentro.",
+    ],
+  },
+  afastamento: {
+    title: "Nem toda distância começa com uma briga.",
+    body: [
+      "Às vezes ela aparece quando as perguntas vão ficando pra depois. Aí o silêncio deixa de ser uma noite ruim e vira o normal.",
+    ],
+  },
+};
+
+const LP1_TRAVA_DECKS: Record<string, string[]> = {
+  correria: ["modo-leve", "porto-seguro"],
+  celular: ["perto-de-novo", "voce-nao-sabia"],
+  briga: ["depois-da-tempestade", "livro-aberto"],
+  cama: ["faisca", "luzes-baixas"],
+  distancia: ["mesmo-longe", "em-voz-alta"],
+};
+
+function lp1AnswersWithAliases(
+  previous: Lp1Answers,
+  key: string,
+  value: string,
+): Lp1Answers {
+  const next = { ...previous, [key]: value };
+  if (key === "fase") {
+    next.stage = value === "novo" ? "novo" : value === "muitos-anos" ? "muitos-anos" : "anos";
+    next.theme = value === "perdidos" ? "porto-seguro" : "livro-aberto";
+    next.intensity = value === "perdidos" ? "deep" : "gentle";
+  }
+  if (key === "dor") {
+    next.pain = value;
+    next.intensity =
+      value === "medo" || value === "afastamento" ? "deep" : "honest";
+    next.theme = value === "afastamento" ? "porto-seguro" : "livro-aberto";
+  }
+  if (key === "rotina") {
+    next["s04-rotina"] = value;
+    next.intensity = value === "tudo" || value === "muito" ? "deep" : "honest";
+  }
+  if (key === "clima") {
+    next["s05-silencio"] =
+      value === "leve" ? "calmo" : value === "honesto" ? "pesado" : "neutro";
+    next.intensity = value === "honesto" ? "deep" : "gentle";
+  }
+  return next;
+}
+
 const LP1_THEME_NAMES: Record<string, string> = {
   "porto-seguro": "Porto Seguro",
   "livro-aberto": "Livro Aberto",
@@ -1497,6 +1814,7 @@ function Lp1Quiz({
     current.kind === "question" && current.key
       ? answers[current.key] ?? ""
       : "";
+  const visualStep = Math.min(step + 1, 22);
 
   useEffect(() => {
     return () => {
@@ -1507,7 +1825,7 @@ function Lp1Quiz({
   }, []);
 
   const selectAnswer = (key: string, value: string) => {
-    setAnswers((previous) => ({ ...previous, [key]: value }));
+    setAnswers((previous) => lp1AnswersWithAliases(previous, key, value));
     if (typeof navigator !== "undefined") navigator.vibrate?.(10);
   };
 
@@ -1527,10 +1845,13 @@ function Lp1Quiz({
     if (singleAdvanceTimer.current !== null) {
       clearTimeout(singleAdvanceTimer.current);
     }
+    const hasExpansion =
+      current.kind === "question" &&
+      current.options.some((option) => option.value === value && option.expand);
     singleAdvanceTimer.current = setTimeout(() => {
       singleAdvanceTimer.current = null;
-      advance({ ...answers, [key]: value });
-    }, 280);
+      advance(lp1AnswersWithAliases(answers, key, value));
+    }, hasExpansion ? 1400 : 280);
   };
 
   const handleNext = () => {
@@ -1561,22 +1882,42 @@ function Lp1Quiz({
 
   return (
     <main className={`lp1-quiz-screen ${showOffer ? "is-offer" : ""}`}>
-      {step > 0 && step < LP1_SCREENS.length ? (
-        <div
-          className="lp1-quiz-progress"
-          role="progressbar"
-          aria-label={`Progresso do quiz: tela ${step + 1} de ${LP1_SCREENS.length}`}
-          aria-valuemin={0}
-          aria-valuemax={LP1_SCREENS.length}
-          aria-valuenow={step}
-        >
-          <span className="lp1-quiz-progress-track" aria-hidden="true">
-            <span
-              className="lp1-quiz-progress-fill"
-              style={{ width: `${(step / LP1_SCREENS.length) * 100}%` }}
-            />
-          </span>
-        </div>
+      {step < LP1_SCREENS.length ? (
+        <>
+          <header className="lp1-quiz-header">
+            <button
+              type="button"
+              className="lp1-quiz-header-back"
+              onClick={goBack}
+              aria-label="Voltar"
+            >
+              <span aria-hidden="true">←</span>
+            </button>
+            <p className="lp1-quiz-counter" aria-label={`Tela ${visualStep} de 22`}>
+              <span>{visualStep}</span>
+              <span>/22</span>
+            </p>
+          </header>
+          <div
+            className="lp1-quiz-progress"
+            role="progressbar"
+            aria-label={`Progresso do quiz: tela ${visualStep} de 22`}
+            aria-valuemin={1}
+            aria-valuemax={22}
+            aria-valuenow={visualStep}
+          >
+            <span className="lp1-quiz-progress-track" aria-hidden="true">
+              <span
+                className="lp1-quiz-progress-fill"
+                style={{ width: `${(visualStep / 22) * 100}%` }}
+              />
+              <span
+                className="lp1-quiz-progress-dot"
+                style={{ left: `${(visualStep / 22) * 100}%` }}
+              />
+            </span>
+          </div>
+        </>
       ) : null}
 
       <div className="lp1-quiz-content">
@@ -1594,8 +1935,29 @@ function Lp1Quiz({
           )
         ) : current.kind === "question" ? (
           <section data-section-name={current.id}>
-            {current.image ? (
-              <img className="lp1-img" src={current.image} alt="" />
+            {current.eyebrow ? <p className="lp1-quiz-eyebrow">{current.eyebrow}</p> : null}
+            {current.format === "multi" ? (
+              <div className="lp1-quiz-accumulation" aria-live="polite">
+                <div className="lp1-quiz-accumulation-thumbs">
+                  {current.options
+                    .filter((option) => selectedValue.split(",").includes(option.value))
+                    .map((option) => (
+                      <img
+                        key={option.value}
+                        src={option.imageSrc}
+                        className="lp1-quiz-accumulation-thumb"
+                        alt=""
+                        onError={(event) => {
+                          event.currentTarget.style.visibility = "hidden";
+                        }}
+                      />
+                    ))}
+                </div>
+                <span>
+                  {selectedValue ? selectedValue.split(",").filter(Boolean).length : 0} de 5
+                  marcados
+                </span>
+              </div>
             ) : null}
             <h1 className="lp1-quiz-title">{current.title}</h1>
             {current.subtitle ? (
@@ -1612,12 +1974,6 @@ function Lp1Quiz({
               }
             />
             {current.format === "multi" ? (
-              <p className="lp1-quiz-count">
-                {selectedValue ? selectedValue.split(",").filter(Boolean).length : 0}{" "}
-                de 5 marcadas
-              </p>
-            ) : null}
-            {current.format === "multi" ? (
               <div className="lp1-quiz-actions">
                 <button
                   type="button"
@@ -1628,21 +1984,26 @@ function Lp1Quiz({
                 >
                   Continuar <ArrowRight size={17} aria-hidden="true" />
                 </button>
-                <button type="button" className="lp1-quiz-back" onClick={goBack}>
-                  ← Voltar
-                </button>
               </div>
-            ) : (
-              <button type="button" className="lp1-quiz-back" onClick={goBack}>
-                ← Voltar
-              </button>
-            )}
+            ) : null}
           </section>
+        ) : current.kind === "chart" ? (
+          <Lp1ChartScreen
+            screen={current}
+            answers={answers}
+            onContinue={handleNext}
+          />
+        ) : current.kind === "photo" ? (
+          <Lp1PhotoScreen
+            dor={answers.dor ?? "sei-la"}
+            screen={current}
+            onContinue={handleNext}
+          />
+        ) : current.kind === "info" || current.kind === "proof" ? (
+          <Lp1InfoScreen screen={current} onContinue={handleNext} />
         ) : (
           <section data-section-name={current.id}>
-            {current.image ? (
-              <img className="lp1-img" src={current.image} alt="" />
-            ) : null}
+            {current.eyebrow ? <p className="lp1-quiz-eyebrow">{current.eyebrow}</p> : null}
             <h1 className="lp1-quiz-title">{current.title}</h1>
             {current.body?.map((paragraph) => (
               <p className="lp1-quiz-card-body" key={paragraph}>
@@ -1690,9 +2051,6 @@ function Lp1Quiz({
                 >
                   {current.cta} <ArrowRight size={17} aria-hidden="true" />
                 </button>
-                <button type="button" className="lp1-quiz-back" onClick={goBack}>
-                  ← Voltar
-                </button>
               </div>
             ) : (
               <>
@@ -1704,7 +2062,7 @@ function Lp1Quiz({
                 >
                   {current.cta} <ArrowRight size={17} aria-hidden="true" />
                 </button>
-                {current.kind === "capture" &&
+                {"key" in current && current.kind === "capture" &&
                 !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email?.trim() ?? "") ? (
                   <button
                     type="button"
@@ -1725,15 +2083,154 @@ function Lp1Quiz({
                     Já fiz o teste — quero o baralho →
                   </button>
                 ) : null}
-                <button type="button" className="lp1-quiz-back" onClick={goBack}>
-                  ← Voltar
-                </button>
               </>
             )}
           </section>
         )}
       </div>
     </main>
+  );
+}
+
+function Lp1ChartScreen({
+  screen,
+  answers,
+  onContinue,
+}: {
+  screen: Lp1NarrativeScreen;
+  answers: Lp1Answers;
+  onContinue: () => void;
+}) {
+  const selectedTravas = (answers.travas ?? "").split(",").filter(Boolean);
+  const deckIds = Array.from(
+    new Set(selectedTravas.flatMap((trava) => LP1_TRAVA_DECKS[trava] ?? [])),
+  );
+  const decks = deckIds
+    .map((id) => connectionThemes.find((theme) => theme.id === id))
+    .filter((theme): theme is (typeof connectionThemes)[number] => Boolean(theme));
+  const isDeckChart = screen.chartKind === "baralhos";
+  const travaLabels: Record<string, string> = {
+    correria: "Correria",
+    celular: "Celular",
+    briga: "Briga",
+    cama: "Cama",
+    distancia: "Distância",
+  };
+  const chartTitle = isDeckChart
+    ? `${decks.length} dos 15 baralhos falam exatamente do que você marcou.`
+    : `Você marcou ${selectedTravas.length} dos 5 momentos.`;
+  const cardCount = decks.reduce((sum, deck) => sum + deck.count, 0);
+
+  return (
+    <section className="lp1-chart-screen" data-section-name={screen.id}>
+      {screen.eyebrow ? <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p> : null}
+      <h1 className="lp1-quiz-title">{chartTitle}</h1>
+      {isDeckChart ? (
+        <>
+          <div className="lp1-deck-chart" aria-label={`${decks.length} baralhos recomendados`}>
+            {connectionThemes.map((theme, index) => {
+              const active = deckIds.includes(theme.id);
+              return (
+                <div
+                  className={`lp1-deck-chart-cell ${active ? "is-active" : ""}`}
+                  key={theme.id}
+                  style={{ animationDelay: `${index * 70}ms` }}
+                  title={active ? theme.title : undefined}
+                >
+                  <span>{active ? theme.title : ""}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="lp1-chart-copy">
+            São {cardCount} cartas escritas para esses momentos. Nenhuma começa pesada.
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="lp1-trava-chart" aria-label={`${selectedTravas.length} momentos marcados`}>
+            {Object.keys(travaLabels).map((value, index) => {
+              const active = selectedTravas.includes(value);
+              return (
+                <div
+                  className={`lp1-trava-chart-row ${active ? "is-active" : ""}`}
+                  key={value}
+                  style={{ animationDelay: `${index * 90}ms` }}
+                >
+                  <span>{travaLabels[value]}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="lp1-chart-copy">{screen.body?.[0]}</p>
+        </>
+      )}
+      <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
+        {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+      </button>
+    </section>
+  );
+}
+
+function Lp1PhotoScreen({
+  dor,
+  screen,
+  onContinue,
+}: {
+  dor: string;
+  screen: Lp1NarrativeScreen;
+  onContinue: () => void;
+}) {
+  const mirror = LP1_DOR_ESPELHO[dor] ?? LP1_DOR_ESPELHO["sei-la"];
+  return (
+    <section className="lp1-photo-screen" data-section-name={screen.id}>
+      <img
+        className="lp1-photo-image"
+        src={`/quiz/dx-${dor}.png`}
+        alt=""
+        aria-hidden="true"
+        onError={(event) => {
+          event.currentTarget.style.visibility = "hidden";
+        }}
+      />
+      <div className="lp1-photo-scrim" aria-hidden="true" />
+      <div className="lp1-photo-copy">
+        {screen.eyebrow ? <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p> : null}
+        <h1 className="lp1-quiz-title">{mirror.title}</h1>
+        {mirror.body.map((paragraph) => (
+          <p className="lp1-quiz-card-body" key={paragraph}>
+            {paragraph}
+          </p>
+        ))}
+        <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
+          {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Lp1InfoScreen({
+  screen,
+  onContinue,
+}: {
+  screen: Lp1NarrativeScreen;
+  onContinue: () => void;
+}) {
+  return (
+    <section className="lp1-info-screen" data-section-name={screen.id}>
+      {screen.eyebrow ? <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p> : null}
+      <h1 className="lp1-quiz-title">{screen.title}</h1>
+      {screen.body?.map((paragraph) => (
+        <p className="lp1-info-body" key={paragraph}>
+          {paragraph}
+        </p>
+      ))}
+      {screen.source ? <p className="lp1-info-source">Fonte: {screen.source}</p> : null}
+      <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
+        {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+      </button>
+    </section>
   );
 }
 
@@ -1768,6 +2265,34 @@ function Lp1QuestionOptions({
             <span>{question.options[question.options.length - 1]?.label}</span>
           </div>
         </>
+      ) : question.format === "scale" ? (
+        <div className="lp1-scale-wrap">
+          <div className="lp1-scale-buttons">
+            {question.options.map((option, index) => {
+              const isSelected = selectedValue === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`lp1-scale-block ${isSelected ? "is-selected" : ""}`}
+                  onClick={() => onSelect(option.value)}
+                  aria-pressed={isSelected}
+                  aria-label={option.label}
+                  data-testid={`button-lp1-quiz-${question.key}-${option.value}`}
+                >
+                  {index + 1}
+                </button>
+              );
+            })}
+          </div>
+          <div className="lp1-scale-labels">
+            <span>{question.scaleEnds?.[0] ?? question.options[0]?.label}</span>
+            <span>
+              {question.scaleEnds?.[1] ??
+                question.options[question.options.length - 1]?.label}
+            </span>
+          </div>
+        </div>
       ) : (
         question.options.map((option) => {
           const isSelected = isMulti
@@ -1783,13 +2308,21 @@ function Lp1QuestionOptions({
               aria-pressed={isSelected}
             >
               {option.imageSrc ? (
-                <img className="lp1-thumb" src={option.imageSrc} alt="" />
+                <img
+                  className="lp1-thumb"
+                  src={option.imageSrc}
+                  alt=""
+                  onError={(event) => {
+                    event.currentTarget.style.visibility = "hidden";
+                  }}
+                />
               ) : question.emoji && option.icon ? (
                 <span className="lp1-quiz-option-icon" aria-hidden="true">
                   {option.icon}
                 </span>
               ) : null}
               <span className="lp1-quiz-option-label">{option.label}</span>
+              {isMulti ? <span className="lp1-multi-label-bar">{option.label}</span> : null}
               {isSelected ? (
                 <Check className="lp1-quiz-option-check" size={18} aria-hidden="true" />
               ) : null}
