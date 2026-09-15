@@ -1982,16 +1982,18 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s19-encontrar",
     kind: "question",
     key: "encontrar",
-    title: "O que você gostaria de encontrar nas perguntas?",
+    eyebrow: "ESCOLHA O QUE FAZ SENTIDO",
+    title: "O que você gostaria de conseguir com essa experiência?",
+    subtitle: "Escolha tudo que fizer sentido.",
     format: "multi",
     options: [
-      { value: "proximo", label: "Me sentir mais próximo" },
-      { value: "novas", label: "Conhecer coisas novas" },
-      { value: "rir", label: "Rir mais" },
-      { value: "sentimentos", label: "Falar de sentimentos" },
-      { value: "desejo", label: "Reacender o desejo" },
-      { value: "distancia", label: "Me conectar à distância" },
-      { value: "rotina", label: "Sair da rotina" },
+      { value: "proximo", label: "Me sentir mais próximo", icon: "❤️" },
+      { value: "novas", label: "Conhecer coisas novas", icon: "🧠" },
+      { value: "rir", label: "Rir mais", icon: "😂" },
+      { value: "sentimentos", label: "Falar de sentimentos", icon: "💬" },
+      { value: "desejo", label: "Reacender o desejo", icon: "🔥" },
+      { value: "distancia", label: "Me conectar à distância", icon: "🌎" },
+      { value: "rotina", label: "Sair da rotina", icon: "🔄" },
     ],
   },
   {
@@ -2632,6 +2634,8 @@ function Lp1Quiz({
                     ? "lp1-night-question"
                   : current.id === "s10-sentir"
                     ? "lp1-feeling-question"
+                  : current.id === "s19-encontrar"
+                    ? "lp1-goal-question"
                     : current.id === "s13-atrapalha"
                       ? "lp1-obstacle-question"
                       : undefined
