@@ -549,7 +549,7 @@
   gap: 1rem;
   margin: 0 auto;
   padding: 0.55rem 0.65rem 0.55rem 1.1rem;
-  border: 1px solid rgba(248, 232, 196, 0.24);
+  border: 0;
   border-radius: 1rem;
   background: rgba(29, 18, 27, 0.58);
   color: #f4efe9;
@@ -559,7 +559,6 @@
 }
 
 .lp1-sale-sticky-card.is-active {
-  border-color: rgba(232, 201, 138, 0.58);
   background: #f8f3e9;
   color: #2a1f14;
 }
