@@ -277,15 +277,40 @@ function OfferCard({
           Baralho recomendado: {recommendedDeck}
         </span>
       </div>
+      {!compact ? (
+        <div className="lp1-sale-offer-story">
+          <div className="lp1-sale-offer-image-slot">
+            <img
+              src="/hero/hero-casal-novo-desktop.webp"
+              alt="Casal criando espaço para uma conversa"
+            />
+            <span>Uma pergunta pode mudar a noite.</span>
+          </div>
+          <div className="lp1-sale-offer-signal">
+            <p className="lp1-sale-offer-signal-kicker">O SINAL DE HOJE</p>
+            <h3>Existe espaço para vocês começarem.</h3>
+            <p>{offerHeadline}</p>
+            <div className="lp1-sale-offer-meter" aria-hidden="true">
+              <span />
+            </div>
+            <small>Começar leve aumenta a chance de a conversa continuar.</small>
+          </div>
+        </div>
+      ) : null}
       <div className="lp1-sale-urgency">
-        {active ? (
-          <>
-            Preço especial expira em{" "}
-            <strong>{formatRemaining(remainingSeconds)}</strong>
-          </>
-        ) : (
-          "Preço normal"
-        )}
+        <div>
+          <span>{active ? "OFERTA ESPECIAL" : "ACESSO VITALÍCIO"}</span>
+          <strong>
+            {active
+              ? `Desconto expira em ${formatRemaining(remainingSeconds)}`
+              : "Preço normal"}
+          </strong>
+        </div>
+        <p>
+          {active
+            ? "Ainda dá tempo de começar essa conversa hoje."
+            : "Você continua com acesso vitalício, sem mensalidade."}
+        </p>
       </div>
       {price ? (
         <div className="lp1-sale-price">
