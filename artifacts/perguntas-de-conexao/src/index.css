@@ -2535,6 +2535,143 @@
   }
 }
 
+/* Night idea step — image-led options with short, high-contrast captions. */
+.lp1-night-question .lp1-quiz-eyebrow {
+  margin-bottom: 0.8rem;
+  color: #b28bff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.lp1-night-question .lp1-quiz-title {
+  max-width: 31rem;
+  margin-bottom: 0.75rem;
+  color: #fbf8ff;
+  font-family: var(--app-font-sans);
+  font-size: clamp(1.8rem, 8vw, 2.55rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+}
+
+.lp1-night-question .lp1-quiz-subtitle {
+  max-width: 31rem;
+  margin: 0 0 1.65rem;
+  color: #bdb3c9;
+  font-size: clamp(0.95rem, 3.6vw, 1.08rem);
+  line-height: 1.45;
+}
+
+.lp1-night-question .lp1-quiz-format-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.lp1-night-question .lp1-quiz-option {
+  min-height: 15rem;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #3a3047;
+  border-radius: 1.25rem;
+  background: #211a2b;
+}
+
+.lp1-night-question .lp1-quiz-option:hover,
+.lp1-night-question .lp1-quiz-option:focus-visible {
+  border-color: #a781ed;
+  background: #2a2138;
+  transform: translateY(-1px);
+}
+
+.lp1-night-question .lp1-quiz-option.is-selected {
+  border: 2px solid #b28bff;
+  background: #33284a;
+  box-shadow: 0 0 0 1px rgba(178, 139, 255, 0.12);
+}
+
+.lp1-night-question .lp1-quiz-option-visual {
+  display: grid;
+  min-height: 10.6rem;
+  flex: 1 1 auto;
+  place-items: center;
+  padding: 0.75rem;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(178, 139, 255, 0.2), transparent 40%),
+    linear-gradient(145deg, #302641, #171225 75%);
+}
+
+.lp1-night-question .lp1-quiz-option:nth-child(2) .lp1-quiz-option-visual {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(236, 190, 113, 0.2), transparent 40%),
+    linear-gradient(145deg, #352b32, #211a2b 75%);
+}
+
+.lp1-night-question .lp1-quiz-option:nth-child(3) .lp1-quiz-option-visual {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(232, 118, 178, 0.22), transparent 40%),
+    linear-gradient(145deg, #3b263d, #211a2b 75%);
+}
+
+.lp1-night-question .lp1-quiz-option:nth-child(4) .lp1-quiz-option-visual {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(244, 139, 79, 0.22), transparent 40%),
+    linear-gradient(145deg, #3b282d, #211a2b 75%);
+}
+
+.lp1-night-question .lp1-quiz-option-icon {
+  display: grid;
+  width: 4rem;
+  height: 4rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 1.25rem;
+  background: rgba(52, 42, 67, 0.9);
+  color: #f4eaff;
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.lp1-night-question .lp1-quiz-option-label {
+  display: flex;
+  min-height: 4.4rem;
+  align-items: center;
+  padding: 0.75rem 0.8rem;
+  background: #211a2b;
+  color: #fbf8ff;
+  font: 800 clamp(0.88rem, 3.8vw, 1.08rem)/1.18 var(--app-font-sans);
+  letter-spacing: -0.03em;
+}
+
+.lp1-night-question .lp1-quiz-option-check,
+.lp1-night-question .lp1-quiz-option:not(.is-selected)::after {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .lp1-night-question .lp1-quiz-format-cards {
+    gap: 0.65rem;
+  }
+
+  .lp1-night-question .lp1-quiz-option {
+    min-height: 14.3rem;
+  }
+
+  .lp1-night-question .lp1-quiz-option-visual {
+    min-height: 9.7rem;
+  }
+
+  .lp1-night-question .lp1-quiz-option-label {
+    min-height: 4.1rem;
+    padding-inline: 0.65rem;
+    font-size: 0.88rem;
+  }
+}
+
 .support-step-label {
   margin: -0.45rem 0 0.9rem;
   color: rgba(255, 255, 255, 0.48);

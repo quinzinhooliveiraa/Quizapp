@@ -1792,32 +1792,31 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s09-desejo-noite",
     kind: "question",
     key: "desejo_noite",
-    title: "Se pudesse escolher uma dessas noites pra vocês, qual seria?",
+    eyebrow: "IMAGINE ISSO",
+    title: "Imagine uma noite que realmente parece diferente.",
+    subtitle: "Qual dessas cenas você gostaria mais de viver com seu parceiro?",
     format: "cards",
+    emoji: true,
     options: [
       {
         value: "proximos",
-        label: "Ficar mais próximos",
-        icon: "❤️",
-        imageSrc: "/quiz/noite-proximos.jpg",
+        label: "Uma noite sem celular",
+        icon: "📵",
       },
       {
         value: "rir",
-        label: "Rir juntos",
+        label: "Rir de coisas que vocês nunca perguntaram",
         icon: "😂",
-        imageSrc: "/quiz/noite-rir.jpg",
       },
       {
         value: "conversar",
-        label: "Conversar de verdade",
-        icon: "🧠",
-        imageSrc: "/quiz/noite-conversar.jpg",
+        label: "Uma conversa longa",
+        icon: "🕯️",
       },
       {
         value: "quimica",
-        label: "Reacender a química",
+        label: "Uma conversa que aproxima de verdade",
         icon: "🔥",
-        imageSrc: "/quiz/noite-quimica.jpg",
       },
     ],
   },
@@ -2539,6 +2538,8 @@ function Lp1Quiz({
                 ? "lp1-conversation-question"
                 : current.id === "s03-tempo"
                   ? "lp1-time-question"
+                  : current.id === "s09-desejo-noite"
+                    ? "lp1-night-question"
                   : undefined
             }
             data-section-name={current.id}
@@ -3314,7 +3315,8 @@ function Lp1QuestionOptions({
 }) {
   const selectedValues = selectedValue.split(",").filter(Boolean);
   const isMulti = question.format === "multi";
-  const isTimeQuestion = question.id === "s03-tempo";
+  const isImageCardQuestion =
+    question.id === "s03-tempo" || question.id === "s09-desejo-noite";
 
   return (
     <div className={`lp1-quiz-options lp1-quiz-format-${question.format}`}>
@@ -3400,7 +3402,7 @@ function Lp1QuestionOptions({
                   ) : null}
                 </>
               ) : question.emoji && option.icon ? (
-                isTimeQuestion ? (
+                isImageCardQuestion ? (
                   <span className="lp1-quiz-option-visual" aria-hidden="true">
                     <span className="lp1-quiz-option-icon">{option.icon}</span>
                   </span>
