@@ -1758,7 +1758,6 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     emoji: true,
     options: [
       { value: "eu-quase", label: "Eu quase sempre", icon: "🙋" },
-      { value: "eu-geralmente", label: "Geralmente eu", icon: "🙂" },
       { value: "os-dois", label: "Os dois", icon: "🫶" },
       { value: "parceiro", label: "Geralmente meu parceiro", icon: "😅" },
       { value: "nenhum", label: "Nenhum dos dois", icon: "🤐" },
