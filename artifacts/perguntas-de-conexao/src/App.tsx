@@ -1127,6 +1127,7 @@ type Lp1AnswerKey =
   | "clima"
   | "objecao"
   | "pain"
+  | "inicia"
   | "s04-rotina"
   | "s05-silencio"
   | "profundidade"
@@ -1767,11 +1768,16 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s06-inicia",
     kind: "question",
     key: "inicia",
-    title: "Quando trava, o que mais pesa?",
+    title: "Quando a conversa não rola, geralmente é por quê?",
+    why: "Não é falta de amor — é a pergunta ou a hora.",
     format: "single",
     emoji: true,
     options: [
-      { value: "ele-nao-entra", label: "Ele(a) não entra", icon: "🤐" },
+      {
+        value: "ele-nao-entra",
+        label: "Ele(a) não entra no assunto",
+        icon: "🤐",
+      },
       {
         value: "nao-sei-perguntar",
         label: "Eu não sei o que perguntar",
@@ -1779,10 +1785,14 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
       },
       {
         value: "nao-senta",
-        label: "A gente só não senta pra isso",
+        label: "Nunca parece a hora certa",
         icon: "⏳",
       },
-      { value: "clima", label: "O clima nunca ajuda", icon: "🌧️" },
+      {
+        value: "clima",
+        label: "Quando tento, o clima trava",
+        icon: "🌧️",
+      },
     ],
   },
   {
@@ -3277,8 +3287,19 @@ function getLp1DistanceResult(answers: Lp1Answers) {
   const topicValues = split("conversas");
   const travaCount = travaValues.length || topicValues.length;
   const obstacleValues = split("atrapalha");
+  const iniciaPoints =
+    read("inicia") === "ele-nao-entra"
+      ? 14
+      : read("inicia") === "nao-sei-perguntar"
+        ? 10
+        : read("inicia") === "clima"
+          ? 12
+          : read("inicia") === "nao-senta"
+            ? 5
+            : 0;
   const painPoints =
     Math.min(travaCount, 5) * 8 +
+    iniciaPoints +
     (read("celular") === "sempre"
       ? 14
       : read("celular") === "as-vezes"
@@ -3301,7 +3322,10 @@ function getLp1DistanceResult(answers: Lp1Answers) {
   const score = Math.round(
     40 + (Math.min(100, Math.max(0, painPoints)) / 100) * 52,
   );
-  const label = score < 64 ? "Morno" : "Distante";
+  const meterPosition = Math.round(
+    Math.min(72, Math.max(30, 30 + ((score - 40) / 52) * 42)),
+  );
+  const label = meterPosition < 50 ? "Morno" : "Distante";
   const routineValue =
     routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
   const spaceValue =
@@ -3309,7 +3333,7 @@ function getLp1DistanceResult(answers: Lp1Answers) {
     (answers.quando === "hoje" || answers.quando === "dias")
       ? "alto"
       : "médio";
-  return { score, label, routineValue, spaceValue };
+  return { score, meterPosition, label, routineValue, spaceValue };
 }
 
 function Lp1ResultScreen({
@@ -3325,12 +3349,22 @@ function Lp1ResultScreen({
 }) {
   const result = getLp1DistanceResult(answers);
   const planCards = getLp1PlanCards(answers);
-  const mirror = LP1_DOR_ESPELHO[answers.dor ?? "sei-la"] ?? LP1_DOR_ESPELHO["sei-la"];
-  const [meterPosition, setMeterPosition] = useState("0%");
+  const mirrorKeyByInicia: Record<string, string> = {
+    "ele-nao-entra": "sei-la",
+    "nao-sei-perguntar": "como-comecar",
+    "nao-senta": "afastamento",
+    clima: "medo",
+  };
+  const mirrorKey =
+    (answers.inicia && mirrorKeyByInicia[answers.inicia]) ??
+    answers.dor ??
+    "sei-la";
+  const mirror = LP1_DOR_ESPELHO[mirrorKey] ?? LP1_DOR_ESPELHO["sei-la"];
+  const [meterPosition, setMeterPosition] = useState("30%");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setMeterPosition(`${result.score}%`);
+      setMeterPosition(`${result.meterPosition}%`);
     }, 40);
     return () => window.clearTimeout(timer);
   }, [result.score]);
@@ -3353,9 +3387,10 @@ function Lp1ResultScreen({
           </span>
           <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
         </div>
-        <div className="lp1-result-meter-labels">
-          <span>Morno</span>
-          <span>Distante</span>
+        <div className="lp1-result-meter-labels lp1-result-meter-labels-three">
+          <span style={{ left: "15%" }}>Morno</span>
+          <span style={{ left: "55%" }}>Distante</span>
+          <span style={{ left: "90%" }}>Frio</span>
         </div>
         <div className="lp1-result-context">
           <span aria-hidden="true">ⓘ</span>

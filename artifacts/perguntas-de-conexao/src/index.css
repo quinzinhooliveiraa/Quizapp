@@ -2500,7 +2500,12 @@
   left: 0;
   height: 9px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #b99a52, #8e4356);
+  background: linear-gradient(
+    90deg,
+    #b99a52 0%,
+    #8e4356 55%,
+    #596170 100%
+  );
   content: "";
 }
 
@@ -2545,6 +2550,18 @@
 .lp1-result-meter-labels {
   color: #9d92a6;
   font: 400 11px/1 var(--app-font-sans);
+}
+
+.lp1-result-meter-labels-three {
+  position: relative;
+  display: block;
+  height: 1rem;
+}
+
+.lp1-result-meter-labels-three span {
+  position: absolute;
+  white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 .lp1-result-context {
