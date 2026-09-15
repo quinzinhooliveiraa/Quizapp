@@ -59,6 +59,10 @@ export function Lp1ComparisonSection({
             ))}
           </div>
         </div>
+        <div className="lp1-comparison-mini-cta">
+          <p>Bora começar hoje à noite?</p>
+          <a href="#lp1-sale-offer">Começar hoje à noite</a>
+        </div>
       </div>
     </section>
   );

@@ -8599,6 +8599,42 @@
   font-weight: 500;
   letter-spacing: 0.04em;
 }
+.lp1-comparison-mini-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin: 1.5rem auto 0;
+  white-space: nowrap;
+}
+.lp1-comparison-mini-cta p {
+  margin: 0;
+  color: #f4efe5;
+  font-size: 0.86rem;
+}
+.lp1-comparison-mini-cta a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.15rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgba(232, 201, 138, 0.72);
+  border-radius: 999px;
+  color: #e8c98a;
+  font: 500 0.7rem/1 var(--app-font-mono);
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.lp1-comparison-mini-cta a:hover,
+.lp1-comparison-mini-cta a:focus-visible {
+  border-color: #e8c98a;
+  background: rgba(232, 201, 138, 0.12);
+  color: #f6e1ad;
+}
 .lp2-comparison-section .lp2-comparison-with {
   background: #f7f5ff;
   border-radius: 14px;
