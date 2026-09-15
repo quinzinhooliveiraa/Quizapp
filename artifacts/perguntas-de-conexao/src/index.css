@@ -1709,28 +1709,9 @@
   background: #211827;
 }
 
-.lp1-sale-testimonial-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-  padding: 0.6rem 0.65rem;
-  color: #b9adbf;
-  font: 400 0.62rem/1.2 var(--app-font-mono);
-}
-
-.lp1-sale-testimonial-meta b {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: #7ed49f;
-  font-weight: 700;
-}
-
 .lp1-sale-testimonial-card img {
   display: block;
   width: 100%;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: #fff;
 }
 

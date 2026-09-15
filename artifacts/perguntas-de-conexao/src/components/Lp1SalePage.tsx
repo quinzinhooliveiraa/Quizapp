@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   Heart,
   ShieldCheck,
@@ -505,12 +504,6 @@ export function Lp1SalePage({
         <div className="lp1-sale-testimonial-grid">
           {testimonialImages.map((image, index) => (
             <article className="lp1-sale-testimonial-card" key={image}>
-              <div className="lp1-sale-testimonial-meta">
-                <span>Depoimento real</span>
-                <b>
-                  <Check size={13} aria-hidden="true" /> Verificado
-                </b>
-              </div>
               <img
                 src={image}
                 alt={`Print real de depoimento de cliente ${index + 1}`}
