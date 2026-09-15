@@ -307,6 +307,18 @@ export function Lp1SalePage({
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
   const displayName = useMemo(() => getDisplayName(answers), [answers]);
   const recommendedDeck = getClimateName(answers);
+  const orderedDecks = useMemo(() => {
+    const recommended = connectionThemes.find(
+      (theme) => theme.title === recommendedDeck,
+    );
+
+    if (!recommended) return connectionThemes;
+
+    return [
+      recommended,
+      ...connectionThemes.filter((theme) => theme.id !== recommended.id),
+    ];
+  }, [recommendedDeck]);
   const personalizedCopy = useMemo(() => getPersonalizedCopy(answers), [answers]);
 
   useEffect(() => {
@@ -482,13 +494,16 @@ export function Lp1SalePage({
           Deslize para ver todos os baralhos →
         </p>
         <div className="lp1-sale-deck-grid">
-          {connectionThemes.map((theme) => (
+          {orderedDecks.map((theme) => (
             <article
               className={`lp1-sale-deck-card ${theme.title === recommendedDeck ? "is-recommended" : ""}`}
               key={theme.id}
             >
               <img src={`/theme-backgrounds/${theme.id}.jpg`} alt="" loading="lazy" />
               <div className="lp1-sale-deck-shade" aria-hidden="true" />
+              {theme.title === recommendedDeck ? (
+                <span className="lp1-sale-deck-badge">Baralho recomendado</span>
+              ) : null}
               <div className="lp1-sale-deck-copy">
                 <strong>{theme.title}</strong>
                 <p>{theme.description}</p>

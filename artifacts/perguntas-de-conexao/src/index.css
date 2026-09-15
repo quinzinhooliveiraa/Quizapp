@@ -1453,7 +1453,10 @@
 }
 
 .lp1-sale-deck-card.is-recommended {
-  border-color: rgba(196, 172, 255, 0.45);
+  border-color: rgba(232, 201, 138, 0.8);
+  box-shadow:
+    0 0 0 1px rgba(232, 201, 138, 0.18),
+    0 1.5rem 3rem rgba(0, 0, 0, 0.3);
 }
 
 .lp1-sale-deck-card > img,
@@ -1476,6 +1479,22 @@
     rgba(22, 17, 28, 0.9) 68%,
     rgba(22, 17, 28, 0.98)
   );
+}
+
+.lp1-sale-deck-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  padding: 0.42rem 0.62rem;
+  border: 1px solid rgba(232, 201, 138, 0.62);
+  border-radius: 999px;
+  background: rgba(29, 20, 31, 0.72);
+  color: #f3d798;
+  font: 500 0.64rem/1 var(--app-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(0.5rem);
 }
 
 .lp1-sale-deck-copy {
