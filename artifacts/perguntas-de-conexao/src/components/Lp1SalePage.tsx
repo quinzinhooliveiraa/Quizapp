@@ -435,13 +435,10 @@ export function Lp1SalePage({
 
   return (
     <main className="lp1-sale-page">
-      <div className="lp1-sale-sticky-bar">
-        <div
-          className={`lp1-sale-sticky-card ${discountActive ? "is-active" : ""}`}
-          aria-live="polite"
-        >
-          <div className="lp1-sale-sticky-copy">
-            {discountActive ? (
+      {discountActive ? (
+        <div className="lp1-sale-sticky-bar">
+          <div className="lp1-sale-sticky-card" aria-live="polite">
+            <div className="lp1-sale-sticky-copy">
               <div className="lp1-sale-sticky-active-copy">
                 <span className="lp1-sale-sticky-prefix">Termina em</span>
                 <b
@@ -451,20 +448,13 @@ export function Lp1SalePage({
                   {formatRemaining(remainingSeconds)}
                 </b>
               </div>
-            ) : (
-              <div className="lp1-sale-sticky-normal-copy">
-                <span>Preço normal</span>
-                <b>{offerState?.full.display ?? "R$ 50"}</b>
-              </div>
-            )}
-          </div>
-          {discountActive ? (
+            </div>
             <button type="button" onClick={scrollToOffer}>
               PEGAR -40% OFF <ArrowRight size={15} aria-hidden="true" />
             </button>
-          ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <section className="lp1-sale-section lp1-sale-recap" data-section-name="sale-recap">
         <div className="lp1-sale-now-after-labels" aria-label="Agora e depois">
