@@ -170,6 +170,8 @@ function getPersonalizedCopy(answers: SaleAnswers) {
         "Foi isso que apareceu nas suas respostas: ainda existe vontade, mas o silêncio começou a ocupar espaços demais.",
       signal: "Sinal encontrado: proximidade que precisa de espaço para voltar",
       offerHeadline: `O primeiro passo de vocês pode começar ${tonight}.`,
+      whyNow:
+        "Porque a distância não precisa virar o novo normal de vocês.",
       epiphany:
         "A distância não precisa virar o normal de vocês.",
     };
@@ -182,6 +184,8 @@ function getPersonalizedCopy(answers: SaleAnswers) {
         "Vocês continuam conversando. O que diminuiu foi o espaço para descobrir o que ainda está acontecendo por dentro.",
       signal: "Sinal encontrado: muita logística, pouco espaço para novidade",
       offerHeadline: `Uma pergunta certa pode mudar ${tonight}.`,
+      whyNow:
+        "Porque a rotina já está ocupando o espaço que poderia ser de vocês.",
       epiphany:
         "Não é conversar mais. É sair do automático por alguns minutos.",
     };
@@ -194,6 +198,8 @@ function getPersonalizedCopy(answers: SaleAnswers) {
         "Suas respostas mostram que não falta assunto — falta uma pergunta que não transforme a conversa em cobrança.",
       signal: "Sinal encontrado: vontade de proximidade com cuidado para não pesar",
       offerHeadline: `A pergunta certa chega antes da conversa ${tonight}.`,
+      whyNow:
+        "Porque vontade de falar já existe — falta só um jeito seguro de começar.",
       epiphany:
         "Quando o assunto já vem pronto, ninguém precisa inventar por onde começar.",
     };
@@ -205,6 +211,8 @@ function getPersonalizedCopy(answers: SaleAnswers) {
       "O seu resultado aponta para um começo leve, com espaço suficiente para a conversa ficar mais profunda sem forçar nada.",
     signal: `Sinal encontrado: começar por ${recommendedDeck} e deixar a conversa crescer`,
     offerHeadline: `Dá para criar esse espaço ${tonight}.`,
+    whyNow:
+      "Porque vocês não precisam esperar a relação ficar distante para abrir uma conversa diferente.",
     epiphany:
       "Uma boa pergunta tira a conversa do automático sem deixar o clima pesado.",
   };
@@ -340,6 +348,11 @@ export function Lp1SalePage({
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
   const recommendedDeck = getClimateName(answers);
   const personalizedCopy = useMemo(() => getPersonalizedCopy(answers), [answers]);
+  const startSignal = recapBars.find(
+    (bar) => bar.label === "Vontade de começar",
+  )?.deck ?? 90;
+  const startSignalLabel =
+    startSignal >= 80 ? "Alta" : startSignal >= 60 ? "Boa" : "Possível";
 
   useEffect(() => {
     let cancelled = false;
@@ -420,6 +433,12 @@ export function Lp1SalePage({
         <span className="lp1-sale-signal">{personalizedCopy.signal}</span>
         <div className="lp1-sale-recap-grid">
           <div className="lp1-sale-meter-column">
+            <div className="lp1-sale-meter-visual is-now">
+              <img
+                src="/hero/secao-distancia.webp"
+                alt="Hoje: um casal sentindo mais distância na conversa"
+              />
+            </div>
             <h2>Hoje</h2>
             {recapBars.map((bar) => (
               <div className="lp1-sale-meter-row" key={`today-${bar.label}`}>
@@ -431,6 +450,12 @@ export function Lp1SalePage({
             ))}
           </div>
           <div className="lp1-sale-meter-column is-deck">
+            <div className="lp1-sale-meter-visual is-deck">
+              <img
+                src="/hero/hero-casal-novo-desktop.webp"
+                alt="Com o baralho: um casal criando espaço para conversar"
+              />
+            </div>
             <h2>Com o baralho</h2>
             {recapBars.map((bar) => (
               <div className="lp1-sale-meter-row" key={`deck-${bar.label}`}>
@@ -443,28 +468,19 @@ export function Lp1SalePage({
           </div>
         </div>
         <div className="lp1-sale-recap-promo">
-          <div className="lp1-sale-recap-image-slot">
-            <img
-              src="/hero/hero-casal-novo-desktop.webp"
-              alt="Casal criando espaço para uma conversa"
-            />
-            <span>Uma pergunta pode mudar a noite.</span>
-          </div>
           <div className="lp1-sale-recap-signal-stack">
             <article className="lp1-sale-recap-signal-card is-success">
               <p>CHANCE DE COMEÇAR BEM</p>
-              <strong>Alta</strong>
+              <strong>{startSignalLabel}</strong>
               <span>
-                {personalizedCopy.signal}. O primeiro passo pode ser leve.
+                {personalizedCopy.signal}. O primeiro passo pode ser leve e
+                possível para vocês.
               </span>
             </article>
             <article className="lp1-sale-recap-signal-card is-urgency">
-              <p>POR QUE AGORA</p>
-              <strong>Não deixe o automático decidir por vocês.</strong>
-              <span>
-                Quanto mais vocês deixam para depois, mais difícil fica abrir
-                espaço para uma conversa diferente.
-              </span>
+              <p>POR QUE VOCÊS DEVEM COMEÇAR AGORA?</p>
+              <strong>{personalizedCopy.whyNow}</strong>
+              <span>{personalizedCopy.body}</span>
             </article>
           </div>
         </div>
