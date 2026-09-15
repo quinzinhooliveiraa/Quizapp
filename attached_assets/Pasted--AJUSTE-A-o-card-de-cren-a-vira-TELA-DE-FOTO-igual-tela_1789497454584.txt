@@ -1,0 +1,30 @@
+── AJUSTE A: o card de crença vira TELA DE FOTO (igual à tela 5) ──
+Transformar o card de crença em kind:"photo": foto de casal quente/intimista
+sangrando a tela inteira (usar /quiz/capa.jpg ou uma cena acolhedora — clima de
+reconciliação, não de tristeza), gradiente escuro na base, texto ancorado embaixo,
+botão "Faz sentido →". Mesmo componente visual da tela 5. Copy:
+  título: "Você não vai virar 'aquela pessoa intensa'."
+  corpo: "Quem faz a pergunta é a carta, não você. Não tem obrigação de responder,
+  começa leve e só vai fundo quando os dois quiserem. Funciona mesmo se só um topar
+  hoje — e você não precisa da resposta perfeita: 'nunca pensei nisso' já é começo."
+
+── AJUSTE B: posição do card de crença ──
+NÃO colocar o card de crença colado na tela 14 (educação). As duas são telas de
+leitura e não podem vir em sequência. Posicionar o card de crença DEPOIS do swipe
+de clima (tela 18), logo antes da pergunta de urgência/compromisso. Assim fica
+cercado por telas interativas.
+
+── AJUSTE C: medidor + plano das 3 noites (tela 21) ──
+1) MEDIDOR nunca cai em "Perto". Recalibrar a faixa: piso = "Morno", teto =
+   "Distante", posição proporcional às respostas de dor (travas marcadas, celular,
+   "sinto que já sei tudo", "vem o sei lá", medo). Fórmula: normalizar o score de
+   dor para 40–92% da barra (40% = Morno leve, 92% = Distante forte). Nunca abaixo
+   de 40%. Manter a linha honesta "não é diagnóstico clínico".
+2) PLANO DAS 3 NOITES — refazer o visual (está feio). Três cards elegantes,
+   empilhados ou em carrossel, na paleta do app (roxo/lilás/dourado):
+     cada card: um selo redondo com o número da noite (1·2·3) em dourado ·
+     nome do baralho recomendado (dourado, mono) · a pergunta real que abre a
+     noite (serif, 2 linhas) · borda fina lilás, fundo #2d2140, radius 16px.
+   Noite 1 = baralho leve · Noite 2 = o clima escolhido no swipe 18 · Noite 3 =
+   um baralho fundo. As 3 perguntas vêm da biblioteca real, na intensidade de cada
+   noite. Se answers de urgência = "hoje", a Noite 1 começa com "Hoje à noite —".

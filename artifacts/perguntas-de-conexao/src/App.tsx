@@ -1898,19 +1898,6 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     ],
   },
   {
-    id: "s13b-crenca",
-    kind: "info",
-    eyebrow: "A VERDADE",
-    title: "Você não vai virar “aquela pessoa intensa”.",
-    body: [
-      "Quem faz a pergunta é a carta — não você. Ninguém precisa chegar com assunto pronto.",
-      "Não tem obrigação de responder. Começa leve; só vai fundo quando os dois quiserem.",
-      "Funciona mesmo se só um de vocês topar hoje.",
-      "E você não precisa ter a resposta perfeita — “nunca pensei nisso” já é um começo.",
-    ],
-    cta: "Faz sentido",
-  },
-  {
     id: "s14-educacao",
     kind: "info",
     title: "Uma conversa boa não começa necessariamente com “precisamos conversar”.",
@@ -1963,6 +1950,17 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         icon: "🔥",
       },
     ],
+  },
+  {
+    id: "s13b-crenca",
+    kind: "photo",
+    eyebrow: "A VERDADE",
+    title: "Você não vai virar “aquela pessoa intensa”.",
+    body: [
+      "Quem faz a pergunta é a carta, não você. Não tem obrigação de responder, começa leve e só vai fundo quando os dois quiserem. Funciona mesmo se só um topar hoje — e você não precisa da resposta perfeita: “nunca pensei nisso” já é começo.",
+    ],
+    cta: "Faz sentido",
+    image: "/hero/hero-casal-novo-mobile.webp",
   },
   {
     id: "s20-urgencia",
@@ -2112,6 +2110,49 @@ function getLp1TrialCards(answers: Lp1Answers): Lp1TrialCard[] {
       deckName:
         connectionThemes.find((theme) => theme.id === deckId)?.title ?? deckId,
       question,
+    };
+  });
+}
+
+function getLp1PlanCards(answers: Lp1Answers): Lp1TrialCard[] {
+  const read = (key: string) =>
+    (answers as Record<string, string | undefined>)[key] ?? "";
+  const climateTheme =
+    LP1_CLIMA_DECKS[read("clima")]?.[0] ?? "porto-seguro";
+  const nights = [
+    { themeId: "modo-leve", intensity: "gentle" as const },
+    {
+      themeId: climateTheme,
+      intensity:
+        read("clima") === "leve"
+          ? ("gentle" as const)
+          : read("clima") === "intimo"
+            ? ("deep" as const)
+            : ("honest" as const),
+    },
+    { themeId: "livro-aberto", intensity: "deep" as const },
+  ];
+  const usedQuestionIds = new Set<string>();
+
+  return nights.map(({ themeId, intensity }, index) => {
+    const preview = selectLandingQuizQuestions(
+      themeId,
+      intensity,
+      read("stage") || read("fase"),
+    );
+    const question =
+      preview.questions.find((item) => !usedQuestionIds.has(item.id)) ??
+      connectionQuestions.find((item) => !usedQuestionIds.has(item.id)) ??
+      connectionQuestions[0];
+    if (question) usedQuestionIds.add(question.id);
+
+    return {
+      id: `lp1-plan-${index + 1}`,
+      deckId: themeId,
+      deckName:
+        connectionThemes.find((theme) => theme.id === themeId)?.title ??
+        preview.theme.title,
+      question: question?.text ?? "Qual pergunta vocês querem abrir hoje?",
     };
   });
 }
@@ -2674,7 +2715,6 @@ function Lp1Quiz({
         ) : current.kind === "result" ? (
           <Lp1ResultScreen
             answers={answers}
-            cards={getLp1TrialCards(answers)}
             sectionId={current.id}
             cta={current.cta}
             onContinue={() => setShowOffer(true)}
@@ -3194,16 +3234,39 @@ const LP1_ROUTINE_POINTS: Record<string, number> = {
 };
 
 function getLp1DistanceResult(answers: Lp1Answers) {
-  const urgencyBias = 36;
+  const read = (key: string) =>
+    (answers as Record<string, string | undefined>)[key] ?? "";
+  const split = (key: string) => read(key).split(",").filter(Boolean);
   const routinePoints = LP1_ROUTINE_POINTS[answers.rotina ?? ""] ?? 0;
-  const climatePoints =
-    answers.clima === "honesto" ? 20 : answers.clima === "normal" ? 10 : 0;
-  const travaCount = (answers.travas ?? "").split(",").filter(Boolean).length;
-  const score = Math.min(
-    100,
-    urgencyBias + travaCount * 12 + routinePoints + climatePoints,
+  const travaValues = split("travas");
+  const topicValues = split("conversas");
+  const travaCount = travaValues.length || topicValues.length;
+  const obstacleValues = split("atrapalha");
+  const painPoints =
+    Math.min(travaCount, 5) * 8 +
+    (read("celular") === "sempre"
+      ? 14
+      : read("celular") === "as-vezes"
+        ? 7
+        : 0) +
+    (read("conhece") === "sei-tudo"
+      ? 10
+      : read("conhece") === "as-vezes-nao"
+        ? 8
+        : 0) +
+    (read("sei-la-mapeado") === "sei-la"
+      ? 14
+      : read("sei-la-mapeado") === "nao-sei"
+        ? 10
+        : 0) +
+    (obstacleValues.includes("medo-resposta") ? 12 : 0) +
+    (obstacleValues.includes("medo") ? 10 : 0) +
+    (obstacleValues.includes("comecar") ? 8 : 0) +
+    (routinePoints >= 15 ? 8 : routinePoints >= 10 ? 4 : 0);
+  const score = Math.round(
+    40 + (Math.min(100, Math.max(0, painPoints)) / 100) * 52,
   );
-  const label = score <= 30 ? "Perto" : score <= 60 ? "Morno" : "Distante";
+  const label = score < 64 ? "Morno" : "Distante";
   const routineValue =
     routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
   const spaceValue =
@@ -3216,18 +3279,17 @@ function getLp1DistanceResult(answers: Lp1Answers) {
 
 function Lp1ResultScreen({
   answers,
-  cards,
   sectionId,
   cta,
   onContinue,
 }: {
   answers: Lp1Answers;
-  cards: Lp1TrialCard[];
   sectionId: string;
   cta: string;
   onContinue: () => void;
 }) {
   const result = getLp1DistanceResult(answers);
+  const planCards = getLp1PlanCards(answers);
   const mirror = LP1_DOR_ESPELHO[answers.dor ?? "sei-la"] ?? LP1_DOR_ESPELHO["sei-la"];
   const [meterPosition, setMeterPosition] = useState("0%");
 
@@ -3257,7 +3319,6 @@ function Lp1ResultScreen({
           <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
         </div>
         <div className="lp1-result-meter-labels">
-          <span>Perto</span>
           <span>Morno</span>
           <span>Distante</span>
         </div>
@@ -3286,17 +3347,22 @@ function Lp1ResultScreen({
       </div>
       <div className="lp1-result-plan">
         <p className="lp1-result-plan-label">PLANO DAS 3 NOITES</p>
-        {cards.slice(0, 3).map((card, index) => (
-          <div className="lp1-result-plan-row" key={`${card.id}-${index}`}>
-            <span>{index + 1}</span>
-            <p>
-              {index === 0 && answers.quando === "hoje" ? "Hoje à noite — " : ""}
-              <strong>{card.deckName}</strong>
-              <br />
-              {card.question}
-            </p>
-          </div>
-        ))}
+        <div className="lp1-result-plan-cards">
+          {planCards.map((card, index) => (
+            <article className="lp1-result-plan-card" key={`${card.id}-${index}`}>
+              <span className="lp1-result-plan-night">{index + 1}</span>
+              <div className="lp1-result-plan-copy">
+                <span className="lp1-result-plan-deck">
+                  {index === 0 && answers.quando === "hoje"
+                    ? "Hoje à noite — "
+                    : ""}
+                  {card.deckName}
+                </span>
+                <p>{card.question}</p>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
         {cta} <ArrowRight size={17} aria-hidden="true" />

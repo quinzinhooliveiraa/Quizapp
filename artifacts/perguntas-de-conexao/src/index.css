@@ -2500,7 +2500,7 @@
   left: 0;
   height: 9px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3d6b57, #b99a52, #8e4356);
+  background: linear-gradient(90deg, #b99a52, #8e4356);
   content: "";
 }
 
@@ -2617,18 +2617,26 @@
   letter-spacing: 0.2em;
 }
 
-.lp1-result-plan-row {
+.lp1-result-plan-cards {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 0.65rem;
-  padding: 0.65rem 0;
-  border-top: 1px solid rgba(157, 146, 166, 0.14);
+  gap: 0.7rem;
 }
 
-.lp1-result-plan-row > span {
+.lp1-result-plan-card {
   display: grid;
-  width: 24px;
-  height: 24px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.9rem;
+  border: 1px solid rgba(178, 139, 255, 0.5);
+  border-radius: 16px;
+  background: #2d2140;
+}
+
+.lp1-result-plan-night {
+  display: grid;
+  width: 30px;
+  height: 30px;
   place-items: center;
   border-radius: 50%;
   background: #3a2b20;
@@ -2636,15 +2644,23 @@
   font: 400 10px/1 var(--app-font-mono);
 }
 
-.lp1-result-plan-row p {
-  margin: 0;
-  color: #f4efe9;
-  font: 400 11.5px/1.45 var(--app-font-sans);
+.lp1-result-plan-copy {
+  min-width: 0;
 }
 
-.lp1-result-plan-row strong {
+.lp1-result-plan-deck {
+  display: block;
   color: #e8c98a;
-  font-weight: 700;
+  font: 400 9.5px/1.2 var(--app-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp1-result-plan-copy p {
+  margin: 0;
+  margin-top: 0.35rem;
+  color: #f4efe9;
+  font: 400 15px/1.25 var(--app-font-serif);
 }
 
 .lp1-capture-error {
