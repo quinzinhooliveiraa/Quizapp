@@ -1,0 +1,61 @@
+Refinar o VISUAL e a COPY da página de oferta seguindo os princípios dos livros
+(Kolenda). Manter a paleta da LP1 (fundo vinho #16111c, dourado #d8b66d, texto
+creme). NÃO mexer na estrutura das seções — só nos pontos abaixo.
+
+═══ 1. DOURADO SÓ ONDE IMPORTA (o mais importante) ═══
+Hoje o dourado está em tudo (etiquetas, ênfase de títulos, links, bordas de
+baralho, barras, botão) e isso mata o contraste. Reservar o dourado para:
+- o BOTÃO de CTA, e
+- no máximo 1 acento por seção.
+Tirar dourado de: bordas de card de baralho, link "Deslize para ver...", barras
+secundárias e qualquer enfeite. Esses viram creme/cinza. O CTA tem que ser o
+elemento mais dourado e saturado da página.
+
+═══ 2. PADRONIZAR AS ETIQUETAS ═══
+Hoje umas etiquetas de seção são dourado monoespaçado ("A VIRADA") e outras são
+lilás espaçado ("A DIFERENÇA"). Escolher UM único estilo de etiqueta de seção e
+usar em TODAS (mesma cor, mesma fonte, mesmo espaçamento). Sugestão: etiqueta
+pequena em caixa-alta, cor creme/apagada (não dourado), letra espaçada. O lilás
+sai (ou fica só se for um selo de "exclusivo" pontual).
+
+═══ 3. CAIXA-ALTA SÓ EM RÓTULO CURTO ═══
+Maiúscula em frase longa cansa a leitura. Manter all-caps só em rótulos de 1-4
+palavras. Passar para caixa mista (ou encurtar) os longos, ex:
+- "A PERGUNTA QUE TODO MUNDO FAZ" → encurtar/caixa mista
+- "VONTADE DE PUXAR ASSUNTO" → "Vontade de puxar assunto"
+- "NO MODO COLEGA DE QUARTO" → caixa mista
+Títulos, perguntas e parágrafos nunca em caixa-alta.
+
+═══ 4. FONTE MONOESPAÇADA SÓ EM RÓTULO ═══
+A monoespaçada é técnica e destoa do tom emocional. Usar só em etiqueta mínima;
+nunca em título, pergunta ou parágrafo (esses em serif/sans normal).
+
+═══ 5. QUEBRAR O PARÁGRAFO-PAREDE DO "MECANISMO" ═══
+O bloco "É o medo de todo mundo... já é um começo" é um texto cinza uniforme e
+longo. Quebrar em frases curtas / 2-3 blocos com respiro, com a ideia-chave no
+começo de cada um. Corpo em peso médio (não light), contraste bom sobre o fundo.
+
+═══ 6. COPY — VARIAR E CONCRETIZAR ═══
+- Reduzir a repetição de "conversa": alternar com intimidade, cumplicidade,
+  reconexão, "conversa de verdade".
+- Onde houver percentual, usar pessoas ("9 em cada 10", não "90%").
+- CTA com verbo concreto do próximo passo, sem "!" nem texto fofo (já é "Começar
+  hoje à noite" — manter esse tom).
+
+═══ 7. IMAGEM "PEGÁVEL" DO PRODUTO ═══
+Na seção "O que tem dentro", além das fotos de clima, incluir uma imagem das
+cartas/app na mão (produto sendo aberto/segurado), para a pessoa se imaginar
+usando. Se ainda não houver o asset, deixar um espaço reservado para ela.
+
+═══ 8. ATENÇÃO VISUAL / HIERARQUIA ═══
+- Isolar o CTA com bastante espaço em branco em volta + sombra/elevação, para o
+  botão parecer o objeto mais próximo do usuário.
+- Garantir que o olhar do casal na imagem aponte para dentro (nunca para fora da
+  tela).
+- No fim de cada primeira dobra, deixar o topo do próximo bloco aparecer "cortado"
+  para convidar a rolagem.
+- Remover moldura/enfeite que não carrega informação; menos pontos brilhando por
+  tela = mais foco no headline, na prova e no CTA.
+
+Não alterar copy que já está aprovada (A Virada, o mecanismo LP1, a tabela, o card
+de preço). Só aplicar os refinamentos acima. Manter a paleta da LP1.
