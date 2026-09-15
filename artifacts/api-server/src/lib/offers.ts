@@ -10,21 +10,30 @@ export type OfferPricing = {
 
 const CANONICAL_PRICING: Record<
   PricingRegion,
-  { fullCents: number; fullDisplay: string; offerCents: number; offerDisplay: string; unitNote: string }
+  {
+    fullCents: number;
+    fullDisplay: string;
+    fullUnitNote: string;
+    offerCents: number;
+    offerDisplay: string;
+    offerUnitNote: string;
+  }
 > = {
   BR: {
     fullCents: 5000,
     fullDisplay: "R$ 50",
+    fullUnitNote: "dá 11 centavos por noite",
     offerCents: 3000,
     offerDisplay: "R$ 30",
-    unitNote: "dá 7 centavos por noite",
+    offerUnitNote: "dá 7 centavos por noite",
   },
   PT: {
     fullCents: 1500,
     fullDisplay: "15 €",
+    fullUnitNote: "dá 3 cêntimos por noite",
     offerCents: 1000,
     offerDisplay: "10 €",
-    unitNote: "dá 2 cêntimos por noite",
+    offerUnitNote: "dá 2 cêntimos por noite",
   },
 };
 
@@ -52,8 +61,18 @@ export function getOfferPricing(region: PricingRegion): OfferPricing {
   const values = CANONICAL_PRICING[region];
   return {
     region,
-    full: makePricing(region, values.fullCents, values.fullDisplay, values.unitNote),
-    offer: makePricing(region, values.offerCents, values.offerDisplay, values.unitNote),
+    full: makePricing(
+      region,
+      values.fullCents,
+      values.fullDisplay,
+      values.fullUnitNote,
+    ),
+    offer: makePricing(
+      region,
+      values.offerCents,
+      values.offerDisplay,
+      values.offerUnitNote,
+    ),
   };
 }
 

@@ -1,0 +1,59 @@
+Otimizar a página de oferta pós-quiz (Lp1Offer), aplicando as regras dos docs
+104/105/95 e do livro de copy. NÃO reconstruir — a estrutura existe. Manter skin
+da LP1 (vinho #7a2e46 / fundo #16111c / dourado #d8b66d).
+
+A) DESCONTO HONESTO (conferir se já existe e consertar; não duplicar):
+   - Janela real de 5 min, server-side (/api/offer/state, offer_windows/visitor_key).
+     Contador NÃO reinicia no reload. Quando expira, o preço SOBE de verdade p/ R$50.
+   - DENTRO da janela: riscado R$ 50 (preço real, âncora honesta) → R$ 30, selo "40% OFF",
+     "pagamento único", equivalência "~7 centavos por noite, pra sempre".
+   - FORA da janela: mostra só R$ 50 e "~11 centavos por noite" (é o estado atual da página).
+   - Europa (PT): riscado 15 € → 10 €, mesma lógica, cartão (sem Pix).
+   - Preço validado no SERVIDOR no checkout; cliente nunca envia valor.
+   - Barra fixa no topo reflete o estado: "Desconto ativo · MM:SS" dentro, "Preço normal" fora.
+
+B) TIRAR A "NOTA DE SUCESSO" (regra doc 105):
+   - Remover "CHANCE DE COMEÇAR BEM: Alta". Não usar rótulo/percentual de sucesso.
+   - No lugar, leitura de GAP personalizada por answers.dor (nomeia o que trava hoje +
+     o que o baralho recomendado destrava). Sem número inventado.
+
+C) CONSERTAR "AGORA → DEPOIS" no formato de 3 eixos (doc 105):
+   Tabela com colunas Hoje | Depois:
+   - Conversa: Só logística → De verdade, toda semana
+   - Descoberta: Parada → Algo novo que você não sabia
+   - Vontade de perguntar: Trava → Sai sozinha
+   Barras de "Hoje" BAIXAS (o incômodo), "Depois" altas. Puxar do score do medidor.
+
+D) ELEVAR O MAIOR DIFERENCIAL (doc 105 — o que o concorrente não copia):
+   Bloco grande, não rodapé:
+   "R$ 50. Uma vez. Pra sempre. Sem assinatura, sem renovação, sem 'cancele antes de
+   4 semanas'. 7 dias de garantia, sem condição e sem precisar provar nada."
+
+E) OBJEÇÃO Nº 1 VIRA BENEFÍCIO (doc 105, linha do Relatio):
+   "✅ Funciona mesmo se ele não entrar de cara: você começa sozinha, pelas perguntas
+   leves. Ele entra quando a conversa já estiver boa."
+
+F) TIRAR O MEDO DE CLICAR (doc 105, linha do Luvly), abaixo do CTA:
+   "Sem pagamento neste passo — você revisa e confirma no próximo."
+
+G) PROVA SOCIAL REAL (docs 104/105 — número, não nome inventado):
+   - Âncora perto do 1º bloco: "212 mil pessoas já salvaram essas perguntas no TikTok".
+   - Depoimentos = prints REAIS (dep-01 a dep-06) no formato Trustpilot (rosto, texto,
+     "Verificado"). Se hoje for placeholder, renderizar os prints reais. Nada inventado,
+     nenhuma foto trocada.
+
+H) BÔNUS JÁ ANEXADO (doc 105 — nosso equivalente ao e-book grátis):
+   "🎁 Leva 3 perguntas de amostra pra usar hoje à noite, agora." (já marcado/incluído)
+
+I) BUGS:
+   - Cabeçalho do FAQ "PEOPLE OFTEN ASK" → português ("PERGUNTAS FREQUENTES").
+   - Corrigir a equivalência por noite pra casar com o preço exibido (7¢ no R$30, 11¢ no R$50).
+
+J) GARANTIA antes E depois do preço (doc 104): linha curta colada no CTA
+   ("7 dias de garantia. Não gostou, devolve.") + bloco completo mais abaixo.
+
+K) Repetir o bloco de oferta inteiro (preço + contador + CTA) no fim da página (doc 105).
+
+NÃO FAZER (regras nossas, docs 104/105): estatística de decaimento inventada, nota de
+sucesso sem conta, foto de depoimento trocada, contador que reinicia no reload, âncora
+de preço que nunca existiu, número de casais inventado. Tudo na paleta da LP1.

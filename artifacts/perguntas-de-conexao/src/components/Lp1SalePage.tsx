@@ -7,6 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
+import { computeLp1Score } from "@/lib/lp1-score";
 import { testimonialImages } from "@/lib/testimonials";
 
 type SaleAnswers = Record<string, unknown>;
@@ -18,6 +19,7 @@ type SalePrice = {
   symbol: string;
   amount: string;
   symbolPosition: "before" | "after";
+  pixAvailable: boolean;
 };
 
 type OfferState = {
@@ -174,6 +176,8 @@ function getPersonalizedCopy(answers: SaleAnswers) {
         "Porque a distância não precisa virar o novo normal de vocês.",
       epiphany:
         "A distância não precisa virar o normal de vocês.",
+      gapTitle: "O que trava hoje: a distância decide o assunto.",
+      gapBody: `O baralho ${recommendedDeck} destrava um jeito simples de voltar a criar proximidade, mesmo quando cada um está no seu celular.`,
     };
   }
 
@@ -188,6 +192,8 @@ function getPersonalizedCopy(answers: SaleAnswers) {
         "Porque a rotina já está ocupando o espaço que poderia ser de vocês.",
       epiphany:
         "Não é conversar mais. É sair do automático por alguns minutos.",
+      gapTitle: "O que trava hoje: a conversa ficou na logística.",
+      gapBody: `O baralho ${recommendedDeck} destrava perguntas que puxam vocês de volta para o que está acontecendo por dentro.`,
     };
   }
 
@@ -202,6 +208,8 @@ function getPersonalizedCopy(answers: SaleAnswers) {
         "Porque vontade de falar já existe — falta só um jeito seguro de começar.",
       epiphany:
         "Quando o assunto já vem pronto, ninguém precisa inventar por onde começar.",
+      gapTitle: "O que trava hoje: começar parece que pode pesar.",
+      gapBody: `O baralho ${recommendedDeck} destrava uma entrada leve, para a conversa ganhar profundidade sem virar cobrança.`,
     };
   }
 
@@ -215,33 +223,37 @@ function getPersonalizedCopy(answers: SaleAnswers) {
       "Porque vocês não precisam esperar a relação ficar distante para abrir uma conversa diferente.",
     epiphany:
       "Uma boa pergunta tira a conversa do automático sem deixar o clima pesado.",
+    gapTitle: "O que trava hoje: ninguém sabe por onde começar.",
+    gapBody: `O baralho ${recommendedDeck} destrava um assunto pronto para vocês saírem do automático e descobrirem algo novo.`,
   };
 }
 
 function getRecapBars(answers: SaleAnswers) {
-  const conversation = String(answers.conversas ?? "");
-  const discovery = String(answers.encontrar ?? "");
-  const desire = String(answers.desejo_noite ?? "");
+  const score = computeLp1Score(answers).value;
+  const todayLevel = Math.max(18, Math.min(52, 18 + Math.round(score * 0.34)));
+  const afterLevel = Math.max(88, Math.min(96, 96 - Math.round(score * 0.08)));
+
   return [
     {
       label: "Conversa",
-      today: conversation.includes("nos-dois") ? 48 : 30,
-      deck:
-        conversation.includes("pessoal") || conversation.includes("tudo")
-          ? 94
-          : 86,
+      today: todayLevel,
+      deck: afterLevel,
+      todayCopy: "Só logística",
+      afterCopy: "De verdade, toda semana",
     },
     {
       label: "Descoberta",
-      today: discovery.includes("novas") ? 54 : 34,
-      deck: String(answers["nunca-perguntou"] ?? "").includes("nao")
-        ? 84
-        : 96,
+      today: Math.max(16, todayLevel - 4),
+      deck: Math.max(86, afterLevel - 2),
+      todayCopy: "Parada",
+      afterCopy: "Algo novo que você não sabia",
     },
     {
-      label: "Vontade de começar",
-      today: answers.urgencia === "hoje" ? 76 : 45,
-      deck: desire ? 98 : 90,
+      label: "Vontade de perguntar",
+      today: Math.max(14, todayLevel - 7),
+      deck: Math.min(98, afterLevel + 2),
+      todayCopy: "Trava",
+      afterCopy: "Sai sozinha",
     },
   ];
 }
@@ -275,6 +287,14 @@ function OfferCard({
 }) {
   const active = Boolean(offerState?.discountActive && remainingSeconds > 0);
   const price = active ? offerState?.offer : offerState?.full;
+  const discountPercent =
+    active && offerState?.full && offerState.offer
+      ? Math.round(
+          ((offerState.full.amountCents - offerState.offer.amountCents) /
+            offerState.full.amountCents) *
+            100,
+        )
+      : 0;
 
   return (
     <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
@@ -295,6 +315,14 @@ function OfferCard({
           "Preço normal"
         )}
       </div>
+      <p className="lp1-sale-guarantee-line lp1-sale-guarantee-before">
+        7 dias de garantia. Não gostou, devolve.
+      </p>
+      <p className="lp1-sale-differential">
+        <strong>{offerState?.full.display ?? "R$ 50"}. Uma vez. Pra sempre.</strong>{" "}
+        Sem assinatura, sem renovação, sem “cancele antes de 4 semanas”. 7 dias
+        de garantia, sem condição e sem precisar provar nada.
+      </p>
       {price ? (
         <div className="lp1-sale-price">
           {active ? (
@@ -303,20 +331,20 @@ function OfferCard({
           <strong>
             <PriceText price={price} />
           </strong>
+          {active && discountPercent > 0 ? (
+            <b className="lp1-sale-discount-badge">{discountPercent}% OFF</b>
+          ) : null}
           <span>pagamento único</span>
         </div>
       ) : (
         <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
       )}
       {price ? (
-       <p className="lp1-sale-unit-note">{price.unitNote}.</p>
+        <p className="lp1-sale-unit-note">{price.unitNote}.</p>
       ) : null}
-      {!compact ? (
-        <p className="lp1-sale-license">
-          Não é gasto. É a diferença entre mais uma noite no automático e uma
-          conversa que vocês vão lembrar.
-        </p>
-      ) : null}
+      <p className="lp1-sale-guarantee-line">
+        7 dias de garantia. Não gostou, devolve.
+      </p>
       <button
         type="button"
         className="lp1-sale-primary-button"
@@ -328,7 +356,19 @@ function OfferCard({
         <ArrowRight size={17} aria-hidden="true" />
       </button>
       <p className="lp1-sale-payment-note">
-        Pix ou cartão · acesso na hora · 7 dias de garantia.
+        {price?.pixAvailable ? "Pix ou cartão" : "Cartão"} · acesso na hora
+      </p>
+      <p className="lp1-sale-fear-note">
+        Sem pagamento neste passo — você revisa e confirma no próximo.
+      </p>
+      <p className="lp1-sale-objection">
+        <Check size={16} aria-hidden="true" /> Funciona mesmo se ele não entrar
+        de cara: você começa sozinha, pelas perguntas leves. Ele entra quando a
+        conversa já estiver boa.
+      </p>
+      <p className="lp1-sale-bonus">
+        <span aria-hidden="true">🎁</span> Leva 3 perguntas de amostra pra usar
+        hoje à noite, agora.
       </p>
     </div>
   );
@@ -348,11 +388,6 @@ export function Lp1SalePage({
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
   const recommendedDeck = getClimateName(answers);
   const personalizedCopy = useMemo(() => getPersonalizedCopy(answers), [answers]);
-  const startSignal = recapBars.find(
-    (bar) => bar.label === "Vontade de começar",
-  )?.deck ?? 90;
-  const startSignalLabel =
-    startSignal >= 80 ? "Alta" : startSignal >= 60 ? "Boa" : "Possível";
 
   useEffect(() => {
     let cancelled = false;
@@ -410,11 +445,12 @@ export function Lp1SalePage({
           <div className="lp1-sale-sticky-copy">
             {discountActive ? (
               <>
-                <span>Oferta especial</span>
-                <strong>Desconto expira em</strong>
-                <b aria-label={`${formatRemaining(remainingSeconds)} restantes`}>
-                  {formatRemaining(remainingSeconds)}
-                </b>
+                <strong>
+                  Desconto ativo ·{" "}
+                  <b aria-label={`${formatRemaining(remainingSeconds)} restantes`}>
+                    {formatRemaining(remainingSeconds)}
+                  </b>
+                </strong>
               </>
             ) : (
               <strong>Preço normal</strong>
@@ -442,9 +478,12 @@ export function Lp1SalePage({
             <h2>Hoje</h2>
             {recapBars.map((bar) => (
               <div className="lp1-sale-meter-row" key={`today-${bar.label}`}>
-                <span>{bar.label}</span>
+                <span>{bar.todayCopy}</span>
                 <i>
-                  <b style={{ width: `${bar.today}%` }} />
+                  <b
+                    style={{ width: `${bar.today}%` }}
+                    aria-label={`${bar.label}: ${bar.today} de 100`}
+                  />
                 </i>
               </div>
             ))}
@@ -456,12 +495,15 @@ export function Lp1SalePage({
                 alt="Com o baralho: um casal criando espaço para conversar"
               />
             </div>
-            <h2>Com o baralho</h2>
+            <h2>Depois</h2>
             {recapBars.map((bar) => (
               <div className="lp1-sale-meter-row" key={`deck-${bar.label}`}>
-                <span>{bar.label}</span>
+                <span>{bar.afterCopy}</span>
                 <i>
-                  <b style={{ width: `${bar.deck}%` }} />
+                  <b
+                    style={{ width: `${bar.deck}%` }}
+                    aria-label={`${bar.label}: ${bar.deck} de 100`}
+                  />
                 </i>
               </div>
             ))}
@@ -469,12 +511,11 @@ export function Lp1SalePage({
         </div>
         <div className="lp1-sale-recap-promo">
           <div className="lp1-sale-recap-signal-stack">
-            <article className="lp1-sale-recap-signal-card is-success">
-              <p>CHANCE DE COMEÇAR BEM</p>
-              <strong>{startSignalLabel}</strong>
+            <article className="lp1-sale-recap-signal-card is-gap">
+              <p>O GAP QUE APARECEU NAS SUAS RESPOSTAS</p>
+              <strong>{personalizedCopy.gapTitle}</strong>
               <span>
-                {personalizedCopy.signal}. O primeiro passo pode ser leve e
-                possível para vocês.
+                {personalizedCopy.gapBody}
               </span>
             </article>
             <article className="lp1-sale-recap-signal-card is-urgency">
@@ -506,7 +547,7 @@ export function Lp1SalePage({
           offerState={offerState}
           remainingSeconds={remainingSeconds}
           recommendedDeck={recommendedDeck}
-            offerHeadline={personalizedCopy.offerHeadline}
+          offerHeadline={personalizedCopy.offerHeadline}
           onCheckout={onCheckout}
         />
         {offerError ? (
@@ -579,19 +620,34 @@ export function Lp1SalePage({
 
       <section className="lp1-sale-section lp1-sale-proof" data-section-name="sale-proof">
         <p className="lp1-sale-kicker">O QUE ACONTECE DEPOIS</p>
+        <p className="lp1-sale-proof-anchor">
+          212 mil pessoas já salvaram essas perguntas no TikTok
+        </p>
         <h2>Uma pergunta pode mudar a noite.</h2>
         <div className="lp1-sale-testimonial-grid">
-          {[testimonialImages[0], testimonialImages[1], testimonialImages[5]].map((image) => (
-            <img key={image} src={image} alt="Depoimento real de cliente" />
+          {testimonialImages.map((image, index) => (
+            <article className="lp1-sale-testimonial-card" key={image}>
+              <div className="lp1-sale-testimonial-meta">
+                <span>Depoimento real</span>
+                <b>
+                  <Check size={13} aria-hidden="true" /> Verificado
+                </b>
+              </div>
+              <img
+                src={image}
+                alt={`Print real de depoimento de cliente ${index + 1}`}
+                loading="lazy"
+              />
+            </article>
           ))}
         </div>
         <p className="lp1-sale-disclaimer">
-          Depoimentos reais de clientes. Fotos e nomes preservados com autorização.
+          Prints reais de clientes. Nenhum nome ou foto foi trocado.
         </p>
       </section>
 
       <section className="lp1-sale-section lp1-sale-faq" data-section-name="sale-faq">
-        <p className="lp1-sale-kicker">PEOPLE OFTEN ASK</p>
+        <p className="lp1-sale-kicker">PERGUNTAS FREQUENTES</p>
         <h2>Antes de começar.</h2>
         <div>
           {faqs.map(([question, answer]) => (
