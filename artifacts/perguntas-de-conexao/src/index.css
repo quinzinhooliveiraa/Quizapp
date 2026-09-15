@@ -1630,23 +1630,22 @@
 }
 
 .lp1-proof-screen .lp1-info-body {
-  max-width: 31rem;
-  margin: 0.85rem auto 0;
-  color: #e6dfee;
-  font: 500 clamp(0.9rem, 3.5vw, 1.05rem)/1.45 var(--app-font-sans);
+  max-width: 24rem;
+  margin: 0.6rem auto 0;
+  color: #bdb3c9;
+  font: 500 0.78rem/1.45 var(--app-font-sans);
 }
 
-.lp1-proof-screen .lp1-info-body + .lp1-info-body {
-  margin-top: 0.55rem;
-  color: #bdb3c9;
-  font-size: 0.88rem;
+.lp1-proof-screen .lp1-info-body strong {
+  color: #b28bff;
+  font-weight: 800;
 }
 
 .lp1-proof-screen .lp1-info-source {
   max-width: 31rem;
-  margin: 0.8rem auto 0;
+  margin: 0.55rem auto 0;
   color: #8f849e;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
 }
 
 .lp1-proof-screen .lp1-quiz-full-cta {

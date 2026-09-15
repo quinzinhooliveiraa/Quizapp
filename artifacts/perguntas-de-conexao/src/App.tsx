@@ -1783,8 +1783,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     eyebrow: "+500 CASAIS",
     title: "já encontraram novas formas de se conectar.",
     body: [
-      "Casais que reservaram alguns minutos para conversar relataram mais proximidade depois de usar nossas perguntas.",
-      "Talvez essa seja a conversa que estava faltando para vocês.",
+      "Casais que reservam alguns minutos para conversar relatam mais proximidade depois de usar as nossas perguntas.",
     ],
     source: "Dados de uma pesquisa com casais que usaram o baralho.",
     cta: "Continuar",
@@ -3285,7 +3284,15 @@ function Lp1InfoScreen({
       ) : null}
       {screen.body?.map((paragraph) => (
         <p className="lp1-info-body" key={paragraph}>
-          {paragraph}
+          {isProofScreen ? (
+            <>
+              Casais que reservam alguns minutos para conversar{" "}
+              <strong>relatam mais proximidade</strong> depois de usar as nossas
+              perguntas.
+            </>
+          ) : (
+            paragraph
+          )}
         </p>
       ))}
       {screen.source ? <p className="lp1-info-source">Fonte: {screen.source}</p> : null}
