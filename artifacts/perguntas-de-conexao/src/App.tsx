@@ -684,6 +684,12 @@ function clearCompletedCheckoutStorage(): void {
   safeRemoveItem("conexao-pending-source-lp");
   safeRemoveItem("conexao-pending-buyer-name");
   safeRemoveItem("conexao-pending-buyer-email");
+  try {
+    sessionStorage.removeItem("lp1-quiz-step");
+    sessionStorage.removeItem("lp1-quiz-offer");
+  } catch {
+    // Session storage may be unavailable in embedded or private browsers.
+  }
 }
 
 function localDateKey() {
@@ -2396,9 +2402,22 @@ function Lp1Quiz({
   onFinish: () => void;
   onBackToLanding: () => void;
 }) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => {
+    try {
+      const storedStep = Number(sessionStorage.getItem("lp1-quiz-step"));
+      return Number.isFinite(storedStep) && storedStep > 0 ? storedStep : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [answers, setAnswers] = useState<Lp1Answers>({});
-  const [showOffer, setShowOffer] = useState(false);
+  const [showOffer, setShowOffer] = useState(() => {
+    try {
+      return sessionStorage.getItem("lp1-quiz-offer") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [captureAttempted, setCaptureAttempted] = useState(false);
   const [trialCardIndex, setTrialCardIndex] = useState(0);
   const [climateIndex, setClimateIndex] = useState(0);
@@ -2411,6 +2430,22 @@ function Lp1Quiz({
       : "";
   const selectedValue = typeof selectedAnswer === "string" ? selectedAnswer : "";
   const visualStep = Math.min(step + 1, LP1_SCREENS.length);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("lp1-quiz-step", String(step));
+    } catch {
+      // Session storage may be unavailable in embedded or private browsers.
+    }
+  }, [step]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("lp1-quiz-offer", String(showOffer));
+    } catch {
+      // Session storage may be unavailable in embedded or private browsers.
+    }
+  }, [showOffer]);
 
   useEffect(() => {
     return () => {
@@ -5386,6 +5421,39 @@ function useCheckout({
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
   const checkoutCtaSourceRef = useRef<LandingCtaSource | null>(null);
+  const checkoutOpenRef = useRef(false);
+  const checkoutHistoryPushedRef = useRef(false);
+
+  useEffect(() => {
+    checkoutOpenRef.current = checkoutOpen;
+  }, [checkoutOpen]);
+
+  const openCheckout = () => {
+    if (!checkoutHistoryPushedRef.current) {
+      try {
+        window.history.pushState(
+          { ...(window.history.state ?? {}), conexaoCheckout: true },
+          "",
+          window.location.href,
+        );
+      } catch {
+        // The modal still opens if the browser blocks history updates.
+      }
+      checkoutHistoryPushedRef.current = true;
+    }
+    setCheckoutOpen(true);
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!checkoutOpenRef.current) return;
+      checkoutHistoryPushedRef.current = false;
+      setCheckoutOpen(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     if (!checkoutOpen) return;
@@ -5512,7 +5580,7 @@ function useCheckout({
     setNameError("");
     setEmailError("");
     setCheckoutState("email");
-    setCheckoutOpen(true);
+    openCheckout();
     params.delete("comprar");
     const query = params.toString();
     window.history.replaceState(
@@ -5540,7 +5608,7 @@ function useCheckout({
           ) {
             setNativeCheckout(parsed);
             setCheckoutState("email");
-            setCheckoutOpen(true);
+            openCheckout();
             return;
           }
           clearPendingCheckoutStorage();
@@ -5569,7 +5637,7 @@ function useCheckout({
           setCardCheckout(parsed);
           setSelectedPaymentMethod("card");
           setCheckoutState("email");
-          setCheckoutOpen(true);
+          openCheckout();
           return;
         }
         clearPendingCheckoutStorage();
@@ -5588,7 +5656,7 @@ function useCheckout({
     if (checkoutCancelled) {
       clearPendingCheckoutStorage();
       setCheckoutState("error");
-      setCheckoutOpen(true);
+      openCheckout();
       return;
     }
     if (!sessionId) return;
@@ -5610,7 +5678,7 @@ function useCheckout({
       ? Date.now()
       : Number(safeGetItem("conexao-pending-at"));
     setCheckoutState("confirming");
-    setCheckoutOpen(true);
+    openCheckout();
     let timeoutId: number | null = null;
     let cancelled = false;
 
@@ -5794,7 +5862,7 @@ function useCheckout({
     name = buyerName,
     inline = false,
   ) => {
-    setCheckoutOpen(true);
+    openCheckout();
     setPaymentError("");
     setAccessCheckNote(null);
     if (!pricing.pixAvailable) {
@@ -6011,7 +6079,7 @@ function useCheckout({
           setNativeCheckout(parsed);
           setCopiedCode(false);
           setCheckoutState("email");
-          setCheckoutOpen(true);
+          openCheckout();
           return;
         }
         clearPendingCheckoutStorage();
@@ -6025,7 +6093,7 @@ function useCheckout({
     setNameError("");
     setEmailError("");
     setCheckoutState("email");
-    setCheckoutOpen(true);
+    openCheckout();
   };
 
   const restartCheckout = () => {
@@ -6043,7 +6111,7 @@ function useCheckout({
     setNameError("");
     setEmailError("");
     setCheckoutState("email");
-    setCheckoutOpen(true);
+    openCheckout();
   };
 
   return {
@@ -7910,6 +7978,16 @@ function TrackedQuiz({
   const [, navigate] = useLocation();
   const quizOrigin = new URLSearchParams(window.location.search).get("from");
   const quizReturnPath = quizOrigin === "lp1" ? "/lp1" : "/";
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (checkout.checkoutOpen) return;
+      navigate(quizReturnPath);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [checkout.checkoutOpen, navigate, quizReturnPath]);
 
   return (
     <>
