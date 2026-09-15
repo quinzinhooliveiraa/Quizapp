@@ -1699,13 +1699,12 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     key: "tempo",
     title: "Há quanto tempo vocês estão juntos?",
     format: "cards",
+    emoji: true,
     options: [
-      { value: "menos-seis", label: "Menos de 6 meses" },
-      { value: "seis-um", label: "6 meses a 1 ano" },
-      { value: "um-tres", label: "1 a 3 anos" },
-      { value: "tres-cinco", label: "3 a 5 anos" },
-      { value: "cinco-dez", label: "5 a 10 anos" },
-      { value: "mais-dez", label: "Mais de 10 anos" },
+      { value: "menos-seis", label: "Menos de 6 meses", icon: "✨" },
+      { value: "seis-um", label: "6 meses a 2 anos", icon: "🌱" },
+      { value: "um-tres", label: "2 a 5 anos", icon: "🏡" },
+      { value: "mais-dez", label: "Mais de 5 anos", icon: "🕯️" },
     ],
   },
   {
@@ -2538,7 +2537,13 @@ function Lp1Quiz({
           />
         ) : current.kind === "question" ? (
           <section
-            className={current.id === "s04-conversas" ? "lp1-conversation-question" : undefined}
+            className={
+              current.id === "s04-conversas"
+                ? "lp1-conversation-question"
+                : current.id === "s03-tempo"
+                  ? "lp1-time-question"
+                  : undefined
+            }
             data-section-name={current.id}
           >
             {current.eyebrow ? <p className="lp1-quiz-eyebrow">{current.eyebrow}</p> : null}
@@ -3287,6 +3292,7 @@ function Lp1QuestionOptions({
 }) {
   const selectedValues = selectedValue.split(",").filter(Boolean);
   const isMulti = question.format === "multi";
+  const isTimeQuestion = question.id === "s03-tempo";
 
   return (
     <div className={`lp1-quiz-options lp1-quiz-format-${question.format}`}>
@@ -3372,9 +3378,15 @@ function Lp1QuestionOptions({
                   ) : null}
                 </>
               ) : question.emoji && option.icon ? (
-                <span className="lp1-quiz-option-icon" aria-hidden="true">
-                  {option.icon}
-                </span>
+                isTimeQuestion ? (
+                  <span className="lp1-quiz-option-visual" aria-hidden="true">
+                    <span className="lp1-quiz-option-icon">{option.icon}</span>
+                  </span>
+                ) : (
+                  <span className="lp1-quiz-option-icon" aria-hidden="true">
+                    {option.icon}
+                  </span>
+                )
               ) : null}
               <span className="lp1-quiz-option-label">{option.label}</span>
               {isMulti ? <span className="lp1-multi-label-bar">{option.label}</span> : null}

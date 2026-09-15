@@ -2348,6 +2348,131 @@
   }
 }
 
+/* Relationship length step — image-led cards with the same option copy as the reference. */
+.lp1-time-question .lp1-quiz-title {
+  max-width: 31rem;
+  margin-bottom: 1.35rem;
+  color: #fbf8ff;
+  font-family: var(--app-font-sans);
+  font-size: clamp(1.9rem, 8vw, 2.65rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+}
+
+.lp1-time-question .lp1-quiz-format-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.lp1-time-question .lp1-quiz-option {
+  min-height: 14.2rem;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #3a3047;
+  border-radius: 1.25rem;
+  background: #211a2b;
+}
+
+.lp1-time-question .lp1-quiz-option:hover,
+.lp1-time-question .lp1-quiz-option:focus-visible {
+  border-color: #a781ed;
+  background: #2a2138;
+  transform: translateY(-1px);
+}
+
+.lp1-time-question .lp1-quiz-option.is-selected {
+  border: 2px solid #b28bff;
+  background: #33284a;
+  box-shadow: 0 0 0 1px rgba(178, 139, 255, 0.12);
+}
+
+.lp1-time-question .lp1-quiz-option-visual {
+  display: grid;
+  min-height: 10rem;
+  flex: 1 1 auto;
+  place-items: center;
+  padding: 0.75rem;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(178, 139, 255, 0.2), transparent 38%),
+    linear-gradient(145deg, #302641, #211a2b 72%);
+}
+
+.lp1-time-question .lp1-quiz-option-icon {
+  display: grid;
+  width: 4.25rem;
+  height: 4.25rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 1.3rem;
+  background: #3a3048;
+  color: #f4eaff;
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
+.lp1-time-question .lp1-quiz-option-label {
+  display: flex;
+  min-height: 4.2rem;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  background: #382a20;
+  color: #fbf8ff;
+  font: 600 clamp(0.92rem, 3.8vw, 1.08rem)/1.2 var(--app-font-sans);
+  letter-spacing: -0.02em;
+}
+
+.lp1-time-question .lp1-quiz-option.is-selected .lp1-quiz-option-label {
+  background: #44344f;
+}
+
+.lp1-time-question .lp1-quiz-option-check {
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.47rem;
+  border-radius: 50%;
+  background: #b28bff;
+  color: #241933;
+  transform: none;
+}
+
+.lp1-time-question .lp1-quiz-option:not(.is-selected)::after {
+  position: absolute;
+  top: 0.95rem;
+  right: 0.95rem;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #62586d;
+  border-radius: 50%;
+  content: "";
+}
+
+@media (max-width: 420px) {
+  .lp1-time-question .lp1-quiz-format-cards {
+    gap: 0.7rem;
+  }
+
+  .lp1-time-question .lp1-quiz-option {
+    min-height: 13.25rem;
+  }
+
+  .lp1-time-question .lp1-quiz-option-visual {
+    min-height: 9.2rem;
+  }
+
+  .lp1-time-question .lp1-quiz-option-label {
+    min-height: 4rem;
+    padding-inline: 0.7rem;
+    font-size: 0.9rem;
+  }
+}
+
 .support-step-label {
   margin: -0.45rem 0 0.9rem;
   color: rgba(255, 255, 255, 0.48);
