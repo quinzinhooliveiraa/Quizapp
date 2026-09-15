@@ -2672,6 +2672,111 @@
   }
 }
 
+/* Desired feeling step — compact multi-select grid with a clear confirmation CTA. */
+.lp1-feeling-question .lp1-quiz-accumulation {
+  display: none;
+}
+
+.lp1-feeling-question .lp1-quiz-title {
+  max-width: 34rem;
+  margin-bottom: 1.45rem;
+  color: #fbf8ff;
+  font-family: var(--app-font-sans);
+  font-size: clamp(1.85rem, 8vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 1.08;
+}
+
+.lp1-feeling-question .lp1-quiz-format-multi {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.lp1-feeling-question .lp1-quiz-option {
+  min-height: 11.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 1.1rem 0.65rem 1rem;
+  overflow: visible;
+  border: 1px solid #3a3047;
+  border-radius: 1.35rem;
+  background: #211a2b;
+  text-align: center;
+}
+
+.lp1-feeling-question .lp1-quiz-option:hover,
+.lp1-feeling-question .lp1-quiz-option:focus-visible {
+  border-color: #a781ed;
+  background: #2a2138;
+  transform: translateY(-1px);
+}
+
+.lp1-feeling-question .lp1-quiz-option.is-selected {
+  border: 2px solid #b28bff;
+  background: #33284a;
+  box-shadow: 0 0 0 1px rgba(178, 139, 255, 0.12);
+}
+
+.lp1-feeling-question .lp1-quiz-option-icon {
+  display: grid;
+  width: 4.2rem;
+  height: 4.2rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 2.55rem;
+  line-height: 1;
+}
+
+.lp1-feeling-question .lp1-quiz-option-label {
+  display: block;
+  color: #cfc5d8;
+  font: 500 clamp(0.86rem, 3vw, 1.04rem)/1.2 var(--app-font-sans);
+  letter-spacing: -0.02em;
+}
+
+.lp1-feeling-question .lp1-multi-label-bar,
+.lp1-feeling-question .lp1-quiz-option-check {
+  display: none;
+}
+
+.lp1-feeling-question .lp1-quiz-actions {
+  margin-top: 1.25rem;
+}
+
+.lp1-feeling-question .lp1-quiz-next {
+  min-height: 3.35rem;
+  background: #b28bff;
+  color: #241933;
+  font-size: 1rem;
+}
+
+.lp1-feeling-question .lp1-quiz-next:disabled {
+  background: #332c32;
+  color: #70656f;
+}
+
+@media (max-width: 420px) {
+  .lp1-feeling-question .lp1-quiz-format-multi {
+    gap: 0.6rem;
+  }
+
+  .lp1-feeling-question .lp1-quiz-option {
+    min-height: 10.75rem;
+    padding-inline: 0.45rem;
+  }
+
+  .lp1-feeling-question .lp1-quiz-option-icon {
+    font-size: 2.35rem;
+  }
+
+  .lp1-feeling-question .lp1-quiz-option-label {
+    font-size: 0.82rem;
+  }
+}
+
 .support-step-label {
   margin: -0.45rem 0 0.9rem;
   color: rgba(255, 255, 255, 0.48);

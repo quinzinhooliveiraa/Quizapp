@@ -1824,15 +1824,16 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s10-sentir",
     kind: "question",
     key: "sentir",
-    title: "O que você mais gostaria de sentir depois dessa conversa?",
-    format: "single",
+    title: "O que você gostaria de sentir mais quando vocês conversam?",
+    format: "multi",
     emoji: true,
     options: [
-      { value: "encontrou", label: "Parece que a gente se encontrou de novo.", icon: "❤️" },
-      { value: "entende", label: "Sinto que ele me entende melhor.", icon: "🫶" },
-      { value: "riu", label: "A gente riu muito.", icon: "😂" },
-      { value: "descobriu", label: "Descobri algo que não sabia.", icon: "🧠" },
-      { value: "quimica", label: "A gente voltou a ter química.", icon: "🔥" },
+      { value: "encontrou", label: "Proximidade", icon: "🥰" },
+      { value: "riu", label: "Leveza", icon: "😂" },
+      { value: "entende", label: "Segurança", icon: "🫶" },
+      { value: "quimica", label: "Desejo", icon: "🔥" },
+      { value: "intimidade", label: "Intimidade", icon: "🤍" },
+      { value: "descobriu", label: "Curiosidade", icon: "✨" },
     ],
   },
   {
@@ -2540,7 +2541,9 @@ function Lp1Quiz({
                   ? "lp1-time-question"
                   : current.id === "s09-desejo-noite"
                     ? "lp1-night-question"
-                  : undefined
+                  : current.id === "s10-sentir"
+                    ? "lp1-feeling-question"
+                    : undefined
             }
             data-section-name={current.id}
           >
