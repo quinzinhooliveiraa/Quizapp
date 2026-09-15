@@ -437,30 +437,23 @@ export function Lp1SalePage({
 
   return (
     <main className="lp1-sale-page">
-      <div className="lp1-sale-sticky-bar">
-        <div
-          className={`lp1-sale-sticky-card ${discountActive ? "is-active" : ""}`}
-          aria-live="polite"
-        >
-          <div className="lp1-sale-sticky-copy">
-            {discountActive ? (
-              <>
-                <strong>
-                  Desconto ativo ·{" "}
-                  <b aria-label={`${formatRemaining(remainingSeconds)} restantes`}>
-                    {formatRemaining(remainingSeconds)}
-                  </b>
-                </strong>
-              </>
-            ) : (
-              <strong>Preço normal</strong>
-            )}
+      {discountActive ? (
+        <div className="lp1-sale-sticky-bar">
+          <div className="lp1-sale-sticky-card is-active" aria-live="polite">
+            <div className="lp1-sale-sticky-copy">
+              <strong>
+                Desconto ativo ·{" "}
+                <b aria-label={`${formatRemaining(remainingSeconds)} restantes`}>
+                  {formatRemaining(remainingSeconds)}
+                </b>
+              </strong>
+            </div>
+            <button type="button" onClick={scrollToOffer}>
+              Quero começar <ArrowRight size={15} aria-hidden="true" />
+            </button>
           </div>
-          <button type="button" onClick={scrollToOffer}>
-            Quero começar <ArrowRight size={15} aria-hidden="true" />
-          </button>
         </div>
-      </div>
+      ) : null}
 
       <section className="lp1-sale-section lp1-sale-recap" data-section-name="sale-recap">
         <p className="lp1-sale-kicker">SEU RESULTADO PERSONALIZADO</p>
