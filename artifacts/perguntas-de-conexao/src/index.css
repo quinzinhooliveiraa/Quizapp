@@ -25786,7 +25786,7 @@ blockquote em {
 .lp3-recommended-theme-carousel {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(17rem, 31%);
+  grid-auto-columns: minmax(19rem, 31%);
   gap: 0.85rem;
   width: 100%;
   max-width: 100%;
@@ -25956,7 +25956,7 @@ blockquote em {
 .lp3-recommended-theme-card {
   position: relative;
   min-width: 0;
-  min-height: 17rem;
+  min-height: 19rem;
   box-sizing: border-box;
   overflow: hidden;
   scroll-snap-align: start;
@@ -26081,7 +26081,7 @@ blockquote em {
   }
 
   .lp3-recommended-theme-card {
-    min-height: 15rem;
+    min-height: 19rem;
   }
 
   .lp3-recommended-theme-top {
