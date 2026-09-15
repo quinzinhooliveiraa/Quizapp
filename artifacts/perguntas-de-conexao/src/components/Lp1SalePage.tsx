@@ -30,12 +30,42 @@ type OfferState = {
 const API_URL = (path: string) => `${apiBaseUrl}${path}`;
 
 const benefitCards = [
-  ["459 perguntas", "em 15 baralhos, do leve ao profundo.", "459"],
-  ["Do leve ao profundo", "A profundidade chega no ritmo de vocês.", "→"],
-  ["Acesso pra 2 pessoas", "Você + convite, sem pagar de novo.", "2"],
-  ["Cada um no seu celular", "Respondem juntos, mesmo à distância.", "↗"],
-  ["Novos baralhos", "Incluídos para sempre, sem mensalidade.", "∞"],
-  ["7 dias de garantia", "Se não fizer sentido, devolvemos.", "✓"],
+  {
+    title: "459 perguntas",
+    body: "em 15 baralhos, do leve ao profundo.",
+    mark: "459",
+    image: "/quiz/clima-leve.png",
+  },
+  {
+    title: "Do leve ao profundo",
+    body: "A profundidade chega no ritmo de vocês.",
+    mark: "→",
+    image: "/quiz/dx-como-comecar.png",
+  },
+  {
+    title: "Acesso pra 2 pessoas",
+    body: "Você + convite, sem pagar de novo.",
+    mark: "2",
+    image: "/quiz/dx-eu-travo.png",
+  },
+  {
+    title: "Cada um no seu celular",
+    body: "Respondem juntos, mesmo à distância.",
+    mark: "↗",
+    image: "/quiz/dx-afastamento.png",
+  },
+  {
+    title: "Novos baralhos",
+    body: "Incluídos para sempre, sem mensalidade.",
+    mark: "∞",
+    image: "/quiz/clima-honesto.png",
+  },
+  {
+    title: "7 dias de garantia",
+    body: "Se não fizer sentido, devolvemos.",
+    mark: "✓",
+    image: "/quiz/dx-sei-la.png",
+  },
 ] as const;
 
 const faqs = [
@@ -119,7 +149,10 @@ function getRecapBars(answers: SaleAnswers) {
     {
       label: "Conversa",
       today: conversation.includes("nos-dois") ? 48 : 30,
-      deck: conversation.includes("pessoal") ? 94 : 86,
+      deck:
+        conversation.includes("pessoal") || conversation.includes("tudo")
+          ? 94
+          : 86,
     },
     {
       label: "Descoberta",
@@ -197,9 +230,7 @@ function OfferCard({
         <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
       )}
       {price ? (
-        <p className="lp1-sale-unit-note">
-          {price.unitNote} — “7 centavos por noite.”
-        </p>
+       <p className="lp1-sale-unit-note">{price.unitNote}.</p>
       ) : null}
       {!compact ? (
         <p className="lp1-sale-license">
@@ -368,9 +399,10 @@ export function Lp1SalePage({
         <p className="lp1-sale-kicker">O QUE VOCÊS LEVAM</p>
         <h2>Uma pergunta boa para cada noite que vocês quiserem lembrar.</h2>
         <div className="lp1-sale-benefit-grid">
-          {benefitCards.map(([title, body, mark], index) => (
+          {benefitCards.map(({ title, body, mark, image }, index) => (
             <article className="lp1-sale-benefit-card" key={title}>
               <div className={`lp1-sale-benefit-image is-${index + 1}`}>
+                <img src={image} alt="" loading="lazy" />
                 <span>{mark}</span>
               </div>
               <div>

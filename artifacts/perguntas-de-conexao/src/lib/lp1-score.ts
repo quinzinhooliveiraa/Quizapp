@@ -64,7 +64,7 @@ const ANSWER_WEIGHTS: Record<string, number> = {
 
 const MAX_SCORE = 101;
 
-export function computeLp1Score(answers: Record<string, string>): Lp1Score {
+export function computeLp1Score(answers: Record<string, unknown>): Lp1Score {
   const canonicalAliases: Record<string, string[]> = {
     fase: ["stage"],
     dor: ["pain"],
@@ -73,11 +73,14 @@ export function computeLp1Score(answers: Record<string, string>): Lp1Score {
   };
   const skippedAliases = new Set(
     Object.entries(canonicalAliases).flatMap(([canonical, aliases]) =>
-      answers[canonical] ? aliases : [],
+      typeof answers[canonical] === "string" && answers[canonical]
+        ? aliases
+        : [],
     ),
   );
   const total = Object.entries(answers).reduce((sum, [key, rawValue]) => {
     if (skippedAliases.has(key)) return sum;
+    if (typeof rawValue !== "string") return sum;
     const values = rawValue.split(",").filter(Boolean);
     return (
       sum +

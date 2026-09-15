@@ -234,6 +234,18 @@ type CardCheckoutData = {
   startedAt: number;
 };
 
+type CheckoutOfferPrice = {
+  display: string;
+  pixAvailable: boolean;
+};
+
+type CheckoutOfferState = {
+  discountActive: boolean;
+  deadline: string;
+  full: CheckoutOfferPrice;
+  offer: CheckoutOfferPrice;
+};
+
 type CheckoutReview = {
   id: string;
   displayName: string | null;
@@ -4770,6 +4782,9 @@ function useCheckout({
 }) {
   const pricing = usePricing();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutOfferState, setCheckoutOfferState] =
+    useState<CheckoutOfferState | null>(null);
+  const [checkoutOfferNow, setCheckoutOfferNow] = useState(() => Date.now());
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
     "couple",
   );
@@ -4803,6 +4818,50 @@ function useCheckout({
   const [confirmingLong, setConfirmingLong] = useState(false);
   const [sendingLong, setSendingLong] = useState(false);
   const checkoutCtaSourceRef = useRef<LandingCtaSource | null>(null);
+
+  useEffect(() => {
+    if (!checkoutOpen) return;
+
+    const visitorKey = getOrCreateVisitorKey();
+    let cancelled = false;
+    fetch(apiUrl("/api/offer/state"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visitorKey }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("offer state request failed");
+        return (await response.json()) as CheckoutOfferState;
+      })
+      .then((state) => {
+        if (!cancelled) {
+          setCheckoutOfferState(state);
+          setCheckoutOfferNow(Date.now());
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCheckoutOfferState(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checkoutOpen]);
+
+  useEffect(() => {
+    if (!checkoutOfferState?.deadline) return;
+    const timer = window.setInterval(() => setCheckoutOfferNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [checkoutOfferState?.deadline]);
+
+  const checkoutDiscountActive = Boolean(
+    checkoutOfferState?.discountActive &&
+      new Date(checkoutOfferState.deadline).getTime() > checkoutOfferNow,
+  );
+  const checkoutPricing =
+    checkoutOfferState && checkoutDiscountActive
+      ? checkoutOfferState.offer
+      : checkoutOfferState?.full ?? pricing;
 
   useEffect(() => {
     if (!pricing.pixAvailable) {
@@ -5413,6 +5472,9 @@ function useCheckout({
   return {
     checkoutOpen,
     checkoutState,
+    checkoutPricing,
+    checkoutDiscountActive,
+    checkoutFullPrice: checkoutOfferState?.full ?? null,
     buyerName,
     setBuyerName,
     buyerEmail,
@@ -5548,14 +5610,14 @@ const CardPaymentForm = forwardRef<
   {
     onPaymentSubmitted: () => void;
     showSubmitButton?: boolean;
+    priceDisplay: string;
   }
 >(function CardPaymentForm(
-  { onPaymentSubmitted, showSubmitButton = true },
+  { onPaymentSubmitted, showSubmitButton = true, priceDisplay },
   ref,
 ) {
   const stripe = useStripe();
   const elements = useElements();
-  const pricing = usePricing();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -5601,7 +5663,7 @@ const CardPaymentForm = forwardRef<
           onClick={() => void handleSubmit()}
           disabled={!stripe || !elements || submitting}
         >
-          {submitting ? "Confirmando pagamento…" : `Pagar ${pricing.display}`}
+          {submitting ? "Confirmando pagamento…" : `Pagar ${priceDisplay}`}
           {!submitting && <ArrowRight size={16} />}
         </button>
       )}
@@ -5613,10 +5675,12 @@ const CardPaymentForm = forwardRef<
 });
 
 function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
-  const pricing = usePricing();
   const {
     checkoutOpen,
     checkoutState,
+    checkoutPricing,
+    checkoutDiscountActive,
+    checkoutFullPrice,
     buyerName,
     setBuyerName,
     buyerEmail,
@@ -5912,6 +5976,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           ref={cardPaymentFormRef}
           onPaymentSubmitted={handleCardPaymentSubmitted}
           showSubmitButton={checkoutState !== "email"}
+          priceDisplay={checkoutPricing.display}
         />
       </Elements>
     </div>
@@ -5987,7 +6052,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     <p className="checkout-access-note">
                       <strong>
                         Digite seu e-mail acima para liberar{" "}
-                        {pricing.pixAvailable ? "Pix e cartão" : "o cartão"}.
+                        {checkoutPricing.pixAvailable ? "Pix e cartão" : "o cartão"}.
                       </strong>
                       Só pra liberar seu acesso e guardar sua compra. Sem spam,
                       sem lista.
@@ -6006,7 +6071,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   <CheckoutPaymentTabs
                     selectedPaymentMethod={selectedPaymentMethod}
                     cardAvailable={cardAvailable}
-                    pixAvailable={pricing.pixAvailable}
+                    pixAvailable={checkoutPricing.pixAvailable}
                     onSelect={handlePaymentMethodSelect}
                     pixContent={pixPaymentContent}
                     cardContent={cardPaymentContent}
@@ -6022,7 +6087,12 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   <div>
                     <div className="checkout-summary-row">
                       <span>Perguntas de Conexão</span>
-                      <span>{pricing.display}</span>
+                      <span className="checkout-summary-price">
+                        {checkoutDiscountActive && checkoutFullPrice ? (
+                          <del>{checkoutFullPrice.display}</del>
+                        ) : null}
+                        {checkoutPricing.display}
+                      </span>
                     </div>
                     <div className="checkout-summary-row checkout-summary-row-guarantee">
                       <span>Garantia de 7 dias</span>
@@ -6032,7 +6102,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     </div>
                     <div className="checkout-summary-total">
                       <strong>Total</strong>
-                      <strong>{pricing.display}</strong>
+                        <strong>{checkoutPricing.display}</strong>
                     </div>
                   </div>
                 </div>
@@ -6052,7 +6122,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                 ) : null}
                 <div className="checkout-purchase-total">
                   <span>Total</span>
-                  <strong>{pricing.display}</strong>
+                  <strong>{checkoutPricing.display}</strong>
                 </div>
                 <button
                   className="button button-primary checkout-purchase-button"
@@ -6061,7 +6131,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   data-testid="button-continue-checkout"
                 >
                   {paymentCreating !== null ? (
-                    pricing.pixAvailable && selectedPaymentMethod === "pix"
+                    checkoutPricing.pixAvailable && selectedPaymentMethod === "pix"
                       ? "Gerando seu Pix…"
                       : "Abrindo pagamento…"
                   ) : (
@@ -6078,7 +6148,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             <CheckoutPaymentTabs
               selectedPaymentMethod={selectedPaymentMethod}
               cardAvailable={cardAvailable}
-              pixAvailable={pricing.pixAvailable}
+              pixAvailable={checkoutPricing.pixAvailable}
               onSelect={selectPaymentMethod}
               pixContent={pixPaymentContent}
               cardContent={cardPaymentContent}
@@ -6089,7 +6159,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             <CheckoutPaymentTabs
               selectedPaymentMethod={selectedPaymentMethod}
               cardAvailable={cardAvailable}
-              pixAvailable={pricing.pixAvailable}
+              pixAvailable={checkoutPricing.pixAvailable}
               onSelect={selectPaymentMethod}
               pixContent={pixPaymentContent}
               cardContent={cardPaymentContent}
@@ -6135,7 +6205,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             <CheckoutPaymentTabs
               selectedPaymentMethod="card"
               cardAvailable={cardAvailable}
-              pixAvailable={pricing.pixAvailable}
+              pixAvailable={checkoutPricing.pixAvailable}
               onSelect={selectPaymentMethod}
             />
             <p className="section-kicker">pagamento indisponível</p>
@@ -6154,7 +6224,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             >
               Tentar novamente <ArrowRight size={16} />
             </button>
-            {pricing.pixAvailable ? (
+            {checkoutPricing.pixAvailable ? (
               <button
                 type="button"
                 className="checkout-secondary-action"

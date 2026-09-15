@@ -522,7 +522,7 @@
 /* LP1 continuous post-result sale */
 .lp1-sale-page {
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: clip;
   background: #16111c;
   color: #f4efe9;
   font-family: var(--app-font-sans);
@@ -828,22 +828,37 @@
 }
 
 .lp1-sale-benefit-image {
+  position: relative;
   display: grid;
   min-height: 4.4rem;
+  overflow: hidden;
   place-items: center;
   border-radius: 0.6rem;
-  background:
-    linear-gradient(145deg, rgba(232, 201, 138, 0.05), rgba(122, 46, 70, 0.8)),
-    url("/theme-backgrounds/porto-seguro.jpg") center / cover;
+  background: #5b1230;
   color: #f9ebc9;
   font: 400 1.3rem/1 var(--app-font-serif);
 }
 
-.lp1-sale-benefit-image.is-2 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/livro-aberto.jpg"); }
-.lp1-sale-benefit-image.is-3 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/voce-nao-sabia.jpg"); }
-.lp1-sale-benefit-image.is-4 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/mesmo-longe.jpg"); }
-.lp1-sale-benefit-image.is-5 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/viagens.jpg"); }
-.lp1-sale-benefit-image.is-6 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/perto-de-novo.jpg"); }
+.lp1-sale-benefit-image::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(232, 201, 138, 0.12), rgba(91, 18, 48, 0.84));
+  content: "";
+}
+
+.lp1-sale-benefit-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.lp1-sale-benefit-image span {
+  position: relative;
+  z-index: 1;
+}
 
 .lp1-sale-benefit-card h3 {
   margin: 0 0 0.25rem;
@@ -946,6 +961,7 @@
 }
 
 .lp1-sale-testimonial-grid img {
+  display: block;
   width: 100%;
   border-radius: 14px 14px 14px 4px;
   background: #211827;
@@ -26395,6 +26411,19 @@ blockquote em {
 
 .checkout-summary-row > span:last-child {
   flex: 0 0 auto;
+}
+
+.checkout-summary-price {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.checkout-summary-price del {
+  color: #95899d;
+  font-size: 0.8em;
+  font-weight: 400;
 }
 
 .checkout-summary-included {

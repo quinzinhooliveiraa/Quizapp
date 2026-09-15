@@ -1,0 +1,91 @@
+Construir a VENDA como UMA PÁGINA DE ROLAGEM CONTÍNUA (não telas separadas com
+"Continuar"), no MESMO design do quiz (fundo #16111c, dourado #e8c98a, serif
+Instrument, mono Space). Ela começa quando a pessoa clica no botão do resultado
+(T25). Espelha a organização do Luvly/Spartan. O preço vem SEMPRE do servidor.
+
+═══ BARRA FIXA NO TOPO (sticky, visível durante toda a rolagem) ═══
+Esquerda: "Desconto aplicado — termina em {mm:ss}" (mono, o número em dourado).
+Direita: botão "Quero começar" que rola até o bloco de oferta.
+Fundo da barra: gradiente #5B1230→#7a2e46. Sempre no topo enquanto rola.
+Quando o contador zera: texto vira "Preço normal" e o botão continua funcionando.
+
+═══ SEÇÃO 1 — RECAP AGORA → DEPOIS (o medidor, reaproveitar do resultado) ═══
+Título: "O que muda quando a pergunta já vem pronta."
+Duas colunas "Hoje" e "Com o baralho", cada uma com 3 barrinhas (estilo confidence
+level do Luvly): Conversa / Descoberta / Vontade de começar. Hoje baixo (vinho),
+Com o baralho alto (dourado). Usa as respostas reais do quiz.
+
+═══ SEÇÃO 2 — EPIFANIA (copy) ═══
+"Talvez vocês não precisem conversar mais. Precisem conversar melhor."
+"'Como foi seu dia?' é fácil responder 'normal'. Mas quando alguém pergunta algo
+que você nunca pensou em responder, a conversa muda. É isso que o Perguntas de
+Conexão faz." (tática do livro: contraste, sem exagero)
+
+═══ SEÇÃO 3 — BLOCO DE OFERTA (o principal) ═══
+Card destacado, borda dourada.
+"Seu acesso está pronto."
+Selo-pílula: "Baralho recomendado: {clima escolhido no quiz}" (personalização real).
+Barra de urgência (gradiente vermelho→vinho, como o Luvly):
+   "Preço especial expira em {mm:ss}"
+Preço: {full.display} riscado → {offer.display} grande. "pagamento único."
+Linha (equivalência diária, p.19): {offer.unitNote} — "7 centavos por noite."
+Frase (p.57, licença pra comprar): "Não é gasto. É a diferença entre mais uma noite
+no automático e uma conversa que vocês vão lembrar."
+Botão: "Quero o Perguntas de Conexão"
+Nota: "Pix ou cartão · acesso na hora · 7 dias de garantia."
+
+═══ SEÇÃO 4 — O QUE VOCÊS LEVAM (cards com imagem, estilo Luvly) ═══
+Grade de cards (imagem colorida à esquerda + texto):
+459 perguntas em 15 baralhos · Do leve ao profundo · Acesso pra 2 pessoas (você +
+convite) · Respondem juntos, cada um no celular · Novos baralhos incluídos, pra
+sempre · Sem mensalidade · 7 dias de garantia.
+
+═══ SEÇÃO 5 — MECANISMO + "SEI LÁ" (argumento de dois lados, do livro) ═══
+"'Mas e se ele responder sei lá?'"
+"É justamente por isso que o jogo não começa nas perguntas pesadas." Três degraus:
+🌿 LEVE → ❤️ HONESTA → 🧠 PROFUNDA (com seta entre eles).
+"Não tem pontuação, nem vencedor, nem obrigação de responder. E funciona à
+distância — cada um no seu celular, na mesma pergunta."
+
+═══ SEÇÃO 6 — TABELA (reaproveitar a que já existe) ═══
+"'Vamos conversar'" × "Perguntas de Conexão", as 6 linhas já definidas.
+
+═══ SEÇÃO 7 — PROVA SOCIAL (prints reais + disclaimer honesto) ═══
+Título: "Uma pergunta pode mudar a noite."
+Prints reais de public/testimonials/: dep-01, dep-02, dep-06 (imagem, cantos
+14px 14px 14px 4px). Abaixo, em 10.5px #7d7386 (como o Luvly faz, honesto):
+"Depoimentos reais de clientes. Fotos e nomes preservados com autorização."
+
+═══ SEÇÃO 8 — FAQ (sanfona, estilo "People often ask") ═══
+E se eu é que não souber responder? · Isso substitui terapia? · Precisa instalar
+app? · E se meu parceiro achar estranho? · Funciona à distância? · É vitalício
+mesmo? · Como recebo depois de pagar? (respostas curtas, tom da landing atual)
+
+═══ SEÇÃO 9 — FECHAMENTO + OFERTA REPETIDA ═══
+"Vocês não precisam esperar a relação ficar distante. Não precisam de viagem, nem
+jantar caro, nem terapia. Às vezes só precisam de uma pergunta que nenhum dos dois
+pensou em fazer."
+Repetir o BLOCO DE OFERTA (seção 3, mesmos valores do servidor, mesmo contador).
+Botão: "Quero começar"
+Abaixo (serif, discreto): "Hoje à noite pode ser só mais uma noite. Ou a noite em
+que vocês começaram uma conversa diferente. ❤️"
+
+═══ DESCONTO HONESTO — decidido no SERVIDOR (mesmas regras de antes) ═══
+- pricing.ts: full BR{5000,"R$ 50"} offer{3000,"R$ 30","7 centavos por noite"};
+  full PT{1500,"15 €"} offer{1000,"10 €","2 cêntimos por noite"}.
+- Tabela offer_windows(visitor_key, deadline, region). POST /api/offer/state cria
+  deadline=agora+300s na 1ª vez; responde {discountActive, deadline, full, offer}.
+  Depois que passa, nunca mais volta a true.
+- checkout/create cobra offer.amountCents se deadline>agora, senão full. Ignora
+  preço do body.
+- A barra fixa e as duas ocorrências do bloco de oferta leem /api/offer/state e
+  mostram o MESMO contador. Zerou: troca pro full.display e some o risco.
+- Riscado = full real (R$ 50 / 15 €). Nunca R$ 47,90, nunca âncora inventada.
+
+CONFERIR E COLAR:
+1. É uma página só, rolagem contínua, na pele do quiz (não telas com Continuar).
+2. A barra de desconto fica fixa no topo durante toda a rolagem.
+3. Dentro dos 5 min o checkout cobra 3000/1000 mesmo se o body mandar outro valor;
+   depois cobra 5000/1500; recarregar não reinicia o contador.
+4. Os 3 prints são arquivos reais de public/testimonials/.
+5. grep "R$ 30" ou "3000" fixo no componente → não acha (vem da API).
