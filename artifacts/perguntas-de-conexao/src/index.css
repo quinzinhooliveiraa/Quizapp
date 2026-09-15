@@ -29014,13 +29014,18 @@ blockquote em {
 }
 
 .lp1-sale-page .lp1-sale-deck-card.is-recommended {
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.3);
+  border-color: rgba(232, 201, 138, 0.88);
+  box-shadow:
+    0 0 0 2px rgba(232, 201, 138, 0.16),
+    0 0 1.8rem rgba(232, 201, 138, 0.12),
+    0 1.5rem 3rem rgba(0, 0, 0, 0.34);
 }
 
 .lp1-sale-page .lp1-sale-deck-badge {
-  border-color: rgba(255, 255, 255, 0.22);
-  color: #e6dce3;
+  border-color: #e8c98a;
+  background: #e8c98a;
+  color: #4c1d32;
+  font-weight: 700;
 }
 
 .lp1-sale-page .lp1-sale-deck-copy small {
