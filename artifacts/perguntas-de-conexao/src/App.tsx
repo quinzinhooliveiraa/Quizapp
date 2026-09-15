@@ -6614,7 +6614,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       <div className="checkout-error-actions">
         <button
           type="button"
-          className="button button-primary"
+          className="button button-primary button-full"
           onClick={() => {
             void createCheckout("couple", buyerEmail, buyerName, true);
           }}
@@ -6622,14 +6622,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           data-testid="button-retry-pix"
         >
           Tentar de novo
-        </button>
-        <button
-          type="button"
-          className="checkout-error-support"
-          onClick={openSupportDialog}
-          data-testid="button-checkout-support"
-        >
-          Falar comigo
         </button>
       </div>
     </div>
@@ -6966,8 +6958,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             </h2>
             <p>
               Não recebemos a confirmação do pagamento. Se você já pagou,
-              aguarde mais um pouco ou fale com a gente. Se ainda não pagou,
-              gere um novo código.
+              aguarde mais um pouco. Se ainda não pagou, gere um novo código.
             </p>
             <button
               onClick={() => {
@@ -7082,12 +7073,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             >
               Tentar novamente <ArrowRight size={16} />
             </button>
-            <p className="checkout-support">
-              Deu problema no pagamento?{" "}
-              <button type="button" onClick={openSupportDialog}>
-                Fala comigo
-              </button>
-            </p>
           </div>
         )}
       </div>
