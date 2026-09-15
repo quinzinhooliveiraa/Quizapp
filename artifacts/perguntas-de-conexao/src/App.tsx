@@ -61,7 +61,10 @@ import {
 } from "@/lib/landing-pages";
 import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
 import { selectLp1Diagnosis } from "@/lib/lp1-diagnosis";
-import { computeLp1Score } from "@/lib/lp1-score";
+import {
+  computeLp1DistanceResult,
+  computeLp1Score,
+} from "@/lib/lp1-score";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
 import { RecommendedQuestionCarousel } from "@/components/RecommendedQuestionCarousel";
 import {
@@ -3255,72 +3258,6 @@ function Lp1LoadingScreen({
   );
 }
 
-const LP1_ROUTINE_POINTS: Record<string, number> = {
-  pouco: 0,
-  alguma: 5,
-  metade: 10,
-  muito: 15,
-  tudo: 20,
-};
-
-function getLp1DistanceResult(answers: Lp1Answers) {
-  const read = (key: string) =>
-    (answers as Record<string, string | undefined>)[key] ?? "";
-  const split = (key: string) => read(key).split(",").filter(Boolean);
-  const routinePoints = LP1_ROUTINE_POINTS[answers.rotina ?? ""] ?? 0;
-  const travaValues = split("travas");
-  const topicValues = split("conversas");
-  const travaCount = travaValues.length || topicValues.length;
-  const obstacleValues = split("atrapalha");
-  const iniciaPoints =
-    read("inicia") === "ele-nao-entra"
-      ? 14
-      : read("inicia") === "nao-sei-perguntar"
-        ? 10
-        : read("inicia") === "clima"
-          ? 12
-          : read("inicia") === "nao-senta"
-            ? 5
-            : 0;
-  const painPoints =
-    Math.min(travaCount, 5) * 8 +
-    iniciaPoints +
-    (read("celular") === "sempre"
-      ? 14
-      : read("celular") === "as-vezes"
-        ? 7
-        : 0) +
-    (read("conhece") === "sei-tudo"
-      ? 10
-      : read("conhece") === "as-vezes-nao"
-        ? 8
-        : 0) +
-    (read("sei-la-mapeado") === "sei-la"
-      ? 14
-      : read("sei-la-mapeado") === "nao-sei"
-        ? 10
-        : 0) +
-    (obstacleValues.includes("medo-resposta") ? 12 : 0) +
-    (obstacleValues.includes("medo") ? 10 : 0) +
-    (obstacleValues.includes("comecar") ? 8 : 0) +
-    (routinePoints >= 15 ? 8 : routinePoints >= 10 ? 4 : 0);
-  const score = Math.round(
-    40 + (Math.min(100, Math.max(0, painPoints)) / 100) * 52,
-  );
-  const meterPosition = Math.round(
-    Math.min(72, Math.max(30, 30 + ((score - 40) / 52) * 42)),
-  );
-  const label = meterPosition < 50 ? "Morno" : "Distante";
-  const routineValue =
-    routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
-  const spaceValue =
-    (answers.clima === "leve" || answers.clima === "normal") &&
-    (answers.quando === "hoje" || answers.quando === "dias")
-      ? "alto"
-      : "médio";
-  return { score, meterPosition, label, routineValue, spaceValue };
-}
-
 function Lp1ResultScreen({
   answers,
   sectionId,
@@ -3332,7 +3269,7 @@ function Lp1ResultScreen({
   cta: string;
   onContinue: () => void;
 }) {
-  const result = getLp1DistanceResult(answers);
+  const result = computeLp1DistanceResult(answers);
   const planCards = getLp1PlanCards(answers);
   const mirrorKeyByInicia: Record<string, string> = {
     "ele-nao-entra": "sei-la",

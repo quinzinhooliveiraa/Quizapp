@@ -7,7 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
-import { computeLp1Score } from "@/lib/lp1-score";
+import { computeLp1DistanceResult } from "@/lib/lp1-score";
 import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
 import { getPricingRegionQuery, type Pricing } from "@/lib/pricing";
@@ -84,6 +84,23 @@ function getVisitorKey(): string {
     // Keep the in-memory key for this page visit.
   }
   return generated;
+}
+
+function getDisplayName(answers: SaleAnswers): string {
+  const answerName = String(
+    answers.nome ?? answers.name ?? answers.buyerName ?? "",
+  ).trim();
+  if (answerName) return answerName.split(/\s+/)[0];
+
+  try {
+    const storedName =
+      localStorage.getItem("conexao-name") ??
+      sessionStorage.getItem("conexao-name") ??
+      "";
+    return storedName.trim().split(/\s+/)[0] ?? "";
+  } catch {
+    return "";
+  }
 }
 
 function formatRemaining(totalSeconds: number): string {
@@ -191,27 +208,26 @@ function getPersonalizedCopy(answers: SaleAnswers) {
 }
 
 function getRecapBars(answers: SaleAnswers) {
-  const score = computeLp1Score(answers).value;
-  const currentLevel = Math.max(12, Math.min(44, Math.round(score * 0.6)));
+  const score = computeLp1DistanceResult(answers).score;
 
   return [
     {
       label: "Conversa",
-      today: currentLevel,
+      today: score,
       deck: 92,
       todayCopy: "Virou só logística",
       afterCopy: "Sai do automático",
     },
     {
       label: "Perguntas",
-      today: Math.max(10, currentLevel - 3),
+      today: score,
       deck: 96,
       todayCopy: "Morrem no “sei lá”",
       afterCopy: "Puxam resposta de verdade",
     },
     {
       label: "Vontade de puxar assunto",
-      today: Math.max(8, currentLevel - 7),
+      today: score,
       deck: 98,
       todayCopy: "Some antes de sair",
       afterCopy: "Vem pronta, sem forçar",
@@ -303,6 +319,7 @@ export function Lp1SalePage({
   const [now, setNow] = useState(() => Date.now());
   const visitorKey = useMemo(() => getVisitorKey(), []);
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
+  const displayName = useMemo(() => getDisplayName(answers), [answers]);
   const recommendedDeck = getClimateName(answers);
   const personalizedCopy = useMemo(() => getPersonalizedCopy(answers), [answers]);
 
@@ -376,15 +393,15 @@ export function Lp1SalePage({
       ) : null}
 
       <section className="lp1-sale-section lp1-sale-recap" data-section-name="sale-recap">
-        <div className="lp1-sale-now-after-labels" aria-label="Agora e depois">
-          <span>Agora</span>
-          <i aria-hidden="true" />
-          <strong>Depois</strong>
-        </div>
+        <p className="lp1-sale-recap-context">
+          {displayName
+            ? `${displayName}, é isso que o teste mostrou`
+            : "O que o teste mostrou sobre vocês"}
+        </p>
         <figure className="lp1-sale-now-after-image">
           <img
             src="/hero/lp1-agora-depois.png"
-            alt="Um casal distante agora e conectado depois"
+            alt="Um casal distante agora e conectado com as cartas"
           />
         </figure>
         <div className="lp1-sale-gap-card">

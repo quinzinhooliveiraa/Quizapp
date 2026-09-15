@@ -3,6 +3,14 @@ export type Lp1Score = {
   band: "perto" | "morno" | "distante";
 };
 
+export type Lp1DistanceResult = {
+  score: number;
+  meterPosition: number;
+  label: "Morno" | "Distante";
+  routineValue: "alta" | "média" | "baixa";
+  spaceValue: "alto" | "médio";
+};
+
 /*
  * The score is deliberately local and additive. Answers that describe more
  * distance or more friction carry more weight; unanswered screens contribute
@@ -101,4 +109,74 @@ export function computeLp1Score(answers: Record<string, unknown>): Lp1Score {
           ? "morno"
           : "distante",
   };
+}
+
+const LP1_ROUTINE_POINTS: Record<string, number> = {
+  pouco: 0,
+  alguma: 5,
+  metade: 10,
+  muito: 15,
+  tudo: 20,
+};
+
+export function computeLp1DistanceResult(
+  answers: Record<string, unknown>,
+): Lp1DistanceResult {
+  const read = (key: string) => {
+    const value = answers[key];
+    return typeof value === "string" ? value : "";
+  };
+  const split = (key: string) => read(key).split(",").filter(Boolean);
+  const routinePoints = LP1_ROUTINE_POINTS[read("rotina")] ?? 0;
+  const travaValues = split("travas");
+  const topicValues = split("conversas");
+  const travaCount = travaValues.length || topicValues.length;
+  const obstacleValues = split("atrapalha");
+  const iniciaPoints =
+    read("inicia") === "ele-nao-entra"
+      ? 14
+      : read("inicia") === "nao-sei-perguntar"
+        ? 10
+        : read("inicia") === "clima"
+          ? 12
+          : read("inicia") === "nao-senta"
+            ? 5
+            : 0;
+  const painPoints =
+    Math.min(travaCount, 5) * 8 +
+    iniciaPoints +
+    (read("celular") === "sempre"
+      ? 14
+      : read("celular") === "as-vezes"
+        ? 7
+        : 0) +
+    (read("conhece") === "sei-tudo"
+      ? 10
+      : read("conhece") === "as-vezes-nao"
+        ? 8
+        : 0) +
+    (read("sei-la-mapeado") === "sei-la"
+      ? 14
+      : read("sei-la-mapeado") === "nao-sei"
+        ? 10
+        : 0) +
+    (obstacleValues.includes("medo-resposta") ? 12 : 0) +
+    (obstacleValues.includes("medo") ? 10 : 0) +
+    (obstacleValues.includes("comecar") ? 8 : 0) +
+    (routinePoints >= 15 ? 8 : routinePoints >= 10 ? 4 : 0);
+  const score = Math.round(
+    40 + (Math.min(100, Math.max(0, painPoints)) / 100) * 52,
+  );
+  const meterPosition = Math.round(
+    Math.min(72, Math.max(30, 30 + ((score - 40) / 52) * 42)),
+  );
+  const label = meterPosition < 50 ? "Morno" : "Distante";
+  const routineValue =
+    routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
+  const spaceValue =
+    (read("clima") === "leve" || read("clima") === "normal") &&
+    (read("quando") === "hoje" || read("quando") === "dias")
+      ? "alto"
+      : "médio";
+  return { score, meterPosition, label, routineValue, spaceValue };
 }
