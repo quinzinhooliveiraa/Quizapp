@@ -1930,7 +1930,8 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s18-clima",
     kind: "question",
     key: "clima",
-    title: "Qual clima combina mais com vocês hoje?",
+    eyebrow: "ESCOLHA PELO FEELING",
+    title: "Qual clima combina mais com vocês?",
     format: "clima",
     emoji: true,
     options: [
