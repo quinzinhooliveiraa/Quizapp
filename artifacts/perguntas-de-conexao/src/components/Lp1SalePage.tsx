@@ -289,20 +289,6 @@ function OfferCard({
           <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
         )}
       </div>
-      <div className="lp1-sale-offer-notes">
-        <p className="lp1-sale-fear-note">
-          Sem pagamento neste passo — você revisa e confirma no próximo.
-        </p>
-        <p className="lp1-sale-objection">
-          <Check size={16} aria-hidden="true" /> Funciona mesmo se ele não
-          entrar de cara: você começa sozinha, pelas perguntas leves. Ele entra
-          quando a conversa já estiver boa.
-        </p>
-        <p className="lp1-sale-bonus">
-          <span aria-hidden="true">🎁</span> Leva 3 perguntas de amostra pra
-          usar hoje à noite.
-        </p>
-      </div>
     </>
   );
 }
