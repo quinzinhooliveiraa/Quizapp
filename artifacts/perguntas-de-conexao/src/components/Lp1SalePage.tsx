@@ -450,11 +450,6 @@ export function Lp1SalePage({
                 >
                   {formatRemaining(remainingSeconds)}
                 </b>
-                <span className="lp1-sale-sticky-price">
-                  {offerState?.full.display ?? "R$ 50"} →{" "}
-                  {offerState?.offer.display ?? "R$ 30"}
-                </span>
-                <span className="lp1-sale-sticky-discount">40% OFF</span>
               </div>
             ) : (
               <div className="lp1-sale-sticky-normal-copy">
@@ -465,7 +460,7 @@ export function Lp1SalePage({
           </div>
           {discountActive ? (
             <button type="button" onClick={scrollToOffer}>
-              PEGAR AGORA <ArrowRight size={15} aria-hidden="true" />
+              PEGAR -40% OFF <ArrowRight size={15} aria-hidden="true" />
             </button>
           ) : null}
         </div>
