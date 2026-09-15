@@ -60,9 +60,6 @@ const faqs = [
   ],
 ] as const;
 
-const realClientQuote =
-  "Bom dia! precisava vir te falar que fiz as perguntas com meu namorado e simplesmente não esperava que fosse render tanto. A gente já conversava bastante, mas teve umas perguntas que fizeram a gente parar e conversar de verdade sobre coisas que nunca tínhamos parado pra falar. No final a gente ficou muito mais tempo do que imaginava kkkkk. Muito bom mesmo, parabéns pelo trabalho.";
-
 function getVisitorKey(): string {
   try {
     const existing =
@@ -458,7 +455,12 @@ export function Lp1SalePage({
         </p>
         <h3>O problema nunca foi ele. Era a pergunta.</h3>
         <blockquote>
-          <p className="lp1-sale-epiphany-quote">“{realClientQuote}”</p>
+          <img
+            className="lp1-sale-epiphany-print"
+            src={testimonialImages[5]}
+            alt="Print real do depoimento de um cliente"
+            loading="lazy"
+          />
           <footer className="lp1-sale-epiphany-attribution">
             <span>Cliente real do Perguntas de Conexão</span>
             <span className="lp1-sale-epiphany-verified">
@@ -466,12 +468,6 @@ export function Lp1SalePage({
               VERIFICADO
             </span>
           </footer>
-          <img
-            className="lp1-sale-epiphany-print"
-            src={testimonialImages[5]}
-            alt="Print real do depoimento de um cliente"
-            loading="lazy"
-          />
         </blockquote>
       </section>
 

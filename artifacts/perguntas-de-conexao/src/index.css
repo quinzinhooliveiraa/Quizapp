@@ -1196,23 +1196,15 @@
 .lp1-sale-page .lp1-sale-epiphany blockquote {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 1rem;
   max-width: 38rem;
-  padding: 1.3rem 1.35rem 1.25rem 1.25rem;
+  padding: clamp(1.1rem, 3vw, 1.5rem);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-left: 3px solid #c9a55e;
   border-radius: 0.85rem;
   background: rgba(255, 255, 255, 0.035);
   box-shadow: 0 1rem 2.2rem rgba(10, 5, 14, 0.12);
-}
-
-.lp1-sale-page .lp1-sale-epiphany .lp1-sale-epiphany-quote {
-  max-width: none;
-  color: #f3e9e3;
-  font-family: var(--app-font-serif);
-  font-size: clamp(1.15rem, 2.7vw, 1.55rem);
-  font-weight: 400;
-  line-height: 1.4;
 }
 
 .lp1-sale-epiphany-attribution {
@@ -1238,11 +1230,12 @@
 
 .lp1-sale-epiphany-print {
   display: block;
-  width: min(100%, 17rem);
+  width: min(100%, 20rem);
   height: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.55rem;
+  border-radius: 0.7rem;
   background: #f8f8f8;
+  box-shadow: 0 0.65rem 1.4rem rgba(10, 5, 14, 0.16);
 }
 
 .lp1-sale-offer-section {
