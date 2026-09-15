@@ -1884,12 +1884,11 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
   {
     id: "s14-educacao",
     kind: "info",
-    eyebrow: "UMA IDEIA IMPORTANTE",
-    title: "Talvez o problema não seja vocês.",
+    title: "Uma conversa boa não começa necessariamente com “precisamos conversar”.",
     body: [
       "Uma conversa boa não depende de alguém ser “bom de conversa”. Às vezes vocês só precisam de uma pergunta que dê vontade de responder.",
     ],
-    cta: "Continuar",
+    cta: "Faz sentido",
   },
   {
     id: "s15-objecao",
@@ -2643,7 +2642,7 @@ function Lp1Quiz({
             onContinue={handleNext}
           />
         ) : current.kind === "info" || current.kind === "proof" ? (
-          <Lp1InfoScreen screen={current} onContinue={handleNext} />
+          <Lp1InfoScreen screen={current} answers={answers} onContinue={handleNext} />
         ) : (
           <section data-section-name={current.id}>
             {current.eyebrow ? <p className="lp1-quiz-eyebrow">{current.eyebrow}</p> : null}
@@ -3259,23 +3258,135 @@ function Lp1PhotoScreen({
   );
 }
 
+type Lp1EducationMetric = {
+  label: string;
+  value: number;
+};
+
+type Lp1EducationInsight = {
+  firstParagraph: string;
+  secondParagraph: string;
+  metrics: Lp1EducationMetric[];
+};
+
+function getLp1EducationInsight(answers: Lp1Answers): Lp1EducationInsight {
+  const read = (key: string) =>
+    (answers as Record<string, string | undefined>)[key] ?? "";
+  const split = (key: string) => read(key).split(",").filter(Boolean);
+  const obstacles = split("atrapalha");
+  const topics = split("conversas");
+  const feelings = split("sentir");
+  const mappedResponse = read("sei-la-mapeado");
+  const hasRoutine = obstacles.includes("rotina");
+  const hasDistraction =
+    obstacles.includes("celular") || read("celular") === "muito";
+  const hasHardStart =
+    obstacles.includes("comecar") ||
+    mappedResponse === "sei-la" ||
+    mappedResponse === "nao-sei";
+  const hasFear = obstacles.includes("medo");
+  const hasFatigue = obstacles.includes("cansaco");
+
+  let firstParagraph =
+    "Às vezes o problema não é falta de vontade. É falta de uma boa porta de entrada.";
+  if (hasRoutine && hasDistraction) {
+    firstParagraph =
+      "Pelo que você contou, a rotina e as distrações acabam ocupando o espaço que poderia ser de vocês.";
+  } else if (hasRoutine) {
+    firstParagraph =
+      "Pelo que você contou, o tempo está espremendo as conversas antes que elas realmente comecem.";
+  } else if (hasDistraction) {
+    firstParagraph =
+      "Pelo que você contou, as distrações interrompem a presença de vocês antes da conversa ganhar profundidade.";
+  } else if (hasHardStart) {
+    firstParagraph =
+      "Pelo que você contou, o mais difícil parece ser encontrar uma porta de entrada que não soe forçada.";
+  } else if (hasFear) {
+    firstParagraph =
+      "Pelo que você contou, existe vontade de falar, mas também cuidado para não deixar o clima pesado.";
+  } else if (hasFatigue) {
+    firstParagraph =
+      "Pelo que você contou, o cansaço tem chegado antes do espaço para uma conversa diferente.";
+  }
+
+  const feelingLabels: Record<string, string> = {
+    encontrou: "proximidade",
+    riu: "leveza",
+    entende: "segurança",
+    quimica: "desejo",
+    intimidade: "intimidade",
+    descobriu: "curiosidade",
+  };
+  const desiredFeelings = feelings
+    .map((feeling) => feelingLabels[feeling])
+    .filter(Boolean);
+  const desiredText =
+    desiredFeelings.length > 0
+      ? desiredFeelings.length === 1
+        ? desiredFeelings[0]
+        : `${desiredFeelings.slice(0, -1).join(", ")} e ${
+            desiredFeelings[desiredFeelings.length - 1]
+          }`
+      : "mais proximidade";
+  const secondParagraph = `Uma pergunta certa cria espaço para você buscar ${desiredText} sem precisar começar com uma conversa difícil.`;
+
+  const automaticScore = Math.min(
+    92,
+    Math.max(
+      34,
+      42 +
+        obstacles.length * 7 +
+        (mappedResponse === "superficial" ? 9 : 0) +
+        (mappedResponse === "muda-assunto" ? 7 : 0),
+    ),
+  );
+  const noveltyScore = Math.min(
+    94,
+    Math.max(
+      54,
+      58 +
+        topics.length * 5 +
+        feelings.length * 4 +
+        (read("desejo_noite") ? 6 : 0) -
+        obstacles.length * 2,
+    ),
+  );
+
+  return {
+    firstParagraph,
+    secondParagraph,
+    metrics: [
+      { label: "Conversa no automático", value: automaticScore },
+      { label: "Espaço para novidade", value: noveltyScore },
+    ],
+  };
+}
+
 function Lp1InfoScreen({
   screen,
+  answers,
   onContinue,
 }: {
   screen: Lp1NarrativeScreen;
+  answers: Lp1Answers;
   onContinue: () => void;
 }) {
   const isProofScreen = screen.id === "s08-prova";
+  const isEducationScreen = screen.id === "s14-educacao";
+  const educationInsight = isEducationScreen
+    ? getLp1EducationInsight(answers)
+    : null;
 
   return (
     <section
-      className={`lp1-info-screen ${isProofScreen ? "lp1-proof-screen" : ""}`}
+      className={`lp1-info-screen ${isProofScreen ? "lp1-proof-screen" : ""} ${
+        isEducationScreen ? "lp1-education-screen" : ""
+      }`}
       data-section-name={screen.id}
     >
       {isProofScreen ? (
         <div className="lp1-proof-stat">{screen.eyebrow}</div>
-      ) : screen.eyebrow ? (
+      ) : screen.eyebrow && !isEducationScreen ? (
         <p className="lp1-quiz-eyebrow">{screen.eyebrow}</p>
       ) : null}
       <h1 className="lp1-quiz-title">{screen.title}</h1>
@@ -3287,22 +3398,50 @@ function Lp1InfoScreen({
           />
         </div>
       ) : null}
-      {screen.body?.map((paragraph) => (
-        <p className="lp1-info-body" key={paragraph}>
-          {isProofScreen ? (
-            <>
-              Casais que reservam alguns minutos para conversar{" "}
-              <strong>relatam mais proximidade</strong> depois de usar as nossas
-              perguntas.
-            </>
-          ) : (
-            paragraph
-          )}
-        </p>
-      ))}
-      {screen.source ? <p className="lp1-info-source">Fonte: {screen.source}</p> : null}
+      {isEducationScreen && educationInsight ? (
+        <div className="lp1-education-panel">
+          <p className="lp1-education-panel-title">POR QUE ISSO IMPORTA?</p>
+          <p className="lp1-education-body">{educationInsight.firstParagraph}</p>
+          <p className="lp1-education-body">{educationInsight.secondParagraph}</p>
+          <div className="lp1-education-metrics">
+            {educationInsight.metrics.map((metric) => (
+              <div className="lp1-education-metric" key={metric.label}>
+                <div className="lp1-education-metric-heading">
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}%</strong>
+                </div>
+                <div className="lp1-education-meter" aria-hidden="true">
+                  <span
+                    style={
+                      { "--meter-value": `${metric.value}%` } as CSSProperties
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          {screen.body?.map((paragraph) => (
+            <p className="lp1-info-body" key={paragraph}>
+              {isProofScreen ? (
+                <>
+                  Casais que reservam alguns minutos para conversar{" "}
+                  <strong>relatam mais proximidade</strong> depois de usar as nossas
+                  perguntas.
+                </>
+              ) : (
+                paragraph
+              )}
+            </p>
+          ))}
+          {screen.source ? <p className="lp1-info-source">Fonte: {screen.source}</p> : null}
+        </>
+      )}
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-        {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+        {isEducationScreen ? "Faz sentido" : screen.cta}{" "}
+        <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
   );
