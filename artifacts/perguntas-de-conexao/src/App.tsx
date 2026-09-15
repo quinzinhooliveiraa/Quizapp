@@ -66,6 +66,7 @@ import {
   computeLp1Score,
 } from "@/lib/lp1-score";
 import { Lp3Testimonials } from "@/components/Lp3Testimonials";
+import { Lp1ComparisonSection } from "@/components/Lp1ComparisonSection";
 import { RecommendedQuestionCarousel } from "@/components/RecommendedQuestionCarousel";
 import {
   ArrowRight,
@@ -4448,57 +4449,7 @@ function LandingV2Quiz({
           </div>
         </div>
       </section>
-      <section
-        className="lp2-comparison-section"
-        data-section-name="comparativo"
-      >
-        <div className="lp-container">
-          <p className="lp-eyebrow lp-eyebrow-center">a diferença</p>
-          <h2 className="lp-h2">
-            O que muda <em>numa noite.</em>
-          </h2>
-          <div className="lp2-comparison">
-            <div className="lp2-comparison-column lp2-comparison-without">
-                <h3>Sem o baralho</h3>
-                <p>
-                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>"E aí, como foi o dia?" — "Normal."</span>
-                </p>
-                <p>
-                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>Cada um rolando o próprio celular</span>
-                </p>
-                <p>
-                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>Você tenta e vem o "sei lá"</span>
-                </p>
-                <p>
-                  <X className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>Amanhã é igual</span>
-                </p>
-            </div>
-            <div className="lp2-comparison-column lp2-comparison-with">
-                <h3>Com o baralho</h3>
-                <p>
-                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>Uma pergunta que ele nunca ouviu antes</span>
-                </p>
-                <p>
-                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>Um celular entre os dois — ou cada um no seu</span>
-                </p>
-                <p>
-                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>A pergunta já chega com o assunto pronto</span>
-                </p>
-                <p>
-                  <Check className="lp2-comparison-mark" size={22} aria-hidden="true" />
-                  <span>Amanhã tem mais 458</span>
-                </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Lp1ComparisonSection />
       <div className="lp-benefit-marquee" aria-label="Destaques do baralho">
         <div className="lp-benefit-marquee-track">
           <div className="lp-benefit-marquee-group">

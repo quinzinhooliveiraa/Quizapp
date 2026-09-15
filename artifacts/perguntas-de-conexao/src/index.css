@@ -1681,42 +1681,6 @@
   font-style: normal;
 }
 
-.lp1-sale-table-section h2 {
-  margin-bottom: 2rem;
-}
-
-.lp1-sale-comparison-table {
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.9rem;
-}
-
-.lp1-sale-comparison-table div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 4.5rem 4.5rem;
-  gap: 0.4rem;
-  align-items: center;
-  min-height: 3.3rem;
-  padding: 0.65rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  color: #b9adbf;
-  font-size: 0.8rem;
-}
-
-.lp1-sale-comparison-table div:last-child {
-  border-bottom: 0;
-}
-
-.lp1-sale-comparison-table b {
-  color: #7d7386;
-  font: 700 1rem/1 var(--app-font-mono);
-  text-align: center;
-}
-
-.lp1-sale-comparison-table b.is-ours {
-  color: #e8c98a;
-}
-
 .lp1-sale-proof {
   text-align: center;
 }
@@ -1951,12 +1915,6 @@
     grid-template-columns: 1fr;
     max-width: 19rem;
     margin: 0 auto;
-  }
-
-  .lp1-sale-comparison-table div {
-    grid-template-columns: minmax(0, 1fr) 3.2rem 3.2rem;
-    padding: 0.65rem 0.7rem;
-    font-size: 0.72rem;
   }
 
   .lp1-sale-steps {
@@ -8641,6 +8599,31 @@
 .lp-main:has(.lp2-hero) .lp2-comparison-with p {
   color: #f9f8fb;
 }
+.lp2-comparison-section {
+  padding: 5rem 1.4rem;
+  background: rgba(0, 0, 0, 0.08);
+}
+.lp2-comparison-section .lp2-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 960px;
+  margin: 2.2rem auto 0;
+  overflow: hidden;
+  border: 1px solid var(--lp1-line);
+  border-radius: 1rem;
+}
+.lp2-comparison-section .lp2-comparison-column {
+  padding: 1.6rem;
+}
+.lp2-comparison-section .lp2-comparison-column + .lp2-comparison-column {
+  border-left: 1px solid var(--lp1-line);
+}
+.lp2-comparison-section .lp2-comparison-column h3 {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
 .lp2-comparison-section .lp2-comparison-with {
   background: #f7f5ff;
   border-radius: 14px;
@@ -9041,6 +9024,9 @@
   .lp-main:has(.lp2-hero) .lp2-comparison-section {
     padding: 3.5rem 1.2rem;
   }
+  .lp2-comparison-section {
+    padding: 3.5rem 1.2rem;
+  }
   .lp1-mechanism-section {
     padding: 3.5rem 1.2rem;
   }
@@ -9059,6 +9045,13 @@
     padding: 1rem 0.85rem;
   }
   .lp-main:has(.lp2-hero) .lp2-comparison-column p {
+    min-height: 5.5rem;
+    font-size: 0.78rem;
+  }
+  .lp2-comparison-section .lp2-comparison-column {
+    padding: 1rem 0.85rem;
+  }
+  .lp2-comparison-section .lp2-comparison-column p {
     min-height: 5.5rem;
     font-size: 0.78rem;
   }

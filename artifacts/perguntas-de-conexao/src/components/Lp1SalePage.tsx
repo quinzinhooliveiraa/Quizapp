@@ -11,6 +11,7 @@ import { computeLp1DistanceResult } from "@/lib/lp1-score";
 import { testimonialImages } from "@/lib/testimonials";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
 import { Lp1MechanismSection } from "@/components/Lp1MechanismSection";
+import { Lp1ComparisonSection } from "@/components/Lp1ComparisonSection";
 import { getPricingRegionQuery, type Pricing } from "@/lib/pricing";
 import { themes as connectionThemes } from "@workspace/connection-content";
 
@@ -461,26 +462,7 @@ export function Lp1SalePage({
 
       <Lp1MechanismSection />
 
-      <section className="lp1-sale-section lp1-sale-table-section" data-section-name="sale-table">
-        <p className="lp1-sale-kicker">A DIFERENÇA NA PRÁTICA</p>
-        <h2>“Vamos conversar” × Perguntas de Conexão</h2>
-        <div className="lp1-sale-comparison-table">
-          {[
-            ["Nomeia o problema", "✓", "✓"],
-            ["Faz a pessoa se sentir ouvida", "✓", "✓"],
-            ["Já chega com o assunto pronto", "—", "✓"],
-            ["Funciona mesmo se só um teve a ideia", "—", "✓"],
-            ["Respondem juntos, cada um no seu celular", "—", "✓"],
-            ["Tem mais 458 para amanhã", "—", "✓"],
-          ].map(([label, generic, deck]) => (
-            <div key={label}>
-              <span>{label}</span>
-              <b>{generic}</b>
-              <b className="is-ours">{deck}</b>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Lp1ComparisonSection className="lp1-sale-comparison-section" />
 
       <section className="lp1-sale-section lp1-sale-benefits" data-section-name="sale-benefits">
         <p className="lp1-sale-kicker">O QUE TEM DENTRO</p>
