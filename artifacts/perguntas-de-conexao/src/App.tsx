@@ -5444,6 +5444,22 @@ function useCheckout({
     setCheckoutOpen(true);
   };
 
+  const closeCheckout = () => {
+    if (!checkoutOpen) return;
+
+    if (checkoutHistoryPushedRef.current) {
+      try {
+        window.history.back();
+        return;
+      } catch {
+        // Fall back to closing the modal if the browser blocks history updates.
+      }
+    }
+
+    checkoutHistoryPushedRef.current = false;
+    setCheckoutOpen(false);
+  };
+
   useEffect(() => {
     const handlePopState = () => {
       if (!checkoutOpenRef.current) return;
@@ -6154,6 +6170,7 @@ function useCheckout({
     handleCardPaymentSubmitted,
     startCheckout,
     restartCheckout,
+    closeCheckout,
   };
 }
 
@@ -6360,6 +6377,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     selectPaymentMethod,
     handleCardPaymentSubmitted,
     restartCheckout,
+    closeCheckout,
   } = checkout;
 
   const cardPaymentFormRef = useRef<CardPaymentFormHandle>(null);
@@ -6653,6 +6671,15 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       <div
         className={`checkout-modal ${checkoutState === "sending" || checkoutState === "confirming" || checkoutState === "card-sending" || checkoutState === "card-confirming" ? "checkout-modal-loading" : ""}`}
       >
+        <button
+          type="button"
+          className="modal-close"
+          onClick={closeCheckout}
+          aria-label="Fechar checkout"
+          data-testid="button-close-checkout"
+        >
+          <X size={18} />
+        </button>
         {checkoutOfferRemainingSeconds > 0 &&
         checkoutState !== "sending" &&
         checkoutState !== "confirming" &&
@@ -7982,7 +8009,7 @@ function TrackedQuiz({
   useEffect(() => {
     const handlePopState = () => {
       if (checkout.checkoutOpen) return;
-      navigate(quizReturnPath);
+      navigate(quizReturnPath, { replace: true });
     };
 
     window.addEventListener("popstate", handlePopState);
