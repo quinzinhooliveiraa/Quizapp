@@ -2891,6 +2891,40 @@
   color: #70656f;
 }
 
+/* Quiz typography system — keep every question on the same sans-serif family. */
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-title,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-eyebrow,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-subtitle,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-why,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-label,
+.lp1-quiz-screen:not(.is-offer) .lp1-multi-label-bar,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-expand,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-next,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-full-cta,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-counter,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-header-back,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-accumulation,
+.lp1-quiz-screen:not(.is-offer) .lp1-info-body,
+.lp1-quiz-screen:not(.is-offer) .lp1-info-source,
+.lp1-quiz-screen:not(.is-offer) .lp1-chart-copy,
+.lp1-quiz-screen:not(.is-offer) .lp1-scale-labels,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-slider-labels {
+  font-family: var(--app-font-sans);
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-title {
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-eyebrow {
+  font-weight: 700;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-counter {
+  font-weight: 700;
+}
+
 .support-step-label {
   margin: -0.45rem 0 0.9rem;
   color: rgba(255, 255, 255, 0.48);
