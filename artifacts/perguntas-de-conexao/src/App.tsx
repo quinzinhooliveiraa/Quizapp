@@ -3109,8 +3109,14 @@ function Lp1LoadingScreen({
       return;
     }
     setModalFeedback("");
-    setAffirmativeAnswers((current) => current + 1);
+    const nextAffirmativeAnswers = affirmativeAnswers + 1;
+    setAffirmativeAnswers(nextAffirmativeAnswers);
     setModalIndex(null);
+    if (nextAffirmativeAnswers >= LP1_LOADING_MODALS.length) {
+      completedRef.current = true;
+      setElapsed(LP1_LOADING_DURATION_MS);
+      onComplete();
+    }
   };
 
   const percentage = Math.round(
