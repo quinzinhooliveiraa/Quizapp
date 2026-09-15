@@ -465,6 +465,13 @@ export function Lp1SalePage({
           melhor lugar para começar. Depois, os outros baralhos ficam abertos
           para cada fase, clima e vontade.
         </p>
+        <figure className="lp1-sale-product-visual">
+          <img
+            src="/checkout-product-art.png"
+            alt="Cartas de Perguntas de Conexão sendo seguradas por duas mãos"
+            loading="lazy"
+          />
+        </figure>
         <p className="lp1-sale-deck-scroll-hint" aria-hidden="true">
           Deslize para ver todos os baralhos →
         </p>

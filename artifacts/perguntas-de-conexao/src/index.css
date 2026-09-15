@@ -28874,3 +28874,156 @@ blockquote em {
 .lp1-quiz-screen:not(.is-offer) .lp1-quiz-format-multi .lp1-multi-label-bar {
   display: none;
 }
+
+/* Offer page visual refinement: keep the gold reserved for the action. */
+.lp1-sale-page .lp1-sale-kicker,
+.lp1-sale-page .lp-eyebrow {
+  color: rgba(243, 233, 227, 0.68);
+  font: 500 0.68rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.lp1-sale-page .lp1-sale-gap-column.is-deck {
+  border-left-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.lp1-sale-page .lp1-sale-gap-column.is-deck .lp1-sale-gap-column-title {
+  color: #f3e9e3;
+}
+
+.lp1-sale-page .lp1-sale-gap-tag {
+  color: #a99dac;
+  font-family: var(--app-font-sans);
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.lp1-sale-page .lp1-sale-gap-column.is-now .lp1-sale-gap-tag {
+  color: #b999a5;
+}
+
+.lp1-sale-page .lp1-sale-gap-row > span {
+  font-family: var(--app-font-sans);
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.lp1-sale-page .lp1-sale-gap-column.is-deck .lp1-sale-gap-row b {
+  background: #c6b9c5;
+}
+
+.lp1-sale-page .lp1-sale-offer-card {
+  border-color: rgba(255, 255, 255, 0.13);
+  background: #211824;
+}
+
+.lp1-sale-page .lp1-sale-recommended {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cfc2ce;
+  font-family: var(--app-font-sans);
+  letter-spacing: 0.01em;
+}
+
+.lp1-sale-page .lp1-sale-offer-card.is-compact {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.lp1-sale-page .lp1-price-card .lp-cta-primary {
+  min-height: 3.7rem;
+  margin-top: 1rem;
+  box-shadow: 0 1rem 2.2rem rgba(232, 177, 58, 0.3);
+}
+
+.lp1-sale-page .lp1-price-card .lp-cta-primary:hover,
+.lp1-sale-page .lp1-price-card .lp-cta-primary:focus-visible {
+  box-shadow: 0 1.2rem 2.6rem rgba(232, 177, 58, 0.42);
+}
+
+.lp1-sale-page .lp1-sale-deck-card {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.lp1-sale-page .lp1-sale-deck-card.is-recommended {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.3);
+}
+
+.lp1-sale-page .lp1-sale-deck-badge {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #e6dce3;
+}
+
+.lp1-sale-page .lp1-sale-deck-copy small {
+  color: #b9adbf;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.lp1-sale-page .lp1-sale-deck-scroll-hint,
+.lp1-sale-page .lp1-sale-proof-anchor {
+  color: #b9adbf;
+}
+
+.lp1-sale-page .lp1-sale-close > svg {
+  color: #b9adbf;
+}
+
+.lp1-sale-page .lp1-mechanism-section .lp1-mechanism-copy {
+  display: grid;
+  gap: 1rem;
+  max-width: 560px;
+  margin: 1.35rem auto 0;
+}
+
+.lp1-sale-page .lp1-mechanism-section .lp2-section-lede {
+  max-width: none;
+  margin: 0;
+  color: #d0c4d0;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card:nth-child(1),
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card:nth-child(2),
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card:nth-child(3) {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card span,
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card:nth-child(1) span,
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card:nth-child(2) span,
+.lp1-sale-page .lp1-mechanism-section .lp2-intensity-card:nth-child(3) span {
+  color: #b9adbf;
+}
+
+.lp1-sale-page .lp1-sale-product-visual {
+  max-width: 560px;
+  margin: 2.25rem auto 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #211824;
+  box-shadow: 0 1.5rem 3rem rgba(10, 5, 14, 0.28);
+}
+
+.lp1-sale-page .lp1-sale-product-visual img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+@media (max-width: 680px) {
+  .lp1-sale-page .lp1-sale-product-visual {
+    margin-top: 1.8rem;
+    border-radius: 0.85rem;
+  }
+}
