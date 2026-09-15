@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
 import { computeLp1DistanceResult } from "@/lib/lp1-score";
-import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
+import { testimonialImages } from "@/lib/testimonials";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
 import { getPricingRegionQuery, type Pricing } from "@/lib/pricing";
 import { themes as connectionThemes } from "@workspace/connection-content";
@@ -59,9 +59,8 @@ const faqs = [
   ],
 ] as const;
 
-const realClientLine =
-  landingTestimonials[0]?.quote.split("\n\n")[2] ??
-  "Mas outras fizeram a gente conversar sobre coisas que nunca tínhamos compartilhado antes.";
+const realClientQuote =
+  "Bom dia! precisava vir te falar que fiz as perguntas com meu namorado e simplesmente não esperava que fosse render tanto. A gente já conversava bastante, mas teve umas perguntas que fizeram a gente parar e conversar de verdade sobre coisas que nunca tínhamos parado pra falar. No final a gente ficou muito mais tempo do que imaginava kkkkk. Muito bom mesmo, parabéns pelo trabalho.";
 
 function getVisitorKey(): string {
   try {
@@ -445,16 +444,19 @@ export function Lp1SalePage({
 
       <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
         <p className="lp1-sale-kicker">A VIRADA</p>
+        <p className="lp1-sale-epiphany-agitation">
+          Você escolheu a hora, criou coragem e disse “vamos conversar”. E veio
+          o “sei lá”.
+        </p>
         <h2>“Vamos conversar” não é pergunta — é cobrança.</h2>
         <p>
           Ela pede que o outro traga algo sem dizer o quê. Uma pergunta como
-          “qual foi uma coisa pequena que te fez sorrir hoje?” já chega com o
-          assunto pronto, sem exigir que ninguém descubra por onde começar.
+          “Você se arrepende de algo sobre a nossa história até aqui?” já chega
+          com o assunto pronto e mostra a profundidade.
         </p>
         <h3>O problema nunca foi ele. Era a pergunta.</h3>
         <blockquote>
-          “{realClientLine}”
-          <cite>— Lucas, 23 anos de casamento</cite>
+          “{realClientQuote}”
         </blockquote>
       </section>
 

@@ -1120,6 +1120,15 @@
   color: #b9adbf;
   font-size: 1rem;
   line-height: 1.75;
+  text-align: left;
+}
+
+.lp1-sale-epiphany-agitation {
+  margin-top: 1.65rem !important;
+  color: #f3e9e3 !important;
+  font-family: var(--app-font-serif);
+  font-size: clamp(1.15rem, 2.3vw, 1.55rem) !important;
+  line-height: 1.35 !important;
 }
 
 .lp1-sale-epiphany blockquote {
