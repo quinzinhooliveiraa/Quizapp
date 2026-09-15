@@ -3028,11 +3028,11 @@ const LP1_LOADING_MODALS = [
   },
   {
     question: "Dez minutos, uma carta, sem precisar marcar nada. Serve pra vocês?",
-    options: ["Serve", "Talvez"],
+    options: ["Sim", "Talvez"],
   },
   {
     question: "Topa começar por uma leve, não pela mais pesada?",
-    options: ["Topo", "Prefiro ir direto"],
+    options: ["Sim", "Prefiro ir direto"],
   },
 ] as const;
 
@@ -3041,6 +3041,9 @@ const LP1_LOADING_TESTIMONIALS = [
   testimonialImages[1],
   testimonialImages[5],
 ] as const;
+const LP1_LOADING_DURATION_MS = 15000;
+const LP1_LOADING_PHASE_DURATION_MS = 5000;
+const LP1_LOADING_MODAL_THRESHOLDS = [3500, 8000, 12500] as const;
 
 function Lp1LoadingScreen({
   sectionId,
@@ -3051,39 +3054,72 @@ function Lp1LoadingScreen({
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [modalIndex, setModalIndex] = useState<number | null>(null);
-  const [shownModals, setShownModals] = useState<number[]>([]);
+  const [affirmativeAnswers, setAffirmativeAnswers] = useState(0);
+  const [modalFeedback, setModalFeedback] = useState("");
   const completedRef = useRef(false);
 
   useEffect(() => {
+    if (
+      modalIndex !== null ||
+      affirmativeAnswers >= LP1_LOADING_MODALS.length ||
+      completedRef.current
+    ) {
+      return;
+    }
     const timer = window.setInterval(() => {
-      setElapsed((current) => Math.min(9000, current + 100));
+      setElapsed((current) =>
+        Math.min(LP1_LOADING_DURATION_MS, current + 100),
+      );
     }, 100);
     return () => window.clearInterval(timer);
-  }, [modalIndex]);
+  }, [affirmativeAnswers, modalIndex]);
 
   useEffect(() => {
-    if (modalIndex !== null) return;
-    const thresholds = [2070, 5130, 8010];
-    const nextModal = thresholds.findIndex(
-      (threshold, index) => elapsed >= threshold && !shownModals.includes(index),
-    );
-    if (nextModal >= 0) {
-      setShownModals((current) => [...current, nextModal]);
-      setModalIndex(nextModal);
+    if (
+      modalIndex !== null ||
+      affirmativeAnswers >= LP1_LOADING_MODALS.length
+    ) {
+      return;
     }
-  }, [elapsed, modalIndex, shownModals]);
+    const nextModal = affirmativeAnswers;
+    if (elapsed >= LP1_LOADING_MODAL_THRESHOLDS[nextModal]) {
+      setModalIndex(nextModal);
+      setModalFeedback("");
+    }
+  }, [affirmativeAnswers, elapsed, modalIndex]);
 
   useEffect(() => {
-    if (elapsed < 9000 || modalIndex !== null || completedRef.current) return;
+    if (
+      elapsed < LP1_LOADING_DURATION_MS ||
+      modalIndex !== null ||
+      affirmativeAnswers < LP1_LOADING_MODALS.length ||
+      completedRef.current
+    ) {
+      return;
+    }
     completedRef.current = true;
     onComplete();
-  }, [elapsed, modalIndex, onComplete]);
+  }, [affirmativeAnswers, elapsed, modalIndex, onComplete]);
 
-  const percentage = Math.round((elapsed / 9000) * 100);
+  const handleModalOption = (optionIndex: number) => {
+    if (optionIndex !== 0) {
+      setModalFeedback(
+        "Para continuar montando suas cartas, confirme que essa proposta faz sentido para vocês.",
+      );
+      return;
+    }
+    setModalFeedback("");
+    setAffirmativeAnswers((current) => current + 1);
+    setModalIndex(null);
+  };
+
+  const percentage = Math.round(
+    (elapsed / LP1_LOADING_DURATION_MS) * 100,
+  );
   const title =
-    elapsed < 3000
+    elapsed < LP1_LOADING_PHASE_DURATION_MS
       ? "Lendo as suas respostas…"
-      : elapsed < 6000
+      : elapsed < LP1_LOADING_PHASE_DURATION_MS * 2
         ? "Cruzando com os 15 baralhos…"
         : "Montando as 3 primeiras cartas…";
 
@@ -3097,8 +3133,19 @@ function Lp1LoadingScreen({
       <div className="lp1-loading-checklist">
         {["Lendo as suas respostas", "Cruzando com os 15 baralhos", "Montando as 3 primeiras cartas"].map(
           (label, index) => (
-            <p key={label} className={elapsed >= (index + 1) * 3000 ? "is-complete" : ""}>
-              <span aria-hidden="true">{elapsed >= (index + 1) * 3000 ? "✓" : "○"}</span>
+            <p
+              key={label}
+              className={
+                elapsed >= (index + 1) * LP1_LOADING_PHASE_DURATION_MS
+                  ? "is-complete"
+                  : ""
+              }
+            >
+              <span aria-hidden="true">
+                {elapsed >= (index + 1) * LP1_LOADING_PHASE_DURATION_MS
+                  ? "✓"
+                  : "○"}
+              </span>
               {label}
             </p>
           ),
@@ -3106,24 +3153,41 @@ function Lp1LoadingScreen({
       </div>
       <img
         className="lp1-loading-testimonial"
-        src={LP1_LOADING_TESTIMONIALS[Math.min(2, Math.floor(elapsed / 3000))]}
+        src={
+          LP1_LOADING_TESTIMONIALS[
+            Math.min(
+              2,
+              Math.floor(elapsed / LP1_LOADING_PHASE_DURATION_MS),
+            )
+          ]
+        }
         alt="Depoimento de cliente"
       />
       {modalIndex !== null ? (
         <div className="lp1-loading-modal-backdrop" role="presentation">
           <div className="lp1-loading-modal" role="dialog" aria-modal="true">
+            <p className="lp1-loading-modal-progress">
+              Pergunta {modalIndex + 1} de {LP1_LOADING_MODALS.length}
+            </p>
             <p>{LP1_LOADING_MODALS[modalIndex].question}</p>
             <div className="lp1-loading-modal-actions">
-              {LP1_LOADING_MODALS[modalIndex].options.map((option) => (
+              {LP1_LOADING_MODALS[modalIndex].options.map((option, optionIndex) => (
                 <button
                   type="button"
                   key={option}
-                  onClick={() => setModalIndex(null)}
+                  onClick={() =>
+                    handleModalOption(optionIndex)
+                  }
                 >
                   {option}
                 </button>
               ))}
             </div>
+            {modalFeedback ? (
+              <p className="lp1-loading-modal-feedback" role="status">
+                {modalFeedback}
+              </p>
+            ) : null}
           </div>
         </div>
       ) : null}

@@ -2144,9 +2144,9 @@
 .lp1-loading-testimonial {
   display: block;
   width: 100%;
-  max-height: 240px;
-  min-height: 150px;
-  object-fit: cover;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
   border-radius: 14px 14px 14px 4px;
 }
 
@@ -2176,6 +2176,14 @@
   text-align: center;
 }
 
+.lp1-loading-modal > .lp1-loading-modal-progress {
+  margin-bottom: 0.7rem;
+  color: #e8c98a;
+  font: 700 10px/1.2 var(--app-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .lp1-loading-modal-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2197,6 +2205,13 @@
   border-color: #e8c98a;
   background: #e8c98a;
   color: #2a1f14;
+}
+
+.lp1-loading-modal-feedback {
+  margin: 0.9rem 0 0;
+  color: #d9c9dc;
+  font: 400 11px/1.35 var(--app-font-sans);
+  text-align: center;
 }
 
 .lp1-result-meter-card {
