@@ -29027,3 +29027,86 @@ blockquote em {
     border-radius: 0.85rem;
   }
 }
+
+/* Diagnostic recap: one continuous cold-to-warm visual block. */
+.lp1-sale-page .lp1-sale-diagnostic-block {
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #2d2733;
+  box-shadow: 0 18px 42px rgba(10, 5, 14, 0.3);
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-now-after-image {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-card {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column {
+  padding-top: clamp(1.15rem, 3vw, 1.45rem);
+  padding-bottom: clamp(1.2rem, 3vw, 1.45rem);
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column.is-now {
+  background: linear-gradient(180deg, #393644 0%, #292733 100%);
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column.is-deck {
+  border-left-color: rgba(232, 184, 161, 0.28);
+  background: linear-gradient(180deg, #713d50 0%, #4f2d40 100%);
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-row {
+  min-height: 4.35rem;
+  align-content: start;
+  gap: 0.34rem;
+  margin-top: 0.9rem;
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-row > span {
+  color: #e7dde2;
+  font-size: 0.67rem;
+  font-weight: 600;
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-row strong {
+  color: #cfc4cf;
+  font-weight: 500;
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column.is-deck .lp1-sale-gap-row > span,
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column.is-deck .lp1-sale-gap-row strong {
+  color: #fff0e7;
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-row i {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column.is-now .lp1-sale-gap-row b {
+  background: #81758b;
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column.is-deck .lp1-sale-gap-row b {
+  background: linear-gradient(90deg, #a85269 0%, #d79b70 100%);
+}
+
+.lp1-sale-page .lp1-sale-diagnostic-block + .lp1-sale-absolution {
+  margin-top: 2rem;
+}
+
+@media (max-width: 680px) {
+  .lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lp1-sale-page .lp1-sale-diagnostic-block .lp1-sale-gap-column {
+    padding-right: 0.7rem;
+    padding-left: 0.7rem;
+  }
+}

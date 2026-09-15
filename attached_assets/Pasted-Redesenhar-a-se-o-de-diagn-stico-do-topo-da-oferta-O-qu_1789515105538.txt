@@ -1,0 +1,35 @@
+Redesenhar a seção de diagnóstico do topo da oferta ("O que o teste mostrou sobre
+vocês"), aplicando as regras de cor do livro (Kolenda). Manter a paleta da LP1.
+
+1. PEÇA ÚNICA: unir a imagem antes/depois e o card de baixo num único bloco
+   arredondado (mesma borda/sombra), sem emenda visível entre foto e tabela. A
+   imagem fica no topo do bloco; o card logo abaixo, colado.
+
+2. DEGRADÊ FRIO→QUENTE NO CARD: o fundo do card de baixo deve CONTINUAR o degradê da
+   imagem — lado esquerdo ("Agora") em tom FRIO e dessaturado (roxo-acinzentado),
+   lado direito ("Com as cartas") em tom QUENTE (vinho/âmbar). Divisor central sutil.
+   (Livro: passado = frio/dessaturado, futuro desejável = quente/vívido — Color p.19.)
+
+3. BARRAS:
+   - Lado "Agora": barras BAIXAS, em tom frio/apagado (mauve/roxo-acinzentado).
+   - Lado "Com as cartas": barras ALTAS, QUENTES E VÍVIDAS (gradiente âmbar/rosa-
+     dourado) — o lado bom tem que ser o mais quente da tela (Color p.16-17).
+   - NÃO deixar as barras do lado bom em cinza/branco apagado (hoje estão assim, e
+     cinza = distante/menos desejável).
+   - NÃO usar dourado puro nas barras — o dourado fica reservado ao botão de CTA.
+
+4. CONTRASTE E RITMO: subir o contraste dos rótulos (Conversa/Perguntas/Vontade de
+   puxar assunto) para ficarem legíveis; corpo em peso médio (não light). Espaçamento
+   CONSTANTE entre as 3 linhas de cada lado (mesmo respiro), para sair da cara de
+   "widget de dashboard".
+
+5. Manter os textos atuais: títulos "Agora" / "Com as cartas" em serif; sub-linha
+   "No modo colega de quarto" / "Conexão de verdade"; os 3 eixos com os mesmos
+   valores. E a frase de fecho "Não é falta de amor. Faltava a pergunta certa."
+   centralizada abaixo do bloco.
+
+6. As barras devem refletir o score real do medidor do quiz quando ele estiver ligado
+   (lado "Agora" sai do score; lado "Com as cartas" fica alto).
+
+Referência visual: card frio→quente, barras quentes no lado positivo, contraste maior
+nos rótulos. Manter a paleta da LP1 (vinho/dourado/fundo escuro).

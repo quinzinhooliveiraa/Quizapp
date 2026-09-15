@@ -208,26 +208,33 @@ function getPersonalizedCopy(answers: SaleAnswers) {
 }
 
 function getRecapBars(answers: SaleAnswers) {
-  const score = computeLp1DistanceResult(answers).score;
+  const distanceScore = computeLp1DistanceResult(answers).score;
+  const currentLevel = Math.max(
+    18,
+    Math.min(42, Math.round((100 - distanceScore) * 0.42)),
+  );
 
   return [
     {
       label: "Conversa",
-      today: score,
+      today: currentLevel,
+      distanceScore,
       deck: 92,
       todayCopy: "Virou só logística",
       afterCopy: "Sai do automático",
     },
     {
       label: "Perguntas",
-      today: score,
+      today: currentLevel,
+      distanceScore,
       deck: 96,
       todayCopy: "Morrem no “sei lá”",
       afterCopy: "Puxam resposta de verdade",
     },
     {
       label: "Vontade de puxar assunto",
-      today: score,
+      today: currentLevel,
+      distanceScore,
       deck: 98,
       todayCopy: "Some antes de sair",
       afterCopy: "Vem pronta, sem forçar",
@@ -390,44 +397,46 @@ export function Lp1SalePage({
             ? `${displayName}, é isso que o teste mostrou`
             : "O que o teste mostrou sobre vocês"}
         </p>
-        <figure className="lp1-sale-now-after-image">
-          <img
-            src="/hero/lp1-agora-depois.png"
-            alt="Um casal distante agora e conectado com as cartas"
-          />
-        </figure>
-        <div className="lp1-sale-gap-card">
-          <div className="lp1-sale-gap-column is-now">
-            <span className="lp1-sale-gap-column-title">Agora</span>
-            <span className="lp1-sale-gap-tag">No modo colega de quarto</span>
-            {recapBars.map((bar) => (
-              <div className="lp1-sale-gap-row" key={`today-${bar.label}`}>
-                <span>{bar.label}</span>
-                <strong>{bar.todayCopy}</strong>
-                <i>
-                  <b
-                    style={{ width: `${bar.today}%` }}
-                    aria-label={`${bar.label}: score ${bar.today} de 100`}
-                  />
-                </i>
-              </div>
-            ))}
-          </div>
-          <div className="lp1-sale-gap-column is-deck">
-            <span className="lp1-sale-gap-column-title">Com as cartas</span>
-            <span className="lp1-sale-gap-tag">Conexão de verdade</span>
-            {recapBars.map((bar) => (
-              <div className="lp1-sale-gap-row" key={`deck-${bar.label}`}>
-                <span>{bar.label}</span>
-                <strong>{bar.afterCopy}</strong>
-                <i>
-                  <b
-                    style={{ width: `${bar.deck}%` }}
-                    aria-label={`${bar.label}: potencial ${bar.deck} de 100`}
-                  />
-                </i>
-              </div>
-            ))}
+        <div className="lp1-sale-diagnostic-block">
+          <figure className="lp1-sale-now-after-image">
+            <img
+              src="/hero/lp1-agora-depois.png"
+              alt="Um casal distante agora e conectado com as cartas"
+            />
+          </figure>
+          <div className="lp1-sale-gap-card">
+            <div className="lp1-sale-gap-column is-now">
+              <span className="lp1-sale-gap-column-title">Agora</span>
+              <span className="lp1-sale-gap-tag">No modo colega de quarto</span>
+              {recapBars.map((bar) => (
+                <div className="lp1-sale-gap-row" key={`today-${bar.label}`}>
+                  <span>{bar.label}</span>
+                  <strong>{bar.todayCopy}</strong>
+                  <i>
+                    <b
+                      style={{ width: `${bar.today}%` }}
+                      aria-label={`${bar.label}: score de distância ${bar.distanceScore} de 100; nível atual ${bar.today} de 100`}
+                    />
+                  </i>
+                </div>
+              ))}
+            </div>
+            <div className="lp1-sale-gap-column is-deck">
+              <span className="lp1-sale-gap-column-title">Com as cartas</span>
+              <span className="lp1-sale-gap-tag">Conexão de verdade</span>
+              {recapBars.map((bar) => (
+                <div className="lp1-sale-gap-row" key={`deck-${bar.label}`}>
+                  <span>{bar.label}</span>
+                  <strong>{bar.afterCopy}</strong>
+                  <i>
+                    <b
+                      style={{ width: `${bar.deck}%` }}
+                      aria-label={`${bar.label}: potencial ${bar.deck} de 100`}
+                    />
+                  </i>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
         <p className="lp1-sale-absolution">
