@@ -1,0 +1,84 @@
+# 111 — Prompt Replit: deixar as mensagens de suporte legíveis
+
+Contexto: em 14/09/2026 chegou a sugestão "Não estou conseguindo entrar nesse link --- página: /login · sessão pendente: não · acesso salvo: não · tela: 392x729 · navegador: Mozilla/5.0…" de silvajuliaa2406@gmail.com. Impossível saber se ela comprou, com qual e-mail, ou se era convite. Este prompt fecha esse buraco. Fonte: cabeça do Claude, em cima do código do repo.
+
+---
+
+## O PROMPT (copiar inteiro pro Replit)
+
+```
+CONTEXTO DO PROBLEMA
+
+Quando alguém clica em "Preciso de ajuda" (/login) ou "Fala comigo" (checkout), abre o SupportDialog em artifacts/perguntas-de-conexao/src/App.tsx (~linha 4219). Ele manda pro POST /api/suggestions só { email, message }, com um rodapé técnico colado no fim do texto (página, sessão pendente, acesso salvo, tela, navegador).
+
+Resultado: as mensagens chegam no painel /admin (aba Feedback) como um bloco de texto corrido que não responde a única coisa que importa — essa pessoa comprou ou não, e com qual e-mail. Hoje eu preciso responder o cliente pedindo informação básica, o que gasta 1 dia de ida e volta.
+
+OBJETIVO
+
+Transformar o suporte em algo que chega auto-diagnosticado: eu abro o painel, bato o olho no card e já sei o que fazer.
+
+ESCOPO — 4 mudanças. Não mexer em mais nada (nada de LP, quiz, preço, checkout, onboarding).
+
+1) SUPPORT DIALOG (App.tsx, componente SupportDialog)
+
+Trocar o textarea solto por um fluxo de 3 passos curtos, mantendo exatamente o visual/classes atuais (app-modal, app-text-input, app-textarea, app-primary-button):
+
+Passo 1 — "O que aconteceu?" (obrigatório, botões grandes, um por linha, estado selecionado igual aos outros botões do app):
+  - "Comprei e não consigo entrar"        → topic: "sem_acesso"
+  - "Paguei e não recebi o e-mail"        → topic: "email_nao_chegou"
+  - "Recebi um convite e não abre"        → topic: "convite"
+  - "Problema no pagamento"               → topic: "pagamento"
+  - "Outro assunto / sugestão"            → topic: "outro"
+
+Passo 2 — campos que dependem do topic:
+  - sem_acesso / email_nao_chegou / pagamento: campo "E-mail que você usou no pagamento" (obrigatório, type=email, prefill com o e-mail já conhecido do localStorage, com a dica "pode ser diferente do seu e-mail de contato") + campo opcional "Como você pagou?" (Pix / Cartão / Não lembro).
+  - convite: campo "Cole aqui o link do convite que te mandaram" (opcional, texto).
+  - outro: nada.
+
+Passo 3 — textarea "Me conta com suas palavras" (opcional quando o topic não for "outro"; obrigatório se for "outro"). Placeholder: "O que apareceu na tela?".
+
+Botão "Enviar" desabilitado até o mínimo estar preenchido. Manter os estados sending/sent/error e a tela de confirmação que já existem.
+
+2) DIAGNÓSTICO AUTOMÁTICO ANTES DE ENVIAR
+
+No submit, antes do POST, o front chama GET /api/access/check-email?email=<e-mail da compra, ou o de contato se não houver> (endpoint já existe em artifacts/api-server/src/routes/connection.ts) e anexa o resultado ao envio. Se a chamada falhar, envia mesmo assim com accessStatus: "desconhecido" — o diagnóstico nunca pode bloquear o envio.
+
+3) BACKEND — POST /api/suggestions (artifacts/api-server/src/routes/feedback.ts) e schema (lib/db/src/schema/index.ts)
+
+Adicionar colunas em suggestionsTable (todas nullable, para não quebrar as linhas antigas):
+  topic text, purchase_email text, payment_method text, invite_link text,
+  access_status text  -- "tem_acesso" | "so_convite" | "sem_acesso" | "desconhecido"
+  page text, user_agent text, screen text,
+  status text default 'aberto'   -- "aberto" | "resolvido"
+
+O POST passa a aceitar esses campos (todos opcionais, com trim e limite de tamanho), continua aceitando o formato antigo { email, message } e continua gravando o message. Mandar `pnpm --filter @workspace/db run push` junto com a mudança.
+
+A notificação push (sendSupportNotification) passa a levar o topic e o access_status no texto, do tipo: "Suporte: comprei e não consigo entrar — sem acesso (julia@gmail.com)".
+
+4) PAINEL ADMIN
+
+4a) Aba Feedback (artifacts/perguntas-de-conexao/src/pages/Admin.tsx, FeedbackTab) — cada sugestão vira um card escaneável:
+  - Linha 1: o topic escrito por extenso, em destaque ("Comprei e não consigo entrar").
+  - Linha 2: badge do access_status com cor — verde "tem acesso", azul "só convite", vermelho "sem acesso", cinza "não verificado".
+  - Linha 3: e-mail de contato e, se for diferente, o e-mail da compra (marcado como "e-mail do pagamento").
+  - Depois: o texto que a pessoa escreveu.
+  - No fim, recolhido num <details> "detalhes técnicos": página, tela, navegador, data.
+  - Botões: "Copiar e-mail" e "Marcar como resolvido" (PATCH /api/admin/suggestions/:id alternando status; cards resolvidos ficam esmaecidos e vão pro fim da lista).
+
+4b) Aba Compradores — hoje GET /api/admin/buyers filtra accessGranted = true, então quem começou um checkout e não confirmou não aparece em lugar nenhum e eu fico cego. Passar a retornar também as sessões com accessGranted = false dos últimos 30 dias, num bloco separado "Pagamentos não confirmados", com nome, e-mail, data e método, e badge vermelha. Não misturar na contagem de compradores.
+
+REGRAS
+- Português do Brasil em toda a interface, tom informal, igual ao resto do app.
+- Nada de biblioteca nova. Reaproveitar as classes CSS que já existem.
+- Sugestões antigas (sem os campos novos) têm que continuar renderizando sem quebrar.
+- Rodar pnpm run typecheck no fim e me dizer o que mudou em cada arquivo.
+```
+
+---
+
+## Por que cada pedaço existe
+
+- O topic obrigatório resolve 80% da ambiguidade sem custar esforço pra quem escreve (é clique, não digitação).
+- O "e-mail do pagamento" separado do e-mail de contato é o campo que teria resolvido o caso da Julia em zero idas e voltas.
+- O check-email no submit faz a mensagem chegar já respondida: "sem acesso" me diz na hora que é caso de pagamento não confirmado ou e-mail trocado.
+- Os "Pagamentos não confirmados" no painel são o ponto cego atual: hoje quem inicia um Pix e não paga (ou paga e o webhook falha) existe no banco com accessGranted=false e não aparece em tela nenhuma.

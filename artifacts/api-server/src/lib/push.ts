@@ -10,6 +10,8 @@ type PurchaseNotification = {
 
 type SupportNotification = {
   email: string;
+  topic?: string;
+  accessStatus?: string;
 };
 
 function isConfigured() {
@@ -73,6 +75,8 @@ export async function sendPurchaseNotification({
 
 export async function sendSupportNotification({
   email,
+  topic,
+  accessStatus,
 }: SupportNotification): Promise<void> {
   if (!isConfigured()) {
     logger.warn("Push notification skipped: VAPID keys are not configured");
@@ -88,7 +92,7 @@ export async function sendSupportNotification({
   const subscriptions = await db.select().from(pushSubscriptionsTable);
   const payload = JSON.stringify({
     title: "Nova mensagem de suporte",
-    body: `Mensagem de ${email}`,
+    body: `${topic || "Suporte"} · ${email || "sem e-mail"} · acesso: ${accessStatus || "não verificado"}`,
   });
 
   await Promise.all(

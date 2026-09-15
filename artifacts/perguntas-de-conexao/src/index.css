@@ -503,6 +503,153 @@
   }
 }
 
+.support-step-label {
+  margin: -0.45rem 0 0.9rem;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.support-field-label {
+  display: block;
+  margin: 0.9rem 0 0.35rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.support-select {
+  appearance: none;
+  cursor: pointer;
+}
+.support-dialog-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+.support-dialog-actions .app-primary-button,
+.support-dialog-actions .app-secondary-button {
+  flex: 1;
+}
+.admin-pending-access-list {
+  display: grid;
+  gap: 0.6rem;
+}
+.admin-pending-access-card {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(232, 201, 138, 0.16);
+  border-radius: 0.85rem;
+  background: rgba(232, 201, 138, 0.045);
+}
+.admin-pending-access-card div {
+  display: grid;
+  gap: 0.22rem;
+}
+.admin-pending-access-card strong {
+  color: #f9f8fb;
+  font-size: 0.86rem;
+}
+.admin-pending-access-card span,
+.admin-pending-access-card time {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.76rem;
+}
+.admin-support-card {
+  display: grid;
+  gap: 0.75rem;
+}
+.admin-support-card.is-resolvido {
+  opacity: 0.68;
+}
+.admin-support-card-heading,
+.admin-support-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+.admin-support-card-heading strong {
+  color: #e8c98a;
+  font-size: 0.82rem;
+}
+.admin-access-badge,
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.28rem 0.5rem;
+  border-radius: 99px;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+.admin-access-badge.is-dono-com-acesso,
+.admin-access-badge.is-convidado-com-acesso {
+  color: #b9f0cf;
+  background: rgba(86, 204, 133, 0.12);
+}
+.admin-access-badge.is-sem-acesso-confirmado {
+  color: #f7d891;
+  background: rgba(240, 183, 64, 0.13);
+}
+.admin-status-badge.is-resolvido {
+  color: #b9f0cf;
+  background: rgba(86, 204, 133, 0.12);
+}
+.admin-status-badge.is-aberto {
+  color: #f7d891;
+  background: rgba(240, 183, 64, 0.13);
+}
+.admin-support-details {
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.73rem;
+}
+.admin-support-details summary {
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 600;
+}
+.admin-support-details dl {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.35rem 0.7rem;
+  margin: 0.7rem 0 0;
+}
+.admin-support-details dt {
+  color: rgba(255, 255, 255, 0.38);
+}
+.admin-support-details dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.admin-feedback-action {
+  border: 0;
+  color: #e8c98a;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.admin-feedback-action:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+@media (max-width: 620px) {
+  .admin-pending-access-card {
+    grid-template-columns: 1fr 1fr;
+  }
+  .admin-pending-access-card time {
+    grid-column: 1 / -1;
+  }
+}
+
 .post-purchase-shell {
   box-sizing: border-box;
   display: flex;

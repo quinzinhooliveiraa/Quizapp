@@ -13,6 +13,7 @@ export const sessionsTable = pgTable("sessions", {
   buyerEmail: text("buyer_email"),
   abacateChargeId: text("abacate_charge_id"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  paymentMethod: text("payment_method"),
   packageId: text("package_id").notNull(),
   packageName: text("package_name").notNull(),
   sourceLp: text("source_lp"),
@@ -87,6 +88,15 @@ export const suggestionsTable = pgTable("suggestions", {
   id: text("id").primaryKey(),
   email: text("email"),
   message: text("message").notNull(),
+  topic: text("topic"),
+  purchaseEmail: text("purchase_email"),
+  paymentMethod: text("payment_method"),
+  inviteLink: text("invite_link"),
+  accessStatus: text("access_status"),
+  page: text("page"),
+  userAgent: text("user_agent"),
+  screen: text("screen"),
+  status: text("status").default("aberto"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

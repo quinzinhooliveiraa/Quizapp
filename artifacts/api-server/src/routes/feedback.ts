@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import crypto from "node:crypto";
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, gte } from "drizzle-orm";
 import {
   db,
   reviewsTable,
@@ -30,10 +30,22 @@ export async function isAdminSession(sessionId?: string): Promise<boolean> {
 }
 
 router.post("/suggestions", async (req, res): Promise<void> => {
-  const body = req.body as { email?: string; message?: string };
+  const body = req.body as {
+    email?: string;
+    message?: string;
+    topic?: string;
+    purchaseEmail?: string;
+    paymentMethod?: string;
+    inviteLink?: string;
+    accessStatus?: string;
+    page?: string;
+    userAgent?: string;
+    screen?: string;
+  };
   const email = body.email?.trim().slice(0, 200) || "";
   const message = body.message?.trim().slice(0, 2000) || "";
-  if (!message) {
+  const topic = body.topic?.trim().slice(0, 80) || "";
+  if (!message && !["compra", "pagamento", "convite"].includes(topic)) {
     res.status(400).json({ error: "Escreva sua sugestão antes de enviar." });
     return;
   }
@@ -43,9 +55,22 @@ router.post("/suggestions", async (req, res): Promise<void> => {
       id: crypto.randomUUID(),
       email: email || null,
       message,
+      topic: topic || null,
+      purchaseEmail: body.purchaseEmail?.trim().toLowerCase().slice(0, 200) || null,
+      paymentMethod: body.paymentMethod?.trim().slice(0, 40) || null,
+      inviteLink: body.inviteLink?.trim().slice(0, 500) || null,
+      accessStatus: body.accessStatus?.trim().slice(0, 40) || null,
+      page: body.page?.trim().slice(0, 300) || null,
+      userAgent: body.userAgent?.trim().slice(0, 500) || null,
+      screen: body.screen?.trim().slice(0, 80) || null,
+      status: "aberto",
     })
     .returning();
-  void sendSupportNotification({ email }).catch((error) =>
+  void sendSupportNotification({
+    email,
+    topic: topic || "suporte",
+    accessStatus: body.accessStatus?.trim().slice(0, 40) || "não verificado",
+  }).catch((error) =>
     req.log.error({ err: error }, "Support push notification failed"),
   );
   res.status(201).json(suggestion);
@@ -64,6 +89,45 @@ router.get("/admin/suggestions", async (req, res): Promise<void> => {
     .orderBy(desc(suggestionsTable.createdAt))
     .limit(300);
   res.json({ suggestions: rows });
+});
+
+router.patch("/admin/suggestions/:suggestionId", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  const suggestionId = req.params.suggestionId?.trim();
+  if (!suggestionId) {
+    res.status(400).json({ error: "Feedback inválido" });
+    return;
+  }
+  const [current] = await db
+    .select({ status: suggestionsTable.status })
+    .from(suggestionsTable)
+    .where(eq(suggestionsTable.id, suggestionId))
+    .limit(1);
+  if (!current) {
+    res.status(404).json({ error: "Feedback não encontrado" });
+    return;
+  }
+  const requestedStatus =
+    req.body && typeof req.body.status === "string"
+      ? req.body.status.trim()
+      : undefined;
+  const nextStatus =
+    requestedStatus === "aberto" || requestedStatus === "resolvido"
+      ? requestedStatus
+      : current.status === "resolvido"
+        ? "aberto"
+        : "resolvido";
+  const [suggestion] = await db
+    .update(suggestionsTable)
+    .set({ status: nextStatus })
+    .where(eq(suggestionsTable.id, suggestionId))
+    .returning();
+  res.json(suggestion);
 });
 
 router.post("/reviews", async (req, res): Promise<void> => {
@@ -133,7 +197,8 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
     res.status(403).json({ error: "Acesso negado" });
     return;
   }
-  const [totalResult, accessResult] = await Promise.all([
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [totalResult, accessResult, pendingResult] = await Promise.all([
     db
       .select({ value: count() })
       .from(sessionsTable)
@@ -142,6 +207,24 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
       .select({ value: count() })
       .from(sessionsTable)
       .where(eq(sessionsTable.accessGranted, true)),
+    db
+      .select({
+        id: sessionsTable.id,
+        buyerName: sessionsTable.buyerName,
+        buyerEmail: sessionsTable.buyerEmail,
+        paymentMethod: sessionsTable.paymentMethod,
+        packageName: sessionsTable.packageName,
+        createdAt: sessionsTable.createdAt,
+      })
+      .from(sessionsTable)
+      .where(
+        and(
+          eq(sessionsTable.accessGranted, false),
+          gte(sessionsTable.createdAt, since),
+        ),
+      )
+      .orderBy(desc(sessionsTable.createdAt))
+      .limit(500),
   ]);
   const buyers = await db
     .select({
@@ -160,6 +243,7 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
     .limit(500);
   res.json({
     buyers,
+    pendingAccess: pendingResult,
     total: Number(totalResult[0]?.value || 0),
     totalWithAccess: Number(accessResult[0]?.value || 0),
   });

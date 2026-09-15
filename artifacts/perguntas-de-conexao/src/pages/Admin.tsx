@@ -37,6 +37,15 @@ type SuggestionEntry = {
   id: string;
   email: string | null;
   message: string;
+  topic: string | null;
+  purchaseEmail: string | null;
+  paymentMethod: string | null;
+  inviteLink: string | null;
+  accessStatus: string | null;
+  page: string | null;
+  userAgent: string | null;
+  screen: string | null;
+  status: string | null;
   createdAt: string;
 };
 type ReviewEntry = {
@@ -57,6 +66,14 @@ type BuyerEntry = {
   inviteLimit: number;
   createdAt: string;
 };
+type PendingAccessEntry = {
+  id: string;
+  buyerName: string;
+  buyerEmail: string | null;
+  paymentMethod: string | null;
+  packageName: string;
+  createdAt: string;
+};
 type RecordingLookup = {
   available?: boolean;
   url?: string;
@@ -75,6 +92,7 @@ type LpSession = {
 };
 type BuyersResponse = {
   buyers?: BuyerEntry[];
+  pendingAccess?: PendingAccessEntry[];
   total?: number;
   totalWithAccess?: number;
 };
@@ -327,6 +345,32 @@ function safeRemoveItem(key: string): void {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("pt-BR");
+}
+
+function feedbackTopicLabel(topic: string | null) {
+  const labels: Record<string, string> = {
+    compra: "Compra e acesso",
+    pagamento: "Pagamento",
+    convite: "Convite",
+    outro: "Outra dúvida",
+  };
+  return topic ? labels[topic] || topic : "Suporte";
+}
+
+function accessStatusLabel(status: string | null) {
+  const labels: Record<string, string> = {
+    "dono com acesso": "Dono com acesso",
+    "convidado com acesso": "Convidado com acesso",
+    "sem acesso confirmado": "Sem acesso",
+    "não verificado": "Não verificado",
+  };
+  return status ? labels[status] || status : "Não verificado";
+}
+
+function paymentMethodLabel(method: string | null) {
+  if (method === "pix") return "Pix";
+  if (method === "card") return "Cartão";
+  return method || "Não informado";
 }
 
 function formatDuration(seconds: number | null) {
@@ -1001,7 +1045,13 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
   );
 }
 
-function BuyersTab({ buyers }: { buyers: BuyerEntry[] }) {
+function BuyersTab({
+  buyers,
+  pendingAccess,
+}: {
+  buyers: BuyerEntry[];
+  pendingAccess: PendingAccessEntry[];
+}) {
   const [visibleBuyers, setVisibleBuyers] = useState(buyers);
   const [loadingBuyerId, setLoadingBuyerId] = useState<string | null>(null);
   const [deletingBuyerId, setDeletingBuyerId] = useState<string | null>(null);
@@ -1083,6 +1133,35 @@ function BuyersTab({ buyers }: { buyers: BuyerEntry[] }) {
   };
 
   return (
+    <>
+    <section className="admin-section" aria-labelledby="pending-access-title">
+      <div className="admin-section-heading">
+        <div>
+          <p className="admin-eyebrow">últimos 30 dias</p>
+          <h2 id="pending-access-title">Pagamentos sem acesso confirmado</h2>
+        </div>
+        <span className="admin-count">{pendingAccess.length}</span>
+      </div>
+      {pendingAccess.length === 0 ? (
+        <p className="admin-footnote">Nenhum pagamento aguardando confirmação.</p>
+      ) : (
+        <div className="admin-pending-access-list">
+          {pendingAccess.map((entry) => (
+            <article className="admin-pending-access-card" key={entry.id}>
+              <div>
+                <strong>{entry.buyerName || "Sem nome"}</strong>
+                <span>{entry.buyerEmail || "Sem e-mail"}</span>
+              </div>
+              <div>
+                <span>{entry.packageName}</span>
+                <span>{paymentMethodLabel(entry.paymentMethod)}</span>
+              </div>
+              <time dateTime={entry.createdAt}>{formatDate(entry.createdAt)}</time>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
     <section className="admin-section" aria-labelledby="buyers-title">
       <div className="admin-section-heading">
         <div>
@@ -1186,6 +1265,7 @@ function BuyersTab({ buyers }: { buyers: BuyerEntry[] }) {
         cadastro não estorna nem cancela o pagamento na Abacate Pay.
       </p>
     </section>
+    </>
   );
 }
 
@@ -1331,6 +1411,47 @@ function FeedbackTab({
   reviews: ReviewEntry[];
   suggestions: SuggestionEntry[];
 }) {
+  const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  useEffect(() => setVisibleSuggestions(suggestions), [suggestions]);
+
+  const toggleSuggestionStatus = async (entry: SuggestionEntry) => {
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId) return;
+    setUpdatingId(entry.id);
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/suggestions/${encodeURIComponent(entry.id)}?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: entry.status === "resolvido" ? "aberto" : "resolvido",
+          }),
+        },
+      );
+      if (!response.ok) throw new Error("update-feedback");
+      const updated = (await response.json()) as SuggestionEntry;
+      setVisibleSuggestions((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const copyEmail = async (entry: SuggestionEntry) => {
+    const value = entry.email || entry.purchaseEmail;
+    if (!value) return;
+    await navigator.clipboard.writeText(value);
+    setCopiedEmail(entry.id);
+    window.setTimeout(
+      () => setCopiedEmail((current) => (current === entry.id ? null : current)),
+      1800,
+    );
+  };
+
   return (
     <>
       <section className="admin-section" aria-labelledby="reviews-title">
@@ -1374,30 +1495,85 @@ function FeedbackTab({
         <div className="admin-section-heading">
           <div>
             <p className="admin-eyebrow">ideias</p>
-            <h2 id="suggestions-title">Sugestões</h2>
+            <h2 id="suggestions-title">Mensagens de suporte</h2>
           </div>
-          <span className="admin-count">{suggestions.length}</span>
+          <span className="admin-count">{visibleSuggestions.length}</span>
         </div>
-        {suggestions.length === 0 ? (
+        {visibleSuggestions.length === 0 ? (
           <p className="admin-footnote">Nenhuma sugestão ainda.</p>
         ) : (
           <div className="admin-feedback-list">
-            {suggestions.map((entry) => (
+            {visibleSuggestions.map((entry) => (
               <article
                 key={entry.id}
-                className="admin-feedback-card"
+                className={`admin-feedback-card admin-support-card is-${entry.status || "aberto"}`}
                 data-testid={`card-suggestion-${entry.id}`}
               >
                 <div className="admin-feedback-top">
-                  <span />
+                  <div className="admin-support-card-heading">
+                    <strong>{feedbackTopicLabel(entry.topic)}</strong>
+                    <span
+                      className={`admin-access-badge is-${(entry.accessStatus || "não verificado").replaceAll(" ", "-")}`}
+                    >
+                      {accessStatusLabel(entry.accessStatus)}
+                    </span>
+                  </div>
                   <span className="admin-feedback-date">
                     {formatDate(entry.createdAt)}
                   </span>
                 </div>
-                <p className="admin-feedback-message">{entry.message}</p>
-                <p className="admin-feedback-meta">
-                  {entry.email || "Sem email"}
+                <p className="admin-feedback-message">
+                  {entry.message || "Sem mensagem adicional."}
                 </p>
+                <p className="admin-feedback-meta">
+                  <span>
+                    {entry.email || "Sem e-mail"}
+                    {entry.purchaseEmail && entry.purchaseEmail !== entry.email
+                      ? ` · compra: ${entry.purchaseEmail}`
+                      : ""}
+                  </span>
+                  {(entry.email || entry.purchaseEmail) && (
+                    <button
+                      type="button"
+                      className="admin-copy-key-button"
+                      onClick={() => void copyEmail(entry)}
+                    >
+                      {copiedEmail === entry.id ? "Copiado" : "Copiar e-mail"}
+                    </button>
+                  )}
+                </p>
+                <details className="admin-support-details">
+                  <summary>Detalhes técnicos</summary>
+                  <dl>
+                    <dt>Pagamento</dt>
+                    <dd>{paymentMethodLabel(entry.paymentMethod)}</dd>
+                    <dt>Convite</dt>
+                    <dd>{entry.inviteLink || "Não informado"}</dd>
+                    <dt>Página</dt>
+                    <dd>{entry.page || "Não informado"}</dd>
+                    <dt>Tela</dt>
+                    <dd>{entry.screen || "Não informado"}</dd>
+                    <dt>Navegador</dt>
+                    <dd>{entry.userAgent || "Não informado"}</dd>
+                  </dl>
+                </details>
+                <div className="admin-support-card-footer">
+                  <span className={`admin-status-badge is-${entry.status || "aberto"}`}>
+                    {entry.status === "resolvido" ? "Resolvido" : "Aberto"}
+                  </span>
+                  <button
+                    type="button"
+                    className="admin-feedback-action"
+                    onClick={() => void toggleSuggestionStatus(entry)}
+                    disabled={updatingId === entry.id}
+                  >
+                    {updatingId === entry.id
+                      ? "Salvando…"
+                      : entry.status === "resolvido"
+                        ? "Reabrir"
+                        : "Marcar como resolvido"}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
@@ -2421,6 +2597,7 @@ export default function Admin() {
   const [suggestions, setSuggestions] = useState<SuggestionEntry[]>([]);
   const [reviews, setReviews] = useState<ReviewEntry[]>([]);
   const [buyers, setBuyers] = useState<BuyerEntry[]>([]);
+  const [pendingAccess, setPendingAccess] = useState<PendingAccessEntry[]>([]);
   const [buyerTotal, setBuyerTotal] = useState(0);
   const [analytics, setAnalytics] = useState<AnalyticsEntry[]>([]);
   const [lpSessions, setLpSessions] = useState<Record<string, LpSession[]>>({});
@@ -2476,12 +2653,14 @@ export default function Admin() {
         ])
           .then(([buyerData, suggestionData, reviewData]) => {
             setBuyers(buyerData.buyers || []);
+            setPendingAccess(buyerData.pendingAccess || []);
             setBuyerTotal(buyerData.total || 0);
             setSuggestions(suggestionData.suggestions || []);
             setReviews(reviewData.reviews || []);
           })
           .catch(() => {
             setBuyers([]);
+            setPendingAccess([]);
             setSuggestions([]);
             setReviews([]);
           });
@@ -2532,7 +2711,7 @@ export default function Admin() {
   }
 
   const tabContent = {
-    buyers: <BuyersTab buyers={buyers} />,
+    buyers: <BuyersTab buyers={buyers} pendingAccess={pendingAccess} />,
     pages: (
       <PagesTab
         origin={origin}

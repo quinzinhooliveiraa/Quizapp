@@ -4737,7 +4737,13 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
 function SupportDialog() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [topic, setTopic] = useState("");
+  const [purchaseEmail, setPurchaseEmail] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [inviteLink, setInviteLink] = useState("");
   const [message, setMessage] = useState("");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [accessStatus, setAccessStatus] = useState("não verificado");
   const [status, setStatus] = useState<
     "idle" | "sending" | "sent" | "error"
   >("idle");
@@ -4750,7 +4756,17 @@ function SupportDialog() {
           safeGetItem("conexao-login-email") ||
           "",
       );
+      setTopic("");
+      setPurchaseEmail(
+        safeGetItem("conexao-pending-buyer-email") ||
+          safeGetItem("conexao-login-email") ||
+          "",
+      );
+      setPaymentMethod("");
+      setInviteLink("");
       setMessage("");
+      setStep(1);
+      setAccessStatus("não verificado");
       setStatus("idle");
       setError("");
       setOpen(true);
@@ -4763,33 +4779,85 @@ function SupportDialog() {
 
   const sendSupportMessage = async () => {
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPurchaseEmail = purchaseEmail.trim().toLowerCase();
     const typedMessage = message.trim();
-    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    const emailForAccessCheck = normalizedPurchaseEmail || normalizedEmail;
+    if (
+      !normalizedEmail ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+    ) {
       setError("Digite um e-mail válido.");
       return;
     }
-    if (!typedMessage) {
+    if (!topic) {
+      setError("Escolha um assunto.");
+      setStep(1);
+      return;
+    }
+    if (
+      (topic === "compra" || topic === "pagamento") &&
+      (!normalizedPurchaseEmail ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPurchaseEmail))
+    ) {
+      setError("Digite o e-mail usado na compra.");
+      setStep(2);
+      return;
+    }
+    if (topic === "pagamento" && !paymentMethod) {
+      setError("Escolha o método de pagamento.");
+      setStep(2);
+      return;
+    }
+    if (topic === "convite" && !inviteLink.trim()) {
+      setError("Cole o link do convite.");
+      setStep(2);
+      return;
+    }
+    if (topic === "outro" && !typedMessage) {
       setError("Escreva uma mensagem antes de enviar.");
+      setStep(3);
       return;
     }
 
     setStatus("sending");
     setError("");
-    const contexto = [
-      `página: ${window.location.pathname}`,
-      `sessão pendente: ${safeGetItem("conexao-pending-session") || "não"}`,
-      `acesso salvo: ${safeGetItem("conexao-session") ? "sim" : "não"}`,
-      `tela: ${window.innerWidth}x${window.innerHeight}`,
-      `navegador: ${navigator.userAgent}`,
-    ].join(" · ");
 
     try {
+      const accessResponse = await fetch(
+        apiUrl(
+          `/api/access/check-email?email=${encodeURIComponent(emailForAccessCheck)}`,
+        ),
+      );
+      let resolvedAccessStatus = "não verificado";
+      if (accessResponse.ok) {
+        const access = (await accessResponse.json()) as {
+          exists?: boolean;
+          asOwner?: boolean;
+          asGuest?: boolean;
+        };
+        resolvedAccessStatus = access.asOwner
+          ? "dono com acesso"
+          : access.asGuest
+            ? "convidado com acesso"
+            : "sem acesso confirmado";
+        setAccessStatus(resolvedAccessStatus);
+      } else {
+        setAccessStatus("não verificado");
+      }
       const response = await fetch(apiUrl("/api/suggestions"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: normalizedEmail,
-          message: `${typedMessage}\n\n---\n${contexto}`,
+          message: typedMessage,
+          topic,
+          purchaseEmail: normalizedPurchaseEmail || undefined,
+          paymentMethod: paymentMethod || undefined,
+          inviteLink: inviteLink.trim() || undefined,
+          accessStatus: resolvedAccessStatus,
+          page: window.location.pathname,
+          userAgent: navigator.userAgent,
+          screen: `${window.innerWidth}x${window.innerHeight}`,
         }),
       });
       if (!response.ok) {
@@ -4807,7 +4875,36 @@ function SupportDialog() {
   const close = () => {
     setOpen(false);
     setStatus("idle");
+    setStep(1);
     setError("");
+  };
+
+  const nextStep = () => {
+    setError("");
+    if (step === 1 && !topic) {
+      setError("Escolha um assunto para continuar.");
+      return;
+    }
+    if (step === 2) {
+      const normalizedPurchaseEmail = purchaseEmail.trim().toLowerCase();
+      if (
+        (topic === "compra" || topic === "pagamento") &&
+        (!normalizedPurchaseEmail ||
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPurchaseEmail))
+      ) {
+        setError("Digite o e-mail usado na compra.");
+        return;
+      }
+      if (topic === "pagamento" && !paymentMethod) {
+        setError("Escolha o método de pagamento.");
+        return;
+      }
+      if (topic === "convite" && !inviteLink.trim()) {
+        setError("Cole o link do convite.");
+        return;
+      }
+    }
+    setStep((current) => (current < 3 ? ((current + 1) as 2 | 3) : current));
   };
 
   return (
@@ -4852,43 +4949,167 @@ function SupportDialog() {
           >
             <p className="modal-eyebrow">fale comigo</p>
             <h2 id="support-title">Precisa de ajuda?</h2>
-            <p>
-              Me conta o que aconteceu que eu te respondo no e-mail. Se for
-              problema com pagamento ou acesso, escreve o e-mail que você usou
-              na compra.
-            </p>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Seu e-mail"
-              className="app-text-input"
-              autoComplete="email"
-              data-testid="input-support-email"
-            />
-            <textarea
-              required
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder="O que aconteceu?"
-              className="app-textarea"
-              rows={5}
-              data-testid="input-support-message"
-            />
+            <p className="support-step-label">Passo {step} de 3</p>
+            {step === 1 && (
+              <>
+                <p>Escolha o assunto para eu te encaminhar mais rápido.</p>
+                <label className="support-field-label" htmlFor="support-topic">
+                  Assunto
+                </label>
+                <select
+                  id="support-topic"
+                  value={topic}
+                  onChange={(event) => setTopic(event.target.value)}
+                  className="app-text-input support-select"
+                  data-testid="select-support-topic"
+                >
+                  <option value="">Selecione uma opção</option>
+                  <option value="compra">Comprei e não consegui acessar</option>
+                  <option value="pagamento">Meu pagamento deu problema</option>
+                  <option value="convite">Meu convite não funciona</option>
+                  <option value="outro">Outra dúvida</option>
+                </select>
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <p>Agora me passe o dado que ajuda a localizar o caso.</p>
+                <label className="support-field-label" htmlFor="support-email">
+                  E-mail para resposta
+                </label>
+                <input
+                  id="support-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="Seu e-mail"
+                  className="app-text-input"
+                  autoComplete="email"
+                  data-testid="input-support-email"
+                />
+                {(topic === "compra" || topic === "pagamento") && (
+                  <>
+                    <label
+                      className="support-field-label"
+                      htmlFor="support-purchase-email"
+                    >
+                      E-mail usado na compra
+                    </label>
+                    <input
+                      id="support-purchase-email"
+                      type="email"
+                      value={purchaseEmail}
+                      onChange={(event) => setPurchaseEmail(event.target.value)}
+                      placeholder="E-mail da compra"
+                      className="app-text-input"
+                      autoComplete="email"
+                      data-testid="input-support-purchase-email"
+                    />
+                  </>
+                )}
+                {topic === "pagamento" && (
+                  <>
+                    <label
+                      className="support-field-label"
+                      htmlFor="support-payment-method"
+                    >
+                      Método de pagamento
+                    </label>
+                    <select
+                      id="support-payment-method"
+                      value={paymentMethod}
+                      onChange={(event) => setPaymentMethod(event.target.value)}
+                      className="app-text-input support-select"
+                      data-testid="select-support-payment-method"
+                    >
+                      <option value="">Selecione uma opção</option>
+                      <option value="pix">Pix</option>
+                      <option value="card">Cartão</option>
+                    </select>
+                  </>
+                )}
+                {topic === "convite" && (
+                  <>
+                    <label
+                      className="support-field-label"
+                      htmlFor="support-invite-link"
+                    >
+                      Link do convite
+                    </label>
+                    <input
+                      id="support-invite-link"
+                      type="url"
+                      value={inviteLink}
+                      onChange={(event) => setInviteLink(event.target.value)}
+                      placeholder="Cole o link que recebeu"
+                      className="app-text-input"
+                      data-testid="input-support-invite-link"
+                    />
+                  </>
+                )}
+              </>
+            )}
+            {step === 3 && (
+              <>
+                <p>
+                  {topic === "outro"
+                    ? "Escreva o que aconteceu para eu conseguir te ajudar."
+                    : "Se quiser, deixe mais detalhes. Os dados acima já ajudam a localizar seu caso."}
+                </p>
+                <label className="support-field-label" htmlFor="support-message">
+                  Mensagem {topic === "outro" ? "(obrigatória)" : "(opcional)"}
+                </label>
+                <textarea
+                  required={topic === "outro"}
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  placeholder="O que aconteceu?"
+                  className="app-textarea"
+                  rows={5}
+                  data-testid="input-support-message"
+                />
+              </>
+            )}
             {error && (
               <p className="checkout-error" role="alert">
                 {error}
               </p>
             )}
-            <button
-              type="submit"
-              disabled={status === "sending"}
-              className="app-primary-button"
-              data-testid="button-send-support"
-            >
-              {status === "sending" ? "Enviando…" : "Enviar"}
-            </button>
+            <div className="support-dialog-actions">
+              {step > 1 && (
+                <button
+                  type="button"
+                  className="app-secondary-button"
+                  onClick={() => {
+                    setError("");
+                    setStep((current) => (current - 1) as 1 | 2);
+                  }}
+                  data-testid="button-back-support"
+                >
+                  Voltar
+                </button>
+              )}
+              {step < 3 ? (
+                <button
+                  type="button"
+                  className="app-primary-button"
+                  onClick={nextStep}
+                  data-testid="button-next-support"
+                >
+                  Continuar
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={status === "sending"}
+                  className="app-primary-button"
+                  data-testid="button-send-support"
+                >
+                  {status === "sending" ? "Enviando…" : "Enviar"}
+                </button>
+              )}
+            </div>
             {status === "error" && (
               <button
                 type="button"
