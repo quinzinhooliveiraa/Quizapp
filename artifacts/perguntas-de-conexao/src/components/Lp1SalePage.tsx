@@ -9,24 +9,16 @@ import {
 import { apiBaseUrl } from "@/config";
 import { computeLp1Score } from "@/lib/lp1-score";
 import { testimonialImages } from "@/lib/testimonials";
+import { Lp1PriceCard } from "@/components/Lp1PriceCard";
+import { getPricingRegionQuery, type Pricing } from "@/lib/pricing";
 
 type SaleAnswers = Record<string, unknown>;
-
-type SalePrice = {
-  display: string;
-  unitNote: string;
-  amountCents: number;
-  symbol: string;
-  amount: string;
-  symbolPosition: "before" | "after";
-  pixAvailable: boolean;
-};
 
 type OfferState = {
   discountActive: boolean;
   deadline: string;
-  full: SalePrice;
-  offer: SalePrice;
+  full: Pricing;
+  offer: Pricing;
 };
 
 const API_URL = (path: string) => `${apiBaseUrl}${path}`;
@@ -256,18 +248,6 @@ function getRecapBars(answers: SaleAnswers) {
   ];
 }
 
-function PriceText({ price }: { price: SalePrice }) {
-  return price.symbolPosition === "before" ? (
-    <>
-      <span>{price.symbol}</span> {price.amount}
-    </>
-  ) : (
-    <>
-      {price.amount} <span>{price.symbol}</span>
-    </>
-  );
-}
-
 function OfferCard({
   offerState,
   remainingSeconds,
@@ -284,15 +264,6 @@ function OfferCard({
   compact?: boolean;
 }) {
   const active = Boolean(offerState?.discountActive && remainingSeconds > 0);
-  const price = active ? offerState?.offer : offerState?.full;
-  const discountPercent =
-    active && offerState?.full && offerState.offer
-      ? Math.round(
-          ((offerState.full.amountCents - offerState.offer.amountCents) /
-            offerState.full.amountCents) *
-            100,
-        )
-      : 0;
 
   return (
     <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
@@ -303,59 +274,22 @@ function OfferCard({
           Baralho recomendado: {recommendedDeck}
         </span>
       </div>
-      <div className="lp1-sale-urgency">
-        {active ? (
-          <>
-            Preço especial expira em{" "}
-            <strong>{formatRemaining(remainingSeconds)}</strong>
-          </>
-        ) : (
-          "Preço normal"
-        )}
-      </div>
-      <p className="lp1-sale-guarantee-line lp1-sale-guarantee-before">
-        7 dias de garantia. Não gostou, devolve.
-      </p>
-      <p className="lp1-sale-differential">
-        <strong>{offerState?.full.display ?? "R$ 50"}. Uma vez. Pra sempre.</strong>{" "}
-        Sem assinatura, sem renovação, sem “cancele antes de 4 semanas”. 7 dias
-        de garantia, sem condição e sem precisar provar nada.
-      </p>
-      {price ? (
-        <div className="lp1-sale-price">
-          {active ? (
-            <del>{offerState?.full.display}</del>
-          ) : null}
-          <strong>
-            <PriceText price={price} />
-          </strong>
-          {active && discountPercent > 0 ? (
-            <b className="lp1-sale-discount-badge">{discountPercent}% OFF</b>
-          ) : null}
-          <span>pagamento único</span>
-        </div>
+      {offerState ? (
+        <Lp1PriceCard
+          fullPricing={offerState.full}
+          offerPricing={offerState.offer}
+          discountActive={active}
+          onBuy={onCheckout}
+          testId={
+            compact
+              ? "button-lp1-sale-checkout-bottom"
+              : "button-lp1-sale-checkout"
+          }
+          className="lp1-sale-shared-price-card"
+        />
       ) : (
         <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
       )}
-      {price ? (
-        <p className="lp1-sale-unit-note">{price.unitNote}.</p>
-      ) : null}
-      <p className="lp1-sale-guarantee-line">
-        7 dias de garantia. Não gostou, devolve.
-      </p>
-      <button
-        type="button"
-        className="lp1-sale-primary-button"
-        onClick={onCheckout}
-        disabled={!price}
-        data-testid={compact ? "button-lp1-sale-checkout-bottom" : "button-lp1-sale-checkout"}
-      >
-        {compact ? "Quero começar" : "Quero o Perguntas de Conexão"}{" "}
-        <ArrowRight size={17} aria-hidden="true" />
-      </button>
-      <p className="lp1-sale-payment-note">
-        {price?.pixAvailable ? "Pix ou cartão" : "Cartão"} · acesso na hora
-      </p>
       <p className="lp1-sale-fear-note">
         Sem pagamento neste passo — você revisa e confirma no próximo.
       </p>
@@ -390,7 +324,7 @@ export function Lp1SalePage({
   useEffect(() => {
     let cancelled = false;
     setOfferError("");
-    fetch(API_URL("/api/offer/state"), {
+    fetch(API_URL(`/api/offer/state${getPricingRegionQuery()}`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ visitorKey }),

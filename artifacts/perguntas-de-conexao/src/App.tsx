@@ -124,6 +124,7 @@ import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { Lp1SalePage } from "@/components/Lp1SalePage";
+import { Lp1PriceCard } from "@/components/Lp1PriceCard";
 import { apiBaseUrl } from "@/config";
 import {
   getPricingRegionQuery,
@@ -2378,28 +2379,12 @@ function Lp1Offer({
           />
         </div>
 
-        <div className="lp1-offer-price-card">
-          <div className="lp1-offer-price">
-            <strong>{pricing.display}</strong>
-            <span>uma vez, pra sempre — sem mensalidade</span>
-          </div>
-          <p className="lp1-offer-guarantee">
-            459 perguntas. Uma por noite, dá mais de um ano de conversa.{" "}
-            <strong>7 dias de garantia: se não mexer com vocês, eu devolvo.</strong>{" "}
-            Você não arrisca nada.
-          </p>
-          <button
-            type="button"
-            className="lp1-offer-cta"
-            onClick={onFinish}
-            data-testid="button-lp1-offer-checkout"
-          >
-            Começar hoje à noite <ArrowRight size={18} aria-hidden="true" />
-          </button>
-          <p className="lp1-offer-payment-note">
-            Pix cai na hora · cartão em uma tela só
-          </p>
-        </div>
+        <Lp1PriceCard
+          fullPricing={pricing}
+          onBuy={onFinish}
+          testId="button-lp1-offer-checkout"
+          className="lp1-offer-price-card"
+        />
       </div>
     </section>
   );
@@ -4800,83 +4785,13 @@ function LandingV2Quiz({
                 </li>
               </ol>
             </div>
-            <div className="lp-price-card lp1-price-card lp1-price-benefits-card">
-              <p className="lp1-price-includes-title">O que vocês levam</p>
-              <ul className="lp-price-includes">
-                <li>
-                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
-                  <span>Baralhos para cada momento de vocês + o bônus do dia</span>
-                </li>
-                <li>
-                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
-                  <span>Baralho personalizado do dia, sempre novo</span>
-                </li>
-                <li>
-                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
-                  <span>
-                    Acesso pra <strong>2 pessoas</strong> (você + convite)
-                  </span>
-                </li>
-                <li>
-                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
-                  <span>Respondam juntos, mesmo à distância</span>
-                </li>
-                <li>
-                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
-                  <span>Novos baralhos incluídos, pra sempre</span>
-                </li>
-                <li>
-                  <Check className="lp1-price-check" size={16} aria-hidden="true" />
-                  <span>Sem mensalidade. Paga uma vez.</span>
-                </li>
-              </ul>
-              <div className="lp-price-main">
-                <p className="lp-price-time">
-                  Uma pergunta por noite, dá mais de um ano de conversa.
-                </p>
-                <p className="lp-price-value">
-                  459 perguntas por{" "}
-                  <span className="lp-price-figure" style={{ whiteSpace: "nowrap" }}>
-                    {pricing.symbolPosition === "before" ? (
-                      <>
-                        <span className="lp-price-symbol">{pricing.symbol}</span>{" "}
-                        {pricing.amount}
-                      </>
-                    ) : (
-                      <>
-                        {pricing.amount}{" "}
-                        <span className="lp-price-symbol">{pricing.symbol}</span>
-                      </>
-                    )}
-                  </span>
-                </p>
-                <p className="lp-price-once">
-                  {pricing.unitNote}
-                </p>
-              </div>
-              <button
-                onClick={onBuy}
-                className="lp-cta-primary lp-cta-full"
-                data-testid="button-price-cta-v2"
-              >
-                Começar hoje à noite <ArrowRight size={18} />
-              </button>
-              <p className="lp-price-freedom">
-                🔒 7 dias de garantia. Você decide.
-              </p>
-              <div className="lp-guarantee">
-                <div className="lp-guarantee-seal" aria-hidden="true">
-                  <ShieldCheck size={28} strokeWidth={1.8} />
-                </div>
-                <div>
-                  <strong>Garantia incondicional de 7 dias.</strong>
-                  <p>
-                    Se não fizer sentido pra vocês, devolvemos 100%. Sem drama,
-                    sem perguntas.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <Lp1PriceCard
+              fullPricing={pricing}
+              onBuy={onBuy}
+              testId="button-price-cta-v2"
+              showBenefits
+              className="lp1-price-benefits-card"
+            />
           </div>
         </div>
       </section>
@@ -5495,7 +5410,7 @@ function useCheckout({
 
     const visitorKey = getOrCreateVisitorKey();
     let cancelled = false;
-    fetch(apiUrl("/api/offer/state"), {
+    fetch(apiUrl(`/api/offer/state${getPricingRegionQuery()}`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ visitorKey }),

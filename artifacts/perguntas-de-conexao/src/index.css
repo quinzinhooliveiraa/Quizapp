@@ -28361,7 +28361,20 @@ blockquote em {
   margin: 0 !important;
 }
 .lp1-price-card .lp-price-figure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
   white-space: nowrap;
+}
+.lp1-price-card .lp-price-old {
+  display: inline;
+  color: #8e8296;
+  font-size: 0.88em;
+  font-weight: 400;
+}
+.lp1-price-card .lp-price-discount {
+  color: #8b3553;
+  font-weight: 700;
 }
 .lp1-price-card .lp-price-symbol {
   opacity: 0.5;
@@ -28383,6 +28396,43 @@ blockquote em {
   text-align: center;
   font-size: 0.78rem;
   color: #6f6580;
+}
+.lp1-price-card .lp-price-payment {
+  margin: 0.7rem 0 0;
+  color: #6f6580;
+  font-size: 0.78rem;
+  text-align: center;
+}
+.lp1-price-card .lp-guarantee {
+  background: rgba(112, 81, 115, 0.05);
+  border-color: rgba(112, 81, 115, 0.12);
+}
+.lp1-price-card .lp-guarantee strong {
+  color: #2a2130;
+}
+.lp1-price-card .lp-guarantee p {
+  color: #715c71;
+}
+.lp1-price-card .lp-guarantee-seal {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  color: #7a5cc4;
+}
+.lp1-sale-shared-price-card {
+  max-width: none;
+  margin-top: 1.4rem;
+  background: #fbf9ff;
+  border-color: rgba(120, 90, 200, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+  text-align: left;
+}
+.lp1-sale-shared-price-card .lp-price-payment,
+.lp1-sale-shared-price-card .lp-price-freedom {
+  text-align: center;
 }
 .lp-quiz-route-marker {
   display: none;
