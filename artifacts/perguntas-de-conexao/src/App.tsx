@@ -1923,7 +1923,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s17-cartas",
     kind: "trial-card",
     key: "cartas",
-    eyebrow: "ESCOLHA PELA PERGUNTA",
+    eyebrow: "ESCOLHA PELO FEELING",
     title: "Qual pergunta combina mais com vocês?",
   },
   {
