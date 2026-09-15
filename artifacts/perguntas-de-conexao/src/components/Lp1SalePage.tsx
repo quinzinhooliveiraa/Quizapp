@@ -1,0 +1,475 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Heart,
+  ShieldCheck,
+} from "lucide-react";
+import { apiBaseUrl } from "@/config";
+import { testimonialImages } from "@/lib/testimonials";
+
+type SaleAnswers = Record<string, unknown>;
+
+type SalePrice = {
+  display: string;
+  unitNote: string;
+  amountCents: number;
+  symbol: string;
+  amount: string;
+  symbolPosition: "before" | "after";
+};
+
+type OfferState = {
+  discountActive: boolean;
+  deadline: string;
+  full: SalePrice;
+  offer: SalePrice;
+};
+
+const API_URL = (path: string) => `${apiBaseUrl}${path}`;
+
+const benefitCards = [
+  ["459 perguntas", "em 15 baralhos, do leve ao profundo.", "459"],
+  ["Do leve ao profundo", "A profundidade chega no ritmo de vocês.", "→"],
+  ["Acesso pra 2 pessoas", "Você + convite, sem pagar de novo.", "2"],
+  ["Cada um no seu celular", "Respondem juntos, mesmo à distância.", "↗"],
+  ["Novos baralhos", "Incluídos para sempre, sem mensalidade.", "∞"],
+  ["7 dias de garantia", "Se não fizer sentido, devolvemos.", "✓"],
+] as const;
+
+const faqs = [
+  [
+    "E se eu é que não souber responder?",
+    'Tudo bem. A primeira pergunta de cada baralho é leve, e "nunca pensei nisso" já é um começo.',
+  ],
+  [
+    "Isso substitui terapia?",
+    "Não. É uma forma simples de criar espaço para vocês conversarem sozinhos, sem prometer substituir acompanhamento.",
+  ],
+  [
+    "Precisa instalar aplicativo?",
+    "Não. Funciona no navegador do celular ou do computador.",
+  ],
+  [
+    "E se meu parceiro achar estranho?",
+    "Por isso o jogo começa leve. Vocês escolhem o clima e ninguém precisa responder nada antes de querer.",
+  ],
+  [
+    "Funciona à distância?",
+    "Sim. Cada um entra no seu celular e vocês respondem à mesma pergunta, juntos.",
+  ],
+  [
+    "É vitalício mesmo?",
+    "Sim. Você paga uma vez e continua com acesso aos baralhos novos.",
+  ],
+  [
+    "Como recebo depois de pagar?",
+    "Na hora. Assim que o pagamento for confirmado, o acesso abre automaticamente.",
+  ],
+] as const;
+
+function getVisitorKey(): string {
+  try {
+    const existing =
+      sessionStorage.getItem("pdc-visitor-key") ||
+      localStorage.getItem("pdc-visitor-key");
+    if (existing) return existing;
+  } catch {
+    // The request can still be retried if browser storage is unavailable.
+  }
+
+  const generated =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  try {
+    sessionStorage.setItem("pdc-visitor-key", generated);
+    localStorage.setItem("pdc-visitor-key", generated);
+  } catch {
+    // Keep the in-memory key for this page visit.
+  }
+  return generated;
+}
+
+function formatRemaining(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getClimateName(answers: SaleAnswers): string {
+  const climate = String(answers.clima ?? "");
+  const names: Record<string, string> = {
+    leve: "Modo Leve",
+    conexao: "Porto Seguro",
+    profundo: "Livro Aberto",
+    divertido: "Modo Leve",
+    intimo: "Faísca",
+    distancia: "Mesmo Longe",
+  };
+  return names[climate] ?? "Porto Seguro";
+}
+
+function getRecapBars(answers: SaleAnswers) {
+  const conversation = String(answers.conversas ?? "");
+  const discovery = String(answers.encontrar ?? "");
+  const desire = String(answers.desejo_noite ?? "");
+  return [
+    {
+      label: "Conversa",
+      today: conversation.includes("nos-dois") ? 48 : 30,
+      deck: conversation.includes("pessoal") ? 94 : 86,
+    },
+    {
+      label: "Descoberta",
+      today: discovery.includes("novas") ? 54 : 34,
+      deck: String(answers["nunca-perguntou"] ?? "").includes("nao")
+        ? 84
+        : 96,
+    },
+    {
+      label: "Vontade de começar",
+      today: answers.urgencia === "hoje" ? 76 : 45,
+      deck: desire ? 98 : 90,
+    },
+  ];
+}
+
+function PriceText({ price }: { price: SalePrice }) {
+  return price.symbolPosition === "before" ? (
+    <>
+      <span>{price.symbol}</span> {price.amount}
+    </>
+  ) : (
+    <>
+      {price.amount} <span>{price.symbol}</span>
+    </>
+  );
+}
+
+function OfferCard({
+  offerState,
+  remainingSeconds,
+  recommendedDeck,
+  onCheckout,
+  compact = false,
+}: {
+  offerState: OfferState | null;
+  remainingSeconds: number;
+  recommendedDeck: string;
+  onCheckout: () => void;
+  compact?: boolean;
+}) {
+  const active = Boolean(offerState?.discountActive && remainingSeconds > 0);
+  const price = active ? offerState?.offer : offerState?.full;
+
+  return (
+    <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
+      <div className="lp1-sale-offer-heading">
+        <p className="lp1-sale-kicker">ACESSO VITALÍCIO</p>
+        <h2>Seu acesso está pronto.</h2>
+        <span className="lp1-sale-recommended">
+          Baralho recomendado: {recommendedDeck}
+        </span>
+      </div>
+      <div className="lp1-sale-urgency">
+        {active ? (
+          <>
+            Preço especial expira em{" "}
+            <strong>{formatRemaining(remainingSeconds)}</strong>
+          </>
+        ) : (
+          "Preço normal"
+        )}
+      </div>
+      {price ? (
+        <div className="lp1-sale-price">
+          {active ? (
+            <del>{offerState?.full.display}</del>
+          ) : null}
+          <strong>
+            <PriceText price={price} />
+          </strong>
+          <span>pagamento único</span>
+        </div>
+      ) : (
+        <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
+      )}
+      {price ? (
+        <p className="lp1-sale-unit-note">
+          {price.unitNote} — “7 centavos por noite.”
+        </p>
+      ) : null}
+      {!compact ? (
+        <p className="lp1-sale-license">
+          Não é gasto. É a diferença entre mais uma noite no automático e uma
+          conversa que vocês vão lembrar.
+        </p>
+      ) : null}
+      <button
+        type="button"
+        className="lp1-sale-primary-button"
+        onClick={onCheckout}
+        disabled={!price}
+        data-testid={compact ? "button-lp1-sale-checkout-bottom" : "button-lp1-sale-checkout"}
+      >
+        {compact ? "Quero começar" : "Quero o Perguntas de Conexão"}{" "}
+        <ArrowRight size={17} aria-hidden="true" />
+      </button>
+      <p className="lp1-sale-payment-note">
+        Pix ou cartão · acesso na hora · 7 dias de garantia.
+      </p>
+    </div>
+  );
+}
+
+export function Lp1SalePage({
+  answers,
+  onCheckout,
+}: {
+  answers: SaleAnswers;
+  onCheckout: () => void;
+}) {
+  const [offerState, setOfferState] = useState<OfferState | null>(null);
+  const [offerError, setOfferError] = useState("");
+  const [now, setNow] = useState(() => Date.now());
+  const visitorKey = useMemo(() => getVisitorKey(), []);
+  const recapBars = useMemo(() => getRecapBars(answers), [answers]);
+  const recommendedDeck = getClimateName(answers);
+
+  useEffect(() => {
+    let cancelled = false;
+    setOfferError("");
+    fetch(API_URL("/api/offer/state"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visitorKey }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("offer state request failed");
+        return (await response.json()) as OfferState;
+      })
+      .then((state) => {
+        if (!cancelled) setOfferState(state);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setOfferError("Não foi possível carregar a oferta. Tente novamente.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [visitorKey]);
+
+  useEffect(() => {
+    if (!offerState?.deadline) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [offerState?.deadline]);
+
+  const remainingSeconds = offerState
+    ? Math.max(0, Math.ceil((new Date(offerState.deadline).getTime() - now) / 1000))
+    : 0;
+  const discountActive = Boolean(
+    offerState?.discountActive && remainingSeconds > 0,
+  );
+
+  const scrollToOffer = () => {
+    document.getElementById("lp1-sale-offer")?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+  };
+
+  return (
+    <main className="lp1-sale-page">
+      <div className="lp1-sale-sticky-bar">
+        <span>
+          {discountActive ? (
+            <>
+              Desconto aplicado — termina em{" "}
+              <strong>{formatRemaining(remainingSeconds)}</strong>
+            </>
+          ) : (
+            "Preço normal"
+          )}
+        </span>
+        <button type="button" onClick={scrollToOffer}>
+          Quero começar <ArrowRight size={15} aria-hidden="true" />
+        </button>
+      </div>
+
+      <section className="lp1-sale-section lp1-sale-recap" data-section-name="sale-recap">
+        <p className="lp1-sale-kicker">O RETRATO DE AGORA</p>
+        <h1>O que muda quando a pergunta já vem pronta.</h1>
+        <div className="lp1-sale-recap-grid">
+          <div className="lp1-sale-meter-column">
+            <h2>Hoje</h2>
+            {recapBars.map((bar) => (
+              <div className="lp1-sale-meter-row" key={`today-${bar.label}`}>
+                <span>{bar.label}</span>
+                <i>
+                  <b style={{ width: `${bar.today}%` }} />
+                </i>
+              </div>
+            ))}
+          </div>
+          <div className="lp1-sale-meter-column is-deck">
+            <h2>Com o baralho</h2>
+            {recapBars.map((bar) => (
+              <div className="lp1-sale-meter-row" key={`deck-${bar.label}`}>
+                <span>{bar.label}</span>
+                <i>
+                  <b style={{ width: `${bar.deck}%` }} />
+                </i>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
+        <p className="lp1-sale-kicker">A DIFERENÇA</p>
+        <h2>Talvez vocês não precisem conversar mais.</h2>
+        <h3>Precisem conversar melhor.</h3>
+        <p>
+          “Como foi seu dia?” é fácil responder “normal”. Mas quando alguém
+          pergunta algo que você nunca pensou em responder, a conversa muda. É
+          isso que o Perguntas de Conexão faz.
+        </p>
+      </section>
+
+      <section
+        className="lp1-sale-section lp1-sale-offer-section"
+        id="lp1-sale-offer"
+        data-section-name="sale-offer"
+      >
+        <OfferCard
+          offerState={offerState}
+          remainingSeconds={remainingSeconds}
+          recommendedDeck={recommendedDeck}
+          onCheckout={onCheckout}
+        />
+        {offerError ? (
+          <button
+            type="button"
+            className="lp1-sale-retry"
+            onClick={() => window.location.reload()}
+          >
+            {offerError} Tentar novamente
+          </button>
+        ) : null}
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-benefits" data-section-name="sale-benefits">
+        <p className="lp1-sale-kicker">O QUE VOCÊS LEVAM</p>
+        <h2>Uma pergunta boa para cada noite que vocês quiserem lembrar.</h2>
+        <div className="lp1-sale-benefit-grid">
+          {benefitCards.map(([title, body, mark], index) => (
+            <article className="lp1-sale-benefit-card" key={title}>
+              <div className={`lp1-sale-benefit-image is-${index + 1}`}>
+                <span>{mark}</span>
+              </div>
+              <div>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-mechanism" data-section-name="sale-mechanism">
+        <p className="lp1-sale-kicker">O MECANISMO</p>
+        <h2>“Mas e se ele responder sei lá?”</h2>
+        <p>É justamente por isso que o jogo não começa nas perguntas pesadas.</p>
+        <div className="lp1-sale-steps">
+          <span><b>🌿</b> LEVE</span>
+          <i>→</i>
+          <span><b>❤️</b> HONESTA</span>
+          <i>→</i>
+          <span><b>🧠</b> PROFUNDA</span>
+        </div>
+        <p>
+          Não tem pontuação, nem vencedor, nem obrigação de responder. E
+          funciona à distância — cada um no seu celular, na mesma pergunta.
+        </p>
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-table-section" data-section-name="sale-table">
+        <p className="lp1-sale-kicker">A DIFERENÇA NA PRÁTICA</p>
+        <h2>“Vamos conversar” × Perguntas de Conexão</h2>
+        <div className="lp1-sale-comparison-table">
+          {[
+            ["Nomeia o problema", "✓", "✓"],
+            ["Faz a pessoa se sentir ouvida", "✓", "✓"],
+            ["Já chega com o assunto pronto", "—", "✓"],
+            ["Funciona mesmo se só um teve a ideia", "—", "✓"],
+            ["Respondem juntos, cada um no seu celular", "—", "✓"],
+            ["Tem mais 458 para amanhã", "—", "✓"],
+          ].map(([label, generic, deck]) => (
+            <div key={label}>
+              <span>{label}</span>
+              <b>{generic}</b>
+              <b className="is-ours">{deck}</b>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-proof" data-section-name="sale-proof">
+        <p className="lp1-sale-kicker">O QUE ACONTECE DEPOIS</p>
+        <h2>Uma pergunta pode mudar a noite.</h2>
+        <div className="lp1-sale-testimonial-grid">
+          {[testimonialImages[0], testimonialImages[1], testimonialImages[5]].map((image) => (
+            <img key={image} src={image} alt="Depoimento real de cliente" />
+          ))}
+        </div>
+        <p className="lp1-sale-disclaimer">
+          Depoimentos reais de clientes. Fotos e nomes preservados com autorização.
+        </p>
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-faq" data-section-name="sale-faq">
+        <p className="lp1-sale-kicker">PEOPLE OFTEN ASK</p>
+        <h2>Antes de começar.</h2>
+        <div>
+          {faqs.map(([question, answer]) => (
+            <details key={question}>
+              <summary>
+                {question}
+                <ChevronDown size={17} aria-hidden="true" />
+              </summary>
+              <p>{answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp1-sale-section lp1-sale-close" data-section-name="sale-close">
+        <Heart size={20} aria-hidden="true" />
+        <h2>
+          Vocês não precisam esperar a relação ficar distante.
+        </h2>
+        <p>
+          Não precisam de viagem, nem jantar caro, nem terapia. Às vezes só
+          precisam de uma pergunta que nenhum dos dois pensou em fazer.
+        </p>
+        <OfferCard
+          offerState={offerState}
+          remainingSeconds={remainingSeconds}
+          recommendedDeck={recommendedDeck}
+          onCheckout={onCheckout}
+          compact
+        />
+        <p className="lp1-sale-last-line">
+          Hoje à noite pode ser só mais uma noite. Ou a noite em que vocês
+          começaram uma conversa diferente. ❤️
+        </p>
+      </section>
+    </main>
+  );
+}

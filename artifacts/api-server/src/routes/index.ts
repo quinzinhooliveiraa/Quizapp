@@ -9,6 +9,7 @@ import feedbackRouter from "./feedback";
 import trackingRouter from "./tracking";
 import experimentsRouter from "./experiments";
 import pricingRouter from "./pricing";
+import offersRouter from "./offers";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(feedbackRouter);
 router.use(trackingRouter);
 router.use(experimentsRouter);
 router.use(pricingRouter);
+router.use(offersRouter);
 
 export default router;

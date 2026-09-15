@@ -123,6 +123,7 @@ const Privacidade = lazy(() => import("@/pages/Privacidade"));
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
+import { Lp1SalePage } from "@/components/Lp1SalePage";
 import { apiBaseUrl } from "@/config";
 import {
   getPricingRegionQuery,
@@ -2513,9 +2514,9 @@ function Lp1Quiz({
 
       <div className="lp1-quiz-content">
         {showOffer ? (
-          <Lp1Offer
-            answers={answers as LandingQuizAnswers}
-            onFinish={onFinish}
+          <Lp1SalePage
+            answers={answers as unknown as Record<string, unknown>}
+            onCheckout={onFinish}
           />
         ) : step === LP1_SCREENS.length ? (
           <Lp1Diagnosis

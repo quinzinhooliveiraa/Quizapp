@@ -519,6 +519,584 @@
   }
 }
 
+/* LP1 continuous post-result sale */
+.lp1-sale-page {
+  min-height: 100vh;
+  overflow: hidden;
+  background: #16111c;
+  color: #f4efe9;
+  font-family: var(--app-font-sans);
+}
+
+.lp1-sale-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem clamp(1rem, 5vw, 4rem);
+  background: linear-gradient(90deg, #5b1230, #7a2e46);
+  color: #f4efe9;
+  font: 400 0.72rem/1.2 var(--app-font-mono);
+}
+
+.lp1-sale-sticky-bar strong {
+  color: #e8c98a;
+  font-weight: 700;
+}
+
+.lp1-sale-sticky-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgba(232, 201, 138, 0.7);
+  border-radius: 999px;
+  background: transparent;
+  color: #f8e8c4;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lp1-sale-section {
+  width: min(100% - 2rem, 980px);
+  margin: 0 auto;
+  padding: clamp(4.5rem, 10vw, 8rem) 0;
+}
+
+.lp1-sale-kicker {
+  margin: 0 0 1.1rem;
+  color: #c9a55e;
+  font: 400 0.68rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.lp1-sale-section h1,
+.lp1-sale-section h2,
+.lp1-sale-section h3 {
+  font-family: var(--app-font-serif);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.lp1-sale-section h1 {
+  max-width: 42rem;
+  margin: 0;
+  font-size: clamp(2.5rem, 7vw, 5.2rem);
+  line-height: 0.98;
+}
+
+.lp1-sale-section h2 {
+  max-width: 42rem;
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.8rem);
+  line-height: 1;
+}
+
+.lp1-sale-recap {
+  padding-top: clamp(5rem, 12vw, 9rem);
+}
+
+.lp1-sale-recap-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.lp1-sale-meter-column {
+  padding: 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.lp1-sale-meter-column.is-deck {
+  border-color: rgba(232, 201, 138, 0.35);
+  background: rgba(232, 201, 138, 0.055);
+}
+
+.lp1-sale-meter-column h2 {
+  margin-bottom: 1.5rem;
+  color: #c9a55e;
+  font-size: 1.45rem;
+}
+
+.lp1-sale-meter-row {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.1rem;
+}
+
+.lp1-sale-meter-row span {
+  color: #b9adbf;
+  font-size: 0.78rem;
+}
+
+.lp1-sale-meter-row i {
+  display: block;
+  height: 0.4rem;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #332a3e;
+}
+
+.lp1-sale-meter-row b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #7a2e46;
+}
+
+.lp1-sale-meter-column.is-deck .lp1-sale-meter-row b {
+  background: #e8c98a;
+}
+
+.lp1-sale-epiphany {
+  max-width: 760px;
+  text-align: center;
+}
+
+.lp1-sale-epiphany h2 {
+  margin: 0 auto;
+}
+
+.lp1-sale-epiphany h3 {
+  margin: 0.25rem 0 2rem;
+  color: #e8c98a;
+  font-size: clamp(2rem, 5vw, 3.8rem);
+}
+
+.lp1-sale-epiphany p {
+  max-width: 38rem;
+  margin: 0 auto;
+  color: #b9adbf;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.lp1-sale-offer-section {
+  padding-top: 2rem;
+  padding-bottom: 5rem;
+}
+
+.lp1-sale-offer-card {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(1.4rem, 4vw, 3rem);
+  border: 1px solid #e8c98a;
+  border-radius: 1.25rem;
+  background: #211827;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.lp1-sale-offer-heading h2 {
+  margin: 0;
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+}
+
+.lp1-sale-recommended {
+  display: inline-flex;
+  margin-top: 1rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(232, 201, 138, 0.12);
+  color: #e8c98a;
+  font: 400 0.68rem/1.2 var(--app-font-mono);
+}
+
+.lp1-sale-urgency {
+  margin: 2rem -1rem 1.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(90deg, #7a2e46, #5b1230);
+  color: #f7d8c5;
+  font: 400 0.78rem/1.2 var(--app-font-mono);
+}
+
+.lp1-sale-urgency strong {
+  color: #e8c98a;
+}
+
+.lp1-sale-price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lp1-sale-price del {
+  color: #8f8293;
+  font: 400 1rem/1 var(--app-font-mono);
+}
+
+.lp1-sale-price strong {
+  color: #f9ebc9;
+  font: 400 clamp(3.2rem, 10vw, 5.6rem)/0.95 var(--app-font-serif);
+  letter-spacing: -0.05em;
+}
+
+.lp1-sale-price strong span {
+  font-size: 0.52em;
+}
+
+.lp1-sale-price > span,
+.lp1-sale-price-loading {
+  color: #a79bad;
+  font-size: 0.78rem;
+}
+
+.lp1-sale-unit-note,
+.lp1-sale-license,
+.lp1-sale-payment-note {
+  color: #b9adbf;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.lp1-sale-license {
+  max-width: 30rem;
+  margin: 1.5rem auto;
+  color: #e8d7bc;
+  font-family: var(--app-font-serif);
+  font-size: 1.1rem;
+}
+
+.lp1-sale-primary-button {
+  display: inline-flex;
+  min-height: 3.3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #e8c98a;
+  color: #2a1f14;
+  font: 700 0.95rem/1.2 var(--app-font-sans);
+  cursor: pointer;
+}
+
+.lp1-sale-primary-button:hover:not(:disabled),
+.lp1-sale-primary-button:focus-visible {
+  background: #f3dca5;
+  transform: translateY(-1px);
+}
+
+.lp1-sale-primary-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.lp1-sale-retry {
+  display: block;
+  margin: 1rem auto 0;
+  border: 0;
+  background: transparent;
+  color: #e8c98a;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lp1-sale-benefits h2 {
+  max-width: 38rem;
+}
+
+.lp1-sale-benefit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 2.5rem;
+}
+
+.lp1-sale-benefit-card {
+  display: grid;
+  grid-template-columns: 4.4rem 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.lp1-sale-benefit-image {
+  display: grid;
+  min-height: 4.4rem;
+  place-items: center;
+  border-radius: 0.6rem;
+  background:
+    linear-gradient(145deg, rgba(232, 201, 138, 0.05), rgba(122, 46, 70, 0.8)),
+    url("/theme-backgrounds/porto-seguro.jpg") center / cover;
+  color: #f9ebc9;
+  font: 400 1.3rem/1 var(--app-font-serif);
+}
+
+.lp1-sale-benefit-image.is-2 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/livro-aberto.jpg"); }
+.lp1-sale-benefit-image.is-3 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/voce-nao-sabia.jpg"); }
+.lp1-sale-benefit-image.is-4 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/mesmo-longe.jpg"); }
+.lp1-sale-benefit-image.is-5 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/viagens.jpg"); }
+.lp1-sale-benefit-image.is-6 { background-image: linear-gradient(145deg, rgba(232, 201, 138, 0.04), rgba(122, 46, 70, 0.82)), url("/theme-backgrounds/perto-de-novo.jpg"); }
+
+.lp1-sale-benefit-card h3 {
+  margin: 0 0 0.25rem;
+  color: #f4efe9;
+  font: 600 0.92rem/1.25 var(--app-font-sans);
+}
+
+.lp1-sale-benefit-card p {
+  margin: 0;
+  color: #9d92a6;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.lp1-sale-mechanism {
+  max-width: 760px;
+  text-align: center;
+}
+
+.lp1-sale-mechanism > p:not(.lp1-sale-kicker) {
+  max-width: 36rem;
+  margin: 1.2rem auto 0;
+  color: #b9adbf;
+  line-height: 1.7;
+}
+
+.lp1-sale-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.45rem, 3vw, 1.5rem);
+  margin: 2.5rem auto;
+  color: #e8c98a;
+  font: 400 0.72rem/1.2 var(--app-font-mono);
+}
+
+.lp1-sale-steps span {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.lp1-sale-steps b {
+  font-size: 1.7rem;
+}
+
+.lp1-sale-steps i {
+  color: #7d7386;
+  font-size: 1.5rem;
+  font-style: normal;
+}
+
+.lp1-sale-table-section h2 {
+  margin-bottom: 2rem;
+}
+
+.lp1-sale-comparison-table {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+}
+
+.lp1-sale-comparison-table div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5rem 4.5rem;
+  gap: 0.4rem;
+  align-items: center;
+  min-height: 3.3rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  color: #b9adbf;
+  font-size: 0.8rem;
+}
+
+.lp1-sale-comparison-table div:last-child {
+  border-bottom: 0;
+}
+
+.lp1-sale-comparison-table b {
+  color: #7d7386;
+  font: 700 1rem/1 var(--app-font-mono);
+  text-align: center;
+}
+
+.lp1-sale-comparison-table b.is-ours {
+  color: #e8c98a;
+}
+
+.lp1-sale-proof {
+  text-align: center;
+}
+
+.lp1-sale-proof h2 {
+  margin: 0 auto 2.25rem;
+}
+
+.lp1-sale-testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.lp1-sale-testimonial-grid img {
+  width: 100%;
+  border-radius: 14px 14px 14px 4px;
+  background: #211827;
+}
+
+.lp1-sale-disclaimer {
+  margin: 1rem auto 0;
+  color: #7d7386;
+  font-size: 0.656rem;
+}
+
+.lp1-sale-faq h2 {
+  margin-bottom: 2rem;
+}
+
+.lp1-sale-faq details {
+  border-top: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.lp1-sale-faq details:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.lp1-sale-faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 0;
+  color: #f4efe9;
+  font-size: 0.9rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.lp1-sale-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.lp1-sale-faq details[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.lp1-sale-faq details p {
+  max-width: 42rem;
+  margin: -0.35rem 0 1.15rem;
+  color: #9d92a6;
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+
+.lp1-sale-close {
+  max-width: 760px;
+  padding-bottom: 7rem;
+  text-align: center;
+}
+
+.lp1-sale-close > svg {
+  margin-bottom: 1.25rem;
+  color: #e8c98a;
+}
+
+.lp1-sale-close > h2 {
+  margin: 0 auto;
+}
+
+.lp1-sale-close > p:not(.lp1-sale-last-line) {
+  max-width: 38rem;
+  margin: 1.25rem auto 2.5rem;
+  color: #b9adbf;
+  line-height: 1.7;
+}
+
+.lp1-sale-offer-card.is-compact {
+  max-width: 520px;
+  margin-top: 2rem;
+  padding: 1.35rem;
+  border-color: rgba(232, 201, 138, 0.55);
+}
+
+.lp1-sale-offer-card.is-compact .lp1-sale-offer-heading h2 {
+  font-size: 1.6rem;
+}
+
+.lp1-sale-offer-card.is-compact .lp1-sale-recommended,
+.lp1-sale-offer-card.is-compact .lp1-sale-unit-note,
+.lp1-sale-offer-card.is-compact .lp1-sale-payment-note {
+  font-size: 0.68rem;
+}
+
+.lp1-sale-offer-card.is-compact .lp1-sale-urgency {
+  margin-top: 1.25rem;
+}
+
+.lp1-sale-last-line {
+  margin-top: 2rem !important;
+  color: #8f8293 !important;
+  font-family: var(--app-font-serif);
+  font-size: 1.05rem;
+}
+
+@media (max-width: 680px) {
+  .lp1-sale-sticky-bar {
+    min-height: 3rem;
+    font-size: 0.62rem;
+  }
+
+  .lp1-sale-sticky-bar button {
+    padding: 0.42rem 0.6rem;
+    font-size: 0.62rem;
+  }
+
+  .lp1-sale-section {
+    width: min(100% - 2rem, 980px);
+    padding: 4.5rem 0;
+  }
+
+  .lp1-sale-recap-grid,
+  .lp1-sale-benefit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lp1-sale-recap-grid {
+    margin-top: 2rem;
+  }
+
+  .lp1-sale-meter-column {
+    padding: 1.1rem;
+  }
+
+  .lp1-sale-testimonial-grid {
+    grid-template-columns: 1fr;
+    max-width: 19rem;
+    margin: 0 auto;
+  }
+
+  .lp1-sale-comparison-table div {
+    grid-template-columns: minmax(0, 1fr) 3.2rem 3.2rem;
+    padding: 0.65rem 0.7rem;
+    font-size: 0.72rem;
+  }
+
+  .lp1-sale-steps {
+    gap: 0.35rem;
+  }
+
+  .lp1-sale-steps i {
+    font-size: 1.05rem;
+  }
+}
+
 /* LP1 replacement screens 1–10 */
 .lp1-quiz-screen:not(.is-offer) {
   position: relative;

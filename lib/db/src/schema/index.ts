@@ -133,6 +133,15 @@ export const pageEventsTable = pgTable("page_events", {
     .defaultNow(),
 });
 
+export const offerWindowsTable = pgTable("offer_windows", {
+  visitorKey: text("visitor_key").primaryKey(),
+  deadline: timestamp("deadline", { withTimezone: true }).notNull(),
+  region: text("region").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const pushSubscriptionsTable = pgTable("push_subscriptions", {
   id: text("id").primaryKey(),
   endpoint: text("endpoint").notNull().unique(),
@@ -150,6 +159,7 @@ export const insertSavedMomentSchema = createInsertSchema(savedMomentsTable);
 export const insertSuggestionSchema = createInsertSchema(suggestionsTable);
 export const insertReviewSchema = createInsertSchema(reviewsTable);
 export const insertPageEventSchema = createInsertSchema(pageEventsTable);
+export const insertOfferWindowSchema = createInsertSchema(offerWindowsTable);
 export const insertPushSubscriptionSchema = createInsertSchema(
   pushSubscriptionsTable,
 );
@@ -168,6 +178,8 @@ export type Review = typeof reviewsTable.$inferSelect;
 export type NewReview = typeof reviewsTable.$inferInsert;
 export type PageEvent = typeof pageEventsTable.$inferSelect;
 export type NewPageEvent = typeof pageEventsTable.$inferInsert;
+export type OfferWindow = typeof offerWindowsTable.$inferSelect;
+export type NewOfferWindow = typeof offerWindowsTable.$inferInsert;
 export type PushSubscription = typeof pushSubscriptionsTable.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptionsTable.$inferInsert;
 

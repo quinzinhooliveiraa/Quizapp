@@ -28,11 +28,12 @@ import {
 import {
   db,
   invitesTable,
+  offerWindowsTable,
   processedEventsTable,
   sessionsTable,
 } from "@workspace/db";
 import crypto from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import {
   createAbacateCheckout,
   createAbacatePixCharge,
@@ -49,7 +50,8 @@ import { sendPurchaseNotification } from "../lib/push";
 import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "../lib/brevo";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
-import { getPricing, resolveRegion } from "../lib/pricing";
+import { resolveRegion } from "../lib/pricing";
+import { getOfferPricing } from "../lib/offers";
 
 type Theme = {
   id: string;
@@ -592,13 +594,25 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
   const mode = parsed.data.mode ?? "native";
   const method = parsed.data.method ?? "pix";
   const visitorKey = parsed.data.visitorKey?.trim().slice(0, 120) || null;
-  const pricing = await getPricing(
-    resolveRegion({
-      headers: req.headers,
-      query: req.query as Record<string, unknown>,
-    }),
-    visitorKey,
-  );
+  const region = resolveRegion({
+    headers: req.headers,
+    query: req.query as Record<string, unknown>,
+  });
+  const offerPricing = getOfferPricing(region);
+  const activeOfferWindow = visitorKey
+    ? await db
+        .select({ deadline: offerWindowsTable.deadline })
+        .from(offerWindowsTable)
+        .where(
+          and(
+            eq(offerWindowsTable.visitorKey, visitorKey),
+            gt(offerWindowsTable.deadline, new Date()),
+          ),
+        )
+        .limit(1)
+        .then(([window]) => window ?? null)
+    : null;
+  const pricing = activeOfferWindow ? offerPricing.offer : offerPricing.full;
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
   if (
     Boolean(parsed.data.experimentId) !==
