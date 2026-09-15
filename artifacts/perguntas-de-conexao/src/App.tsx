@@ -1712,16 +1712,17 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s04-conversas",
     kind: "question",
     key: "conversas",
-    title: "Quando vocês conversam, é mais sobre…",
+    title: "Sobre o que vocês mais conversam hoje?",
+    subtitle: "Pode escolher mais de uma.",
     format: "multi",
     emoji: true,
     options: [
-      { value: "trabalho", label: "Trabalho/estudos", icon: "💼" },
-      { value: "rotina", label: "Rotina/casa", icon: "🏠" },
-      { value: "besteira", label: "Besteira e brincadeiras", icon: "😂" },
-      { value: "nos-dois", label: "Nós dois", icon: "❤️" },
-      { value: "pessoal", label: "Coisas pessoais", icon: "🧠" },
+      { value: "rotina", label: "Rotina e compromissos", icon: "📅" },
+      { value: "trabalho", label: "Trabalho e dinheiro", icon: "💰" },
+      { value: "besteira", label: "Coisas engraçadas", icon: "😂" },
+      { value: "nos-dois", label: "A relação de vocês", icon: "❤️" },
       { value: "intimidade", label: "Intimidade", icon: "🔥" },
+      { value: "pessoal", label: "Planos e sonhos", icon: "🌎" },
       { value: "tudo", label: "Um pouco de tudo", icon: "📱" },
     ],
   },
@@ -2536,7 +2537,10 @@ function Lp1Quiz({
             onContinue={() => setShowOffer(true)}
           />
         ) : current.kind === "question" ? (
-          <section data-section-name={current.id}>
+          <section
+            className={current.id === "s04-conversas" ? "lp1-conversation-question" : undefined}
+            data-section-name={current.id}
+          >
             {current.eyebrow ? <p className="lp1-quiz-eyebrow">{current.eyebrow}</p> : null}
             {current.format === "multi" ? (
               <div className="lp1-quiz-accumulation" aria-live="polite">
