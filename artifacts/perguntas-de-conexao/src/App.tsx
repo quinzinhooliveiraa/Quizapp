@@ -1923,8 +1923,8 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s17-cartas",
     kind: "trial-card",
     key: "cartas",
-    eyebrow: "UMA CARTA DE VERDADE",
-    title: "É pra vocês?",
+    eyebrow: "ESCOLHA PELA PERGUNTA",
+    title: "Qual pergunta combina mais com vocês?",
   },
   {
     id: "s18-clima",
@@ -2603,6 +2603,8 @@ function Lp1Quiz({
           <Lp1TrialCardScreen
             cardIndex={trialCardIndex}
             sectionId={current.id}
+            eyebrow={current.eyebrow}
+            title={current.title}
             card={getLp1TrialCards(answers)[trialCardIndex]}
             answer={
               answers.cartas?.[
@@ -2751,12 +2753,16 @@ function Lp1TrialCardScreen({
   card,
   cardIndex,
   sectionId,
+  eyebrow,
+  title,
   answer,
   onSelect,
 }: {
   card?: Lp1TrialCard;
   cardIndex: number;
   sectionId: string;
+  eyebrow?: string;
+  title: string;
   answer?: Lp1CartaVerdict;
   onSelect: (cardId: string, verdict: Lp1CartaVerdict) => void;
 }) {
@@ -2779,6 +2785,8 @@ function Lp1TrialCardScreen({
       className="lp1-trial-card-screen"
       data-section-name={sectionId}
     >
+      {eyebrow ? <p className="lp1-quiz-eyebrow">{eyebrow}</p> : null}
+      <h1 className="lp1-quiz-title">{title}</h1>
       <div
         className={`lp1-trial-card ${direction ? `is-leaving-${direction}` : ""}`}
       >
