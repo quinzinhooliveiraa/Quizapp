@@ -1,0 +1,154 @@
+Refazer o quiz LP1 do zero. Substituir LP1_SCREENS e Lp1Quiz inteiros.
+O quiz começa na pergunta 1 (não há tela de capa). Total: 22 telas.
+
+═══ CHROME ═══
+Fundo #16111c. Texto #f4efe9. Esmaecido #9d92a6. Dourado #e8c98a / #c9a55e.
+Header 52px: "←" à esquerda (#9d92a6, 24px) · contador à direita "4/22", número
+em #e8c98a e "/22" em #6d6172, Space Mono 12px.
+Barra 3px: trilho rgba(255,255,255,.08), preenchimento gradiente #c9a55e→#e8c98a,
+COM ponto arredondado de 9px na ponta.
+Rodapé: botão largura total -32px, altura 52px, radius 999px, #e8c98a, texto
+#2a1f14 bold 15px. Desabilitado #4a4030/#8a7f6a. "← Voltar" NUNCA no rodapé.
+Título: Instrument Serif 400, 25px, lh 1.16, text-wrap balance, máx 2 linhas.
+Eyebrow: Space Mono 9.5px, .2em, uppercase, #c9a55e.
+Subtítulo: Plus Jakarta 12.5px #9d92a6.
+navigator.vibrate?.(10) em toda seleção.
+
+═══ TIPOS ═══
+single → pílulas, gap 8px, min-h 62px, radius 14px, borda #332a3e, fundo #221a2b,
+  EMOJI 34px à esquerda, label 14px. Selecionado: borda #e8c98a, fundo
+  linear-gradient(180deg,rgba(232,201,138,.16),rgba(232,201,138,.05)), ✓ dourado.
+  Avança sozinho em 280ms. Sem botão. Se a opção tiver expand, o card revela o
+  texto (12.5px #9d92a6, altura animada 180ms) e o avanço sobe para 1400ms.
+
+multi → grid 2 col, gap 9px. Card radius 14px overflow hidden; imagem 4:5
+  object-fit cover, filter brightness(1.28) contrast(1.04); barra sólida #3a2b20
+  dentro do card com label 12.5px. Selecionado: borda 2px #e8c98a, barra #e8c98a
+  com texto #2a1f14, checkbox 20px no topo direito.
+  ACÚMULO acima do título: fita que ganha um thumb 34x34 radius 8px por seleção
+  (entrada scale .8→1, 160ms) + "{n} de 5 marcados" em mono 10px.
+
+scale → 5 blocos em linha, gap 6px, h 44px, radius 10px, borda #332a3e, fundo
+  #221a2b, número mono 12px. Selecionado: fundo #e8c98a, texto #2a1f14.
+  Rótulos das pontas embaixo, 11px #9d92a6. Avança sozinho.
+
+photo → A FOTO SANGRA A TELA (absolute inset 0, object-fit cover, z-index 0).
+  Por cima: linear-gradient(180deg, rgba(22,17,28,.15), rgba(22,17,28,.55) 45%,
+  rgba(22,17,28,.96) 78%). Título e corpo ancorados na BASE, padding 20px.
+  Sem card, sem moldura, sem margem.
+
+chart → bloco de dado. Regras: nenhum número que não venha das respostas dela ou
+  da biblioteca real de 459 perguntas. Detalhe em cada tela abaixo.
+
+info → sem foto. Eyebrow, título, corpo 13.5px, linha de fonte 10.5px #7d7386.
+
+proof → título, corpo, fileira de 9 círculos 34px sobrepostos (-10px), gradientes
+  vinho/dourado, + círculo final "+212k" mono 10px.
+
+═══ TELAS 1 A 10 ═══
+
+01 single · key:"fase" · eyebrow:"SOBRE VOCÊS"
+   "Em que fase vocês estão?"
+   sub: "Não existe resposta certa. Só a que parece mais com vocês hoje."
+   🌱 Estamos começando · 🏡 Já temos uma história · ♾️ Muitos anos juntos
+   🌙 A gente meio que se perdeu
+
+02 multi · key:"travas" · eyebrow:"ONDE ACONTECE" · min 1
+   "Onde a conversa de vocês costuma travar?"
+   sub: "Marque todos que acontecem."
+   /quiz/trava-correria.jpg  "Na correria — só sobra logística"
+   /quiz/trava-celular.jpg   "Cada um no celular, lado a lado"
+   /quiz/trava-briga.jpg     "Depois de uma briga mal resolvida"
+   /quiz/trava-cama.jpg      "Na cama — virou automático"
+   /quiz/trava-distancia.jpg "Na distância — cada um no seu canto"
+
+03 chart · eyebrow:"O MAPA DE VOCÊS"
+   "Você marcou {n} dos 5 momentos."
+   Desenho: 5 blocos horizontais, gap 4px, altura 46px, radius 8px. Os marcados
+   preenchem em gradiente #7a2e46→#c9a55e com o label dentro em 11px; os não
+   marcados ficam #221a2b com o label #6d6172. Anima o preenchimento da esquerda
+   para a direita, 90ms de atraso entre cada um.
+   Corpo: "Não é o relacionamento inteiro que trava. São momentos específicos —
+   e é neles que a pergunta certa entra."
+   cta: "Continuar"
+
+04 single · key:"dor" · eyebrow:"O QUE TRAVA"
+   "Quando você tenta puxar assunto de verdade, o que acontece?"
+   🙄 Ele(a) responde "sei lá"            → sei-la
+   😶 Eu travo — não sei nem o que dizer  → eu-travo
+   🤷 Como é que a gente chega nesse tipo de conversa? → como-comecar
+   😬 Tenho medo da resposta               → medo
+   🫥 A gente se afastou sem perceber      → afastamento
+
+05 photo · image: "/quiz/dx-" + answers.dor + ".png"
+   Mapa DOR_ESPELHO (título / corpo):
+   sei-la       "Ele não estava fugindo de você."
+                "\"Vamos conversar\" pede que o outro traga alguma coisa sem dizer
+                 o quê. Ninguém sabe responder isso. Nem você, se ele perguntasse
+                 primeiro."
+   eu-travo     "O problema nunca foi você não ter o que dizer."
+                "É que ninguém chega com a pergunta pronta. Quando a carta faz a
+                 pergunta, você só responde."
+   como-comecar "\"Como é que a gente chega nesse tipo de conversa?\""
+                "É a pergunta que mais aparece. E a resposta é sem graça: alguém
+                 chega com uma pergunta na mão e lê em voz alta. É isso."
+   medo         "Você tem medo da resposta. Faz sentido."
+                "Por isso o baralho começa leve. Ninguém abre o jogo numa pergunta
+                 pesada — a profundidade vem depois, quando os dois já estão dentro."
+   afastamento  "Nem toda distância começa com uma briga."
+                "Às vezes ela aparece quando as perguntas vão ficando pra depois.
+                 Aí o silêncio deixa de ser uma noite ruim e vira o normal."
+   cta: "Continuar"
+
+06 scale · key:"rotina" · eyebrow:"O RITMO"
+   "Na última semana, quanto da conversa de vocês foi só logística?"
+   sub: "Conta, mercado, horário, o que falta em casa."
+   ends: ["Quase nada", "Praticamente tudo"]
+
+07 single · key:"clima" · eyebrow:"O CLIMA"
+   "Quando fica um silêncio entre vocês, ele parece…"
+   3 cards lado a lado, imagem 1:1 no topo, label embaixo:
+   /quiz/clima-leve.png "Confortável" · (emoji ◌) "Normal" ·
+   /quiz/clima-honesto.png "Difícil de atravessar"
+
+08 info · eyebrow:"POR QUE A PERGUNTA IMPORTA"
+   "Não é conversa. É a pergunta ser específica."
+   "Em 1997 o psicólogo Arthur Aron colocou estranhos para responderem 36
+   perguntas em ordem crescente de profundidade. Dois deles se casaram. O que o
+   estudo mostrou não foi sobre amor: foi que a intimidade não depende de vontade,
+   depende da pergunta ter resposta.
+   \"Vamos conversar\" não é uma pergunta. É uma cobrança."
+   fonte: "Aron et al., Personality and Social Psychology Bulletin, 1997."
+
+09 chart · eyebrow:"O QUE JÁ EXISTE PRONTO"
+   "{k} dos 15 baralhos falam exatamente do que você marcou."
+   k é calculado de verdade: mapear cada trava para os baralhos correspondentes
+   (correria→Modo Leve, Porto Seguro · celular→Perto de Novo, Você Não Sabia ·
+   briga→Depois da Tempestade, Livro Aberto · cama→Faísca, Luzes Baixas ·
+   distancia→Mesmo Longe, Em Voz Alta) e contar os únicos.
+   Desenho: 15 quadradinhos 26x26 radius 6px em grid 5x3. Os k acesos em #e8c98a
+   com o nome do baralho embaixo em 9px; os outros #221a2b. Acende um a um, 70ms.
+   Corpo: "São {c} cartas escritas para esses momentos. Nenhuma começa pesada."
+   ({c} = soma real das cartas desses baralhos)
+
+10 single · key:"objecao" · eyebrow:"O QUE ATRAPALHA" · com expand
+   "O que mais te faria deixar isso pra depois?"
+   🫣 "Vou parecer intenso demais"
+      expand: "Quem faz a pergunta é a carta, não você. Ninguém precisa chegar
+               com assunto pronto — nem você."
+   🤨 "Ele(a) não vai topar"
+      expand: "É o medo de todo mundo. Por isso começa leve: as primeiras são
+               fáceis de responder até pra quem trava."
+   ⏳ "A gente não tem tempo"
+      expand: "Uma carta por noite. Dez minutos, sem marcar nada, sem clima."
+   🤔 "Não sei se muda alguma coisa"
+      expand: "Não precisa acreditar. Vê as três de hoje à noite e julga depois."
+
+═══ CONFERIR E COLAR O RESULTADO ═══
+1. grep "#c4acff" no index.css → zero
+2. Nenhum texto visível com "de 22" — só o contador do header
+3. Nas telas photo a foto cobre 100% da largura E da altura, sem moldura
+4. Escolha única avança sozinha; botão só nas telas chart, photo, info e proof
+5. "← Voltar" no header em todas; não encosta no botão em nenhuma
+6. Os números das telas 03 e 09 mudam de verdade conforme as respostas
+7. Percorra as 10 telas no preview sem erro de console

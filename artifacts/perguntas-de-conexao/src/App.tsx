@@ -1058,7 +1058,7 @@ const LP1_LEGACY_SCREENS: Lp1Screen[] = [
   {
     id: "s00-capa",
     kind: "card",
-    title: "Duas pessoas. 24 telas. Uma conversa que pode mudar a noite.",
+    title: "Duas pessoas. 22 telas. Uma conversa que pode mudar a noite.",
     body: [
       "Responda algumas perguntas sobre vocês e descubra por onde começar.",
       "Leva 2 minutos. No fim, você recebe um diagnóstico feito para o momento de vocês.",
@@ -1520,7 +1520,7 @@ const LP1_SCREEN_ONE_TO_TEN: Lp1Screen[] = [
 
 const LP1_SCREENS: Lp1Screen[] = [
   ...LP1_SCREEN_ONE_TO_TEN,
-  ...LP1_LEGACY_SCREENS.slice(11),
+  ...LP1_LEGACY_SCREENS.slice(12),
 ];
 
 const LP1_DOR_ESPELHO: Record<
