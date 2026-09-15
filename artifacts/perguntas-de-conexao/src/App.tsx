@@ -3388,9 +3388,9 @@ function Lp1ResultScreen({
           <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
         </div>
         <div className="lp1-result-meter-labels lp1-result-meter-labels-three">
-          <span style={{ left: "15%" }}>Morno</span>
-          <span style={{ left: "55%" }}>Distante</span>
-          <span style={{ left: "90%" }}>Frio</span>
+          <span style={{ left: "15%" }}>Frio</span>
+          <span style={{ left: "55%" }}>Morno</span>
+          <span style={{ left: "90%" }}>Distante</span>
         </div>
         <div className="lp1-result-context">
           <span aria-hidden="true">ⓘ</span>
