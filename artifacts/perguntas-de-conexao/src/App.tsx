@@ -2388,7 +2388,6 @@ function Lp1Offer({
           fullPricing={pricing}
           onBuy={onFinish}
           testId="button-lp1-offer-checkout"
-          className="lp1-offer-price-card"
         />
       </div>
     </section>

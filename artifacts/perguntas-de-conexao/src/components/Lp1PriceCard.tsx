@@ -5,6 +5,7 @@ type Lp1PriceCardProps = {
   fullPricing: Pricing;
   offerPricing?: Pricing | null;
   discountActive?: boolean;
+  discountLabel?: string | null;
   onBuy: () => void;
   testId?: string;
   className?: string;
@@ -27,6 +28,7 @@ export function Lp1PriceCard({
   fullPricing,
   offerPricing,
   discountActive = false,
+  discountLabel = null,
   onBuy,
   testId = "button-price-cta-v2",
   className = "",
@@ -72,14 +74,23 @@ export function Lp1PriceCard({
         </>
       ) : null}
       <div className="lp-price-main">
+        {hasDiscount && discountLabel ? (
+          <p className="lp-price-discount-label" aria-live="polite">
+            {discountLabel}
+          </p>
+        ) : null}
         <p className="lp-price-value">
           459 perguntas por{" "}
-          <span className="lp-price-figure">
+          <span className={`lp-price-figure ${hasDiscount ? "is-discount" : ""}`}>
             {hasDiscount ? (
               <>
-                <del className="lp-price-old">{fullPricing.display}</del>{" "}
+                <del className="lp-price-old">
+                  De <PriceText pricing={fullPricing} />
+                </del>
                 <strong className="lp-price-discount">
+                  <span>Por </span>
                   <PriceText pricing={pricing} />
+                  <span className="lp-price-off-badge">40% OFF</span>
                 </strong>
               </>
             ) : (
@@ -109,6 +120,7 @@ export function Lp1PriceCard({
           <p>Se não fizer sentido pra vocês, devolvemos 100%. Sem drama, sem perguntas.</p>
         </div>
       </div>
+      <p className="lp-price-lifetime">Paga uma vez. Pra sempre. Sem assinatura.</p>
     </div>
   );
 }

@@ -242,7 +242,6 @@ function OfferCard({
   offerHeadline,
   onCheckout,
   compact = false,
-  showCountdown = false,
 }: {
   offerState: OfferState | null;
   remainingSeconds: number;
@@ -250,7 +249,6 @@ function OfferCard({
   offerHeadline: string;
   onCheckout: () => void;
   compact?: boolean;
-  showCountdown?: boolean;
 }) {
   const active = Boolean(offerState?.discountActive && remainingSeconds > 0);
 
@@ -263,27 +261,23 @@ function OfferCard({
           <span className="lp1-sale-recommended">
             Baralho recomendado: {recommendedDeck}
           </span>
-          <p className="lp1-sale-lifetime">
-            Paga uma vez. Pra sempre. Sem assinatura.
-          </p>
-          {showCountdown && active ? (
-            <p className="lp1-sale-inline-timer" aria-live="polite">
-              Termina em {formatRemaining(remainingSeconds)}
-            </p>
-          ) : null}
         </div>
         {offerState ? (
           <Lp1PriceCard
             fullPricing={offerState.full}
             offerPricing={offerState.offer}
             discountActive={active}
+            discountLabel={
+              active
+                ? `Desconto por concluir o teste · acaba em ${formatRemaining(remainingSeconds)}`
+                : null
+            }
             onBuy={onCheckout}
             testId={
               compact
                 ? "button-lp1-sale-checkout-bottom"
                 : "button-lp1-sale-checkout"
             }
-            className="lp1-sale-shared-price-card"
           />
         ) : (
           <p className="lp1-sale-price-loading">Carregando preço seguro…</p>
@@ -569,7 +563,6 @@ export function Lp1SalePage({
           offerHeadline={personalizedCopy.offerHeadline}
           onCheckout={onCheckout}
           compact
-          showCountdown
         />
         <p className="lp1-sale-last-line">
           Hoje à noite pode ser só mais uma noite. Ou a noite em que vocês

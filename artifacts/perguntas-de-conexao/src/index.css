@@ -1204,20 +1204,6 @@
   font: 400 0.68rem/1.2 var(--app-font-mono);
 }
 
-.lp1-sale-lifetime {
-  margin: 1.25rem auto 0;
-  color: #f6e1ad;
-  font: 400 clamp(1.05rem, 2.4vw, 1.35rem)/1.25 var(--app-font-serif);
-}
-
-.lp1-sale-inline-timer {
-  margin: 0.85rem auto 0;
-  color: #d8b66d;
-  font: 700 0.7rem/1.2 var(--app-font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .lp1-sale-offer-notes {
   max-width: 680px;
   margin: 0 auto;
@@ -4889,14 +4875,6 @@
   border: 1px solid #e1d9e1;
   border-radius: 1rem;
   background: #fff;
-}
-
-.lp1-offer-price-card {
-  margin-top: 1.1rem;
-  padding: 1.25rem 1.15rem 1.1rem;
-  border: 1px solid #e5c8c1;
-  border-radius: 1.15rem;
-  background: #f9eae2;
 }
 
 .lp1-offer-price {
@@ -28644,6 +28622,18 @@ blockquote em {
   gap: 0.35rem;
   white-space: nowrap;
 }
+.lp1-price-card .lp-price-figure.is-discount {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.4rem;
+  vertical-align: middle;
+}
+.lp1-price-card .lp-price-discount-label {
+  margin: 0 0 0.65rem;
+  color: #8b3553;
+  font: 700 0.68rem/1.25 var(--app-font-mono);
+  letter-spacing: 0.02em;
+}
 .lp1-price-card .lp-price-old {
   display: inline;
   color: #8e8296;
@@ -28651,8 +28641,23 @@ blockquote em {
   font-weight: 400;
 }
 .lp1-price-card .lp-price-discount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   color: #8b3553;
   font-weight: 700;
+}
+.lp1-price-card .lp-price-off-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: #e8b13a;
+  color: #17121c;
+  font: 800 0.62rem/1 var(--app-font-mono);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .lp1-price-card .lp-price-symbol {
   opacity: 0.5;
@@ -28700,17 +28705,25 @@ blockquote em {
   height: 2.1rem;
   color: #7a5cc4;
 }
-.lp1-sale-shared-price-card {
-  max-width: none;
-  margin-top: 1.4rem;
-  background: #fbf9ff;
-  border-color: rgba(120, 90, 200, 0.22);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
-  text-align: left;
-}
-.lp1-sale-shared-price-card .lp-price-payment,
-.lp1-sale-shared-price-card .lp-price-freedom {
+.lp1-price-card .lp-price-lifetime {
+  margin: 1.1rem 0 0;
+  color: #715c71;
+  font: 400 1rem/1.35 var(--app-font-serif);
   text-align: center;
+}
+.lp1-price-card .lp-price-payment,
+.lp1-price-card .lp-price-freedom {
+  text-align: center;
+}
+.lp1-price-card .lp-cta-primary {
+  background: #e8b13a;
+  background-image: none;
+  box-shadow: 0 6px 20px rgba(232, 177, 58, 0.28);
+}
+.lp1-price-card .lp-cta-primary:hover {
+  background: #e8b13a;
+  background-image: none;
+  box-shadow: 0 10px 28px rgba(232, 177, 58, 0.4);
 }
 .lp-quiz-route-marker {
   display: none;
