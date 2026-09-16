@@ -8,3 +8,9 @@ The Perguntas de Conexão preview is served by the artifact-managed web workflow
 **Why:** The workspace previously contained both a legacy named workflow and an artifact-registered workflow for this product; the duplicate legacy workflow was removed.
 
 **How to apply:** Restart `artifacts/perguntas-de-conexao: web` when validating this app; do not create another service for the same frontend. Screenshot captures may use a fresh browser context, so a separate wait before taking a screenshot does not advance the splash timer; validate the loaded route with the capture itself.
+
+The sale page's price offer is served by the separate `artifacts/api-server: API Server` workflow; if it is stopped, the page cannot start or refresh the regional offer state.
+
+**Why:** A preview can render the frontend normally while the checkout price request fails because the API workflow is not running.
+
+**How to apply:** Keep the API workflow running alongside the web workflow when validating the sale page; the frontend retries transient offer failures before showing its manual retry action.

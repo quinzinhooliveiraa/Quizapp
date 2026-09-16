@@ -123,23 +123,111 @@ function getDiscountPercent(offerState: OfferState | null): number {
   );
 }
 
-function getClimateName(answers: SaleAnswers): string {
-  const climate = String(answers.clima ?? "");
-  const blockers = String(answers.travas ?? "")
+const DECK_RECOMMENDATION_RULES: Record<string, string[][]> = {
+  clima: [
+    ["leve", "modo-leve", "perto-de-novo"],
+    ["divertido", "modo-leve", "voce-nao-sabia"],
+    ["conexao", "porto-seguro", "perto-de-novo"],
+    ["normal", "porto-seguro", "voce-nao-sabia"],
+    ["honesto", "livro-aberto", "porto-seguro"],
+    ["profundo", "livro-aberto", "depois-da-tempestade"],
+    ["intimo", "faisca", "luzes-baixas"],
+  ],
+  trava: [
+    ["correria", "modo-leve", "porto-seguro"],
+    ["celular", "perto-de-novo", "voce-nao-sabia"],
+    ["briga", "depois-da-tempestade", "livro-aberto"],
+    ["cama", "faisca", "luzes-baixas"],
+    ["distancia", "mesmo-longe", "em-voz-alta"],
+  ],
+  dor: [
+    ["afastamento", "mesmo-longe", "perto-de-novo"],
+    ["medo", "porto-seguro", "livro-aberto"],
+    ["eu-travo", "modo-leve", "porto-seguro"],
+    ["como-comecar", "modo-leve", "porto-seguro"],
+    ["sei-la", "voce-nao-sabia", "modo-leve"],
+  ],
+};
+
+function getRecommendedDeckIds(answers: SaleAnswers): string[] {
+  const scores = new Map<string, number>();
+  const themeOrder = new Map(connectionThemes.map((theme, index) => [theme.id, index]));
+  const addScore = (deckIds: string[], points: number) => {
+    deckIds.forEach((deckId, index) => {
+      scores.set(deckId, (scores.get(deckId) ?? 0) + Math.max(1, points - index * 2));
+    });
+  };
+  const addRule = (group: "clima" | "trava" | "dor", value: string, points: number) => {
+    const rule = DECK_RECOMMENDATION_RULES[group].find(([match]) => match === value);
+    if (rule) addScore(rule.slice(1), points);
+  };
+
+  addRule("clima", String(answers.clima ?? ""), 12);
+  String(answers.travas ?? "")
+    .split(",")
+    .filter(Boolean)
+    .forEach((value) => addRule("trava", value, 10));
+  addRule("dor", String(answers.dor ?? ""), 8);
+
+  const routine = String(answers.rotina ?? "");
+  if (routine === "tudo" || routine === "muito") {
+    addScore(["modo-leve", "porto-seguro"], 7);
+  }
+
+  const phase = String(answers.fase ?? answers.stage ?? "");
+  if (phase === "novo") addScore(["voce-nao-sabia", "modo-leve"], 6);
+  if (phase === "perdidos" || phase === "reconexao") {
+    addScore(["perto-de-novo", "livro-aberto"], 7);
+  }
+
+  const objection = String(answers.objecao ?? "");
+  if (objection === "intenso-demais") addScore(["faisca", "luzes-baixas"], 7);
+  if (objection === "ele-nao-topa" || objection === "nao-sei-comecar") {
+    addScore(["modo-leve", "porto-seguro"], 6);
+  }
+
+  const mappedConversation = String(answers["sei-la-mapeado"] ?? "");
+  if (mappedConversation === "rende" || mappedConversation === "vai-longe") {
+    addScore(["voce-nao-sabia", "modo-leve"], 5);
+  }
+  if (mappedConversation === "sei-la" || mappedConversation === "nao-sei") {
+    addScore(["porto-seguro", "livro-aberto"], 5);
+  }
+
+  const conversationTopics = String(answers.conversas ?? "")
     .split(",")
     .filter(Boolean);
-  const names: Record<string, string> = {
-    leve: "Modo Leve",
-    conexao: "Porto Seguro",
-    profundo: "Livro Aberto",
-    divertido: "Modo Leve",
-    intimo: "Faísca",
-    distancia: "Mesmo Longe",
-    normal: "Porto Seguro",
-    honesto: "Depois da Tempestade",
-  };
-  if (blockers.includes("distancia")) return "Mesmo Longe";
-  return names[climate] ?? "Porto Seguro";
+  if (conversationTopics.includes("intimidade")) {
+    addScore(["faisca", "luzes-baixas"], 5);
+  }
+  if (conversationTopics.includes("nos-dois") || conversationTopics.includes("pessoal")) {
+    addScore(["voce-nao-sabia", "porto-seguro"], 4);
+  }
+
+  if (String(answers.celular ?? "") === "sempre") {
+    addScore(["perto-de-novo", "mesmo-longe"], 5);
+  }
+
+  if (scores.size === 0) {
+    addScore(["porto-seguro", "modo-leve", "voce-nao-sabia"], 3);
+  }
+
+  return [...connectionThemes]
+    .sort(
+      (a, b) =>
+        (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0) ||
+        (themeOrder.get(a.id) ?? 0) - (themeOrder.get(b.id) ?? 0),
+    )
+    .slice(0, 3)
+    .map((theme) => theme.id);
+}
+
+function getClimateName(answers: SaleAnswers): string {
+  const primaryDeckId = getRecommendedDeckIds(answers)[0] ?? "porto-seguro";
+  return (
+    connectionThemes.find((theme) => theme.id === primaryDeckId)?.title ??
+    "Porto Seguro"
+  );
 }
 
 function getAnswer(answers: SaleAnswers, keys: string[]): string {
@@ -259,14 +347,14 @@ function getRecapBars(answers: SaleAnswers) {
 function OfferCard({
   offerState,
   remainingSeconds,
-  recommendedDeck,
+  recommendedDecks,
   offerHeadline,
   onCheckout,
   compact = false,
 }: {
   offerState: OfferState | null;
   remainingSeconds: number;
-  recommendedDeck: string;
+  recommendedDecks: string[];
   offerHeadline: string;
   onCheckout: () => void;
   compact?: boolean;
@@ -290,7 +378,7 @@ function OfferCard({
               minutos. São 3 passos:
             </p>
             <span className="lp1-sale-recommended">
-              Baralho recomendado: {recommendedDeck}
+              Baralhos recomendados: {recommendedDecks.join(" · ")}
             </span>
           </div>
         ) : null}
@@ -375,6 +463,7 @@ export function Lp1SalePage({
 }) {
   const [offerState, setOfferState] = useState<OfferState | null>(null);
   const [offerError, setOfferError] = useState("");
+  const [offerRetry, setOfferRetry] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const [recapVisible, setRecapVisible] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -383,45 +472,68 @@ export function Lp1SalePage({
   const visitorKey = useMemo(() => getVisitorKey(), []);
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
   const displayName = useMemo(() => getDisplayName(answers), [answers]);
-  const recommendedDeck = getClimateName(answers);
+  const recommendedDeckIds = useMemo(
+    () => getRecommendedDeckIds(answers),
+    [answers],
+  );
+  const recommendedDeck = useMemo(
+    () => getClimateName(answers),
+    [answers],
+  );
+  const recommendedDecks = useMemo(
+    () =>
+      recommendedDeckIds
+        .map((deckId) => connectionThemes.find((theme) => theme.id === deckId))
+        .filter((theme): theme is (typeof connectionThemes)[number] => Boolean(theme)),
+    [recommendedDeckIds],
+  );
   const orderedDecks = useMemo(() => {
-    const recommended = connectionThemes.find(
-      (theme) => theme.title === recommendedDeck,
-    );
-
-    if (!recommended) return connectionThemes;
-
+    const recommendedIds = new Set(recommendedDeckIds);
     return [
-      recommended,
-      ...connectionThemes.filter((theme) => theme.id !== recommended.id),
+      ...recommendedDecks,
+      ...connectionThemes.filter((theme) => !recommendedIds.has(theme.id)),
     ];
-  }, [recommendedDeck]);
+  }, [recommendedDeckIds, recommendedDecks]);
+  const recommendedDeckTitles = recommendedDecks.map((theme) => theme.title);
   const personalizedCopy = useMemo(() => getPersonalizedCopy(answers), [answers]);
 
   useEffect(() => {
     let cancelled = false;
+    let retryTimer: number | undefined;
+    setOfferState(null);
     setOfferError("");
-    fetch(API_URL(`/api/offer/start${getPricingRegionQuery()}`), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ visitorKey }),
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("offer state request failed");
-        return (await response.json()) as OfferState;
-      })
-      .then((state) => {
-        if (!cancelled) setOfferState(state);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setOfferError("Não foi possível carregar a oferta. Tente novamente.");
+
+    const loadOffer = async () => {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          const response = await fetch(API_URL(`/api/offer/start${getPricingRegionQuery()}`), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ visitorKey }),
+          });
+          if (!response.ok) throw new Error("offer state request failed");
+          const state = (await response.json()) as OfferState;
+          if (!cancelled) setOfferState(state);
+          return;
+        } catch {
+          if (cancelled) return;
+          if (attempt === 2) {
+            setOfferError("Não foi possível carregar a oferta. Tente novamente.");
+            return;
+          }
+          await new Promise<void>((resolve) => {
+            retryTimer = window.setTimeout(resolve, 650 * (attempt + 1));
+          });
         }
-      });
+      }
+    };
+
+    void loadOffer();
     return () => {
       cancelled = true;
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
     };
-  }, [visitorKey]);
+  }, [offerRetry, visitorKey]);
 
   useEffect(() => {
     if (!offerState?.deadline) return;
@@ -631,24 +743,26 @@ export function Lp1SalePage({
 
       <section className="lp1-sale-section lp1-sale-benefits" data-section-name="sale-benefits">
         <p className="lp1-sale-kicker">o que tem dentro</p>
-        <h2>Um começo recomendado pra vocês. E mais 14 caminhos para continuar.</h2>
+        <h2>Todos os baralhos para vocês. Três escolhidos pelo quiz.</h2>
         <p className="lp1-sale-library-intro">
-          Pelo que você respondeu, <strong>{recommendedDeck}</strong> é o
-          melhor lugar para começar. Depois, os outros baralhos ficam abertos
-          para cada fase, clima e vontade.
+          Pelo que vocês responderam, <strong>{recommendedDeck}</strong> é o
+          melhor lugar para começar. Os outros dois recomendados completam esse
+          caminho, e todos os outros baralhos continuam disponíveis.
         </p>
         <p className="lp1-sale-deck-scroll-hint" aria-hidden="true">
           Deslize para ver todos os baralhos →
         </p>
         <div className="lp1-sale-deck-grid">
-          {orderedDecks.map((theme) => (
+          {orderedDecks.map((theme) => {
+            const isRecommended = recommendedDeckIds.includes(theme.id);
+            return (
             <article
-              className={`lp1-sale-deck-card ${theme.title === recommendedDeck ? "is-recommended" : ""}`}
+              className={`lp1-sale-deck-card ${isRecommended ? "is-recommended" : ""}`}
               key={theme.id}
             >
               <img src={`/theme-backgrounds/${theme.id}.jpg`} alt="" loading="lazy" decoding="async" />
               <div className="lp1-sale-deck-shade" aria-hidden="true" />
-              {theme.title === recommendedDeck ? (
+              {isRecommended ? (
                 <span className="lp1-sale-deck-badge">baralho recomendado</span>
               ) : null}
               <div className="lp1-sale-deck-copy">
@@ -657,7 +771,8 @@ export function Lp1SalePage({
                 <small>{theme.count} perguntas</small>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -688,7 +803,7 @@ export function Lp1SalePage({
         <OfferCard
           offerState={offerState}
           remainingSeconds={remainingSeconds}
-          recommendedDeck={recommendedDeck}
+          recommendedDecks={recommendedDeckTitles}
           offerHeadline={personalizedCopy.offerHeadline}
           onCheckout={onCheckout}
         />
@@ -696,7 +811,7 @@ export function Lp1SalePage({
           <button
             type="button"
             className="lp1-sale-retry"
-            onClick={() => window.location.reload()}
+            onClick={() => setOfferRetry((attempt) => attempt + 1)}
           >
             {offerError} Tentar novamente
           </button>
@@ -731,7 +846,7 @@ export function Lp1SalePage({
         <OfferCard
           offerState={offerState}
           remainingSeconds={remainingSeconds}
-          recommendedDeck={recommendedDeck}
+          recommendedDecks={recommendedDeckTitles}
           offerHeadline={personalizedCopy.offerHeadline}
           onCheckout={onCheckout}
           compact

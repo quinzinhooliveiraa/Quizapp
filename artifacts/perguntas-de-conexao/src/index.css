@@ -582,7 +582,7 @@
 
 .lp1-sale-sticky-prefix,
 .lp1-sale-sticky-normal-copy span {
-  color: #c9a55e;
+  color: #7a5cc4;
   font-size: clamp(0.78rem, 1.5vw, 1rem);
   font-weight: 700;
   letter-spacing: 0;
@@ -590,7 +590,7 @@
 }
 
 .lp1-sale-sticky-timer {
-  color: #e8c98a;
+  color: #7a5cc4;
   font-size: clamp(1.55rem, 3.4vw, 2.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -1954,32 +1954,42 @@
   }
 
   .lp1-sale-sticky-card {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.55rem 0.7rem;
-    padding: 0.7rem 0.75rem;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: clamp(0.2rem, 1.8vw, 0.7rem);
+    min-height: 3.2rem;
+    padding: 0.48rem clamp(0.4rem, 2vw, 0.75rem);
   }
 
   .lp1-sale-sticky-copy {
-    flex: 1 1 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.3rem 0.45rem;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    min-width: 0;
+    overflow: hidden;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
     line-height: 1.15;
   }
 
   .lp1-sale-sticky-active-copy,
   .lp1-sale-sticky-normal-copy {
+    min-width: 0;
+    overflow: hidden;
     gap: 0.3rem;
   }
 
   .lp1-sale-sticky-prefix,
   .lp1-sale-sticky-normal-copy span {
-    font-size: 0.72rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(0.42rem, 2.35vw, 0.72rem);
+    letter-spacing: -0.015em;
   }
 
   .lp1-sale-sticky-timer {
-    font-size: 1.65rem;
+    flex: 0 0 auto;
+    font-size: clamp(1rem, 7vw, 1.65rem);
   }
 
   .lp1-sale-sticky-price {
@@ -1995,9 +2005,11 @@
   }
 
   .lp1-sale-sticky-card button {
+    flex: 0 0 auto;
     min-height: 2.5rem;
-    padding: 0.62rem 1rem;
-    font-size: 0.7rem;
+    gap: 0.2rem;
+    padding: 0.5rem clamp(0.4rem, 2.2vw, 1rem);
+    font-size: clamp(0.48rem, 2vw, 0.7rem);
   }
 
   .lp1-sale-recap-promo {
@@ -29719,6 +29731,7 @@ blockquote em {
   margin: 0;
   padding: 0;
   list-style: none;
+  text-align: left;
 }
 
 .lp1-sale-page .lp1-price-steps li {
@@ -29750,12 +29763,15 @@ blockquote em {
 .lp1-sale-page .lp1-price-step-copy {
   display: block;
   flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 .lp1-sale-page .lp1-price-steps strong {
   display: block;
   color: #2a2130;
   font-weight: 600;
+  text-align: left;
 }
 
 .lp1-sale-page .lp-price-includes li {
