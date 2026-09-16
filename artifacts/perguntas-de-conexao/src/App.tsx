@@ -2349,6 +2349,7 @@ function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
         />
       </figure>
 
+      <p className="lp1-bridge-sequence-intro">É assim que uma conversa começa.</p>
       <div className="lp1-bridge-sequence" aria-label="Como uma conversa começa">
         <div className="lp1-bridge-step">
           <span className="lp1-bridge-step-number">01</span>

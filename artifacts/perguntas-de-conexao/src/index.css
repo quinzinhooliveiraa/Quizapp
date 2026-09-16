@@ -3536,12 +3536,19 @@
   filter: saturate(0.88) contrast(1.04);
 }
 
+.lp1-bridge-sequence-intro {
+  margin: 1.45rem 0 0;
+  color: #d7cce6;
+  font: 500 0.9rem/1.4 var(--app-font-sans);
+  letter-spacing: 0.01em;
+}
+
 .lp1-bridge-sequence {
   display: flex;
   align-items: flex-start;
   justify-content: center;
   gap: clamp(0.4rem, 2.5vw, 1rem);
-  margin: 1.65rem 0 0;
+  margin: 0.95rem 0 0;
 }
 
 .lp1-bridge-step {
@@ -3586,27 +3593,32 @@
 
 .lp1-bridge-cta {
   display: flex;
-  width: 100%;
-  min-height: 3.65rem;
+  width: fit-content;
+  min-height: 2.5rem;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  margin-top: 1.55rem;
-  padding: 0.9rem 1.25rem;
+  margin: 1.35rem auto 0;
+  padding: 0.45rem 0.15rem 0.55rem;
   border: 0;
-  border-radius: 999px;
-  background: #b28bff;
-  color: #211633;
-  font: 700 0.95rem/1.15 var(--app-font-sans);
+  border-bottom: 1px solid rgba(196, 172, 255, 0.55);
+  border-radius: 0;
+  background: transparent;
+  color: #c4acff;
+  font: 600 0.92rem/1.15 var(--app-font-sans);
   cursor: pointer;
   transition:
     background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
     transform 160ms ease;
 }
 
 .lp1-bridge-cta:hover,
 .lp1-bridge-cta:focus-visible {
-  background: #c4acff;
+  border-color: #e0d3ff;
+  background: transparent;
+  color: #e0d3ff;
   transform: translateY(-1px);
 }
 
