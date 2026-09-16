@@ -270,11 +270,9 @@ function OfferCard({
             Ou vocês podem estar tendo a conversa de verdade daqui a dez
             minutos. São 3 passos:
           </p>
-          {compact ? (
-            <span className="lp1-sale-recommended">
-              baralho recomendado: {recommendedDeck}
-            </span>
-          ) : null}
+          <span className="lp1-sale-recommended">
+            baralho recomendado: {recommendedDeck}
+          </span>
         </div>
         {offerState ? (
           compact ? (
@@ -293,9 +291,6 @@ function OfferCard({
           ) : (
             <div className="lp1-price-stack">
               <div className="lp-price-card lp1-price-card lp1-price-steps-card">
-                <span className="lp1-sale-recommended">
-                  baralho recomendado: {recommendedDeck}
-                </span>
                 <ol className="lp1-price-steps">
                   <li>
                     <span className="lp1-price-step-number" aria-hidden="true">
