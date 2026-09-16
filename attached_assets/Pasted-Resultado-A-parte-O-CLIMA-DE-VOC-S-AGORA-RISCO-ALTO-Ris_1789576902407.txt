@@ -1,0 +1,52 @@
+Resultado
+A parte:
+O CLIMA DE VOCÊS AGORA
+RISCO ALTO
+Risco de continuar no automático
+
+funciona melhor do que o antigo “risco de afastamento”.
+E eu manteria a barra com Baixo → Atenção → Médio → Alto. Ela cria exatamente a sensação de resultado personalizado que você queria.
+Só faria um pequeno ajuste no texto, porque hoje há uma leve repetição:
+Risco de continuar no automático
+Quanto mais tempo vocês passam no automático, mais fácil é deixar a conexão para depois.
+
+Eu deixaria:
+Risco de continuar no automático
+Quanto mais tempo essa rotina se repete, mais fácil é deixar a conexão para depois.
+
+Fica menos repetitivo.
+E o bloco inferior está bom:
+O QUE NÃO DEIXAR PARA DEPOIS
+O medo da resposta é compreensível — mas adiar também muda a relação. Começar com uma pergunta leve dá a vocês uma chance de se reencontrar antes que o silêncio fique confortável.
+
+Esse trecho é forte. Ele cria urgência sem precisar dizer “seu relacionamento está acabando”.
+Eu só mudaria:
+“antes que o silêncio fique confortável”
+
+para:
+“antes que o silêncio vire rotina.”
+
+Porque “silêncio confortável” é bonito, mas “virar rotina” conversa diretamente com o problema central do produto.
+Ficaria:
+O QUE NÃO DEIXAR PARA DEPOIS
+O medo da resposta é compreensível — mas adiar também muda a relação. Começar com uma pergunta leve dá a vocês uma chance de se reencontrar antes que o silêncio vire rotina.
+
+Pergunta 22
+A segunda tela também ficou bem melhor.
+Eu manteria exatamente essa estrutura:
+Se vocês tivessem as perguntas certas na mão, o que você gostaria que acontecesse nessa noite?
+
+As respostas estão boas porque cada uma representa um desejo diferente.
+Eu só faria um ajuste pequeno na primeira opção:
+🔄 A gente finalmente sair do automático
+
+Está correto como está, mas visualmente eu talvez deixasse:
+🔄 Sair do automático
+
+Porque fica mais curto e todas as opções ficam mais escaneáveis:
+🔄 Sair do automático
+🧠 Descobrir coisas que ainda não sabemos um sobre o outro
+🫶 Ter uma conversa que realmente aproxime a gente
+😂 Só rir, conversar e aproveitar uma noite diferente
+
+E eu não colocaria “Hoje” nessa pergunta, porque você já perguntou anteriormente quando a pessoa gostaria de ter essa noite. Assim, essa pergunta tem uma função diferente: ela revela qual transformação emocional a pessoa quer.
