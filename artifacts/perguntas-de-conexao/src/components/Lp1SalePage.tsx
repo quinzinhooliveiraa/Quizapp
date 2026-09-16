@@ -259,21 +259,23 @@ function OfferCard({
   return (
     <>
       <div className="lp1-sale-offer-card">
-        <div className="lp1-sale-offer-heading">
-          <p className="lp1-sale-kicker">acesso vitalício</p>
-          <h2>
-            Hoje pode ser mais uma noite
-            <br />
-            <em>cada um no seu celular.</em>
-          </h2>
-          <p className="lp1-price-context">
-            Ou vocês podem estar tendo a conversa de verdade daqui a dez
-            minutos. São 3 passos:
-          </p>
-          <span className="lp1-sale-recommended">
-            Baralho recomendado: {recommendedDeck}
-          </span>
-        </div>
+        {!compact ? (
+          <div className="lp1-sale-offer-heading">
+            <p className="lp1-sale-kicker">acesso vitalício</p>
+            <h2>
+              Hoje pode ser mais uma noite
+              <br />
+              <em>cada um no seu celular.</em>
+            </h2>
+            <p className="lp1-price-context">
+              Ou vocês podem estar tendo a conversa de verdade daqui a dez
+              minutos. São 3 passos:
+            </p>
+            <span className="lp1-sale-recommended">
+              Baralho recomendado: {recommendedDeck}
+            </span>
+          </div>
+        ) : null}
         {offerState ? (
           <div className="lp1-price-stack">
             <div className="lp-price-card lp1-price-card lp1-price-steps-card">
