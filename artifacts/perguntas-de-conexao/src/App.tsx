@@ -3479,18 +3479,6 @@ function Lp1ResultScreen({
       : result.label === "Risco médio"
         ? "is-medio"
         : "is-alto";
-  const relationshipDynamic =
-    result.label === "Risco baixo"
-      ? "Troca presente"
-      : result.label === "Risco médio"
-        ? "Conexão no automático"
-        : "Distância ganhando espaço";
-  const resultInsights = [
-    { icon: urgency.insightIcon, label: "Padrão central", value: urgency.insightLabel },
-    { icon: "⚡", label: "Risco de afastamento", value: result.label },
-    { icon: "🫶", label: "Dinâmica da relação", value: relationshipDynamic },
-    { icon: "🌱", label: "Espaço para começar hoje", value: result.spaceValue },
-  ];
   const targetMeterPosition = Math.min(90, Math.max(69, result.meterPosition));
   const [meterPosition, setMeterPosition] = useState("8%");
 
@@ -3515,8 +3503,12 @@ function Lp1ResultScreen({
       </figure>
       <div className="lp1-result-meter-card">
         <div className="lp1-result-meter-heading">
-          <span>Risco de afastamento</span>
+          <span>Risco de continuar no automático</span>
         </div>
+        <p className="lp1-result-meter-subcopy">
+          Quanto mais tempo vocês passam no automático, mais fácil é deixar a
+          conexão para depois.
+        </p>
         <div className="lp1-result-meter">
           <span
             className="lp1-result-meter-balloon"
@@ -3531,7 +3523,7 @@ function Lp1ResultScreen({
             Baixo
           </span>
           <span className="is-morno" style={{ left: "33.333%" }}>
-            Estável
+            Atenção
           </span>
           <span className="is-morno" style={{ left: "66.667%" }}>
             Médio
@@ -3552,16 +3544,10 @@ function Lp1ResultScreen({
           </div>
         </div>
       </div>
-      <div className="lp1-result-insights">
-        {resultInsights.map((insight) => (
-          <div className="lp1-result-insight" key={insight.label}>
-            <span aria-hidden="true">{insight.icon}</span>
-            <p>
-              {insight.label} <strong>{insight.value}</strong>
-            </p>
-          </div>
-        ))}
-      </div>
+      <p className="lp1-result-good-news">
+        A boa notícia? Você não precisa esperar isso virar um problema maior para
+        mudar uma noite.
+      </p>
       <p className="lp1-result-disclaimer">
         Este score de conexão é informal e serve apenas para reflexão. Ele não
         substitui uma avaliação clínica nem resume toda a experiência de vocês.

@@ -3263,6 +3263,13 @@
   font: 500 12px/1.2 var(--app-font-sans);
 }
 
+.lp1-result-meter-subcopy {
+  max-width: 20rem;
+  margin: 0.55rem 0 0;
+  color: #b9adbf;
+  font: 400 10px/1.45 var(--app-font-sans);
+}
+
 .lp1-result-meter-heading strong {
   padding: 0.3rem 0.5rem;
   border-radius: 999px;
@@ -3438,6 +3445,14 @@
   margin: 1.2rem auto 0.25rem;
   color: #7d7386;
   font: 400 8.5px/1.35 var(--app-font-sans);
+  text-align: center;
+}
+
+.lp1-result-good-news {
+  max-width: 20rem;
+  margin: 1rem auto 0;
+  color: #e8c98a;
+  font: 500 12px/1.45 var(--app-font-sans);
   text-align: center;
 }
 
