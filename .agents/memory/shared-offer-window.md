@@ -7,4 +7,4 @@ The personalized sale page and the checkout must resolve the offer through the s
 
 **Why:** Buyers should not see one countdown on the offer page and a different price or deadline after opening checkout; the server also owns the BR/PT full and discounted prices.
 
-**How to apply:** Use an explicit offer-start request only when the completed-quiz offer screen renders, then reuse the read-only offer-state endpoint and visitor identity for checkout. Include the selected `regiao` query in every request so BR/PT cannot drift. Let the server determine the amounts; the client should only render the returned deadline and active price.
+**How to apply:** Use an explicit offer-start request only when the completed-quiz offer screen renders, then reuse the read-only offer-state endpoint and visitor identity for checkout. Include the selected `regiao` query in every request so BR/PT cannot drift. Keep the server's canonical offer table aligned with public pricing, let the server determine amounts, and let the client only render the returned deadline and active price.
