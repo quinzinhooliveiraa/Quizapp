@@ -6,9 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Buyer } from './buyer';
+import type { PendingAccess } from './pendingAccess';
 
 export type ListAdminBuyers200 = {
   buyers: Buyer[];
+  pendingAccess: PendingAccess[];
   total: number;
   totalWithAccess: number;
 };

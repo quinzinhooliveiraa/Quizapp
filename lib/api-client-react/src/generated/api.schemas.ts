@@ -85,6 +85,26 @@ export interface Buyer {
   createdAt: string;
 }
 
+export type PendingAccessPackageId = typeof PendingAccessPackageId[keyof typeof PendingAccessPackageId];
+
+
+export const PendingAccessPackageId = {
+  couple: 'couple',
+  family: 'family',
+} as const;
+
+export interface PendingAccess {
+  id: string;
+  buyerName: string;
+  /** @nullable */
+  buyerEmail: string | null;
+  /** @nullable */
+  paymentMethod: string | null;
+  packageId: PendingAccessPackageId;
+  packageName: string;
+  createdAt: string;
+}
+
 export type LandingSessionStatus = typeof LandingSessionStatus[keyof typeof LandingSessionStatus];
 
 
@@ -1042,6 +1062,7 @@ export const GetAdminQuizAnalyticsLp = {
 
 export type DeleteAdminAnalyticsDataParams = {
 sessionId: string;
+scope?: DeleteAdminAnalyticsDataScope;
 lp?: DeleteAdminAnalyticsDataLp;
 from?: string;
 to?: string;
@@ -1051,6 +1072,14 @@ to?: string;
  */
 days?: number;
 };
+
+export type DeleteAdminAnalyticsDataScope = typeof DeleteAdminAnalyticsDataScope[keyof typeof DeleteAdminAnalyticsDataScope];
+
+
+export const DeleteAdminAnalyticsDataScope = {
+  landing: 'landing',
+  quiz: 'quiz',
+} as const;
 
 export type DeleteAdminAnalyticsDataLp = typeof DeleteAdminAnalyticsDataLp[keyof typeof DeleteAdminAnalyticsDataLp];
 
@@ -1144,8 +1173,64 @@ sessionId: string;
 
 export type ListAdminBuyers200 = {
   buyers: Buyer[];
+  pendingAccess: PendingAccess[];
   total: number;
   totalWithAccess: number;
+};
+
+export type UpdateAdminPendingAccessParams = {
+sessionId: string;
+};
+
+export type UpdateAdminPendingAccessBodyPackageId = typeof UpdateAdminPendingAccessBodyPackageId[keyof typeof UpdateAdminPendingAccessBodyPackageId];
+
+
+export const UpdateAdminPendingAccessBodyPackageId = {
+  couple: 'couple',
+  family: 'family',
+} as const;
+
+/**
+ * @nullable
+ */
+export type UpdateAdminPendingAccessBodyPaymentMethod = typeof UpdateAdminPendingAccessBodyPaymentMethod[keyof typeof UpdateAdminPendingAccessBodyPaymentMethod] | null;
+
+
+export const UpdateAdminPendingAccessBodyPaymentMethod = {
+  pix: 'pix',
+  card: 'card',
+  unknown: 'unknown',
+} as const;
+
+export type UpdateAdminPendingAccessBody = {
+  /**
+     * @minLength 1
+     * @maxLength 160
+     */
+  buyerName: string;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  buyerEmail: string | null;
+  packageId: UpdateAdminPendingAccessBodyPackageId;
+  /** @nullable */
+  paymentMethod: UpdateAdminPendingAccessBodyPaymentMethod;
+};
+
+export type DeleteAdminPendingAccessParams = {
+sessionId: string;
+};
+
+export type DeleteAdminPendingAccessBodyConfirmation = typeof DeleteAdminPendingAccessBodyConfirmation[keyof typeof DeleteAdminPendingAccessBodyConfirmation];
+
+
+export const DeleteAdminPendingAccessBodyConfirmation = {
+  APAGAR_PAGAMENTO: 'APAGAR PAGAMENTO',
+} as const;
+
+export type DeleteAdminPendingAccessBody = {
+  confirmation: DeleteAdminPendingAccessBodyConfirmation;
 };
 
 export type DeleteAdminBuyerParams = {

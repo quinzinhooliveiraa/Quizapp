@@ -38,6 +38,8 @@ import type {
   CompleteOwnerOnboarding200,
   DeleteAdminAnalyticsDataParams,
   DeleteAdminBuyerParams,
+  DeleteAdminPendingAccessBody,
+  DeleteAdminPendingAccessParams,
   Experiment,
   ExperimentAssignment,
   ExperimentInput,
@@ -77,6 +79,7 @@ import type {
   ListQuestionsParams,
   OkResponse,
   PageEventInput,
+  PendingAccess,
   Preferences,
   PreferencesInput,
   PrimaryLandingPageInput,
@@ -99,6 +102,8 @@ import type {
   UnsubscribeAdminPushBody,
   UpdateAdminExperimentOptimizationParams,
   UpdateAdminExperimentStatusParams,
+  UpdateAdminPendingAccessBody,
+  UpdateAdminPendingAccessParams,
   UpdateAdminPrimaryLandingPageParams,
   WebhookResult
 } from './api.schemas';
@@ -3790,6 +3795,168 @@ export function useListAdminBuyers<TData = Awaited<ReturnType<typeof listAdminBu
 
 
 
+
+export const getUpdateAdminPendingAccessUrl = (pendingId: string,
+    params: UpdateAdminPendingAccessParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/pending-access/${pendingId}?${stringifiedParams}` : `/api/admin/pending-access/${pendingId}`
+}
+
+/**
+ * @summary Update an unconfirmed payment registration
+ */
+export const updateAdminPendingAccess = async (pendingId: string,
+    updateAdminPendingAccessBody: UpdateAdminPendingAccessBody,
+    params: UpdateAdminPendingAccessParams, options?: Parameters<typeof customFetch>[1]): Promise<PendingAccess> => {
+
+  return customFetch<PendingAccess>(getUpdateAdminPendingAccessUrl(pendingId,params),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateAdminPendingAccessBody)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminPendingAccessMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminPendingAccess>>, TError,{pendingId: string;data: BodyType<UpdateAdminPendingAccessBody>;params: UpdateAdminPendingAccessParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminPendingAccess>>, TError,{pendingId: string;data: BodyType<UpdateAdminPendingAccessBody>;params: UpdateAdminPendingAccessParams}, TContext> => {
+
+const mutationKey = ['updateAdminPendingAccess'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminPendingAccess>>, {pendingId: string;data: BodyType<UpdateAdminPendingAccessBody>;params: UpdateAdminPendingAccessParams}> = (props) => {
+          const {pendingId,data,params} = props ?? {};
+
+          return  updateAdminPendingAccess(pendingId,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminPendingAccessMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminPendingAccess>>>
+    export type UpdateAdminPendingAccessMutationBody = BodyType<UpdateAdminPendingAccessBody>
+    export type UpdateAdminPendingAccessMutationError = ErrorType<void>
+
+    /**
+ * @summary Update an unconfirmed payment registration
+ */
+export const useUpdateAdminPendingAccess = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminPendingAccess>>, TError,{pendingId: string;data: BodyType<UpdateAdminPendingAccessBody>;params: UpdateAdminPendingAccessParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminPendingAccess>>,
+        TError,
+        {pendingId: string;data: BodyType<UpdateAdminPendingAccessBody>;params: UpdateAdminPendingAccessParams},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminPendingAccessMutationOptions(options));
+    }
+
+export const getDeleteAdminPendingAccessUrl = (pendingId: string,
+    params: DeleteAdminPendingAccessParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/pending-access/${pendingId}?${stringifiedParams}` : `/api/admin/pending-access/${pendingId}`
+}
+
+/**
+ * @summary Delete an unconfirmed payment registration
+ */
+export const deleteAdminPendingAccess = async (pendingId: string,
+    deleteAdminPendingAccessBody: DeleteAdminPendingAccessBody,
+    params: DeleteAdminPendingAccessParams, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteAdminPendingAccessUrl(pendingId,params),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(deleteAdminPendingAccessBody)
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminPendingAccessMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPendingAccess>>, TError,{pendingId: string;data: BodyType<DeleteAdminPendingAccessBody>;params: DeleteAdminPendingAccessParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPendingAccess>>, TError,{pendingId: string;data: BodyType<DeleteAdminPendingAccessBody>;params: DeleteAdminPendingAccessParams}, TContext> => {
+
+const mutationKey = ['deleteAdminPendingAccess'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminPendingAccess>>, {pendingId: string;data: BodyType<DeleteAdminPendingAccessBody>;params: DeleteAdminPendingAccessParams}> = (props) => {
+          const {pendingId,data,params} = props ?? {};
+
+          return  deleteAdminPendingAccess(pendingId,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminPendingAccessMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminPendingAccess>>>
+    export type DeleteAdminPendingAccessMutationBody = BodyType<DeleteAdminPendingAccessBody>
+    export type DeleteAdminPendingAccessMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete an unconfirmed payment registration
+ */
+export const useDeleteAdminPendingAccess = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminPendingAccess>>, TError,{pendingId: string;data: BodyType<DeleteAdminPendingAccessBody>;params: DeleteAdminPendingAccessParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminPendingAccess>>,
+        TError,
+        {pendingId: string;data: BodyType<DeleteAdminPendingAccessBody>;params: DeleteAdminPendingAccessParams},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminPendingAccessMutationOptions(options));
+    }
 
 export const getDeleteAdminBuyerUrl = (buyerId: string,
     params: DeleteAdminBuyerParams,) => {

@@ -6,9 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { DeleteAdminAnalyticsDataLp } from './deleteAdminAnalyticsDataLp';
+import type { DeleteAdminAnalyticsDataScope } from './deleteAdminAnalyticsDataScope';
 
 export type DeleteAdminAnalyticsDataParams = {
 sessionId: string;
+scope?: DeleteAdminAnalyticsDataScope;
 lp?: DeleteAdminAnalyticsDataLp;
 from?: string;
 to?: string;

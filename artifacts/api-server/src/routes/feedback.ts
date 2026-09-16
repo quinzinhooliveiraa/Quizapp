@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import crypto from "node:crypto";
 import { and, count, desc, eq, gte } from "drizzle-orm";
+import { z } from "zod";
 import {
   db,
   reviewsTable,
@@ -29,6 +30,27 @@ const ACCESS_STATUS_ALIASES: Record<string, string> = {
   "sem acesso confirmado": "sem_acesso",
   "não verificado": "desconhecido",
 };
+
+const PENDING_PACKAGE_CONFIG = {
+  couple: { name: "Pacote Casal" },
+  family: { name: "Pacote Família" },
+} as const;
+
+const pendingAccessBodySchema = z.object({
+  buyerName: z.string().trim().min(1).max(160),
+  buyerEmail: z
+    .string()
+    .trim()
+    .max(200)
+    .nullable()
+    .transform((value) => value?.toLowerCase() || null),
+  packageId: z.enum(["couple", "family"]),
+  paymentMethod: z.enum(["pix", "card", "unknown"]).nullable(),
+});
+
+const pendingDeleteBodySchema = z.object({
+  confirmation: z.literal("APAGAR PAGAMENTO"),
+});
 
 function normalizeAccessStatus(value: string | undefined): string | null {
   const normalized = value?.trim().toLowerCase() || "";
@@ -238,6 +260,7 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
         buyerName: sessionsTable.buyerName,
         buyerEmail: sessionsTable.buyerEmail,
         paymentMethod: sessionsTable.paymentMethod,
+        packageId: sessionsTable.packageId,
         packageName: sessionsTable.packageName,
         createdAt: sessionsTable.createdAt,
       })
@@ -275,6 +298,100 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
   });
 });
 
+router.patch(
+  "/admin/pending-access/:pendingId",
+  async (req, res): Promise<void> => {
+    const sessionId =
+      typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+    if (!(await isAdminSession(sessionId))) {
+      res.status(403).json({ error: "Acesso negado" });
+      return;
+    }
+
+    const pendingId = req.params.pendingId?.trim();
+    const parsed = pendingAccessBodySchema.safeParse(req.body);
+    if (!pendingId || !parsed.success) {
+      res.status(400).json({ error: "Dados do pagamento inválidos" });
+      return;
+    }
+
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const packageConfig = PENDING_PACKAGE_CONFIG[parsed.data.packageId];
+    const updated = await db
+      .update(sessionsTable)
+      .set({
+        buyerName: parsed.data.buyerName,
+        buyerEmail: parsed.data.buyerEmail,
+        packageId: parsed.data.packageId,
+        packageName: packageConfig.name,
+        paymentMethod: parsed.data.paymentMethod,
+      })
+      .where(
+        and(
+          eq(sessionsTable.id, pendingId),
+          eq(sessionsTable.accessGranted, false),
+          eq(sessionsTable.internal, false),
+          gte(sessionsTable.createdAt, since),
+        ),
+      )
+      .returning({
+        id: sessionsTable.id,
+        buyerName: sessionsTable.buyerName,
+        buyerEmail: sessionsTable.buyerEmail,
+        paymentMethod: sessionsTable.paymentMethod,
+        packageId: sessionsTable.packageId,
+        packageName: sessionsTable.packageName,
+        createdAt: sessionsTable.createdAt,
+      });
+
+    if (updated.length === 0) {
+      res.status(404).json({ error: "Pagamento não confirmado não encontrado" });
+      return;
+    }
+
+    res.json(updated[0]);
+  },
+);
+
+router.delete(
+  "/admin/pending-access/:pendingId",
+  async (req, res): Promise<void> => {
+    const sessionId =
+      typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+    if (!(await isAdminSession(sessionId))) {
+      res.status(403).json({ error: "Acesso negado" });
+      return;
+    }
+
+    const pendingId = req.params.pendingId?.trim();
+    const parsed = pendingDeleteBodySchema.safeParse(req.body);
+    if (!pendingId || !parsed.success) {
+      res.status(400).json({ error: "Digite APAGAR PAGAMENTO para confirmar" });
+      return;
+    }
+
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const deleted = await db
+      .delete(sessionsTable)
+      .where(
+        and(
+          eq(sessionsTable.id, pendingId),
+          eq(sessionsTable.accessGranted, false),
+          eq(sessionsTable.internal, false),
+          gte(sessionsTable.createdAt, since),
+        ),
+      )
+      .returning({ id: sessionsTable.id });
+
+    if (deleted.length === 0) {
+      res.status(404).json({ error: "Pagamento não confirmado não encontrado" });
+      return;
+    }
+
+    res.status(204).end();
+  },
+);
+
 router.delete("/admin/buyers/:buyerId", async (req, res): Promise<void> => {
   const sessionId =
     typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
@@ -291,7 +408,9 @@ router.delete("/admin/buyers/:buyerId", async (req, res): Promise<void> => {
 
   const deleted = await db
     .delete(sessionsTable)
-    .where(eq(sessionsTable.id, buyerId))
+    .where(
+      and(eq(sessionsTable.id, buyerId), eq(sessionsTable.accessGranted, true)),
+    )
     .returning({ id: sessionsTable.id });
 
   if (deleted.length === 0) {

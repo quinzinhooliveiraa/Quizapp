@@ -758,6 +758,7 @@ router.delete("/admin/analytics-data", async (req, res): Promise<void> => {
   }
 
   const lpIds = window.lpId === "all" ? [...LP_IDS] : [window.lpId];
+  const scope = parsed.data.scope ?? "landing";
   const eventFilters = [
     inArray(pageEventsTable.lpId, lpIds),
     gte(pageEventsTable.createdAt, window.from),
@@ -771,6 +772,26 @@ router.delete("/admin/analytics-data", async (req, res): Promise<void> => {
   ];
 
   const deleted = await db.transaction(async (tx) => {
+    if (scope === "quiz") {
+      const deletedQuizAnswers = await tx
+        .delete(quizAnswersTable)
+        .where(
+          and(
+            inArray(quizAnswersTable.lpId, lpIds),
+            gte(quizAnswersTable.createdAt, window.from),
+            lt(quizAnswersTable.createdAt, window.to),
+          ),
+        )
+        .returning({ id: quizAnswersTable.id });
+
+      return {
+        deletedEvents: 0,
+        deletedSessions: 0,
+        deletedInvites: 0,
+        deletedQuizAnswers: deletedQuizAnswers.length,
+      };
+    }
+
     const sessions = await tx
       .select({ id: sessionsTable.id })
       .from(sessionsTable)
@@ -795,22 +816,11 @@ router.delete("/admin/analytics-data", async (req, res): Promise<void> => {
             .where(inArray(sessionsTable.id, sessionIds))
             .returning({ id: sessionsTable.id })
         : [];
-    const deletedQuizAnswers = await tx
-      .delete(quizAnswersTable)
-      .where(
-        and(
-          inArray(quizAnswersTable.lpId, lpIds),
-          gte(quizAnswersTable.createdAt, window.from),
-          lt(quizAnswersTable.createdAt, window.to),
-        ),
-      )
-      .returning({ id: quizAnswersTable.id });
-
     return {
       deletedEvents: events.length,
       deletedSessions: deletedSessions.length,
       deletedInvites: invites.length,
-      deletedQuizAnswers: deletedQuizAnswers.length,
+      deletedQuizAnswers: 0,
     };
   });
 

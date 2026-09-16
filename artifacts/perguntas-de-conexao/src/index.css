@@ -4723,7 +4723,7 @@
 }
 .admin-pending-access-card {
   display: grid;
-  grid-template-columns: 1.3fr 1fr auto auto;
+  grid-template-columns: 1.3fr 1fr auto auto auto;
   gap: 1rem;
   align-items: center;
   padding: 0.85rem 1rem;
@@ -4753,6 +4753,128 @@
   font-size: 0.65rem !important;
   font-weight: 700;
   white-space: nowrap;
+}
+.admin-pending-access-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.admin-visibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.55rem;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+}
+.admin-visibility-toggle:hover,
+.admin-visibility-toggle.is-visible {
+  color: #e8c98a;
+  border-color: rgba(232, 201, 138, 0.38);
+  background: rgba(232, 201, 138, 0.08);
+}
+.admin-pending-access-actions {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem !important;
+}
+.admin-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.5rem;
+  color: #e8c98a;
+  background: transparent;
+  border: 1px solid rgba(232, 201, 138, 0.28);
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.admin-edit-button:hover {
+  background: rgba(232, 201, 138, 0.1);
+  border-color: rgba(232, 201, 138, 0.55);
+}
+.admin-edit-button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+.admin-pending-editor,
+.admin-pending-delete-confirm {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.85rem;
+  padding: 1rem;
+  border: 1px solid rgba(196, 172, 255, 0.24);
+  border-radius: 0.85rem;
+  background: rgba(196, 172, 255, 0.06);
+}
+.admin-pending-delete-confirm {
+  border-color: rgba(255, 130, 130, 0.28);
+  background: rgba(255, 110, 110, 0.06);
+}
+.admin-pending-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.admin-pending-editor-heading h3,
+.admin-pending-delete-confirm h3 {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.admin-pending-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.admin-pending-editor-grid label,
+.admin-pending-delete-confirm label {
+  display: grid;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.admin-pending-editor-grid input,
+.admin-pending-editor-grid select,
+.admin-pending-delete-confirm input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.7rem;
+  color: #f9f8fb;
+  background: rgba(8, 7, 18, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.45rem;
+  font: inherit;
+  font-size: 0.82rem;
+}
+.admin-pending-editor-grid input:focus,
+.admin-pending-editor-grid select:focus,
+.admin-pending-delete-confirm input:focus {
+  outline: 2px solid rgba(196, 172, 255, 0.65);
+  outline-offset: 1px;
+}
+.admin-pending-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+.admin-pending-delete-confirm > p:not(.admin-eyebrow) {
+  max-width: 42rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 .admin-support-card {
   display: grid;
@@ -4897,8 +5019,21 @@
   .admin-pending-access-card {
     grid-template-columns: 1fr 1fr;
   }
+  .admin-pending-access-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
   .admin-pending-access-card time {
     grid-column: 1 / -1;
+  }
+  .admin-pending-editor-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-pending-editor-actions {
+    flex-direction: column-reverse;
+  }
+  .admin-pending-editor-actions button {
+    width: 100%;
   }
 }
 

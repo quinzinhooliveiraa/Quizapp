@@ -7,9 +7,12 @@ import {
   Check,
   Copy,
   ChevronDown,
+  Eye,
+  EyeOff,
   ExternalLink,
   FlaskConical,
   LayoutTemplate,
+  Pencil,
   ShieldAlert,
   Trash2,
 } from "lucide-react";
@@ -72,8 +75,15 @@ type PendingAccessEntry = {
   buyerName: string;
   buyerEmail: string | null;
   paymentMethod: string | null;
+  packageId: "couple" | "family";
   packageName: string;
   createdAt: string;
+};
+type PendingAccessDraft = {
+  buyerName: string;
+  buyerEmail: string;
+  packageId: "couple" | "family";
+  paymentMethod: "pix" | "card" | "unknown" | "";
 };
 type RecordingLookup = {
   available?: boolean;
@@ -248,6 +258,7 @@ const TABS = [
   { id: "buyers", label: "Compradores" },
   { id: "pages", label: "Páginas" },
   { id: "analytics", label: "Análise" },
+  { id: "quiz", label: "Quiz" },
   { id: "experiments", label: "Experimentos" },
   { id: "notifications", label: "Notificações" },
   { id: "feedback", label: "Feedback" },
@@ -1255,9 +1266,6 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
   const [viewMode, setViewMode] = useState<AnalyticsViewMode>("funnel");
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const [cleanupConfirmation, setCleanupConfirmation] = useState("");
-  const [quizAnalytics, setQuizAnalytics] = useState<QuizAnalytics | null>(null);
-  const [quizAnalyticsLoading, setQuizAnalyticsLoading] = useState(false);
-  const [quizAnalyticsError, setQuizAnalyticsError] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<{
     deletedEvents: number;
     deletedSessions: number;
@@ -1281,7 +1289,7 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
     Boolean(sessionId) &&
     (period !== "custom" || Boolean(customFrom && customTo));
   const cleanupParams = useMemo<DeleteAdminAnalyticsDataParams>(() => {
-    const base = { sessionId, lp: landingPage };
+    const base = { sessionId, lp: landingPage, scope: "landing" as const };
     if (period === "custom") {
       return {
         ...base,
@@ -1327,49 +1335,6 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
       retry: 1,
     },
   });
-
-  useEffect(() => {
-    if (!canFetch) {
-      setQuizAnalytics(null);
-      return;
-    }
-    const controller = new AbortController();
-    const search = new URLSearchParams({
-      sessionId,
-      lp: landingPage,
-    });
-    if (period === "custom") {
-      search.set("from", customFrom);
-      search.set("to", customTo);
-    } else {
-      search.set("days", period);
-    }
-    setQuizAnalyticsLoading(true);
-    setQuizAnalyticsError(false);
-    fetch(`${apiBaseUrl}/api/admin/quiz-analytics?${search.toString()}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("quiz analytics");
-        return (await response.json()) as QuizAnalytics;
-      })
-      .then((data) => setQuizAnalytics(data))
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setQuizAnalyticsError(true);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setQuizAnalyticsLoading(false);
-      });
-    return () => controller.abort();
-  }, [
-    canFetch,
-    customFrom,
-    customTo,
-    landingPage,
-    period,
-    sessionId,
-  ]);
 
   return (
     <section className="admin-section admin-analysis" aria-labelledby="analysis-title">
@@ -1466,20 +1431,6 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
           onViewModeChange={setViewMode}
         />
       )}
-      {quizAnalyticsLoading && (
-        <div className="admin-analysis-state" role="status">
-          Carregando respostas do quiz…
-        </div>
-      )}
-      {quizAnalyticsError && (
-        <div className="admin-analysis-state is-error" role="alert">
-          Não foi possível carregar as respostas do quiz agora.
-        </div>
-      )}
-      {quizAnalytics && !quizAnalyticsLoading && !quizAnalyticsError && (
-        <QuizAnswersPanel data={quizAnalytics} />
-      )}
-
       <section className="admin-cleanup-card" aria-labelledby="cleanup-title">
         <div className="admin-cleanup-heading">
           <div className="admin-cleanup-icon" aria-hidden="true">
@@ -1493,7 +1444,7 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
         <p>
           Apague os eventos e checkouts desta seleção para começar uma nova
           leitura sem os logs atuais. A limpeza também remove convites ligados
-          aos checkouts selecionados.
+          aos checkouts selecionados, mas não mexe nas respostas do quiz.
         </p>
         <div className="admin-cleanup-scope">
           <span>
@@ -1507,8 +1458,7 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
           <p className="admin-cleanup-result" role="status">
             Limpeza concluída: {cleanupResult.deletedEvents} eventos,{" "}
             {cleanupResult.deletedSessions} checkouts e{" "}
-            {cleanupResult.deletedInvites} convites e{" "}
-            {cleanupResult.deletedQuizAnswers} respostas de quiz removidos.
+            {cleanupResult.deletedInvites} convites removidos.
           </p>
         )}
         {cleanupMutation.isError && (
@@ -1552,8 +1502,7 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
               período <strong>{periodLabel}</strong>.
             </p>
             <ul>
-               <li>eventos de visualização, clique, saída e LCP;</li>
-               <li>respostas registradas no quiz;</li>
+              <li>eventos de visualização, clique, saída e LCP;</li>
               <li>checkouts e compras confirmadas dentro do escopo;</li>
               <li>convites ligados a esses checkouts.</li>
             </ul>
@@ -1604,6 +1553,304 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
   );
 }
 
+function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
+  const [landingPage, setLandingPage] = useState<FunnelLandingPageId>("v2");
+  const [period, setPeriod] = useState<AnalyticsPeriod>("30");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [cleanupOpen, setCleanupOpen] = useState(false);
+  const [cleanupConfirmation, setCleanupConfirmation] = useState("");
+  const [quizAnalytics, setQuizAnalytics] = useState<QuizAnalytics | null>(null);
+  const [quizAnalyticsLoading, setQuizAnalyticsLoading] = useState(false);
+  const [quizAnalyticsError, setQuizAnalyticsError] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState<number | null>(null);
+
+  const canFetch =
+    Boolean(sessionId) &&
+    (period !== "custom" || Boolean(customFrom && customTo));
+  const cleanupParams = useMemo<DeleteAdminAnalyticsDataParams>(() => {
+    const base = {
+      sessionId,
+      lp: landingPage,
+      scope: "quiz" as const,
+    };
+    if (period === "custom") {
+      return {
+        ...base,
+        ...(customFrom ? { from: customFrom } : {}),
+        ...(customTo ? { to: customTo } : {}),
+      };
+    }
+    return { ...base, days: Number(period) };
+  }, [customFrom, customTo, landingPage, period, sessionId]);
+  const cleanupMutation = useDeleteAdminAnalyticsData({
+    mutation: {
+      onSuccess: (result) => {
+        setCleanupOpen(false);
+        setCleanupConfirmation("");
+        setCleanupResult(result.deletedQuizAnswers);
+      },
+    },
+  });
+  const landingLabel =
+    landingPage === "all"
+      ? "todas as landing pages"
+      : landingPage === "lp3"
+        ? "LP3"
+        : landingPage === "v1"
+          ? "V1"
+          : "LP principal";
+  const periodLabel =
+    period === "custom"
+      ? `${customFrom || "—"} até ${customTo || "—"}`
+      : `últimos ${period} dias`;
+  const canConfirmCleanup =
+    canFetch &&
+    cleanupConfirmation.trim().toUpperCase() === CLEANUP_CONFIRMATION &&
+    !cleanupMutation.isPending;
+
+  useEffect(() => {
+    if (!canFetch) {
+      setQuizAnalytics(null);
+      return;
+    }
+    const controller = new AbortController();
+    const search = new URLSearchParams({ sessionId, lp: landingPage });
+    if (period === "custom") {
+      search.set("from", customFrom);
+      search.set("to", customTo);
+    } else {
+      search.set("days", period);
+    }
+    setQuizAnalyticsLoading(true);
+    setQuizAnalyticsError(false);
+    fetch(`${apiBaseUrl}/api/admin/quiz-analytics?${search.toString()}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("quiz analytics");
+        return (await response.json()) as QuizAnalytics;
+      })
+      .then((data) => setQuizAnalytics(data))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setQuizAnalyticsError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setQuizAnalyticsLoading(false);
+      });
+    return () => controller.abort();
+  }, [canFetch, customFrom, customTo, landingPage, period, sessionId]);
+
+  return (
+    <section
+      className="admin-section admin-analysis"
+      aria-labelledby="quiz-analysis-title"
+    >
+      <div className="admin-section-heading">
+        <div>
+          <p className="admin-eyebrow">comportamento das respostas</p>
+          <h2 id="quiz-analysis-title">Análise do quiz</h2>
+        </div>
+        <span className="admin-count">dados separados da LP</span>
+      </div>
+      <p className="admin-analysis-copy">
+        Veja somente as respostas e a conclusão do quiz, sem misturar esses
+        dados com visitas, cliques e compras das landing pages.
+      </p>
+
+      <div className="admin-analysis-controls" aria-label="Filtros do quiz">
+        <label>
+          <span>Landing page</span>
+          <select
+            value={landingPage}
+            onChange={(event) =>
+              setLandingPage(event.target.value as FunnelLandingPageId)
+            }
+            data-testid="select-quiz-analytics-landing-page"
+          >
+            <option value="v2">LP principal · Perguntas que aproximam</option>
+            <option value="lp3">LP3 · Oferta essencial</option>
+            <option value="v1">V1 · Reacender a chama</option>
+            <option value="all">Todas as landing pages</option>
+          </select>
+        </label>
+        <label>
+          <span>Período</span>
+          <select
+            value={period}
+            onChange={(event) =>
+              setPeriod(event.target.value as AnalyticsPeriod)
+            }
+            data-testid="select-quiz-analytics-period"
+          >
+            <option value="2">Últimos 2 dias</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </label>
+        {period === "custom" && (
+          <div className="admin-analysis-date-range">
+            <label>
+              <span>Início</span>
+              <input
+                type="date"
+                value={customFrom}
+                max={customTo || undefined}
+                onChange={(event) => setCustomFrom(event.target.value)}
+                data-testid="input-quiz-analytics-from"
+              />
+            </label>
+            <label>
+              <span>Fim</span>
+              <input
+                type="date"
+                value={customTo}
+                min={customFrom || undefined}
+                onChange={(event) => setCustomTo(event.target.value)}
+                data-testid="input-quiz-analytics-to"
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      {period === "custom" && (!customFrom || !customTo) && (
+        <p className="admin-analysis-hint" role="status">
+          Escolha as duas datas para carregar o período personalizado.
+        </p>
+      )}
+      {quizAnalyticsLoading && (
+        <div className="admin-analysis-state" role="status">
+          Carregando respostas do quiz…
+        </div>
+      )}
+      {quizAnalyticsError && (
+        <div className="admin-analysis-state is-error" role="alert">
+          Não foi possível carregar as respostas do quiz agora.
+        </div>
+      )}
+      {quizAnalytics && !quizAnalyticsLoading && !quizAnalyticsError && (
+        <QuizAnswersPanel data={quizAnalytics} />
+      )}
+
+      <section className="admin-cleanup-card" aria-labelledby="quiz-cleanup-title">
+        <div className="admin-cleanup-heading">
+          <div className="admin-cleanup-icon" aria-hidden="true">
+            <Trash2 size={18} />
+          </div>
+          <div>
+            <p className="admin-eyebrow">zona de manutenção</p>
+            <h3 id="quiz-cleanup-title">Limpar dados do quiz</h3>
+          </div>
+        </div>
+        <p>
+          Apague somente as respostas registradas no quiz para começar uma nova
+          leitura. Os eventos e checkouts da LP ficam preservados.
+        </p>
+        <div className="admin-cleanup-scope">
+          <span>
+            <strong>Escopo</strong> respostas do quiz · {landingLabel}
+          </span>
+          <span>
+            <strong>Período</strong> {periodLabel}
+          </span>
+        </div>
+        {cleanupResult !== null && (
+          <p className="admin-cleanup-result" role="status">
+            Limpeza concluída: {cleanupResult}{" "}
+            {cleanupResult === 1 ? "resposta removida" : "respostas removidas"}.
+          </p>
+        )}
+        {cleanupMutation.isError && (
+          <p className="admin-cleanup-error" role="alert">
+            Não foi possível limpar as respostas do quiz. Verifique a seleção e
+            tente novamente.
+          </p>
+        )}
+        <button
+          type="button"
+          className="admin-cleanup-button"
+          onClick={() => {
+            setCleanupResult(null);
+            setCleanupConfirmation("");
+            setCleanupOpen(true);
+          }}
+          disabled={!canFetch || cleanupMutation.isPending}
+        >
+          <Trash2 size={16} />
+          Limpar respostas do quiz
+        </button>
+        {!canFetch && (
+          <small className="admin-cleanup-hint">
+            Complete o período personalizado antes de limpar.
+          </small>
+        )}
+      </section>
+
+      {cleanupOpen && (
+        <div className="admin-cleanup-overlay">
+          <div
+            className="admin-cleanup-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quiz-cleanup-dialog-title"
+          >
+            <p className="admin-eyebrow">ação permanente</p>
+            <h3 id="quiz-cleanup-dialog-title">Confirmar limpeza do quiz</h3>
+            <p>
+              Você está prestes a apagar somente as respostas do quiz de{" "}
+              <strong>{landingLabel}</strong> no período{" "}
+              <strong>{periodLabel}</strong>.
+            </p>
+            <p className="admin-cleanup-warning">
+              Esta ação não pode ser desfeita. Os eventos e checkouts da LP não
+              serão apagados.
+            </p>
+            <label className="admin-cleanup-confirm-label">
+              <span>
+                Digite <strong>{CLEANUP_CONFIRMATION}</strong> para continuar
+              </span>
+              <input
+                value={cleanupConfirmation}
+                onChange={(event) => setCleanupConfirmation(event.target.value)}
+                placeholder={CLEANUP_CONFIRMATION}
+                autoComplete="off"
+                data-testid="input-confirm-quiz-cleanup"
+              />
+            </label>
+            <div className="admin-cleanup-dialog-actions">
+              <button
+                type="button"
+                className="admin-cleanup-cancel"
+                onClick={() => {
+                  setCleanupOpen(false);
+                  setCleanupConfirmation("");
+                }}
+                disabled={cleanupMutation.isPending}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="admin-cleanup-button"
+                onClick={() =>
+                  cleanupMutation.mutate({ params: cleanupParams })
+                }
+                disabled={!canConfirmCleanup}
+                data-testid="button-confirm-quiz-cleanup"
+              >
+                {cleanupMutation.isPending ? "Limpando…" : "Apagar respostas"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function BuyersTab({
   buyers,
   pendingAccess,
@@ -1612,14 +1859,136 @@ function BuyersTab({
   pendingAccess: PendingAccessEntry[];
 }) {
   const [visibleBuyers, setVisibleBuyers] = useState(buyers);
+  const [visiblePendingAccess, setVisiblePendingAccess] = useState(pendingAccess);
+  const [showPendingAccess, setShowPendingAccess] = useState(
+    () => safeGetItem("admin-pending-access-visible") !== "0",
+  );
   const [loadingBuyerId, setLoadingBuyerId] = useState<string | null>(null);
   const [deletingBuyerId, setDeletingBuyerId] = useState<string | null>(null);
   const [deleteMessage, setDeleteMessage] = useState("");
+  const [editingPendingAccess, setEditingPendingAccess] =
+    useState<PendingAccessEntry | null>(null);
+  const [pendingAccessDraft, setPendingAccessDraft] =
+    useState<PendingAccessDraft | null>(null);
+  const [savingPendingAccessId, setSavingPendingAccessId] = useState<
+    string | null
+  >(null);
+  const [deletingPendingAccessId, setDeletingPendingAccessId] = useState<
+    string | null
+  >(null);
+  const [pendingDeleteTarget, setPendingDeleteTarget] =
+    useState<PendingAccessEntry | null>(null);
+  const [pendingDeleteConfirmation, setPendingDeleteConfirmation] = useState("");
+  const [pendingAccessMessage, setPendingAccessMessage] = useState("");
   const [recordingMessages, setRecordingMessages] = useState<
     Record<string, RecordingLookup>
   >({});
   const [copiedVisitorKey, setCopiedVisitorKey] = useState<string | null>(null);
   useEffect(() => setVisibleBuyers(buyers), [buyers]);
+  useEffect(() => setVisiblePendingAccess(pendingAccess), [pendingAccess]);
+
+  const togglePendingAccessVisibility = () => {
+    const nextValue = !showPendingAccess;
+    if (nextValue) {
+      safeRemoveItem("admin-pending-access-visible");
+    } else {
+      safeSetItem("admin-pending-access-visible", "0");
+    }
+    setShowPendingAccess(nextValue);
+  };
+
+  const startEditingPendingAccess = (entry: PendingAccessEntry) => {
+    setPendingAccessMessage("");
+    setEditingPendingAccess(entry);
+    setPendingAccessDraft({
+      buyerName: entry.buyerName,
+      buyerEmail: entry.buyerEmail || "",
+      packageId: entry.packageId,
+      paymentMethod:
+        entry.paymentMethod === "pix" ||
+        entry.paymentMethod === "card" ||
+        entry.paymentMethod === "unknown"
+          ? entry.paymentMethod
+          : "",
+    });
+  };
+
+  const savePendingAccess = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingPendingAccess || !pendingAccessDraft) return;
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId) return;
+    setSavingPendingAccessId(editingPendingAccess.id);
+    setPendingAccessMessage("");
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/pending-access/${encodeURIComponent(editingPendingAccess.id)}?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...pendingAccessDraft,
+            buyerEmail: pendingAccessDraft.buyerEmail.trim() || null,
+            paymentMethod: pendingAccessDraft.paymentMethod || null,
+          }),
+        },
+      );
+      if (!response.ok) throw new Error("update-pending-access");
+      const updated = (await response.json()) as PendingAccessEntry;
+      setVisiblePendingAccess((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setEditingPendingAccess(null);
+      setPendingAccessDraft(null);
+    } catch {
+      setPendingAccessMessage(
+        "Não foi possível salvar este pagamento. Tente novamente.",
+      );
+    } finally {
+      setSavingPendingAccessId(null);
+    }
+  };
+
+  const requestPendingAccessDeletion = (entry: PendingAccessEntry) => {
+    setPendingAccessMessage("");
+    setPendingDeleteTarget(entry);
+    setPendingDeleteConfirmation("");
+  };
+
+  const deletePendingAccess = async () => {
+    if (
+      !pendingDeleteTarget ||
+      pendingDeleteConfirmation.trim() !== "APAGAR PAGAMENTO"
+    ) {
+      return;
+    }
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId) return;
+    setDeletingPendingAccessId(pendingDeleteTarget.id);
+    setPendingAccessMessage("");
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/pending-access/${encodeURIComponent(pendingDeleteTarget.id)}?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ confirmation: "APAGAR PAGAMENTO" }),
+        },
+      );
+      if (!response.ok) throw new Error("delete-pending-access");
+      setVisiblePendingAccess((current) =>
+        current.filter((item) => item.id !== pendingDeleteTarget.id),
+      );
+      setPendingDeleteTarget(null);
+      setPendingDeleteConfirmation("");
+    } catch {
+      setPendingAccessMessage(
+        "Não foi possível apagar este pagamento. Tente novamente.",
+      );
+    } finally {
+      setDeletingPendingAccessId(null);
+    }
+  };
 
   const openRecording = async (buyerId: string) => {
     const sessionId = safeGetItem("conexao-session")?.trim();
@@ -1699,13 +2068,30 @@ function BuyersTab({
           <p className="admin-eyebrow">últimos 30 dias</p>
           <h2 id="pending-access-title">Pagamentos não confirmados</h2>
         </div>
-        <span className="admin-count">{pendingAccess.length}</span>
+        <div className="admin-pending-access-heading-actions">
+          <span className="admin-count">{visiblePendingAccess.length}</span>
+          <button
+            type="button"
+            className={`admin-visibility-toggle${showPendingAccess ? " is-visible" : ""}`}
+            role="switch"
+            aria-checked={showPendingAccess}
+            onClick={togglePendingAccessVisibility}
+          >
+            {showPendingAccess ? <Eye size={15} /> : <EyeOff size={15} />}
+            {showPendingAccess ? "Ocultar" : "Mostrar"}
+          </button>
+        </div>
       </div>
-      {pendingAccess.length === 0 ? (
+      {!showPendingAccess ? (
+        <p className="admin-footnote">
+          Esta visão está oculta neste navegador. Use “Mostrar” para abrir a
+          lista novamente.
+        </p>
+      ) : visiblePendingAccess.length === 0 ? (
         <p className="admin-footnote">Nenhum pagamento aguardando confirmação.</p>
       ) : (
         <div className="admin-pending-access-list">
-          {pendingAccess.map((entry) => (
+          {visiblePendingAccess.map((entry) => (
             <article className="admin-pending-access-card" key={entry.id}>
               <div>
                 <strong>{entry.buyerName || "Sem nome"}</strong>
@@ -1717,8 +2103,203 @@ function BuyersTab({
               </div>
               <span className="admin-pending-access-badge">Não confirmado</span>
               <time dateTime={entry.createdAt}>{formatDate(entry.createdAt)}</time>
+              <div className="admin-pending-access-actions">
+                <button
+                  type="button"
+                  className="admin-edit-button"
+                  onClick={() => startEditingPendingAccess(entry)}
+                  disabled={
+                    savingPendingAccessId === entry.id ||
+                    deletingPendingAccessId === entry.id
+                  }
+                >
+                  <Pencil size={14} />
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="admin-delete-button"
+                  aria-label={`Apagar pagamento de ${entry.buyerName || "Sem nome"}`}
+                  onClick={() => requestPendingAccessDeletion(entry)}
+                  disabled={
+                    savingPendingAccessId === entry.id ||
+                    deletingPendingAccessId === entry.id
+                  }
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </article>
           ))}
+        </div>
+      )}
+      {pendingAccessMessage && (
+        <p className="admin-notification-message">{pendingAccessMessage}</p>
+      )}
+      {editingPendingAccess && pendingAccessDraft && (
+        <form
+          className="admin-pending-editor"
+          onSubmit={(event) => void savePendingAccess(event)}
+        >
+          <div className="admin-pending-editor-heading">
+            <div>
+              <p className="admin-eyebrow">editar cadastro</p>
+              <h3>{editingPendingAccess.buyerName || "Pagamento"}</h3>
+            </div>
+            <button
+              type="button"
+              className="admin-icon-button"
+              aria-label="Fechar edição"
+              onClick={() => {
+                setEditingPendingAccess(null);
+                setPendingAccessDraft(null);
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <div className="admin-pending-editor-grid">
+            <label>
+              Nome
+              <input
+                value={pendingAccessDraft.buyerName}
+                onChange={(event) =>
+                  setPendingAccessDraft((current) =>
+                    current
+                      ? { ...current, buyerName: event.target.value }
+                      : current,
+                  )
+                }
+                required
+                maxLength={160}
+              />
+            </label>
+            <label>
+              E-mail
+              <input
+                type="email"
+                value={pendingAccessDraft.buyerEmail}
+                onChange={(event) =>
+                  setPendingAccessDraft((current) =>
+                    current
+                      ? { ...current, buyerEmail: event.target.value }
+                      : current,
+                  )
+                }
+                maxLength={200}
+              />
+            </label>
+            <label>
+              Pacote
+              <select
+                value={pendingAccessDraft.packageId}
+                onChange={(event) =>
+                  setPendingAccessDraft((current) =>
+                    current
+                      ? {
+                          ...current,
+                          packageId: event.target.value as "couple" | "family",
+                        }
+                      : current,
+                  )
+                }
+              >
+                <option value="couple">Pacote Casal</option>
+                <option value="family">Pacote Família</option>
+              </select>
+            </label>
+            <label>
+              Pagamento
+              <select
+                value={pendingAccessDraft.paymentMethod}
+                onChange={(event) =>
+                  setPendingAccessDraft((current) =>
+                    current
+                      ? {
+                          ...current,
+                          paymentMethod: event.target.value as PendingAccessDraft["paymentMethod"],
+                        }
+                      : current,
+                  )
+                }
+              >
+                <option value="">Não informado</option>
+                <option value="pix">Pix</option>
+                <option value="card">Cartão</option>
+                <option value="unknown">Não lembro</option>
+              </select>
+            </label>
+          </div>
+          <div className="admin-pending-editor-actions">
+            <button
+              type="button"
+              className="admin-experiment-secondary-button"
+              onClick={() => {
+                setEditingPendingAccess(null);
+                setPendingAccessDraft(null);
+              }}
+              disabled={savingPendingAccessId === editingPendingAccess.id}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="admin-experiment-action-button"
+              disabled={savingPendingAccessId === editingPendingAccess.id}
+            >
+              {savingPendingAccessId === editingPendingAccess.id
+                ? "Salvando…"
+                : "Salvar alterações"}
+            </button>
+          </div>
+        </form>
+      )}
+      {pendingDeleteTarget && (
+        <div className="admin-pending-delete-confirm" role="alertdialog">
+          <p className="admin-eyebrow">apagar pagamento</p>
+          <h3>
+            Remover o cadastro de{" "}
+            {pendingDeleteTarget.buyerName || "Sem nome"}?
+          </h3>
+          <p>
+            Isso apaga apenas o registro administrativo desta tentativa. Não
+            cancela nem estorna uma cobrança no provedor de pagamento.
+          </p>
+          <label>
+            Digite <strong>APAGAR PAGAMENTO</strong> para confirmar
+            <input
+              value={pendingDeleteConfirmation}
+              onChange={(event) => setPendingDeleteConfirmation(event.target.value)}
+              autoComplete="off"
+              autoFocus
+            />
+          </label>
+          <div className="admin-pending-editor-actions">
+            <button
+              type="button"
+              className="admin-experiment-secondary-button"
+              onClick={() => {
+                setPendingDeleteTarget(null);
+                setPendingDeleteConfirmation("");
+              }}
+              disabled={deletingPendingAccessId === pendingDeleteTarget.id}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="admin-experiment-action-button is-danger"
+              onClick={() => void deletePendingAccess()}
+              disabled={
+                pendingDeleteConfirmation.trim() !== "APAGAR PAGAMENTO" ||
+                deletingPendingAccessId === pendingDeleteTarget.id
+              }
+            >
+              {deletingPendingAccessId === pendingDeleteTarget.id
+                ? "Apagando…"
+                : "Apagar pagamento"}
+            </button>
+          </div>
         </div>
       )}
     </section>
@@ -3307,6 +3888,7 @@ export default function Admin() {
       />
     ),
     analytics: <AnalyticsTab sessionId={sessionId} />,
+    quiz: <QuizAnalyticsTab sessionId={sessionId} />,
     feedback: <FeedbackTab reviews={reviews} suggestions={suggestions} />,
     experiments: <ExperimentsTab sessionId={sessionId} />,
     notifications: <NotificationsTab sessionId={sessionId} />,

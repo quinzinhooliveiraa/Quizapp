@@ -638,6 +638,13 @@ paths:
           in: query
           required: true
           schema: { type: string }
+        - name: scope
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [landing, quiz]
+            default: landing
         - name: lp
           in: query
           required: false
@@ -1105,11 +1112,91 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Buyer"
+                  pendingAccess:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PendingAccess"
                   total: { type: number }
                   totalWithAccess: { type: number }
-                required: [buyers, total, totalWithAccess]
+                required: [buyers, pendingAccess, total, totalWithAccess]
         "403":
           description: Access denied
+  /admin/pending-access/{pendingId}:
+    patch:
+      operationId: updateAdminPendingAccess
+      tags: [admin]
+      summary: Update an unconfirmed payment registration
+      parameters:
+        - name: pendingId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                buyerName: { type: string, minLength: 1, maxLength: 160 }
+                buyerEmail: { type: ["string", "null"], maxLength: 200 }
+                packageId:
+                  type: string
+                  enum: [couple, family]
+                paymentMethod:
+                  type: ["string", "null"]
+                  enum: [pix, card, unknown, null]
+              required: [buyerName, buyerEmail, packageId, paymentMethod]
+      responses:
+        "200":
+          description: Updated unconfirmed payment registration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingAccess"
+        "400":
+          description: Invalid pending payment data
+        "403":
+          description: Access denied
+        "404":
+          description: Pending payment not found
+    delete:
+      operationId: deleteAdminPendingAccess
+      tags: [admin]
+      summary: Delete an unconfirmed payment registration
+      parameters:
+        - name: pendingId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirmation:
+                  type: string
+                  enum: ["APAGAR PAGAMENTO"]
+              required: [confirmation]
+      responses:
+        "204":
+          description: Pending payment deleted
+        "400":
+          description: Explicit deletion confirmation is required
+        "403":
+          description: Access denied
+        "404":
+          description: Pending payment not found
   /admin/buyers/{buyerId}:
     delete:
       operationId: deleteAdminBuyer
@@ -1330,6 +1417,28 @@ components:
           accessGranted,
           invitesUsed,
           inviteLimit,
+          createdAt,
+        ]
+    PendingAccess:
+      type: object
+      properties:
+        id: { type: string }
+        buyerName: { type: string }
+        buyerEmail: { type: ["string", "null"] }
+        paymentMethod: { type: ["string", "null"] }
+        packageId:
+          type: string
+          enum: [couple, family]
+        packageName: { type: string }
+        createdAt: { type: string, format: date-time }
+      required:
+        [
+          id,
+          buyerName,
+          buyerEmail,
+          paymentMethod,
+          packageId,
+          packageName,
           createdAt,
         ]
     LandingSession:

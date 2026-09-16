@@ -619,6 +619,7 @@ export const GetAdminQuizAnalyticsResponse = zod.object({
 /**
  * @summary Delete analytics and checkout data for a selected landing page window
  */
+export const deleteAdminAnalyticsDataQueryScopeDefault = `landing`;
 export const deleteAdminAnalyticsDataQueryLpDefault = `v2`;
 export const deleteAdminAnalyticsDataQueryDaysMax = 90;
 
@@ -626,6 +627,7 @@ export const deleteAdminAnalyticsDataQueryDaysMax = 90;
 
 export const DeleteAdminAnalyticsDataQueryParams = zod.object({
   "sessionId": zod.coerce.string(),
+  "scope": zod.enum(['landing', 'quiz']).default(deleteAdminAnalyticsDataQueryScopeDefault),
   "lp": zod.enum(['v1', 'v2', 'lp3', 'all']).default(deleteAdminAnalyticsDataQueryLpDefault),
   "from": zod.coerce.string().optional(),
   "to": zod.coerce.string().optional(),
@@ -1189,9 +1191,71 @@ export const ListAdminBuyersResponse = zod.object({
   "inviteLimit": zod.number(),
   "createdAt": zod.coerce.date()
 })),
+  "pendingAccess": zod.array(zod.object({
+  "id": zod.string(),
+  "buyerName": zod.string(),
+  "buyerEmail": zod.string().nullable(),
+  "paymentMethod": zod.string().nullable(),
+  "packageId": zod.enum(['couple', 'family']),
+  "packageName": zod.string(),
+  "createdAt": zod.coerce.date()
+})),
   "total": zod.number(),
   "totalWithAccess": zod.number()
 })
+
+
+/**
+ * @summary Update an unconfirmed payment registration
+ */
+export const UpdateAdminPendingAccessParams = zod.object({
+  "pendingId": zod.coerce.string()
+})
+
+export const UpdateAdminPendingAccessQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const updateAdminPendingAccessBodyBuyerNameMax = 160;
+
+export const updateAdminPendingAccessBodyBuyerEmailMax = 200;
+
+
+
+export const UpdateAdminPendingAccessBody = zod.object({
+  "buyerName": zod.string().min(1).max(updateAdminPendingAccessBodyBuyerNameMax),
+  "buyerEmail": zod.string().max(updateAdminPendingAccessBodyBuyerEmailMax).nullable(),
+  "packageId": zod.enum(['couple', 'family']),
+  "paymentMethod": zod.union([zod.literal('pix'),zod.literal('card'),zod.literal('unknown'),zod.literal(null)]).nullable()
+})
+
+export const UpdateAdminPendingAccessResponse = zod.object({
+  "id": zod.string(),
+  "buyerName": zod.string(),
+  "buyerEmail": zod.string().nullable(),
+  "paymentMethod": zod.string().nullable(),
+  "packageId": zod.enum(['couple', 'family']),
+  "packageName": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete an unconfirmed payment registration
+ */
+export const DeleteAdminPendingAccessParams = zod.object({
+  "pendingId": zod.coerce.string()
+})
+
+export const DeleteAdminPendingAccessQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const DeleteAdminPendingAccessBody = zod.object({
+  "confirmation": zod.enum(['APAGAR PAGAMENTO'])
+})
+
+export const DeleteAdminPendingAccessResponse = zod.void()
 
 
 /**
