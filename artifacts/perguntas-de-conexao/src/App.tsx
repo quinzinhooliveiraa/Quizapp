@@ -1906,6 +1906,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         value: "proximos",
         label: "Uma noite sem celular",
         icon: "📵",
+        imageSrc: "/quiz/s09-sem-celular.png",
       },
       {
         value: "rir",
