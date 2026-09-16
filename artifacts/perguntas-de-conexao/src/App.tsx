@@ -1912,6 +1912,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         value: "rir",
         label: "Rir de coisas que vocês nunca perguntaram",
         icon: "😂",
+        imageSrc: "/quiz/s09-rir.png",
       },
       {
         value: "conversar",
