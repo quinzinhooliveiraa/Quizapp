@@ -28986,10 +28986,130 @@ blockquote em {
   background: #211824;
 }
 
+.lp1-sale-page .lp1-sale-offer-card:not(.is-compact) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .lp1-sale-page .lp1-price-card {
   background: #fbf9ff;
   border-color: rgba(120, 90, 200, 0.22);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.lp1-sale-page .lp1-price-stack {
+  display: grid;
+  gap: 1rem;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.lp1-sale-page .lp1-price-stack .lp1-price-card {
+  max-width: none;
+  margin: 0;
+}
+
+.lp1-sale-page .lp1-price-steps-card {
+  padding-bottom: 2.15rem;
+}
+
+.lp1-sale-page .lp1-price-benefits-card {
+  padding-top: 2rem;
+}
+
+.lp1-sale-page .lp1-price-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lp1-sale-page .lp1-price-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding-left: 0;
+  color: #584b59;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.lp1-sale-page .lp1-price-step-number {
+  display: inline-flex;
+  flex: 0 0 1.8rem;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin-top: 0.05rem;
+  border-radius: 50%;
+  background: rgba(139, 53, 83, 0.12);
+  color: #8b3553;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.lp1-sale-page .lp1-price-step-copy {
+  display: block;
+  flex: 1;
+}
+
+.lp1-sale-page .lp1-price-steps strong {
+  display: block;
+  color: #2a2130;
+  font-weight: 600;
+}
+
+.lp1-sale-page .lp1-price-includes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: #584b59;
+}
+
+.lp1-sale-page .lp1-price-check {
+  flex: 0 0 auto;
+  margin-top: 0.18rem;
+  color: #2fa36b;
+  stroke-width: 2.6;
+}
+
+.lp1-sale-page .lp1-price-includes strong {
+  color: #8b3553;
+}
+
+.lp1-sale-page .lp1-price-includes-title {
+  margin: 0 0 0.75rem;
+  color: #7a5cc4 !important;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-align: left;
+  text-transform: none;
+}
+
+.lp1-sale-page .lp1-price-card .lp-cta-full {
+  min-height: 3.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .lp1-sale-page .lp1-price-steps {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .lp1-sale-page .lp1-price-steps li {
+    min-height: 2.7rem;
+  }
 }
 
 .lp1-sale-page .lp1-sale-recommended {
