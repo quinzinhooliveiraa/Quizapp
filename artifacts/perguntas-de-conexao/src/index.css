@@ -3247,7 +3247,7 @@
 
 .lp1-result-meter-labels {
   color: #9d92a6;
-  font: 400 11px/1 var(--app-font-sans);
+  font: 400 9px/1 var(--app-font-sans);
 }
 
 .lp1-result-meter-labels .is-frio {
@@ -3278,6 +3278,14 @@
   position: absolute;
   white-space: nowrap;
   transform: translateX(-50%);
+}
+
+.lp1-result-meter-labels-four span:first-child {
+  transform: translateX(0);
+}
+
+.lp1-result-meter-labels-four span:last-child {
+  transform: translateX(-100%);
 }
 
 .lp1-result-context {
@@ -3321,9 +3329,11 @@
 }
 
 .lp1-result-disclaimer {
-  margin: 0.7rem 0 1.1rem;
+  max-width: 19rem;
+  margin: 0.75rem auto 0.7rem;
   color: #7d7386;
-  font: 400 10.5px/1.45 var(--app-font-sans);
+  font: 400 8.5px/1.35 var(--app-font-sans);
+  text-align: center;
 }
 
 .lp1-result-insights {

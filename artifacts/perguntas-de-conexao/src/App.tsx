@@ -3488,14 +3488,15 @@ function Lp1ResultScreen({
     { icon: "?", label: "Dinâmica da relação", value: relationshipDynamic },
     { icon: "🌱", label: "Espaço para começar hoje", value: result.spaceValue },
   ];
-  const [meterPosition, setMeterPosition] = useState("50%");
+  const targetMeterPosition = Math.min(88, Math.max(66, result.meterPosition));
+  const [meterPosition, setMeterPosition] = useState("8%");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setMeterPosition(`${result.meterPosition}%`);
+      setMeterPosition(`${targetMeterPosition}%`);
     }, 40);
     return () => window.clearTimeout(timer);
-  }, [result.score]);
+  }, [targetMeterPosition]);
 
   return (
     <section className="lp1-result-screen" data-section-name={sectionId}>
@@ -3523,16 +3524,16 @@ function Lp1ResultScreen({
           <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
         </div>
         <div className="lp1-result-meter-labels lp1-result-meter-labels-four">
-          <span className="is-frio" style={{ left: "10%" }}>
+          <span className="is-frio" style={{ left: "0%" }}>
             Baixo
           </span>
-          <span className="is-morno" style={{ left: "37%" }}>
+          <span className="is-morno" style={{ left: "33.333%" }}>
             Estável
           </span>
-          <span className="is-morno" style={{ left: "64%" }}>
+          <span className="is-morno" style={{ left: "66.667%" }}>
             Médio
           </span>
-          <span className="is-distante" style={{ left: "90%" }}>
+          <span className="is-distante" style={{ left: "100%" }}>
             Alto
           </span>
         </div>
@@ -3548,10 +3549,6 @@ function Lp1ResultScreen({
           </div>
         </div>
       </div>
-      <p className="lp1-result-disclaimer">
-        Este score de conexão é informal e serve apenas para reflexão. Ele não
-        substitui uma avaliação clínica nem resume toda a experiência de vocês.
-      </p>
       <div className="lp1-result-insights">
         {resultInsights.map((insight) => (
           <div className="lp1-result-insight" key={insight.label}>
@@ -3562,6 +3559,10 @@ function Lp1ResultScreen({
           </div>
         ))}
       </div>
+      <p className="lp1-result-disclaimer">
+        Este score de conexão é informal e serve apenas para reflexão. Ele não
+        substitui uma avaliação clínica nem resume toda a experiência de vocês.
+      </p>
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
         {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
       </button>
