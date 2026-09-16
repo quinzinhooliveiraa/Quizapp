@@ -173,6 +173,7 @@ export async function createAbacatePixCharge({
       data: {
         amount,
         description,
+        externalId: sessionId,
         metadata: { externalId: sessionId },
       },
     }),
