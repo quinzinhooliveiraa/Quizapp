@@ -187,8 +187,12 @@ export async function createAbacatePixCharge({
     typeof json.data.brCode !== "string" ||
     typeof json.data.brCodeBase64 !== "string"
   ) {
+    const providerMessage =
+      typeof json.success === "object" && json.success?.message
+        ? json.success.message
+        : "resposta inválida do provedor";
     throw new Error(
-      `Falha ao criar cobrança Pix na Abacate Pay: ${JSON.stringify(json)}`,
+      `Falha ao criar cobrança Pix na Abacate Pay (${response.status}): ${providerMessage}`,
     );
   }
 

@@ -18,7 +18,6 @@ import {
   type ExperimentVariant,
 } from "@workspace/db";
 import { logger } from "./logger";
-import { BR_PRICE_VARIANTS } from "./pricing";
 
 export const OPTIMIZATION_INTERVAL_MS = 15 * 60 * 1000;
 export const OPTIMIZATION_STEP = 10;
@@ -329,18 +328,7 @@ async function getVariantMetrics(
       ]);
       const visitors = Number(visitorResult[0]?.value || 0);
       const purchases = Number(purchaseResult[0]?.value || 0);
-      const variantKey = [
-        variant.name.trim().toLowerCase(),
-        variant.path.split("/").filter(Boolean).pop()?.toLowerCase(),
-      ].find(
-        (candidate): candidate is keyof typeof BR_PRICE_VARIANTS =>
-          candidate === "a" || candidate === "b" || candidate === "c",
-      );
-      const priceCents = isPriceExperiment
-        ? variantKey
-          ? BR_PRICE_VARIANTS[variantKey].amountCents
-          : 0
-        : 1;
+      const priceCents = isPriceExperiment ? 5000 : 1;
       return {
         variantId: variant.id,
         name: variant.name,
