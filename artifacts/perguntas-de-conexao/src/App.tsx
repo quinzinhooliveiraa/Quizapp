@@ -2028,6 +2028,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         label: "Honesto",
         description: "para falar do que existe entre vocês",
         icon: "❤️",
+        imageSrc: "/quiz/clima-honesto.jpeg",
       },
       {
         value: "profundo",
