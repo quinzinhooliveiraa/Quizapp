@@ -22,3 +22,4 @@
 - [Pricing region resolution](pricing-region-resolution.md) — the proxy exposes no country header; use Accept-Language with BR as the safe default.
 - [Support diagnosis rules](support-diagnosis-card.md) — admin translations and push titles must use the same deterministic topic/status rules.
 - [Shared offer window](shared-offer-window.md) — sale page and checkout must use the same visitor-key offer state for countdown and regional pricing.
+- [API client declaration freshness](api-client-declaration-freshness.md) — rebuild project-reference declarations when generated source types change or consumers may read stale response shapes.

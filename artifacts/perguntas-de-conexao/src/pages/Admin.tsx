@@ -141,6 +141,16 @@ type QuizAnalytics = {
   campaigns: QuizAnalyticsGroup[];
   variants: QuizAnalyticsGroup[];
 };
+type QuizCatalogOption = {
+  value: string;
+  label: string;
+};
+type QuizCatalogEntry = {
+  screenId: string;
+  answerKey: string;
+  title: string;
+  options: QuizCatalogOption[];
+};
 type LpSessionsResponse = { sessions?: LpSession[] };
 type AnalyticsPeriod = "2" | "7" | "30" | "custom";
 type ExperimentStatus = "draft" | "active" | "paused" | "completed";
@@ -245,6 +255,174 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 const INTERNAL_TRACKING_STORAGE_KEY = "pdc_internal";
 const CLEANUP_CONFIRMATION = "LIMPAR DADOS";
+
+// Keep the admin readable even when the analytics API only has the technical
+// screen/key identifiers. This is the current LP1 quiz contract, not a
+// second source of answers or scoring rules.
+const LP1_QUIZ_CATALOG: QuizCatalogEntry[] = [
+  {
+    screenId: "s02-momento",
+    answerKey: "momento",
+    title: "Hoje, vocês estão em qual momento?",
+    options: [
+      { value: "namorando", label: "Namorando" },
+      { value: "casados", label: "Casados" },
+      { value: "distancia", label: "À distância" },
+      { value: "comecando", label: "Começando agora" },
+      { value: "reconexao", label: "Em reconexão" },
+    ],
+  },
+  {
+    screenId: "s03-tempo",
+    answerKey: "tempo",
+    title: "Há quanto tempo vocês estão juntos?",
+    options: [
+      { value: "menos-seis", label: "Menos de 6 meses" },
+      { value: "seis-um", label: "6 meses a 2 anos" },
+      { value: "um-tres", label: "2 a 5 anos" },
+      { value: "mais-dez", label: "Mais de 5 anos" },
+    ],
+  },
+  {
+    screenId: "s04-conversas",
+    answerKey: "conversas",
+    title: "Hoje, a conversa de vocês é mais sobre o quê?",
+    options: [
+      { value: "rotina", label: "Rotina e contas" },
+      { value: "trabalho", label: "Trabalho" },
+      { value: "besteira", label: "Besteira e risada" },
+      { value: "nos-dois", label: "Vocês dois" },
+      { value: "intimidade", label: "Intimidade" },
+      { value: "pessoal", label: "Planos" },
+    ],
+  },
+  {
+    screenId: "s05-sei-la",
+    answerKey: "sei-la-mapeado",
+    title: "Você tenta puxar uma conversa de verdade. E aí?",
+    options: [
+      { value: "sei-la", label: 'Vem o "sei lá"' },
+      { value: "nao-sei", label: 'Vem o "não sei"' },
+      { value: "superficial", label: "Responde, mas fica raso" },
+      { value: "muda-assunto", label: "Muda de assunto" },
+      { value: "rende", label: "Às vezes rende" },
+      { value: "vai-longe", label: "Quando engata, vai longe" },
+    ],
+  },
+  {
+    screenId: "s06-inicia",
+    answerKey: "inicia",
+    title: "Quando a conversa não rola, geralmente é por quê?",
+    options: [
+      { value: "ele-nao-entra", label: "Ele(a) não entra no assunto" },
+      { value: "nao-sei-perguntar", label: "Eu não sei o que perguntar" },
+      { value: "nao-senta", label: "Nunca parece a hora certa" },
+      { value: "clima", label: "Quando tento, o clima trava" },
+    ],
+  },
+  {
+    screenId: "s07-celular",
+    answerKey: "celular",
+    title: "O celular senta com vocês?",
+    options: [
+      { value: "sempre", label: "Sempre" },
+      { value: "as-vezes", label: "Às vezes" },
+      { value: "quase-nunca", label: "Quase nunca" },
+    ],
+  },
+  {
+    screenId: "s09-desejo-noite",
+    answerKey: "desejo_noite",
+    title: "Imagine uma noite que realmente parece diferente. Qual cena você gostaria mais?",
+    options: [
+      { value: "proximos", label: "Uma noite sem celular" },
+      { value: "rir", label: "Rir de coisas que vocês nunca perguntaram" },
+      { value: "conversar", label: "Uma conversa longa" },
+      { value: "quimica", label: "Uma conversa que aproxima de verdade" },
+    ],
+  },
+  {
+    screenId: "s10-sentir",
+    answerKey: "sentir",
+    title: "No fim de uma noite dessas, o que você queria sentir?",
+    options: [
+      { value: "entende", label: "Que ele(a) me entende de novo" },
+      { value: "encontrou", label: "Que a gente se reencontrou" },
+      { value: "leveza", label: "Leveza, rir junto" },
+      { value: "ouvido", label: "Aquela paz de ter sido ouvido(a)" },
+      { value: "desejo", label: "Desejo de volta" },
+    ],
+  },
+  {
+    screenId: "s11-conhece",
+    answerKey: "conhece",
+    title: "Você ainda sente que conhece ele(a) de verdade?",
+    options: [
+      { value: "sim", label: "Sim, bastante" },
+      { value: "mais-ou-menos", label: "Mais ou menos" },
+      { value: "as-vezes-nao", label: "Às vezes sinto que não" },
+      { value: "sei-tudo", label: "Sinto que já sei tudo" },
+    ],
+  },
+  {
+    screenId: "s12-nunca-perguntou",
+    answerKey: "nunca-perguntou",
+    title: "Tem uma pergunta que você queria fazer pra ele(a) e nunca fez?",
+    options: [
+      { value: "varias", label: "Várias" },
+      { value: "algumas", label: "Uma ou outra" },
+      { value: "nem-sei", label: "Nem sei qual seria" },
+      { value: "vergonha", label: "Tenho, mas dá medo" },
+      { value: "nao", label: "Não" },
+    ],
+  },
+  {
+    screenId: "s13-atrapalha",
+    answerKey: "atrapalha",
+    title: "O que mais te faz empurrar essa conversa pra depois?",
+    options: [
+      { value: "cansaco", label: "Cansaço e rotina" },
+      { value: "celular", label: "O celular" },
+      { value: "comecar", label: "Não sei como começar" },
+      { value: "medo", label: "Vou parecer forçado(a)" },
+      { value: "medo-resposta", label: "Medo da resposta" },
+      { value: "nao-para", label: "Sinto que a gente já falou de tudo" },
+    ],
+  },
+  {
+    screenId: "s18-clima",
+    answerKey: "clima",
+    title: "Qual clima combina mais com vocês?",
+    options: [
+      { value: "leve", label: "Leve" },
+      { value: "honesto", label: "Honesto" },
+      { value: "profundo", label: "Profundo" },
+      { value: "intimo", label: "Íntimo" },
+    ],
+  },
+  {
+    screenId: "s20-urgencia",
+    answerKey: "urgencia",
+    title: "Quando você gostaria de ter uma noite diferente com ele?",
+    options: [
+      { value: "hoje", label: "Hoje" },
+      { value: "proximos-dias", label: "Nos próximos dias" },
+      { value: "essa-semana", label: "Essa semana" },
+      { value: "oportunidade", label: "Quando surgir uma oportunidade" },
+    ],
+  },
+  {
+    screenId: "s21-ultimo",
+    answerKey: "ultimo",
+    title: "Se pudesse começar essa conversa hoje, gostaria de ter as perguntas certas na mão?",
+    options: [
+      { value: "sim-quero", label: "Sim, quero" },
+      { value: "muito", label: "Muito" },
+      { value: "otimo", label: "Seria ótimo" },
+      { value: "ajudaria", label: "Acho que ajudaria" },
+    ],
+  },
+];
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -804,17 +982,134 @@ function AnalyticsPanel({
   );
 }
 
+function normalizeQuizScreenId(screenId: string) {
+  return screenId.split(":")[0] || screenId;
+}
+
+function getQuizCatalogEntry(screenId: string, answerKey: string) {
+  const normalizedScreenId = normalizeQuizScreenId(screenId);
+  return (
+    LP1_QUIZ_CATALOG.find(
+      (entry) =>
+        entry.screenId === normalizedScreenId && entry.answerKey === answerKey,
+    ) ||
+    LP1_QUIZ_CATALOG.find((entry) => entry.screenId === normalizedScreenId)
+  );
+}
+
+function formatQuizAnswer(value: string, entry?: QuizCatalogEntry) {
+  const optionLabels = new Map(
+    (entry?.options || []).map((option) => [option.value, option.label]),
+  );
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => optionLabels.get(part) || part)
+    .join(" · ");
+}
+
+function QuizQuestionCard({
+  entry,
+  step,
+  visitors,
+  answers,
+  totalVisitors,
+  breakdown,
+}: {
+  entry: QuizCatalogEntry;
+  step: number;
+  visitors: number;
+  answers: number;
+  totalVisitors: number;
+  breakdown: QuizAnalyticsAnswer[];
+}) {
+  const maxVisitors = Math.max(...breakdown.map((answer) => answer.visitors), 0);
+  const answerRows =
+    breakdown.length > 0
+      ? breakdown.slice(0, 6)
+      : entry.options.map((option) => ({
+          screenId: entry.screenId,
+          answerKey: entry.answerKey,
+          value: option.value,
+          answers: 0,
+          visitors: 0,
+        }));
+
+  return (
+    <article className="admin-quiz-question-card">
+      <div className="admin-quiz-question-heading">
+        <div>
+          <span className="admin-quiz-question-step">
+            {String(step).padStart(2, "0")} · {entry.answerKey}
+          </span>
+          <h4>{entry.title}</h4>
+        </div>
+        <div className="admin-quiz-question-reach">
+          <strong>{visitors}</strong>
+          <span>visitantes</span>
+        </div>
+      </div>
+      <div className="admin-quiz-question-meta">
+        <span>{answers} registros</span>
+        <span>
+          {totalVisitors > 0
+            ? `${((visitors / totalVisitors) * 100).toFixed(1)}% do topo`
+            : "sem dados no período"}
+        </span>
+      </div>
+      <div className="admin-quiz-answer-bars">
+        {answerRows.map((answer) => (
+          <div
+            className={`admin-quiz-answer-row${answer.visitors === 0 ? " is-empty" : ""}`}
+            key={`${answer.screenId}-${answer.answerKey}-${answer.value}`}
+          >
+            <div className="admin-quiz-answer-label">
+              <span>{formatQuizAnswer(answer.value, entry)}</span>
+              <strong>
+                {answer.visitors > 0 ? `${answer.visitors} visitantes` : "sem respostas"}
+              </strong>
+            </div>
+            <div className="admin-quiz-answer-track" aria-hidden="true">
+              <span
+                style={{
+                  width: `${maxVisitors > 0 ? (answer.visitors / maxVisitors) * 100 : 0}%`,
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
 function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
   const labelForGroup = (group: QuizAnalyticsGroup) =>
     group.source || group.campaign
       ? [group.source, group.campaign].filter(Boolean).join(" · ")
       : "sem UTM / direto";
-  const formatAnswer = (value: string) =>
-    value
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .join(", ");
+  const questionSummaries = LP1_QUIZ_CATALOG.map((entry, index) => {
+    const questionRows = data.questions.filter(
+      (question) =>
+        normalizeQuizScreenId(question.screenId) === entry.screenId &&
+        question.answerKey === entry.answerKey,
+    );
+    const breakdown = data.answerBreakdown.filter(
+      (answer) =>
+        normalizeQuizScreenId(answer.screenId) === entry.screenId &&
+        answer.answerKey === entry.answerKey,
+    );
+    return {
+      entry,
+      step: questionRows.length
+        ? Math.min(...questionRows.map((question) => question.step)) + 1
+        : index + 1,
+      visitors: Math.max(...questionRows.map((question) => question.visitors), 0),
+      answers: questionRows.reduce((total, question) => total + question.answers, 0),
+      breakdown,
+    };
+  });
 
   return (
     <section className="admin-quiz-analytics" aria-labelledby="quiz-analytics-title">
@@ -846,48 +1141,53 @@ function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
         </div>
       </div>
 
-      {data.questions.length ? (
-        <div className="admin-quiz-analysis-grid">
-          <div className="admin-quiz-analysis-card">
-            <h4>Alcance por pergunta</h4>
-            <div className="admin-quiz-list">
-              {data.questions.map((question) => (
-                <div
-                  className="admin-quiz-list-row"
-                  key={`${question.screenId}-${question.answerKey}`}
-                >
-                  <span>
-                    <strong>{question.screenId}</strong>
-                    <small>{question.answerKey}</small>
-                  </span>
-                  <b>{question.visitors} visitantes</b>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="admin-quiz-analysis-card">
-            <h4>Alternativas mais registradas</h4>
-            <div className="admin-quiz-list">
-              {data.answerBreakdown.slice(0, 18).map((answer) => (
-                <div
-                  className="admin-quiz-list-row"
-                  key={`${answer.screenId}-${answer.answerKey}-${answer.value}`}
-                >
-                  <span>
-                    <strong>{formatAnswer(answer.value)}</strong>
-                    <small>
-                      {answer.screenId} · {answer.answerKey}
-                    </small>
-                  </span>
-                  <b>{answer.visitors} visitantes</b>
-                </div>
-              ))}
-            </div>
-          </div>
+      <details className="admin-quiz-structure" open>
+        <summary>
+          <span>
+            <strong>Mapa atual do quiz</strong>
+            <small>As perguntas e alternativas que estão sendo exibidas na LP principal</small>
+          </span>
+          <span>{LP1_QUIZ_CATALOG.length} perguntas</span>
+        </summary>
+        <div className="admin-quiz-structure-grid">
+          {LP1_QUIZ_CATALOG.map((entry, index) => (
+            <article className="admin-quiz-structure-item" key={entry.screenId}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <strong>{entry.title}</strong>
+                <small>{entry.options.map((option) => option.label).join(" · ")}</small>
+              </div>
+            </article>
+          ))}
         </div>
-      ) : (
-        <p className="admin-footnote">Ainda não há respostas registradas neste período.</p>
-      )}
+      </details>
+
+      <div className="admin-quiz-question-list">
+        <div className="admin-quiz-section-heading">
+          <div>
+            <p className="admin-eyebrow">comportamento por etapa</p>
+            <h4>Onde as pessoas avançam — e onde param</h4>
+          </div>
+          <span>visitantes do topo: {data.visitors}</span>
+        </div>
+        {questionSummaries.map((question) => (
+          <QuizQuestionCard
+            key={question.entry.screenId}
+            entry={question.entry}
+            step={question.step}
+            visitors={question.visitors}
+            answers={question.answers}
+            totalVisitors={data.visitors}
+            breakdown={question.breakdown}
+          />
+        ))}
+        {data.questions.length === 0 && (
+          <p className="admin-footnote">
+            Ainda não há respostas registradas neste período. O mapa acima mostra
+            o conteúdo que será medido quando as primeiras visitas responderem.
+          </p>
+        )}
+      </div>
 
       <div className="admin-quiz-analysis-grid">
         <div className="admin-quiz-analysis-card">
