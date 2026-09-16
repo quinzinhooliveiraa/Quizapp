@@ -1923,6 +1923,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         value: "quimica",
         label: "Uma conversa que aproxima de verdade",
         icon: "🔥",
+        imageSrc: "/quiz/s09-aproxima.png",
       },
     ],
   },
