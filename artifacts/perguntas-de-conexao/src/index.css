@@ -3092,6 +3092,23 @@
   background: #221a2b;
 }
 
+.lp1-result-photo {
+  height: clamp(8.5rem, 31vw, 12rem);
+  margin: 0 0 0.8rem;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #221a2b;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.18);
+}
+
+.lp1-result-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 54%;
+}
+
 .lp1-result-meter-heading,
 .lp1-result-meter-labels {
   display: flex;
@@ -3225,8 +3242,29 @@
   background: rgba(122, 46, 70, 0.12);
 }
 
-.lp1-result-context > span {
+.lp1-result-urgency-mark {
+  display: grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 1.05rem;
+  place-items: center;
+  margin-top: 0.1rem;
+  border: 1px solid rgba(232, 201, 138, 0.7);
+  border-radius: 50%;
   color: #e8c98a;
+  font: 800 10px/1 var(--app-font-sans);
+}
+
+.lp1-result-context > div {
+  min-width: 0;
+}
+
+.lp1-result-urgency-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #d59ab1;
+  font: 800 9px/1.2 var(--app-font-mono);
+  letter-spacing: 0.08em;
 }
 
 .lp1-result-context p {

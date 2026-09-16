@@ -3333,6 +3333,116 @@ function Lp1LoadingScreen({
   );
 }
 
+type Lp1UrgencyMessage = {
+  copy: string;
+  insightIcon: string;
+  insightLabel: string;
+  insightValue: string;
+};
+
+function getLp1UrgencyMessage(
+  answers: Lp1Answers,
+  routineValue: string,
+): Lp1UrgencyMessage {
+  const read = (key: string) => {
+    const value = (answers as Record<string, unknown>)[key];
+    return typeof value === "string" ? value : "";
+  };
+  const split = (key: string) => read(key).split(",").filter(Boolean);
+  const obstacles = split("atrapalha");
+  const blocks = split("travas");
+  const conversations = split("conversas");
+
+  if (
+    read("celular") === "sempre" ||
+    blocks.includes("celular") ||
+    obstacles.includes("celular")
+  ) {
+    return {
+      copy:
+        "Quando o celular entra em toda pausa de vocês, cada noite adiada vira um pouco mais de distância. Antes que estar lado a lado sem se encontrar pareça normal, criem um momento que seja só de vocês.",
+      insightIcon: "📵",
+      insightLabel: "Presença sem tela",
+      insightValue: "pede atenção",
+    };
+  }
+
+  if (read("dor") === "afastamento" || read("fase") === "perdidos") {
+    return {
+      copy:
+        "A distância raramente chega de uma vez. Ela cresce nas conversas adiadas, nas noites iguais e no “depois a gente fala”. Se vocês querem mudar esse clima, o próximo momento precisa ser escolhido — não esperado.",
+      insightIcon: "↔",
+      insightLabel: "Proximidade entre vocês",
+      insightValue: "precisa de espaço",
+    };
+  }
+
+  if (
+    read("inicia") === "ele-nao-entra" ||
+    read("inicia") === "nao-senta" ||
+    read("objecao") === "ele-nao-topa"
+  ) {
+    return {
+      copy:
+        "Esperar o momento perfeito ou a iniciativa do outro mantém tudo no mesmo lugar. Uma conversa que importa precisa de um começo pequeno — antes que o silêncio vire o jeito mais fácil de vocês passarem a noite.",
+      insightIcon: "↗",
+      insightLabel: "Iniciativa para se encontrar",
+      insightValue: "não pode ficar para depois",
+    };
+  }
+
+  if (
+    obstacles.includes("medo-resposta") ||
+    obstacles.includes("medo") ||
+    read("dor") === "medo"
+  ) {
+    return {
+      copy:
+        "O medo da resposta é compreensível — mas adiar também muda a relação. Começar com uma pergunta leve dá a vocês uma chance de se reencontrar antes que o silêncio fique confortável.",
+      insightIcon: "◌",
+      insightLabel: "Coragem para perguntar",
+      insightValue: "começa pequeno",
+    };
+  }
+
+  if (
+    read("rotina") === "tudo" ||
+    read("rotina") === "muito" ||
+    conversations.includes("rotina") ||
+    obstacles.includes("cansaco")
+  ) {
+    return {
+      copy:
+        "A rotina já está ocupando espaço demais entre vocês. Não precisa acontecer uma briga para a conexão diminuir: quando as perguntas ficam para depois, o automático começa a parecer normal.",
+      insightIcon: "◷",
+      insightLabel: "Conversa além do automático",
+      insightValue: routineValue,
+    };
+  }
+
+  if (
+    obstacles.includes("comecar") ||
+    read("inicia") === "nao-sei-perguntar" ||
+    read("dor") === "como-comecar"
+  ) {
+    return {
+      copy:
+        "Enquanto vocês esperam saber exatamente o que dizer, a rotina continua decidindo por vocês. Não precisa ser a conversa perfeita; precisa acontecer antes que mais uma semana passe igual.",
+      insightIcon: "?",
+      insightLabel: "Um começo possível",
+      insightValue: "é o que falta",
+    };
+  }
+
+  return {
+    copy:
+      "O que esfria uma relação nem sempre parece urgente no começo. São as perguntas adiadas e os momentos deixados para depois. Aproveitem o espaço que ainda existe entre vocês antes que ele vire distância.",
+    insightIcon: "✦",
+    insightLabel: "Espaço para se aproximar",
+    insightValue: "ainda existe",
+  };
+}
+
 function Lp1ResultScreen({
   answers,
   sectionId,
@@ -3356,6 +3466,7 @@ function Lp1ResultScreen({
     answers.dor ??
     "sei-la";
   const mirror = LP1_DOR_ESPELHO[mirrorKey] ?? LP1_DOR_ESPELHO["sei-la"];
+  const urgency = getLp1UrgencyMessage(answers, result.routineValue);
   const [meterPosition, setMeterPosition] = useState("50%");
 
   useEffect(() => {
@@ -3369,6 +3480,12 @@ function Lp1ResultScreen({
     <section className="lp1-result-screen" data-section-name={sectionId}>
       <p className="lp1-quiz-eyebrow">O CLIMA DE VOCÊS AGORA</p>
       <h1 className="lp1-quiz-title">{mirror.title}</h1>
+      <figure className="lp1-result-photo">
+        <img
+          src="/hero/secao-distancia.webp"
+          alt="Casal criando um momento de conexão"
+        />
+      </figure>
       <div className="lp1-result-meter-card">
         <div className="lp1-result-meter-heading">
           <span>Distância na conversa</span>
@@ -3401,8 +3518,15 @@ function Lp1ResultScreen({
           </span>
         </div>
         <div className="lp1-result-context">
-          <span aria-hidden="true">ⓘ</span>
-          <p>{mirror.body[0]}</p>
+          <span className="lp1-result-urgency-mark" aria-hidden="true">
+            !
+          </span>
+          <div>
+            <strong className="lp1-result-urgency-label">
+              O QUE NÃO DEIXAR PARA DEPOIS
+            </strong>
+            <p>{urgency.copy}</p>
+          </div>
         </div>
       </div>
       <p className="lp1-result-disclaimer">
@@ -3411,9 +3535,9 @@ function Lp1ResultScreen({
       </p>
       <div className="lp1-result-insights">
         <div className="lp1-result-insight">
-          <span aria-hidden="true">📉</span>
+          <span aria-hidden="true">{urgency.insightIcon}</span>
           <p>
-            Conversa além da rotina <strong>{result.routineValue}</strong>
+            {urgency.insightLabel} <strong>{urgency.insightValue}</strong>
           </p>
         </div>
         <div className="lp1-result-insight">
