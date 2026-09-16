@@ -575,13 +575,14 @@
 .lp1-sale-sticky-normal-copy {
   display: inline-flex;
   align-items: baseline;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.45rem 0.7rem;
+  white-space: nowrap;
 }
 
 .lp1-sale-sticky-prefix,
 .lp1-sale-sticky-normal-copy span {
-  color: #8b3553;
+  color: #c9a55e;
   font-size: clamp(0.78rem, 1.5vw, 1rem);
   font-weight: 700;
   letter-spacing: 0;
@@ -589,7 +590,7 @@
 }
 
 .lp1-sale-sticky-timer {
-  color: #8b3553;
+  color: #e8c98a;
   font-size: clamp(1.55rem, 3.4vw, 2.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -626,19 +627,20 @@
   padding: 0.78rem 1.25rem;
   border: 0;
   border-radius: 999px;
-  background: #8b3553;
-  color: #f8f3e9;
+  background: linear-gradient(135deg, #e8b13a, #c98f1e);
+  color: #17121c;
   font: 700 0.82rem/1 var(--app-font-sans);
   letter-spacing: 0;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(91, 18, 48, 0.24);
-  transition: background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 6px 16px rgba(232, 177, 58, 0.28);
+  transition: filter 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .lp1-sale-sticky-card button:hover,
 .lp1-sale-sticky-card button:focus-visible {
-  background: #5b1230;
+  filter: brightness(1.08);
+  box-shadow: 0 8px 20px rgba(232, 177, 58, 0.4);
   transform: translateY(-1px);
 }
 
@@ -673,18 +675,20 @@
   padding: 0.9rem 1.2rem;
   border: 0;
   border-radius: 999px;
-  background: #8b3553;
-  color: #f8f3e9;
+  background: linear-gradient(135deg, #e8b13a, #c98f1e);
+  color: #17121c;
   font: 700 0.9rem/1 var(--app-font-sans);
-  box-shadow: 0 8px 24px rgba(91, 18, 48, 0.3);
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(232, 177, 58, 0.3);
   cursor: pointer;
   pointer-events: auto;
-  transition: background-color 160ms ease, transform 160ms ease;
+  transition: filter 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .lp1-sale-bottom-cta button:hover,
 .lp1-sale-bottom-cta button:focus-visible {
-  background: #5b1230;
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px rgba(232, 177, 58, 0.42);
   transform: translateY(-1px);
 }
 
