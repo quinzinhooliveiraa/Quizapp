@@ -24,6 +24,18 @@ function PriceText({ pricing }: { pricing: Pricing }) {
   );
 }
 
+function getDiscountPercent(fullPricing: Pricing, offerPricing: Pricing): number {
+  if (fullPricing.amountCents <= 0 || offerPricing.amountCents >= fullPricing.amountCents) {
+    return 0;
+  }
+
+  return Math.round(
+    ((fullPricing.amountCents - offerPricing.amountCents) /
+      fullPricing.amountCents) *
+      100,
+  );
+}
+
 export function Lp1PriceCard({
   fullPricing,
   offerPricing,
@@ -37,6 +49,10 @@ export function Lp1PriceCard({
   const hasDiscount = Boolean(discountActive && offerPricing);
   const pricing =
     hasDiscount && offerPricing ? offerPricing : fullPricing;
+  const discountPercent =
+    hasDiscount && offerPricing
+      ? getDiscountPercent(fullPricing, offerPricing)
+      : 0;
 
   return (
     <div className={`lp-price-card lp1-price-card ${className}`.trim()}>
@@ -90,7 +106,9 @@ export function Lp1PriceCard({
                 <strong className="lp-price-discount">
                   <span>Por </span>
                   <PriceText pricing={pricing} />
-                  <span className="lp-price-off-badge">40% OFF</span>
+                  <span className="lp-price-off-badge">
+                    {discountPercent}% OFF
+                  </span>
                 </strong>
               </>
             ) : (

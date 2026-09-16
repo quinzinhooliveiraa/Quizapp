@@ -106,6 +106,22 @@ function formatRemaining(totalSeconds: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function getDiscountPercent(offerState: OfferState | null): number {
+  if (
+    !offerState ||
+    offerState.full.amountCents <= 0 ||
+    offerState.offer.amountCents >= offerState.full.amountCents
+  ) {
+    return 0;
+  }
+
+  return Math.round(
+    ((offerState.full.amountCents - offerState.offer.amountCents) /
+      offerState.full.amountCents) *
+      100,
+  );
+}
+
 function getClimateName(answers: SaleAnswers): string {
   const climate = String(answers.clima ?? "");
   const blockers = String(answers.travas ?? "")
@@ -403,6 +419,7 @@ export function Lp1SalePage({
   const discountActive = Boolean(
     offerState?.discountActive && remainingSeconds > 0,
   );
+  const discountPercent = getDiscountPercent(offerState);
 
   const scrollToOffer = () => {
     document.getElementById("lp1-sale-offer")?.scrollIntoView({
@@ -429,7 +446,8 @@ export function Lp1SalePage({
               </div>
             </div>
             <button type="button" onClick={scrollToOffer}>
-              PEGAR -40% OFF <ArrowRight size={15} aria-hidden="true" />
+              PEGAR -{discountPercent}% OFF{" "}
+              <ArrowRight size={15} aria-hidden="true" />
             </button>
           </div>
         </div>
