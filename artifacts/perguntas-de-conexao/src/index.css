@@ -642,6 +642,52 @@
   transform: translateY(-1px);
 }
 
+.lp1-sale-page.has-bottom-cta {
+  padding-bottom: 6.25rem;
+}
+
+.lp1-sale-bottom-cta {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 35;
+  display: flex;
+  justify-content: center;
+  padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+  background: linear-gradient(
+    180deg,
+    rgba(22, 17, 28, 0),
+    rgba(22, 17, 28, 0.96) 35%
+  );
+  pointer-events: none;
+}
+
+.lp1-sale-bottom-cta button {
+  display: inline-flex;
+  width: min(100%, 32rem);
+  min-height: 3.1rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #8b3553;
+  color: #f8f3e9;
+  font: 700 0.9rem/1 var(--app-font-sans);
+  box-shadow: 0 8px 24px rgba(91, 18, 48, 0.3);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.lp1-sale-bottom-cta button:hover,
+.lp1-sale-bottom-cta button:focus-visible {
+  background: #5b1230;
+  transform: translateY(-1px);
+}
+
 .lp1-sale-section {
   width: min(100% - 2rem, 980px);
   margin: 0 auto;
@@ -29943,4 +29989,74 @@ blockquote em {
     padding-right: 0.7rem;
     padding-left: 0.7rem;
   }
+}
+
+/* Quiz controls: keep every answer and continuation action in the lilac system. */
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-next,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-full-cta {
+  border-color: #b28bff;
+  background: #b28bff;
+  color: #241933;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-next:hover:not(:disabled),
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-next:focus-visible:not(:disabled),
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-full-cta:hover:not(:disabled),
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-full-cta:focus-visible:not(:disabled) {
+  border-color: #c9b5ff;
+  background: #c9b5ff;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-next:disabled,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-full-cta:disabled {
+  border-color: #332c32;
+  background: #332c32;
+  color: #70656f;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option:hover,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option:focus-visible {
+  border-color: #a781ed;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option.is-selected {
+  border-color: #b28bff;
+  background: #33284a;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-check {
+  color: #b28bff;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-format-multi .lp1-quiz-option.is-selected .lp1-multi-label-bar {
+  background: #b28bff;
+  color: #241933;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-format-multi .lp1-quiz-option.is-selected .lp1-quiz-option-check {
+  border-color: #b28bff;
+  background: #b28bff;
+  color: #241933;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-scale-block:hover,
+.lp1-quiz-screen:not(.is-offer) .lp1-scale-block:focus-visible,
+.lp1-quiz-screen:not(.is-offer) .lp1-scale-block.is-selected {
+  border-color: #b28bff;
+  background: #b28bff;
+  color: #241933;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-trial-verdict:hover,
+.lp1-quiz-screen:not(.is-offer) .lp1-trial-verdict:focus-visible,
+.lp1-quiz-screen:not(.is-offer) .lp1-trial-verdict.is-selected,
+.lp1-quiz-screen:not(.is-offer) .lp1-climate-verdict.is-selected {
+  border-color: #b28bff;
+  background: #b28bff;
+  color: #241933;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-climate-verdict:hover,
+.lp1-quiz-screen:not(.is-offer) .lp1-climate-verdict:focus-visible {
+  border-color: #b28bff;
 }

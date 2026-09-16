@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import pwaEntryLogo from '@assets/pwa-entry-logo.png';
+import pwaEntryLogo from '@assets/pwa-entry-logo.webp';
 
 export function SplashScreen() {
   const [visible, setVisible] = useState(true);

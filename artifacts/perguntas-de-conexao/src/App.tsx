@@ -1587,13 +1587,13 @@ const LP1_SCREEN_ONE_TO_TEN: Lp1Screen[] = [
       {
         value: "leve",
         label: "Confortável",
-        imageSrc: "/quiz/clima-leve.png",
+        imageSrc: "/quiz/clima-leve.webp",
       },
       { value: "normal", label: "Normal", icon: "◌" },
       {
         value: "honesto",
         label: "Difícil de atravessar",
-        imageSrc: "/quiz/clima-honesto.png",
+        imageSrc: "/quiz/clima-honesto.webp",
       },
     ],
   },
@@ -1776,25 +1776,25 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         value: "menos-seis",
         label: "Menos de 6 meses",
         icon: "✨",
-        imageSrc: "/quiz/tempo-menos-seis.png",
+        imageSrc: "/quiz/tempo-menos-seis.webp",
       },
       {
         value: "seis-um",
         label: "6 meses a 2 anos",
         icon: "🌱",
-        imageSrc: "/quiz/tempo-seis-dois.png",
+        imageSrc: "/quiz/tempo-seis-dois.webp",
       },
       {
         value: "um-tres",
         label: "2 a 5 anos",
         icon: "🏡",
-        imageSrc: "/quiz/tempo-dois-cinco.png",
+        imageSrc: "/quiz/tempo-dois-cinco.webp",
       },
       {
         value: "mais-dez",
         label: "Mais de 5 anos",
         icon: "🕯️",
-        imageSrc: "/quiz/tempo-mais-cinco.png",
+        imageSrc: "/quiz/tempo-mais-cinco.webp",
       },
     ],
   },
@@ -1908,25 +1908,25 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         value: "proximos",
         label: "Uma noite sem celular",
         icon: "📵",
-        imageSrc: "/quiz/s09-sem-celular.png",
+        imageSrc: "/quiz/s09-sem-celular.webp",
       },
       {
         value: "rir",
         label: "Rir de coisas que vocês nunca perguntaram",
         icon: "😂",
-        imageSrc: "/quiz/s09-rir.png",
+        imageSrc: "/quiz/s09-rir.webp",
       },
       {
         value: "conversar",
         label: "Uma conversa longa",
         icon: "🕯️",
-        imageSrc: "/quiz/s09-conversa-longa.png",
+        imageSrc: "/quiz/s09-conversa-longa.webp",
       },
       {
         value: "quimica",
         label: "Uma conversa que aproxima de verdade",
         icon: "🔥",
-        imageSrc: "/quiz/s09-aproxima.png",
+        imageSrc: "/quiz/s09-aproxima.webp",
       },
     ],
   },
@@ -2023,7 +2023,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         label: "Leve",
         description: "para respirar juntos e sair do automático",
         icon: "🌿",
-        imageSrc: "/quiz/clima-leve.png",
+        imageSrc: "/quiz/clima-leve.webp",
       },
       {
         value: "honesto",
@@ -2037,7 +2037,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         label: "Profundo",
         description: "para descobrir um ao outro de outro jeito",
         icon: "🧠",
-        imageSrc: "/quiz/clima-honesto.png",
+        imageSrc: "/quiz/clima-honesto.webp",
       },
       {
         value: "intimo",
@@ -2430,10 +2430,12 @@ function Lp1Quiz({
   onFinish,
   onBackToLanding,
   experimentAssignment,
+  checkoutOpen,
 }: {
   onFinish: () => void;
   onBackToLanding: () => void;
   experimentAssignment?: StoredExperimentAssignment;
+  checkoutOpen: boolean;
 }) {
   const [step, setStep] = useState(() => {
     try {
@@ -2714,6 +2716,7 @@ function Lp1Quiz({
           <Lp1SalePage
             answers={answers as unknown as Record<string, unknown>}
             onCheckout={onFinish}
+            checkoutOpen={checkoutOpen}
           />
         ) : step === LP1_SCREENS.length ? (
           <Lp1Diagnosis
@@ -3506,7 +3509,7 @@ function Lp1ResultScreen({
           {result.label}
         </span>
         <img
-          src="/hero/resultado-conexao.png"
+          src="/hero/resultado-conexao.webp"
           alt="Casal refletindo juntos sobre a relação"
         />
       </figure>
@@ -3667,7 +3670,7 @@ function Lp1PhotoScreen({
     <section className="lp1-photo-screen" data-section-name={screen.id}>
       <img
         className="lp1-photo-image"
-        src={screen.image ?? `/quiz/dx-${dor}.png`}
+        src={screen.image ?? `/quiz/dx-${dor}.webp`}
         alt=""
         aria-hidden="true"
         onError={(event) => {
@@ -3827,7 +3830,7 @@ function Lp1InfoScreen({
       {isProofScreen ? (
         <div className="lp1-proof-art">
           <img
-            src="/proof-couples-orbits.png"
+            src="/proof-couples-orbits.webp"
             alt="Casais conectados em círculos ao redor de um casal"
           />
         </div>
@@ -8049,6 +8052,7 @@ function TrackedQuiz({
         onFinish={() => checkout.startCheckout("couple")}
         onBackToLanding={() => navigate(quizReturnPath)}
         experimentAssignment={experimentAssignment}
+        checkoutOpen={checkout.checkoutOpen}
       />
       <CheckoutModal checkout={checkout} />
     </>

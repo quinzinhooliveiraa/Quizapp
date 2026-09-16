@@ -367,14 +367,18 @@ function OfferCard({
 export function Lp1SalePage({
   answers,
   onCheckout,
+  checkoutOpen = false,
 }: {
   answers: SaleAnswers;
   onCheckout: () => void;
+  checkoutOpen?: boolean;
 }) {
   const [offerState, setOfferState] = useState<OfferState | null>(null);
   const [offerError, setOfferError] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const [recapVisible, setRecapVisible] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [offerCardVisible, setOfferCardVisible] = useState(false);
   const recapRef = useRef<HTMLDivElement | null>(null);
   const visitorKey = useMemo(() => getVisitorKey(), []);
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
@@ -447,6 +451,51 @@ export function Lp1SalePage({
     return () => observer.disconnect();
   }, [recapVisible]);
 
+  useEffect(() => {
+    let frame = 0;
+    const updateScrollState = () => {
+      frame = 0;
+      setHasScrolled(window.scrollY > 360);
+    };
+    const handleScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateScrollState);
+    };
+
+    updateScrollState();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  useEffect(() => {
+    const offerCards = Array.from(
+      document.querySelectorAll<HTMLElement>(".lp1-sale-offer-card"),
+    );
+    if (offerCards.length === 0 || !("IntersectionObserver" in window)) {
+      setOfferCardVisible(false);
+      return;
+    }
+
+    const visibleCards = new Set<HTMLElement>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const card = entry.target as HTMLElement;
+          if (entry.isIntersecting) visibleCards.add(card);
+          else visibleCards.delete(card);
+        });
+        setOfferCardVisible(visibleCards.size > 0);
+      },
+      { threshold: 0.12, rootMargin: "-8% 0px -8% 0px" },
+    );
+
+    offerCards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, []);
+
   const remainingSeconds = offerState
     ? Math.max(0, Math.ceil((new Date(offerState.deadline).getTime() - now) / 1000))
     : 0;
@@ -454,6 +503,7 @@ export function Lp1SalePage({
     offerState?.discountActive && remainingSeconds > 0,
   );
   const discountPercent = getDiscountPercent(offerState);
+  const showBottomCta = hasScrolled && !offerCardVisible && !checkoutOpen;
 
   const scrollToOffer = () => {
     document.getElementById("lp1-sale-offer")?.scrollIntoView({
@@ -464,7 +514,7 @@ export function Lp1SalePage({
   };
 
   return (
-    <main className="lp1-sale-page">
+    <main className={`lp1-sale-page ${showBottomCta ? "has-bottom-cta" : ""}`}>
       {discountActive ? (
         <div className="lp1-sale-sticky-bar">
           <div className="lp1-sale-sticky-card" aria-live="polite">
@@ -498,7 +548,7 @@ export function Lp1SalePage({
         <div className="lp1-sale-diagnostic-block">
           <figure className="lp1-sale-now-after-image">
             <img
-              src="/hero/lp1-agora-depois.png"
+              src="/hero/lp1-agora-depois.webp"
               alt="Um casal distante agora e conectado com as cartas"
             />
           </figure>
@@ -596,7 +646,7 @@ export function Lp1SalePage({
               className={`lp1-sale-deck-card ${theme.title === recommendedDeck ? "is-recommended" : ""}`}
               key={theme.id}
             >
-              <img src={`/theme-backgrounds/${theme.id}.jpg`} alt="" loading="lazy" />
+              <img src={`/theme-backgrounds/${theme.id}.jpg`} alt="" loading="lazy" decoding="async" />
               <div className="lp1-sale-deck-shade" aria-hidden="true" />
               {theme.title === recommendedDeck ? (
                 <span className="lp1-sale-deck-badge">baralho recomendado</span>
@@ -691,6 +741,17 @@ export function Lp1SalePage({
           começaram uma conversa diferente. ❤️
         </p>
       </section>
+      {showBottomCta ? (
+        <div className="lp1-sale-bottom-cta" aria-label="Continuar para pagamento">
+          <button
+            type="button"
+            onClick={onCheckout}
+            data-testid="button-lp1-sale-sticky-checkout"
+          >
+            Continuar para pagamento <ArrowRight size={18} aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
     </main>
   );
 }
