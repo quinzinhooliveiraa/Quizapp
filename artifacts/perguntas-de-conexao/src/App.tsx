@@ -2336,7 +2336,7 @@ function Lp1Diagnosis({
 function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
   return (
     <section className="lp1-bridge-screen" data-section-name="s22-a-partir-daqui">
-      <p className="lp1-bridge-eyebrow">O QUE FAZER A PARTIR DAQUI</p>
+      <p className="lp1-bridge-eyebrow">O que fazer a partir daqui</p>
       <h1 className="lp1-bridge-title">Você não precisa ter ‘a conversa’.</h1>
       <p className="lp1-bridge-subtitle">
         Você só precisa de uma boa pergunta para começar.
@@ -2355,14 +2355,14 @@ function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
           <strong>Uma boa pergunta</strong>
         </div>
         <span className="lp1-bridge-arrow" aria-hidden="true">
-          ↓
+          →
         </span>
         <div className="lp1-bridge-step">
           <span className="lp1-bridge-step-number">02</span>
           <strong>Uma resposta</strong>
         </div>
         <span className="lp1-bridge-arrow" aria-hidden="true">
-          ↓
+          →
         </span>
         <div className="lp1-bridge-step">
           <span className="lp1-bridge-step-number">03</span>
@@ -2377,7 +2377,7 @@ function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
 
       <div className="lp1-bridge-brand">
         <span>É exatamente para isso que existe</span>
-        <strong>PERGUNTAS DE CONEXÃO</strong>
+        <strong>Perguntas de Conexão</strong>
       </div>
 
       <button
@@ -2386,7 +2386,7 @@ function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
         onClick={onContinue}
         data-testid="button-lp1-bridge-continue"
       >
-        Conhecer o Perguntas de Conexão <span aria-hidden="true">→</span>
+        continuar
       </button>
     </section>
   );

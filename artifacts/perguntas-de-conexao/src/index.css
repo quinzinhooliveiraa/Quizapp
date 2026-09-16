@@ -3494,6 +3494,7 @@
   max-width: 35rem;
   margin: 0 auto;
   padding-bottom: 1rem;
+  text-align: center;
 }
 
 .lp1-bridge-eyebrow {
@@ -3501,12 +3502,11 @@
   color: #c9a55e;
   font: 400 9.5px/1.2 var(--app-font-mono);
   letter-spacing: 0.2em;
-  text-transform: uppercase;
 }
 
 .lp1-bridge-title {
   max-width: 30rem;
-  margin: 0;
+  margin: 0 auto;
   color: #fbf8ff;
   font: 400 clamp(2.25rem, 10vw, 3.8rem)/1.02 var(--app-font-serif);
   letter-spacing: -0.045em;
@@ -3515,7 +3515,7 @@
 
 .lp1-bridge-subtitle {
   max-width: 24rem;
-  margin: 1rem 0 1.45rem;
+  margin: 1rem auto 1.45rem;
   color: #bdb3c9;
   font: 400 clamp(1rem, 4vw, 1.2rem)/1.42 var(--app-font-sans);
 }
@@ -3537,16 +3537,20 @@
 }
 
 .lp1-bridge-sequence {
-  display: grid;
-  justify-items: start;
-  gap: 0.45rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(0.4rem, 2.5vw, 1rem);
   margin: 1.65rem 0 0;
 }
 
 .lp1-bridge-step {
   display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.65rem;
 }
 
 .lp1-bridge-step-number {
@@ -3563,17 +3567,19 @@
 .lp1-bridge-step strong {
   color: #f4efe9;
   font: 500 0.98rem/1.2 var(--app-font-sans);
+  text-align: center;
 }
 
 .lp1-bridge-arrow {
-  padding-left: 0.88rem;
+  flex: 0 0 auto;
+  padding-top: 0.65rem;
   color: #806caa;
-  font: 400 1.15rem/1 var(--app-font-sans);
+  font: 400 1.35rem/1 var(--app-font-sans);
 }
 
 .lp1-bridge-closing {
   max-width: 30rem;
-  margin: 1.75rem 0 0;
+  margin: 1.75rem auto 0;
   color: #f4efe9;
   font: 400 0.92rem/1.55 var(--app-font-sans);
 }
@@ -3581,15 +3587,14 @@
 .lp1-bridge-brand {
   display: grid;
   gap: 0.35rem;
-  margin-top: 1.4rem;
+  margin: 1.4rem auto 0;
   color: #8f849e;
   font: 400 0.7rem/1.3 var(--app-font-sans);
 }
 
 .lp1-bridge-brand strong {
   color: #c4acff;
-  font: 700 0.72rem/1.2 var(--app-font-mono);
-  letter-spacing: 0.14em;
+  font: 700 0.78rem/1.2 var(--app-font-sans);
 }
 
 .lp1-bridge-cta {
@@ -3606,6 +3611,7 @@
   background: #b28bff;
   color: #211633;
   font: 700 0.95rem/1.15 var(--app-font-sans);
+  text-transform: lowercase;
   cursor: pointer;
   transition:
     background 160ms ease,
