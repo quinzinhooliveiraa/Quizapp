@@ -18,10 +18,10 @@ export type Pricing = {
 export const FALLBACK_PRICING: Pricing = {
   region: "BR",
   currency: "brl",
-  amountCents: 4790,
-  display: "R$ 47,90",
+  amountCents: 5000,
+  display: "R$ 50",
   symbol: "R$",
-  amount: "47,90",
+  amount: "50",
   symbolPosition: "before",
   unitNote: "dá 11 centavos por noite",
   pixAvailable: true,

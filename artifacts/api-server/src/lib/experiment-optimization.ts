@@ -328,7 +328,7 @@ async function getVariantMetrics(
       ]);
       const visitors = Number(visitorResult[0]?.value || 0);
       const purchases = Number(purchaseResult[0]?.value || 0);
-      const priceCents = isPriceExperiment ? 4790 : 1;
+      const priceCents = isPriceExperiment ? 5000 : 1;
       return {
         variantId: variant.id,
         name: variant.name,
