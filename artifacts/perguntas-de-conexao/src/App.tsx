@@ -2375,18 +2375,13 @@ function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
         falassem sozinhos.
       </p>
 
-      <div className="lp1-bridge-brand">
-        <span>É exatamente para isso que existe</span>
-        <strong>Perguntas de Conexão</strong>
-      </div>
-
       <button
         type="button"
         className="lp1-bridge-cta"
         onClick={onContinue}
         data-testid="button-lp1-bridge-continue"
       >
-        continuar
+        Continuar <span aria-hidden="true">→</span>
       </button>
     </section>
   );
