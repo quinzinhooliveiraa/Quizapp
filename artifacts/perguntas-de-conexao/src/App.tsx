@@ -2931,7 +2931,7 @@ function Lp1Quiz({
           <Lp1ResultScreen
             answers={answers}
             sectionId={current.id}
-            onContinue={() => setShowOffer(true)}
+            onContinue={() => setShowBridgeScreen(true)}
           />
         ) : current.kind === "chart" ? (
           <Lp1ChartScreen
