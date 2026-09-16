@@ -1973,6 +1973,9 @@
 
   .lp1-sale-sticky-active-copy,
   .lp1-sale-sticky-normal-copy {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
     min-width: 0;
     overflow: hidden;
     gap: 0.3rem;
@@ -1980,11 +1983,14 @@
 
   .lp1-sale-sticky-prefix,
   .lp1-sale-sticky-normal-copy span {
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
+    white-space: normal;
     font-size: clamp(0.42rem, 2.35vw, 0.72rem);
     letter-spacing: -0.015em;
+    line-height: 1.05;
   }
 
   .lp1-sale-sticky-timer {
