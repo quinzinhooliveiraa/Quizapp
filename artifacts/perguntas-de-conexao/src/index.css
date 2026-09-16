@@ -28994,6 +28994,20 @@ blockquote em {
   box-shadow: none;
 }
 
+.lp1-sale-page .lp1-sale-offer-heading h2 em {
+  color: #e8c98a;
+  font-style: italic;
+}
+
+.lp1-sale-page .lp1-sale-offer-heading .lp1-price-context {
+  max-width: 560px;
+  margin: 1.4rem auto 1.8rem;
+  color: #b9adbf;
+  font-size: 1rem;
+  line-height: 1.65;
+  text-align: left;
+}
+
 .lp1-sale-page .lp1-price-card {
   background: #fbf9ff;
   border-color: rgba(120, 90, 200, 0.22);

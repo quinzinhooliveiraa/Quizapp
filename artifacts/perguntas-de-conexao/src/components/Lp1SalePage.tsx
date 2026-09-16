@@ -261,7 +261,21 @@ function OfferCard({
       <div className={`lp1-sale-offer-card ${compact ? "is-compact" : ""}`}>
         <div className="lp1-sale-offer-heading">
           <p className="lp1-sale-kicker">acesso vitalício</p>
-          <h2>{offerHeadline}</h2>
+          {compact ? (
+            <h2>{offerHeadline}</h2>
+          ) : (
+            <>
+              <h2>
+                Hoje pode ser mais uma noite
+                <br />
+                <em>cada um no seu celular.</em>
+              </h2>
+              <p className="lp1-price-context">
+                Ou vocês podem estar tendo a conversa de verdade daqui a dez
+                minutos. São 3 passos:
+              </p>
+            </>
+          )}
           {compact ? (
             <span className="lp1-sale-recommended">
               baralho recomendado: {recommendedDeck}
