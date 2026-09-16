@@ -1191,6 +1191,8 @@ type Lp1Answers = Partial<Record<Lp1AnswerKey, string>> & {
   climaVerdicts?: Record<string, Lp1CartaVerdict>;
 };
 
+const LP1_QUIZ_CONTINUE_LABEL = "Continuar";
+
 const LP1_LEGACY_SCREENS: Lp1Screen[] = [
   {
     id: "s00-capa",
@@ -2900,7 +2902,7 @@ function Lp1Quiz({
                   onClick={handleNext}
                   data-testid={`button-lp1-quiz-next-${current.id}`}
                 >
-                  {current.cta} <ArrowRight size={17} aria-hidden="true" />
+                  {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
                 </button>
               </div>
             ) : (
@@ -2911,7 +2913,7 @@ function Lp1Quiz({
                   onClick={handleNext}
                   data-testid={`button-lp1-quiz-next-${current.id}`}
                 >
-                  {current.cta} <ArrowRight size={17} aria-hidden="true" />
+                  {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
                 </button>
                 {"key" in current && current.kind === "capture" ? (
                   <button
@@ -3162,7 +3164,7 @@ function Lp1ComparisonScreen({
         ))}
       </div>
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-        {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+        {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
   );
@@ -3660,7 +3662,7 @@ function Lp1ChartScreen({
         </>
       )}
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-        {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+        {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
   );
@@ -3700,7 +3702,7 @@ function Lp1PhotoScreen({
           </p>
         ))}
         <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-          {screen.cta} <ArrowRight size={17} aria-hidden="true" />
+          {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -3899,7 +3901,7 @@ function Lp1InfoScreen({
         </>
       )}
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-        {isEducationScreen || isBeliefScreen ? "Faz sentido" : screen.cta}{" "}
+        {LP1_QUIZ_CONTINUE_LABEL}{" "}
         <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
