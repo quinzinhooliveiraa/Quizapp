@@ -414,12 +414,22 @@ const LP1_QUIZ_CATALOG: QuizCatalogEntry[] = [
   {
     screenId: "s21-ultimo",
     answerKey: "ultimo",
-    title: "Se pudesse começar essa conversa hoje, gostaria de ter as perguntas certas na mão?",
+    title:
+      "Se vocês tivessem as perguntas certas na mão, o que você gostaria que acontecesse nessa noite?",
     options: [
-      { value: "sim-quero", label: "Sim, quero" },
-      { value: "muito", label: "Muito" },
-      { value: "otimo", label: "Seria ótimo" },
-      { value: "ajudaria", label: "Acho que ajudaria" },
+      { value: "automatico", label: "A gente finalmente sair do automático" },
+      {
+        value: "descobrir",
+        label: "Descobrir coisas que ainda não sabemos um sobre o outro",
+      },
+      {
+        value: "aproximar",
+        label: "Ter uma conversa que realmente aproxime a gente",
+      },
+      {
+        value: "rir",
+        label: "Só rir, conversar e aproveitar uma noite diferente",
+      },
     ],
   },
 ];

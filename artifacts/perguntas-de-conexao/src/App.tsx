@@ -2081,14 +2081,27 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     id: "s21-ultimo",
     kind: "question",
     key: "ultimo",
-    title: "Se você pudesse começar essa conversa hoje, gostaria de ter as perguntas certas na mão?",
+    title:
+      "Se vocês tivessem as perguntas certas na mão, o que você gostaria que acontecesse nessa noite?",
     format: "single",
     emoji: true,
     options: [
-      { value: "sim-quero", label: "Sim, quero", icon: "❤️" },
-      { value: "muito", label: "Muito", icon: "🥺" },
-      { value: "otimo", label: "Seria ótimo", icon: "🙂" },
-      { value: "ajudaria", label: "Acho que ajudaria", icon: "🤔" },
+      { value: "automatico", label: "A gente finalmente sair do automático", icon: "🔄" },
+      {
+        value: "descobrir",
+        label: "Descobrir coisas que ainda não sabemos um sobre o outro",
+        icon: "🧠",
+      },
+      {
+        value: "aproximar",
+        label: "Ter uma conversa que realmente aproxime a gente",
+        icon: "🫶",
+      },
+      {
+        value: "rir",
+        label: "Só rir, conversar e aproveitar uma noite diferente",
+        icon: "😂",
+      },
     ],
   },
   {
