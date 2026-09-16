@@ -3043,15 +3043,16 @@
 .lp1-loading-modal > p {
   margin: 0 0 1.2rem;
   color: #f4efe9;
-  font: 400 19px/1.2 var(--app-font-serif);
+  font: 600 19px/1.28 var(--app-font-sans);
+  letter-spacing: -0.025em;
   text-align: center;
 }
 
 .lp1-loading-modal > .lp1-loading-modal-progress {
   margin-bottom: 0.7rem;
   color: #e8c98a;
-  font: 700 10px/1.2 var(--app-font-mono);
-  letter-spacing: 0.12em;
+  font: 800 10px/1.2 var(--app-font-sans);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -3067,7 +3068,7 @@
   border-radius: 999px;
   background: #2a2031;
   color: #f4efe9;
-  font: 600 12px/1.1 var(--app-font-sans);
+  font: 700 13px/1.1 var(--app-font-sans);
   cursor: pointer;
 }
 
