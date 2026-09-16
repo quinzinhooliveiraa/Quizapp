@@ -1,0 +1,154 @@
+FORMATO:
+- Mobile-first
+- Proporção visual 9:16
+- Deve parecer uma tela real de landing page/quiz.
+- Responsiva para celular.
+- Crie tudo em HTML/CSS/JS.
+- Não precisa de backend.
+- O botão pode simplesmente avançar para uma próxima seção placeholder.
+
+IDENTIDADE VISUAL:
+Use a identidade visual do Perguntas de Conexão:
+- fundo vinho/roxo escuro
+- tons aproximados de #302254, #241a45 e #41245d
+- detalhes em lavanda #c4acff
+- pequenos detalhes dourados/quentes
+- estética cinematográfica, íntima e sofisticada
+- aparência premium, mas não corporativa
+- bastante espaço negativo
+- tipografia moderna e elegante
+- bordas arredondadas
+- sombras suaves
+- evitar excesso de elementos
+
+CONTEXTO:
+Essa tela aparece imediatamente depois de uma tela de diagnóstico que mostrou:
+
+“O CLIMA DE VOCÊS AGORA”
+
+“RISCO ALTO”
+
+“Risco de continuar no automático”
+
+A pessoa acabou de perceber que existe um problema de rotina/conversa no relacionamento.
+
+Agora NÃO quero assustá-la novamente.
+
+Quero transformar essa tensão em uma sensação de:
+“Ah, então talvez seja simples começar.”
+
+COPY EXATA:
+
+Pequeno texto no topo:
+“O QUE FAZER A PARTIR DAQUI”
+
+Título principal:
+“Você não precisa ter ‘a conversa’.”
+
+Subtítulo:
+“Você só precisa de uma boa pergunta para começar.”
+
+Depois disso, crie uma composição visual mostrando uma progressão simples:
+
+01
+Uma boa pergunta
+
+↓
+
+02
+Uma resposta
+
+↓
+
+03
+Outra pergunta
+
+A ideia visual deve deixar muito claro que a conversa não precisa começar com algo pesado.
+
+Depois da sequência, coloque:
+
+“E, quando você percebe, vocês estão falando de coisas que talvez não falassem sozinhos.”
+
+Depois, de maneira MUITO sutil:
+
+“É exatamente para isso que existe”
+
+“PERGUNTAS DE CONEXÃO”
+
+IMPORTANTE:
+Esse trecho não deve parecer um pitch.
+Não coloque logo gigante.
+Não faça uma seção de apresentação do produto.
+É apenas uma conexão natural entre o mecanismo explicado e o próximo passo.
+
+BOTÃO:
+
+“Conhecer o Perguntas de Conexão →”
+
+O botão deve levar para uma seção placeholder chamada:
+
+“PÁGINA DE VENDA”
+
+Pode deixar essa seção apenas como um bloco vazio indicando onde a página de venda entraria.
+
+ELEMENTO VISUAL:
+Inclua uma imagem/visual cinematográfico de um casal jovem adulto conversando em casa durante uma noite comum.
+
+A cena deve transmitir:
+- proximidade
+- conversa natural
+- intimidade
+- conforto
+- uma noite comum
+- conexão
+
+NÃO quero:
+- casal se beijando
+- pose de ensaio
+- casal excessivamente feliz
+- imagem genérica de banco de imagens
+- aparência de publicidade
+- casal olhando para a câmera
+
+A imagem deve parecer uma fotografia cinematográfica espontânea.
+
+COMPOSIÇÃO:
+
+Topo:
+“O QUE FAZER A PARTIR DAQUI”
+
+Grande título:
+“Você não precisa ter
+‘a conversa’.”
+
+Subtítulo.
+
+Imagem cinematográfica do casal.
+
+Progressão:
+01 Uma boa pergunta
+↓
+02 Uma resposta
+↓
+03 Outra pergunta
+
+Texto de fechamento.
+
+PERGUNTAS DE CONEXÃO
+
+Botão.
+
+A experiência deve ser visualmente leve e não muito longa.
+
+QUERO QUE VOCÊ PRESTE ATENÇÃO ESPECIAL À HIERARQUIA:
+
+1. “Você não precisa ter ‘a conversa’.” deve ser o elemento dominante.
+2. “Você só precisa de uma boa pergunta para começar.” deve explicar a ideia.
+3. A sequência 01 → 02 → 03 deve funcionar como o mecanismo visual.
+4. A fotografia deve criar emoção.
+5. O produto deve aparecer apenas no final como conexão, não como apresentação.
+6. O botão deve ser claro, mas não agressivo.
+
+NÃO adicione textos extras que eu não forneci.
+
+Entregue o resultado funcionando diretamente no preview do Replit.

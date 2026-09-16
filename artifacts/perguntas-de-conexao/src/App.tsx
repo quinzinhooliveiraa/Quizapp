@@ -740,6 +740,7 @@ function clearCompletedCheckoutStorage(): void {
   try {
     sessionStorage.removeItem("lp1-quiz-step");
     sessionStorage.removeItem("lp1-quiz-offer");
+    sessionStorage.removeItem("lp1-quiz-bridge");
   } catch {
     // Session storage may be unavailable in embedded or private browsers.
   }
@@ -2332,6 +2333,65 @@ function Lp1Diagnosis({
   );
 }
 
+function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
+  return (
+    <section className="lp1-bridge-screen" data-section-name="s22-a-partir-daqui">
+      <p className="lp1-bridge-eyebrow">O QUE FAZER A PARTIR DAQUI</p>
+      <h1 className="lp1-bridge-title">Você não precisa ter ‘a conversa’.</h1>
+      <p className="lp1-bridge-subtitle">
+        Você só precisa de uma boa pergunta para começar.
+      </p>
+
+      <figure className="lp1-bridge-photo">
+        <img
+          src="/hero/hero-casal-novo.webp"
+          alt="Casal conversando em casa durante uma noite comum"
+        />
+      </figure>
+
+      <div className="lp1-bridge-sequence" aria-label="Como uma conversa começa">
+        <div className="lp1-bridge-step">
+          <span className="lp1-bridge-step-number">01</span>
+          <strong>Uma boa pergunta</strong>
+        </div>
+        <span className="lp1-bridge-arrow" aria-hidden="true">
+          ↓
+        </span>
+        <div className="lp1-bridge-step">
+          <span className="lp1-bridge-step-number">02</span>
+          <strong>Uma resposta</strong>
+        </div>
+        <span className="lp1-bridge-arrow" aria-hidden="true">
+          ↓
+        </span>
+        <div className="lp1-bridge-step">
+          <span className="lp1-bridge-step-number">03</span>
+          <strong>Outra pergunta</strong>
+        </div>
+      </div>
+
+      <p className="lp1-bridge-closing">
+        E, quando você percebe, vocês estão falando de coisas que talvez não
+        falassem sozinhos.
+      </p>
+
+      <div className="lp1-bridge-brand">
+        <span>É exatamente para isso que existe</span>
+        <strong>PERGUNTAS DE CONEXÃO</strong>
+      </div>
+
+      <button
+        type="button"
+        className="lp1-bridge-cta"
+        onClick={onContinue}
+        data-testid="button-lp1-bridge-continue"
+      >
+        Conhecer o Perguntas de Conexão <span aria-hidden="true">→</span>
+      </button>
+    </section>
+  );
+}
+
 const LP1_OFFER_HEADLINES: Record<string, string> = {
   routine: "Dá pra resolver isso hoje à noite.",
   discovery: "Dá pra descobrir algo novo hoje à noite.",
@@ -2466,6 +2526,13 @@ function Lp1Quiz({
       return false;
     }
   });
+  const [showBridgeScreen, setShowBridgeScreen] = useState(() => {
+    try {
+      return sessionStorage.getItem("lp1-quiz-bridge") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [captureAttempted, setCaptureAttempted] = useState(false);
   const [trialCardIndex, setTrialCardIndex] = useState(0);
   const [climateIndex, setClimateIndex] = useState(0);
@@ -2477,7 +2544,10 @@ function Lp1Quiz({
       ? answers[current.key as Lp1AnswerKey]
       : "";
   const selectedValue = typeof selectedAnswer === "string" ? selectedAnswer : "";
-  const visualStep = Math.min(step + 1, LP1_SCREENS.length);
+  const totalVisualSteps = LP1_SCREENS.length + 1;
+  const visualStep = showBridgeScreen
+    ? totalVisualSteps
+    : Math.min(step + 1, LP1_SCREENS.length);
 
   useEffect(() => {
     try {
@@ -2494,6 +2564,14 @@ function Lp1Quiz({
       // Session storage may be unavailable in embedded or private browsers.
     }
   }, [showOffer]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("lp1-quiz-bridge", String(showBridgeScreen));
+    } catch {
+      // Session storage may be unavailable in embedded or private browsers.
+    }
+  }, [showBridgeScreen]);
 
   useEffect(() => {
     return () => {
@@ -2677,6 +2755,10 @@ function Lp1Quiz({
   };
 
   const goBack = () => {
+    if (showBridgeScreen) {
+      setShowBridgeScreen(false);
+      return;
+    }
     if (step === 0) {
       onBackToLanding();
       return;
@@ -2686,7 +2768,7 @@ function Lp1Quiz({
 
   return (
     <main className={`lp1-quiz-screen ${showOffer ? "is-offer" : ""}`}>
-      {!showOffer && step < LP1_SCREENS.length ? (
+      {!showOffer && (step < LP1_SCREENS.length || showBridgeScreen) ? (
         <>
           <header className="lp1-quiz-header">
             <button
@@ -2697,27 +2779,27 @@ function Lp1Quiz({
             >
               <span aria-hidden="true">←</span>
             </button>
-             <p className="lp1-quiz-counter" aria-label={`Tela ${visualStep} de ${LP1_SCREENS.length}`}>
+             <p className="lp1-quiz-counter" aria-label={`Tela ${visualStep} de ${totalVisualSteps}`}>
               <span>{visualStep}</span>
-               <span>/{LP1_SCREENS.length}</span>
+                <span>/{totalVisualSteps}</span>
             </p>
           </header>
           <div
             className="lp1-quiz-progress"
             role="progressbar"
-             aria-label={`Progresso do quiz: tela ${visualStep} de ${LP1_SCREENS.length}`}
+             aria-label={`Progresso do quiz: tela ${visualStep} de ${totalVisualSteps}`}
             aria-valuemin={1}
-             aria-valuemax={LP1_SCREENS.length}
+             aria-valuemax={totalVisualSteps}
             aria-valuenow={visualStep}
           >
             <span className="lp1-quiz-progress-track" aria-hidden="true">
               <span
                 className="lp1-quiz-progress-fill"
-                 style={{ width: `${(visualStep / LP1_SCREENS.length) * 100}%` }}
+                 style={{ width: `${(visualStep / totalVisualSteps) * 100}%` }}
               />
               <span
                 className="lp1-quiz-progress-dot"
-                 style={{ left: `${(visualStep / LP1_SCREENS.length) * 100}%` }}
+                 style={{ left: `${(visualStep / totalVisualSteps) * 100}%` }}
               />
             </span>
           </div>
@@ -2731,10 +2813,17 @@ function Lp1Quiz({
             onCheckout={onFinish}
             checkoutOpen={checkoutOpen}
           />
+        ) : showBridgeScreen ? (
+          <Lp1BridgeScreen
+            onContinue={() => {
+              setShowBridgeScreen(false);
+              setShowOffer(true);
+            }}
+          />
         ) : step === LP1_SCREENS.length ? (
           <Lp1Diagnosis
             answers={answers as LandingQuizAnswers}
-            onContinue={() => setShowOffer(true)}
+            onContinue={() => setShowBridgeScreen(true)}
           />
         ) : current.kind === "question" && current.id === "s18-clima" ? (
           <Lp1ClimatePicker

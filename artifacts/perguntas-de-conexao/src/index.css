@@ -3490,6 +3490,134 @@
   text-align: center;
 }
 
+.lp1-bridge-screen {
+  max-width: 35rem;
+  margin: 0 auto;
+  padding-bottom: 1rem;
+}
+
+.lp1-bridge-eyebrow {
+  margin: 0 0 1rem;
+  color: #c9a55e;
+  font: 400 9.5px/1.2 var(--app-font-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.lp1-bridge-title {
+  max-width: 30rem;
+  margin: 0;
+  color: #fbf8ff;
+  font: 400 clamp(2.25rem, 10vw, 3.8rem)/1.02 var(--app-font-serif);
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.lp1-bridge-subtitle {
+  max-width: 24rem;
+  margin: 1rem 0 1.45rem;
+  color: #bdb3c9;
+  font: 400 clamp(1rem, 4vw, 1.2rem)/1.42 var(--app-font-sans);
+}
+
+.lp1-bridge-photo {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  background: #221a2b;
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.24);
+}
+
+.lp1-bridge-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  filter: saturate(0.88) contrast(1.04);
+}
+
+.lp1-bridge-sequence {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+  margin: 1.65rem 0 0;
+}
+
+.lp1-bridge-step {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.lp1-bridge-step-number {
+  display: grid;
+  width: 2.05rem;
+  height: 2.05rem;
+  place-items: center;
+  border: 1px solid rgba(196, 172, 255, 0.45);
+  border-radius: 50%;
+  color: #c4acff;
+  font: 700 10px/1 var(--app-font-mono);
+}
+
+.lp1-bridge-step strong {
+  color: #f4efe9;
+  font: 500 0.98rem/1.2 var(--app-font-sans);
+}
+
+.lp1-bridge-arrow {
+  padding-left: 0.88rem;
+  color: #806caa;
+  font: 400 1.15rem/1 var(--app-font-sans);
+}
+
+.lp1-bridge-closing {
+  max-width: 30rem;
+  margin: 1.75rem 0 0;
+  color: #f4efe9;
+  font: 400 0.92rem/1.55 var(--app-font-sans);
+}
+
+.lp1-bridge-brand {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1.4rem;
+  color: #8f849e;
+  font: 400 0.7rem/1.3 var(--app-font-sans);
+}
+
+.lp1-bridge-brand strong {
+  color: #c4acff;
+  font: 700 0.72rem/1.2 var(--app-font-mono);
+  letter-spacing: 0.14em;
+}
+
+.lp1-bridge-cta {
+  display: flex;
+  width: 100%;
+  min-height: 3.65rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 1.55rem;
+  padding: 0.9rem 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: #b28bff;
+  color: #211633;
+  font: 700 0.95rem/1.15 var(--app-font-sans);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.lp1-bridge-cta:hover,
+.lp1-bridge-cta:focus-visible {
+  background: #c4acff;
+  transform: translateY(-1px);
+}
+
 .lp1-result-insights {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
