@@ -29073,7 +29073,7 @@ blockquote em {
   font-weight: 600;
 }
 
-.lp1-sale-page .lp1-price-includes li {
+.lp1-sale-page .lp-price-includes li {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -29087,7 +29087,7 @@ blockquote em {
   stroke-width: 2.6;
 }
 
-.lp1-sale-page .lp1-price-includes strong {
+.lp1-sale-page .lp-price-includes strong {
   color: #8b3553;
 }
 
