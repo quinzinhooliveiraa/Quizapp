@@ -28986,6 +28986,12 @@ blockquote em {
   background: #211824;
 }
 
+.lp1-sale-page .lp1-price-card {
+  background: #fbf9ff;
+  border-color: rgba(120, 90, 200, 0.22);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
 .lp1-sale-page .lp1-sale-recommended {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.04);
