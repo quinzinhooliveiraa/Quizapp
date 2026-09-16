@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ChevronDown,
@@ -364,6 +364,8 @@ export function Lp1SalePage({
   const [offerState, setOfferState] = useState<OfferState | null>(null);
   const [offerError, setOfferError] = useState("");
   const [now, setNow] = useState(() => Date.now());
+  const [recapVisible, setRecapVisible] = useState(false);
+  const recapRef = useRef<HTMLDivElement | null>(null);
   const visitorKey = useMemo(() => getVisitorKey(), []);
   const recapBars = useMemo(() => getRecapBars(answers), [answers]);
   const displayName = useMemo(() => getDisplayName(answers), [answers]);
@@ -413,6 +415,28 @@ export function Lp1SalePage({
     return () => window.clearInterval(timer);
   }, [offerState?.deadline]);
 
+  useEffect(() => {
+    const element = recapRef.current;
+    if (!element || recapVisible) return;
+
+    if (!("IntersectionObserver" in window)) {
+      setRecapVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setRecapVisible(true);
+        observer.disconnect();
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -12% 0px" },
+    );
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [recapVisible]);
+
   const remainingSeconds = offerState
     ? Math.max(0, Math.ceil((new Date(offerState.deadline).getTime() - now) / 1000))
     : 0;
@@ -446,7 +470,7 @@ export function Lp1SalePage({
               </div>
             </div>
             <button type="button" onClick={scrollToOffer}>
-              PEGAR -{discountPercent}% OFF{" "}
+              Pegar -{discountPercent}% off{" "}
               <ArrowRight size={15} aria-hidden="true" />
             </button>
           </div>
@@ -466,7 +490,10 @@ export function Lp1SalePage({
               alt="Um casal distante agora e conectado com as cartas"
             />
           </figure>
-          <div className="lp1-sale-gap-card">
+          <div
+            ref={recapRef}
+            className={`lp1-sale-gap-card ${recapVisible ? "is-visible" : ""}`}
+          >
             <div className="lp1-sale-gap-column is-now">
               <span className="lp1-sale-gap-column-title">Agora</span>
               <span className="lp1-sale-gap-tag">No modo colega de quarto</span>
@@ -507,7 +534,7 @@ export function Lp1SalePage({
       </section>
 
       <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
-        <p className="lp1-sale-kicker">A VIRADA</p>
+        <p className="lp1-sale-kicker">A virada</p>
         <p className="lp1-sale-epiphany-agitation">
           Você escolheu a hora, criou coragem e disse “vamos conversar”. E veio
           o “sei lá”.
@@ -530,7 +557,7 @@ export function Lp1SalePage({
             <span>Cliente real do Perguntas de Conexão</span>
             <span className="lp1-sale-epiphany-verified">
               <ShieldCheck size={12} aria-hidden="true" />
-              VERIFICADO
+              Verificado
             </span>
           </footer>
         </blockquote>

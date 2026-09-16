@@ -107,7 +107,7 @@ export function Lp1PriceCard({
                   <span>Por </span>
                   <PriceText pricing={pricing} />
                   <span className="lp-price-off-badge">
-                    {discountPercent}% OFF
+                    {discountPercent}% off
                   </span>
                 </strong>
               </>
