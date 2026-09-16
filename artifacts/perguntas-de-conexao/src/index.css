@@ -29280,8 +29280,10 @@ blockquote em {
 .lp1-price-card .lp-price-payment {
   margin: 0.7rem 0 0;
   color: #6f6580;
-  font-size: 0.78rem;
+  font-size: clamp(0.64rem, 2.5vw, 0.78rem);
+  letter-spacing: -0.01em;
   text-align: center;
+  white-space: nowrap;
 }
 .lp1-price-card .lp-guarantee {
   background: rgba(112, 81, 115, 0.05);
@@ -29300,7 +29302,7 @@ blockquote em {
   justify-content: center;
   width: 2.1rem;
   height: 2.1rem;
-  color: #7a5cc4;
+  color: #c98f1e;
 }
 .lp1-price-card .lp-price-lifetime {
   margin: 1.1rem 0 0;
@@ -29806,12 +29808,18 @@ blockquote em {
 .lp1-sale-page .lp1-price-card .lp-cta-primary {
   min-height: 3.7rem;
   margin-top: 1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e8b13a, #c98f1e);
+  color: #17121c;
+  font-weight: 700;
+  white-space: nowrap;
   animation: lp1-yellow-cta-pulse 2.8s ease-in-out infinite;
   box-shadow: 0 1rem 2.2rem rgba(232, 177, 58, 0.3);
 }
 
 .lp1-sale-page .lp1-price-card .lp-cta-primary:hover,
 .lp1-sale-page .lp1-price-card .lp-cta-primary:focus-visible {
+  filter: brightness(1.08);
   box-shadow: 0 1.2rem 2.6rem rgba(232, 177, 58, 0.42);
 }
 

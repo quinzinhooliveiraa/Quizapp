@@ -129,9 +129,8 @@ export function Lp1PriceCard({
         Começar hoje à noite <ArrowRight size={18} aria-hidden="true" />
       </button>
       <p className="lp-price-payment">
-        {pricing.pixAvailable ? "Pix ou cartão" : "Cartão"} · acesso na hora
+        Acesso imediato · Pagamento seguro · Garantia de 7 dias
       </p>
-      <p className="lp-price-freedom">🔒 7 dias de garantia. Você decide.</p>
       <div className="lp-guarantee">
         <div className="lp-guarantee-seal" aria-hidden="true">
           <ShieldCheck size={28} strokeWidth={1.8} />
