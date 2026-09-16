@@ -1,11 +1,12 @@
 import { ArrowRight, Check, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
 import type { Pricing } from "@/lib/pricing";
 
 type Lp1PriceCardProps = {
   fullPricing: Pricing;
   offerPricing?: Pricing | null;
   discountActive?: boolean;
-  discountLabel?: string | null;
+  discountLabel?: ReactNode;
   onBuy: () => void;
   testId?: string;
   className?: string;
@@ -15,11 +16,13 @@ type Lp1PriceCardProps = {
 function PriceText({ pricing }: { pricing: Pricing }) {
   return pricing.symbolPosition === "before" ? (
     <>
-      <span className="lp-price-symbol">{pricing.symbol}</span> {pricing.amount}
+      <span className="lp-price-symbol">{pricing.symbol}</span>{" "}
+      <span className="lp-price-amount">{pricing.amount}</span>
     </>
   ) : (
     <>
-      {pricing.amount} <span className="lp-price-symbol">{pricing.symbol}</span>
+      <span className="lp-price-amount">{pricing.amount}</span>{" "}
+      <span className="lp-price-symbol">{pricing.symbol}</span>
     </>
   );
 }
@@ -89,14 +92,14 @@ export function Lp1PriceCard({
           </ul>
         </>
       ) : null}
-      <div className="lp-price-main">
+      <div className={`lp-price-main ${hasDiscount ? "is-discount" : ""}`}>
         {hasDiscount && discountLabel ? (
-          <p className="lp-price-discount-label" aria-live="polite">
+          <div className="lp-price-discount-label" aria-live="polite">
             {discountLabel}
-          </p>
+          </div>
         ) : null}
         <p className="lp-price-value">
-          459 perguntas por{" "}
+          <span className="lp-price-label">459 perguntas por</span>
           <span className={`lp-price-figure ${hasDiscount ? "is-discount" : ""}`}>
             {hasDiscount ? (
               <>
@@ -104,7 +107,7 @@ export function Lp1PriceCard({
                   De <PriceText pricing={fullPricing} />
                 </del>
                 <strong className="lp-price-discount">
-                  <span>Por </span>
+                  <span className="lp-price-discount-prefix">Por</span>
                   <PriceText pricing={pricing} />
                   <span className="lp-price-off-badge">
                     {discountPercent}% off

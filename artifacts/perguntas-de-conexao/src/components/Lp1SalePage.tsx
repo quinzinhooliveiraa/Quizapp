@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ChevronDown,
+  Clock3,
   Heart,
   ShieldCheck,
 } from "lucide-react";
@@ -271,6 +272,7 @@ function OfferCard({
   compact?: boolean;
 }) {
   const active = Boolean(offerState?.discountActive && remainingSeconds > 0);
+  const discountPercent = getDiscountPercent(offerState);
 
   return (
     <>
@@ -332,9 +334,17 @@ function OfferCard({
               offerPricing={offerState.offer}
               discountActive={active}
               discountLabel={
-                active
-                  ? `Desconto por concluir o teste · acaba em ${formatRemaining(remainingSeconds)}`
-                  : null
+                active ? (
+                  <>
+                    <span className="lp-price-discount-copy">
+                      O seu desconto de menos de {discountPercent}% termina em
+                    </span>
+                    <strong className="lp-price-discount-timer">
+                      <Clock3 size={18} strokeWidth={2.2} aria-hidden="true" />
+                      {formatRemaining(remainingSeconds)}
+                    </strong>
+                  </>
+                ) : null
               }
               onBuy={onCheckout}
               testId={
