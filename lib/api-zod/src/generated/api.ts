@@ -415,6 +415,59 @@ export const TrackPageEventResponse = zod.void()
 
 
 /**
+ * @summary Record an anonymous quiz answer for future optimization
+ */
+export const trackQuizAnswerBodyQuizIdMax = 80;
+
+export const trackQuizAnswerBodyVisitorKeyMax = 120;
+
+export const trackQuizAnswerBodyScreenIdMax = 120;
+
+export const trackQuizAnswerBodyAnswerKeyMax = 80;
+
+export const trackQuizAnswerBodyAnswerValueMax = 2000;
+
+export const trackQuizAnswerBodyStepMin = 0;
+export const trackQuizAnswerBodyStepMax = 999;
+
+export const trackQuizAnswerBodyExperimentIdMax = 120;
+
+export const trackQuizAnswerBodyExperimentVariantIdMax = 120;
+
+export const trackQuizAnswerBodyUtmSourceMax = 160;
+
+export const trackQuizAnswerBodyUtmMediumMax = 160;
+
+export const trackQuizAnswerBodyUtmCampaignMax = 200;
+
+export const trackQuizAnswerBodyUtmContentMax = 200;
+
+export const trackQuizAnswerBodyUtmTermMax = 200;
+
+export const trackQuizAnswerBodyInternalDefault = false;
+
+export const TrackQuizAnswerBody = zod.object({
+  "lpId": zod.enum(['v1', 'v2', 'lp3']),
+  "quizId": zod.string().min(1).max(trackQuizAnswerBodyQuizIdMax),
+  "visitorKey": zod.string().min(1).max(trackQuizAnswerBodyVisitorKeyMax),
+  "screenId": zod.string().min(1).max(trackQuizAnswerBodyScreenIdMax),
+  "answerKey": zod.string().min(1).max(trackQuizAnswerBodyAnswerKeyMax),
+  "answerValue": zod.string().min(1).max(trackQuizAnswerBodyAnswerValueMax),
+  "step": zod.number().int().min(trackQuizAnswerBodyStepMin).max(trackQuizAnswerBodyStepMax),
+  "experimentId": zod.string().max(trackQuizAnswerBodyExperimentIdMax).optional(),
+  "experimentVariantId": zod.string().max(trackQuizAnswerBodyExperimentVariantIdMax).optional(),
+  "utmSource": zod.string().max(trackQuizAnswerBodyUtmSourceMax).optional(),
+  "utmMedium": zod.string().max(trackQuizAnswerBodyUtmMediumMax).optional(),
+  "utmCampaign": zod.string().max(trackQuizAnswerBodyUtmCampaignMax).optional(),
+  "utmContent": zod.string().max(trackQuizAnswerBodyUtmContentMax).optional(),
+  "utmTerm": zod.string().max(trackQuizAnswerBodyUtmTermMax).optional(),
+  "internal": zod.boolean().default(trackQuizAnswerBodyInternalDefault)
+})
+
+export const TrackQuizAnswerResponse = zod.void()
+
+
+/**
  * @summary Get the landing page configured for the main route
  */
 export const GetPrimaryLandingPageResponse = zod.object({
@@ -512,6 +565,58 @@ export const GetAdminFunnelAnalyticsResponse = zod.object({
 
 
 /**
+ * @summary Get quiz answer analytics
+ */
+export const getAdminQuizAnalyticsQueryDaysMax = 90;
+
+
+
+export const GetAdminQuizAnalyticsQueryParams = zod.object({
+  "sessionId": zod.coerce.string(),
+  "lp": zod.enum(['v1', 'v2', 'lp3', 'all']).optional(),
+  "days": zod.coerce.number().int().min(1).max(getAdminQuizAnalyticsQueryDaysMax).optional(),
+  "from": zod.date().optional(),
+  "to": zod.date().optional()
+})
+
+export const GetAdminQuizAnalyticsResponse = zod.object({
+  "quizId": zod.string(),
+  "lpId": zod.string(),
+  "from": zod.string(),
+  "to": zod.string(),
+  "visitors": zod.number().int(),
+  "answers": zod.number().int(),
+  "completedVisitors": zod.number().int(),
+  "completionRate": zod.number(),
+  "questions": zod.array(zod.object({
+  "screenId": zod.string(),
+  "answerKey": zod.string(),
+  "step": zod.number().int(),
+  "answers": zod.number().int(),
+  "visitors": zod.number().int()
+})),
+  "answerBreakdown": zod.array(zod.object({
+  "screenId": zod.string(),
+  "answerKey": zod.string(),
+  "value": zod.string(),
+  "answers": zod.number().int(),
+  "visitors": zod.number().int()
+})),
+  "campaigns": zod.array(zod.object({
+  "source": zod.string().nullable(),
+  "campaign": zod.string().nullable(),
+  "answers": zod.number().int(),
+  "visitors": zod.number().int()
+})),
+  "variants": zod.array(zod.object({
+  "variantId": zod.string().nullable(),
+  "answers": zod.number().int(),
+  "visitors": zod.number().int()
+}))
+})
+
+
+/**
  * @summary Delete analytics and checkout data for a selected landing page window
  */
 export const deleteAdminAnalyticsDataQueryLpDefault = `v2`;
@@ -530,7 +635,8 @@ export const DeleteAdminAnalyticsDataQueryParams = zod.object({
 export const DeleteAdminAnalyticsDataResponse = zod.object({
   "deletedEvents": zod.number().int(),
   "deletedSessions": zod.number().int(),
-  "deletedInvites": zod.number().int()
+  "deletedInvites": zod.number().int(),
+  "deletedQuizAnswers": zod.number().int()
 })
 
 

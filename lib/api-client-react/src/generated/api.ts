@@ -27,6 +27,7 @@ import type {
   AdminExperimentAnalyticsResponse,
   AdminExperimentsResponse,
   AdminFunnelAnalytics,
+  AdminQuizAnalytics,
   CancelInvite200,
   CheckAccessEmail200,
   CheckAccessEmailParams,
@@ -51,6 +52,7 @@ import type {
   GetAdminExperimentOptimizationParams,
   GetAdminFunnelAnalyticsParams,
   GetAdminPrimaryLandingPageParams,
+  GetAdminQuizAnalyticsParams,
   GetAdminSessionRecordingParams,
   GetExperimentAssignmentParams,
   GetExperimentLinkAssignmentParams,
@@ -82,6 +84,7 @@ import type {
   Question,
   QuestionSession,
   QuestionTheme,
+  QuizAnswerInput,
   ReceiveStripeWebhookBody,
   ResetGuestOnboarding200,
   ResetOwnerOnboarding200,
@@ -1839,6 +1842,77 @@ export const useTrackPageEvent = <TError = ErrorType<void>,
       return useMutation(getTrackPageEventMutationOptions(options));
     }
 
+export const getTrackQuizAnswerUrl = () => {
+
+
+
+
+  return `/api/track/quiz-answer`
+}
+
+/**
+ * @summary Record an anonymous quiz answer for future optimization
+ */
+export const trackQuizAnswer = async (quizAnswerInput: QuizAnswerInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getTrackQuizAnswerUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(quizAnswerInput)
+  }
+);}
+
+
+
+
+
+export const getTrackQuizAnswerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackQuizAnswer>>, TError,{data: BodyType<QuizAnswerInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof trackQuizAnswer>>, TError,{data: BodyType<QuizAnswerInput>}, TContext> => {
+
+const mutationKey = ['trackQuizAnswer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof trackQuizAnswer>>, {data: BodyType<QuizAnswerInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  trackQuizAnswer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TrackQuizAnswerMutationResult = NonNullable<Awaited<ReturnType<typeof trackQuizAnswer>>>
+    export type TrackQuizAnswerMutationBody = BodyType<QuizAnswerInput>
+    export type TrackQuizAnswerMutationError = ErrorType<void>
+
+    /**
+ * @summary Record an anonymous quiz answer for future optimization
+ */
+export const useTrackQuizAnswer = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackQuizAnswer>>, TError,{data: BodyType<QuizAnswerInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof trackQuizAnswer>>,
+        TError,
+        {data: BodyType<QuizAnswerInput>},
+        TContext
+      > => {
+      return useMutation(getTrackQuizAnswerMutationOptions(options));
+    }
+
 export const getGetPrimaryLandingPageUrl = () => {
 
 
@@ -2072,6 +2146,90 @@ export function useGetAdminFunnelAnalytics<TData = Awaited<ReturnType<typeof get
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAdminFunnelAnalyticsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminQuizAnalyticsUrl = (params: GetAdminQuizAnalyticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/quiz-analytics?${stringifiedParams}` : `/api/admin/quiz-analytics`
+}
+
+/**
+ * @summary Get quiz answer analytics
+ */
+export const getAdminQuizAnalytics = async (params: GetAdminQuizAnalyticsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminQuizAnalytics> => {
+
+  return customFetch<AdminQuizAnalytics>(getGetAdminQuizAnalyticsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminQuizAnalyticsQueryKey = (params?: GetAdminQuizAnalyticsParams,) => {
+    return [
+    `/api/admin/quiz-analytics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminQuizAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminQuizAnalytics>>, TError = ErrorType<void>>(params: GetAdminQuizAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminQuizAnalyticsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminQuizAnalytics>>> = ({ signal }) => getAdminQuizAnalytics(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminQuizAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminQuizAnalytics>>>
+export type GetAdminQuizAnalyticsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get quiz answer analytics
+ */
+
+export function useGetAdminQuizAnalytics<TData = Awaited<ReturnType<typeof getAdminQuizAnalytics>>, TError = ErrorType<void>>(
+ params: GetAdminQuizAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminQuizAnalyticsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

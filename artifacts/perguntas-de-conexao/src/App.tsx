@@ -149,6 +149,53 @@ const queryClient = new QueryClient({
 });
 const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
+
+function getQuizAttribution() {
+  if (typeof window === "undefined") {
+    return {};
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    utmSource: params.get("utm_source") || undefined,
+    utmMedium: params.get("utm_medium") || undefined,
+    utmCampaign: params.get("utm_campaign") || undefined,
+    utmContent: params.get("utm_content") || undefined,
+    utmTerm: params.get("utm_term") || undefined,
+  };
+}
+
+function trackLp1QuizAnswer({
+  screenId,
+  answerKey,
+  answerValue,
+  step,
+  experimentAssignment,
+}: {
+  screenId: string;
+  answerKey: string;
+  answerValue: string;
+  step: number;
+  experimentAssignment?: StoredExperimentAssignment;
+}) {
+  void fetch(apiUrl("/api/track/quiz-answer"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      lpId: "v2",
+      quizId: "lp1",
+      visitorKey: getOrCreateVisitorKey(),
+      screenId,
+      answerKey,
+      answerValue,
+      step,
+      experimentId: experimentAssignment?.experimentId,
+      experimentVariantId: experimentAssignment?.experimentVariantId,
+      internal: isInternalTrackingEnabled(),
+      ...getQuizAttribution(),
+    }),
+    keepalive: true,
+  }).catch(() => undefined);
+}
 // Baralhos que têm foto de fundo (arquivos em /public/theme-backgrounds/).
 const THEME_BACKGROUND_IDS = new Set([
   "porto-seguro",
@@ -2397,9 +2444,11 @@ function Lp1Offer({
 function Lp1Quiz({
   onFinish,
   onBackToLanding,
+  experimentAssignment,
 }: {
   onFinish: () => void;
   onBackToLanding: () => void;
+  experimentAssignment?: StoredExperimentAssignment;
 }) {
   const [step, setStep] = useState(() => {
     try {
@@ -2478,6 +2527,13 @@ function Lp1Quiz({
       },
     };
     setAnswers(nextAnswers);
+    trackLp1QuizAnswer({
+      screenId: `${current.id}:${cardId}`,
+      answerKey: "cartas",
+      answerValue: verdict,
+      step,
+      experimentAssignment,
+    });
     if (singleAdvanceTimer.current !== null) {
       clearTimeout(singleAdvanceTimer.current);
     }
@@ -2513,6 +2569,13 @@ function Lp1Quiz({
 
     if (climateIndex < climateQuestion.options.length - 1) {
       setAnswers(nextAnswers);
+      trackLp1QuizAnswer({
+        screenId: `${current.id}:${climateValue}`,
+        answerKey: "climaVerdicts",
+        answerValue: verdict,
+        step,
+        experimentAssignment,
+      });
       setClimateIndex((index) => index + 1);
       if (typeof navigator !== "undefined") navigator.vibrate?.(10);
       return;
@@ -2531,6 +2594,13 @@ function Lp1Quiz({
       nextAnswers.clima = preferredClimate.value;
     }
     setAnswers(nextAnswers);
+    trackLp1QuizAnswer({
+      screenId: `${current.id}:${climateValue}`,
+      answerKey: "climaVerdicts",
+      answerValue: verdict,
+      step,
+      experimentAssignment,
+    });
     if (typeof navigator !== "undefined") navigator.vibrate?.(10);
     advance(nextAnswers);
   };
@@ -2539,6 +2609,13 @@ function Lp1Quiz({
     if (isLastScreen) {
       const score = computeLp1Score(nextAnswers as LandingQuizAnswers);
       console.info("[lp1] score", score);
+      trackLp1QuizAnswer({
+        screenId: "quiz-complete",
+        answerKey: "completed",
+        answerValue: "true",
+        step: LP1_SCREENS.length,
+        experimentAssignment,
+      });
       setShowOffer(false);
       setStep(LP1_SCREENS.length);
       return;
@@ -2548,6 +2625,13 @@ function Lp1Quiz({
 
   const handleSingleSelect = (key: string, value: string) => {
     selectAnswer(key, value);
+    trackLp1QuizAnswer({
+      screenId: current.id,
+      answerKey: key,
+      answerValue: value,
+      step,
+      experimentAssignment,
+    });
     if (singleAdvanceTimer.current !== null) {
       clearTimeout(singleAdvanceTimer.current);
     }
@@ -2583,6 +2667,13 @@ function Lp1Quiz({
       ? currentValues.filter((item) => item !== value)
       : [...currentValues, value];
     selectAnswer(current.key, nextValues.join(","));
+    trackLp1QuizAnswer({
+      screenId: current.id,
+      answerKey: current.key,
+      answerValue: nextValues.join(","),
+      step,
+      experimentAssignment,
+    });
   };
 
   const goBack = () => {
@@ -7780,6 +7871,7 @@ function TrackedQuiz({
       <Lp1Quiz
         onFinish={() => checkout.startCheckout("couple")}
         onBackToLanding={() => navigate(quizReturnPath)}
+        experimentAssignment={experimentAssignment}
       />
       <CheckoutModal checkout={checkout} />
     </>

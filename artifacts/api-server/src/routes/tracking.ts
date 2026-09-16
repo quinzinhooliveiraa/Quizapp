@@ -17,6 +17,7 @@ import {
   db,
   invitesTable,
   pageEventsTable,
+  quizAnswersTable,
   sessionsTable,
 } from "@workspace/db";
 import {
@@ -31,6 +32,12 @@ const router: IRouter = Router();
 const LP_IDS = ["v1", "v2", "lp3"] as const;
 const EVENT_TYPES = ["view", "cta_click", "exit"] as const;
 const CTA_SOURCES = ["hero_quiz", "hero_comprar", "lp3_offer"] as const;
+
+function trackedText(value: unknown, maxLength: number): string | null {
+  return typeof value === "string" && value.trim()
+    ? value.trim().slice(0, maxLength)
+    : null;
+}
 
 router.post("/track/page-event", async (req, res): Promise<void> => {
   const body = req.body as {
@@ -97,6 +104,89 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
       typeof body.lcpMs === "number" && Number.isFinite(body.lcpMs)
         ? Math.max(0, Math.min(Math.round(body.lcpMs), 120000))
         : null,
+  });
+  res.status(204).end();
+});
+
+router.post("/track/quiz-answer", async (req, res): Promise<void> => {
+  const body = req.body as {
+    lpId?: string;
+    quizId?: string;
+    visitorKey?: string;
+    screenId?: string;
+    answerKey?: string;
+    answerValue?: string;
+    step?: number;
+    experimentId?: string;
+    experimentVariantId?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    utmContent?: string;
+    utmTerm?: string;
+    internal?: boolean;
+  };
+  const lpId = trackedText(body.lpId, 40);
+  const quizId = trackedText(body.quizId, 80);
+  const visitorKey = trackedText(body.visitorKey, 120);
+  const screenId = trackedText(body.screenId, 120);
+  const answerKey = trackedText(body.answerKey, 80);
+  const answerValue = trackedText(body.answerValue, 2000);
+  const step =
+    typeof body.step === "number" && Number.isInteger(body.step)
+      ? Math.max(0, Math.min(body.step, 999))
+      : null;
+
+  if (
+    lpId !== "v1" &&
+    lpId !== "v2" &&
+    lpId !== "lp3"
+  ) {
+    res.status(400).json({ error: "Landing page inválida" });
+    return;
+  }
+  if (
+    !quizId ||
+    !visitorKey ||
+    !screenId ||
+    !answerKey ||
+    !answerValue ||
+    step === null
+  ) {
+    res.status(400).json({ error: "Resposta de quiz inválida" });
+    return;
+  }
+  if (Boolean(body.experimentId) !== Boolean(body.experimentVariantId)) {
+    res.status(400).json({ error: "Associação de experimento inválida" });
+    return;
+  }
+
+  const assignment =
+    body.experimentId && body.experimentVariantId
+      ? undefined
+      : await getActiveAssignmentForVisitor(visitorKey);
+
+  await db.insert(quizAnswersTable).values({
+    id: crypto.randomUUID(),
+    visitorKey,
+    quizId,
+    lpId,
+    screenId,
+    answerKey,
+    answerValue,
+    step,
+    experimentId:
+      trackedText(body.experimentId, 120) || assignment?.experimentId || null,
+    experimentVariantId:
+      trackedText(body.experimentVariantId, 120) ||
+      assignment?.experimentVariantId ||
+      null,
+    utmSource: trackedText(body.utmSource, 160),
+    utmMedium: trackedText(body.utmMedium, 160),
+    utmCampaign: trackedText(body.utmCampaign, 200),
+    utmContent: trackedText(body.utmContent, 200),
+    utmTerm: trackedText(body.utmTerm, 200),
+    internal: body.internal === true,
   });
   res.status(204).end();
 });
@@ -462,6 +552,146 @@ async function computeFunnelAnalytics({
   };
 }
 
+async function computeQuizAnalytics({
+  lpId,
+  from,
+  to,
+  fromLabel,
+  toLabel,
+}: {
+  lpId: AnalyticsLandingPageId;
+  from: Date;
+  to: Date;
+  fromLabel: string;
+  toLabel: string;
+}) {
+  const lpIds = lpId === "all" ? [...LP_IDS] : [lpId];
+  const answerWindow = [
+    eq(quizAnswersTable.quizId, "lp1"),
+    inArray(quizAnswersTable.lpId, lpIds),
+    eq(quizAnswersTable.internal, false),
+    gte(quizAnswersTable.createdAt, from),
+    lt(quizAnswersTable.createdAt, to),
+  ];
+  const distinctVisitors = sql<number>`count(distinct ${quizAnswersTable.visitorKey})`;
+
+  const [totals, completed, questions, answerBreakdown, campaigns, variants] =
+    await Promise.all([
+      db
+        .select({
+          answers: count(),
+          visitors: distinctVisitors,
+        })
+        .from(quizAnswersTable)
+        .where(and(...answerWindow)),
+      db
+        .select({ visitors: distinctVisitors })
+        .from(quizAnswersTable)
+        .where(
+          and(
+            ...answerWindow,
+            eq(quizAnswersTable.screenId, "quiz-complete"),
+            eq(quizAnswersTable.answerValue, "true"),
+          ),
+        ),
+      db
+        .select({
+          screenId: quizAnswersTable.screenId,
+          answerKey: quizAnswersTable.answerKey,
+          step: sql<number>`min(${quizAnswersTable.step})`,
+          answers: count(),
+          visitors: distinctVisitors,
+        })
+        .from(quizAnswersTable)
+        .where(
+          and(...answerWindow, ne(quizAnswersTable.screenId, "quiz-complete")),
+        )
+        .groupBy(quizAnswersTable.screenId, quizAnswersTable.answerKey)
+        .orderBy(asc(sql<number>`min(${quizAnswersTable.step})`)),
+      db
+        .select({
+          screenId: quizAnswersTable.screenId,
+          answerKey: quizAnswersTable.answerKey,
+          value: quizAnswersTable.answerValue,
+          answers: count(),
+          visitors: distinctVisitors,
+        })
+        .from(quizAnswersTable)
+        .where(
+          and(...answerWindow, ne(quizAnswersTable.screenId, "quiz-complete")),
+        )
+        .groupBy(
+          quizAnswersTable.screenId,
+          quizAnswersTable.answerKey,
+          quizAnswersTable.answerValue,
+        )
+        .orderBy(desc(distinctVisitors))
+        .limit(120),
+      db
+        .select({
+          source: quizAnswersTable.utmSource,
+          campaign: quizAnswersTable.utmCampaign,
+          answers: count(),
+          visitors: distinctVisitors,
+        })
+        .from(quizAnswersTable)
+        .where(and(...answerWindow))
+        .groupBy(quizAnswersTable.utmSource, quizAnswersTable.utmCampaign)
+        .orderBy(desc(distinctVisitors))
+        .limit(40),
+      db
+        .select({
+          variantId: quizAnswersTable.experimentVariantId,
+          answers: count(),
+          visitors: distinctVisitors,
+        })
+        .from(quizAnswersTable)
+        .where(and(...answerWindow, isNotNull(quizAnswersTable.experimentVariantId)))
+        .groupBy(quizAnswersTable.experimentVariantId)
+        .orderBy(desc(distinctVisitors)),
+    ]);
+
+  const visitorCount = Number(totals[0]?.visitors || 0);
+  const completedCount = Number(completed[0]?.visitors || 0);
+
+  return {
+    quizId: "lp1",
+    lpId,
+    from: fromLabel,
+    to: toLabel,
+    visitors: visitorCount,
+    answers: Number(totals[0]?.answers || 0),
+    completedVisitors: completedCount,
+    completionRate:
+      visitorCount > 0 ? Number(((completedCount / visitorCount) * 100).toFixed(1)) : 0,
+    questions: questions.map((row) => ({
+      screenId: row.screenId,
+      answerKey: row.answerKey,
+      step: Number(row.step),
+      answers: Number(row.answers),
+      visitors: Number(row.visitors),
+    })),
+    answerBreakdown: answerBreakdown.map((row) => ({
+      screenId: row.screenId,
+      answerKey: row.answerKey,
+      value: row.value,
+      answers: Number(row.answers),
+      visitors: Number(row.visitors),
+    })),
+    campaigns: campaigns.map((row) => ({
+      source: row.source,
+      campaign: row.campaign,
+      answers: Number(row.answers),
+      visitors: Number(row.visitors),
+    })),
+    variants: variants.map((row) => ({
+      variantId: row.variantId,
+      answers: Number(row.answers),
+      visitors: Number(row.visitors),
+    })),
+  };
+}
+
 router.get("/admin/analytics", async (req, res): Promise<void> => {
   const sessionId =
     typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
@@ -489,6 +719,24 @@ router.get("/admin/analytics-funnel", async (req, res): Promise<void> => {
   }
 
   const analytics = await computeFunnelAnalytics(window);
+  res.json(analytics);
+});
+
+router.get("/admin/quiz-analytics", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+
+  const window = resolveAnalyticsWindow(req.query);
+  if ("error" in window) {
+    res.status(400).json({ error: window.error });
+    return;
+  }
+
+  const analytics = await computeQuizAnalytics(window);
   res.json(analytics);
 });
 
@@ -547,11 +795,22 @@ router.delete("/admin/analytics-data", async (req, res): Promise<void> => {
             .where(inArray(sessionsTable.id, sessionIds))
             .returning({ id: sessionsTable.id })
         : [];
+    const deletedQuizAnswers = await tx
+      .delete(quizAnswersTable)
+      .where(
+        and(
+          inArray(quizAnswersTable.lpId, lpIds),
+          gte(quizAnswersTable.createdAt, window.from),
+          lt(quizAnswersTable.createdAt, window.to),
+        ),
+      )
+      .returning({ id: quizAnswersTable.id });
 
     return {
       deletedEvents: events.length,
       deletedSessions: deletedSessions.length,
       deletedInvites: invites.length,
+      deletedQuizAnswers: deletedQuizAnswers.length,
     };
   });
 

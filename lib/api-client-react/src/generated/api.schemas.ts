@@ -406,6 +406,108 @@ export interface PageEventInput {
   internal?: boolean;
 }
 
+export type QuizAnswerInputLpId = typeof QuizAnswerInputLpId[keyof typeof QuizAnswerInputLpId];
+
+
+export const QuizAnswerInputLpId = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+} as const;
+
+export interface QuizAnswerInput {
+  lpId: QuizAnswerInputLpId;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  quizId: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  visitorKey: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  screenId: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  answerKey: string;
+  /**
+     * @minLength 1
+     * @maxLength 2000
+     */
+  answerValue: string;
+  /**
+     * @minimum 0
+     * @maximum 999
+     */
+  step: number;
+  /** @maxLength 120 */
+  experimentId?: string;
+  /** @maxLength 120 */
+  experimentVariantId?: string;
+  /** @maxLength 160 */
+  utmSource?: string;
+  /** @maxLength 160 */
+  utmMedium?: string;
+  /** @maxLength 200 */
+  utmCampaign?: string;
+  /** @maxLength 200 */
+  utmContent?: string;
+  /** @maxLength 200 */
+  utmTerm?: string;
+  internal?: boolean;
+}
+
+export type AdminQuizAnalyticsQuestionsItem = {
+  screenId: string;
+  answerKey: string;
+  step: number;
+  answers: number;
+  visitors: number;
+};
+
+export type AdminQuizAnalyticsAnswerBreakdownItem = {
+  screenId: string;
+  answerKey: string;
+  value: string;
+  answers: number;
+  visitors: number;
+};
+
+export type AdminQuizAnalyticsCampaignsItem = {
+  source: string | null;
+  campaign: string | null;
+  answers: number;
+  visitors: number;
+};
+
+export type AdminQuizAnalyticsVariantsItem = {
+  variantId: string | null;
+  answers: number;
+  visitors: number;
+};
+
+export interface AdminQuizAnalytics {
+  quizId: string;
+  lpId: string;
+  from: string;
+  to: string;
+  visitors: number;
+  answers: number;
+  completedVisitors: number;
+  completionRate: number;
+  questions: AdminQuizAnalyticsQuestionsItem[];
+  answerBreakdown: AdminQuizAnalyticsAnswerBreakdownItem[];
+  campaigns: AdminQuizAnalyticsCampaignsItem[];
+  variants: AdminQuizAnalyticsVariantsItem[];
+}
+
 export type ExperimentVariantInputStatus = typeof ExperimentVariantInputStatus[keyof typeof ExperimentVariantInputStatus];
 
 
@@ -797,6 +899,7 @@ export interface AdminAnalyticsCleanupResponse {
   deletedEvents: number;
   deletedSessions: number;
   deletedInvites: number;
+  deletedQuizAnswers: number;
 }
 
 export interface CheckoutCreateResponse {
@@ -909,6 +1012,28 @@ export type GetAdminFunnelAnalyticsLp = typeof GetAdminFunnelAnalyticsLp[keyof t
 
 
 export const GetAdminFunnelAnalyticsLp = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+  all: 'all',
+} as const;
+
+export type GetAdminQuizAnalyticsParams = {
+sessionId: string;
+lp?: GetAdminQuizAnalyticsLp;
+/**
+ * @minimum 1
+ * @maximum 90
+ */
+days?: number;
+from?: string;
+to?: string;
+};
+
+export type GetAdminQuizAnalyticsLp = typeof GetAdminQuizAnalyticsLp[keyof typeof GetAdminQuizAnalyticsLp];
+
+
+export const GetAdminQuizAnalyticsLp = {
   v1: 'v1',
   v2: 'v2',
   lp3: 'lp3',

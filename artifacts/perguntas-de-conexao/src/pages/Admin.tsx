@@ -106,6 +106,41 @@ type AnalyticsEntry = {
   avgTimeOnPageSeconds: number | null;
   topExitSections: Array<{ section: string; count: number }>;
 };
+type QuizAnalyticsQuestion = {
+  screenId: string;
+  answerKey: string;
+  step: number;
+  answers: number;
+  visitors: number;
+};
+type QuizAnalyticsAnswer = {
+  screenId: string;
+  answerKey: string;
+  value: string;
+  answers: number;
+  visitors: number;
+};
+type QuizAnalyticsGroup = {
+  source?: string | null;
+  campaign?: string | null;
+  variantId?: string | null;
+  answers: number;
+  visitors: number;
+};
+type QuizAnalytics = {
+  quizId: string;
+  lpId: string;
+  from: string;
+  to: string;
+  visitors: number;
+  answers: number;
+  completedVisitors: number;
+  completionRate: number;
+  questions: QuizAnalyticsQuestion[];
+  answerBreakdown: QuizAnalyticsAnswer[];
+  campaigns: QuizAnalyticsGroup[];
+  variants: QuizAnalyticsGroup[];
+};
 type LpSessionsResponse = { sessions?: LpSession[] };
 type AnalyticsPeriod = "2" | "7" | "30" | "custom";
 type ExperimentStatus = "draft" | "active" | "paused" | "completed";
@@ -769,6 +804,138 @@ function AnalyticsPanel({
   );
 }
 
+function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
+  const labelForGroup = (group: QuizAnalyticsGroup) =>
+    group.source || group.campaign
+      ? [group.source, group.campaign].filter(Boolean).join(" · ")
+      : "sem UTM / direto";
+  const formatAnswer = (value: string) =>
+    value
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(", ");
+
+  return (
+    <section className="admin-quiz-analytics" aria-labelledby="quiz-analytics-title">
+      <div className="admin-analytics-card-heading">
+        <div>
+          <p className="admin-eyebrow">sinais para otimização</p>
+          <h3 id="quiz-analytics-title">Respostas do quiz</h3>
+        </div>
+        <span className="admin-count">
+          {data.from} — {data.to}
+        </span>
+      </div>
+      <div className="admin-metric-grid admin-quiz-metric-grid">
+        <div>
+          <span>Visitantes com resposta</span>
+          <strong>{data.visitors}</strong>
+        </div>
+        <div>
+          <span>Respostas registradas</span>
+          <strong>{data.answers}</strong>
+        </div>
+        <div>
+          <span>Chegaram ao resultado</span>
+          <strong>{data.completedVisitors}</strong>
+        </div>
+        <div>
+          <span>Conclusão</span>
+          <strong>{data.completionRate.toFixed(1)}%</strong>
+        </div>
+      </div>
+
+      {data.questions.length ? (
+        <div className="admin-quiz-analysis-grid">
+          <div className="admin-quiz-analysis-card">
+            <h4>Alcance por pergunta</h4>
+            <div className="admin-quiz-list">
+              {data.questions.map((question) => (
+                <div
+                  className="admin-quiz-list-row"
+                  key={`${question.screenId}-${question.answerKey}`}
+                >
+                  <span>
+                    <strong>{question.screenId}</strong>
+                    <small>{question.answerKey}</small>
+                  </span>
+                  <b>{question.visitors} visitantes</b>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="admin-quiz-analysis-card">
+            <h4>Alternativas mais registradas</h4>
+            <div className="admin-quiz-list">
+              {data.answerBreakdown.slice(0, 18).map((answer) => (
+                <div
+                  className="admin-quiz-list-row"
+                  key={`${answer.screenId}-${answer.answerKey}-${answer.value}`}
+                >
+                  <span>
+                    <strong>{formatAnswer(answer.value)}</strong>
+                    <small>
+                      {answer.screenId} · {answer.answerKey}
+                    </small>
+                  </span>
+                  <b>{answer.visitors} visitantes</b>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="admin-footnote">Ainda não há respostas registradas neste período.</p>
+      )}
+
+      <div className="admin-quiz-analysis-grid">
+        <div className="admin-quiz-analysis-card">
+          <h4>Origem e campanhas</h4>
+          {data.campaigns.length ? (
+            <div className="admin-quiz-list">
+              {data.campaigns.map((campaign) => (
+                <div
+                  className="admin-quiz-list-row"
+                  key={`${campaign.source}-${campaign.campaign}`}
+                >
+                  <span>
+                    <strong>{labelForGroup(campaign)}</strong>
+                    <small>{campaign.answers} respostas</small>
+                  </span>
+                  <b>{campaign.visitors} visitantes</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="admin-footnote">Nenhuma origem com respostas ainda.</p>
+          )}
+        </div>
+        <div className="admin-quiz-analysis-card">
+          <h4>Variantes de experimento</h4>
+          {data.variants.length ? (
+            <div className="admin-quiz-list">
+              {data.variants.map((variant) => (
+                <div className="admin-quiz-list-row" key={variant.variantId}>
+                  <span>
+                    <strong>{variant.variantId}</strong>
+                    <small>{variant.answers} respostas</small>
+                  </span>
+                  <b>{variant.visitors} visitantes</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="admin-footnote">
+              Nenhuma variante de experimento associada ainda.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function AnalyticsTab({ sessionId }: { sessionId: string }) {
   const queryClient = useQueryClient();
   const [landingPage, setLandingPage] = useState<FunnelLandingPageId>("v2");
@@ -778,10 +945,14 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
   const [viewMode, setViewMode] = useState<AnalyticsViewMode>("funnel");
   const [cleanupOpen, setCleanupOpen] = useState(false);
   const [cleanupConfirmation, setCleanupConfirmation] = useState("");
+  const [quizAnalytics, setQuizAnalytics] = useState<QuizAnalytics | null>(null);
+  const [quizAnalyticsLoading, setQuizAnalyticsLoading] = useState(false);
+  const [quizAnalyticsError, setQuizAnalyticsError] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<{
     deletedEvents: number;
     deletedSessions: number;
     deletedInvites: number;
+    deletedQuizAnswers: number;
   } | null>(null);
 
   const params = useMemo<GetAdminFunnelAnalyticsParams>(() => {
@@ -846,6 +1017,49 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
       retry: 1,
     },
   });
+
+  useEffect(() => {
+    if (!canFetch) {
+      setQuizAnalytics(null);
+      return;
+    }
+    const controller = new AbortController();
+    const search = new URLSearchParams({
+      sessionId,
+      lp: landingPage,
+    });
+    if (period === "custom") {
+      search.set("from", customFrom);
+      search.set("to", customTo);
+    } else {
+      search.set("days", period);
+    }
+    setQuizAnalyticsLoading(true);
+    setQuizAnalyticsError(false);
+    fetch(`${apiBaseUrl}/api/admin/quiz-analytics?${search.toString()}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("quiz analytics");
+        return (await response.json()) as QuizAnalytics;
+      })
+      .then((data) => setQuizAnalytics(data))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setQuizAnalyticsError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setQuizAnalyticsLoading(false);
+      });
+    return () => controller.abort();
+  }, [
+    canFetch,
+    customFrom,
+    customTo,
+    landingPage,
+    period,
+    sessionId,
+  ]);
 
   return (
     <section className="admin-section admin-analysis" aria-labelledby="analysis-title">
@@ -942,6 +1156,19 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
           onViewModeChange={setViewMode}
         />
       )}
+      {quizAnalyticsLoading && (
+        <div className="admin-analysis-state" role="status">
+          Carregando respostas do quiz…
+        </div>
+      )}
+      {quizAnalyticsError && (
+        <div className="admin-analysis-state is-error" role="alert">
+          Não foi possível carregar as respostas do quiz agora.
+        </div>
+      )}
+      {quizAnalytics && !quizAnalyticsLoading && !quizAnalyticsError && (
+        <QuizAnswersPanel data={quizAnalytics} />
+      )}
 
       <section className="admin-cleanup-card" aria-labelledby="cleanup-title">
         <div className="admin-cleanup-heading">
@@ -970,7 +1197,8 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
           <p className="admin-cleanup-result" role="status">
             Limpeza concluída: {cleanupResult.deletedEvents} eventos,{" "}
             {cleanupResult.deletedSessions} checkouts e{" "}
-            {cleanupResult.deletedInvites} convites removidos.
+            {cleanupResult.deletedInvites} convites e{" "}
+            {cleanupResult.deletedQuizAnswers} respostas de quiz removidos.
           </p>
         )}
         {cleanupMutation.isError && (
@@ -1014,7 +1242,8 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
               período <strong>{periodLabel}</strong>.
             </p>
             <ul>
-              <li>eventos de visualização, clique, saída e LCP;</li>
+               <li>eventos de visualização, clique, saída e LCP;</li>
+               <li>respostas registradas no quiz;</li>
               <li>checkouts e compras confirmadas dentro do escopo;</li>
               <li>convites ligados a esses checkouts.</li>
             </ul>

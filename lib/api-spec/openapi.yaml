@@ -495,6 +495,22 @@ paths:
           description: Event recorded
         "400":
           description: Invalid event
+  /track/quiz-answer:
+    post:
+      operationId: trackQuizAnswer
+      tags: [tracking]
+      summary: Record an anonymous quiz answer for future optimization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizAnswerInput"
+      responses:
+        "204":
+          description: Quiz answer recorded
+        "400":
+          description: Invalid quiz answer
   /landing-pages/primary:
     get:
       operationId: getPrimaryLandingPage
@@ -573,6 +589,43 @@ paths:
                 $ref: "#/components/schemas/AdminFunnelAnalytics"
         "400":
           description: Invalid analytics filters
+        "403":
+          description: Access denied
+  /admin/quiz-analytics:
+    get:
+      operationId: getAdminQuizAnalytics
+      tags: [admin]
+      summary: Get quiz answer analytics
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: lp
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [v1, v2, lp3, all]
+        - name: days
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 90 }
+        - name: from
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Quiz answer analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminQuizAnalytics"
         "403":
           description: Access denied
   /admin/analytics-data:
@@ -1581,6 +1634,103 @@ components:
           type: boolean
           default: false
       required: [lpId, visitorKey, eventType]
+    QuizAnswerInput:
+      type: object
+      properties:
+        lpId: { type: string, enum: [v1, v2, lp3] }
+        quizId: { type: string, minLength: 1, maxLength: 80 }
+        visitorKey: { type: string, minLength: 1, maxLength: 120 }
+        screenId: { type: string, minLength: 1, maxLength: 120 }
+        answerKey: { type: string, minLength: 1, maxLength: 80 }
+        answerValue: { type: string, minLength: 1, maxLength: 2000 }
+        step: { type: integer, minimum: 0, maximum: 999 }
+        experimentId: { type: string, maxLength: 120 }
+        experimentVariantId: { type: string, maxLength: 120 }
+        utmSource: { type: string, maxLength: 160 }
+        utmMedium: { type: string, maxLength: 160 }
+        utmCampaign: { type: string, maxLength: 200 }
+        utmContent: { type: string, maxLength: 200 }
+        utmTerm: { type: string, maxLength: 200 }
+        internal:
+          type: boolean
+          default: false
+      required:
+        [
+          lpId,
+          quizId,
+          visitorKey,
+          screenId,
+          answerKey,
+          answerValue,
+          step,
+        ]
+    AdminQuizAnalytics:
+      type: object
+      properties:
+        quizId: { type: string }
+        lpId: { type: string }
+        from: { type: string }
+        to: { type: string }
+        visitors: { type: integer }
+        answers: { type: integer }
+        completedVisitors: { type: integer }
+        completionRate: { type: number }
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              screenId: { type: string }
+              answerKey: { type: string }
+              step: { type: integer }
+              answers: { type: integer }
+              visitors: { type: integer }
+            required: [screenId, answerKey, step, answers, visitors]
+        answerBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              screenId: { type: string }
+              answerKey: { type: string }
+              value: { type: string }
+              answers: { type: integer }
+              visitors: { type: integer }
+            required: [screenId, answerKey, value, answers, visitors]
+        campaigns:
+          type: array
+          items:
+            type: object
+            properties:
+              source: { type: string, nullable: true }
+              campaign: { type: string, nullable: true }
+              answers: { type: integer }
+              visitors: { type: integer }
+            required: [source, campaign, answers, visitors]
+        variants:
+          type: array
+          items:
+            type: object
+            properties:
+              variantId: { type: string, nullable: true }
+              answers: { type: integer }
+              visitors: { type: integer }
+            required: [variantId, answers, visitors]
+      required:
+        [
+          quizId,
+          lpId,
+          from,
+          to,
+          visitors,
+          answers,
+          completedVisitors,
+          completionRate,
+          questions,
+          answerBreakdown,
+          campaigns,
+          variants,
+        ]
     ExperimentVariantInput:
       type: object
       properties:
@@ -1982,7 +2132,8 @@ components:
         deletedEvents: { type: integer }
         deletedSessions: { type: integer }
         deletedInvites: { type: integer }
-      required: [deletedEvents, deletedSessions, deletedInvites]
+        deletedQuizAnswers: { type: integer }
+      required: [deletedEvents, deletedSessions, deletedInvites, deletedQuizAnswers]
     CheckoutCreateResponse:
       type: object
       properties:

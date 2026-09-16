@@ -10,4 +10,5 @@ export interface AdminAnalyticsCleanupResponse {
   deletedEvents: number;
   deletedSessions: number;
   deletedInvites: number;
+  deletedQuizAnswers: number;
 }
