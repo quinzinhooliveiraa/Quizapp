@@ -2344,8 +2344,8 @@ function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
 
       <figure className="lp1-bridge-photo">
         <img
-          src="/hero/hero-casal-novo.webp"
-          alt="Casal conversando em casa durante uma noite comum"
+          src="/hero/bridge-casal-sofa.png"
+          alt="Casal conversando no sofá em casa"
         />
       </figure>
 
