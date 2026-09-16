@@ -29162,12 +29162,19 @@ blockquote em {
 .lp1-sale-page .lp1-price-card .lp-cta-primary {
   min-height: 3.7rem;
   margin-top: 1rem;
+  animation: lp1-yellow-cta-pulse 2.8s ease-in-out infinite;
   box-shadow: 0 1rem 2.2rem rgba(232, 177, 58, 0.3);
 }
 
 .lp1-sale-page .lp1-price-card .lp-cta-primary:hover,
 .lp1-sale-page .lp1-price-card .lp-cta-primary:focus-visible {
   box-shadow: 0 1.2rem 2.6rem rgba(232, 177, 58, 0.42);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp1-sale-page .lp1-price-card .lp-cta-primary {
+    animation: none;
+  }
 }
 
 .lp1-sale-page .lp1-sale-deck-card {
