@@ -29015,6 +29015,13 @@ blockquote em {
   text-align: center;
 }
 
+.lp1-sale-page .lp1-sale-recommended {
+  margin-top: 0.55rem;
+  border: 1px solid rgba(170, 145, 235, 0.42);
+  background: rgba(122, 92, 196, 0.16);
+  color: #c9baf5;
+}
+
 .lp1-sale-page .lp1-price-card {
   background: #fbf9ff;
   border-color: rgba(120, 90, 200, 0.22);

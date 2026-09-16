@@ -271,7 +271,7 @@ function OfferCard({
             minutos. São 3 passos:
           </p>
           <span className="lp1-sale-recommended">
-            baralho recomendado: {recommendedDeck}
+            Baralho recomendado: {recommendedDeck}
           </span>
         </div>
         {offerState ? (
