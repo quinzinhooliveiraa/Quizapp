@@ -1841,6 +1841,13 @@
   font-size: 1.6rem;
 }
 
+.lp1-sale-offer-card.is-compact .lp1-sale-offer-heading .lp1-price-context {
+  margin: 0.9rem auto 1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .lp1-sale-offer-card.is-compact .lp1-sale-recommended,
 .lp1-sale-offer-card.is-compact .lp1-sale-unit-note,
 .lp1-sale-offer-card.is-compact .lp1-sale-payment-note {
