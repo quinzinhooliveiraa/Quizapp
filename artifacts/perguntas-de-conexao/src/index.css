@@ -3231,6 +3231,12 @@
   color: #23645d;
 }
 
+.lp1-result-photo-risk.is-atencao {
+  border-color: rgba(201, 157, 92, 0.72);
+  background: rgba(244, 224, 176, 0.72);
+  color: #805b2d;
+}
+
 .lp1-result-photo-risk.is-medio {
   background: rgba(244, 213, 190, 0.68);
   color: #8b493a;
@@ -3332,6 +3338,18 @@
   transition: left 900ms ease-out;
 }
 
+.lp1-result-meter-marker.is-atencao {
+  border-color: #d8b471;
+}
+
+.lp1-result-meter-marker.is-medio {
+  border-color: #e8c98a;
+}
+
+.lp1-result-meter-marker.is-alto {
+  border-color: #d59ab1;
+}
+
 .lp1-result-meter-balloon {
   position: absolute;
   bottom: 32px;
@@ -3344,6 +3362,18 @@
   white-space: nowrap;
   transform: translateX(-50%);
   transition: left 900ms ease-out;
+}
+
+.lp1-result-meter-balloon.is-atencao {
+  background: #3a2a25;
+}
+
+.lp1-result-meter-balloon.is-medio {
+  background: #2b2231;
+}
+
+.lp1-result-meter-balloon.is-alto {
+  background: #331b28;
 }
 
 .lp1-result-meter-balloon::after {
@@ -3368,6 +3398,10 @@
 
 .lp1-result-meter-labels .is-morno {
   color: #e8c98a;
+}
+
+.lp1-result-meter-labels .is-atencao {
+  color: #d8b471;
 }
 
 .lp1-result-meter-labels .is-distante {

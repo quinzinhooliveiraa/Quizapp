@@ -6,7 +6,7 @@ export type Lp1Score = {
 export type Lp1DistanceResult = {
   score: number;
   meterPosition: number;
-  label: "Risco baixo" | "Risco médio" | "Risco alto";
+  label: "Atenção" | "Risco médio" | "Risco alto";
   routineValue: "alta" | "média" | "baixa";
   spaceValue: "alto" | "médio" | "baixo";
 };
@@ -203,11 +203,16 @@ export function computeLp1DistanceResult(
   );
   /*
    * The quiz is intentionally a reflection prompt, not a clinical scale.
-   * Keep the visible result in the meaningful "medium to high" band while
-   * preserving answer-driven variation inside that band.
+   * Keep the marker out of the low zone to preserve urgency, while still
+   * allowing answers to move it through attention, medium, and high.
    */
-  const meterPosition = Math.round(69 + score * 0.21);
-  const label = meterPosition >= 82 ? "Risco alto" : "Risco médio";
+  const meterPosition = Math.round(42 + score * 0.48);
+  const label =
+    meterPosition >= 82
+      ? "Risco alto"
+      : meterPosition >= 58
+        ? "Risco médio"
+        : "Atenção";
   const routineValue =
     (LP1_ROUTINE_RISK[read("rotina")] ?? 0) <= -4
       ? "alta"

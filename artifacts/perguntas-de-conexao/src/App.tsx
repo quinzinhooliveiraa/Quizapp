@@ -3358,7 +3358,7 @@ function getLp1UrgencyMessage(
   const blocks = split("travas");
   const conversations = split("conversas");
 
-  if (riskLabel === "Risco baixo") {
+  if (riskLabel === "Atenção") {
     return {
       copy:
         "Pelo que você contou, a conexão de vocês ainda está viva. Não existe um problema para consertar agora — existe uma troca boa para continuar escolhendo, antes que a rotina transforme presença em piloto automático.",
@@ -3474,13 +3474,15 @@ function Lp1ResultScreen({
     result.label,
   );
   const riskTone =
-    result.label === "Risco baixo"
-      ? "is-baixo"
+    result.label === "Atenção"
+      ? "is-atencao"
       : result.label === "Risco médio"
         ? "is-medio"
         : "is-alto";
-  const targetMeterPosition = Math.min(90, Math.max(69, result.meterPosition));
-  const [meterPosition, setMeterPosition] = useState("8%");
+  const targetMeterPosition = result.meterPosition;
+  const [meterPosition, setMeterPosition] = useState(
+    () => `${targetMeterPosition}%`,
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -3511,18 +3513,21 @@ function Lp1ResultScreen({
         </p>
         <div className="lp1-result-meter">
           <span
-            className="lp1-result-meter-balloon"
+            className={`lp1-result-meter-balloon ${riskTone}`}
             style={{ left: meterPosition }}
           >
             vocês estão aqui
           </span>
-          <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
+          <span
+            className={`lp1-result-meter-marker ${riskTone}`}
+            style={{ left: meterPosition }}
+          />
         </div>
         <div className="lp1-result-meter-labels lp1-result-meter-labels-four">
           <span className="is-frio" style={{ left: "0%" }}>
             Baixo
           </span>
-          <span className="is-morno" style={{ left: "33.333%" }}>
+          <span className="is-atencao" style={{ left: "33.333%" }}>
             Atenção
           </span>
           <span className="is-morno" style={{ left: "66.667%" }}>
