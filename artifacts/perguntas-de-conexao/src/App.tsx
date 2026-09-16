@@ -3488,7 +3488,7 @@ function Lp1ResultScreen({
     { icon: "?", label: "Dinâmica da relação", value: relationshipDynamic },
     { icon: "🌱", label: "Espaço para começar hoje", value: result.spaceValue },
   ];
-  const targetMeterPosition = Math.min(88, Math.max(66, result.meterPosition));
+  const targetMeterPosition = Math.min(90, Math.max(69, result.meterPosition));
   const [meterPosition, setMeterPosition] = useState("8%");
 
   useEffect(() => {

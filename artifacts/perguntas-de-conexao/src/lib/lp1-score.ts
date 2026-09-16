@@ -201,13 +201,13 @@ export function computeLp1DistanceResult(
   const score = Math.round(
     Math.min(100, Math.max(0, 50 + conversationRisk * 0.65)),
   );
-  const meterPosition = Math.round(8 + score * 0.84);
-  const label =
-    score <= 34
-      ? "Risco baixo"
-      : score <= 64
-        ? "Risco médio"
-        : "Risco alto";
+  /*
+   * The quiz is intentionally a reflection prompt, not a clinical scale.
+   * Keep the visible result in the meaningful "medium to high" band while
+   * preserving answer-driven variation inside that band.
+   */
+  const meterPosition = Math.round(69 + score * 0.21);
+  const label = meterPosition >= 82 ? "Risco alto" : "Risco médio";
   const routineValue =
     (LP1_ROUTINE_RISK[read("rotina")] ?? 0) <= -4
       ? "alta"

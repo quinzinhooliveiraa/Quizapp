@@ -3338,36 +3338,36 @@
 
 .lp1-result-insights {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0.35rem;
+  margin-top: 0.9rem;
 }
 
 .lp1-result-insight {
   display: flex;
-  min-height: 66px;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.65rem;
-  border-radius: 12px;
-  background: #221a2b;
+  padding: 0.2rem 0;
 }
 
 .lp1-result-insight > span {
-  font-size: 1.5rem;
+  width: 1.3rem;
+  flex: 0 0 1.3rem;
+  color: #e8c98a;
+  font-size: 1rem;
+  text-align: center;
 }
 
 .lp1-result-insight p {
   margin: 0;
   color: #f4efe9;
-  font: 400 10.5px/1.25 var(--app-font-sans);
+  font: 400 11px/1.3 var(--app-font-sans);
 }
 
 .lp1-result-insight strong {
-  display: block;
-  margin-top: 0.25rem;
+  margin-left: 0.2rem;
   color: #e8c98a;
-  font: 700 10px/1 var(--app-font-mono);
-  text-transform: uppercase;
+  font: 600 11px/1.3 var(--app-font-sans);
+  text-transform: none;
 }
 
 .lp1-capture-error {
