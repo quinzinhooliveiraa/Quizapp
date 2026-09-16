@@ -2042,6 +2042,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         label: "Íntimo",
         description: "para reacender a faísca entre vocês",
         icon: "🔥",
+        imageSrc: "/quiz/clima-intimo.jpeg",
       },
     ],
   },
