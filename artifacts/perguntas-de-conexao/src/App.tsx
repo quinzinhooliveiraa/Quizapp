@@ -2209,49 +2209,6 @@ function getLp1TrialCards(answers: Lp1Answers): Lp1TrialCard[] {
   });
 }
 
-function getLp1PlanCards(answers: Lp1Answers): Lp1TrialCard[] {
-  const read = (key: string) =>
-    (answers as Record<string, string | undefined>)[key] ?? "";
-  const climateTheme =
-    LP1_CLIMA_DECKS[read("clima")]?.[0] ?? "porto-seguro";
-  const nights = [
-    { themeId: "modo-leve", intensity: "gentle" as const },
-    {
-      themeId: climateTheme,
-      intensity:
-        read("clima") === "leve"
-          ? ("gentle" as const)
-          : read("clima") === "intimo"
-            ? ("deep" as const)
-            : ("honest" as const),
-    },
-    { themeId: "livro-aberto", intensity: "deep" as const },
-  ];
-  const usedQuestionIds = new Set<string>();
-
-  return nights.map(({ themeId, intensity }, index) => {
-    const preview = selectLandingQuizQuestions(
-      themeId,
-      intensity,
-      read("stage") || read("fase"),
-    );
-    const question =
-      preview.questions.find((item) => !usedQuestionIds.has(item.id)) ??
-      connectionQuestions.find((item) => !usedQuestionIds.has(item.id)) ??
-      connectionQuestions[0];
-    if (question) usedQuestionIds.add(question.id);
-
-    return {
-      id: `lp1-plan-${index + 1}`,
-      deckId: themeId,
-      deckName:
-        connectionThemes.find((theme) => theme.id === themeId)?.title ??
-        preview.theme.title,
-      question: question?.text ?? "Qual pergunta vocês querem abrir hoje?",
-    };
-  });
-}
-
 function lp1AnswersWithAliases(
   previous: Lp1Answers,
   key: string,
@@ -3388,7 +3345,6 @@ function Lp1ResultScreen({
   onContinue: () => void;
 }) {
   const result = computeLp1DistanceResult(answers);
-  const planCards = getLp1PlanCards(answers);
   const mirrorKeyByInicia: Record<string, string> = {
     "ele-nao-entra": "sei-la",
     "nao-sei-perguntar": "como-comecar",
@@ -3465,25 +3421,6 @@ function Lp1ResultScreen({
           <p>
             Espaço para começar hoje <strong>{result.spaceValue}</strong>
           </p>
-        </div>
-      </div>
-      <div className="lp1-result-plan">
-        <p className="lp1-result-plan-label">PLANO DAS 3 NOITES</p>
-        <div className="lp1-result-plan-cards">
-          {planCards.map((card, index) => (
-            <article className="lp1-result-plan-card" key={`${card.id}-${index}`}>
-              <span className="lp1-result-plan-night">{index + 1}</span>
-              <div className="lp1-result-plan-copy">
-                <span className="lp1-result-plan-deck">
-                  {index === 0 && answers.quando === "hoje"
-                    ? "Hoje à noite — "
-                    : ""}
-                  {card.deckName}
-                </span>
-                <p>{card.question}</p>
-              </div>
-            </article>
-          ))}
         </div>
       </div>
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
