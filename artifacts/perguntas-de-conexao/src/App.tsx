@@ -4008,7 +4008,35 @@ function Lp1QuestionOptions({
               data-testid={`button-lp1-quiz-${question.key}-${option.value}`}
               aria-pressed={isSelected}
             >
-              {option.imageSrc ? (
+              {isImageCardQuestion ? (
+                <span className="lp1-quiz-option-visual" aria-hidden="true">
+                  {option.imageSrc ? (
+                    <>
+                      <img
+                        className="lp1-thumb"
+                        src={option.imageSrc}
+                        alt=""
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                          const fallback = event.currentTarget
+                            .nextElementSibling as HTMLElement | null;
+                          if (fallback) fallback.style.display = "grid";
+                        }}
+                      />
+                      {option.icon ? (
+                        <span
+                          className="lp1-quiz-option-icon lp1-image-fallback"
+                          aria-hidden="true"
+                        >
+                          {option.icon}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : option.icon ? (
+                    <span className="lp1-quiz-option-icon">{option.icon}</span>
+                  ) : null}
+                </span>
+              ) : option.imageSrc ? (
                 <>
                   <img
                     className="lp1-thumb"
@@ -4031,15 +4059,9 @@ function Lp1QuestionOptions({
                   ) : null}
                 </>
               ) : question.emoji && option.icon ? (
-                isImageCardQuestion ? (
-                  <span className="lp1-quiz-option-visual" aria-hidden="true">
-                    <span className="lp1-quiz-option-icon">{option.icon}</span>
-                  </span>
-                ) : (
-                  <span className="lp1-quiz-option-icon" aria-hidden="true">
-                    {option.icon}
-                  </span>
-                )
+                <span className="lp1-quiz-option-icon" aria-hidden="true">
+                  {option.icon}
+                </span>
               ) : null}
               <span className="lp1-quiz-option-label">{option.label}</span>
               {isMulti ? <span className="lp1-multi-label-bar">{option.label}</span> : null}
