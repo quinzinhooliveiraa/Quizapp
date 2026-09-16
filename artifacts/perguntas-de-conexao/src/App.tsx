@@ -3468,26 +3468,11 @@ function Lp1ResultScreen({
   onContinue: () => void;
 }) {
   const result = computeLp1DistanceResult(answers);
-  const mirrorKeyByInicia: Record<string, string> = {
-    "ele-nao-entra": "sei-la",
-    "nao-sei-perguntar": "como-comecar",
-    "nao-senta": "afastamento",
-    clima: "medo",
-  };
-  const mirrorKey =
-    (answers.inicia && mirrorKeyByInicia[answers.inicia]) ??
-    answers.dor ??
-    "sei-la";
-  const mirror = LP1_DOR_ESPELHO[mirrorKey] ?? LP1_DOR_ESPELHO["sei-la"];
   const urgency = getLp1UrgencyMessage(
     answers,
     result.routineValue,
     result.label,
   );
-  const resultTitle =
-    result.label === "Risco baixo"
-      ? "A conexão de vocês ainda está viva."
-      : mirror.title;
   const riskTone =
     result.label === "Risco baixo"
       ? "is-baixo"
@@ -3518,8 +3503,10 @@ function Lp1ResultScreen({
   return (
     <section className="lp1-result-screen" data-section-name={sectionId}>
       <p className="lp1-quiz-eyebrow">O CLIMA DE VOCÊS AGORA</p>
-      <h1 className="lp1-quiz-title">{resultTitle}</h1>
       <figure className="lp1-result-photo">
+        <span className={`lp1-result-photo-risk ${riskTone}`} role="status">
+          {result.label}
+        </span>
         <img
           src="/hero/resultado-conexao.png"
           alt="Casal refletindo juntos sobre a relação"
@@ -3528,9 +3515,6 @@ function Lp1ResultScreen({
       <div className="lp1-result-meter-card">
         <div className="lp1-result-meter-heading">
           <span>Risco de afastamento</span>
-          <strong className={`lp1-result-meter-status ${riskTone}`}>
-            {result.label}
-          </strong>
         </div>
         <div className="lp1-result-meter">
           <span

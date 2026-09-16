@@ -3093,12 +3093,44 @@
 }
 
 .lp1-result-photo {
+  position: relative;
   height: clamp(8.5rem, 31vw, 12rem);
   margin: 0 0 0.8rem;
   overflow: hidden;
   border-radius: 16px;
   background: #221a2b;
   box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.18);
+}
+
+.lp1-result-photo-risk {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 1;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid currentColor;
+  border-radius: 0.45rem;
+  background: rgba(244, 213, 190, 0.96);
+  color: #7a2e46;
+  font: 800 10px/1 var(--app-font-sans);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  box-shadow: 0 0.35rem 1rem rgba(10, 7, 13, 0.2);
+}
+
+.lp1-result-photo-risk.is-baixo {
+  background: rgba(205, 235, 224, 0.96);
+  color: #23645d;
+}
+
+.lp1-result-photo-risk.is-medio {
+  background: rgba(244, 213, 190, 0.96);
+  color: #8b493a;
+}
+
+.lp1-result-photo-risk.is-alto {
+  background: rgba(231, 188, 199, 0.96);
+  color: #7a2e46;
 }
 
 .lp1-result-photo img {
