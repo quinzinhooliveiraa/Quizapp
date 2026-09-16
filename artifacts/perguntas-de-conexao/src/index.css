@@ -29016,6 +29016,13 @@ blockquote em {
   padding-bottom: 2.15rem;
 }
 
+.lp1-sale-page .lp1-price-steps-card .lp1-sale-recommended {
+  margin: 0 0 1.25rem;
+  border-color: rgba(122, 92, 196, 0.24);
+  background: rgba(122, 92, 196, 0.08);
+  color: #7a5cc4;
+}
+
 .lp1-sale-page .lp1-price-benefits-card {
   padding-top: 2rem;
 }

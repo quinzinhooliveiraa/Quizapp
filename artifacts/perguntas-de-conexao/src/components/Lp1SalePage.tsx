@@ -262,9 +262,11 @@ function OfferCard({
         <div className="lp1-sale-offer-heading">
           <p className="lp1-sale-kicker">acesso vitalício</p>
           <h2>{offerHeadline}</h2>
-          <span className="lp1-sale-recommended">
-            baralho recomendado: {recommendedDeck}
-          </span>
+          {compact ? (
+            <span className="lp1-sale-recommended">
+              baralho recomendado: {recommendedDeck}
+            </span>
+          ) : null}
         </div>
         {offerState ? (
           compact ? (
@@ -283,6 +285,9 @@ function OfferCard({
           ) : (
             <div className="lp1-price-stack">
               <div className="lp-price-card lp1-price-card lp1-price-steps-card">
+                <span className="lp1-sale-recommended">
+                  baralho recomendado: {recommendedDeck}
+                </span>
                 <ol className="lp1-price-steps">
                   <li>
                     <span className="lp1-price-step-number" aria-hidden="true">
