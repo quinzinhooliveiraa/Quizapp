@@ -750,6 +750,9 @@ export function Lp1SalePage({
           >
             Continuar para pagamento <ArrowRight size={18} aria-hidden="true" />
           </button>
+          <span className="lp1-sale-bottom-cta-note">
+            Acesso imediato · Pagamento seguro · Garantia de 7 dias
+          </span>
         </div>
       ) : null}
     </main>

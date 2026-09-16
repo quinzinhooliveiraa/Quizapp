@@ -655,7 +655,10 @@
   left: 0;
   z-index: 35;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.42rem;
   padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
   background: linear-gradient(
     180deg,
@@ -663,6 +666,14 @@
     rgba(22, 17, 28, 0.96) 35%
   );
   pointer-events: none;
+}
+
+.lp1-sale-bottom-cta-note {
+  color: rgba(244, 239, 233, 0.72);
+  font-size: clamp(0.62rem, 2.3vw, 0.78rem);
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .lp1-sale-bottom-cta button {
