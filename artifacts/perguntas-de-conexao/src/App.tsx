@@ -3359,7 +3359,7 @@ function getLp1UrgencyMessage(
     return {
       copy:
         "Pelo que você contou, a conexão de vocês ainda está viva. Não existe um problema para consertar agora — existe uma troca boa para continuar escolhendo, antes que a rotina transforme presença em piloto automático.",
-      insightIcon: "✦",
+      insightIcon: "💫",
       insightLabel: "Conexão viva",
       insightValue: "pede continuidade",
     };
@@ -3383,7 +3383,7 @@ function getLp1UrgencyMessage(
     return {
       copy:
         "A distância raramente chega de uma vez. Ela cresce nas conversas adiadas, nas noites iguais e no “depois a gente fala”. Se vocês querem mudar esse clima, o próximo momento precisa ser escolhido — não esperado.",
-      insightIcon: "↔",
+      insightIcon: "🫶",
       insightLabel: "Proximidade entre vocês",
       insightValue: "precisa de espaço",
     };
@@ -3397,7 +3397,7 @@ function getLp1UrgencyMessage(
     return {
       copy:
         "Esperar o momento perfeito ou a iniciativa do outro mantém tudo no mesmo lugar. Uma conversa que importa precisa de um começo pequeno — antes que o silêncio vire o jeito mais fácil de vocês passarem a noite.",
-      insightIcon: "↗",
+      insightIcon: "🚪",
       insightLabel: "Iniciativa para se encontrar",
       insightValue: "não pode ficar para depois",
     };
@@ -3411,7 +3411,7 @@ function getLp1UrgencyMessage(
     return {
       copy:
         "O medo da resposta é compreensível — mas adiar também muda a relação. Começar com uma pergunta leve dá a vocês uma chance de se reencontrar antes que o silêncio fique confortável.",
-      insightIcon: "◌",
+      insightIcon: "💬",
       insightLabel: "Coragem para perguntar",
       insightValue: "começa pequeno",
     };
@@ -3426,7 +3426,7 @@ function getLp1UrgencyMessage(
     return {
       copy:
         "A rotina já está ocupando espaço demais entre vocês. Não precisa acontecer uma briga para a conexão diminuir: quando as perguntas ficam para depois, o automático começa a parecer normal.",
-      insightIcon: "◷",
+      insightIcon: "🔄",
       insightLabel: "Conversa além do automático",
       insightValue: routineValue,
     };
@@ -3440,7 +3440,7 @@ function getLp1UrgencyMessage(
     return {
       copy:
         "Enquanto vocês esperam saber exatamente o que dizer, a rotina continua decidindo por vocês. Não precisa ser a conversa perfeita; precisa acontecer antes que mais uma semana passe igual.",
-      insightIcon: "?",
+      insightIcon: "💡",
       insightLabel: "Um começo possível",
       insightValue: "é o que falta",
     };
@@ -3449,7 +3449,7 @@ function getLp1UrgencyMessage(
   return {
     copy:
       "O que esfria uma relação nem sempre parece urgente no começo. São as perguntas adiadas e os momentos deixados para depois. Aproveitem o espaço que ainda existe entre vocês antes que ele vire distância.",
-    insightIcon: "✦",
+    insightIcon: "✨",
     insightLabel: "Espaço para se aproximar",
     insightValue: "ainda existe",
   };
@@ -3485,7 +3485,7 @@ function Lp1ResultScreen({
   const resultInsights = [
     { icon: urgency.insightIcon, label: "Padrão central", value: urgency.insightLabel },
     { icon: "⚡", label: "Risco de afastamento", value: result.label },
-    { icon: "?", label: "Dinâmica da relação", value: relationshipDynamic },
+    { icon: "🫶", label: "Dinâmica da relação", value: relationshipDynamic },
     { icon: "🌱", label: "Espaço para começar hoje", value: result.spaceValue },
   ];
   const targetMeterPosition = Math.min(90, Math.max(69, result.meterPosition));
