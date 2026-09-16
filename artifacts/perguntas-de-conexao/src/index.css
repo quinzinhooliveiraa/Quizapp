@@ -29220,6 +29220,23 @@ blockquote em {
   text-align: left;
 }
 
+.lp1-quiz-screen:not(.is-offer) .lp1-time-question .lp1-quiz-option {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-time-question .lp1-quiz-option-label {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.lp1-quiz-screen:not(.is-offer) .lp1-time-question .lp1-image-fallback {
+  display: none;
+}
+
 .lp1-quiz-screen:not(.is-offer) .lp1-quiz-option .lp1-quiz-option-check,
 .lp1-quiz-screen:not(.is-offer) .lp1-quiz-option-check {
   position: static;
