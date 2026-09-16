@@ -3801,6 +3801,23 @@ function Lp1InfoScreen({
   );
 }
 
+const lp1ClimateImagePreloadCache = new Map<string, Promise<void>>();
+
+function preloadLp1ClimateImage(src: string) {
+  const cached = lp1ClimateImagePreloadCache.get(src);
+  if (cached) return cached;
+
+  const preload = new Promise<void>((resolve) => {
+    const image = document.createElement("img");
+    image.decoding = "async";
+    image.onload = () => resolve();
+    image.onerror = () => resolve();
+    image.src = src;
+  });
+  lp1ClimateImagePreloadCache.set(src, preload);
+  return preload;
+}
+
 function Lp1ClimatePicker({
   question,
   cardIndex,
@@ -3812,6 +3829,7 @@ function Lp1ClimatePicker({
   verdicts: Record<string, Lp1CartaVerdict>;
   onVerdict: (climateValue: string, verdict: Lp1CartaVerdict) => void;
 }) {
+  const [isPreparing, setIsPreparing] = useState(false);
   const option = question.options[cardIndex] ?? question.options[0];
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [dragX, setDragX] = useState(0);
@@ -3819,23 +3837,45 @@ function Lp1ClimatePicker({
   const pointerStart = useRef<number | null>(null);
 
   useEffect(() => {
+    question.options.forEach((climateOption) => {
+      if (climateOption.imageSrc) {
+        void preloadLp1ClimateImage(climateOption.imageSrc);
+      }
+    });
+  }, [question.options]);
+
+  useEffect(() => {
     setDirection(null);
     setDragX(0);
     setShowConfetti(false);
+    setIsPreparing(false);
   }, [option?.value]);
 
   if (!option) return null;
 
   const verdict = verdicts[option.value];
   const choose = (nextVerdict: Lp1CartaVerdict) => {
-    if (direction) return;
-    setDirection(nextVerdict === "nao" ? "left" : "right");
-    if (nextVerdict === "sim") {
-      navigator.vibrate?.(12);
-      setShowConfetti(true);
-      window.setTimeout(() => setShowConfetti(false), 420);
+    if (direction || isPreparing) return;
+
+    const nextOption = question.options[cardIndex + 1];
+    const commitChoice = () => {
+      setIsPreparing(false);
+      setDirection(nextVerdict === "nao" ? "left" : "right");
+      if (nextVerdict === "sim") {
+        navigator.vibrate?.(12);
+        setShowConfetti(true);
+        window.setTimeout(() => setShowConfetti(false), 420);
+      }
+      window.setTimeout(() => onVerdict(option.value, nextVerdict), 220);
+    };
+
+    if (nextOption?.imageSrc) {
+      setIsPreparing(true);
+      void preloadLp1ClimateImage(nextOption.imageSrc).then(commitChoice);
+      return;
     }
-    window.setTimeout(() => onVerdict(option.value, nextVerdict), 220);
+
+    commitChoice();
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
