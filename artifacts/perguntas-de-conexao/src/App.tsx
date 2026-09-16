@@ -3343,6 +3343,7 @@ type Lp1UrgencyMessage = {
 function getLp1UrgencyMessage(
   answers: Lp1Answers,
   routineValue: string,
+  riskLabel: string,
 ): Lp1UrgencyMessage {
   const read = (key: string) => {
     const value = (answers as Record<string, unknown>)[key];
@@ -3352,6 +3353,16 @@ function getLp1UrgencyMessage(
   const obstacles = split("atrapalha");
   const blocks = split("travas");
   const conversations = split("conversas");
+
+  if (riskLabel === "Risco baixo") {
+    return {
+      copy:
+        "Pelo que você contou, a conexão de vocês ainda está viva. Não existe um problema para consertar agora — existe uma troca boa para continuar escolhendo, antes que a rotina transforme presença em piloto automático.",
+      insightIcon: "✦",
+      insightLabel: "Conexão viva",
+      insightValue: "pede continuidade",
+    };
+  }
 
   if (
     read("celular") === "sempre" ||
@@ -3466,7 +3477,33 @@ function Lp1ResultScreen({
     answers.dor ??
     "sei-la";
   const mirror = LP1_DOR_ESPELHO[mirrorKey] ?? LP1_DOR_ESPELHO["sei-la"];
-  const urgency = getLp1UrgencyMessage(answers, result.routineValue);
+  const urgency = getLp1UrgencyMessage(
+    answers,
+    result.routineValue,
+    result.label,
+  );
+  const resultTitle =
+    result.label === "Risco baixo"
+      ? "A conexão de vocês ainda está viva."
+      : mirror.title;
+  const riskTone =
+    result.label === "Risco baixo"
+      ? "is-baixo"
+      : result.label === "Risco médio"
+        ? "is-medio"
+        : "is-alto";
+  const relationshipDynamic =
+    result.label === "Risco baixo"
+      ? "Troca presente"
+      : result.label === "Risco médio"
+        ? "Conexão no automático"
+        : "Distância ganhando espaço";
+  const resultInsights = [
+    { icon: urgency.insightIcon, label: "Padrão central", value: urgency.insightLabel },
+    { icon: "⚡", label: "Risco de afastamento", value: result.label },
+    { icon: "?", label: "Dinâmica da relação", value: relationshipDynamic },
+    { icon: "🌱", label: "Espaço para começar hoje", value: result.spaceValue },
+  ];
   const [meterPosition, setMeterPosition] = useState("50%");
 
   useEffect(() => {
@@ -3479,21 +3516,17 @@ function Lp1ResultScreen({
   return (
     <section className="lp1-result-screen" data-section-name={sectionId}>
       <p className="lp1-quiz-eyebrow">O CLIMA DE VOCÊS AGORA</p>
-      <h1 className="lp1-quiz-title">{mirror.title}</h1>
+      <h1 className="lp1-quiz-title">{resultTitle}</h1>
       <figure className="lp1-result-photo">
         <img
-          src="/hero/secao-distancia.webp"
-          alt="Casal criando um momento de conexão"
+          src="/hero/resultado-conexao.png"
+          alt="Casal refletindo juntos sobre a relação"
         />
       </figure>
       <div className="lp1-result-meter-card">
         <div className="lp1-result-meter-heading">
-          <span>Distância na conversa</span>
-          <strong
-            className={`lp1-result-meter-status ${
-              result.label === "Morno" ? "is-morno" : "is-distante"
-            }`}
-          >
+          <span>Risco de afastamento</span>
+          <strong className={`lp1-result-meter-status ${riskTone}`}>
             {result.label}
           </strong>
         </div>
@@ -3506,15 +3539,18 @@ function Lp1ResultScreen({
           </span>
           <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
         </div>
-        <div className="lp1-result-meter-labels lp1-result-meter-labels-three">
+        <div className="lp1-result-meter-labels lp1-result-meter-labels-four">
           <span className="is-frio" style={{ left: "10%" }}>
-            Frio
+            Baixo
           </span>
-          <span className="is-morno" style={{ left: "50%" }}>
-            Morno
+          <span className="is-morno" style={{ left: "37%" }}>
+            Estável
+          </span>
+          <span className="is-morno" style={{ left: "64%" }}>
+            Médio
           </span>
           <span className="is-distante" style={{ left: "90%" }}>
-            Distante
+            Alto
           </span>
         </div>
         <div className="lp1-result-context">
@@ -3530,22 +3566,18 @@ function Lp1ResultScreen({
         </div>
       </div>
       <p className="lp1-result-disclaimer">
-        Calculado a partir das respostas que você deu neste teste. Não é diagnóstico
-        clínico — é o retrato do que você acabou de contar.
+        Este score de conexão é informal e serve apenas para reflexão. Ele não
+        substitui uma avaliação clínica nem resume toda a experiência de vocês.
       </p>
       <div className="lp1-result-insights">
-        <div className="lp1-result-insight">
-          <span aria-hidden="true">{urgency.insightIcon}</span>
-          <p>
-            {urgency.insightLabel} <strong>{urgency.insightValue}</strong>
-          </p>
-        </div>
-        <div className="lp1-result-insight">
-          <span aria-hidden="true">🌱</span>
-          <p>
-            Espaço para começar hoje <strong>{result.spaceValue}</strong>
-          </p>
-        </div>
+        {resultInsights.map((insight) => (
+          <div className="lp1-result-insight" key={insight.label}>
+            <span aria-hidden="true">{insight.icon}</span>
+            <p>
+              {insight.label} <strong>{insight.value}</strong>
+            </p>
+          </div>
+        ))}
       </div>
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
         {cta} <ArrowRight size={17} aria-hidden="true" />

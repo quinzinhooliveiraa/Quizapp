@@ -6,9 +6,9 @@ export type Lp1Score = {
 export type Lp1DistanceResult = {
   score: number;
   meterPosition: number;
-  label: "Morno" | "Distante";
+  label: "Risco baixo" | "Risco médio" | "Risco alto";
   routineValue: "alta" | "média" | "baixa";
-  spaceValue: "alto" | "médio";
+  spaceValue: "alto" | "médio" | "baixo";
 };
 
 /*
@@ -111,12 +111,12 @@ export function computeLp1Score(answers: Record<string, unknown>): Lp1Score {
   };
 }
 
-const LP1_ROUTINE_POINTS: Record<string, number> = {
-  pouco: 0,
-  alguma: 5,
-  metade: 10,
-  muito: 15,
-  tudo: 20,
+const LP1_ROUTINE_RISK: Record<string, number> = {
+  pouco: -10,
+  alguma: -4,
+  metade: 4,
+  muito: 12,
+  tudo: 18,
 };
 
 export function computeLp1DistanceResult(
@@ -127,10 +127,11 @@ export function computeLp1DistanceResult(
     return typeof value === "string" ? value : "";
   };
   const split = (key: string) => read(key).split(",").filter(Boolean);
-  const routinePoints = LP1_ROUTINE_POINTS[read("rotina")] ?? 0;
+  const phase = read("fase") || read("momento");
+  const routinePoints = LP1_ROUTINE_RISK[read("rotina")] ?? 0;
   const travaValues = split("travas");
   const topicValues = split("conversas");
-  const travaCount = travaValues.length || topicValues.length;
+  const travaCount = travaValues.length;
   const obstacleValues = split("atrapalha");
   const iniciaPoints =
     read("inicia") === "ele-nao-entra"
@@ -142,41 +143,87 @@ export function computeLp1DistanceResult(
           : read("inicia") === "nao-senta"
             ? 5
             : 0;
-  const painPoints =
+  const routineTopicRisk = topicValues.reduce(
+    (total, topic) =>
+      total +
+      ({
+        rotina: 6,
+        trabalho: 2,
+        besteira: -3,
+        "nos-dois": -6,
+        intimidade: -6,
+        pessoal: -4,
+      }[topic] ?? 0),
+    0,
+  );
+  const phaseRisk =
+    phase === "perdidos" || phase === "reconexao"
+      ? 12
+      : phase === "novo" || phase === "comecando"
+        ? -4
+        : 2;
+  const conversationRisk =
     Math.min(travaCount, 5) * 8 +
+    routineTopicRisk +
+    phaseRisk +
     iniciaPoints +
     (read("celular") === "sempre"
-      ? 14
+      ? 12
       : read("celular") === "as-vezes"
-        ? 7
-        : 0) +
-    (read("conhece") === "sei-tudo"
-      ? 10
+        ? 3
+        : -6) +
+    (read("conhece") === "sim"
+      ? -6
+      : read("conhece") === "sei-tudo"
+        ? 6
       : read("conhece") === "as-vezes-nao"
         ? 8
-        : 0) +
+        : read("conhece") === "mais-ou-menos"
+          ? 2
+          : 0) +
     (read("sei-la-mapeado") === "sei-la"
-      ? 14
+      ? 10
       : read("sei-la-mapeado") === "nao-sei"
-        ? 10
-        : 0) +
+        ? 8
+        : read("sei-la-mapeado") === "superficial"
+          ? 3
+          : read("sei-la-mapeado") === "rende" ||
+              read("sei-la-mapeado") === "vai-longe"
+            ? -8
+            : read("sei-la-mapeado") === "muda-assunto"
+              ? 7
+              : 0) +
     (obstacleValues.includes("medo-resposta") ? 12 : 0) +
     (obstacleValues.includes("medo") ? 10 : 0) +
     (obstacleValues.includes("comecar") ? 8 : 0) +
-    (routinePoints >= 15 ? 8 : routinePoints >= 10 ? 4 : 0);
+    (obstacleValues.includes("nao-para") ? 6 : 0) +
+    (read("clima") === "honesto" ? 6 : 0);
   const score = Math.round(
-    40 + (Math.min(100, Math.max(0, painPoints)) / 100) * 52,
+    Math.min(100, Math.max(0, 50 + conversationRisk * 0.65)),
   );
-  const meterPosition = Math.round(
-    Math.min(86, Math.max(56, 56 + ((score - 40) / 52) * 30)),
-  );
-  const label = meterPosition < 71 ? "Morno" : "Distante";
+  const meterPosition = Math.round(8 + score * 0.84);
+  const label =
+    score <= 34
+      ? "Risco baixo"
+      : score <= 64
+        ? "Risco médio"
+        : "Risco alto";
   const routineValue =
-    routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
+    (LP1_ROUTINE_RISK[read("rotina")] ?? 0) <= -4
+      ? "alta"
+      : (LP1_ROUTINE_RISK[read("rotina")] ?? 0) <= 4
+        ? "média"
+        : "baixa";
+  const urgency = read("urgencia");
+  const when = read("quando");
   const spaceValue =
-    (read("clima") === "leve" || read("clima") === "normal") &&
-    (read("quando") === "hoje" || read("quando") === "dias")
+    urgency === "hoje" ||
+    urgency === "proximos-dias" ||
+    when === "hoje" ||
+    when === "dias"
       ? "alto"
-      : "médio";
+      : urgency === "oportunidade" || when === "quando"
+        ? "baixo"
+        : "médio";
   return { score, meterPosition, label, routineValue, spaceValue };
 }
