@@ -2826,7 +2826,6 @@ function Lp1Quiz({
           <Lp1ResultScreen
             answers={answers}
             sectionId={current.id}
-            cta={current.cta}
             onContinue={() => setShowOffer(true)}
           />
         ) : current.kind === "chart" ? (
@@ -3459,12 +3458,10 @@ function getLp1UrgencyMessage(
 function Lp1ResultScreen({
   answers,
   sectionId,
-  cta,
   onContinue,
 }: {
   answers: Lp1Answers;
   sectionId: string;
-  cta: string;
   onContinue: () => void;
 }) {
   const result = computeLp1DistanceResult(answers);
@@ -3566,7 +3563,7 @@ function Lp1ResultScreen({
         ))}
       </div>
       <button type="button" className="lp1-quiz-next lp1-quiz-full-cta" onClick={onContinue}>
-        {cta} <ArrowRight size={17} aria-hidden="true" />
+        {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
   );

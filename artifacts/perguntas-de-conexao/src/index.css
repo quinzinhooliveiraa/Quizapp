@@ -3104,32 +3104,36 @@
 
 .lp1-result-photo-risk {
   position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
+  top: 0.65rem;
+  left: 0.65rem;
   z-index: 1;
-  padding: 0.45rem 0.65rem;
-  border: 1px solid currentColor;
-  border-radius: 0.45rem;
-  background: rgba(244, 213, 190, 0.96);
+  padding: 0.3rem 0.48rem;
+  border: 1px solid rgba(122, 46, 70, 0.72);
+  border-radius: 0.38rem;
+  background: rgba(244, 213, 190, 0.68);
   color: #7a2e46;
-  font: 800 10px/1 var(--app-font-sans);
+  font: 800 8px/1 var(--app-font-sans);
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  box-shadow: 0 0.35rem 1rem rgba(10, 7, 13, 0.2);
+  white-space: nowrap;
+  box-shadow: 0 0.2rem 0.55rem rgba(10, 7, 13, 0.16);
+  backdrop-filter: blur(2px);
 }
 
 .lp1-result-photo-risk.is-baixo {
-  background: rgba(205, 235, 224, 0.96);
+  border-color: rgba(35, 100, 93, 0.68);
+  background: rgba(205, 235, 224, 0.68);
   color: #23645d;
 }
 
 .lp1-result-photo-risk.is-medio {
-  background: rgba(244, 213, 190, 0.96);
+  background: rgba(244, 213, 190, 0.68);
   color: #8b493a;
 }
 
 .lp1-result-photo-risk.is-alto {
-  background: rgba(231, 188, 199, 0.96);
+  border-color: rgba(122, 46, 70, 0.72);
+  background: rgba(231, 188, 199, 0.68);
   color: #7a2e46;
 }
 
