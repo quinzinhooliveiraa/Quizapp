@@ -6,6 +6,7 @@
 - [Modal overlay stacking](modal-overlay-breakpoints.md) — modal backdrops must be finalized after legacy breakpoint rules so the full viewport stays blurred and non-interactive.
 - [OpenAPI query parameter generation](openapi-query-params.md) — avoid adding generated query params to an operation whose generated path params already use the same name; manual query reads can preserve compatibility.
 - [Abacate checkout status](abacate-checkout-status.md) — retrieve a checkout with `/checkouts/get?id=...`; `/billings/{id}` returns the wrong result for this integration.
+- [AbacatePay description charset](abacate-description-charset.md) — transparent Pix descriptions must use ASCII punctuation; an em dash is rejected by the provider.
 - [Checkout attribution context](checkout-attribution-context.md) — payment sessions must read the landing visitor identity from session storage.
 - [Checkout UI reuse](checkout-ui-reuse.md) — keep landing-page checkout presentation on the shared controller/modal so source attribution and Pix state stay in one flow.
 - [Inline checkout payment](inline-checkout-payment.md) — keep Pix and card payment creation/rendering inside the first checkout; the CTA must not become a separate payment page.

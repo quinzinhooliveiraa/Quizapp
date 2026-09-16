@@ -692,7 +692,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       const charge = await createAbacatePixCharge({
         sessionId,
         amount: pricing.amountCents,
-        description: "Perguntas de Conexão — Pacote Casal",
+        description: "Perguntas de Conexao - Pacote Casal",
       });
       await db
         .update(sessionsTable)
