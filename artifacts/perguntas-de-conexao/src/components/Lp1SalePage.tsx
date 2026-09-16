@@ -337,7 +337,7 @@ function OfferCard({
                 active ? (
                   <>
                     <span className="lp-price-discount-copy">
-                      O seu desconto de menos de {discountPercent}% termina em
+                       O seu desconto de {discountPercent}% termina em
                     </span>
                     <strong className="lp-price-discount-timer">
                       <Clock3 size={18} strokeWidth={2.2} aria-hidden="true" />
@@ -470,7 +470,9 @@ export function Lp1SalePage({
           <div className="lp1-sale-sticky-card" aria-live="polite">
             <div className="lp1-sale-sticky-copy">
               <div className="lp1-sale-sticky-active-copy">
-                <span className="lp1-sale-sticky-prefix">Termina em</span>
+                <span className="lp1-sale-sticky-prefix">
+                  O seu desconto de {discountPercent}% termina em
+                </span>
                 <b
                   className="lp1-sale-sticky-timer"
                   aria-label={`${formatRemaining(remainingSeconds)} restantes`}
@@ -480,7 +482,7 @@ export function Lp1SalePage({
               </div>
             </div>
             <button type="button" onClick={scrollToOffer}>
-              Pegar -{discountPercent}% off{" "}
+              Obter desconto{" "}
               <ArrowRight size={15} aria-hidden="true" />
             </button>
           </div>
