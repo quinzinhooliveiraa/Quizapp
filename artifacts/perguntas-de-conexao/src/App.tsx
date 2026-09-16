@@ -1770,10 +1770,30 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     format: "cards",
     emoji: true,
     options: [
-      { value: "menos-seis", label: "Menos de 6 meses", icon: "✨" },
-      { value: "seis-um", label: "6 meses a 2 anos", icon: "🌱" },
-      { value: "um-tres", label: "2 a 5 anos", icon: "🏡" },
-      { value: "mais-dez", label: "Mais de 5 anos", icon: "🕯️" },
+      {
+        value: "menos-seis",
+        label: "Menos de 6 meses",
+        icon: "✨",
+        imageSrc: "/quiz/tempo-menos-seis.png",
+      },
+      {
+        value: "seis-um",
+        label: "6 meses a 2 anos",
+        icon: "🌱",
+        imageSrc: "/quiz/tempo-seis-dois.png",
+      },
+      {
+        value: "um-tres",
+        label: "2 a 5 anos",
+        icon: "🏡",
+        imageSrc: "/quiz/tempo-dois-cinco.png",
+      },
+      {
+        value: "mais-dez",
+        label: "Mais de 5 anos",
+        icon: "🕯️",
+        imageSrc: "/quiz/tempo-mais-cinco.png",
+      },
     ],
   },
   {

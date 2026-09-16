@@ -3552,6 +3552,18 @@
     linear-gradient(145deg, #302641, #211a2b 72%);
 }
 
+.lp1-time-question .lp1-thumb {
+  display: block;
+  width: 100%;
+  min-height: 10rem;
+  max-height: none;
+  flex: 1 1 auto;
+  aspect-ratio: 1;
+  border-radius: 0;
+  object-fit: cover;
+  filter: none;
+}
+
 .lp1-time-question .lp1-quiz-option-icon {
   display: grid;
   width: 4.25rem;
