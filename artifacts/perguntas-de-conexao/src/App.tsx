@@ -1918,6 +1918,7 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
         value: "conversar",
         label: "Uma conversa longa",
         icon: "🕯️",
+        imageSrc: "/quiz/s09-conversa-longa.png",
       },
       {
         value: "quimica",
