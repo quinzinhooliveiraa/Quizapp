@@ -3114,6 +3114,16 @@
   text-transform: uppercase;
 }
 
+.lp1-result-meter-status.is-morno {
+  background: rgba(232, 201, 138, 0.18);
+  color: #e8c98a;
+}
+
+.lp1-result-meter-status.is-distante {
+  background: rgba(155, 93, 118, 0.24);
+  color: #d59ab1;
+}
+
 .lp1-result-meter {
   position: relative;
   height: 50px;
@@ -3129,9 +3139,11 @@
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    #b99a52 0%,
-    #8e4356 55%,
-    #596170 100%
+    #6e96bb 0%,
+    #8da2bd 24%,
+    #e8c98a 50%,
+    #b87871 72%,
+    #7a2e46 100%
   );
   content: "";
 }
@@ -3161,6 +3173,7 @@
   font: 400 9px/1 var(--app-font-mono);
   white-space: nowrap;
   transform: translateX(-50%);
+  transition: left 900ms ease-out;
 }
 
 .lp1-result-meter-balloon::after {
@@ -3177,6 +3190,18 @@
 .lp1-result-meter-labels {
   color: #9d92a6;
   font: 400 11px/1 var(--app-font-sans);
+}
+
+.lp1-result-meter-labels .is-frio {
+  color: #8eafd0;
+}
+
+.lp1-result-meter-labels .is-morno {
+  color: #e8c98a;
+}
+
+.lp1-result-meter-labels .is-distante {
+  color: #d59ab1;
 }
 
 .lp1-result-meter-labels-three {

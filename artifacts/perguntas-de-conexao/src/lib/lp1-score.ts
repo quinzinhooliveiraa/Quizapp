@@ -168,9 +168,9 @@ export function computeLp1DistanceResult(
     40 + (Math.min(100, Math.max(0, painPoints)) / 100) * 52,
   );
   const meterPosition = Math.round(
-    Math.min(72, Math.max(30, 30 + ((score - 40) / 52) * 42)),
+    Math.min(86, Math.max(56, 56 + ((score - 40) / 52) * 30)),
   );
-  const label = meterPosition < 50 ? "Morno" : "Distante";
+  const label = meterPosition < 71 ? "Morno" : "Distante";
   const routineValue =
     routinePoints <= 5 ? "alta" : routinePoints <= 10 ? "média" : "baixa";
   const spaceValue =

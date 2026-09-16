@@ -3400,7 +3400,7 @@ function Lp1ResultScreen({
     answers.dor ??
     "sei-la";
   const mirror = LP1_DOR_ESPELHO[mirrorKey] ?? LP1_DOR_ESPELHO["sei-la"];
-  const [meterPosition, setMeterPosition] = useState("30%");
+  const [meterPosition, setMeterPosition] = useState("50%");
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -3416,7 +3416,13 @@ function Lp1ResultScreen({
       <div className="lp1-result-meter-card">
         <div className="lp1-result-meter-heading">
           <span>Distância na conversa</span>
-          <strong>{result.label}</strong>
+          <strong
+            className={`lp1-result-meter-status ${
+              result.label === "Morno" ? "is-morno" : "is-distante"
+            }`}
+          >
+            {result.label}
+          </strong>
         </div>
         <div className="lp1-result-meter">
           <span
@@ -3428,9 +3434,15 @@ function Lp1ResultScreen({
           <span className="lp1-result-meter-marker" style={{ left: meterPosition }} />
         </div>
         <div className="lp1-result-meter-labels lp1-result-meter-labels-three">
-          <span style={{ left: "15%" }}>Frio</span>
-          <span style={{ left: "55%" }}>Morno</span>
-          <span style={{ left: "90%" }}>Distante</span>
+          <span className="is-frio" style={{ left: "10%" }}>
+            Frio
+          </span>
+          <span className="is-morno" style={{ left: "50%" }}>
+            Morno
+          </span>
+          <span className="is-distante" style={{ left: "90%" }}>
+            Distante
+          </span>
         </div>
         <div className="lp1-result-context">
           <span aria-hidden="true">ⓘ</span>
