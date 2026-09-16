@@ -28621,11 +28621,10 @@ blockquote em {
 }
 
 .checkout-pix-check {
-  display: flex;
+  display: grid;
   flex: 0 0 100%;
   width: 100%;
-  align-items: center;
-  justify-content: center;
+  place-items: center;
   text-align: center;
   margin-top: 0.1rem;
 }
