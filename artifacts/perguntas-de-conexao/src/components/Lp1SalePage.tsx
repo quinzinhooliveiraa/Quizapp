@@ -384,39 +384,41 @@ function OfferCard({
         ) : null}
         {offerState ? (
           <div className="lp1-price-stack">
-            <div className="lp-price-card lp1-price-card lp1-price-steps-card">
-              <ol className="lp1-price-steps">
-                <li>
-                  <span className="lp1-price-step-number" aria-hidden="true">
-                    1
-                  </span>
-                  <span className="lp1-price-step-copy">
-                    <strong>Você paga.</strong>{" "}
-                    {offerState.full.pixAvailable
-                      ? "Pix cai na hora e o acesso abre sozinho."
-                      : "O acesso abre sozinho, na hora."}
-                  </span>
-                </li>
-                <li>
-                  <span className="lp1-price-step-number" aria-hidden="true">
-                    2
-                  </span>
-                  <span className="lp1-price-step-copy">
-                    <strong>Convida ele(a).</strong> Um link. A pessoa entra
-                    sem pagar de novo.
-                  </span>
-                </li>
-                <li>
-                  <span className="lp1-price-step-number" aria-hidden="true">
-                    3
-                  </span>
-                  <span className="lp1-price-step-copy">
-                    <strong>Escolhem um baralho.</strong> Leem a primeira
-                    pergunta em voz alta. Pronto.
-                  </span>
-                </li>
-              </ol>
-            </div>
+            {!compact ? (
+              <div className="lp-price-card lp1-price-card lp1-price-steps-card">
+                <ol className="lp1-price-steps">
+                  <li>
+                    <span className="lp1-price-step-number" aria-hidden="true">
+                      1
+                    </span>
+                    <span className="lp1-price-step-copy">
+                      <strong>Você paga.</strong>{" "}
+                      {offerState.full.pixAvailable
+                        ? "Pix cai na hora e o acesso abre sozinho."
+                        : "O acesso abre sozinho, na hora."}
+                    </span>
+                  </li>
+                  <li>
+                    <span className="lp1-price-step-number" aria-hidden="true">
+                      2
+                    </span>
+                    <span className="lp1-price-step-copy">
+                      <strong>Convida ele(a).</strong> Um link. A pessoa entra
+                      sem pagar de novo.
+                    </span>
+                  </li>
+                  <li>
+                    <span className="lp1-price-step-number" aria-hidden="true">
+                      3
+                    </span>
+                    <span className="lp1-price-step-copy">
+                      <strong>Escolhem um baralho.</strong> Leem a primeira
+                      pergunta em voz alta. Pronto.
+                    </span>
+                  </li>
+                </ol>
+              </div>
+            ) : null}
             <Lp1PriceCard
               fullPricing={offerState.full}
               offerPricing={offerState.offer}
