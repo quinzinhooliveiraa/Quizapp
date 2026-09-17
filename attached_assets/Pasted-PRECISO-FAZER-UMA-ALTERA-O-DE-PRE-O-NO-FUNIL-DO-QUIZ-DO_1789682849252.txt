@@ -1,0 +1,244 @@
+PRECISO FAZER UMA ALTERAÇÃO DE PREÇO NO FUNIL DO QUIZ DO PERGUNTAS DE CONEXÃO.
+
+IMPORTANTE:
+Faça somente as alterações relacionadas a preço, desconto e textos que dependem diretamente desses valores.
+NÃO altere o layout.
+NÃO altere as perguntas do quiz.
+NÃO altere a lógica do diagnóstico.
+NÃO altere a identidade visual.
+NÃO altere textos que não tenham relação com preço/desconto.
+NÃO altere Portugal.
+A alteração abaixo é SOMENTE para a oferta do Brasil.
+
+========================================
+NOVO PREÇO BRASIL
+========================================
+
+O preço original do produto no Brasil deve voltar a ser:
+
+R$ 47,90
+
+Depois que a pessoa termina o quiz e chega à oferta promocional, o preço promocional deve ser:
+
+R$ 29,90
+
+Ou seja:
+
+PREÇO ORIGINAL:
+R$ 47,90
+
+PREÇO PROMOCIONAL:
+R$ 29,90
+
+DESCONTO:
+aproximadamente 38%
+
+ECONOMIA:
+R$ 18,00
+
+========================================
+ALTERAR TODOS OS TEXTOS RELACIONADOS
+========================================
+
+Procure no projeto inteiro por qualquer referência ao preço antigo:
+
+R$ 50
+50 reais
+50,00
+R$50
+50%
+
+e qualquer referência ao preço promocional antigo:
+
+R$ 30
+30 reais
+30,00
+R$30
+
+Substitua essas referências SOMENTE quando elas estiverem relacionadas à oferta brasileira do Perguntas de Conexão.
+
+A oferta brasileira deve ficar consistente em todos os lugares.
+
+Sempre que aparecer a comparação de preço, usar:
+
+De R$ 47,90
+por R$ 29,90
+
+ou a versão visual equivalente já existente no projeto.
+
+========================================
+DESCONTO
+========================================
+
+O funil atualmente possui textos mencionando 40% de desconto.
+
+NÃO mantenha “40% de desconto”, porque R$47,90 → R$29,90 representa aproximadamente 37,6%.
+
+Use:
+
+“38% DE DESCONTO”
+
+quando houver necessidade de mostrar uma porcentagem.
+
+Também pode usar:
+
+“R$18 DE DESCONTO”
+
+quando houver espaço para destacar o valor economizado.
+
+Se existir algum texto como:
+
+“Economize 40%”
+“40% OFF”
+“40% de desconto”
+“Você ganhou 40%”
+“Desconto de 40%”
+
+ajuste para:
+
+“Economize 38%”
+“38% OFF”
+“38% de desconto”
+“Você ganhou 38%”
+“Desconto de 38%”
+
+conforme o contexto e o idioma visual já utilizado na página.
+
+========================================
+HEADLINES E GATILHOS
+========================================
+
+Revise TODOS os headlines, subtítulos, badges, etiquetas, mensagens de urgência, textos de CTA e qualquer outro elemento do funil que mencione:
+
+- R$50
+- R$30
+- 40% de desconto
+- 40% OFF
+- economia baseada nesses valores
+
+Eles precisam refletir os novos valores.
+
+Exemplo:
+
+ANTES:
+“De R$50 por apenas R$30”
+“40% de desconto”
+“Você economiza R$20”
+
+DEPOIS:
+“De R$47,90 por apenas R$29,90”
+“38% de desconto”
+“Você economiza R$18”
+
+========================================
+OFERTA FINAL
+========================================
+
+A oferta final brasileira deve apresentar claramente:
+
+R$ 47,90
+~~R$ 29,90~~ [NÃO usar esse formato literalmente se o projeto já possui um componente visual próprio]
+
+O preço promocional final deve ser:
+
+R$ 29,90
+
+Se já existir um componente de preço riscado, desconto ou badge, apenas atualize os valores dentro do componente existente.
+
+========================================
+CTA
+========================================
+
+Não altere o texto do CTA se ele não mencionar preço.
+
+Se o CTA atualmente mencionar R$30, atualize para R$29,90.
+
+========================================
+TIMER
+========================================
+
+Se existir um contador/timer relacionado ao desconto, MANTENHA o timer e sua lógica exatamente como está.
+
+Apenas altere os valores/textos relacionados ao preço.
+
+========================================
+PORTUGAL — NÃO ALTERAR
+========================================
+
+MUITO IMPORTANTE:
+
+Não altere nenhuma configuração de Portugal.
+
+O preço de Portugal, atualmente €15 com oferta para €10, deve permanecer exatamente como está.
+
+Não faça conversão automática entre Brasil e Portugal.
+
+Não compartilhe o preço brasileiro com Portugal.
+
+A lógica deve continuar separada por país/mercado.
+
+========================================
+LÓGICA
+========================================
+
+Verifique também se os preços estão armazenados em variáveis, constantes, objetos de configuração ou condições do código.
+
+Não altere apenas o texto visual.
+
+Se existir algo como:
+
+originalPrice
+discountPrice
+discountPercentage
+price
+offerPrice
+currency
+country
+locale
+etc.
+
+atualize a configuração brasileira corretamente para:
+
+originalPrice = 47.90
+discountPrice = 29.90
+
+e faça o percentual exibido corresponder ao desconto real.
+
+IMPORTANTE:
+Não quero simplesmente trocar textos.
+Quero que o preço REAL enviado ao checkout também seja R$29,90 no Brasil.
+
+O checkout brasileiro deve receber R$29,90.
+
+Portugal deve continuar recebendo €10 na oferta.
+
+========================================
+VERIFICAÇÃO FINAL
+========================================
+
+Depois de fazer as alterações, faça uma busca no projeto inteiro e confirme que não ficou nenhuma referência antiga ao preço brasileiro:
+
+R$50
+R$ 50
+50,00
+R$30
+R$ 30
+30,00
+40% de desconto
+40% OFF
+
+quando essas referências estiverem relacionadas à oferta atual do Brasil.
+
+Também confirme que:
+
+Brasil:
+R$47,90 → R$29,90
+38% de desconto
+R$18 de economia
+
+Portugal:
+€15 → €10
+
+Não altere nenhuma outra parte do funil.
+
+Antes de finalizar, teste o fluxo completo do quiz até o checkout para garantir que o preço visual e o preço efetivamente enviado ao checkout estão iguais.

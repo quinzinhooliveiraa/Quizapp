@@ -20,11 +20,11 @@ const CANONICAL_PRICING: Record<
   }
 > = {
   BR: {
-    fullCents: 5000,
-    fullDisplay: "R$ 50",
+    fullCents: 4790,
+    fullDisplay: "R$ 47,90",
     fullUnitNote: "dá 11 centavos por noite",
-    offerCents: 3000,
-    offerDisplay: "R$ 30",
+    offerCents: 2990,
+    offerDisplay: "R$ 29,90",
     offerUnitNote: "dá 7 centavos por noite",
   },
   PT: {
