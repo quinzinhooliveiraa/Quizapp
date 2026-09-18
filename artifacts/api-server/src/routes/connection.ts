@@ -1,4 +1,4 @@
-import { Router, type IRouter, type Request } from "express";
+import { Router, type IRouter } from "express";
 import {
   CreateInviteBody,
   CreateInviteParams,
@@ -46,12 +46,14 @@ import {
   isStripeConfigured,
   verifyStripeWebhook,
 } from "../lib/stripe";
-import { sendPurchaseNotification } from "../lib/push";
-import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "../lib/brevo";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
 import { resolveRegion } from "../lib/pricing";
 import { getOfferPricing, getOfferWindow } from "../lib/offers";
+import {
+  grantSessionAccess,
+  notifyGrantedAccess,
+} from "../lib/payment-access";
 
 type Theme = {
   id: string;
@@ -420,72 +422,6 @@ const packageConfig = {
 
 const router: IRouter = Router();
 
-type AccessUpdateExecutor = Pick<typeof db, "update">;
-
-async function grantSessionAccess(
-  executor: AccessUpdateExecutor,
-  sessionId: string,
-) {
-  const [updated] = await executor
-    .update(sessionsTable)
-    .set({ accessGranted: true })
-    .where(
-      and(
-        eq(sessionsTable.id, sessionId),
-        eq(sessionsTable.accessGranted, false),
-      ),
-    )
-    .returning({
-      id: sessionsTable.id,
-      buyerName: sessionsTable.buyerName,
-      buyerEmail: sessionsTable.buyerEmail,
-      packageName: sessionsTable.packageName,
-      accessGranted: sessionsTable.accessGranted,
-    });
-  return updated;
-}
-
-type GrantedSession = NonNullable<
-  Awaited<ReturnType<typeof grantSessionAccess>>
->;
-
-function notifyGrantedAccess(
-  req: Request,
-  session: GrantedSession | undefined,
-) {
-  if (!session?.accessGranted) return;
-  void sendPurchaseNotification({
-    buyerName: session.buyerName,
-    packageName: session.packageName,
-  }).catch((error) =>
-    req.log.error({ err: error }, "Purchase push notification failed"),
-  );
-  if (session.buyerEmail) {
-    const baseUrl =
-      process.env.PUBLIC_BASE_URL || "https://www.perguntasdeconexao.com.br";
-    const payload = buildPurchaseAccessEmail({
-      buyerName: session.buyerName,
-      accessUrl: `${baseUrl}/acesso/${encodeURIComponent(session.id)}`,
-      loginUrl: `${baseUrl}/login`,
-    });
-    void sendEmailViaBrevo({
-      to: session.buyerEmail,
-      toName: session.buyerName,
-      subject: payload.subject,
-      htmlContent: payload.htmlContent,
-      textContent: payload.textContent,
-    })
-      .then((result) => {
-        if (!result.ok) {
-          req.log.error({ error: result.error }, "Purchase access email failed");
-        }
-      })
-      .catch((error) =>
-        req.log.error({ err: error }, "Purchase access email threw"),
-      );
-  }
-}
-
 router.get("/questions/themes", (_req, res): void => {
   res.json(ListQuestionThemesResponse.parse(themes));
 });
@@ -778,7 +714,9 @@ router.post("/checkout/stripe-webhook", async (req, res): Promise<void> => {
 
     if (sessionId) {
       const updated = await grantSessionAccess(tx, sessionId);
-      notifyGrantedAccess(req, updated);
+       notifyGrantedAccess(updated, (error, message) =>
+         req.log.error({ err: error }, message),
+       );
     }
     return "processed" as const;
   });
@@ -858,7 +796,9 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
 
       if (typeof sessionId === "string") {
         const updated = await grantSessionAccess(tx, sessionId);
-        notifyGrantedAccess(req, updated);
+         notifyGrantedAccess(updated, (error, message) =>
+           req.log.error({ err: error }, message),
+         );
       }
       return "processed" as const;
     });
@@ -873,7 +813,9 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
     }
   } else if (typeof sessionId === "string") {
     const updated = await grantSessionAccess(db, sessionId);
-    notifyGrantedAccess(req, updated);
+     notifyGrantedAccess(updated, (error, message) =>
+       req.log.error({ err: error }, message),
+     );
   }
 
   res.json(
@@ -918,7 +860,9 @@ router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
       ) {
         const updated = await grantSessionAccess(db, session.id);
         if (updated) session.accessGranted = true;
-        notifyGrantedAccess(req, updated);
+        notifyGrantedAccess(updated, (error, message) =>
+          req.log.error({ err: error }, message),
+        );
       }
     }
   }

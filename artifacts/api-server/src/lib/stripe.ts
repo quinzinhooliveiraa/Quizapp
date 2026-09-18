@@ -61,3 +61,17 @@ export function verifyStripeWebhook(
     webhookSecret,
   );
 }
+
+export async function fetchStripePaymentIntentStatus(
+  paymentIntentId: string,
+): Promise<string | null> {
+  if (!paymentIntentId || !isStripeConfigured()) return null;
+
+  try {
+    const paymentIntent =
+      await getStripeClient().paymentIntents.retrieve(paymentIntentId);
+    return paymentIntent.status;
+  } catch {
+    return null;
+  }
+}

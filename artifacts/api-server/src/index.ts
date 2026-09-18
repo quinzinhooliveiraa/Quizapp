@@ -3,6 +3,7 @@ import app from "./app";
 import { attachLobbyServer } from "./lib/lobbyServer";
 import { logger } from "./lib/logger";
 import { startExperimentOptimizationScheduler } from "./lib/experiment-optimization";
+import { startPaymentReconciliationScheduler } from "./lib/payment-reconciliation";
 
 const rawPort = process.env["PORT"];
 
@@ -29,4 +30,5 @@ httpServer.listen(port, (err?: Error) => {
 
   logger.info({ port }, "Server listening (HTTP + WebSocket)");
   startExperimentOptimizationScheduler();
+  startPaymentReconciliationScheduler();
 });
