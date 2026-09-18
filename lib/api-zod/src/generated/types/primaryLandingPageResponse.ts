@@ -5,9 +5,11 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { LandingPageVisibility } from './landingPageVisibility';
 import type { PrimaryLandingPageId } from './primaryLandingPageId';
 
 export interface PrimaryLandingPageResponse {
   primaryLandingPage: PrimaryLandingPageId;
   fallbackUsed: boolean;
+  landingPages: LandingPageVisibility[];
 }

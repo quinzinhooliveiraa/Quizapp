@@ -11,7 +11,10 @@ import {
 import { isAdminSession } from "./feedback";
 import {
   getPrimaryLandingPageId,
+  getPrimaryLandingPageConfiguration,
+  getLandingPageVisibility,
   isPrimaryLandingPageId,
+  setLandingPageVisibility,
   setPrimaryLandingPageId,
 } from "../lib/primary-landing-page";
 
@@ -43,10 +46,11 @@ router.get("/admin/check", async (req, res): Promise<void> => {
 });
 
 router.get("/landing-pages/primary", async (_req, res): Promise<void> => {
-  const primary = await getPrimaryLandingPageId();
+  const primary = await getPrimaryLandingPageConfiguration();
   res.json({
     primaryLandingPage: primary.id,
     fallbackUsed: primary.usedFallback,
+    landingPages: primary.landingPages,
   });
 });
 
@@ -58,10 +62,11 @@ router.get("/admin/landing-pages/primary", async (req, res): Promise<void> => {
     return;
   }
 
-  const primary = await getPrimaryLandingPageId();
+  const primary = await getPrimaryLandingPageConfiguration();
   res.json({
     primaryLandingPage: primary.id,
     fallbackUsed: primary.usedFallback,
+    landingPages: primary.landingPages,
   });
 });
 
@@ -86,7 +91,38 @@ router.patch("/admin/landing-pages/primary", async (req, res): Promise<void> => 
   res.json({
     primaryLandingPage: saved,
     fallbackUsed: false,
+    landingPages: await getLandingPageVisibility(),
   });
+});
+
+router.patch("/admin/landing-pages/visibility", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+
+  const landingPage =
+    typeof req.body?.landingPage === "string"
+      ? req.body.landingPage.trim()
+      : "";
+  const visible = req.body?.visible;
+  if (!isPrimaryLandingPageId(landingPage) || typeof visible !== "boolean") {
+    res.status(400).json({ error: "Visibilidade da landing page inválida" });
+    return;
+  }
+
+  try {
+    res.json(await setLandingPageVisibility(landingPage, visible));
+  } catch (error) {
+    res.status(400).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível alterar a visibilidade.",
+    });
+  }
 });
 
 router.get("/push/vapid-public-key", (_req, res): void => {

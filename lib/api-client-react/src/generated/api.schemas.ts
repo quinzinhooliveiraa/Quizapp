@@ -18,9 +18,20 @@ export interface PrimaryLandingPageInput {
   primaryLandingPage: PrimaryLandingPageId;
 }
 
+export interface LandingPageVisibility {
+  landingPage: PrimaryLandingPageId;
+  visible: boolean;
+}
+
 export interface PrimaryLandingPageResponse {
   primaryLandingPage: PrimaryLandingPageId;
   fallbackUsed: boolean;
+  landingPages: LandingPageVisibility[];
+}
+
+export interface LandingPageVisibilityInput {
+  landingPage: PrimaryLandingPageId;
+  visible: boolean;
 }
 
 export interface Suggestion {
@@ -1096,6 +1107,10 @@ sessionId: string;
 };
 
 export type UpdateAdminPrimaryLandingPageParams = {
+sessionId: string;
+};
+
+export type UpdateAdminLandingPageVisibilityParams = {
 sessionId: string;
 };
 

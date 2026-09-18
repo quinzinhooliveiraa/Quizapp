@@ -66,6 +66,8 @@ import type {
   InviteAccepted,
   InviteInput,
   InviteListItem,
+  LandingPageVisibility,
+  LandingPageVisibilityInput,
   ListAdminBuyers200,
   ListAdminBuyersParams,
   ListAdminExperimentsParams,
@@ -102,6 +104,7 @@ import type {
   UnsubscribeAdminPushBody,
   UpdateAdminExperimentOptimizationParams,
   UpdateAdminExperimentStatusParams,
+  UpdateAdminLandingPageVisibilityParams,
   UpdateAdminPendingAccessBody,
   UpdateAdminPendingAccessParams,
   UpdateAdminPrimaryLandingPageParams,
@@ -2486,6 +2489,85 @@ export const useUpdateAdminPrimaryLandingPage = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdateAdminPrimaryLandingPageMutationOptions(options));
+    }
+
+export const getUpdateAdminLandingPageVisibilityUrl = (params: UpdateAdminLandingPageVisibilityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/landing-pages/visibility?${stringifiedParams}` : `/api/admin/landing-pages/visibility`
+}
+
+/**
+ * @summary Show or hide a landing page
+ */
+export const updateAdminLandingPageVisibility = async (landingPageVisibilityInput: LandingPageVisibilityInput,
+    params: UpdateAdminLandingPageVisibilityParams, options?: Parameters<typeof customFetch>[1]): Promise<LandingPageVisibility> => {
+
+  return customFetch<LandingPageVisibility>(getUpdateAdminLandingPageVisibilityUrl(params),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(landingPageVisibilityInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminLandingPageVisibilityMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminLandingPageVisibility>>, TError,{data: BodyType<LandingPageVisibilityInput>;params: UpdateAdminLandingPageVisibilityParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminLandingPageVisibility>>, TError,{data: BodyType<LandingPageVisibilityInput>;params: UpdateAdminLandingPageVisibilityParams}, TContext> => {
+
+const mutationKey = ['updateAdminLandingPageVisibility'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminLandingPageVisibility>>, {data: BodyType<LandingPageVisibilityInput>;params: UpdateAdminLandingPageVisibilityParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  updateAdminLandingPageVisibility(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminLandingPageVisibilityMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminLandingPageVisibility>>>
+    export type UpdateAdminLandingPageVisibilityMutationBody = BodyType<LandingPageVisibilityInput>
+    export type UpdateAdminLandingPageVisibilityMutationError = ErrorType<void>
+
+    /**
+ * @summary Show or hide a landing page
+ */
+export const useUpdateAdminLandingPageVisibility = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminLandingPageVisibility>>, TError,{data: BodyType<LandingPageVisibilityInput>;params: UpdateAdminLandingPageVisibilityParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminLandingPageVisibility>>,
+        TError,
+        {data: BodyType<LandingPageVisibilityInput>;params: UpdateAdminLandingPageVisibilityParams},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminLandingPageVisibilityMutationOptions(options));
     }
 
 export const getListAdminExperimentsUrl = (params: ListAdminExperimentsParams,) => {

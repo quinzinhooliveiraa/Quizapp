@@ -638,6 +638,13 @@ function shortVisitorKey(visitorKey: string) {
 }
 
 function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
+  const defaultVisibility = useMemo(
+    () =>
+      Object.fromEntries(
+        LANDINGS.map((landing) => [landing.id, true]),
+      ) as Record<LandingPageId, boolean>,
+    [],
+  );
   const [currentId, setCurrentId] = useState<LandingPageId>(
     DEFAULT_PRIMARY_LANDING_PAGE_ID,
   );
@@ -646,6 +653,10 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [visibility, setVisibility] =
+    useState<Record<LandingPageId, boolean>>(defaultVisibility);
+  const [savingVisibility, setSavingVisibility] =
+    useState<LandingPageId | null>(null);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -655,7 +666,13 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
     )
       .then(async (response) => {
         if (!response.ok) throw new Error("primary-landing-page");
-        return (await response.json()) as { primaryLandingPage?: string };
+        return (await response.json()) as {
+          primaryLandingPage?: string;
+          landingPages?: Array<{
+            landingPage?: string;
+            visible?: boolean;
+          }>;
+        };
       })
       .then((data) => {
         if (!mounted) return;
@@ -665,6 +682,19 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
         const resolvedId = landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
         setCurrentId(resolvedId);
         setSelectedId(resolvedId);
+        setVisibility((current) => {
+          const next = { ...current };
+          for (const entry of data.landingPages || []) {
+            if (
+              entry.landingPage &&
+              entry.landingPage in next &&
+              typeof entry.visible === "boolean"
+            ) {
+              next[entry.landingPage as LandingPageId] = entry.visible;
+            }
+          }
+          return next;
+        });
       })
       .catch(() => {
         if (mounted)
@@ -695,6 +725,10 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
       const data = (await response.json()) as {
         primaryLandingPage?: string;
         error?: string;
+        landingPages?: Array<{
+          landingPage?: string;
+          visible?: boolean;
+        }>;
       };
       if (!response.ok) throw new Error(data.error || "primary-landing-page");
       const landing = data.primaryLandingPage
@@ -703,6 +737,21 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
       const resolvedId = landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
       setCurrentId(resolvedId);
       setSelectedId(resolvedId);
+      if (data.landingPages) {
+        setVisibility((current) => {
+          const next = { ...current };
+          for (const entry of data.landingPages || []) {
+            if (
+              entry.landingPage &&
+              entry.landingPage in next &&
+              typeof entry.visible === "boolean"
+            ) {
+              next[entry.landingPage as LandingPageId] = entry.visible;
+            }
+          }
+          return next;
+        });
+      }
       setMessage("Landing Page Principal atualizada.");
     } catch (error) {
       setMessage(
@@ -712,6 +761,46 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleVisibility = async (
+    landingPage: LandingPageId,
+    visible: boolean,
+  ) => {
+    setSavingVisibility(landingPage);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/landing-pages/visibility?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ landingPage, visible }),
+        },
+      );
+      const data = (await response.json()) as {
+        landingPage?: string;
+        visible?: boolean;
+        error?: string;
+      };
+      if (!response.ok || data.landingPage !== landingPage) {
+        throw new Error(data.error || "visibility");
+      }
+      setVisibility((current) => ({ ...current, [landingPage]: visible }));
+      setMessage(
+        `${getLandingPageById(landingPage)?.name || "Landing page"} ${
+          visible ? "publicada" : "ocultada"
+        }.`,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error && error.message !== "visibility"
+          ? error.message
+          : "Não foi possível alterar a visibilidade.",
+      );
+    } finally {
+      setSavingVisibility(null);
     }
   };
 
@@ -731,7 +820,7 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
       </div>
       <p className="admin-primary-landing-copy">
         Escolha qual landing page será exibida diretamente na rota principal do
-        domínio. Os links individuais e os experimentos continuam separados.
+        domínio. Páginas ocultas redirecionam seus links para a principal.
       </p>
       <form className="admin-primary-landing-form" onSubmit={save}>
         <div className="admin-primary-landing-current">
@@ -764,6 +853,68 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
           {saving ? "Salvando…" : "Salvar"}
         </button>
       </form>
+      <div className="admin-primary-landing-visibility">
+        <div>
+          <span className="admin-primary-landing-visibility-label">
+            Visibilidade dos links
+          </span>
+          <p>
+            Ocultar uma página mantém o link seguro: quem acessá-lo será levado
+            para a landing principal.
+          </p>
+        </div>
+        <div className="admin-primary-landing-visibility-list">
+          {LANDINGS.map((landing) => {
+            const isPrimary = landing.id === currentId;
+            const isVisible = visibility[landing.id] !== false;
+            const isSaving = savingVisibility === landing.id;
+            return (
+              <div
+                key={landing.id}
+                className={`admin-primary-landing-visibility-row ${
+                  isVisible ? "" : "is-hidden"
+                }`}
+              >
+                <div>
+                  <strong>{landing.name}</strong>
+                  <span>
+                    {isPrimary
+                      ? "Principal"
+                      : isVisible
+                        ? "Visível"
+                        : "Oculta"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="admin-icon-button"
+                  onClick={() =>
+                    void toggleVisibility(landing.id, !isVisible)
+                  }
+                  disabled={loading || saving || isPrimary || isSaving}
+                  aria-label={
+                    isPrimary
+                      ? `${landing.name} é a landing principal`
+                      : isVisible
+                        ? `Ocultar ${landing.name}`
+                        : `Mostrar ${landing.name}`
+                  }
+                  title={
+                    isPrimary
+                      ? "A landing principal não pode ser ocultada"
+                      : isVisible
+                        ? "Ocultar página"
+                        : "Mostrar página"
+                  }
+                  data-testid={`button-toggle-landing-visibility-${landing.id}`}
+                >
+                  {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
       {message && (
         <p className="admin-primary-landing-message" role="status">
           {message}

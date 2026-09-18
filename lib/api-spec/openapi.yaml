@@ -723,6 +723,33 @@ paths:
           description: Invalid landing page
         "403":
           description: Access denied
+  /admin/landing-pages/visibility:
+    patch:
+      operationId: updateAdminLandingPageVisibility
+      tags: [admin]
+      summary: Show or hide a landing page
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LandingPageVisibilityInput"
+      responses:
+        "200":
+          description: Updated landing page visibility
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LandingPageVisibility"
+        "400":
+          description: Invalid visibility change
+        "403":
+          description: Access denied
   /admin/experiments:
     get:
       operationId: listAdminExperiments
@@ -1364,7 +1391,25 @@ components:
         primaryLandingPage:
           $ref: "#/components/schemas/PrimaryLandingPageId"
         fallbackUsed: { type: boolean }
-      required: [primaryLandingPage, fallbackUsed]
+        landingPages:
+          type: array
+          items:
+            $ref: "#/components/schemas/LandingPageVisibility"
+      required: [primaryLandingPage, fallbackUsed, landingPages]
+    LandingPageVisibility:
+      type: object
+      properties:
+        landingPage:
+          $ref: "#/components/schemas/PrimaryLandingPageId"
+        visible: { type: boolean }
+      required: [landingPage, visible]
+    LandingPageVisibilityInput:
+      type: object
+      properties:
+        landingPage:
+          $ref: "#/components/schemas/PrimaryLandingPageId"
+        visible: { type: boolean }
+      required: [landingPage, visible]
     Suggestion:
       type: object
       properties:

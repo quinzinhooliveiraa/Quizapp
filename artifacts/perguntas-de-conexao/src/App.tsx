@@ -8200,8 +8200,72 @@ function ExperimentUnavailable() {
   );
 }
 
+type LandingPageStatusResponse = {
+  primaryLandingPage?: string;
+  landingPages?: Array<{
+    landingPage?: string;
+    visible?: boolean;
+  }>;
+};
+
+function isLandingPageVisible(
+  status: LandingPageStatusResponse,
+  landingPageId: LandingPageId,
+) {
+  return (
+    status.landingPages?.find((entry) => entry.landingPage === landingPageId)
+      ?.visible !== false
+  );
+}
+
+function getPrimaryLandingPath(status: LandingPageStatusResponse) {
+  const primary = status.primaryLandingPage
+    ? getLandingPageById(status.primaryLandingPage)
+    : undefined;
+  return primary?.path ?? getLandingPageById(DEFAULT_PRIMARY_LANDING_PAGE_ID)!.path;
+}
+
+function LandingPageVisibilityGuard({
+  landingPageId,
+  children,
+}: {
+  landingPageId: LandingPageId;
+  children: ReactNode;
+}) {
+  const [, navigate] = useLocation();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch(apiUrl("/api/landing-pages/primary"), { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("landing-page-status");
+        return (await response.json()) as LandingPageStatusResponse;
+      })
+      .then((status) => {
+        if (!mounted) return;
+        if (!isLandingPageVisible(status, landingPageId)) {
+          navigate(getPrimaryLandingPath(status), { replace: true });
+          return;
+        }
+        setReady(true);
+      })
+      .catch(() => {
+        if (mounted) navigate("/", { replace: true });
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [landingPageId, navigate]);
+
+  if (!ready) return <RouteLoading />;
+  return <>{children}</>;
+}
+
 function ExperimentLinkRoute() {
   const { experimentSlug = "" } = useParams<{ experimentSlug: string }>();
+  const [, navigate] = useLocation();
   const [state, setState] = useState<
     "loading" | "ready" | "unavailable" | "error"
   >("loading");
@@ -8213,27 +8277,39 @@ function ExperimentLinkRoute() {
     let mounted = true;
     const visitorKey = getOrCreateVisitorKey();
     const encodedSlug = encodeURIComponent(experimentSlug);
-    fetch(
-      apiUrl(
-        `/api/experiments/link/${encodedSlug}?visitorKey=${encodeURIComponent(visitorKey)}`,
+    Promise.all([
+      fetch(
+        apiUrl(
+          `/api/experiments/link/${encodedSlug}?visitorKey=${encodeURIComponent(visitorKey)}`,
+        ),
       ),
-    )
+      fetch(apiUrl("/api/landing-pages/primary"), { cache: "no-store" }),
+    ])
       .then(async (response) => {
-        const data = (await response.json()) as StoredExperimentAssignment & {
+        const [assignmentResponse, statusResponse] = response;
+        const data = (await assignmentResponse.json()) as StoredExperimentAssignment & {
           landingPage?: string;
         };
+        const status =
+          (await statusResponse.json()) as LandingPageStatusResponse;
         const landing = data.landingPage
           ? data.landingPage === "/"
             ? getLandingPageById("v2")
             : getLandingPageByPath(data.landingPage)
           : undefined;
-        if (!response.ok || !landing) {
-          throw new Error(response.status === 404 ? "unavailable" : "error");
+        if (!assignmentResponse.ok || !statusResponse.ok || !landing) {
+          throw new Error(
+            assignmentResponse.status === 404 ? "unavailable" : "error",
+          );
         }
-        return { assignment: data, landing };
+        return { assignment: data, landing, status };
       })
-      .then(({ assignment, landing }) => {
+      .then(({ assignment, landing, status }) => {
         if (!mounted) return;
+        if (!isLandingPageVisible(status, landing.id)) {
+          navigate(getPrimaryLandingPath(status), { replace: true });
+          return;
+        }
         storeExperimentAssignment(assignment);
         setExperimentAssignment(assignment);
         setLandingPage(landing.path);
@@ -8250,7 +8326,7 @@ function ExperimentLinkRoute() {
     return () => {
       mounted = false;
     };
-  }, [experimentSlug]);
+  }, [experimentSlug, navigate]);
 
   if (state === "loading") {
     return (
@@ -12696,13 +12772,19 @@ function Router() {
             <PrimaryLandingPageRoute />
           </Route>
           <Route path="/lp2">
-            <Home />
+            <LandingPageVisibilityGuard landingPageId="v1">
+              <Home />
+            </LandingPageVisibilityGuard>
           </Route>
           <Route path="/lp1">
-            <Home variant="v2" />
+            <LandingPageVisibilityGuard landingPageId="v2">
+              <Home variant="v2" />
+            </LandingPageVisibilityGuard>
           </Route>
           <Route path="/lp3">
-            <TrackedLp3 />
+            <LandingPageVisibilityGuard landingPageId="lp3">
+              <TrackedLp3 />
+            </LandingPageVisibilityGuard>
           </Route>
           <Route path="/quiz">
             <TrackedQuiz />

@@ -472,7 +472,11 @@ export const TrackQuizAnswerResponse = zod.void()
  */
 export const GetPrimaryLandingPageResponse = zod.object({
   "primaryLandingPage": zod.enum(['v1', 'v2', 'lp3']),
-  "fallbackUsed": zod.boolean()
+  "fallbackUsed": zod.boolean(),
+  "landingPages": zod.array(zod.object({
+  "landingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "visible": zod.boolean()
+}))
 })
 
 
@@ -651,7 +655,11 @@ export const GetAdminPrimaryLandingPageQueryParams = zod.object({
 
 export const GetAdminPrimaryLandingPageResponse = zod.object({
   "primaryLandingPage": zod.enum(['v1', 'v2', 'lp3']),
-  "fallbackUsed": zod.boolean()
+  "fallbackUsed": zod.boolean(),
+  "landingPages": zod.array(zod.object({
+  "landingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "visible": zod.boolean()
+}))
 })
 
 
@@ -668,7 +676,29 @@ export const UpdateAdminPrimaryLandingPageBody = zod.object({
 
 export const UpdateAdminPrimaryLandingPageResponse = zod.object({
   "primaryLandingPage": zod.enum(['v1', 'v2', 'lp3']),
-  "fallbackUsed": zod.boolean()
+  "fallbackUsed": zod.boolean(),
+  "landingPages": zod.array(zod.object({
+  "landingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "visible": zod.boolean()
+}))
+})
+
+
+/**
+ * @summary Show or hide a landing page
+ */
+export const UpdateAdminLandingPageVisibilityQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const UpdateAdminLandingPageVisibilityBody = zod.object({
+  "landingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "visible": zod.boolean()
+})
+
+export const UpdateAdminLandingPageVisibilityResponse = zod.object({
+  "landingPage": zod.enum(['v1', 'v2', 'lp3']),
+  "visible": zod.boolean()
 })
 
 
