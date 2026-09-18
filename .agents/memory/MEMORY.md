@@ -26,3 +26,4 @@
 - [API client declaration freshness](api-client-declaration-freshness.md) — rebuild project-reference declarations when generated source types change or consumers may read stale response shapes.
 - [Image preloading in preview](image-preloading-preview.md) — use a DOM img element for browser image preloads; the global Image constructor can trip the app boundary in this preview.
 - [Image optimization formats](image-optimization-formats.md) — large raster art is served as high-quality WebP; small photographic backgrounds stay JPEG when WebP would be larger.
+- [Primary landing authority](primary-landing-authority.md) — the server setting is authoritative; browser storage must not choose which page `/` renders.

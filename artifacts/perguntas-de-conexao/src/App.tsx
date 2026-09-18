@@ -8148,27 +8148,14 @@ function TrackedQuiz({
   );
 }
 
-const PRIMARY_LANDING_CACHE_KEY = "conexao-primary-landing";
-
-function readCachedPrimaryLanding(): LandingPageId {
-  if (typeof window === "undefined") return DEFAULT_PRIMARY_LANDING_PAGE_ID;
-  try {
-    const cached = window.localStorage.getItem(PRIMARY_LANDING_CACHE_KEY);
-    const landing = cached ? getLandingPageById(cached) : undefined;
-    return landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
-  } catch {
-    return DEFAULT_PRIMARY_LANDING_PAGE_ID;
-  }
-}
-
 function PrimaryLandingPageRoute() {
   const [landingPageId, setLandingPageId] = useState<LandingPageId>(
-    readCachedPrimaryLanding,
+    DEFAULT_PRIMARY_LANDING_PAGE_ID,
   );
 
   useEffect(() => {
     let mounted = true;
-    fetch(apiUrl("/api/landing-pages/primary"))
+    fetch(apiUrl("/api/landing-pages/primary"), { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error("primary-landing-page");
         return (await response.json()) as { primaryLandingPage?: string };
@@ -8179,11 +8166,6 @@ function PrimaryLandingPageRoute() {
           ? getLandingPageById(data.primaryLandingPage)
           : undefined;
         const resolved = landing?.id ?? DEFAULT_PRIMARY_LANDING_PAGE_ID;
-        try {
-          window.localStorage.setItem(PRIMARY_LANDING_CACHE_KEY, resolved);
-        } catch {
-          // Sem localStorage a página continua funcionando com o padrão.
-        }
         setLandingPageId((current) => (current === resolved ? current : resolved));
       })
       .catch(() => {
