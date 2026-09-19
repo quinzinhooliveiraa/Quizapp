@@ -591,6 +591,51 @@ paths:
           description: Invalid analytics filters
         "403":
           description: Access denied
+  /admin/analytics-export:
+    get:
+      operationId: getAdminAnalyticsExport
+      tags: [admin]
+      summary: Export funnel and quiz analytics for automated reporting
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Bearer token configured in ANALYTICS_EXPORT_TOKEN
+        - name: lp
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [v1, v2, lp3, all]
+            default: v2
+        - name: from
+          in: query
+          required: false
+          schema: { type: string }
+        - name: to
+          in: query
+          required: false
+          schema: { type: string }
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+      responses:
+        "200":
+          description: Funnel, quiz completion, and UTM breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAnalyticsExport"
+        "400":
+          description: Invalid analytics filters
+        "401":
+          description: Missing or invalid bearer token
   /admin/quiz-analytics:
     get:
       operationId: getAdminQuizAnalytics
@@ -2280,6 +2325,39 @@ components:
           visitors,
           avgLcpMs,
         ]
+    AnalyticsUtmBreakdown:
+      type: object
+      properties:
+        source: { type: ["string", "null"] }
+        campaign: { type: ["string", "null"] }
+        answers: { type: integer }
+        visitors: { type: integer }
+      required: [source, campaign, answers, visitors]
+    AdminAnalyticsExport:
+      type: object
+      properties:
+        generatedAt: { type: string, format: date-time }
+        window:
+          type: object
+          properties:
+            lpId: { type: string, enum: [v1, v2, lp3, all] }
+            from: { type: string }
+            to: { type: string }
+          required: [lpId, from, to]
+        funnel:
+          $ref: "#/components/schemas/AdminFunnelAnalytics"
+        completion:
+          type: object
+          properties:
+            visitors: { type: integer }
+            completedVisitors: { type: integer }
+            completionRate: { type: number }
+          required: [visitors, completedVisitors, completionRate]
+        utmBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsUtmBreakdown"
+      required: [generatedAt, window, funnel, completion, utmBreakdown]
     AdminAnalyticsCleanupResponse:
       type: object
       properties:

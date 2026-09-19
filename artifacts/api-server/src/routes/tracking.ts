@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import crypto from "node:crypto";
 import {
   and,
@@ -723,6 +723,55 @@ router.get("/admin/analytics-funnel", async (req, res): Promise<void> => {
 
   const analytics = await computeFunnelAnalytics(window);
   res.json(analytics);
+});
+
+function hasValidAnalyticsExportToken(req: Request): boolean {
+  const configuredToken = process.env.ANALYTICS_EXPORT_TOKEN?.trim();
+  const authorization = req.header("authorization")?.trim();
+  if (!configuredToken || !authorization?.startsWith("Bearer ")) return false;
+
+  const providedToken = authorization.slice("Bearer ".length).trim();
+  const expectedBuffer = Buffer.from(configuredToken);
+  const providedBuffer = Buffer.from(providedToken);
+  return (
+    expectedBuffer.length === providedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, providedBuffer)
+  );
+}
+
+router.get("/admin/analytics-export", async (req, res): Promise<void> => {
+  if (!hasValidAnalyticsExportToken(req)) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+
+  const window = resolveAnalyticsWindow(req.query);
+  if ("error" in window) {
+    res.status(400).json({ error: window.error });
+    return;
+  }
+
+  await reconcilePendingPayments();
+  const [funnel, quiz] = await Promise.all([
+    computeFunnelAnalytics(window),
+    computeQuizAnalytics(window),
+  ]);
+
+  res.json({
+    generatedAt: new Date().toISOString(),
+    window: {
+      lpId: window.lpId,
+      from: window.fromLabel,
+      to: window.toLabel,
+    },
+    funnel,
+    completion: {
+      visitors: quiz.visitors,
+      completedVisitors: quiz.completedVisitors,
+      completionRate: quiz.completionRate,
+    },
+    utmBreakdown: quiz.campaigns,
+  });
 });
 
 router.get("/admin/quiz-analytics", async (req, res): Promise<void> => {

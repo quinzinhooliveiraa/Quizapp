@@ -926,6 +926,45 @@ export interface AdminFunnelAnalytics {
   avgLcpMs: number | null;
 }
 
+export interface AnalyticsUtmBreakdown {
+  /** @nullable */
+  source: string | null;
+  /** @nullable */
+  campaign: string | null;
+  answers: number;
+  visitors: number;
+}
+
+export type AdminAnalyticsExportWindowLpId = typeof AdminAnalyticsExportWindowLpId[keyof typeof AdminAnalyticsExportWindowLpId];
+
+
+export const AdminAnalyticsExportWindowLpId = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+  all: 'all',
+} as const;
+
+export type AdminAnalyticsExportWindow = {
+  lpId: AdminAnalyticsExportWindowLpId;
+  from: string;
+  to: string;
+};
+
+export type AdminAnalyticsExportCompletion = {
+  visitors: number;
+  completedVisitors: number;
+  completionRate: number;
+};
+
+export interface AdminAnalyticsExport {
+  generatedAt: string;
+  window: AdminAnalyticsExportWindow;
+  funnel: AdminFunnelAnalytics;
+  completion: AdminAnalyticsExportCompletion;
+  utmBreakdown: AnalyticsUtmBreakdown[];
+}
+
 export interface AdminAnalyticsCleanupResponse {
   deletedEvents: number;
   deletedSessions: number;
@@ -1043,6 +1082,27 @@ export type GetAdminFunnelAnalyticsLp = typeof GetAdminFunnelAnalyticsLp[keyof t
 
 
 export const GetAdminFunnelAnalyticsLp = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+  all: 'all',
+} as const;
+
+export type GetAdminAnalyticsExportParams = {
+lp?: GetAdminAnalyticsExportLp;
+from?: string;
+to?: string;
+/**
+ * @minimum 1
+ * @maximum 90
+ */
+days?: number;
+};
+
+export type GetAdminAnalyticsExportLp = typeof GetAdminAnalyticsExportLp[keyof typeof GetAdminAnalyticsExportLp];
+
+
+export const GetAdminAnalyticsExportLp = {
   v1: 'v1',
   v2: 'v2',
   lp3: 'lp3',

@@ -24,6 +24,7 @@ import type {
   AbacatePayWebhookResult,
   AccessState,
   AdminAnalyticsCleanupResponse,
+  AdminAnalyticsExport,
   AdminExperimentAnalyticsResponse,
   AdminExperimentsResponse,
   AdminFunnelAnalytics,
@@ -49,6 +50,7 @@ import type {
   ExperimentStatusUpdate,
   GetActiveExperimentAssignmentParams,
   GetAdminAnalytics200,
+  GetAdminAnalyticsExportParams,
   GetAdminAnalyticsParams,
   GetAdminExperimentAnalyticsParams,
   GetAdminExperimentOptimizationParams,
@@ -2154,6 +2156,90 @@ export function useGetAdminFunnelAnalytics<TData = Awaited<ReturnType<typeof get
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAdminFunnelAnalyticsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminAnalyticsExportUrl = (params?: GetAdminAnalyticsExportParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/analytics-export?${stringifiedParams}` : `/api/admin/analytics-export`
+}
+
+/**
+ * @summary Export funnel and quiz analytics for automated reporting
+ */
+export const getAdminAnalyticsExport = async (params?: GetAdminAnalyticsExportParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminAnalyticsExport> => {
+
+  return customFetch<AdminAnalyticsExport>(getGetAdminAnalyticsExportUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminAnalyticsExportQueryKey = (params?: GetAdminAnalyticsExportParams,) => {
+    return [
+    `/api/admin/analytics-export`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminAnalyticsExportQueryOptions = <TData = Awaited<ReturnType<typeof getAdminAnalyticsExport>>, TError = ErrorType<void>>(params?: GetAdminAnalyticsExportParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminAnalyticsExport>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminAnalyticsExportQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminAnalyticsExport>>> = ({ signal }) => getAdminAnalyticsExport(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminAnalyticsExport>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminAnalyticsExportQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminAnalyticsExport>>>
+export type GetAdminAnalyticsExportQueryError = ErrorType<void>
+
+
+/**
+ * @summary Export funnel and quiz analytics for automated reporting
+ */
+
+export function useGetAdminAnalyticsExport<TData = Awaited<ReturnType<typeof getAdminAnalyticsExport>>, TError = ErrorType<void>>(
+ params?: GetAdminAnalyticsExportParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminAnalyticsExport>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminAnalyticsExportQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
