@@ -27,6 +27,7 @@ import {
 import { isAdminSession } from "./feedback";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice, type DeviceType } from "../lib/device";
+import { reconcilePendingPayments } from "../lib/payment-reconciliation";
 
 const router: IRouter = Router();
 const LP_IDS = ["v1", "v2", "lp3"] as const;
@@ -699,6 +700,7 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
     res.status(403).json({ error: "Acesso negado" });
     return;
   }
+  await reconcilePendingPayments();
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const analytics = await computeFunnel(since);
   res.json({ analytics });
@@ -712,6 +714,7 @@ router.get("/admin/analytics-funnel", async (req, res): Promise<void> => {
     return;
   }
 
+  await reconcilePendingPayments();
   const window = resolveAnalyticsWindow(req.query);
   if ("error" in window) {
     res.status(400).json({ error: window.error });

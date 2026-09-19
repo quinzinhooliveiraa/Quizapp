@@ -2577,12 +2577,10 @@ function PagesTab({
   const [lpSessions, setLpSessions] = useState<Record<string, LpSession[]>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
-  const toggleLanding = async (landing: LandingEntry) => {
-    const isOpen = expanded[landing.id];
-    setExpanded((current) => ({ ...current, [landing.id]: !isOpen }));
-    if (isOpen || analytics.some((item) => item.lpId === landing.id)) return;
-
-    setLoading((current) => ({ ...current, [landing.id]: true }));
+  const loadLanding = async (landing: LandingEntry, showLoading = true) => {
+    if (showLoading) {
+      setLoading((current) => ({ ...current, [landing.id]: true }));
+    }
     try {
       const query = `sessionId=${encodeURIComponent(sessionId)}`;
       const [analyticsResponse, sessionsResponse] = await Promise.all([
@@ -2609,11 +2607,33 @@ function PagesTab({
         [landing.id]: sessionsData.sessions || [],
       }));
     } catch {
-      setLpSessions((current) => ({ ...current, [landing.id]: [] }));
+      if (showLoading) {
+        setLpSessions((current) => ({ ...current, [landing.id]: [] }));
+      }
     } finally {
-      setLoading((current) => ({ ...current, [landing.id]: false }));
+      if (showLoading) {
+        setLoading((current) => ({ ...current, [landing.id]: false }));
+      }
     }
   };
+
+  const toggleLanding = async (landing: LandingEntry) => {
+    const isOpen = expanded[landing.id];
+    setExpanded((current) => ({ ...current, [landing.id]: !isOpen }));
+    if (isOpen) return;
+    await loadLanding(landing);
+  };
+
+  useEffect(() => {
+    const openLandings = LANDINGS.filter((landing) => expanded[landing.id]);
+    if (openLandings.length === 0) return;
+
+    const interval = window.setInterval(() => {
+      void Promise.all(openLandings.map((landing) => loadLanding(landing, false)));
+    }, 15_000);
+
+    return () => window.clearInterval(interval);
+  }, [expanded, sessionId]);
 
   return (
     <section className="admin-section" aria-labelledby="landing-pages-title">
@@ -3985,6 +4005,33 @@ export default function Admin() {
       })
       .catch(() => setStatus("denied"));
   }, []);
+
+  useEffect(() => {
+    if (status !== "ok" || !sessionId) return;
+    let cancelled = false;
+
+    const refreshBuyers = async () => {
+      try {
+        const response = await fetch(
+          `${apiBaseUrl}/api/admin/buyers?sessionId=${encodeURIComponent(sessionId)}`,
+        );
+        if (!response.ok || cancelled) return;
+        const buyerData = (await response.json()) as BuyersResponse;
+        if (cancelled) return;
+        setBuyers(buyerData.buyers || []);
+        setPendingAccess(buyerData.pendingAccess || []);
+        setBuyerTotal(buyerData.total || 0);
+      } catch {
+        // Keep the last known admin data when a refresh is temporarily unavailable.
+      }
+    };
+
+    const intervalId = window.setInterval(() => void refreshBuyers(), 15_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [sessionId, status]);
 
   const copyLink = async (entry: LandingEntry) => {
     try {

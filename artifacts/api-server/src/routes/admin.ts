@@ -17,6 +17,7 @@ import {
   setLandingPageVisibility,
   setPrimaryLandingPageId,
 } from "../lib/primary-landing-page";
+import { reconcilePendingPayments } from "../lib/payment-reconciliation";
 
 const router: IRouter = Router();
 
@@ -258,6 +259,7 @@ router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
     return;
   }
 
+  await reconcilePendingPayments();
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const events = await db
     .select({

@@ -9,6 +9,7 @@ import {
   suggestionsTable,
 } from "@workspace/db";
 import { sendSupportNotification } from "../lib/push";
+import { reconcilePendingPayments } from "../lib/payment-reconciliation";
 
 const router: IRouter = Router();
 
@@ -244,6 +245,7 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
     res.status(403).json({ error: "Acesso negado" });
     return;
   }
+  await reconcilePendingPayments();
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const [totalResult, accessResult, pendingResult] = await Promise.all([
     db

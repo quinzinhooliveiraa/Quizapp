@@ -714,9 +714,9 @@ router.post("/checkout/stripe-webhook", async (req, res): Promise<void> => {
 
     if (sessionId) {
       const updated = await grantSessionAccess(tx, sessionId);
-       notifyGrantedAccess(updated, (error, message) =>
-         req.log.error({ err: error }, message),
-       );
+      notifyGrantedAccess(updated, (error, message) =>
+        req.log.error({ err: error }, message),
+      );
     }
     return "processed" as const;
   });
@@ -796,9 +796,9 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
 
       if (typeof sessionId === "string") {
         const updated = await grantSessionAccess(tx, sessionId);
-         notifyGrantedAccess(updated, (error, message) =>
-           req.log.error({ err: error }, message),
-         );
+        notifyGrantedAccess(updated, (error, message) =>
+          req.log.error({ err: error }, message),
+        );
       }
       return "processed" as const;
     });
@@ -813,9 +813,9 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
     }
   } else if (typeof sessionId === "string") {
     const updated = await grantSessionAccess(db, sessionId);
-     notifyGrantedAccess(updated, (error, message) =>
-       req.log.error({ err: error }, message),
-     );
+    notifyGrantedAccess(updated, (error, message) =>
+      req.log.error({ err: error }, message),
+    );
   }
 
   res.json(
