@@ -744,11 +744,13 @@
 
   .analytics-funnel-svg {
     min-width: 630px;
-    transform: translateX(-8%);
+    transform: none;
   }
 
   .analytics-funnel-visual {
-    overflow-x: hidden;
+    overflow-x: auto;
+    scrollbar-color: var(--analytics-lilac) rgba(255, 255, 255, 0.08);
+    scrollbar-width: thin;
   }
 
   .analytics-funnel-svg-label {

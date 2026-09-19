@@ -328,9 +328,20 @@ router.get("/admin/lp-sessions", async (req, res): Promise<void> => {
           .from(sessionsTable)
           .where(inArray(sessionsTable.visitorKey, visitorKeys))
       : [];
-  const sessionByVisitorKey = new Map(
-    linkedSessions.map((session) => [session.visitorKey, session]),
-  );
+  const sessionByVisitorKey = new Map<
+    string,
+    (typeof linkedSessions)[number]
+  >();
+  for (const session of linkedSessions) {
+    if (!session.visitorKey) continue;
+    const current = sessionByVisitorKey.get(session.visitorKey);
+    // A visitor can have several checkout attempts. Access is an aggregate
+    // property of the visitor: one granted session must win over any pending
+    // attempt so the admin never reports a paid buyer as unpaid.
+    if (!current || session.accessGranted || !current.accessGranted) {
+      sessionByVisitorKey.set(session.visitorKey, session);
+    }
+  }
 
   res.json({
     sessions: visitorKeys.map((visitorKey) => {

@@ -1,0 +1,37 @@
+Corrija 3 bugs e 2 pontos de segurança neste projeto:
+
+1) CONCLUSÃO DO QUIZ SEMPRE 0% (telemetria)
+Em artifacts/perguntas-de-conexao/src/App.tsx, o evento "quiz-complete"
+(que o backend conta em artifacts/api-server/src/routes/tracking.ts, procurando
+screenId="quiz-complete" e answerValue="true") só dispara dentro de advance()
+quando isLastScreen é true, ou seja ao SAIR da última tela do array LP1_SCREENS,
+que hoje é "s24-clima". No fluxo real o usuário chega ao resultado sem passar por
+essa transição, então o evento nunca dispara e a conclusão fica 0%.
+Correção: disparar trackLp1QuizAnswer({ screenId:"quiz-complete",
+answerKey:"completed", answerValue:"true", ... }) UMA vez por sessão no momento
+em que o resultado aparece (quando Lp1Diagnosis monta / step === LP1_SCREENS.length),
+com um useEffect e uma guarda pra não repetir. Tirar o disparo antigo de dentro
+do advance().
+
+2) COMPRADOR APARECE COMO "AGUARDANDO PAGAMENTO" MESMO TENDO PAGO
+Em artifacts/api-server/src/routes/admin.ts, endpoint /admin/lp-sessions, as
+sessões são agrupadas por visitorKey num Map que guarda uma linha qualquer. Se o
+visitante tem mais de uma sessão (ex.: tentou Pix e depois cartão), pode sobrar a
+linha não paga e mostrar "aguardando_pagamento".
+Correção: ao agrupar por visitorKey, priorizar a sessão com accessGranted=true
+(se QUALQUER sessão do visitante tiver acesso, status = "comprou"). E em
+artifacts/api-server/src/lib/payment-reconciliation.ts aumentar
+PENDING_PAYMENT_WINDOW_MS de 48h para ~30 dias.
+
+3) PAINEL ADMIN ILEGÍVEL NO CELULAR
+A visão do funil (Páginas > Análise) em artifacts/perguntas-de-conexao/src/pages/
+Admin.tsx e seu CSS fica confusa no mobile e não dá pra rolar até a coluna de
+conversão/quantas pessoas fecharam.
+Correção: deixar o funil responsivo em telas ~375px, empilhando cada etapa em
+cards verticais OU com rolagem horizontal (overflow-x:auto) garantindo que a
+coluna de conversão fique acessível.
+
+4) SEGURANÇA: o endpoint GET /api/access/check-email (connection.ts) é público e
+revela se um e-mail é cliente. Adicionar rate limiting por IP.
+
+5) SEGURANÇA: adicionar .env e .env.* ao .gitignore.

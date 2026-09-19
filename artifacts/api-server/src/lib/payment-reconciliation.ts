@@ -10,7 +10,7 @@ import {
 } from "./payment-access";
 import { logger } from "./logger";
 
-const PENDING_PAYMENT_WINDOW_MS = 48 * 60 * 60 * 1000;
+const PENDING_PAYMENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_PENDING_PAYMENTS_PER_PASS = 100;
 
 let reconciliationRunning = false;

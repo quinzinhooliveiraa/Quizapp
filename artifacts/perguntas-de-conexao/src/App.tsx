@@ -741,6 +741,7 @@ function clearCompletedCheckoutStorage(): void {
     sessionStorage.removeItem("lp1-quiz-step");
     sessionStorage.removeItem("lp1-quiz-offer");
     sessionStorage.removeItem("lp1-quiz-bridge");
+    sessionStorage.removeItem("lp1-quiz-completed");
   } catch {
     // Session storage may be unavailable in embedded or private browsers.
   }
@@ -2273,9 +2274,11 @@ const LP1_THEME_NAMES: Record<string, string> = {
 function Lp1Diagnosis({
   answers,
   onContinue,
+  experimentAssignment,
 }: {
   answers: LandingQuizAnswers;
   onContinue: () => void;
+  experimentAssignment?: StoredExperimentAssignment;
 }) {
   const diagnosis = selectLp1Diagnosis(answers);
   const preview = selectLandingQuizQuestions(
@@ -2287,6 +2290,32 @@ function Lp1Diagnosis({
     id: question.id,
     text: question.text,
   }));
+  const completionTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (completionTrackedRef.current) return;
+    try {
+      if (sessionStorage.getItem("lp1-quiz-completed") === "true") {
+        completionTrackedRef.current = true;
+        return;
+      }
+    } catch {
+      // Session storage may be unavailable in embedded or private browsers.
+    }
+    completionTrackedRef.current = true;
+    trackLp1QuizAnswer({
+      screenId: "quiz-complete",
+      answerKey: "completed",
+      answerValue: "true",
+      step: LP1_SCREENS.length,
+      experimentAssignment,
+    });
+    try {
+      sessionStorage.setItem("lp1-quiz-completed", "true");
+    } catch {
+      // The ref still prevents duplicate events during this mounted session.
+    }
+  }, [experimentAssignment]);
 
   return (
     <section className="lp1-diagnosis" aria-labelledby="lp1-diagnosis-title">
@@ -2683,13 +2712,6 @@ function Lp1Quiz({
     if (isLastScreen) {
       const score = computeLp1Score(nextAnswers as LandingQuizAnswers);
       console.info("[lp1] score", score);
-      trackLp1QuizAnswer({
-        screenId: "quiz-complete",
-        answerKey: "completed",
-        answerValue: "true",
-        step: LP1_SCREENS.length,
-        experimentAssignment,
-      });
       setShowOffer(false);
       setStep(LP1_SCREENS.length);
       return;
@@ -2820,6 +2842,7 @@ function Lp1Quiz({
           <Lp1Diagnosis
             answers={answers as LandingQuizAnswers}
             onContinue={() => setShowBridgeScreen(true)}
+            experimentAssignment={experimentAssignment}
           />
         ) : current.kind === "question" && current.id === "s18-clima" ? (
           <Lp1ClimatePicker
