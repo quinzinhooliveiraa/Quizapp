@@ -736,6 +736,12 @@ router.get(
       return;
     }
 
+    const offerCents = getOfferPricing("BR").offer.amountCents;
+    const discountedCents = Math.min(
+      session.lockedPriceCents ?? offerCents,
+      offerCents,
+    );
+
     let pix:
       | {
           brCode: string;
@@ -752,7 +758,8 @@ router.get(
       session.pixBrcodeBase64 &&
       session.pixChargeId &&
       session.pixExpiresAt &&
-      session.pixExpiresAt.getTime() > Date.now()
+      session.pixExpiresAt.getTime() > Date.now() &&
+      (session.lockedPriceCents ?? Infinity) <= offerCents
     ) {
       pix = {
         brCode: session.pixBrcode,
@@ -762,11 +769,9 @@ router.get(
       };
     } else if (!session.accessGranted && session.paymentMethod === "pix") {
       try {
-        const amountCents =
-          session.lockedPriceCents ?? getOfferPricing("BR").full.amountCents;
         const charge = await createAbacatePixCharge({
           sessionId: session.id,
-          amount: amountCents,
+          amount: discountedCents,
           description: "Perguntas de Conexao - Pacote Casal",
         });
         const pixExpiresAt = new Date(Date.now() + PIX_LIFETIME_MS);
@@ -778,6 +783,7 @@ router.get(
             pixChargeId: charge.id,
             pixBrcode: charge.brCode,
             pixExpiresAt,
+            lockedPriceCents: discountedCents,
           })
           .where(eq(sessionsTable.id, session.id));
         pix = {
@@ -795,6 +801,45 @@ router.get(
       }
     }
 
+    let clientSecret: string | null = null;
+    if (!session.accessGranted && session.paymentMethod === "card") {
+      if (
+        session.lockedPriceCents !== null &&
+        session.lockedPriceCents <= offerCents
+      ) {
+        clientSecret = session.stripePaymentIntentId
+          ? await fetchStripePaymentIntentClientSecret(
+              session.stripePaymentIntentId,
+            )
+          : null;
+      } else {
+        try {
+          const paymentIntent = await createStripePaymentIntent({
+            sessionId: session.id,
+            buyerEmail: session.buyerEmail,
+            pricing: getOfferPricing("BR").offer,
+          });
+          await db
+            .update(sessionsTable)
+            .set({
+              stripePaymentIntentId: paymentIntent.id,
+              lockedPriceCents: discountedCents,
+            })
+            .where(eq(sessionsTable.id, session.id));
+          clientSecret = paymentIntent.clientSecret;
+        } catch (error) {
+          req.log.error(
+            { err: error, sessionId: session.id },
+            "Failed to resume card checkout",
+          );
+          res.status(502).json({
+            error: "O cartão não abriu. Tenta novamente em instantes.",
+          });
+          return;
+        }
+      }
+    }
+
     const latestAbandonEmailAt = [session.abandonEmail1At, session.abandonEmail2At]
       .filter((value): value is Date => value instanceof Date)
       .sort((a, b) => b.getTime() - a.getTime())[0];
@@ -805,13 +850,6 @@ router.get(
       session.paymentMethod === "pix" || session.paymentMethod === "card"
         ? session.paymentMethod
         : null;
-    const clientSecret =
-      !session.accessGranted && session.stripePaymentIntentId
-        ? await fetchStripePaymentIntentClientSecret(
-            session.stripePaymentIntentId,
-          )
-        : null;
-
     res.json(
       ResumeCheckoutResponse.parse({
         sessionId: session.id,
@@ -819,7 +857,7 @@ router.get(
         buyerEmail: session.buyerEmail,
         paymentMethod,
         accessGranted: session.accessGranted,
-        lockedPriceCents: session.lockedPriceCents,
+        lockedPriceCents: discountedCents,
         discountValidUntil: discountValidUntil?.toISOString() ?? null,
         pix,
         clientSecret,

@@ -1,0 +1,56 @@
+CONTEXTO
+
+Bug no endpoint de retomada de checkout: o e-mail de abandono promete desconto, mas o
+resume pode cobrar o preço cheio. Hoje, em artifacts/api-server/src/routes/connection.ts,
+no router.get("/checkout/resume/:sessionId"), o preço usado é:
+
+  const amountCents = session.lockedPriceCents ?? getOfferPricing("BR").full.amountCents;
+
+Isso tem dois furos:
+1. Se o checkout original começou depois da janela de 10 min, lockedPriceCents já é o cheio
+   (4790), e o resume cobra 4790 mesmo o e-mail dizendo "segurei seu desconto".
+2. Se lockedPriceCents for null, o fallback cai no preço CHEIO.
+
+Regra de ouro: quem chega pelo link de retomada NUNCA paga acima do preço com desconto.
+
+ESCOPO (mexer só no endpoint de resume, não tocar no create nem no timer de 10 min)
+
+No /checkout/resume/:sessionId, calcular um preço com desconto garantido e usar ele em
+todos os caminhos:
+
+  const offerCents = getOfferPricing("BR").offer.amountCents;
+  const discountedCents = Math.min(session.lockedPriceCents ?? offerCents, offerCents);
+
+1) PIX
+   - Só reusar a cobrança Pix existente (o branch de pixBrcode ainda válido) se ela já
+     estiver no preço com desconto, ou seja, se (session.lockedPriceCents ?? Infinity) <=
+     offerCents. Se a cobrança válida estiver acima do desconto, NÃO reusar: gerar uma nova
+     com discountedCents.
+   - Ao (re)gerar o Pix, usar amount: discountedCents (trocar o "?? full.amountCents" atual).
+   - Depois de gerar, gravar lockedPriceCents: discountedCents na sessão, junto com o
+     pixChargeId/pixBrcode/pixExpiresAt que já são gravados.
+
+2) CARTÃO
+   - Se paymentMethod === "card" e a sessão não tem acesso: se lockedPriceCents for null ou
+     maior que offerCents, criar um NOVO PaymentIntent no preço com desconto
+     (createStripePaymentIntent com pricing = getOfferPricing("BR").offer), atualizar
+     session.stripePaymentIntentId e lockedPriceCents = discountedCents, e devolver o
+     clientSecret desse novo intent. Se já estiver <= offerCents, reusar o intent atual
+     como hoje.
+
+3) RESPOSTA
+   - No ResumeCheckoutResponse, devolver lockedPriceCents: discountedCents (pra página
+     mostrar 29,90, não 47,90).
+
+Não mexer no create, no timer de 10 min da página de vendas, nem nos textos dos e-mails.
+
+TESTE DE ACEITE (rodar e me mostrar)
+  1. Criar um checkout Pix, deixar zerar os 10 min sem pagar.
+  2. Abrir /checkout/resume/<sessionId> e conferir na Abacate que a nova cobrança está em
+     29,90, NÃO 47,90.
+  3. Criar um checkout de cartão que travou no cheio (47,90), abrir o resume e conferir no
+     Stripe que o PaymentIntent do resume está em 29,90.
+  4. Conferir que um checkout que já tinha travado 29,90 continua 29,90 (não duplica cobrança
+     à toa).
+
+Rodar pnpm run typecheck no fim e me dizer o que mudou em cada arquivo.
