@@ -2294,14 +2294,6 @@ function Lp1Diagnosis({
 
   useEffect(() => {
     if (completionTrackedRef.current) return;
-    try {
-      if (sessionStorage.getItem("lp1-quiz-completed") === "true") {
-        completionTrackedRef.current = true;
-        return;
-      }
-    } catch {
-      // Session storage may be unavailable in embedded or private browsers.
-    }
     completionTrackedRef.current = true;
     trackLp1QuizAnswer({
       screenId: "quiz-complete",
@@ -2310,15 +2302,14 @@ function Lp1Diagnosis({
       step: LP1_SCREENS.length,
       experimentAssignment,
     });
-    try {
-      sessionStorage.setItem("lp1-quiz-completed", "true");
-    } catch {
-      // The ref still prevents duplicate events during this mounted session.
-    }
   }, [experimentAssignment]);
 
   return (
-    <section className="lp1-diagnosis" aria-labelledby="lp1-diagnosis-title">
+    <section
+      className="lp1-diagnosis"
+      data-section-name="quiz-result"
+      aria-labelledby="lp1-diagnosis-title"
+    >
       <div className="lp1-diagnosis-card">
         <span className="lp1-diagnosis-badge">DIAGNÓSTICO PERSONALIZADO</span>
         <p className="lp1-diagnosis-kicker">O que o teste mostrou</p>
@@ -2695,6 +2686,13 @@ function Lp1Quiz({
 
     if (preferredClimate) {
       nextAnswers.clima = preferredClimate.value;
+      trackLp1QuizAnswer({
+        screenId: current.id,
+        answerKey: "clima",
+        answerValue: preferredClimate.value,
+        step,
+        experimentAssignment,
+      });
     }
     setAnswers(nextAnswers);
     trackLp1QuizAnswer({
