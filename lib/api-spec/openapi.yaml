@@ -436,6 +436,26 @@ paths:
           description: Invalid checkout data
         "502":
           description: Payment provider unavailable
+  /checkout/resume/{sessionId}:
+    get:
+      operationId: resumeCheckout
+      tags: [checkout]
+      summary: Reopen an unfinished checkout
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Checkout data for resuming payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutResumeResponse"
+        "404":
+          description: Checkout session not found
   /checkout/abacatepay-webhook:
     post:
       operationId: receiveAbacatePayWebhook
@@ -2383,7 +2403,45 @@ components:
           type: string
         clientSecret:
           type: string
+        lockedPriceCents:
+          type: integer
+        pixExpiresAt:
+          type: string
+          format: date-time
       required: [sessionId]
+    CheckoutResumeResponse:
+      type: object
+      properties:
+        sessionId: { type: string }
+        buyerName: { type: string }
+        buyerEmail: { type: ["string", "null"] }
+        paymentMethod: { type: ["string", "null"], enum: [pix, card, null] }
+        accessGranted: { type: boolean }
+        lockedPriceCents: { type: ["integer", "null"] }
+        discountValidUntil:
+          type: ["string", "null"]
+          format: date-time
+        pix:
+          type: ["object", "null"]
+          properties:
+            brCode: { type: string }
+            brCodeBase64: { type: string }
+            chargeId: { type: string }
+            expiresAt: { type: string, format: date-time }
+          required: [brCode, brCodeBase64, chargeId, expiresAt]
+        clientSecret: { type: ["string", "null"] }
+      required:
+        [
+          sessionId,
+          buyerName,
+          buyerEmail,
+          paymentMethod,
+          accessGranted,
+          lockedPriceCents,
+          discountValidUntil,
+          pix,
+          clientSecret,
+        ]
     AbacatePayWebhook:
       type: object
       additionalProperties: true

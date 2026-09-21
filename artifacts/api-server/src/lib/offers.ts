@@ -110,7 +110,7 @@ export async function startOfferWindow(
     .values({
       visitorKey,
       region,
-      deadline: new Date(now.getTime() + 5 * 60 * 1000),
+      deadline: new Date(now.getTime() + 10 * 60 * 1000),
     })
     .onConflictDoNothing()
     .returning();

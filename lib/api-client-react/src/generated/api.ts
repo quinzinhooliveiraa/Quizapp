@@ -34,6 +34,7 @@ import type {
   CheckAccessEmailParams,
   CheckoutCreateInput,
   CheckoutCreateResponse,
+  CheckoutResumeResponse,
   CheckoutWebhook,
   CompleteGuestOnboarding200,
   CompleteOwnerOnboarding200,
@@ -1638,6 +1639,83 @@ export const useCreateCheckout = <TError = ErrorType<void>,
       > => {
       return useMutation(getCreateCheckoutMutationOptions(options));
     }
+
+export const getResumeCheckoutUrl = (sessionId: string,) => {
+
+
+
+
+  return `/api/checkout/resume/${sessionId}`
+}
+
+/**
+ * @summary Reopen an unfinished checkout
+ */
+export const resumeCheckout = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<CheckoutResumeResponse> => {
+
+  return customFetch<CheckoutResumeResponse>(getResumeCheckoutUrl(sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getResumeCheckoutQueryKey = (sessionId: string,) => {
+    return [
+    `/api/checkout/resume/${sessionId}`
+    ] as const;
+    }
+
+
+export const getResumeCheckoutQueryOptions = <TData = Awaited<ReturnType<typeof resumeCheckout>>, TError = ErrorType<void>>(sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof resumeCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getResumeCheckoutQueryKey(sessionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof resumeCheckout>>> = ({ signal }) => resumeCheckout(sessionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: sessionId !== null && sessionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof resumeCheckout>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ResumeCheckoutQueryResult = NonNullable<Awaited<ReturnType<typeof resumeCheckout>>>
+export type ResumeCheckoutQueryError = ErrorType<void>
+
+
+/**
+ * @summary Reopen an unfinished checkout
+ */
+
+export function useResumeCheckout<TData = Awaited<ReturnType<typeof resumeCheckout>>, TError = ErrorType<void>>(
+ sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof resumeCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getResumeCheckoutQueryOptions(sessionId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getReceiveAbacatePayWebhookUrl = () => {
 

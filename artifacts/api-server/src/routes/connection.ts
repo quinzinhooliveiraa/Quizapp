@@ -5,6 +5,8 @@ import {
   CreateInviteResponse,
   CreateCheckoutBody,
   CreateCheckoutResponse,
+  ResumeCheckoutParams,
+  ResumeCheckoutResponse,
   CreateQuestionSessionBody,
   CreateQuestionSessionResponse,
   ReceiveAbacatePayWebhookBody,
@@ -43,6 +45,7 @@ import {
 } from "../lib/abacatepay";
 import {
   createStripePaymentIntent,
+  fetchStripePaymentIntentClientSecret,
   isStripeConfigured,
   verifyStripeWebhook,
 } from "../lib/stripe";
@@ -421,6 +424,7 @@ const packageConfig = {
 } as const;
 
 const router: IRouter = Router();
+const PIX_LIFETIME_MS = 15 * 60 * 1000;
 
 const EMAIL_CHECK_RATE_WINDOW_MS = 60_000;
 const EMAIL_CHECK_RATE_LIMIT = 20;
@@ -637,6 +641,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       invitesUsed: 0,
       accessGranted: false,
       internal: parsed.data.internal === true,
+      lockedPriceCents: pricing.amountCents,
     })
     .returning();
 
@@ -655,6 +660,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
         CreateCheckoutResponse.parse({
           sessionId,
           clientSecret: paymentIntent.clientSecret,
+          lockedPriceCents: pricing.amountCents,
         }),
       );
       return;
@@ -666,9 +672,16 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
         amount: pricing.amountCents,
         description: "Perguntas de Conexao - Pacote Casal",
       });
+      const pixExpiresAt = new Date(Date.now() + PIX_LIFETIME_MS);
       await db
         .update(sessionsTable)
-        .set({ abacateChargeId: charge.id })
+        .set({
+          abacateChargeId: charge.id,
+          pixChargeId: charge.id,
+          pixBrcode: charge.brCode,
+          pixBrcodeBase64: charge.brCodeBase64,
+          pixExpiresAt,
+        })
         .where(eq(sessionsTable.id, sessionId));
       res.status(201).json(
         CreateCheckoutResponse.parse({
@@ -676,6 +689,8 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
           brCode: charge.brCode,
           brCodeBase64: charge.brCodeBase64,
           chargeId: charge.id,
+          lockedPriceCents: pricing.amountCents,
+          pixExpiresAt: pixExpiresAt.toISOString(),
         }),
       );
       return;
@@ -701,6 +716,117 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     });
   }
 });
+
+router.get(
+  "/checkout/resume/:sessionId",
+  async (req, res): Promise<void> => {
+    const parsed = ResumeCheckoutParams.safeParse(req.params);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Sessão de checkout inválida" });
+      return;
+    }
+
+    const [session] = await db
+      .select()
+      .from(sessionsTable)
+      .where(eq(sessionsTable.id, parsed.data.sessionId))
+      .limit(1);
+    if (!session) {
+      res.status(404).json({ error: "Checkout não encontrado" });
+      return;
+    }
+
+    let pix:
+      | {
+          brCode: string;
+          brCodeBase64: string;
+          chargeId: string;
+          expiresAt: string;
+        }
+      | null = null;
+
+    if (
+      !session.accessGranted &&
+      session.paymentMethod === "pix" &&
+      session.pixBrcode &&
+      session.pixBrcodeBase64 &&
+      session.pixChargeId &&
+      session.pixExpiresAt &&
+      session.pixExpiresAt.getTime() > Date.now()
+    ) {
+      pix = {
+        brCode: session.pixBrcode,
+        brCodeBase64: session.pixBrcodeBase64,
+        chargeId: session.pixChargeId,
+        expiresAt: session.pixExpiresAt.toISOString(),
+      };
+    } else if (!session.accessGranted && session.paymentMethod === "pix") {
+      try {
+        const amountCents =
+          session.lockedPriceCents ?? getOfferPricing("BR").full.amountCents;
+        const charge = await createAbacatePixCharge({
+          sessionId: session.id,
+          amount: amountCents,
+          description: "Perguntas de Conexao - Pacote Casal",
+        });
+        const pixExpiresAt = new Date(Date.now() + PIX_LIFETIME_MS);
+        await db
+          .update(sessionsTable)
+          .set({
+            abacateChargeId: charge.id,
+            pixBrcodeBase64: charge.brCodeBase64,
+            pixChargeId: charge.id,
+            pixBrcode: charge.brCode,
+            pixExpiresAt,
+          })
+          .where(eq(sessionsTable.id, session.id));
+        pix = {
+          brCode: charge.brCode,
+          brCodeBase64: charge.brCodeBase64,
+          chargeId: charge.id,
+          expiresAt: pixExpiresAt.toISOString(),
+        };
+      } catch (error) {
+        req.log.error({ err: error, sessionId: session.id }, "Failed to resume Pix checkout");
+        res.status(502).json({
+          error: "O Pix não abriu. Tenta novamente em instantes.",
+        });
+        return;
+      }
+    }
+
+    const latestAbandonEmailAt = [session.abandonEmail1At, session.abandonEmail2At]
+      .filter((value): value is Date => value instanceof Date)
+      .sort((a, b) => b.getTime() - a.getTime())[0];
+    const discountValidUntil = latestAbandonEmailAt
+      ? new Date(latestAbandonEmailAt.getTime() + 24 * 60 * 60 * 1000)
+      : null;
+    const paymentMethod =
+      session.paymentMethod === "pix" || session.paymentMethod === "card"
+        ? session.paymentMethod
+        : null;
+    const clientSecret =
+      !session.accessGranted && session.stripePaymentIntentId
+        ? await fetchStripePaymentIntentClientSecret(
+            session.stripePaymentIntentId,
+          )
+        : null;
+
+    res.json(
+      ResumeCheckoutResponse.parse({
+        sessionId: session.id,
+        buyerName: session.buyerName,
+        buyerEmail: session.buyerEmail,
+        paymentMethod,
+        accessGranted: session.accessGranted,
+        lockedPriceCents: session.lockedPriceCents,
+        discountValidUntil: discountValidUntil?.toISOString() ?? null,
+        pix,
+        clientSecret,
+      }),
+    );
+  },
+);
 
 router.post("/checkout/stripe-webhook", async (req, res): Promise<void> => {
   const signature = req.header("stripe-signature");

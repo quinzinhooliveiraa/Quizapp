@@ -75,3 +75,17 @@ export async function fetchStripePaymentIntentStatus(
     return null;
   }
 }
+
+export async function fetchStripePaymentIntentClientSecret(
+  paymentIntentId: string,
+): Promise<string | null> {
+  if (!paymentIntentId || !isStripeConfigured()) return null;
+
+  try {
+    const paymentIntent =
+      await getStripeClient().paymentIntents.retrieve(paymentIntentId);
+    return paymentIntent.client_secret ?? null;
+  } catch {
+    return null;
+  }
+}

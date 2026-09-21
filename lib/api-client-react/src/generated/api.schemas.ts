@@ -980,6 +980,47 @@ export interface CheckoutCreateResponse {
   brCodeBase64?: string;
   chargeId?: string;
   clientSecret?: string;
+  lockedPriceCents?: number;
+  pixExpiresAt?: string;
+}
+
+/**
+ * @nullable
+ */
+export type CheckoutResumeResponsePaymentMethod = typeof CheckoutResumeResponsePaymentMethod[keyof typeof CheckoutResumeResponsePaymentMethod] | null;
+
+
+export const CheckoutResumeResponsePaymentMethod = {
+  pix: 'pix',
+  card: 'card',
+} as const;
+
+/**
+ * @nullable
+ */
+export type CheckoutResumeResponsePix = {
+  brCode: string;
+  brCodeBase64: string;
+  chargeId: string;
+  expiresAt: string;
+} | null;
+
+export interface CheckoutResumeResponse {
+  sessionId: string;
+  buyerName: string;
+  /** @nullable */
+  buyerEmail: string | null;
+  /** @nullable */
+  paymentMethod: CheckoutResumeResponsePaymentMethod;
+  accessGranted: boolean;
+  /** @nullable */
+  lockedPriceCents: number | null;
+  /** @nullable */
+  discountValidUntil: string | null;
+  /** @nullable */
+  pix: CheckoutResumeResponsePix;
+  /** @nullable */
+  clientSecret: string | null;
 }
 
 export type AbacatePayWebhookDataMetadata = {

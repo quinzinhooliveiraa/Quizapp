@@ -279,15 +279,19 @@ type NativeCheckoutData = {
   brCodeBase64: string;
   chargeId: string;
   startedAt: number;
+  expiresAt?: string;
+  lockedPriceCents?: number;
 };
 
 type CardCheckoutData = {
   sessionId: string;
   clientSecret: string;
   startedAt: number;
+  lockedPriceCents?: number;
 };
 
 type CheckoutOfferPrice = {
+  amountCents: number;
   display: string;
   pixAvailable: boolean;
 };
@@ -5560,16 +5564,24 @@ function useCheckout({
   sourceLp,
   onCtaClick,
   experimentAssignment,
+  resumeSessionId,
 }: {
   sourceLp: CheckoutSourceLp;
   onCtaClick?: (ctaSource?: LandingCtaSource) => void;
   experimentAssignment?: StoredExperimentAssignment;
+  resumeSessionId?: string;
 }) {
   const pricing = usePricing();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutOfferState, setCheckoutOfferState] =
     useState<CheckoutOfferState | null>(null);
   const [checkoutOfferNow, setCheckoutOfferNow] = useState(() => Date.now());
+  const [checkoutLockedPriceCents, setCheckoutLockedPriceCents] = useState<
+    number | null
+  >(null);
+  const [resumeDiscountValidUntil, setResumeDiscountValidUntil] = useState<
+    string | null
+  >(null);
   const [selectedPackage, setSelectedPackage] = useState<"couple" | "family">(
     "couple",
   );
@@ -5667,28 +5679,130 @@ function useCheckout({
   }, [checkoutOpen]);
 
   useEffect(() => {
+    if (!resumeSessionId) return;
+
+    let cancelled = false;
+    openCheckout();
+    setCheckoutState("sending");
+    fetch(apiUrl(`/api/checkout/resume/${encodeURIComponent(resumeSessionId)}`))
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          sessionId?: string;
+          buyerName?: string;
+          buyerEmail?: string | null;
+          paymentMethod?: "pix" | "card" | null;
+          accessGranted?: boolean;
+          lockedPriceCents?: number | null;
+          discountValidUntil?: string | null;
+          pixExpiresAt?: string;
+          pix?: {
+            brCode: string;
+            brCodeBase64: string;
+            chargeId: string;
+            expiresAt: string;
+          } | null;
+          clientSecret?: string | null;
+        };
+        if (!response.ok || !data.sessionId) {
+          throw new Error("checkout resume failed");
+        }
+        return data;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        if (data.accessGranted) {
+          safeSetItem("conexao-session", data.sessionId!);
+          safeSetItem("conexao-role", "owner");
+          window.location.href = "/post-purchase";
+          return;
+        }
+
+        setBuyerName(data.buyerName || "");
+        setBuyerEmail(data.buyerEmail || "");
+        setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
+        setResumeDiscountValidUntil(data.discountValidUntil ?? null);
+        safeSetItem("conexao-pending-session", data.sessionId!);
+        safeSetItem("conexao-pending-buyer-name", data.buyerName || "");
+        safeSetItem("conexao-pending-buyer-email", data.buyerEmail || "");
+
+        if (data.pix) {
+          const resumedPix: NativeCheckoutData = {
+            sessionId: data.sessionId!,
+            brCode: data.pix.brCode,
+            brCodeBase64: data.pix.brCodeBase64,
+            chargeId: data.pix.chargeId,
+            startedAt: Date.now(),
+            expiresAt: data.pix.expiresAt,
+            lockedPriceCents: data.lockedPriceCents ?? undefined,
+          };
+          setNativeCheckout(resumedPix);
+          safeSetItem("conexao-pending-pix", JSON.stringify(resumedPix));
+          setSelectedPaymentMethod("pix");
+        } else if (data.clientSecret) {
+          const resumedCard: CardCheckoutData = {
+            sessionId: data.sessionId!,
+            clientSecret: data.clientSecret,
+            startedAt: Date.now(),
+            lockedPriceCents: data.lockedPriceCents ?? undefined,
+          };
+          setCardCheckout(resumedCard);
+          safeSetItem("conexao-pending-card", JSON.stringify(resumedCard));
+          setSelectedPaymentMethod("card");
+        } else {
+          setSelectedPaymentMethod("pix");
+        }
+        setCheckoutState("email");
+        setCheckoutOfferNow(Date.now());
+      })
+      .catch(() => {
+        if (!cancelled) setCheckoutState("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resumeSessionId]);
+
+  useEffect(() => {
     if (!checkoutOfferState?.deadline) return;
     const timer = window.setInterval(() => setCheckoutOfferNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, [checkoutOfferState?.deadline]);
 
-  const checkoutDiscountActive = Boolean(
-    checkoutOfferState?.discountActive &&
-      new Date(checkoutOfferState.deadline).getTime() > checkoutOfferNow,
+  const lockedOfferPricing =
+    checkoutLockedPriceCents !== null && checkoutOfferState
+      ? checkoutLockedPriceCents === checkoutOfferState.offer.amountCents
+        ? checkoutOfferState.offer
+        : checkoutOfferState.full
+      : null;
+  const lockedPriceUsesOffer = Boolean(
+    lockedOfferPricing &&
+      lockedOfferPricing.amountCents === checkoutOfferState?.offer.amountCents,
   );
+  const checkoutDiscountActive =
+    lockedOfferPricing !== null
+      ? lockedPriceUsesOffer
+      : Boolean(
+          checkoutOfferState?.discountActive &&
+            new Date(checkoutOfferState.deadline).getTime() > checkoutOfferNow,
+        );
+  const checkoutOfferDeadline =
+    resumeDiscountValidUntil || checkoutOfferState?.deadline;
   const checkoutOfferRemainingSeconds = checkoutOfferState
     ? Math.max(
         0,
         Math.ceil(
-          (new Date(checkoutOfferState.deadline).getTime() - checkoutOfferNow) /
+          (new Date(checkoutOfferDeadline || checkoutOfferState.deadline).getTime() -
+            checkoutOfferNow) /
             1000,
         ),
       )
     : 0;
   const checkoutPricing =
-    checkoutOfferState && checkoutDiscountActive
+    lockedOfferPricing ||
+    (checkoutOfferState && checkoutDiscountActive
       ? checkoutOfferState.offer
-      : checkoutOfferState?.full ?? pricing;
+      : checkoutOfferState?.full ?? pricing);
 
   useEffect(() => {
     if (!pricing.pixAvailable) {
@@ -5786,7 +5900,10 @@ function useCheckout({
         ) {
           if (
             nativeCheckoutEnabled &&
-            Date.now() - parsed.startedAt < PENDING_CHECKOUT_MAX_AGE_MS
+            Date.now() <
+              (parsed.expiresAt
+                ? new Date(parsed.expiresAt).getTime()
+                : parsed.startedAt + PENDING_CHECKOUT_MAX_AGE_MS)
           ) {
             setNativeCheckout(parsed);
             setCheckoutState("email");
@@ -5919,7 +6036,12 @@ function useCheckout({
 
     let cancelled = false;
     const checkPayment = async () => {
-      if (Date.now() - nativeCheckout.startedAt >= PIX_LIFETIME_MS) {
+      if (
+        Date.now() >=
+        (nativeCheckout.expiresAt
+          ? new Date(nativeCheckout.expiresAt).getTime()
+          : nativeCheckout.startedAt + PIX_LIFETIME_MS)
+      ) {
         setNativeCheckout(null);
         setPixExpired(true);
         clearPendingCheckoutStorage();
@@ -6089,6 +6211,8 @@ function useCheckout({
         brCode?: string;
         brCodeBase64?: string;
         chargeId?: string;
+          lockedPriceCents?: number;
+        pixExpiresAt?: string;
       };
       if (
         !response.ok ||
@@ -6111,7 +6235,10 @@ function useCheckout({
         brCodeBase64: data.brCodeBase64,
         chargeId: data.chargeId,
         startedAt: checkoutStartedAt,
+        expiresAt: data.pixExpiresAt,
+        lockedPriceCents: data.lockedPriceCents,
       };
+      setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
       setNativeCheckout(pix);
       setPixExpired(false);
       safeSetItem("conexao-pending-pix", JSON.stringify(pix));
@@ -6186,6 +6313,7 @@ function useCheckout({
       const data = (await response.json()) as {
         sessionId?: string;
         clientSecret?: string;
+        lockedPriceCents?: number;
       };
       if (!response.ok || !data.sessionId || !data.clientSecret) {
         throw new Error("card checkout failed");
@@ -6196,7 +6324,9 @@ function useCheckout({
         sessionId: data.sessionId,
         clientSecret: data.clientSecret,
         startedAt: checkoutStartedAt,
+        lockedPriceCents: data.lockedPriceCents,
       };
+      setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
       safeSetItem("conexao-pending-session", data.sessionId);
       safeSetItem("conexao-pending-source-lp", sourceLp);
       safeSetItem("conexao-pending-buyer-name", normalizedName);
@@ -6255,8 +6385,11 @@ function useCheckout({
           parsed.brCode &&
           parsed.brCodeBase64 &&
           parsed.chargeId &&
-          parsed.startedAt &&
-          Date.now() - parsed.startedAt < PENDING_CHECKOUT_MAX_AGE_MS
+           parsed.startedAt &&
+           Date.now() <
+             (parsed.expiresAt
+               ? new Date(parsed.expiresAt).getTime()
+               : parsed.startedAt + PENDING_CHECKOUT_MAX_AGE_MS)
         ) {
           setNativeCheckout(parsed);
           setCopiedCode(false);
@@ -6279,7 +6412,12 @@ function useCheckout({
   };
 
   const restartCheckout = () => {
+    if (resumeSessionId) {
+      window.location.href = window.location.href;
+      return;
+    }
     clearPendingCheckoutStorage();
+    setCheckoutLockedPriceCents(null);
     setNativeCheckout(null);
     setPixExpired(false);
     setCardCheckout(null);
@@ -6659,31 +6797,9 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
 
   const pixPaymentContent = nativeCheckout ? (
     <div className="checkout-pix-inline">
-      <div className="checkout-qr-wrap">
-        <img
-          src={
-            nativeCheckout.brCodeBase64.startsWith("data:")
-              ? nativeCheckout.brCodeBase64
-              : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
-          }
-          alt="QR Code do Pix"
-        />
-      </div>
-      <p className="checkout-pix-hint">
-        Escaneie o QR ou copie o código.
-        <br />
-        <strong>Assim que cair, seu acesso abre sozinho.</strong>
-      </p>
-      {checkoutState === "email" || checkoutState === "native-payment" ? (
-        <p className="checkout-pix-auto-check" role="status" aria-live="polite">
-          <span aria-hidden="true">●</span> verificando seu pagamento a cada
-          poucos segundos
-        </p>
-      ) : null}
-      <div className="checkout-pix-copybox">
-        <code>{nativeCheckout.brCode}</code>
+      <div className="checkout-pix-copy-primary">
         <button
-          className="checkout-copy-button"
+          className="checkout-copy-button checkout-copy-button-primary"
           type="button"
           onClick={async () => {
             const copied = await copyPixCode(nativeCheckout.brCode);
@@ -6696,9 +6812,41 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           }}
           data-testid="button-copy-pix"
         >
-          {copiedCode ? <Check size={16} /> : <Copy size={16} />}
-          {copiedCode ? "Copiado!" : "Copiar"}
+          {copiedCode ? <Check size={17} /> : <Copy size={17} />}
+          {copiedCode ? "Copiado!" : "Copiar código Pix"}
         </button>
+        <code className="checkout-pix-code">{nativeCheckout.brCode}</code>
+      </div>
+      <div className="checkout-pix-guide">
+        <div className="checkout-qr-wrap">
+          <img
+            src={
+              nativeCheckout.brCodeBase64.startsWith("data:")
+                ? nativeCheckout.brCodeBase64
+                : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
+            }
+            alt="QR Code do Pix"
+          />
+        </div>
+        <ol className="checkout-pix-steps">
+          <li>Copie o código</li>
+          <li>Abra o app do seu banco</li>
+          <li>Entre em Pix &gt; Pix Copia e Cola</li>
+          <li>Cole e confirme</li>
+        </ol>
+      </div>
+      <p className="checkout-pix-hint">
+        O QR é para pagar pelo computador. No celular, o copia e cola costuma ser
+        mais rápido.
+        <br />
+        <strong>Assim que cair, seu acesso abre sozinho.</strong>
+      </p>
+      {checkoutState === "email" || checkoutState === "native-payment" ? (
+        <p className="checkout-pix-auto-check" role="status" aria-live="polite">
+          <span aria-hidden="true">●</span> aguardando confirmação do banco
+        </p>
+      ) : null}
+      <div className="checkout-pix-copybox">
         <button
           className="button button-primary checkout-pix-check"
           type="button"
@@ -12667,6 +12815,26 @@ function AccessLinkRoute({ params }: { params: { sessionId: string } }) {
   return null;
 }
 
+function ResumeCheckoutRoute({ params }: { params: { sessionId: string } }) {
+  const checkout = useCheckout({
+    sourceLp: "v2",
+    resumeSessionId: params.sessionId,
+  });
+
+  if (!checkout.checkoutOpen) {
+    return (
+      <main className="primary-landing-loading" role="status" aria-live="polite">
+        <span className="brand-symbol" aria-hidden="true">
+          <Feather size={18} strokeWidth={1.6} />
+        </span>
+        <p>Reabrindo seu checkout…</p>
+      </main>
+    );
+  }
+
+  return <CheckoutModal checkout={checkout} />;
+}
+
 function ProtectedExperienceRoute() {
   const [, navigate] = useLocation();
   const storedSessionId = safeGetItem("conexao-session")?.trim() || "";
@@ -12814,6 +12982,7 @@ function Router() {
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/post-purchase" component={PostPurchaseInvite} />
           <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
+          <Route path="/retomar/:sessionId" component={ResumeCheckoutRoute} />
           <Route path="/login" component={Login} />
           <Route path="/play" component={Play} />
           <Route path="/app" component={ProtectedExperienceRoute} />
@@ -12847,6 +13016,7 @@ function RouteAwareSplash() {
     location === "/onboarding" ||
     location === "/post-purchase" ||
     location.startsWith("/acesso/") ||
+    location.startsWith("/retomar/") ||
     location === "/play" ||
     location === "/app" ||
     location.startsWith("/invite/");

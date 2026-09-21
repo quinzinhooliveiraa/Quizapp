@@ -337,7 +337,34 @@ export const CreateCheckoutResponse = zod.object({
   "brCode": zod.string().optional(),
   "brCodeBase64": zod.string().optional(),
   "chargeId": zod.string().optional(),
-  "clientSecret": zod.string().optional()
+  "clientSecret": zod.string().optional(),
+  "lockedPriceCents": zod.number().int().optional(),
+  "pixExpiresAt": zod.coerce.date().optional()
+})
+
+
+/**
+ * @summary Reopen an unfinished checkout
+ */
+export const ResumeCheckoutParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const ResumeCheckoutResponse = zod.object({
+  "sessionId": zod.string(),
+  "buyerName": zod.string(),
+  "buyerEmail": zod.string().nullable(),
+  "paymentMethod": zod.union([zod.literal('pix'),zod.literal('card'),zod.literal(null)]).nullable(),
+  "accessGranted": zod.boolean(),
+  "lockedPriceCents": zod.number().int().nullable(),
+  "discountValidUntil": zod.coerce.date().nullable(),
+  "pix": zod.object({
+  "brCode": zod.string(),
+  "brCodeBase64": zod.string(),
+  "chargeId": zod.string(),
+  "expiresAt": zod.coerce.date()
+}).nullable(),
+  "clientSecret": zod.string().nullable()
 })
 
 
