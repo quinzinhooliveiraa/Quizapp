@@ -1,0 +1,32 @@
+CONTEXTO
+
+No painel admin (aba Quiz · "Análise do quiz"), a LP principal mostra, nos últimos 7 dias:
+- 78 visitantes com resposta, 53 chegando na ÚLTIMA pergunta do quiz (etapa "19 · ULTIMO", 67,9%)
+- MAS "Chegaram ao resultado": 0 e "Conclusão": 0,0%
+- E a etapa "12 · CLIMA" (pergunta "Qual clima combina mais com vocês?") aparece com 0 visitantes / 0 registros, enquanto todas as outras etapas registram normalmente.
+
+São dois bugs de TRACKING, não de conteúdo. Ninguém tá sumindo de verdade no fim — o evento não está sendo contado. Preciso que você conserte os dois. NÃO mexa em copy, preço, oferta, checkout nem no visual das telas. Só no tracking.
+
+Como o tracking funciona hoje (confirme no código antes de mexer): cada tela do quiz renderiza com data-section-name={screen.id}, um IntersectionObserver lê esse atributo e guarda em lastSectionRef, e o evento "exit" manda lastSection pra POST /api/track/page-event. O admin (aba Quiz) lê esses eventos por etapa. Arquivos prováveis: artifacts/perguntas-de-conexao/src/App.tsx (Lp1Quiz, Lp1Diagnosis, o observer), artifacts/api-server/src/routes/ (track/page-event e a agregação do quiz), artifacts/perguntas-de-conexao/src/pages/Admin.tsx.
+
+PASSO 1 — DIAGNÓSTICO (me responda antes de corrigir)
+
+1a) A tela de RESULTADO (T25 / Lp1Diagnosis) renderiza com um data-section-name próprio e único? Qual é o id? Se não tem, esse é o bug do "chegaram ao resultado = 0".
+1b) Como o admin calcula "Chegaram ao resultado"? Ele conta um id/evento específico (ex: "resultado" ou "s25-...")? Esse id BATE exatamente com o que a tela de resultado emite? Me mostre os dois lados (o que a tela manda × o que o admin procura).
+1c) A pergunta "Clima" tem qual screen.id? Existe id DUPLICADO ou fora de ordem? No painel aparecem duas etapas rotuladas "12" (uma "NUNCA-PERGUNTOU" e outra "CLIMA") — isso cheira a colisão de id ou a um screen.id que não bate com a chave que a agregação espera. Confirme.
+
+PASSO 2 — CORREÇÃO
+
+Bug A (resultado = 0):
+- Garanta que a tela de resultado renderiza com um data-section-name único e estável, e que o observer é re-registrado quando ela monta (hoje o observer pode observar só uma vez no mount e não re-observar quando a tela troca — confirme e corrija se for o caso).
+- Garanta que "chegar ao resultado" dispara o mesmo evento/id que o admin conta. Se o admin conta um id específico, use exatamente esse id na tela de resultado. Se preferir, dispare também um evento explícito (ex: page-event com section "resultado") no momento em que a tela de resultado aparece, e faça o admin contar visitantes distintos desse evento.
+
+Bug B (Clima = 0):
+- Ache a causa (id duplicado, id que não bate com a chave da agregação, ou tela que não recebe data-section-name). Dê um screen.id único e consistente pra tela de Clima e alinhe com o que a agregação do admin usa pra rotular a etapa. Depois do fix, a etapa Clima tem que registrar visitantes como as vizinhas.
+
+PASSO 3 — CONFERIR ANTES DE DIZER QUE TERMINOU
+
+- Rode o quiz inteiro no celular até o resultado. Confirme no Network que o page-event de "resultado" saiu e que o de "Clima" saiu com o id certo.
+- Depois de 1 sessão de teste, o painel (aba Quiz) tem que mostrar "Chegaram ao resultado" ≥ 1 e a etapa Clima com registro > 0.
+- Rode pnpm run typecheck e me diga exatamente o que mudou em cada arquivo.
+- Não altere os números/telas do quiz nem a lógica de diagnóstico — só o tracking.
