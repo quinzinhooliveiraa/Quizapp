@@ -2556,6 +2556,7 @@ function Lp1Quiz({
   const [climateIndex, setClimateIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completionTrackedRef = useRef(false);
+  const completionStorageKey = `lp1-quiz-completed:${lpId}`;
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
   const selectedAnswer =
@@ -2578,9 +2579,9 @@ function Lp1Quiz({
 
     let alreadyTracked = false;
     try {
-      alreadyTracked = sessionStorage.getItem("lp1-quiz-completed") === "true";
+      alreadyTracked = sessionStorage.getItem(completionStorageKey) === "true";
       if (!alreadyTracked) {
-        sessionStorage.setItem("lp1-quiz-completed", "true");
+        sessionStorage.setItem(completionStorageKey, "true");
       }
     } catch {
       // Session storage may be unavailable in embedded or private browsers.
@@ -2596,7 +2597,14 @@ function Lp1Quiz({
       step: LP1_SCREENS.length,
       experimentAssignment,
     });
-  }, [experimentAssignment, lpId, showBridgeScreen, showOffer, step]);
+  }, [
+    completionStorageKey,
+    experimentAssignment,
+    lpId,
+    showBridgeScreen,
+    showOffer,
+    step,
+  ]);
 
   useEffect(() => {
     try {
@@ -5469,7 +5477,6 @@ function useLpTracking(
     const track = (
       eventType:
         | "view"
-        | "cta_click"
         | "exit"
         | LandingTrackingEvent,
       extra: Record<string, unknown> = {},

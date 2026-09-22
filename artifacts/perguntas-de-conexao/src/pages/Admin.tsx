@@ -1110,19 +1110,19 @@ function AnalyticsPanel({
       </div>
       <div className="admin-metric-grid">
         <div>
-          <span>Visualizações</span>
+          <span>Visitas (únicas)</span>
           <strong>{analytics?.views || 0}</strong>
         </div>
         <div>
-          <span>Cliques em comprar</span>
+          <span>Clicou comprar (únicas)</span>
           <strong>{analytics?.ctaClicks || 0}</strong>
         </div>
         <div>
-          <span>Checkouts iniciados</span>
+          <span>Pagamentos gerados</span>
           <strong>{analytics?.checkoutsStarted || 0}</strong>
         </div>
         <div>
-          <span>Compras confirmadas</span>
+          <span>Pagou</span>
           <strong>{analytics?.purchasesConfirmed || 0}</strong>
         </div>
         <div>

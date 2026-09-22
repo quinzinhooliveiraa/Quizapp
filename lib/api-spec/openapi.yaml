@@ -1822,7 +1822,17 @@ components:
           maxLength: 120
         ctaSource:
           type: string
-          enum: [hero_quiz, hero_comprar, lp3_offer]
+          enum:
+            [
+              hero_comprar,
+              oferta_principal,
+              preco,
+              rodape,
+              sticky,
+              pos_quiz,
+              baralho_modal,
+              lp3_offer,
+            ]
         experimentId:
           type: string
           maxLength: 120
@@ -1851,7 +1861,6 @@ components:
           type: string
           enum:
             [
-              hero_quiz,
               hero_comprar,
               oferta_principal,
               preco,

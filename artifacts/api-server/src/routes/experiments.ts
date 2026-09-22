@@ -560,14 +560,17 @@ router.get(
                 eq(pageEventsTable.eventType, "view"),
               ),
             ),
-          db
-            .select({ value: count() })
+              db
+                .select({
+                  value: sql<number>`count(distinct ${pageEventsTable.visitorKey})`,
+                })
             .from(pageEventsTable)
             .where(
               and(
                 eq(pageEventsTable.experimentId, experiment.id),
                 eq(pageEventsTable.experimentVariantId, variant.id),
-                eq(pageEventsTable.eventType, "cta_click"),
+                    eq(pageEventsTable.eventType, "buy_click"),
+                    eq(pageEventsTable.internal, false),
               ),
             ),
           db

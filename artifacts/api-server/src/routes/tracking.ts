@@ -185,6 +185,28 @@ router.post("/track/quiz-answer", async (req, res): Promise<void> => {
       ? undefined
       : await getActiveAssignmentForVisitor(visitorKey);
 
+  if (screenId === "quiz-complete") {
+    const existingCompletion = await db
+      .select({ id: quizAnswersTable.id })
+      .from(quizAnswersTable)
+      .where(
+        and(
+          eq(quizAnswersTable.visitorKey, visitorKey),
+          eq(quizAnswersTable.quizId, quizId),
+          eq(quizAnswersTable.lpId, lpId),
+          eq(quizAnswersTable.screenId, "quiz-complete"),
+          eq(quizAnswersTable.answerKey, answerKey),
+          eq(quizAnswersTable.answerValue, "true"),
+          eq(quizAnswersTable.internal, body.internal === true),
+        ),
+      )
+      .limit(1);
+    if (existingCompletion.length > 0) {
+      res.status(204).end();
+      return;
+    }
+  }
+
   await db.insert(quizAnswersTable).values({
     id: crypto.randomUUID(),
     visitorKey,
