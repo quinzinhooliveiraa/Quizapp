@@ -825,7 +825,11 @@ function PrimaryLandingPageSettings({ sessionId }: { sessionId: string }) {
       <form className="admin-primary-landing-form" onSubmit={save}>
         <div className="admin-primary-landing-current">
           <span>LP atual</span>
-          <strong>{currentLanding?.name || "Reacender a chama"}</strong>
+          <strong>
+            {currentLanding?.name ||
+              getLandingPageById(DEFAULT_PRIMARY_LANDING_PAGE_ID)?.name ||
+              DEFAULT_PRIMARY_LANDING_PAGE_ID}
+          </strong>
         </div>
         <label>
           <span>Selecionar LP</span>
@@ -1465,11 +1469,7 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
   const landingLabel =
     landingPage === "all"
       ? "todas as landing pages"
-      : landingPage === "lp3"
-        ? "lp3 · Oferta essencial"
-        : landingPage === "v1"
-          ? "v1 · Reacender a chama"
-          : "v2 · Perguntas que aproximam";
+      : `${landingPage} · ${getLandingPageById(landingPage)?.name || landingPage}`;
   const periodLabel =
     period === "custom"
       ? `${customFrom || "—"} até ${customTo || "—"}`
@@ -1511,9 +1511,12 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
             }
             data-testid="select-analytics-landing-page"
           >
-            <option value="v1">v1 · Reacender a chama</option>
-            <option value="v2">v2 · Perguntas que aproximam</option>
-            <option value="lp3">lp3 · Oferta essencial</option>
+            {LANDINGS.map((landing) => (
+              <option key={landing.id} value={landing.id}>
+                {landing.id} ·{" "}
+                {getLandingPageById(landing.id)?.name || landing.id}
+              </option>
+            ))}
             <option value="all">Todas as landing pages</option>
           </select>
         </label>
@@ -1746,11 +1749,7 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
   const landingLabel =
     landingPage === "all"
       ? "todas as landing pages"
-      : landingPage === "lp3"
-        ? "lp3 · Oferta essencial"
-        : landingPage === "v1"
-          ? "v1 · Reacender a chama"
-          : "v2 · Perguntas que aproximam";
+      : `${landingPage} · ${getLandingPageById(landingPage)?.name || landingPage}`;
   const periodLabel =
     period === "custom"
       ? `${customFrom || "—"} até ${customTo || "—"}`
@@ -1820,9 +1819,12 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
             }
             data-testid="select-quiz-analytics-landing-page"
           >
-            <option value="v1">v1 · Reacender a chama</option>
-            <option value="v2">v2 · Perguntas que aproximam</option>
-            <option value="lp3">lp3 · Oferta essencial</option>
+            {LANDINGS.map((landing) => (
+              <option key={landing.id} value={landing.id}>
+                {landing.id} ·{" "}
+                {getLandingPageById(landing.id)?.name || landing.id}
+              </option>
+            ))}
             <option value="all">Todas as landing pages</option>
           </select>
         </label>

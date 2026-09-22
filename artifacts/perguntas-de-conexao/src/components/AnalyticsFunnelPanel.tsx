@@ -15,6 +15,7 @@ import {
   Users,
   Waves,
 } from "lucide-react";
+import { getLandingPageById } from "@/lib/landing-pages";
 import "./analytics-funnel.css";
 
 export type AnalyticsLandingPageId = "v1" | "v2" | "lp3" | "all";
@@ -79,12 +80,10 @@ const DEVICE_COLUMNS = [
   { key: "tablet", label: "Tablet", icon: Tablet },
 ] as const;
 
-const LANDING_LABELS: Record<AnalyticsLandingPageId, string> = {
-  v1: "Reacender a chama",
-  v2: "Perguntas que aproximam",
-  lp3: "Oferta essencial",
-  all: "Todas as landing pages",
-};
+function getLandingLabel(id: AnalyticsLandingPageId): string {
+  if (id === "all") return "Todas as landing pages";
+  return `${id} · ${getLandingPageById(id)?.name || id}`;
+}
 
 const SOURCE_LABELS: Record<string, string> = {
   hero_comprar: "Comprar no topo",
@@ -237,7 +236,7 @@ function AnalyticsFunnelPanel({
           </div>
           <h2 id="analytics-funnel-title">O caminho até a compra</h2>
           <p>
-            {LANDING_LABELS[data.lpId]} <span aria-hidden="true">·</span>{" "}
+            {getLandingLabel(data.lpId)} <span aria-hidden="true">·</span>{" "}
             {formatDateRange(data.from, data.to)}
           </p>
         </div>
