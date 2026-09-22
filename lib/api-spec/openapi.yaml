@@ -1840,14 +1840,27 @@ components:
         visitorKey: { type: string, minLength: 1, maxLength: 120 }
         experimentId: { type: string, maxLength: 120 }
         experimentVariantId: { type: string, maxLength: 120 }
-        eventType: { type: string, enum: [view, cta_click, exit] }
+        eventType:
+          type: string
+          enum: [view, cta_click, exit, quiz_start, theme_peek, buy_click, checkout_open]
         timeOnPageMs: { type: number, minimum: 0 }
         lastSection: { type: string, maxLength: 80 }
         clarityUserId: { type: string, maxLength: 200 }
         claritySessionId: { type: string, maxLength: 200 }
         ctaSource:
           type: string
-          enum: [hero_quiz, hero_comprar, lp3_offer]
+          enum:
+            [
+              hero_quiz,
+              hero_comprar,
+              oferta_principal,
+              preco,
+              rodape,
+              sticky,
+              pos_quiz,
+              baralho_modal,
+              lp3_offer,
+            ]
         lcpMs: { type: number, minimum: 0 }
         internal:
           type: boolean
@@ -2279,13 +2292,15 @@ components:
       properties:
         views:
           $ref: "#/components/schemas/AnalyticsDeviceCounts"
-        ctaClicks:
+        buyClicks:
           $ref: "#/components/schemas/AnalyticsDeviceCounts"
-        checkoutsStarted:
+        checkoutOpens:
+          $ref: "#/components/schemas/AnalyticsDeviceCounts"
+        paymentsGenerated:
           $ref: "#/components/schemas/AnalyticsDeviceCounts"
         purchasesConfirmed:
           $ref: "#/components/schemas/AnalyticsDeviceCounts"
-      required: [views, ctaClicks, checkoutsStarted, purchasesConfirmed]
+      required: [views, buyClicks, checkoutOpens, paymentsGenerated, purchasesConfirmed]
     AnalyticsCtaSource:
       type: object
       properties:
@@ -2299,6 +2314,12 @@ components:
         new: { type: number }
         recurring: { type: number }
       required: [unique, new, recurring]
+    AnalyticsNavigationSignals:
+      type: object
+      properties:
+        quizStarts: { type: number }
+        themePeeks: { type: number }
+      required: [quizStarts, themePeeks]
     AdminFunnelAnalytics:
       type: object
       properties:
@@ -2306,9 +2327,12 @@ components:
         from: { type: string }
         to: { type: string }
         views: { type: number }
-        ctaClicks: { type: number }
-        checkoutsStarted: { type: number }
+        buyClicks: { type: number }
+        checkoutOpens: { type: number }
+        paymentsGenerated: { type: number }
         purchasesConfirmed: { type: number }
+        navigationSignals:
+          $ref: "#/components/schemas/AnalyticsNavigationSignals"
         avgTimeOnPageSeconds: { type: ["number", "null"] }
         heroExits: { type: number }
         topExitSections:
@@ -2334,9 +2358,11 @@ components:
           from,
           to,
           views,
-          ctaClicks,
-          checkoutsStarted,
+          buyClicks,
+          checkoutOpens,
+          paymentsGenerated,
           purchasesConfirmed,
+          navigationSignals,
           avgTimeOnPageSeconds,
            heroExits,
           topExitSections,

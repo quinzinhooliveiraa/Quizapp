@@ -9,7 +9,8 @@ import type { AnalyticsDeviceCounts } from './analyticsDeviceCounts';
 
 export interface AnalyticsDeviceBreakdown {
   views: AnalyticsDeviceCounts;
-  ctaClicks: AnalyticsDeviceCounts;
-  checkoutsStarted: AnalyticsDeviceCounts;
+  buyClicks: AnalyticsDeviceCounts;
+  checkoutOpens: AnalyticsDeviceCounts;
+  paymentsGenerated: AnalyticsDeviceCounts;
   purchasesConfirmed: AnalyticsDeviceCounts;
 }

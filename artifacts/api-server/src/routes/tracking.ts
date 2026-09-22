@@ -31,8 +31,26 @@ import { reconcilePendingPayments } from "../lib/payment-reconciliation";
 
 const router: IRouter = Router();
 const LP_IDS = ["v1", "v2", "lp3"] as const;
-const EVENT_TYPES = ["view", "cta_click", "exit"] as const;
-const CTA_SOURCES = ["hero_quiz", "hero_comprar", "lp3_offer"] as const;
+const EVENT_TYPES = [
+  "view",
+  "cta_click",
+  "exit",
+  "quiz_start",
+  "theme_peek",
+  "buy_click",
+  "checkout_open",
+] as const;
+const CTA_SOURCES = [
+  "hero_quiz",
+  "hero_comprar",
+  "oferta_principal",
+  "preco",
+  "rodape",
+  "sticky",
+  "pos_quiz",
+  "baralho_modal",
+  "lp3_offer",
+] as const;
 
 function trackedText(value: unknown, maxLength: number): string | null {
   return typeof value === "string" && value.trim()
@@ -195,10 +213,22 @@ router.post("/track/quiz-answer", async (req, res): Promise<void> => {
 async function computeFunnel(since: Date) {
   return Promise.all(
     LP_IDS.map(async (lpId) => {
-      const [views, ctaClicks, avgTime, checkouts, purchases, exits] =
+      const distinctVisitors = sql<number>`count(distinct ${pageEventsTable.visitorKey})`;
+      const distinctSessionVisitors = sql<number>`count(distinct ${sessionsTable.visitorKey})`;
+      const [
+        views,
+        buyClicks,
+        checkoutOpens,
+        avgTime,
+        paymentsGenerated,
+        purchases,
+        exits,
+        quizStarts,
+        themePeeks,
+      ] =
         await Promise.all([
           db
-            .select({ value: count() })
+            .select({ value: distinctVisitors })
             .from(pageEventsTable)
             .where(
               and(
@@ -209,12 +239,23 @@ async function computeFunnel(since: Date) {
               ),
             ),
           db
-            .select({ value: count() })
+            .select({ value: distinctVisitors })
             .from(pageEventsTable)
             .where(
               and(
                 eq(pageEventsTable.lpId, lpId),
-                eq(pageEventsTable.eventType, "cta_click"),
+                eq(pageEventsTable.eventType, "buy_click"),
+                eq(pageEventsTable.internal, false),
+                gte(pageEventsTable.createdAt, since),
+              ),
+            ),
+          db
+            .select({ value: distinctVisitors })
+            .from(pageEventsTable)
+            .where(
+              and(
+                eq(pageEventsTable.lpId, lpId),
+                eq(pageEventsTable.eventType, "checkout_open"),
                 eq(pageEventsTable.internal, false),
                 gte(pageEventsTable.createdAt, since),
               ),
@@ -233,7 +274,7 @@ async function computeFunnel(since: Date) {
               ),
             ),
           db
-            .select({ value: count() })
+            .select({ value: distinctSessionVisitors })
             .from(sessionsTable)
             .where(
               and(
@@ -243,7 +284,7 @@ async function computeFunnel(since: Date) {
               ),
             ),
           db
-            .select({ value: count() })
+            .select({ value: distinctSessionVisitors })
             .from(sessionsTable)
             .where(
               and(
@@ -270,13 +311,43 @@ async function computeFunnel(since: Date) {
             .groupBy(pageEventsTable.lastSection)
             .orderBy(desc(count()))
             .limit(5),
+          db
+            .select({ value: distinctVisitors })
+            .from(pageEventsTable)
+            .where(
+              and(
+                eq(pageEventsTable.lpId, lpId),
+                eq(pageEventsTable.eventType, "quiz_start"),
+                eq(pageEventsTable.internal, false),
+                gte(pageEventsTable.createdAt, since),
+              ),
+            ),
+          db
+            .select({ value: distinctVisitors })
+            .from(pageEventsTable)
+            .where(
+              and(
+                eq(pageEventsTable.lpId, lpId),
+                eq(pageEventsTable.eventType, "theme_peek"),
+                eq(pageEventsTable.internal, false),
+                gte(pageEventsTable.createdAt, since),
+              ),
+            ),
         ]);
       return {
         lpId,
         views: Number(views[0]?.value || 0),
-        ctaClicks: Number(ctaClicks[0]?.value || 0),
-        checkoutsStarted: Number(checkouts[0]?.value || 0),
+        buyClicks: Number(buyClicks[0]?.value || 0),
+        checkoutOpens: Number(checkoutOpens[0]?.value || 0),
+        paymentsGenerated: Number(paymentsGenerated[0]?.value || 0),
         purchasesConfirmed: Number(purchases[0]?.value || 0),
+        navigationSignals: {
+          quizStarts: Number(quizStarts[0]?.value || 0),
+          themePeeks: Number(themePeeks[0]?.value || 0),
+        },
+        // Keep the legacy report shape readable for existing consumers.
+        ctaClicks: Number(buyClicks[0]?.value || 0),
+        checkoutsStarted: Number(paymentsGenerated[0]?.value || 0),
         avgTimeOnPageSeconds:
           avgTime[0]?.value == null
             ? null
@@ -390,11 +461,16 @@ async function computeFunnelAnalytics({
     gte(sessionsTable.createdAt, from),
     lt(sessionsTable.createdAt, to),
   ];
+  const distinctEventVisitors = sql<number>`count(distinct ${pageEventsTable.visitorKey})`;
+  const distinctSessionVisitors = sql<number>`count(distinct ${sessionsTable.visitorKey})`;
 
   const [
     views,
-    ctaClicks,
-    checkouts,
+    buyClicks,
+    checkoutOpens,
+    quizStarts,
+    themePeeks,
+    paymentsGenerated,
     purchases,
     avgTime,
     exits,
@@ -407,19 +483,31 @@ async function computeFunnelAnalytics({
     avgLcp,
   ] = await Promise.all([
     db
-      .select({ value: count() })
+      .select({ value: distinctEventVisitors })
       .from(pageEventsTable)
       .where(and(...eventWindow, eq(pageEventsTable.eventType, "view"))),
     db
-      .select({ value: count() })
+      .select({ value: distinctEventVisitors })
       .from(pageEventsTable)
-      .where(and(...eventWindow, eq(pageEventsTable.eventType, "cta_click"))),
+      .where(and(...eventWindow, eq(pageEventsTable.eventType, "buy_click"))),
     db
-      .select({ value: count() })
+      .select({ value: distinctEventVisitors })
+      .from(pageEventsTable)
+      .where(and(...eventWindow, eq(pageEventsTable.eventType, "checkout_open"))),
+    db
+      .select({ value: distinctEventVisitors })
+      .from(pageEventsTable)
+      .where(and(...eventWindow, eq(pageEventsTable.eventType, "quiz_start"))),
+    db
+      .select({ value: distinctEventVisitors })
+      .from(pageEventsTable)
+      .where(and(...eventWindow, eq(pageEventsTable.eventType, "theme_peek"))),
+    db
+      .select({ value: distinctSessionVisitors })
       .from(sessionsTable)
       .where(and(...sessionWindow)),
     db
-      .select({ value: count() })
+      .select({ value: distinctSessionVisitors })
       .from(sessionsTable)
       .where(and(...sessionWindow, eq(sessionsTable.accessGranted, true))),
     db
@@ -447,35 +535,35 @@ async function computeFunnelAnalytics({
       .select({
         eventType: pageEventsTable.eventType,
         device: pageEventsTable.device,
-        value: count(),
+        value: distinctEventVisitors,
       })
       .from(pageEventsTable)
       .where(and(...eventWindow))
       .groupBy(pageEventsTable.eventType, pageEventsTable.device),
     db
-      .select({ device: sessionsTable.device, value: count() })
+      .select({ device: sessionsTable.device, value: distinctSessionVisitors })
       .from(sessionsTable)
       .where(and(...sessionWindow))
       .groupBy(sessionsTable.device),
     db
-      .select({ device: sessionsTable.device, value: count() })
+      .select({ device: sessionsTable.device, value: distinctSessionVisitors })
       .from(sessionsTable)
       .where(and(...sessionWindow, eq(sessionsTable.accessGranted, true)))
       .groupBy(sessionsTable.device),
     db
-      .select({ source: sessionsTable.ctaSource, value: count() })
+      .select({ source: sessionsTable.ctaSource, value: distinctSessionVisitors })
       .from(sessionsTable)
       .where(and(...sessionWindow, isNotNull(sessionsTable.ctaSource)))
       .groupBy(sessionsTable.ctaSource)
-      .orderBy(desc(count())),
+      .orderBy(desc(distinctSessionVisitors)),
     db
       .select({
-        visitorKey: sessionsTable.visitorKey,
+        visitorKey: pageEventsTable.visitorKey,
         value: count(),
       })
-      .from(sessionsTable)
-      .where(and(...sessionWindow, isNotNull(sessionsTable.visitorKey)))
-      .groupBy(sessionsTable.visitorKey),
+      .from(pageEventsTable)
+      .where(and(...eventWindow))
+      .groupBy(pageEventsTable.visitorKey),
     db
       .select({ value: sql<string>`avg(${pageEventsTable.lcpMs})` })
       .from(pageEventsTable)
@@ -484,14 +572,25 @@ async function computeFunnelAnalytics({
 
   const deviceBreakdown = {
     views: emptyDeviceCounts(),
-    ctaClicks: emptyDeviceCounts(),
-    checkoutsStarted: emptyDeviceCounts(),
+    buyClicks: emptyDeviceCounts(),
+    checkoutOpens: emptyDeviceCounts(),
+    paymentsGenerated: emptyDeviceCounts(),
     purchasesConfirmed: emptyDeviceCounts(),
   };
   for (const row of eventDevices) {
-    if (row.eventType === "view" || row.eventType === "cta_click") {
+    if (
+      row.eventType === "view" ||
+      row.eventType === "buy_click" ||
+      row.eventType === "checkout_open"
+    ) {
+      const deviceKey =
+        row.eventType === "view"
+          ? "views"
+          : row.eventType === "buy_click"
+            ? "buyClicks"
+            : "checkoutOpens";
       addDeviceCount(
-        deviceBreakdown[row.eventType === "view" ? "views" : "ctaClicks"],
+        deviceBreakdown[deviceKey],
         row.device,
         Number(row.value),
       );
@@ -499,7 +598,7 @@ async function computeFunnelAnalytics({
   }
   for (const row of checkoutDevices) {
     addDeviceCount(
-      deviceBreakdown.checkoutsStarted,
+      deviceBreakdown.paymentsGenerated,
       row.device,
       Number(row.value),
     );
@@ -522,9 +621,14 @@ async function computeFunnelAnalytics({
     from: fromLabel,
     to: toLabel,
     views: Number(views[0]?.value || 0),
-    ctaClicks: Number(ctaClicks[0]?.value || 0),
-    checkoutsStarted: Number(checkouts[0]?.value || 0),
+    buyClicks: Number(buyClicks[0]?.value || 0),
+    checkoutOpens: Number(checkoutOpens[0]?.value || 0),
+    paymentsGenerated: Number(paymentsGenerated[0]?.value || 0),
     purchasesConfirmed: Number(purchases[0]?.value || 0),
+    navigationSignals: {
+      quizStarts: Number(quizStarts[0]?.value || 0),
+      themePeeks: Number(themePeeks[0]?.value || 0),
+    },
     avgTimeOnPageSeconds:
       avgTime[0]?.value == null
         ? null

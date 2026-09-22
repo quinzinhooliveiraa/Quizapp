@@ -400,6 +400,10 @@ export const PageEventInputEventType = {
   view: 'view',
   cta_click: 'cta_click',
   exit: 'exit',
+  quiz_start: 'quiz_start',
+  theme_peek: 'theme_peek',
+  buy_click: 'buy_click',
+  checkout_open: 'checkout_open',
 } as const;
 
 export type PageEventInputCtaSource = typeof PageEventInputCtaSource[keyof typeof PageEventInputCtaSource];
@@ -408,6 +412,12 @@ export type PageEventInputCtaSource = typeof PageEventInputCtaSource[keyof typeo
 export const PageEventInputCtaSource = {
   hero_quiz: 'hero_quiz',
   hero_comprar: 'hero_comprar',
+  oferta_principal: 'oferta_principal',
+  preco: 'preco',
+  rodape: 'rodape',
+  sticky: 'sticky',
+  pos_quiz: 'pos_quiz',
+  baralho_modal: 'baralho_modal',
   lp3_offer: 'lp3_offer',
 } as const;
 
@@ -876,8 +886,9 @@ export interface AnalyticsDeviceCounts {
 
 export interface AnalyticsDeviceBreakdown {
   views: AnalyticsDeviceCounts;
-  ctaClicks: AnalyticsDeviceCounts;
-  checkoutsStarted: AnalyticsDeviceCounts;
+  buyClicks: AnalyticsDeviceCounts;
+  checkoutOpens: AnalyticsDeviceCounts;
+  paymentsGenerated: AnalyticsDeviceCounts;
   purchasesConfirmed: AnalyticsDeviceCounts;
 }
 
@@ -890,6 +901,11 @@ export interface AnalyticsVisitors {
   unique: number;
   new: number;
   recurring: number;
+}
+
+export interface AnalyticsNavigationSignals {
+  quizStarts: number;
+  themePeeks: number;
 }
 
 export type AdminFunnelAnalyticsLpId = typeof AdminFunnelAnalyticsLpId[keyof typeof AdminFunnelAnalyticsLpId];
@@ -912,9 +928,11 @@ export interface AdminFunnelAnalytics {
   from: string;
   to: string;
   views: number;
-  ctaClicks: number;
-  checkoutsStarted: number;
+  buyClicks: number;
+  checkoutOpens: number;
+  paymentsGenerated: number;
   purchasesConfirmed: number;
+  navigationSignals: AnalyticsNavigationSignals;
   /** @nullable */
   avgTimeOnPageSeconds: number | null;
   heroExits: number;

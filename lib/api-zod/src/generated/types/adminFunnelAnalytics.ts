@@ -9,6 +9,7 @@ import type { AdminFunnelAnalyticsLpId } from './adminFunnelAnalyticsLpId';
 import type { AdminFunnelAnalyticsTopExitSectionsItem } from './adminFunnelAnalyticsTopExitSectionsItem';
 import type { AnalyticsCtaSource } from './analyticsCtaSource';
 import type { AnalyticsDeviceBreakdown } from './analyticsDeviceBreakdown';
+import type { AnalyticsNavigationSignals } from './analyticsNavigationSignals';
 import type { AnalyticsVisitors } from './analyticsVisitors';
 
 export interface AdminFunnelAnalytics {
@@ -16,9 +17,11 @@ export interface AdminFunnelAnalytics {
   from: string;
   to: string;
   views: number;
-  ctaClicks: number;
-  checkoutsStarted: number;
+  buyClicks: number;
+  checkoutOpens: number;
+  paymentsGenerated: number;
   purchasesConfirmed: number;
+  navigationSignals: AnalyticsNavigationSignals;
   /** @nullable */
   avgTimeOnPageSeconds: number | null;
   heroExits: number;

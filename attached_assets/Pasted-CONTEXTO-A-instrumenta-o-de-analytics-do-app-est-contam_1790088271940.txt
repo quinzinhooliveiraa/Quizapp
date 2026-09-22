@@ -1,0 +1,72 @@
+CONTEXTO
+
+A instrumentação de analytics do app está contaminando a leitura do funil. Auditoria (22/09/2026)
+achou 6 problemas no repo. Objetivo deste prompt: lapidar o tracking pra o painel /admin (abas
+Análise e Quiz) refletir a realidade. NÃO mexer em copy de LP, preço, conteúdo do quiz nem no
+fluxo de pagamento em si — só na MEDIÇÃO e nos rótulos.
+
+ARQUIVOS: artifacts/perguntas-de-conexao/src/App.tsx, artifacts/api-server/src/routes/tracking.ts,
+artifacts/perguntas-de-conexao/src/components/AnalyticsFunnelPanel.tsx,
+artifacts/perguntas-de-conexao/src/pages/Admin.tsx, lib/db/src/schema/index.ts,
+lib/api-zod (tipos de evento).
+
+MUDANÇAS
+
+1) SEPARAR OS EVENTOS DE CTA (App.tsx)
+   Hoje tudo é `cta_click`. Trocar por eventos com intenção clara:
+   - hero_quiz (linhas ~7844, ~7876) → passar a emitir eventType "quiz_start" (não é compra).
+   - theme_peek:<id> (linhas ~7841, ~8144) → eventType "theme_peek" (navegação, não compra).
+   - Todo botão real de compra tem que emitir eventType "buy_click" COM ctaSource rotulado.
+     Corrigir TODAS as chamadas startCheckout("couple") que hoje vão sem source
+     (linhas ~7343, ~7839, ~7985, ~8200, ~8258, ~8284, ~8320) pra passar um ctaSource distinto:
+     hero_comprar, oferta_principal, preco, rodape, sticky, pos_quiz, baralho_modal (o que fizer
+     sentido pela posição do botão). Nunca deixar buy_click sem source.
+   - Quando o modal de checkout abrir (openCheckout, ~5635), emitir eventType "checkout_open" 1x
+     por abertura, com o mesmo ctaSource.
+   Adicionar "quiz_start", "theme_peek", "buy_click", "checkout_open" ao enum de eventType
+   (lib/api-zod .../pageEventInputEventType.ts e onde o backend valida EVENT_TYPES em tracking.ts:34).
+
+2) CORRIGIR O lpId FIXO (App.tsx)
+   Tirar o "v2" cravado em trackLp1QuizAnswer (linha 184) e em useLpTracking("v2", …) (linha 8297).
+   Usar o id real da LP que está no ar (o mesmo valor que a config de Páginas usa: v1/v2/lp3),
+   vindo de uma prop/estado, não hardcoded. Assim o painel para de jogar tudo em "v2" e a
+   "Reacender a chama" deixa de aparecer zerada.
+
+3) QUIZ: FAZER O "quiz-complete" DISPARAR DE VERDADE (App.tsx)
+   O evento screenId:"quiz-complete" (linha ~2313) está num componente que não monta no fluxo
+   atual (o quiz vai direto pra transição de venda). Mover o disparo pro momento real em que a
+   pessoa CHEGA no resultado/diagnóstico/transição de venda, garantindo que rode 1x por visitante.
+   Resultado esperado: a métrica "Chegaram ao resultado"/"Conclusão %" no admin para de ser 0.
+
+4) QUIZ: UNIFICAR O screenId (App.tsx)
+   Parar de compor screenId como `${id}:${cardId}` (linha ~2639) e `${id}:${climateValue}`
+   (linhas ~2681, ~2713). Sempre mandar screenId = id base da tela, e colocar o valor escolhido
+   só em answerValue. Em multi-escolha, mandar uma linha por valor selecionado, todas com o mesmo
+   screenId e answerValue = cada valor. Isso conserta o "16 CLIMA" aparecendo com 18 e as linhas
+   quebradas de multi-escolha.
+
+5) BACKEND: FUNIL POR PESSOA E COM OS DEGRAUS CERTOS (tracking.ts > computeFunnel)
+   - Medir cada etapa por distinct(visitor_key), não count() bruto. (Se quiser manter o bruto,
+     expor num campo separado tipo viewsRaw/buyClicksRaw.)
+   - Etapas do funil de compra: view → buy_click → checkout_open → payment_generated(=sessions)
+     → paid(=sessions access_granted). "Clicaram comprar" passa a contar SÓ buy_click
+     (excluir quiz_start e theme_peek).
+   - Devolver quiz_start e theme_peek num bloco à parte ("sinais de navegação"), fora do funil.
+   - Manter o filtro internal=false (já existe e está certo).
+
+6) PAINEL (AnalyticsFunnelPanel.tsx + aba Quiz)
+   - Renomear as etapas pro que elas são de verdade: "Visitas (únicas)", "Clicou comprar (únicas)",
+     "Abriu pagamento", "Gerou Pix/cartão", "Pagou". Mostrar quiz_start/theme_peek como navegação,
+     não dentro do funil de compra.
+   - Corrigir os rótulos do seletor de LP pra baterem com os lpId reais (v1=Reacender a chama etc.).
+   - Onde "De onde vêm os checkouts" já usa ctaSource, agora vai ficar útil porque todo buy_click
+     tem source.
+
+REGRAS
+- Português do Brasil na interface, tom informal.
+- Migração de schema só se precisar (event_type e cta_source já são text livres; não precisa ALTER).
+  Se adicionar índice por (lp_id, event_type, created_at) em page_events, rodar
+  `pnpm --filter @workspace/db run push`.
+- Não quebrar eventos antigos: linhas com event_type "cta_click" já gravadas continuam existindo;
+  o painel pode tratar "cta_click" legado como buy_click sem source, ou ignorar antes de uma data.
+- Rodar `pnpm run typecheck` no fim e listar o que mudou em cada arquivo.

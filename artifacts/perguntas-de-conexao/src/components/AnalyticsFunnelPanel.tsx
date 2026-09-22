@@ -25,16 +25,22 @@ export type AnalyticsFunnelData = {
   from: string;
   to: string;
   views: number;
-  ctaClicks: number;
-  checkoutsStarted: number;
+  buyClicks: number;
+  checkoutOpens: number;
+  paymentsGenerated: number;
   purchasesConfirmed: number;
+  navigationSignals: {
+    quizStarts: number;
+    themePeeks: number;
+  };
   avgTimeOnPageSeconds: number | null;
   heroExits: number;
   topExitSections: Array<{ section: string; count: number }>;
   deviceBreakdown: {
     views: { mobile: number; desktop: number; tablet: number };
-    ctaClicks: { mobile: number; desktop: number; tablet: number };
-    checkoutsStarted: { mobile: number; desktop: number; tablet: number };
+    buyClicks: { mobile: number; desktop: number; tablet: number };
+    checkoutOpens: { mobile: number; desktop: number; tablet: number };
+    paymentsGenerated: { mobile: number; desktop: number; tablet: number };
     purchasesConfirmed: { mobile: number; desktop: number; tablet: number };
   };
   checkoutsByCtaSource: Array<{ source: string; count: number }>;
@@ -49,16 +55,22 @@ type AnalyticsFunnelPanelProps = {
 };
 
 type Stage = {
-  key: "views" | "ctaClicks" | "checkoutsStarted" | "purchasesConfirmed";
+  key:
+    | "views"
+    | "buyClicks"
+    | "checkoutOpens"
+    | "paymentsGenerated"
+    | "purchasesConfirmed";
   label: string;
   icon: typeof Eye;
 };
 
 const STAGES: Stage[] = [
-  { key: "views", label: "Visitas", icon: Eye },
-  { key: "ctaClicks", label: "Clicaram comprar", icon: MousePointer2 },
-  { key: "checkoutsStarted", label: "Iniciaram checkout", icon: CreditCard },
-  { key: "purchasesConfirmed", label: "Pagaram", icon: Check },
+  { key: "views", label: "Visitas (únicas)", icon: Eye },
+  { key: "buyClicks", label: "Clicou comprar (únicas)", icon: MousePointer2 },
+  { key: "checkoutOpens", label: "Abriu pagamento", icon: CreditCard },
+  { key: "paymentsGenerated", label: "Gerou Pix/cartão", icon: CreditCard },
+  { key: "purchasesConfirmed", label: "Pagou", icon: Check },
 ];
 
 const DEVICE_COLUMNS = [
@@ -75,8 +87,13 @@ const LANDING_LABELS: Record<AnalyticsLandingPageId, string> = {
 };
 
 const SOURCE_LABELS: Record<string, string> = {
-  hero_quiz: "Quiz no topo",
   hero_comprar: "Comprar no topo",
+  oferta_principal: "Oferta principal",
+  preco: "Bloco de preço",
+  rodape: "Rodapé",
+  sticky: "CTA fixo",
+  pos_quiz: "Depois do quiz",
+  baralho_modal: "Prévia do baralho",
   lp3_offer: "Oferta da página",
 };
 
@@ -195,7 +212,7 @@ function AnalyticsFunnelPanel({
   );
   const visitorSplitTotal = data.visitors.new + data.visitors.recurring;
   const unpaidCheckouts = Math.max(
-    data.checkoutsStarted - data.purchasesConfirmed,
+    data.paymentsGenerated - data.purchasesConfirmed,
     0,
   );
   const deviceRows = STAGES.map((stage) => ({
@@ -203,7 +220,7 @@ function AnalyticsFunnelPanel({
     values: data.deviceBreakdown[stage.key],
   }));
   const funnelPoints = STAGES.map((stage, index) => ({
-    x: 112 + index * 258,
+      x: 112 + index * 194,
     height:
       data.views > 0
         ? Math.max(10, 112 * (data[stage.key] / data.views))
@@ -299,10 +316,10 @@ function AnalyticsFunnelPanel({
             role="img"
             aria-labelledby="analytics-funnel-svg-title analytics-funnel-svg-description"
           >
-            <title id="analytics-funnel-svg-title">Funil de conversão em quatro etapas</title>
+             <title id="analytics-funnel-svg-title">Funil de conversão em cinco etapas</title>
             <desc id="analytics-funnel-svg-description">
-              Visitas, cliques para comprar, checkouts iniciados e pagamentos confirmados,
-              com percentuais relativos ao número de visitas.
+               Visitas, cliques para comprar, abertura do pagamento, geração de Pix ou cartão
+               e pagamentos confirmados, com percentuais relativos ao número de visitas.
             </desc>
             <defs>
               <linearGradient id="analytics-funnel-wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -431,6 +448,31 @@ function AnalyticsFunnelPanel({
         </div>
 
         <div className="analytics-funnel-diagnostics-grid">
+          <article className="analytics-funnel-card analytics-funnel-card-navigation">
+            <div className="analytics-funnel-card-heading">
+              <div>
+                <span className="analytics-funnel-card-overline">Navegação</span>
+                <h4>Sinais fora do funil de compra</h4>
+              </div>
+              <MousePointer2 size={18} aria-hidden="true" />
+            </div>
+            <div className="analytics-funnel-performance-metrics">
+              <div>
+                <MousePointer2 size={15} aria-hidden="true" />
+                <span>Começaram o quiz</span>
+                <strong>{formatNumber(data.navigationSignals.quizStarts)}</strong>
+              </div>
+              <div>
+                <Eye size={15} aria-hidden="true" />
+                <span>Pré-visualizaram um baralho</span>
+                <strong>{formatNumber(data.navigationSignals.themePeeks)}</strong>
+              </div>
+            </div>
+            <p className="analytics-funnel-card-note">
+              Esses sinais ajudam a entender a navegação, mas não contam como intenção de compra.
+            </p>
+          </article>
+
           <article className="analytics-funnel-card analytics-funnel-card-source">
             <div className="analytics-funnel-card-heading">
               <div>

@@ -31,6 +31,7 @@ export * from './adminQuizAnalyticsVariantsItem';
 export * from './analyticsCtaSource';
 export * from './analyticsDeviceBreakdown';
 export * from './analyticsDeviceCounts';
+export * from './analyticsNavigationSignals';
 export * from './analyticsUtmBreakdown';
 export * from './analyticsVisitors';
 export * from './buyer';

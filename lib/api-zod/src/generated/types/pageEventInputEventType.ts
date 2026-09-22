@@ -13,4 +13,8 @@ export const PageEventInputEventType = {
   view: 'view',
   cta_click: 'cta_click',
   exit: 'exit',
+  quiz_start: 'quiz_start',
+  theme_peek: 'theme_peek',
+  buy_click: 'buy_click',
+  checkout_open: 'checkout_open',
 } as const;

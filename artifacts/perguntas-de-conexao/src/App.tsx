@@ -165,12 +165,14 @@ function getQuizAttribution() {
 }
 
 function trackLp1QuizAnswer({
+  lpId,
   screenId,
   answerKey,
   answerValue,
   step,
   experimentAssignment,
 }: {
+  lpId: "v1" | "v2" | "lp3";
   screenId: string;
   answerKey: string;
   answerValue: string;
@@ -181,7 +183,7 @@ function trackLp1QuizAnswer({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      lpId: "v2",
+      lpId,
       quizId: "lp1",
       visitorKey: getOrCreateVisitorKey(),
       screenId,
@@ -2288,11 +2290,9 @@ const LP1_THEME_NAMES: Record<string, string> = {
 function Lp1Diagnosis({
   answers,
   onContinue,
-  experimentAssignment,
 }: {
   answers: LandingQuizAnswers;
   onContinue: () => void;
-  experimentAssignment?: StoredExperimentAssignment;
 }) {
   const diagnosis = selectLp1Diagnosis(answers);
   const preview = selectLandingQuizQuestions(
@@ -2304,20 +2304,6 @@ function Lp1Diagnosis({
     id: question.id,
     text: question.text,
   }));
-  const completionTrackedRef = useRef(false);
-
-  useEffect(() => {
-    if (completionTrackedRef.current) return;
-    completionTrackedRef.current = true;
-    trackLp1QuizAnswer({
-      screenId: "quiz-complete",
-      answerKey: "completed",
-      answerValue: "true",
-      step: LP1_SCREENS.length,
-      experimentAssignment,
-    });
-  }, [experimentAssignment]);
-
   return (
     <section
       className="lp1-diagnosis"
@@ -2530,11 +2516,13 @@ function Lp1Offer({
 }
 
 function Lp1Quiz({
+  lpId,
   onFinish,
   onBackToLanding,
   experimentAssignment,
   checkoutOpen,
 }: {
+  lpId: "v1" | "v2" | "lp3";
   onFinish: () => void;
   onBackToLanding: () => void;
   experimentAssignment?: StoredExperimentAssignment;
@@ -2567,6 +2555,7 @@ function Lp1Quiz({
   const [trialCardIndex, setTrialCardIndex] = useState(0);
   const [climateIndex, setClimateIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completionTrackedRef = useRef(false);
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
   const selectedAnswer =
@@ -2578,6 +2567,36 @@ function Lp1Quiz({
   const visualStep = showBridgeScreen
     ? totalVisualSteps
     : Math.min(step + 1, LP1_SCREENS.length);
+
+  useEffect(() => {
+    if (
+      completionTrackedRef.current ||
+      (!showOffer && !showBridgeScreen && step < LP1_SCREENS.length)
+    ) {
+      return;
+    }
+
+    let alreadyTracked = false;
+    try {
+      alreadyTracked = sessionStorage.getItem("lp1-quiz-completed") === "true";
+      if (!alreadyTracked) {
+        sessionStorage.setItem("lp1-quiz-completed", "true");
+      }
+    } catch {
+      // Session storage may be unavailable in embedded or private browsers.
+    }
+    completionTrackedRef.current = true;
+    if (alreadyTracked) return;
+
+    trackLp1QuizAnswer({
+      lpId,
+      screenId: "quiz-complete",
+      answerKey: "completed",
+      answerValue: "true",
+      step: LP1_SCREENS.length,
+      experimentAssignment,
+    });
+  }, [experimentAssignment, lpId, showBridgeScreen, showOffer, step]);
 
   useEffect(() => {
     try {
@@ -2636,7 +2655,8 @@ function Lp1Quiz({
     };
     setAnswers(nextAnswers);
     trackLp1QuizAnswer({
-      screenId: `${current.id}:${cardId}`,
+      lpId,
+      screenId: current.id,
       answerKey: "cartas",
       answerValue: verdict,
       step,
@@ -2678,7 +2698,8 @@ function Lp1Quiz({
     if (climateIndex < climateQuestion.options.length - 1) {
       setAnswers(nextAnswers);
       trackLp1QuizAnswer({
-        screenId: `${current.id}:${climateValue}`,
+        lpId,
+        screenId: current.id,
         answerKey: "climaVerdicts",
         answerValue: verdict,
         step,
@@ -2701,6 +2722,7 @@ function Lp1Quiz({
     if (preferredClimate) {
       nextAnswers.clima = preferredClimate.value;
       trackLp1QuizAnswer({
+        lpId,
         screenId: current.id,
         answerKey: "clima",
         answerValue: preferredClimate.value,
@@ -2710,7 +2732,8 @@ function Lp1Quiz({
     }
     setAnswers(nextAnswers);
     trackLp1QuizAnswer({
-      screenId: `${current.id}:${climateValue}`,
+      lpId,
+      screenId: current.id,
       answerKey: "climaVerdicts",
       answerValue: verdict,
       step,
@@ -2734,6 +2757,7 @@ function Lp1Quiz({
   const handleSingleSelect = (key: string, value: string) => {
     selectAnswer(key, value);
     trackLp1QuizAnswer({
+      lpId,
       screenId: current.id,
       answerKey: key,
       answerValue: value,
@@ -2762,6 +2786,22 @@ function Lp1Quiz({
     }
     if (current.kind === "question") {
       if (!selectedValue) return;
+      if (current.format === "multi") {
+        selectedValue
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+          .forEach((value) => {
+            trackLp1QuizAnswer({
+              lpId,
+              screenId: current.id,
+              answerKey: current.key,
+              answerValue: value,
+              step,
+              experimentAssignment,
+            });
+          });
+      }
       const score = computeLp1Score(answers as LandingQuizAnswers);
       console.info("[lp1] score", score);
     }
@@ -2775,13 +2815,6 @@ function Lp1Quiz({
       ? currentValues.filter((item) => item !== value)
       : [...currentValues, value];
     selectAnswer(current.key, nextValues.join(","));
-    trackLp1QuizAnswer({
-      screenId: current.id,
-      answerKey: current.key,
-      answerValue: nextValues.join(","),
-      step,
-      experimentAssignment,
-    });
   };
 
   const goBack = () => {
@@ -2854,7 +2887,6 @@ function Lp1Quiz({
           <Lp1Diagnosis
             answers={answers as LandingQuizAnswers}
             onContinue={() => setShowBridgeScreen(true)}
-            experimentAssignment={experimentAssignment}
           />
         ) : current.kind === "question" && current.id === "s18-clima" ? (
           <Lp1ClimatePicker
@@ -4626,13 +4658,17 @@ function TestimonialCarousel({ variant = "default" }: { variant?: "lp1" | "defau
 }
 
 function LandingV2Quiz({
-  onBuy,
+  onPriceBuy,
+  onStickyBuy,
+  onThemeBuy,
   onHeroBuy,
   onThemePeek,
   checkoutOpen,
   onStartQuiz,
 }: {
-  onBuy: () => void;
+  onPriceBuy: () => void;
+  onStickyBuy: () => void;
+  onThemeBuy: () => void;
   onHeroBuy: () => void;
   onThemePeek: (themeId: string) => void;
   checkoutOpen: boolean;
@@ -5033,7 +5069,7 @@ function LandingV2Quiz({
             </div>
             <Lp1PriceCard
               fullPricing={pricing}
-              onBuy={onBuy}
+              onBuy={onPriceBuy}
               testId="button-price-cta-v2"
               showBenefits
               className="lp1-price-benefits-card"
@@ -5111,7 +5147,7 @@ function LandingV2Quiz({
         <div className="lp-sticky-cta" aria-label="Começar agora">
           <button
             type="button"
-            onClick={onBuy}
+            onClick={onStickyBuy}
             className="lp-cta-primary lp-sticky-cta-button"
             data-testid="button-sticky-cta-v2"
           >
@@ -5129,7 +5165,7 @@ function LandingV2Quiz({
                 onClose={() => setPeekThemeId(null)}
                 onBuy={() => {
                   setPeekThemeId(null);
-                  onBuy();
+                  onThemeBuy();
                 }}
               />
             ) : null;
@@ -5360,10 +5396,21 @@ function StoredAccessGate() {
 }
 
 type LandingCtaSource =
-  | "hero_quiz"
   | "hero_comprar"
+  | "oferta_principal"
+  | "preco"
+  | "rodape"
+  | "sticky"
+  | "pos_quiz"
+  | "baralho_modal"
   | "lp3_offer"
-  | `theme_peek:${string}`;
+  | "hero_quiz";
+
+type LandingTrackingEvent =
+  | "quiz_start"
+  | "theme_peek"
+  | "buy_click"
+  | "checkout_open";
 
 function useLpTracking(
   lpId: "v1" | "v2" | "lp3",
@@ -5420,7 +5467,11 @@ function useLpTracking(
       if (sessionId) claritySessionIdRef.current = sessionId;
     };
     const track = (
-      eventType: "view" | "cta_click" | "exit",
+      eventType:
+        | "view"
+        | "cta_click"
+        | "exit"
+        | LandingTrackingEvent,
       extra: Record<string, unknown> = {},
     ) => {
       const payload = JSON.stringify({
@@ -5534,7 +5585,11 @@ function useLpTracking(
     };
   }, [experimentAssignment, lpId]);
 
-  return (ctaSource?: LandingCtaSource) => {
+  return (
+    eventType: LandingTrackingEvent,
+    ctaSource?: LandingCtaSource,
+    extra: Record<string, unknown> = {},
+  ) => {
     syncInternalTrackingFromUrl();
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
@@ -5542,11 +5597,12 @@ function useLpTracking(
       body: JSON.stringify({
         lpId,
         visitorKey: visitorKeyRef.current,
-        eventType: "cta_click",
+        eventType,
         experimentId: experimentAssignment?.experimentId,
         experimentVariantId: experimentAssignment?.experimentVariantId,
         internal: isInternalTrackingEnabled(),
         ctaSource,
+        ...extra,
         clarityUserId: clarityUserIdRef.current || undefined,
         claritySessionId: claritySessionIdRef.current || undefined,
       }),
@@ -5572,12 +5628,15 @@ type CheckoutSourceLp = "v1" | "v2" | "lp3";
 
 function useCheckout({
   sourceLp,
-  onCtaClick,
+  onTrackingEvent,
   experimentAssignment,
   resumeSessionId,
 }: {
   sourceLp: CheckoutSourceLp;
-  onCtaClick?: (ctaSource?: LandingCtaSource) => void;
+  onTrackingEvent?: (
+    eventType: LandingTrackingEvent,
+    ctaSource?: LandingCtaSource,
+  ) => void;
   experimentAssignment?: StoredExperimentAssignment;
   resumeSessionId?: string;
 }) {
@@ -5633,6 +5692,14 @@ function useCheckout({
   }, [checkoutOpen]);
 
   const openCheckout = () => {
+    const wasOpen = checkoutOpenRef.current;
+    checkoutOpenRef.current = true;
+    if (!wasOpen) {
+      onTrackingEvent?.(
+        "checkout_open",
+        checkoutCtaSourceRef.current || undefined,
+      );
+    }
     if (!checkoutHistoryPushedRef.current) {
       try {
         window.history.pushState(
@@ -5652,6 +5719,7 @@ function useCheckout({
     const handlePopState = () => {
       if (!checkoutOpenRef.current) return;
       checkoutHistoryPushedRef.current = false;
+      checkoutOpenRef.current = false;
       setCheckoutOpen(false);
     };
 
@@ -6379,10 +6447,10 @@ function useCheckout({
 
   const startCheckout = (
     packageId: "couple" | "family" = selectedPackage,
-    ctaSource?: LandingCtaSource,
+    ctaSource: LandingCtaSource,
   ) => {
-    checkoutCtaSourceRef.current = ctaSource || null;
-    onCtaClick?.(ctaSource);
+    checkoutCtaSourceRef.current = ctaSource;
+    onTrackingEvent?.("buy_click", ctaSource);
     setSelectedPackage(packageId);
     setPixExpired(false);
     safeSetItem("conexao-pending-source-lp", sourceLp);
@@ -7798,7 +7866,7 @@ function Home({
     useState<LandingQuizAnswers>({});
   const checkoutController = useCheckout({
     sourceLp: checkoutSourceLp,
-    onCtaClick: trackCtaClick,
+    onTrackingEvent: trackCtaClick,
     experimentAssignment,
   });
   const { startCheckout } = checkoutController;
@@ -7836,12 +7904,18 @@ function Home({
       <main className={`lp-main ${variant === "v1" ? "lp2-rebuild" : ""}`}>
         {variant === "v2" ? (
           <LandingV2Quiz
-            onBuy={() => startCheckout("couple")}
+            onPriceBuy={() => startCheckout("couple", "preco")}
+            onStickyBuy={() => startCheckout("couple", "sticky")}
+            onThemeBuy={() => startCheckout("couple", "baralho_modal")}
             onHeroBuy={() => startCheckout("couple", "hero_comprar")}
-            onThemePeek={(themeId) => trackCtaClick(`theme_peek:${themeId}`)}
+            onThemePeek={(themeId) =>
+              trackCtaClick("theme_peek", undefined, {
+                lastSection: `theme_peek:${themeId}`,
+              })
+            }
             checkoutOpen={checkoutController.checkoutOpen}
             onStartQuiz={() => {
-              trackCtaClick("hero_quiz");
+              trackCtaClick("quiz_start");
               navigate("/quiz?from=lp1");
             }}
           />
@@ -7873,7 +7947,7 @@ function Home({
                       type="button"
                       className="lp-cta-primary lp-cta-big"
                       onClick={() => {
-                        trackCtaClick("hero_quiz");
+                        trackCtaClick("quiz_start");
                         document
                           .getElementById("lp-quiz")
                           ?.scrollIntoView({
@@ -7982,7 +8056,7 @@ function Home({
                   com a cara da fase que vocês estão vivendo.
                 </p>
                 <LandingQuiz
-                  onFinish={() => startCheckout("couple")}
+                  onFinish={() => startCheckout("couple", "pos_quiz")}
                   step={landingQuizStep}
                   answers={landingQuizAnswers}
                   onAnswer={advanceLandingQuiz}
@@ -8141,7 +8215,9 @@ function Home({
                       className={`lp-theme-card ${index > 8 ? "lp-theme-vibe" : ""}`}
                       onClick={() => {
                         setPeekThemeId(String(themeId));
-                        trackCtaClick(`theme_peek:${String(themeId)}`);
+                        trackCtaClick("theme_peek", undefined, {
+                          lastSection: `theme_peek:${String(themeId)}`,
+                        });
                       }}
                       data-testid={`button-lp-theme-${String(themeId)}`}
                     >
@@ -8197,7 +8273,7 @@ function Home({
                   </p>
                   <p className="lp2-offer-price-note">uma vez, pra sempre — sem mensalidade</p>
                   <button
-                    onClick={() => startCheckout("couple")}
+                    onClick={() => startCheckout("couple", "preco")}
                     className="lp-cta-primary lp-cta-full lp2-offer-cta"
                     data-testid="button-price-cta"
                   >
@@ -8255,7 +8331,7 @@ function Home({
                 onClose={() => setPeekThemeId(null)}
                 onBuy={() => {
                   setPeekThemeId(null);
-                  startCheckout("couple");
+                  startCheckout("couple", "baralho_modal");
                 }}
               />
             ) : null;
@@ -8280,8 +8356,7 @@ function TrackedLp3({
   return (
     <>
       <Lp3
-        onCtaClick={(ctaSource) => trackCtaClick(ctaSource)}
-        onCheckout={() => checkout.startCheckout("couple")}
+        onCheckout={() => checkout.startCheckout("couple", "oferta_principal")}
         showSupportAction={!checkout.checkoutOpen}
       />
       <CheckoutModal checkout={checkout} />
@@ -8294,14 +8369,25 @@ function TrackedQuiz({
 }: {
   experimentAssignment?: StoredExperimentAssignment;
 }) {
-  const trackCtaClick = useLpTracking("v2", experimentAssignment);
+  const quizOrigin = new URLSearchParams(window.location.search).get("from");
+  const storedQuizLp = safeGetItem("conexao-pending-source-lp");
+  const quizLpId: CheckoutSourceLp =
+    quizOrigin === "lp1"
+      ? "v2"
+      : quizOrigin === "lp2"
+        ? "v1"
+        : storedQuizLp === "v1" || storedQuizLp === "v2"
+          ? storedQuizLp
+          : DEFAULT_PRIMARY_LANDING_PAGE_ID === "lp3"
+            ? "v2"
+            : DEFAULT_PRIMARY_LANDING_PAGE_ID;
+  const trackCtaClick = useLpTracking(quizLpId, experimentAssignment);
   const checkout = useCheckout({
-    sourceLp: "v2",
-    onCtaClick: trackCtaClick,
+    sourceLp: quizLpId,
+    onTrackingEvent: trackCtaClick,
     experimentAssignment,
   });
   const [, navigate] = useLocation();
-  const quizOrigin = new URLSearchParams(window.location.search).get("from");
   const quizReturnPath = quizOrigin === "lp1" ? "/lp1" : "/";
 
   useEffect(() => {
@@ -8317,7 +8403,8 @@ function TrackedQuiz({
   return (
     <>
       <Lp1Quiz
-        onFinish={() => checkout.startCheckout("couple")}
+        lpId={quizLpId}
+        onFinish={() => checkout.startCheckout("couple", "pos_quiz")}
         onBackToLanding={() => navigate(quizReturnPath)}
         experimentAssignment={experimentAssignment}
         checkoutOpen={checkout.checkoutOpen}

@@ -1466,10 +1466,10 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
     landingPage === "all"
       ? "todas as landing pages"
       : landingPage === "lp3"
-        ? "LP3"
+        ? "lp3 · Oferta essencial"
         : landingPage === "v1"
-          ? "V1"
-          : "LP principal";
+          ? "v1 · Reacender a chama"
+          : "v2 · Perguntas que aproximam";
   const periodLabel =
     period === "custom"
       ? `${customFrom || "—"} até ${customTo || "—"}`
@@ -1511,9 +1511,9 @@ function AnalyticsTab({ sessionId }: { sessionId: string }) {
             }
             data-testid="select-analytics-landing-page"
           >
-            <option value="v2">LP principal · Perguntas que aproximam</option>
-            <option value="lp3">LP3 · Oferta essencial</option>
-            <option value="v1">V1 · Reacender a chama</option>
+            <option value="v1">v1 · Reacender a chama</option>
+            <option value="v2">v2 · Perguntas que aproximam</option>
+            <option value="lp3">lp3 · Oferta essencial</option>
             <option value="all">Todas as landing pages</option>
           </select>
         </label>
@@ -1747,10 +1747,10 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
     landingPage === "all"
       ? "todas as landing pages"
       : landingPage === "lp3"
-        ? "LP3"
+        ? "lp3 · Oferta essencial"
         : landingPage === "v1"
-          ? "V1"
-          : "LP principal";
+          ? "v1 · Reacender a chama"
+          : "v2 · Perguntas que aproximam";
   const periodLabel =
     period === "custom"
       ? `${customFrom || "—"} até ${customTo || "—"}`
@@ -1820,9 +1820,9 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
             }
             data-testid="select-quiz-analytics-landing-page"
           >
-            <option value="v2">LP principal · Perguntas que aproximam</option>
-            <option value="lp3">LP3 · Oferta essencial</option>
-            <option value="v1">V1 · Reacender a chama</option>
+            <option value="v1">v1 · Reacender a chama</option>
+            <option value="v2">v2 · Perguntas que aproximam</option>
+            <option value="lp3">lp3 · Oferta essencial</option>
             <option value="all">Todas as landing pages</option>
           </select>
         </label>

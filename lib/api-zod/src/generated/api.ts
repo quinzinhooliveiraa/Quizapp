@@ -428,12 +428,12 @@ export const TrackPageEventBody = zod.object({
   "visitorKey": zod.string().min(1).max(trackPageEventBodyVisitorKeyMax),
   "experimentId": zod.string().max(trackPageEventBodyExperimentIdMax).optional(),
   "experimentVariantId": zod.string().max(trackPageEventBodyExperimentVariantIdMax).optional(),
-  "eventType": zod.enum(['view', 'cta_click', 'exit']),
+  "eventType": zod.enum(['view', 'cta_click', 'exit', 'quiz_start', 'theme_peek', 'buy_click', 'checkout_open']),
   "timeOnPageMs": zod.number().min(trackPageEventBodyTimeOnPageMsMin).optional(),
   "lastSection": zod.string().max(trackPageEventBodyLastSectionMax).optional(),
   "clarityUserId": zod.string().max(trackPageEventBodyClarityUserIdMax).optional(),
   "claritySessionId": zod.string().max(trackPageEventBodyClaritySessionIdMax).optional(),
-  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'lp3_offer']).optional(),
+  "ctaSource": zod.enum(['hero_quiz', 'hero_comprar', 'oferta_principal', 'preco', 'rodape', 'sticky', 'pos_quiz', 'baralho_modal', 'lp3_offer']).optional(),
   "lcpMs": zod.number().min(trackPageEventBodyLcpMsMin).optional(),
   "internal": zod.boolean().default(trackPageEventBodyInternalDefault)
 })
@@ -551,9 +551,14 @@ export const GetAdminFunnelAnalyticsResponse = zod.object({
   "from": zod.string(),
   "to": zod.string(),
   "views": zod.number(),
-  "ctaClicks": zod.number(),
-  "checkoutsStarted": zod.number(),
+  "buyClicks": zod.number(),
+  "checkoutOpens": zod.number(),
+  "paymentsGenerated": zod.number(),
   "purchasesConfirmed": zod.number(),
+  "navigationSignals": zod.object({
+  "quizStarts": zod.number(),
+  "themePeeks": zod.number()
+}),
   "avgTimeOnPageSeconds": zod.number().nullable(),
   "heroExits": zod.number(),
   "topExitSections": zod.array(zod.object({
@@ -566,12 +571,17 @@ export const GetAdminFunnelAnalyticsResponse = zod.object({
   "desktop": zod.number(),
   "tablet": zod.number()
 }),
-  "ctaClicks": zod.object({
+  "buyClicks": zod.object({
   "mobile": zod.number(),
   "desktop": zod.number(),
   "tablet": zod.number()
 }),
-  "checkoutsStarted": zod.object({
+  "checkoutOpens": zod.object({
+  "mobile": zod.number(),
+  "desktop": zod.number(),
+  "tablet": zod.number()
+}),
+  "paymentsGenerated": zod.object({
   "mobile": zod.number(),
   "desktop": zod.number(),
   "tablet": zod.number()
@@ -626,9 +636,14 @@ export const GetAdminAnalyticsExportResponse = zod.object({
   "from": zod.string(),
   "to": zod.string(),
   "views": zod.number(),
-  "ctaClicks": zod.number(),
-  "checkoutsStarted": zod.number(),
+  "buyClicks": zod.number(),
+  "checkoutOpens": zod.number(),
+  "paymentsGenerated": zod.number(),
   "purchasesConfirmed": zod.number(),
+  "navigationSignals": zod.object({
+  "quizStarts": zod.number(),
+  "themePeeks": zod.number()
+}),
   "avgTimeOnPageSeconds": zod.number().nullable(),
   "heroExits": zod.number(),
   "topExitSections": zod.array(zod.object({
@@ -641,12 +656,17 @@ export const GetAdminAnalyticsExportResponse = zod.object({
   "desktop": zod.number(),
   "tablet": zod.number()
 }),
-  "ctaClicks": zod.object({
+  "buyClicks": zod.object({
   "mobile": zod.number(),
   "desktop": zod.number(),
   "tablet": zod.number()
 }),
-  "checkoutsStarted": zod.object({
+  "checkoutOpens": zod.object({
+  "mobile": zod.number(),
+  "desktop": zod.number(),
+  "tablet": zod.number()
+}),
+  "paymentsGenerated": zod.object({
   "mobile": zod.number(),
   "desktop": zod.number(),
   "tablet": zod.number()
