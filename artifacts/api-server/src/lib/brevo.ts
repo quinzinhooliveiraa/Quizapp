@@ -111,68 +111,111 @@ export function buildPurchaseAccessEmail(params: {
 }
 
 export function buildAbandonedCheckoutEmail(params: {
-  sequence: 1 | 2;
+  sequence: 1 | 2 | 3 | 4 | 5;
   sessionId: string;
   buyerName: string;
   buyerEmail: string;
   pixBrCode?: string | null;
 }) {
-  const firstName = params.buyerName.trim().split(/\s+/)[0] || "vocês";
-  const safeFirstName = escapeHtml(firstName);
   const baseUrl =
     process.env.PUBLIC_BASE_URL || "https://www.perguntasdeconexao.com.br";
   const resumeUrl = `${baseUrl}/retomar/${encodeURIComponent(params.sessionId)}`;
-  const safeResumeUrl = escapeHtml(resumeUrl);
-  const pixBlock =
-    params.sequence === 1 && params.pixBrCode
-      ? `
-        <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 10px;">Se você escolheu Pix, é mais rápido ainda: copia o código abaixo, cola no app do seu banco e pronto, 30 segundos e tá liberado pra hoje à noite.</p>
-        <div style="background: #f4f0f8; border-radius: 10px; padding: 14px; margin: 0 0 22px; overflow-wrap: anywhere;">
-          <code style="font-size: 11px; line-height: 1.45; color: #4a4550;">${escapeHtml(params.pixBrCode)}</code>
-        </div>
-      `
-      : "";
+  type Paragraph =
+    | string
+    | { prefix: string; linkText: string; suffix?: string }
+    | { code: string };
 
-  if (params.sequence === 2) {
-    const subject =
-      process.env.ABANDON_EMAIL_2_SUBJECT || "último dia do seu desconto";
-    const htmlContent = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #17121b;">
-        <p style="font-size: 14px; color: #6b6070; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Perguntas de Conexão</p>
-        <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 24px;">${subject}</h1>
-        <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Oi, ${safeFirstName}</p>
-        <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Passando só pra avisar: seu desconto no Perguntas de Conexão vira abóbora hoje. Depois disso volta pro valor cheio.</p>
-        <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 24px;">São 459 perguntas pra vocês saírem do "e aí, como foi seu dia" e terem conversa de verdade, uma por noite, pra mais de um ano.</p>
-        <a href="${safeResumeUrl}" style="display: block; text-align: center; background: #8a2f4d; color: #ffffff; text-decoration: none; border-radius: 999px; padding: 15px 20px; font-size: 16px; font-weight: 600; margin: 0 0 24px;">Garantir meu acesso com desconto</a>
-        <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0;">Se precisar de ajuda pra pagar, é só responder aqui.</p>
-        <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 24px 0 0;">Perguntas de Conexão</p>
-      </div>
-    `;
-    const textContent = `Perguntas de Conexão\n\nOi, ${firstName}\n\nPassando só pra avisar: seu desconto no Perguntas de Conexão vira abóbora hoje. Depois disso volta pro valor cheio.\n\nSão 459 perguntas pra vocês saírem do "e aí, como foi seu dia" e terem conversa de verdade, uma por noite, pra mais de um ano.\n\nGarantir meu acesso com desconto: ${resumeUrl}\n\nSe precisar de ajuda pra pagar, é só responder aqui.\n\nPerguntas de Conexão`;
-    return { subject, htmlContent, textContent };
-  }
+  const linkParagraph = (prefix: string): Paragraph => ({
+    prefix,
+    linkText: resumeUrl,
+  });
+  const paragraphsBySequence: Record<1 | 2 | 3 | 4 | 5, Paragraph[]> = {
+    1: [
+      "Oi. Aqui é o Joaquim, eu que criei o Perguntas de Conexão. Pessoa de verdade, não robô.",
+      "Vi que você fez o teste todo e travou bem na hora de liberar as perguntas.",
+      ...(params.pixBrCode
+        ? [
+            "Se foi Pix, é rápido: copia o código aqui embaixo e cola no app do banco. Uns 30 segundos e libera.",
+            { code: params.pixBrCode },
+          ]
+        : []),
+      linkParagraph("Ou volta por aqui: "),
+      'Amanhã te conto por que eu criei isso. Tem a ver com um "sei lá" que quase virou o normal aqui em casa.',
+      "Travou algo no pagamento? Só responder este e-mail que eu leio.",
+      "Joaquim",
+    ],
+    2: [
+      "Oi.",
+      "Ontem falei que ia te contar por que eu criei isso.",
+      'Teve uma noite que a minha namorada sentou do meu lado querendo conversar de verdade. Ela falou "vamos conversar". E eu, sinceramente? Fui respondendo "sei lá", "sei lá", até a conversa morrer ali.',
+      "Não foi maldade. Eu simplesmente não sabia o que responder, e era mais fácil desconversar.",
+      "O problema é que aquilo foi virando o normal da gente: dois que se gostam, lado a lado, cada um no celular, sem assunto.",
+      'Se você já ouviu (ou já deu) esse "sei lá", conhece essa parede.',
+      'Eu fui atrás de uma saída. Não foi terapia, não foi "esforço", não foi marcar um jantar caro. Foi uma coisa só, bem simples, e amanhã te conto qual.',
+      linkParagraph("Teu acesso continua aqui: "),
+      "Joaquim",
+    ],
+    3: [
+      "Oi.",
+      "A virada foi essa: o problema nunca foi a gente. Era a pergunta.",
+      '"Vamos conversar" não é pergunta, é cobrança. Pede que o outro traga algo sem dizer o quê. Ninguém responde isso.',
+      'Aí eu troquei por perguntas prontas, que já chegam com o assunto na mão. "Você se arrepende de algo sobre a nossa história até aqui?" Essa tem resposta. Abre uma porta.',
+      "Foi daí que nasceu o Perguntas de Conexão: 459 perguntas pra abrir conversa sozinhas, uma por noite. O baralho que mais combinou com vocês no teste já tá separado.",
+      linkParagraph("Destrava aqui: "),
+      "Joaquim",
+    ],
+    4: [
+      "Oi.",
+      'Todo mundo acha que é "um baralho de perguntas". O que acontece de verdade é outra coisa.',
+      "É a paz meio esquisita de boa de quem foi escutado.",
+      "É rir junto num dia que ia acabar cada um no seu celular.",
+      "E principalmente, é redescobrir uma pessoa que você achava que já sabia tudo. Foi o que uma cliente me escreveu:",
+      '"Teve uma pergunta que fez meu namorado falar uma coisa que eu nunca tinha ouvido dele daquele jeito. A gente ficou um tempão conversando depois, e eu pensei: como é que eu namoro essa pessoa há tanto tempo e nunca conversamos sobre isso? Foi conhecer de um jeito novo alguém que eu já conheço."',
+      "E dá pra fazer à distância, cada um no seu celular, ao mesmo tempo. É pros dois. E é vitalício: baralho novo entra pra sempre, sem pagar de novo.",
+      linkParagraph("Tá a um passo: "),
+      "Joaquim",
+    ],
+    5: [
+      "Oi.",
+      "Esse é meu último e-mail sobre isso.",
+      "O desconto que eu segurei pra você acaba hoje. Depois volta pro valor cheio, e eu não consigo reabrir.",
+      "Se ficou algum receio: são 7 dias de garantia. Não fez sentido pra vocês, devolvo 100%, sem drama.",
+      "Dá 11 centavos por noite pra tirar a conversa de vocês do automático. Vale o risco?",
+      linkParagraph("Garantir com desconto: "),
+      "Joaquim",
+      " (quando for pagar, o Pix aparece no meu nome, Joaquim Emmanuel de Oliveira. Sou eu mesmo, pode confiar.)",
+    ],
+  };
 
-  const subject =
-    process.env.ABANDON_EMAIL_1_SUBJECT ||
-    "vocês pararam bem na melhor parte";
+  const paragraphs = paragraphsBySequence[params.sequence];
+  const textContent = paragraphs
+    .map((paragraph) => {
+      if (typeof paragraph === "string") return paragraph;
+      if ("code" in paragraph) return paragraph.code;
+      return `${paragraph.prefix}${paragraph.linkText}${paragraph.suffix ?? ""}`;
+    })
+    .join("\n\n");
   const htmlContent = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #17121b;">
-      <p style="font-size: 14px; color: #6b6070; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Perguntas de Conexão</p>
-      <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 24px;">${subject}</h1>
-      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Oi, ${safeFirstName}</p>
-      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Você foi até o fim do teste e parou bem na hora de destravar as perguntas. Acontece: a vida corre, o celular apita, e a gente deixa pra depois.</p>
-      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Mas olha o que ficou te esperando: 459 perguntas, 15 baralhos. Uma por noite dá mais de um ano de conversa de verdade com quem importa. E o baralho que mais combinou com vocês no teste já tá separado.</p>
-      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 10px;"><strong>Falta só um passo:</strong></p>
-      <a href="${safeResumeUrl}" style="display: block; text-align: center; background: #8a2f4d; color: #ffffff; text-decoration: none; border-radius: 999px; padding: 15px 20px; font-size: 16px; font-weight: 600; margin: 0 0 24px;">Voltar e finalizar meu acesso</a>
-      ${pixBlock}
-      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 20px;">Segurei o seu desconto, mas só até amanhã. Depois volta pro valor cheio.</p>
-      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 24px;">Travou alguma coisa na hora de pagar? Responde este e-mail que eu resolvo pra você.</p>
-      <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0;">Perguntas de Conexão</p>
+    <div style="font-family: Arial, sans-serif; max-width: 560px; padding: 24px; color: #17121b;">
+      ${paragraphs
+        .map((paragraph) => {
+          if (typeof paragraph === "string") {
+            return `<p style="font-size: 15px; line-height: 1.55; margin: 0 0 16px;">${escapeHtml(paragraph)}</p>`;
+          }
+          if ("code" in paragraph) {
+            return `<p style="font-size: 13px; line-height: 1.45; margin: 0 0 16px; overflow-wrap: anywhere;"><code>${escapeHtml(paragraph.code)}</code></p>`;
+          }
+          return `<p style="font-size: 15px; line-height: 1.55; margin: 0 0 16px;">${escapeHtml(paragraph.prefix)}<a href="${escapeHtml(resumeUrl)}">${escapeHtml(paragraph.linkText)}</a>${escapeHtml(paragraph.suffix ?? "")}</p>`;
+        })
+        .join("\n      ")}
     </div>
   `;
-  const pixText = params.pixBrCode
-    ? `\n\nSe você escolheu Pix, é mais rápido ainda: copia o código abaixo, cola no app do seu banco e pronto, 30 segundos e tá liberado pra hoje à noite.\n${params.pixBrCode}`
-    : "";
-  const textContent = `Perguntas de Conexão\n\nOi, ${firstName}\n\nVocê foi até o fim do teste e parou bem na hora de destravar as perguntas. Acontece: a vida corre, o celular apita, e a gente deixa pra depois.\n\nMas olha o que ficou te esperando: 459 perguntas, 15 baralhos. Uma por noite dá mais de um ano de conversa de verdade com quem importa. E o baralho que mais combinou com vocês no teste já tá separado.\n\nFalta só um passo:\n\nVoltar e finalizar meu acesso: ${resumeUrl}${pixText}\n\nSegurei o seu desconto, mas só até amanhã. Depois volta pro valor cheio.\n\nTravou alguma coisa na hora de pagar? Responde este e-mail que eu resolvo pra você.\n\nPerguntas de Conexão`;
-  return { subject, htmlContent, textContent };
+  const subjects: Record<1 | 2 | 3 | 4 | 5, string> = {
+    1: "você parou bem na melhor parte",
+    2: 'o dia que a nossa conversa morreu num "sei lá"',
+    3: "o problema nunca foi vocês",
+    4: "o que ninguém te conta sobre 10 minutos de conversa",
+    5: "último e-mail (seu desconto acaba hoje)",
+  };
+  return { subject: subjects[params.sequence], htmlContent, textContent };
 }

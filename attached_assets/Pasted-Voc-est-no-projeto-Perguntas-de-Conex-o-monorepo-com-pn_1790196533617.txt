@@ -1,0 +1,96 @@
+Você está no projeto Perguntas de Conexão (monorepo com pnpm). Todos os arquivos citados
+existem neste repositório. NÃO peça para anexar contexto e não mude de projeto: use os
+arquivos abaixo.
+
+TAREFA
+Trocar os e-mails de recuperação de checkout/Pix abandonado. Hoje são 2 e-mails na função
+buildAbandonedCheckoutEmail (artifacts/api-server/src/lib/brevo.ts), disparados pelo scheduler
+artifacts/api-server/src/lib/abandoned-checkout.ts. Problemas: caem na aba Promoções do Gmail
+(HTML pesado com cabeçalho/botão/card) e a copy é fraca e sem rosto.
+Vamos trocar por uma sequência de 5 e-mails em TEXTO SIMPLES, na voz de uma pessoa (Joaquim).
+
+REGRAS IMPORTANTES
+- NÃO usar o caractere travessão "—" em nenhum texto.
+- NÃO usar nome do cliente (não capturamos): todo e-mail abre com "Oi.".
+- Assinatura sempre "Joaquim" (nunca "Perguntas de Conexão").
+- Português do Brasil, informal, de pessoa pra pessoa.
+- {link} = o resumeUrl que a função já monta (https://.../retomar/{sessionId}). Um link só por e-mail.
+- [código Pix] = o params.pixBrCode que a função já recebe, e SÓ aparece no e-mail 1.
+- Nada de biblioteca nova. Não quebrar o resumeUrl nem o desconto travado que já funcionam.
+
+MUDANÇA 1 — brevo.ts (buildAbandonedCheckoutEmail)
+- Ampliar o tipo "sequence" de (1 | 2) para (1 | 2 | 3 | 4 | 5).
+- SUBSTITUIR o conteúdo atual das sequências 1 e 2 (os textos antigos saem de vez) e ADICIONAR 3, 4, 5.
+- Cada e-mail em TEXTO SIMPLES: sem eyebrow de marca em caixa alta, sem botão colorido, sem card cinza.
+  Só parágrafos simples e UM link de texto (o resumeUrl). Manter htmlContent e textContent, mas o HTML
+  tem que ser praticamente igual ao texto (parágrafos + 1 link inline).
+- Usar exatamente os assuntos e corpos abaixo:
+
+E-MAIL 1 (sequence 1)
+Assunto: você parou bem na melhor parte
+Oi. Aqui é o Joaquim, eu que criei o Perguntas de Conexão. Pessoa de verdade, não robô.
+Vi que você fez o teste todo e travou bem na hora de liberar as perguntas.
+Se foi Pix, é rápido: copia o código aqui embaixo e cola no app do banco. Uns 30 segundos e libera.
+[código Pix]
+Ou volta por aqui: {link}
+Amanhã te conto por que eu criei isso. Tem a ver com um "sei lá" que quase virou o normal aqui em casa.
+Travou algo no pagamento? Só responder este e-mail que eu leio.
+Joaquim
+
+E-MAIL 2 (sequence 2)
+Assunto: o dia que a nossa conversa morreu num "sei lá"
+Ontem falei que ia te contar por que eu criei isso.
+Teve uma noite que a minha namorada sentou do meu lado querendo conversar de verdade. Ela falou "vamos conversar". E eu, sinceramente? Fui respondendo "sei lá", "sei lá", até a conversa morrer ali.
+Não foi maldade. Eu simplesmente não sabia o que responder, e era mais fácil desconversar.
+O problema é que aquilo foi virando o normal da gente: dois que se gostam, lado a lado, cada um no celular, sem assunto.
+Se você já ouviu (ou já deu) esse "sei lá", conhece essa parede.
+Eu fui atrás de uma saída. Não foi terapia, não foi "esforço", não foi marcar um jantar caro. Foi uma coisa só, bem simples, e amanhã te conto qual.
+Teu acesso continua aqui: {link}
+Joaquim
+
+E-MAIL 3 (sequence 3)
+Assunto: o problema nunca foi vocês
+A virada foi essa: o problema nunca foi a gente. Era a pergunta.
+"Vamos conversar" não é pergunta, é cobrança. Pede que o outro traga algo sem dizer o quê. Ninguém responde isso.
+Aí eu troquei por perguntas prontas, que já chegam com o assunto na mão. "Você se arrepende de algo sobre a nossa história até aqui?" Essa tem resposta. Abre uma porta.
+Foi daí que nasceu o Perguntas de Conexão: 459 perguntas pra abrir conversa sozinhas, uma por noite. O baralho que mais combinou com vocês no teste já tá separado.
+Destrava aqui: {link}
+Joaquim
+
+E-MAIL 4 (sequence 4)
+Assunto: o que ninguém te conta sobre 10 minutos de conversa
+Todo mundo acha que é "um baralho de perguntas". O que acontece de verdade é outra coisa.
+É a paz meio esquisita de boa de quem foi escutado.
+É rir junto num dia que ia acabar cada um no seu celular.
+E principalmente, é redescobrir uma pessoa que você achava que já sabia tudo. Foi o que uma cliente me escreveu:
+"Teve uma pergunta que fez meu namorado falar uma coisa que eu nunca tinha ouvido dele daquele jeito. A gente ficou um tempão conversando depois, e eu pensei: como é que eu namoro essa pessoa há tanto tempo e nunca conversamos sobre isso? Foi conhecer de um jeito novo alguém que eu já conheço."
+E dá pra fazer à distância, cada um no seu celular, ao mesmo tempo. É pros dois. E é vitalício: baralho novo entra pra sempre, sem pagar de novo.
+Tá a um passo: {link}
+Joaquim
+
+E-MAIL 5 (sequence 5)
+Assunto: último e-mail (seu desconto acaba hoje)
+Esse é meu último e-mail sobre isso.
+O desconto que eu segurei pra você acaba hoje. Depois volta pro valor cheio, e eu não consigo reabrir.
+Se ficou algum receio: são 7 dias de garantia. Não fez sentido pra vocês, devolvo 100%, sem drama.
+Dá 11 centavos por noite pra tirar a conversa de vocês do automático. Vale o risco?
+Garantir com desconto: {link}
+Joaquim
+(quando for pagar, o Pix aparece no meu nome, Joaquim Emmanuel de Oliveira. Sou eu mesmo, pode confiar.)
+
+MUDANÇA 2 — abandoned-checkout.ts (scheduler)
+- Trocar as 2 constantes de tempo por um cronograma de 5 toques a partir de createdAt:
+  ~20 min, +1 dia, +2 dias, +3 dias, +4 dias.
+- Hoje o controle é abandonEmail1At / abandonEmail2At. Adicionar colunas nullable
+  abandonEmail3At, abandonEmail4At, abandonEmail5At em sessionsTable (lib/db/src/schema/index.ts)
+  e rodar `pnpm --filter @workspace/db run push`.
+- Ajustar a query de candidatos e a escolha de qual sequência mandar pra cobrir as 5 etapas,
+  sempre parando se accessGranted = true (pagou) e respeitando internal = false.
+
+MUDANÇA 3 — coerência do desconto
+- O e-mail 5 diz que "o desconto acaba hoje". Isso tem que ser VERDADE. Se o desconto travado
+  não dura ~4 a 5 dias, ajustar o prazo pra bater com o fim da sequência (senão vira urgência falsa).
+
+NO FINAL
+- Rodar `pnpm run typecheck`.
+- Listar exatamente o que mudou em cada arquivo.

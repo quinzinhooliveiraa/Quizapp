@@ -425,6 +425,7 @@ const packageConfig = {
 
 const router: IRouter = Router();
 const PIX_LIFETIME_MS = 15 * 60 * 1000;
+const ABANDONED_CHECKOUT_DISCOUNT_MS = 5 * 24 * 60 * 60 * 1000;
 
 const EMAIL_CHECK_RATE_WINDOW_MS = 60_000;
 const EMAIL_CHECK_RATE_LIMIT = 20;
@@ -736,11 +737,21 @@ router.get(
       return;
     }
 
+    const fullCents = getOfferPricing("BR").full.amountCents;
     const offerCents = getOfferPricing("BR").offer.amountCents;
-    const discountedCents = Math.min(
-      session.lockedPriceCents ?? offerCents,
-      offerCents,
+    const discountValidUntil = new Date(
+      session.createdAt.getTime() + ABANDONED_CHECKOUT_DISCOUNT_MS,
     );
+    const discountIsActive = discountValidUntil.getTime() > Date.now();
+    const resumeCents = discountIsActive
+      ? Math.min(
+          session.lockedPriceCents ?? offerCents,
+          offerCents,
+        )
+      : fullCents;
+    const resumePricing = discountIsActive
+      ? getOfferPricing("BR").offer
+      : getOfferPricing("BR").full;
 
     let pix:
       | {
@@ -759,7 +770,7 @@ router.get(
       session.pixChargeId &&
       session.pixExpiresAt &&
       session.pixExpiresAt.getTime() > Date.now() &&
-      (session.lockedPriceCents ?? Infinity) <= offerCents
+      session.lockedPriceCents === resumeCents
     ) {
       pix = {
         brCode: session.pixBrcode,
@@ -771,7 +782,7 @@ router.get(
       try {
         const charge = await createAbacatePixCharge({
           sessionId: session.id,
-          amount: discountedCents,
+          amount: resumeCents,
           description: "Perguntas de Conexao - Pacote Casal",
         });
         const pixExpiresAt = new Date(Date.now() + PIX_LIFETIME_MS);
@@ -783,7 +794,7 @@ router.get(
             pixChargeId: charge.id,
             pixBrcode: charge.brCode,
             pixExpiresAt,
-            lockedPriceCents: discountedCents,
+            lockedPriceCents: resumeCents,
           })
           .where(eq(sessionsTable.id, session.id));
         pix = {
@@ -805,7 +816,7 @@ router.get(
     if (!session.accessGranted && session.paymentMethod === "card") {
       if (
         session.lockedPriceCents !== null &&
-        session.lockedPriceCents <= offerCents
+        session.lockedPriceCents === resumeCents
       ) {
         clientSecret = session.stripePaymentIntentId
           ? await fetchStripePaymentIntentClientSecret(
@@ -817,13 +828,13 @@ router.get(
           const paymentIntent = await createStripePaymentIntent({
             sessionId: session.id,
             buyerEmail: session.buyerEmail,
-            pricing: getOfferPricing("BR").offer,
+            pricing: resumePricing,
           });
           await db
             .update(sessionsTable)
             .set({
               stripePaymentIntentId: paymentIntent.id,
-              lockedPriceCents: discountedCents,
+              lockedPriceCents: resumeCents,
             })
             .where(eq(sessionsTable.id, session.id));
           clientSecret = paymentIntent.clientSecret;
@@ -840,12 +851,6 @@ router.get(
       }
     }
 
-    const latestAbandonEmailAt = [session.abandonEmail1At, session.abandonEmail2At]
-      .filter((value): value is Date => value instanceof Date)
-      .sort((a, b) => b.getTime() - a.getTime())[0];
-    const discountValidUntil = latestAbandonEmailAt
-      ? new Date(latestAbandonEmailAt.getTime() + 24 * 60 * 60 * 1000)
-      : null;
     const paymentMethod =
       session.paymentMethod === "pix" || session.paymentMethod === "card"
         ? session.paymentMethod
@@ -857,8 +862,8 @@ router.get(
         buyerEmail: session.buyerEmail,
         paymentMethod,
         accessGranted: session.accessGranted,
-        lockedPriceCents: discountedCents,
-        discountValidUntil: discountValidUntil?.toISOString() ?? null,
+        lockedPriceCents: resumeCents,
+        discountValidUntil: discountValidUntil.toISOString(),
         pix,
         clientSecret,
       }),
