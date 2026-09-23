@@ -645,7 +645,7 @@ export function Lp1SalePage({
                 </b>
               </div>
             </div>
-            <button type="button" onClick={scrollToOffer}>
+            <button type="button" onClick={onCheckout}>
               Obter desconto{" "}
               <ArrowRight size={15} aria-hidden="true" />
             </button>
