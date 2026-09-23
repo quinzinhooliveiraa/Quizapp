@@ -1,0 +1,44 @@
+CONTEXTO
+
+SUBSTITUIR a recuperação de checkout abandonado (Pix) do Perguntas de Conexão. Hoje são 2 e-mails
+(buildAbandonedCheckoutEmail em artifacts/api-server/src/lib/brevo.ts, disparados pelo scheduler em
+artifacts/api-server/src/lib/abandoned-checkout.ts). Dois problemas: caem na aba Promoções do Gmail
+(HTML pesado com cabeçalho/botão/card) e a copy é transacional e sem rosto. Trocar por uma Soap Opera
+Sequence de 5 mensagens em TEXTO SIMPLES, na voz de uma pessoa (Joaquim). NÃO capturamos nome nem
+telefone: a copy NÃO pode depender de nome. IMPORTANTE: não usar o caractere travessão "—" em nenhum
+texto.
+
+MUDANÇAS
+
+1) brevo.ts — buildAbandonedCheckoutEmail
+   - SUBSTITUIR o conteúdo atual das sequências 1 e 2 (os textos antigos saem de vez, não manter) e
+     ADICIONAR as sequências 3, 4 e 5. Ampliar o tipo sequence de (1 | 2) para (1 | 2 | 3 | 4 | 5).
+   - Reescrever CADA sequência em TEXTO SIMPLES pra cair na aba Principal: sem eyebrow de marca em
+     caixa alta, sem botão colorido, sem card cinza. Só parágrafos simples e UM link de texto
+     (o resumeUrl) por e-mail. Manter htmlContent e textContent, mas o HTML deve ser praticamente
+     igual ao texto (parágrafos + 1 link inline).
+   - Assinatura: "Joaquim" (sem traço antes, e não "Perguntas de Conexão").
+   - Copiar os textos das 5 mensagens do doc 120 (assuntos e corpo), exatamente, sem inserir nenhum
+     travessão "—". Manter o bloco do código Pix SÓ na sequência 1. Nunca usar {primeiro_nome}
+     (abrir com "Oi.").
+   - Na sequência 5, o "desconto acaba hoje" tem que bater com o prazo real do desconto (item 3).
+
+2) abandoned-checkout.ts — scheduler
+   - Trocar as 2 constantes de tempo por um cronograma de 5 toques a partir de createdAt:
+     ~20 min, +1 dia, +2 dias, +3 dias, +4 dias.
+   - Hoje o controle é abandonEmail1At / abandonEmail2At. Adicionar colunas nullable
+     abandonEmail3At, abandonEmail4At, abandonEmail5At em sessionsTable (lib/db/src/schema/index.ts)
+     e rodar `pnpm --filter @workspace/db run push`.
+   - Ajustar a query de candidatos e a escolha de qual sequência mandar pra cobrir as 5 etapas,
+     sempre parando se accessGranted = true (pagou) e respeitando internal = false.
+
+3) Alinhar o prazo do desconto com a msg 5 (senão vira fake urgency). Se o desconto travado não tem
+   prazo de ~4-5 dias, ajustar pra bater com o fim da sequência.
+
+4) DELIVERABILITY (fora do código, conferir no Brevo/DNS): remetente com nome de pessoa
+   (ex: "Joaquim | Perguntas de Conexão") e SPF/DKIM/DMARC do domínio configurados.
+
+REGRAS
+- Português do Brasil, tom informal, de pessoa pra pessoa. NENHUM travessão "—" nos textos.
+- Nada de biblioteca nova. Não quebrar o resumeUrl nem o desconto travado que já funcionam.
+- Rodar `pnpm run typecheck` no fim e listar o que mudou em cada arquivo.
