@@ -1,6 +1,7 @@
 import {
   and,
   eq,
+  gte,
   isNotNull,
   isNull,
   lte,
@@ -14,10 +15,9 @@ import {
 import { logger } from "./logger";
 
 const FIRST_EMAIL_AFTER_MS = 20 * 60 * 1000;
-const SECOND_EMAIL_AFTER_MS = 24 * 60 * 60 * 1000;
-const THIRD_EMAIL_AFTER_MS = 2 * 24 * 60 * 60 * 1000;
-const FOURTH_EMAIL_AFTER_MS = 3 * 24 * 60 * 60 * 1000;
-const FIFTH_EMAIL_AFTER_MS = 4 * 24 * 60 * 60 * 1000;
+const EMAIL_GAP_MS = 24 * 60 * 60 * 1000;
+const FIRST_EMAIL_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+const SEQUENCE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const RESEND_BATCH_SIZE = 100;
 const SCHEDULER_INTERVAL_MS = 5 * 60 * 1000;
 const PIX_LIFETIME_MS = 15 * 60 * 1000;
@@ -31,10 +31,9 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
   try {
     const now = Date.now();
     const firstCutoff = new Date(now - FIRST_EMAIL_AFTER_MS);
-    const secondCutoff = new Date(now - SECOND_EMAIL_AFTER_MS);
-    const thirdCutoff = new Date(now - THIRD_EMAIL_AFTER_MS);
-    const fourthCutoff = new Date(now - FOURTH_EMAIL_AFTER_MS);
-    const fifthCutoff = new Date(now - FIFTH_EMAIL_AFTER_MS);
+    const firstMinimumCreatedAt = new Date(now - FIRST_EMAIL_MAX_AGE_MS);
+    const sequenceMaximumCreatedAt = new Date(now - SEQUENCE_MAX_AGE_MS);
+    const emailGapCutoff = new Date(now - EMAIL_GAP_MS);
     const candidates = await db
       .select({
         id: sessionsTable.id,
@@ -57,27 +56,33 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
           isNotNull(sessionsTable.buyerEmail),
           or(
             and(
+              gte(sessionsTable.createdAt, sequenceMaximumCreatedAt),
+              gte(sessionsTable.createdAt, firstMinimumCreatedAt),
               lte(sessionsTable.createdAt, firstCutoff),
               isNull(sessionsTable.abandonEmail1At),
             ),
             and(
-              lte(sessionsTable.createdAt, secondCutoff),
+              gte(sessionsTable.createdAt, sequenceMaximumCreatedAt),
               isNotNull(sessionsTable.abandonEmail1At),
+              lte(sessionsTable.abandonEmail1At, emailGapCutoff),
               isNull(sessionsTable.abandonEmail2At),
             ),
             and(
-              lte(sessionsTable.createdAt, thirdCutoff),
+              gte(sessionsTable.createdAt, sequenceMaximumCreatedAt),
               isNotNull(sessionsTable.abandonEmail2At),
+              lte(sessionsTable.abandonEmail2At, emailGapCutoff),
               isNull(sessionsTable.abandonEmail3At),
             ),
             and(
-              lte(sessionsTable.createdAt, fourthCutoff),
+              gte(sessionsTable.createdAt, sequenceMaximumCreatedAt),
               isNotNull(sessionsTable.abandonEmail3At),
+              lte(sessionsTable.abandonEmail3At, emailGapCutoff),
               isNull(sessionsTable.abandonEmail4At),
             ),
             and(
-              lte(sessionsTable.createdAt, fifthCutoff),
+              gte(sessionsTable.createdAt, sequenceMaximumCreatedAt),
               isNotNull(sessionsTable.abandonEmail4At),
+              lte(sessionsTable.abandonEmail4At, emailGapCutoff),
               isNull(sessionsTable.abandonEmail5At),
             ),
           ),
