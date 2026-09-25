@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { logger } from "./logger";
 
 export type MetaEventName =
+  | "ViewContent"
   | "InitiateCheckout"
   | "AddPaymentInfo"
   | "Purchase";

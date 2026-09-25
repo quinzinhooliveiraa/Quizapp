@@ -14,6 +14,12 @@ import { Lp1MechanismSection } from "@/components/Lp1MechanismSection";
 import { Lp1ComparisonSection } from "@/components/Lp1ComparisonSection";
 import { getPricingRegionQuery, type Pricing } from "@/lib/pricing";
 import { themes as connectionThemes } from "@workspace/connection-content";
+import {
+  createMetaEventId,
+  getMetaAttributionCookies,
+  isMetaTrackingAllowed,
+  trackMetaPixelEvent,
+} from "@/lib/meta-pixel";
 
 type SaleAnswers = Record<string, unknown>;
 
@@ -536,6 +542,41 @@ export function Lp1SalePage({
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
     };
   }, [offerRetry, visitorKey]);
+
+  const viewContentTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!offerState || viewContentTrackedRef.current) return;
+    viewContentTrackedRef.current = true;
+    if (!isMetaTrackingAllowed()) return;
+
+    const pricing = offerState.discountActive ? offerState.offer : offerState.full;
+    const value = pricing.amountCents / 100;
+    const currency = pricing.currency.toUpperCase();
+    const eventId = createMetaEventId("ViewContent");
+    const attribution = getMetaAttributionCookies();
+    trackMetaPixelEvent(
+      "ViewContent",
+      { content_name: "Perguntas de Conexão", value, currency },
+      eventId,
+    );
+    void fetch(API_URL("/api/track/meta-event"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventName: "ViewContent",
+        eventId,
+        visitorKey,
+        value,
+        currency,
+        consent: true,
+        internal: false,
+        fbp: attribution.fbp,
+        fbc: attribution.fbc,
+        sourceUrl: window.location.href,
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, [offerState, visitorKey]);
 
   useEffect(() => {
     if (!offerState?.deadline) return;

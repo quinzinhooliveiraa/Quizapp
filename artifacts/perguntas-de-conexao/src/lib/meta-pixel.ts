@@ -130,6 +130,7 @@ function initializeMetaPixel(): void {
   }
 
   if (!window.__pdcMetaPixelInitialized) {
+    window.fbq("set", "autoConfig", false, META_PIXEL_ID);
     window.fbq("init", META_PIXEL_ID);
     window.__pdcMetaPixelInitialized = true;
   }

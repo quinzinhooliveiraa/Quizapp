@@ -153,7 +153,8 @@ router.post("/track/meta-event", (req, res): void => {
   }
 
   if (
-    body.eventName !== "InitiateCheckout" ||
+    (body.eventName !== "InitiateCheckout" &&
+      body.eventName !== "ViewContent") ||
     !body.eventId?.trim() ||
     body.eventId.length > 255 ||
     !body.visitorKey?.trim() ||
@@ -172,7 +173,7 @@ router.post("/track/meta-event", (req, res): void => {
     const forwardedFor = req.header("x-forwarded-for");
     const clientIpAddress =
       forwardedFor?.split(",")[0]?.trim() || req.ip || undefined;
-    void sendMetaEvent("InitiateCheckout", {
+    void sendMetaEvent(body.eventName as "InitiateCheckout" | "ViewContent", {
       eventId: body.eventId.trim(),
       value,
       currency: body.currency,
