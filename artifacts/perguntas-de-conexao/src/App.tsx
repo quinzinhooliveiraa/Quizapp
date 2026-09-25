@@ -7077,8 +7077,8 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     <div className="checkout-pix-expired" role="status" aria-live="polite">
       <p className="checkout-pix-expired-title">O código Pix expirou.</p>
       <p>
-        Ele vale 15 minutos. Toque em <strong>“Começar hoje à noite”</strong> aqui
-        embaixo que eu gero outro na hora — seus dados continuam preenchidos.
+        Ele vale 15 minutos. Toque no botão principal aqui embaixo que eu gero
+        outro na hora — seus dados continuam preenchidos.
       </p>
       <p className="checkout-pix-expired-alt">
         Ou pague no <strong>cartão</strong>, na aba ao lado. Aí não tem prazo.
@@ -7203,7 +7203,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
               <section className="checkout-order-column">
                 <div className="checkout-form-card checkout-details-card">
                   <div className="checkout-access-heading">
-                    <h3>Pra onde eu mando o acesso?</h3>
+                    <h3>Pra onde enviamos seu acesso?</h3>
                   </div>
                   <div className="checkout-fields-inline">
                     <label className="checkout-field">
@@ -7237,23 +7237,15 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                       )}
                     </label>
                     <p className="checkout-access-note">
-                      <strong>
-                        Digite seu e-mail acima para liberar{" "}
-                        {checkoutPricing.pixAvailable ? "Pix e cartão" : "o cartão"}.
-                      </strong>
-                      Só pra liberar seu acesso e guardar sua compra. Sem spam,
-                      sem lista.
+                      Usaremos seu e-mail para identificar sua compra e liberar seu
+                      acesso.
                     </p>
                   </div>
                 </div>
                 <div className="checkout-form-card checkout-payment-card">
                   <div className="checkout-card-heading checkout-payment-heading">
-                    <h3>Como você prefere pagar?</h3>
-                    <p>
-                      {hasValidBuyerDetails
-                        ? "Uma única cobrança. Sem assinatura."
-                        : "Digite seu e-mail acima para abrir as opções de pagamento."}
-                    </p>
+                    <h3>COMO VOCÊ PREFERE PAGAR?</h3>
+                    <p>Uma única cobrança. Sem assinatura.</p>
                   </div>
                   <CheckoutPaymentTabs
                     selectedPaymentMethod={selectedPaymentMethod}
@@ -7323,7 +7315,8 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                       : "Abrindo pagamento…"
                   ) : (
                     <>
-                      Começar hoje à noite <ArrowRight size={17} />
+                      Quero meu acesso — {checkoutPricing.display}{" "}
+                      <ArrowRight size={17} />
                     </>
                   )}
                 </button>

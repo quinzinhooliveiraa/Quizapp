@@ -1,0 +1,187 @@
+Quero fazer um ajuste final de UX no checkout atual.
+
+IMPORTANTE:
+- NÃO alterar backend.
+- NÃO alterar APIs.
+- NÃO alterar integração com Abacate Pay.
+- NÃO alterar webhooks.
+- NÃO alterar banco de dados.
+- NÃO alterar autenticação.
+- NÃO alterar a lógica de geração/confirmação de Pix.
+- NÃO alterar a lógica de pagamento com cartão.
+- NÃO alterar a lógica de liberação do produto.
+- NÃO criar um novo fluxo de pagamento.
+- NÃO remover a obrigatoriedade do e-mail.
+
+A lógica atual está funcionando e deve permanecer exatamente como está.
+
+O objetivo é SOMENTE melhorar a percepção de fricção do checkout e deixar mais claro para o usuário por que o e-mail é solicitado.
+
+CONTEXTO:
+O e-mail precisa ser coletado para identificar a compra e liberar o acesso ao produto. Portanto, NÃO quero tentar permitir pagamento sem e-mail.
+
+O problema atual é principalmente de comunicação: o checkout apresenta o e-mail como se fosse uma barreira para liberar Pix e cartão.
+
+Quero que você faça os seguintes ajustes:
+
+1. SEÇÃO DO E-MAIL
+
+Substitua o título atual:
+
+"Pra onde eu mando o acesso?"
+
+por:
+
+"Pra onde enviamos seu acesso?"
+
+Mantenha o campo de e-mail e toda a validação atual.
+
+Abaixo do campo, use uma explicação curta e objetiva:
+
+"Usaremos seu e-mail para identificar sua compra e liberar seu acesso."
+
+Remova textos que façam parecer que o e-mail é necessário apenas para "liberar Pix e cartão".
+
+Em particular, não usar:
+"Digite seu e-mail acima para liberar Pix e cartão."
+
+Também não precisa usar "Sem spam, sem lista." porque isso chama atenção para uma preocupação que o usuário talvez nem tivesse.
+
+2. MÉTODO DE PAGAMENTO
+
+Depois do campo de e-mail, mantenha normalmente:
+
+"COMO VOCÊ PREFERE PAGAR?"
+
+Mantenha as opções:
+- Pix
+- Cartão de crédito
+- Apple Pay / Google Pay, caso já estejam disponíveis pela integração atual
+
+NÃO alterar o funcionamento dessas opções.
+
+Depois que o usuário inserir um e-mail válido, o comportamento atual deve continuar exatamente como já funciona.
+
+3. MICROCOPY DO PAGAMENTO
+
+Se atualmente aparecer:
+
+"Digite seu e-mail acima para abrir as opções de pagamento."
+
+remova essa frase.
+
+O e-mail já foi explicado na seção anterior. Não precisamos repetir que ele é uma condição para liberar o pagamento.
+
+A ideia é o usuário perceber:
+
+"Estou preenchendo meus dados para comprar"
+e não:
+"Preciso passar por uma barreira antes de poder pagar."
+
+4. BOTÃO PRINCIPAL
+
+Se ainda estiver usando:
+
+"Começar hoje à noite →"
+
+substitua por:
+
+"Quero meu acesso — R$ 47,90 →"
+
+Esse texto deve continuar chamando exatamente o mesmo handler/ação que já existe atualmente.
+
+NÃO criar nova função.
+
+NÃO alterar a lógica do botão.
+
+Se o botão atualmente fica desabilitado enquanto o e-mail não é válido, mantenha esse comportamento.
+
+5. RESUMO DA COMPRA
+
+Mantenha:
+
+Perguntas de Conexão
+R$ 47,90
+
+Garantia de 7 dias
+incluída
+
+Total
+R$ 47,90
+
+Não alterar valores, regras ou lógica da garantia.
+
+6. TEXTO DE SEGURANÇA/EXPECTATIVA
+
+Mantenha a informação:
+
+"Assim que o pagamento cair, o acesso abre sozinho nesta tela. Não precisa mandar comprovante nem esperar e-mail."
+
+Pode apenas ajustar visualmente para que fique legível e próximo do resumo/pagamento.
+
+NÃO alterar o comportamento descrito.
+
+7. TELA DO PIX
+
+Não alterar absolutamente nada relacionado à geração, confirmação ou validação do Pix.
+
+Apenas melhorar a apresentação visual se necessário.
+
+Manter:
+- QR Code
+- Pix copia e cola
+- botão "Copiar código Pix"
+- instruções
+- status de confirmação
+- confirmação automática
+- botão de acesso
+
+Não alterar nenhum handler.
+
+8. PRINCÍPIO MAIS IMPORTANTE
+
+Não quero transformar o checkout em uma página cheia de explicações.
+
+Quero que ele fique simples:
+
+[ E-MAIL ]
+
+Pra onde enviamos seu acesso?
+seu@email.com
+
+Usaremos seu e-mail para identificar sua compra e liberar seu acesso.
+
+[ MÉTODO DE PAGAMENTO ]
+
+Como você prefere pagar?
+[ Pix ] [ Cartão ]
+
+[ RESUMO ]
+
+Perguntas de Conexão — R$ 47,90
+Garantia de 7 dias — incluída
+Total — R$ 47,90
+
+[ BOTÃO ]
+
+Quero meu acesso — R$ 47,90 →
+
+9. RESTRIÇÃO ABSOLUTA
+
+Faça somente alterações de frontend, layout, espaçamento, hierarquia visual e textos.
+
+Antes de finalizar, verifique o diff e confirme que nenhuma lógica de:
+- Abacate Pay
+- Pix
+- cartão
+- webhook
+- pagamento
+- banco
+- autenticação
+- liberação de acesso
+
+foi modificada.
+
+Se alguma alteração exigir mudança de backend ou integração, NÃO faça essa alteração.
+
+Preserve todo o comportamento atual e apenas melhore a experiência visual e a comunicação do checkout.
