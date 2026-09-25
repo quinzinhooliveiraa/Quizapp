@@ -1,0 +1,54 @@
+CONTEXTO
+Instalar o Pixel da Meta (navegador) + Conversions API (servidor) no app Perguntas de Conexão.
+O app roda no Railway. NÃO mexer em copy, preço, quiz nem no fluxo de pagamento. Só adicionar rastreamento.
+Pixel ID: 1059096806597539
+Variáveis de ambiente (já criadas no Railway, no serviço do backend; ler de process.env, NUNCA no front nem no git):
+  META_PIXEL_ID=1059096806597539
+  META_CAPI_TOKEN=(token)
+  META_TEST_EVENT_CODE=(opcional, só pra teste; se vazio, não mandar)
+No front o Pixel ID pode ficar direto no código (é público). O token só existe no backend.
+
+1) PIXEL BASE (front)
+- Carregar o código base do Meta Pixel 1x no index.html (ou no root do App), com fbq('init', '1059096806597539').
+- Disparar PageView a cada troca de rota (é SPA; não só no primeiro load).
+- NÃO carregar o pixel em /admin nem quando o modo interno (internal:true) estiver ativo.
+
+2) EVENTOS NO NAVEGADOR (App.tsx)
+- quiz_start        -> fbq('trackCustom','QuizStart')
+- quiz-complete     -> fbq('trackCustom','QuizComplete')  (quando chega no resultado/transição de venda)
+- página de oferta  -> fbq('track','ViewContent',{content_name:'Perguntas de Conexão', value, currency})
+- checkout_open     -> fbq('track','InitiateCheckout',{value, currency})
+- payment_generated -> fbq('track','AddPaymentInfo',{value, currency, payment_type:'pix'|'card'})
+- Purchase NÃO dispara no front pelo clique. Ver item 3.
+value = preço real da oferta selecionada; currency = moeda da sessão (BRL, ou EUR na operação de Portugal).
+Cada evento leva eventID único (ex.: `${tipo}_${sessionId || visitorKey}_${timestamp}`) e o MESMO eventID
+vai pro servidor no item 3 (deduplicação).
+
+3) CONVERSIONS API (backend, api-server)
+- Criar um helper sendMetaEvent(eventName, {eventId, value, currency, userData, sourceUrl}) que faz POST em
+  https://graph.facebook.com/<versão atual>/<META_PIXEL_ID>/events?access_token=<META_CAPI_TOKEN>
+  com action_source:'website', event_time (segundos), event_id, event_source_url, custom_data {value, currency}.
+- user_data: em e ph com SHA-256 (minúsculo, sem espaço; telefone só dígitos com DDI 55/351),
+  fn se tiver nome, external_id = SHA-256 do visitor_key, client_ip_address (atrás do proxy do Railway:
+  pegar o primeiro IP do header x-forwarded-for), client_user_agent,
+  fbp (cookie _fbp) e fbc (cookie _fbc; se chegar ?fbclid= na URL e não tiver _fbc, montar
+  fb.1.<timestamp_ms>.<fbclid> e salvar o cookie). Guardar fbp/fbc/ip/ua na sessão quando o checkout é criado,
+  pra ter isso na hora da compra.
+- Espelhar no servidor: InitiateCheckout e AddPaymentInfo (mesmo eventID do front).
+- PURCHASE: disparar SÓ no servidor, no momento em que a sessão vira access_granted=true (webhook/confirmação
+  do Pix ou cartão), com event_id = `purchase_${sessionId}`, value e currency reais da venda.
+  Garantir 1x por sessão (flag meta_purchase_sent na sessão ou checagem equivalente) pra webhook repetido
+  não mandar Purchase duplicado.
+- Se na página de acesso/obrigado quiser Purchase no front também, usar exatamente
+  eventID: `purchase_${sessionId}` pra deduplicar.
+- Se META_TEST_EVENT_CODE existir, incluir test_event_code no payload.
+- Erro na CAPI nunca pode quebrar o checkout: try/catch, logar e seguir.
+- Se faltar META_CAPI_TOKEN, logar um aviso e não mandar nada (sem crash).
+
+4) LGPD
+- Banner simples de cookies no rodapé ("Usamos cookies pra melhorar sua experiência. [Ok]"), salvo em
+  localStorage, sem bloquear a navegação.
+
+5) NO FIM
+- Rodar pnpm run typecheck.
+- Listar o que mudou em cada arquivo e onde cada evento dispara (arquivo + linha).

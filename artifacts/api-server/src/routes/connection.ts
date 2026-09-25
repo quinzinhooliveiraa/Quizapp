@@ -53,6 +53,7 @@ import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
 import { resolveRegion } from "../lib/pricing";
 import { getOfferPricing, getOfferWindow } from "../lib/offers";
+import { sendMetaEvent } from "../lib/meta-conversions";
 import {
   grantSessionAccess,
   notifyGrantedAccess,
@@ -557,6 +558,51 @@ router.post("/access/sessions", async (req, res): Promise<void> => {
   res.status(201).json(CreateQuestionSessionResponse.parse(session));
 });
 
+function normalizeMetaSourceUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString().slice(0, 2048)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function sendCheckoutMetaEvent(
+  session: typeof sessionsTable.$inferSelect,
+  eventId: string | undefined,
+  paymentType: "pix" | "card",
+) {
+  if (
+    !session.metaConsent ||
+    session.internal ||
+    !eventId ||
+    session.lockedPriceCents == null ||
+    !session.currency
+  ) {
+    return;
+  }
+
+  void sendMetaEvent("AddPaymentInfo", {
+    eventId,
+    value: session.lockedPriceCents / 100,
+    currency: session.currency,
+    sourceUrl: session.metaSourceUrl,
+    paymentType,
+    userData: {
+      email: session.buyerEmail,
+      firstName: session.buyerName.split(/\s+/)[0],
+      visitorKey: session.visitorKey,
+      clientIpAddress: session.metaClientIp,
+      clientUserAgent: session.metaClientUserAgent,
+      fbp: session.metaFbp,
+      fbc: session.metaFbc,
+    },
+  });
+}
+
 router.post("/checkout/create", async (req, res): Promise<void> => {
   const parsed = CreateCheckoutBody.safeParse(req.body);
   if (
@@ -581,6 +627,42 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     : null;
   const pricing = activeOfferWindow ? offerPricing.offer : offerPricing.full;
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
+  const metaConsent = parsed.data.metaConsent === true;
+  const sourceLp = parsed.data.sourceLp || null;
+  const fallbackSourcePath =
+    sourceLp === "v2"
+      ? "/lp1"
+      : sourceLp === "v1"
+        ? "/lp2"
+        : sourceLp === "lp3"
+          ? "/lp3"
+          : "/";
+  const metaSourceUrl = metaConsent
+    ? normalizeMetaSourceUrl(parsed.data.metaSourceUrl) ||
+      normalizeMetaSourceUrl(req.header("referer")) ||
+      normalizeMetaSourceUrl(
+        new URL(
+          fallbackSourcePath,
+          process.env.PUBLIC_BASE_URL ||
+            "https://www.perguntasdeconexao.com.br",
+        ).toString(),
+      )
+    : null;
+  const metaClientIp = metaConsent
+    ? req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.ip ||
+      null
+    : null;
+  const metaClientUserAgent = metaConsent
+    ? req.header("user-agent")?.slice(0, 1000) || null
+    : null;
+  const metaFbp = metaConsent
+    ? parsed.data.metaFbp?.trim().slice(0, 500) || null
+    : null;
+  const metaFbc = metaConsent
+    ? parsed.data.metaFbc?.trim().slice(0, 500) || null
+    : null;
+  const metaEventId = parsed.data.metaEventId?.trim().slice(0, 255);
   if (
     Boolean(parsed.data.experimentId) !==
     Boolean(parsed.data.experimentVariantId)
@@ -638,6 +720,13 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
         parsed.data.experimentVariantId?.trim().slice(0, 120) ||
         assignment?.experimentVariantId ||
         null,
+      currency: pricing.currency.toUpperCase(),
+      metaConsent,
+      metaFbp,
+      metaFbc,
+      metaClientIp,
+      metaClientUserAgent,
+      metaSourceUrl,
       inviteLimit: config.limit,
       invitesUsed: 0,
       accessGranted: false,
@@ -657,6 +746,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
         .update(sessionsTable)
         .set({ stripePaymentIntentId: paymentIntent.id })
         .where(eq(sessionsTable.id, sessionId));
+      sendCheckoutMetaEvent(session, metaEventId, "card");
       res.status(201).json(
         CreateCheckoutResponse.parse({
           sessionId,
@@ -684,6 +774,7 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
           pixExpiresAt,
         })
         .where(eq(sessionsTable.id, sessionId));
+      sendCheckoutMetaEvent(session, metaEventId, "pix");
       res.status(201).json(
         CreateCheckoutResponse.parse({
           sessionId,

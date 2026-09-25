@@ -515,6 +515,22 @@ paths:
           description: Event recorded
         "400":
           description: Invalid event
+  /track/meta-event:
+    post:
+      operationId: trackMetaEvent
+      tags: [tracking]
+      summary: Mirror a consented checkout event to Meta Conversions API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetaEventInput"
+      responses:
+        "204":
+          description: Event accepted
+        "400":
+          description: Invalid event
   /track/quiz-answer:
     post:
       operationId: trackQuizAnswer
@@ -1842,7 +1858,60 @@ components:
         internal:
           type: boolean
           default: false
+        metaEventId:
+          type: string
+          maxLength: 255
+        metaConsent:
+          type: boolean
+          default: false
+        metaFbp:
+          type: string
+          maxLength: 500
+        metaFbc:
+          type: string
+          maxLength: 500
+        metaSourceUrl:
+          type: string
+          format: uri
+          maxLength: 2048
       required: [packageId, buyerName]
+    MetaEventInput:
+      type: object
+      properties:
+        eventName:
+          type: string
+          enum: [InitiateCheckout]
+        eventId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        visitorKey:
+          type: string
+          minLength: 1
+          maxLength: 120
+        value:
+          type: number
+          exclusiveMinimum: 0
+        currency:
+          type: string
+          enum: [BRL, EUR]
+        consent:
+          type: boolean
+        internal:
+          type: boolean
+          default: false
+        fbp:
+          type: string
+          maxLength: 500
+        fbc:
+          type: string
+          maxLength: 500
+        sourceUrl:
+          type: string
+          format: uri
+          maxLength: 2048
+      required:
+        [eventName, eventId, visitorKey, value, currency, consent, sourceUrl]
     PageEventInput:
       type: object
       properties:

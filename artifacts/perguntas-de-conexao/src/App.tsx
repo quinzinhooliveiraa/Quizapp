@@ -130,6 +130,7 @@ import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import { Lp1SalePage } from "@/components/Lp1SalePage";
 import { Lp1MechanismSection } from "@/components/Lp1MechanismSection";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
+import { MetaConsentBanner } from "@/components/MetaConsentBanner";
 import { apiBaseUrl } from "@/config";
 import {
   getPricingRegionQuery,
@@ -137,6 +138,13 @@ import {
 } from "@/lib/pricing";
 import { SUPPORT_DIALOG_EVENT, openSupportDialog } from "@/lib/support";
 import { getThemePeek } from "@/lib/theme-peek";
+import {
+  createMetaEventId,
+  getMetaAttributionCookies,
+  isMetaTrackingAllowed,
+  META_CONSENT_CHANGE_EVENT,
+  trackMetaPixelEvent,
+} from "@/lib/meta-pixel";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -149,6 +157,18 @@ const queryClient = new QueryClient({
 });
 const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
+
+function getMetaCheckoutContext(eventId: string) {
+  const consent = isMetaTrackingAllowed();
+  const attribution = consent ? getMetaAttributionCookies() : {};
+  return {
+    metaEventId: eventId,
+    metaConsent: consent,
+    metaFbp: attribution.fbp,
+    metaFbc: attribution.fbc,
+    metaSourceUrl: consent ? window.location.href : undefined,
+  };
+}
 
 function getQuizAttribution() {
   if (typeof window === "undefined") {
@@ -179,6 +199,14 @@ function trackLp1QuizAnswer({
   step: number;
   experimentAssignment?: StoredExperimentAssignment;
 }) {
+  if (screenId === "quiz-complete") {
+    trackMetaPixelEvent(
+      "QuizComplete",
+      {},
+      createMetaEventId("QuizComplete"),
+      true,
+    );
+  }
   void fetch(apiUrl("/api/track/quiz-answer"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -5598,6 +5626,14 @@ function useLpTracking(
     extra: Record<string, unknown> = {},
   ) => {
     syncInternalTrackingFromUrl();
+    if (eventType === "quiz_start") {
+      trackMetaPixelEvent(
+        "QuizStart",
+        {},
+        createMetaEventId("QuizStart"),
+        true,
+      );
+    }
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -5651,6 +5687,7 @@ function useCheckout({
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutOfferState, setCheckoutOfferState] =
     useState<CheckoutOfferState | null>(null);
+  const [checkoutOfferLoaded, setCheckoutOfferLoaded] = useState(false);
   const [checkoutOfferNow, setCheckoutOfferNow] = useState(() => Date.now());
   const [checkoutLockedPriceCents, setCheckoutLockedPriceCents] = useState<
     number | null
@@ -5693,6 +5730,7 @@ function useCheckout({
   const checkoutCtaSourceRef = useRef<LandingCtaSource | null>(null);
   const checkoutOpenRef = useRef(false);
   const checkoutHistoryPushedRef = useRef(false);
+  const checkoutInitiateEventIdRef = useRef("");
 
   useEffect(() => {
     checkoutOpenRef.current = checkoutOpen;
@@ -5702,6 +5740,9 @@ function useCheckout({
     const wasOpen = checkoutOpenRef.current;
     checkoutOpenRef.current = true;
     if (!wasOpen) {
+      checkoutInitiateEventIdRef.current =
+        createMetaEventId("InitiateCheckout");
+      setCheckoutOfferLoaded(false);
       onTrackingEvent?.(
         "checkout_open",
         checkoutCtaSourceRef.current || undefined,
@@ -5737,6 +5778,7 @@ function useCheckout({
   useEffect(() => {
     if (!checkoutOpen) return;
 
+    setCheckoutOfferLoaded(false);
     const visitorKey = getOrCreateVisitorKey();
     let cancelled = false;
     fetch(apiUrl(`/api/offer/state${getPricingRegionQuery()}`), {
@@ -5752,10 +5794,14 @@ function useCheckout({
         if (!cancelled) {
           setCheckoutOfferState(state);
           setCheckoutOfferNow(Date.now());
+          setCheckoutOfferLoaded(true);
         }
       })
       .catch(() => {
-        if (!cancelled) setCheckoutOfferState(null);
+        if (!cancelled) {
+          setCheckoutOfferState(null);
+          setCheckoutOfferLoaded(true);
+        }
       });
 
     return () => {
@@ -5888,6 +5934,44 @@ function useCheckout({
     (checkoutOfferState && checkoutDiscountActive
       ? checkoutOfferState.offer
       : checkoutOfferState?.full ?? pricing);
+
+  useEffect(() => {
+    const eventId = checkoutInitiateEventIdRef.current;
+    if (!checkoutOpen || !checkoutOfferLoaded || !eventId) return;
+    checkoutInitiateEventIdRef.current = "";
+    if (!isMetaTrackingAllowed()) return;
+
+    const value = checkoutPricing.amountCents / 100;
+    const currency = checkoutPricing.currency.toUpperCase();
+    const attribution = getMetaAttributionCookies();
+    trackMetaPixelEvent(
+      "InitiateCheckout",
+      { value, currency },
+      eventId,
+    );
+    void fetch(apiUrl("/api/track/meta-event"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventName: "InitiateCheckout",
+        eventId,
+        visitorKey: getOrCreateVisitorKey(),
+        value,
+        currency,
+        consent: true,
+        internal: isInternalTrackingEnabled(),
+        fbp: attribution.fbp,
+        fbc: attribution.fbc,
+        sourceUrl: window.location.href,
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, [
+    checkoutOpen,
+    checkoutOfferLoaded,
+    checkoutPricing.amountCents,
+    checkoutPricing.currency,
+  ]);
 
   useEffect(() => {
     if (!pricing.pixAvailable) {

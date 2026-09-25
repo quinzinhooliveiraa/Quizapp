@@ -28,6 +28,7 @@ import { isAdminSession } from "./feedback";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice, type DeviceType } from "../lib/device";
 import { reconcilePendingPayments } from "../lib/payment-reconciliation";
+import { sendMetaEvent } from "../lib/meta-conversions";
 
 const router: IRouter = Router();
 const LP_IDS = ["v1", "v2", "lp3"] as const;
@@ -124,6 +125,68 @@ router.post("/track/page-event", async (req, res): Promise<void> => {
         ? Math.max(0, Math.min(Math.round(body.lcpMs), 120000))
         : null,
   });
+  res.status(204).end();
+});
+
+router.post("/track/meta-event", (req, res): void => {
+  const body = req.body as {
+    eventName?: string;
+    eventId?: string;
+    visitorKey?: string;
+    value?: number;
+    currency?: string;
+    consent?: boolean;
+    internal?: boolean;
+    fbp?: string;
+    fbc?: string;
+    sourceUrl?: string;
+  };
+  const value = body.value;
+  let sourceUrl: string | null = null;
+  try {
+    const parsedUrl = new URL(body.sourceUrl || "");
+    if (parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:") {
+      sourceUrl = parsedUrl.toString().slice(0, 2048);
+    }
+  } catch {
+    sourceUrl = null;
+  }
+
+  if (
+    body.eventName !== "InitiateCheckout" ||
+    !body.eventId?.trim() ||
+    body.eventId.length > 255 ||
+    !body.visitorKey?.trim() ||
+    body.visitorKey.length > 120 ||
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value <= 0 ||
+    (body.currency !== "BRL" && body.currency !== "EUR") ||
+    !sourceUrl
+  ) {
+    res.status(400).json({ error: "Evento Meta inválido" });
+    return;
+  }
+
+  if (body.consent === true && body.internal !== true) {
+    const forwardedFor = req.header("x-forwarded-for");
+    const clientIpAddress =
+      forwardedFor?.split(",")[0]?.trim() || req.ip || undefined;
+    void sendMetaEvent("InitiateCheckout", {
+      eventId: body.eventId.trim(),
+      value,
+      currency: body.currency,
+      sourceUrl,
+      userData: {
+        visitorKey: body.visitorKey.trim().slice(0, 120),
+        clientIpAddress,
+        clientUserAgent: req.header("user-agent") || undefined,
+        fbp: body.fbp?.trim().slice(0, 500),
+        fbc: body.fbc?.trim().slice(0, 500),
+      },
+    });
+  }
+
   res.status(204).end();
 });
 
