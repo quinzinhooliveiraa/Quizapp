@@ -7315,7 +7315,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                       : "Abrindo pagamento…"
                   ) : (
                     <>
-                      Quero meu acesso — {checkoutPricing.display}{" "}
+                      Quero meu acesso{" "}
                       <ArrowRight size={17} />
                     </>
                   )}
