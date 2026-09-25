@@ -82,6 +82,7 @@ import type {
   ListAdminSuggestionsParams,
   ListPublicReviews200,
   ListQuestionsParams,
+  MetaEventInput,
   OkResponse,
   PageEventInput,
   PendingAccess,
@@ -1928,6 +1929,77 @@ export const useTrackPageEvent = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getTrackPageEventMutationOptions(options));
+    }
+
+export const getTrackMetaEventUrl = () => {
+
+
+
+
+  return `/api/track/meta-event`
+}
+
+/**
+ * @summary Mirror a consented checkout event to Meta Conversions API
+ */
+export const trackMetaEvent = async (metaEventInput: MetaEventInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getTrackMetaEventUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(metaEventInput)
+  }
+);}
+
+
+
+
+
+export const getTrackMetaEventMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackMetaEvent>>, TError,{data: BodyType<MetaEventInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof trackMetaEvent>>, TError,{data: BodyType<MetaEventInput>}, TContext> => {
+
+const mutationKey = ['trackMetaEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof trackMetaEvent>>, {data: BodyType<MetaEventInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  trackMetaEvent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TrackMetaEventMutationResult = NonNullable<Awaited<ReturnType<typeof trackMetaEvent>>>
+    export type TrackMetaEventMutationBody = BodyType<MetaEventInput>
+    export type TrackMetaEventMutationError = ErrorType<void>
+
+    /**
+ * @summary Mirror a consented checkout event to Meta Conversions API
+ */
+export const useTrackMetaEvent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trackMetaEvent>>, TError,{data: BodyType<MetaEventInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof trackMetaEvent>>,
+        TError,
+        {data: BodyType<MetaEventInput>},
+        TContext
+      > => {
+      return useMutation(getTrackMetaEventMutationOptions(options));
     }
 
 export const getTrackQuizAnswerUrl = () => {

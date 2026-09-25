@@ -31,4 +31,13 @@ export interface CheckoutCreateInput {
   /** @maxLength 120 */
   experimentVariantId?: string;
   internal?: boolean;
+  /** @maxLength 255 */
+  metaEventId?: string;
+  metaConsent?: boolean;
+  /** @maxLength 500 */
+  metaFbp?: string;
+  /** @maxLength 500 */
+  metaFbc?: string;
+  /** @maxLength 2048 */
+  metaSourceUrl?: string;
 }

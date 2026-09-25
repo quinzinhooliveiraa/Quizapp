@@ -387,6 +387,55 @@ export interface CheckoutCreateInput {
   /** @maxLength 120 */
   experimentVariantId?: string;
   internal?: boolean;
+  /** @maxLength 255 */
+  metaEventId?: string;
+  metaConsent?: boolean;
+  /** @maxLength 500 */
+  metaFbp?: string;
+  /** @maxLength 500 */
+  metaFbc?: string;
+  /** @maxLength 2048 */
+  metaSourceUrl?: string;
+}
+
+export type MetaEventInputEventName = typeof MetaEventInputEventName[keyof typeof MetaEventInputEventName];
+
+
+export const MetaEventInputEventName = {
+  InitiateCheckout: 'InitiateCheckout',
+} as const;
+
+export type MetaEventInputCurrency = typeof MetaEventInputCurrency[keyof typeof MetaEventInputCurrency];
+
+
+export const MetaEventInputCurrency = {
+  BRL: 'BRL',
+  EUR: 'EUR',
+} as const;
+
+export interface MetaEventInput {
+  eventName: MetaEventInputEventName;
+  /**
+     * @minLength 1
+     * @maxLength 255
+     */
+  eventId: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  visitorKey: string;
+  /** @exclusiveMinimum 0 */
+  value: number;
+  currency: MetaEventInputCurrency;
+  consent: boolean;
+  internal?: boolean;
+  /** @maxLength 500 */
+  fbp?: string;
+  /** @maxLength 500 */
+  fbc?: string;
+  /** @maxLength 2048 */
+  sourceUrl: string;
 }
 
 export type PageEventInputLpId = typeof PageEventInputLpId[keyof typeof PageEventInputLpId];

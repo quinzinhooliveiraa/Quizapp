@@ -15,6 +15,7 @@
 - [Testimonials source](testimonials-source.md) — LP1 and LP3 must consume one shared official testimonials array; LP3 may preserve its existing subset by filtering that source.
 - [Drizzle non-TTY schema conflicts](drizzle-non-tty-schema-conflicts.md) — column drops/renames can still require interactive confirmation when schema push runs without a TTY.
 - [Orval Zod barrel collisions](orval-zod-barrel-collisions.md) — request-body schemas can collide with generated type names; expose generated types under a namespace when this occurs.
+- [Orval URI formats](orval-uri-formats.md) — this workspace's Zod generator does not support OpenAPI format: uri; validate URLs in handlers when codegen emits zod.url().
 - [LP3 narrative priority](lp3-narrative-priority.md) — low-discovery routine signals with renewed proximity resolve to the routine narrative despite partial vulnerability.
 - [LP3 story card](lp3-story-card.md) — keep the story title and narrative inside the same composed card; testimonials stay as the next section.
 - [LP3 CSS formatting](lp3-css-formatting.md) — targeted typography edits sit in legacy CSS where automatic formatting can reflow unrelated rules; keep diffs scoped.

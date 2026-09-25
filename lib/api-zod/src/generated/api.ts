@@ -315,6 +315,16 @@ export const createCheckoutBodyExperimentIdMax = 120;
 export const createCheckoutBodyExperimentVariantIdMax = 120;
 
 export const createCheckoutBodyInternalDefault = false;
+export const createCheckoutBodyMetaEventIdMax = 255;
+
+export const createCheckoutBodyMetaConsentDefault = false;
+export const createCheckoutBodyMetaFbpMax = 500;
+
+export const createCheckoutBodyMetaFbcMax = 500;
+
+export const createCheckoutBodyMetaSourceUrlMax = 2048;
+
+
 
 export const CreateCheckoutBody = zod.object({
   "packageId": zod.enum(['couple']),
@@ -327,7 +337,12 @@ export const CreateCheckoutBody = zod.object({
   "ctaSource": zod.enum(['hero_comprar', 'oferta_principal', 'preco', 'rodape', 'sticky', 'pos_quiz', 'baralho_modal', 'lp3_offer']).optional(),
   "experimentId": zod.string().max(createCheckoutBodyExperimentIdMax).optional(),
   "experimentVariantId": zod.string().max(createCheckoutBodyExperimentVariantIdMax).optional(),
-  "internal": zod.boolean().default(createCheckoutBodyInternalDefault)
+  "internal": zod.boolean().default(createCheckoutBodyInternalDefault),
+  "metaEventId": zod.string().max(createCheckoutBodyMetaEventIdMax).optional(),
+  "metaConsent": zod.boolean().default(createCheckoutBodyMetaConsentDefault),
+  "metaFbp": zod.string().max(createCheckoutBodyMetaFbpMax).optional(),
+  "metaFbc": zod.string().max(createCheckoutBodyMetaFbcMax).optional(),
+  "metaSourceUrl": zod.string().max(createCheckoutBodyMetaSourceUrlMax).optional()
 })
 
 export const CreateCheckoutResponse = zod.object({
@@ -439,6 +454,40 @@ export const TrackPageEventBody = zod.object({
 })
 
 export const TrackPageEventResponse = zod.void()
+
+
+/**
+ * @summary Mirror a consented checkout event to Meta Conversions API
+ */
+export const trackMetaEventBodyEventIdMax = 255;
+
+export const trackMetaEventBodyVisitorKeyMax = 120;
+
+export const trackMetaEventBodyValueExclusiveMin = 0;
+
+export const trackMetaEventBodyInternalDefault = false;
+export const trackMetaEventBodyFbpMax = 500;
+
+export const trackMetaEventBodyFbcMax = 500;
+
+export const trackMetaEventBodySourceUrlMax = 2048;
+
+
+
+export const TrackMetaEventBody = zod.object({
+  "eventName": zod.enum(['InitiateCheckout']),
+  "eventId": zod.string().min(1).max(trackMetaEventBodyEventIdMax),
+  "visitorKey": zod.string().min(1).max(trackMetaEventBodyVisitorKeyMax),
+  "value": zod.number().gt(trackMetaEventBodyValueExclusiveMin),
+  "currency": zod.enum(['BRL', 'EUR']),
+  "consent": zod.boolean(),
+  "internal": zod.boolean().default(trackMetaEventBodyInternalDefault),
+  "fbp": zod.string().max(trackMetaEventBodyFbpMax).optional(),
+  "fbc": zod.string().max(trackMetaEventBodyFbcMax).optional(),
+  "sourceUrl": zod.string().max(trackMetaEventBodySourceUrlMax)
+})
+
+export const TrackMetaEventResponse = zod.void()
 
 
 /**

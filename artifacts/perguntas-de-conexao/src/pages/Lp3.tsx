@@ -19,6 +19,10 @@ import { usePricing } from "@/lib/pricing";
 import { getPricingRegionQuery } from "@/lib/pricing";
 import { apiBaseUrl } from "@/config";
 import { getThemePeek } from "@/lib/theme-peek";
+import {
+  createMetaEventId,
+  trackMetaPixelEvent,
+} from "@/lib/meta-pixel";
 import heroMockupMac from "@assets/lp-hero-mockup-mac.webp";
 import heroMockupPhone from "@assets/lp-hero-mockup-phone-no-bg.webp";
 
@@ -183,6 +187,7 @@ export default function Lp3({
   const [showOtherPaths, setShowOtherPaths] = useState(false);
   const [peekThemeId, setPeekThemeId] = useState<string | null>(null);
   const offerStartRef = useRef<Promise<void> | null>(null);
+  const offerViewTrackedRef = useRef(false);
 
   const result = useMemo(() => selectLp3Narrative(answers), [answers]);
   const recommendedTheme = useMemo(() => findTheme(result.themeId), [result.themeId]);
@@ -237,6 +242,20 @@ export default function Lp3({
       setShowOtherPaths(false);
     }
   }, [screen]);
+
+  useEffect(() => {
+    if (screen !== "offer" || offerViewTrackedRef.current) return;
+    offerViewTrackedRef.current = true;
+    trackMetaPixelEvent(
+      "ViewContent",
+      {
+        content_name: "Perguntas de Conexão",
+        value: pricing.amountCents / 100,
+        currency: pricing.currency.toUpperCase(),
+      },
+      createMetaEventId("ViewContent"),
+    );
+  }, [pricing.amountCents, pricing.currency, screen]);
 
   useEffect(() => {
     if (screen !== "offer") {

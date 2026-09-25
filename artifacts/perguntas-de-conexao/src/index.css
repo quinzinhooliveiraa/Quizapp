@@ -28419,6 +28419,38 @@ blockquote em {
   color: var(--lp1-accent);
 }
 
+.meta-consent-banner {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  max-width: min(28rem, calc(100vw - 2rem));
+  padding: 0.75rem 0.9rem 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.8rem;
+  background: rgba(23, 18, 27, 0.94);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.28);
+  color: rgba(249, 248, 251, 0.86);
+  font-size: 0.78rem;
+  backdrop-filter: blur(12px);
+}
+
+.meta-consent-banner button {
+  flex: 0 0 auto;
+  min-width: 2.2rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(232, 177, 58, 0.6);
+  border-radius: 0.45rem;
+  background: rgba(232, 177, 58, 0.14);
+  color: #f4c65d;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .legal-page {
   min-height: 100vh;
   padding: 3rem 1rem 5rem;

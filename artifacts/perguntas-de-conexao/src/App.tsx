@@ -2456,6 +2456,7 @@ function Lp1Offer({
 }) {
   const diagnosis = selectLp1Diagnosis(answers);
   const pricing = usePricing();
+  const offerViewTrackedRef = useRef(false);
   const testimonialNameByNarrative: Record<string, string> = {
     routine: "Marina",
     discovery: "Julia",
@@ -2472,6 +2473,20 @@ function Lp1Offer({
     ) ?? landingTestimonials[0];
   const testimonialImageIndex =
     Math.max(0, landingTestimonials.indexOf(testimonial)) % testimonialImages.length;
+
+  useEffect(() => {
+    if (offerViewTrackedRef.current) return;
+    offerViewTrackedRef.current = true;
+    trackMetaPixelEvent(
+      "ViewContent",
+      {
+        content_name: "Perguntas de Conexão",
+        value: pricing.amountCents / 100,
+        currency: pricing.currency.toUpperCase(),
+      },
+      createMetaEventId("ViewContent"),
+    );
+  }, [pricing.amountCents, pricing.currency]);
 
   return (
     <section className="lp1-offer" aria-labelledby="lp1-offer-title">
@@ -5942,7 +5957,7 @@ function useCheckout({
     if (!isMetaTrackingAllowed()) return;
 
     const value = checkoutPricing.amountCents / 100;
-    const currency = checkoutPricing.currency.toUpperCase();
+    const currency = pricing.currency.toUpperCase();
     const attribution = getMetaAttributionCookies();
     trackMetaPixelEvent(
       "InitiateCheckout",
@@ -5970,7 +5985,7 @@ function useCheckout({
     checkoutOpen,
     checkoutOfferLoaded,
     checkoutPricing.amountCents,
-    checkoutPricing.currency,
+    pricing.currency,
   ]);
 
   useEffect(() => {
@@ -6351,6 +6366,7 @@ function useCheckout({
       syncInternalTrackingFromUrl();
       const normalizedEmail = email.trim().toLowerCase();
       const normalizedName = getCheckoutBuyerName(normalizedEmail, name);
+      const paymentEventId = createMetaEventId("AddPaymentInfo");
       const response = await fetch(
         apiUrl(`/api/checkout/create${getPricingRegionQuery()}`),
         {
@@ -6366,6 +6382,7 @@ function useCheckout({
           ctaSource: checkoutCtaSourceRef.current || undefined,
           visitorKey: getStoredVisitorKey() || undefined,
           internal: isInternalTrackingEnabled(),
+           ...getMetaCheckoutContext(paymentEventId),
           ...(experimentAssignment
             ? {
                 experimentId: experimentAssignment.experimentId,
@@ -6392,6 +6409,16 @@ function useCheckout({
       ) {
         throw new Error("checkout failed");
       }
+      trackMetaPixelEvent(
+        "AddPaymentInfo",
+        {
+          value:
+            (data.lockedPriceCents ?? checkoutPricing.amountCents) / 100,
+          currency: pricing.currency.toUpperCase(),
+          payment_type: "pix",
+        },
+        paymentEventId,
+      );
       safeSetItem("conexao-pending-session", data.sessionId);
       safeSetItem("conexao-pending-source-lp", sourceLp);
       safeSetItem("conexao-pending-buyer-name", normalizedName);
@@ -6456,6 +6483,7 @@ function useCheckout({
       syncInternalTrackingFromUrl();
       const normalizedEmail = buyerEmail.trim().toLowerCase();
       const normalizedName = getCheckoutBuyerName(normalizedEmail, buyerName);
+      const paymentEventId = createMetaEventId("AddPaymentInfo");
       const response = await fetch(
         apiUrl(`/api/checkout/create${getPricingRegionQuery()}`),
         {
@@ -6470,6 +6498,7 @@ function useCheckout({
           ctaSource: checkoutCtaSourceRef.current || undefined,
           visitorKey: getStoredVisitorKey() || undefined,
           internal: isInternalTrackingEnabled(),
+           ...getMetaCheckoutContext(paymentEventId),
           ...(experimentAssignment
             ? {
                 experimentId: experimentAssignment.experimentId,
@@ -6487,6 +6516,16 @@ function useCheckout({
       if (!response.ok || !data.sessionId || !data.clientSecret) {
         throw new Error("card checkout failed");
       }
+      trackMetaPixelEvent(
+        "AddPaymentInfo",
+        {
+          value:
+            (data.lockedPriceCents ?? checkoutPricing.amountCents) / 100,
+          currency: pricing.currency.toUpperCase(),
+          payment_type: "card",
+        },
+        paymentEventId,
+      );
 
       const checkoutStartedAt = Date.now();
       const card: CardCheckoutData = {
@@ -13184,6 +13223,22 @@ function Router() {
     </RoutedErrorBoundary>
   );
 }
+
+function MetaPixelRouteTracking() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    if (!isMetaTrackingAllowed(location)) return;
+    trackMetaPixelEvent(
+      "PageView",
+      {},
+      createMetaEventId("PageView"),
+    );
+  }, [location]);
+
+  return null;
+}
+
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
@@ -13219,8 +13274,10 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
+          <MetaPixelRouteTracking />
           <RouteAwareSplash />
           <SupportDialog />
+          <MetaConsentBanner />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>
