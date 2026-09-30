@@ -13686,12 +13686,16 @@ function ProtectedExperienceRoute() {
     query: {
       enabled: !!storedSessionId,
       queryKey: getGetQuestionSessionQueryKey(storedSessionId),
+      retry: (count, error) =>
+        getApiErrorStatus(error) !== 404 && count < 3,
     },
   });
   const guestQuery = useGetInvite(storedGuestToken, {
     query: {
       enabled: !!storedGuestToken,
       queryKey: getGetInviteQueryKey(storedGuestToken),
+      retry: (count, error) =>
+        getApiErrorStatus(error) !== 404 && count < 3,
     },
   });
   const hasAccess =
@@ -13709,7 +13713,8 @@ function ProtectedExperienceRoute() {
     !!storedGuestToken && guestQuery.isError && inviteErrorStatus !== 404;
   const sessionConnectionError =
     !!storedSessionId && sessionQuery.isError && sessionErrorStatus !== 404;
-  const hasConnectionError = inviteConnectionError || sessionConnectionError;
+  const hasConnectionError =
+    !hasAccess && (inviteConnectionError || sessionConnectionError);
 
   useEffect(() => {
     const retryAccessChecks = () => {
