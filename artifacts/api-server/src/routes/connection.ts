@@ -5,6 +5,7 @@ import {
   CreateInviteResponse,
   CreateCheckoutBody,
   CreateCheckoutResponse,
+  UpdateCheckoutCardEmailBody,
   VerifyCardCheckoutBody,
   VerifyCardCheckoutResponse,
   ResumeCheckoutParams,
@@ -877,6 +878,40 @@ router.post("/checkout/card/verify", async (req, res): Promise<void> => {
       accessGranted: true,
     }),
   );
+});
+
+router.post("/checkout/card/email", async (req, res): Promise<void> => {
+  const parsed = UpdateCheckoutCardEmailBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { sessionId, paymentIntentId, buyerEmail, buyerName } = parsed.data;
+  const [session] = await db
+    .select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, sessionId))
+    .limit(1);
+
+  if (
+    !session ||
+    session.paymentMethod !== "card" ||
+    session.stripePaymentIntentId !== paymentIntentId
+  ) {
+    res.status(404).json({ error: "Checkout não encontrado" });
+    return;
+  }
+
+  await db
+    .update(sessionsTable)
+    .set({
+      buyerEmail: buyerEmail.trim().toLowerCase(),
+      ...(buyerName?.trim() ? { buyerName: buyerName.trim() } : {}),
+    })
+    .where(eq(sessionsTable.id, sessionId));
+
+  res.json({ ok: true });
 });
 
 router.get(

@@ -32,6 +32,7 @@ import type {
   CancelInvite200,
   CheckAccessEmail200,
   CheckAccessEmailParams,
+  CheckoutCardEmailInput,
   CheckoutCardVerifyInput,
   CheckoutCardVerifyResponse,
   CheckoutCreateInput,
@@ -114,6 +115,7 @@ import type {
   UpdateAdminPendingAccessBody,
   UpdateAdminPendingAccessParams,
   UpdateAdminPrimaryLandingPageParams,
+  UpdateCheckoutCardEmail200,
   WebhookResult
 } from './api.schemas';
 
@@ -1641,6 +1643,77 @@ export const useCreateCheckout = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateCheckoutMutationOptions(options));
+    }
+
+export const getUpdateCheckoutCardEmailUrl = () => {
+
+
+
+
+  return `/api/checkout/card/email`
+}
+
+/**
+ * @summary Save the buyer email captured by a card wallet
+ */
+export const updateCheckoutCardEmail = async (checkoutCardEmailInput: CheckoutCardEmailInput, options?: Parameters<typeof customFetch>[1]): Promise<UpdateCheckoutCardEmail200> => {
+
+  return customFetch<UpdateCheckoutCardEmail200>(getUpdateCheckoutCardEmailUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(checkoutCardEmailInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateCheckoutCardEmailMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCheckoutCardEmail>>, TError,{data: BodyType<CheckoutCardEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCheckoutCardEmail>>, TError,{data: BodyType<CheckoutCardEmailInput>}, TContext> => {
+
+const mutationKey = ['updateCheckoutCardEmail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCheckoutCardEmail>>, {data: BodyType<CheckoutCardEmailInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCheckoutCardEmail(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCheckoutCardEmailMutationResult = NonNullable<Awaited<ReturnType<typeof updateCheckoutCardEmail>>>
+    export type UpdateCheckoutCardEmailMutationBody = BodyType<CheckoutCardEmailInput>
+    export type UpdateCheckoutCardEmailMutationError = ErrorType<void>
+
+    /**
+ * @summary Save the buyer email captured by a card wallet
+ */
+export const useUpdateCheckoutCardEmail = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCheckoutCardEmail>>, TError,{data: BodyType<CheckoutCardEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCheckoutCardEmail>>,
+        TError,
+        {data: BodyType<CheckoutCardEmailInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateCheckoutCardEmailMutationOptions(options));
     }
 
 export const getVerifyCardCheckoutUrl = () => {

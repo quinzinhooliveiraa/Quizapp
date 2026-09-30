@@ -20,6 +20,7 @@ import {
 } from "@tanstack/react-query";
 import {
   Elements,
+  ExpressCheckoutElement,
   PaymentElement,
   useElements,
   useStripe,
@@ -318,6 +319,7 @@ type CardCheckoutData = {
   clientSecret: string;
   startedAt: number;
   lockedPriceCents?: number;
+  trackingSent?: boolean;
 };
 
 type CheckoutOfferPrice = {
@@ -768,12 +770,57 @@ function getOrCreateVisitorKey(): string {
   return visitorKey;
 }
 
+const PENDING_CHECKOUT_COOKIE = "pdc-pending-checkout-session";
+const PENDING_CHECKOUT_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+
+function getPendingCheckoutSessionId(): string {
+  const stored = safeGetItem("conexao-pending-session");
+  const pendingAt = Number(safeGetItem("conexao-pending-at"));
+  if (
+    stored &&
+    Number.isFinite(pendingAt) &&
+    pendingAt > 0 &&
+    Date.now() - pendingAt >= PENDING_CHECKOUT_COOKIE_MAX_AGE * 1000
+  ) {
+    safeRemoveItem("conexao-pending-session");
+    clearPendingCheckoutCookie();
+    return "";
+  }
+  if (stored || typeof document === "undefined") return stored || "";
+
+  const cookie = document.cookie
+    .split(";")
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(`${PENDING_CHECKOUT_COOKIE}=`));
+  if (!cookie) return "";
+
+  try {
+    return decodeURIComponent(cookie.slice(PENDING_CHECKOUT_COOKIE.length + 1));
+  } catch {
+    return "";
+  }
+}
+
+function storePendingCheckoutSessionId(sessionId: string): void {
+  safeSetItem("conexao-pending-session", sessionId);
+  if (typeof document === "undefined") return;
+
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${PENDING_CHECKOUT_COOKIE}=${encodeURIComponent(sessionId)}; Path=/; Max-Age=${PENDING_CHECKOUT_COOKIE_MAX_AGE}; SameSite=Lax${secure}`;
+}
+
+function clearPendingCheckoutCookie(): void {
+  if (typeof document === "undefined") return;
+  document.cookie = `${PENDING_CHECKOUT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+}
+
 function clearPendingCheckoutStorage(): void {
   safeRemoveItem("conexao-pending-pix");
   safeRemoveItem("conexao-pending-card");
   safeRemoveItem("conexao-pending-session");
   safeRemoveItem("conexao-pending-bill");
   safeRemoveItem("conexao-pending-at");
+  clearPendingCheckoutCookie();
 }
 
 function clearCompletedCheckoutStorage(): void {
@@ -1016,6 +1063,7 @@ function LandingQuiz({
   onAnswer: (key: LandingQuizAnswerKey, value: string) => void;
 }) {
   const [previewIndex, setPreviewIndex] = useState(0);
+  const pricing = usePricing();
 
   if (step === 3) {
     const preview = selectLandingQuizQuestions(
@@ -1083,8 +1131,11 @@ function LandingQuiz({
           className="lp-cta-primary lp-cta-big"
           data-testid="button-quiz-cta"
         >
-          Começar hoje à noite <ArrowRight size={18} />
+          Quero meu acesso · {pricing.display} <ArrowRight size={18} />
         </button>
+        <p className="checkout-cta-guarantee">
+          Pagamento único · 7 dias de garantia
+        </p>
       </div>
     );
   }
@@ -2322,6 +2373,7 @@ function Lp1Diagnosis({
   answers: LandingQuizAnswers;
   onContinue: () => void;
 }) {
+  const pricing = usePricing();
   const diagnosis = selectLp1Diagnosis(answers);
   const preview = selectLandingQuizQuestions(
     answers.theme,
@@ -2374,8 +2426,12 @@ function Lp1Diagnosis({
           onClick={onContinue}
           data-testid="button-lp1-diagnosis-continue"
         >
-          Começar hoje à noite <ArrowRight size={18} aria-hidden="true" />
+          Quero meu acesso · {pricing.display}{" "}
+          <ArrowRight size={18} aria-hidden="true" />
         </button>
+        <p className="checkout-cta-guarantee">
+          Pagamento único · 7 dias de garantia
+        </p>
       </div>
     </section>
   );
@@ -5202,9 +5258,9 @@ function LandingV2Quiz({
             className="lp-cta-primary lp-sticky-cta-button"
             data-testid="button-sticky-cta-v2"
           >
-            Começar hoje à noite <ArrowRight size={18} />
+            Quero meu acesso · {pricing.display} <ArrowRight size={18} />
           </button>
-          <span>Acesso imediato · Pagamento seguro · Garantia de 7 dias</span>
+          <span>Pagamento único · 7 dias de garantia</span>
         </div>
       ) : null}
       {peekThemeId
@@ -5727,6 +5783,7 @@ function useCheckout({
   const [cardCheckout, setCardCheckout] = useState<CardCheckoutData | null>(
     null,
   );
+  const [cardSubmitting, setCardSubmitting] = useState(false);
   const [cardAvailable, setCardAvailable] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "pix" | "card"
@@ -5747,6 +5804,8 @@ function useCheckout({
   const checkoutOpenRef = useRef(false);
   const checkoutHistoryPushedRef = useRef(false);
   const checkoutInitiateEventIdRef = useRef("");
+  const cardCheckoutCreatingRef = useRef(false);
+  const cardPaymentInfoTrackedRef = useRef(false);
 
   useEffect(() => {
     checkoutOpenRef.current = checkoutOpen;
@@ -5759,6 +5818,10 @@ function useCheckout({
       checkoutInitiateEventIdRef.current =
         createMetaEventId("InitiateCheckout");
       setCheckoutOfferLoaded(false);
+      setNameError("");
+      setEmailError("");
+      setCardError("");
+      setPaymentError("");
       onTrackingEvent?.(
         "checkout_open",
         checkoutCtaSourceRef.current || undefined,
@@ -5868,7 +5931,7 @@ function useCheckout({
         setBuyerEmail(data.buyerEmail || "");
         setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
         setResumeDiscountValidUntil(data.discountValidUntil ?? null);
-        safeSetItem("conexao-pending-session", data.sessionId!);
+        storePendingCheckoutSessionId(data.sessionId!);
         safeSetItem("conexao-pending-buyer-name", data.buyerName || "");
         safeSetItem("conexao-pending-buyer-email", data.buyerEmail || "");
 
@@ -5891,8 +5954,10 @@ function useCheckout({
             clientSecret: data.clientSecret,
             startedAt: Date.now(),
             lockedPriceCents: data.lockedPriceCents ?? undefined,
+            trackingSent: true,
           };
           setCardCheckout(resumedCard);
+          cardPaymentInfoTrackedRef.current = true;
           safeSetItem("conexao-pending-card", JSON.stringify(resumedCard));
           setSelectedPaymentMethod("card");
         } else {
@@ -5902,7 +5967,12 @@ function useCheckout({
         setCheckoutOfferNow(Date.now());
       })
       .catch(() => {
-        if (!cancelled) setCheckoutState("error");
+        if (!cancelled) {
+          setPaymentError(
+            "Não foi possível reabrir este pagamento agora. Confira seu e-mail e tente novamente.",
+          );
+          setCheckoutState("email");
+        }
       });
 
     return () => {
@@ -5950,6 +6020,47 @@ function useCheckout({
     (checkoutOfferState && checkoutDiscountActive
       ? checkoutOfferState.offer
       : checkoutOfferState?.full ?? pricing);
+
+  const trackCardPaymentInfo = () => {
+    if (cardPaymentInfoTrackedRef.current) return;
+    cardPaymentInfoTrackedRef.current = true;
+
+    const eventId = createMetaEventId("AddPaymentInfo");
+    const value = checkoutPricing.amountCents / 100;
+    const currency = pricing.currency.toUpperCase();
+    const attribution = getMetaAttributionCookies();
+    trackMetaPixelEvent(
+      "AddPaymentInfo",
+      { value, currency, payment_type: "card" },
+      eventId,
+    );
+    if (!isMetaTrackingAllowed()) return;
+
+    void fetch(apiUrl("/api/track/meta-event"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventName: "AddPaymentInfo",
+        eventId,
+        visitorKey: getOrCreateVisitorKey(),
+        value,
+        currency,
+        consent: true,
+        internal: isInternalTrackingEnabled(),
+        fbp: attribution.fbp,
+        fbc: attribution.fbc,
+        sourceUrl: window.location.href,
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+
+    setCardCheckout((current) => {
+      if (!current || current.trackingSent) return current;
+      const updated = { ...current, trackingSent: true };
+      safeSetItem("conexao-pending-card", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   useEffect(() => {
     const eventId = checkoutInitiateEventIdRef.current;
@@ -6118,7 +6229,8 @@ function useCheckout({
           parsed.startedAt &&
           Date.now() - parsed.startedAt < PENDING_CHECKOUT_MAX_AGE_MS
         ) {
-          setCardCheckout(parsed);
+           setCardCheckout({ ...parsed, trackingSent: parsed.trackingSent ?? true });
+           cardPaymentInfoTrackedRef.current = parsed.trackingSent ?? true;
           setSelectedPaymentMethod("card");
           setCheckoutState("email");
           openCheckout();
@@ -6134,12 +6246,12 @@ function useCheckout({
 
     const params = new URLSearchParams(window.location.search);
     const sessionIdFromUrl = params.get("session");
-    const pendingSession = safeGetItem("conexao-pending-session");
+    const pendingSession = getPendingCheckoutSessionId();
     const sessionId = sessionIdFromUrl || pendingSession;
     const checkoutCancelled = params.get("checkout") === "cancelado";
     if (checkoutCancelled) {
       clearPendingCheckoutStorage();
-      setCheckoutState("error");
+      setCheckoutState("email");
       openCheckout();
       return;
     }
@@ -6420,7 +6532,7 @@ function useCheckout({
         },
         paymentEventId,
       );
-      safeSetItem("conexao-pending-session", data.sessionId);
+      storePendingCheckoutSessionId(data.sessionId);
       safeSetItem("conexao-pending-source-lp", sourceLp);
       safeSetItem("conexao-pending-buyer-name", normalizedName);
       safeSetItem("conexao-pending-buyer-email", normalizedEmail);
@@ -6448,44 +6560,64 @@ function useCheckout({
           "Não foi possível abrir o Pix aqui agora. Tente novamente.",
         );
       } else {
-        setCheckoutState("error");
+        setPaymentError(
+          "Não foi possível abrir o Pix aqui agora. Tente novamente.",
+        );
+        setCheckoutState("email");
       }
     } finally {
       if (inline) setPaymentCreating(null);
     }
   };
 
-  const createCardCheckout = async (inline = false) => {
+  const createCardCheckout = async (
+    inline = false,
+    walletPreload = false,
+  ): Promise<boolean> => {
     if (!cardAvailable || !stripePromise) {
       const message =
         pricing.pixAvailable
           ? "O pagamento com cartão está indisponível agora. Tente o Pix ou recarregue a página."
           : "O pagamento com cartão está indisponível agora. Recarregue a página e tente de novo.";
-      setCardError(message);
-      setPaymentError(message);
-      return;
+      if (!walletPreload) {
+        setCardError(message);
+        setPaymentError(message);
+      }
+      return false;
     }
     if (cardCheckout) {
-      setCardError("");
-      setSelectedPaymentMethod("card");
-      if (!inline) setCheckoutState("email");
-      return;
+      if (!walletPreload) {
+        setCardError("");
+        setSelectedPaymentMethod("card");
+        if (!cardCheckout.trackingSent) trackCardPaymentInfo();
+        if (!inline) setCheckoutState("email");
+      }
+      return true;
+    }
+    if (cardCheckoutCreatingRef.current) {
+      if (!walletPreload && inline) setPaymentCreating("card");
+      return false;
     }
 
-    setSelectedPaymentMethod("card");
-    setCardPaymentVerified(false);
-    setCardError("");
-    setPaymentError("");
-    if (inline) {
-      setPaymentCreating("card");
-    } else {
-      setCheckoutState("card-sending");
+    cardCheckoutCreatingRef.current = true;
+    if (!walletPreload) {
+      setSelectedPaymentMethod("card");
+      setCardPaymentVerified(false);
+      setCardError("");
+      setPaymentError("");
+      if (inline) {
+        setPaymentCreating("card");
+      } else {
+        setCheckoutState("card-sending");
+      }
     }
     try {
       syncInternalTrackingFromUrl();
       const normalizedEmail = buyerEmail.trim().toLowerCase();
       const normalizedName = getCheckoutBuyerName(normalizedEmail, buyerName);
-      const paymentEventId = createMetaEventId("AddPaymentInfo");
+      const paymentEventId = walletPreload
+        ? null
+        : createMetaEventId("AddPaymentInfo");
       const response = await fetch(
         apiUrl(`/api/checkout/create${getPricingRegionQuery()}`),
         {
@@ -6500,7 +6632,9 @@ function useCheckout({
           ctaSource: checkoutCtaSourceRef.current || undefined,
           visitorKey: getStoredVisitorKey() || undefined,
           internal: isInternalTrackingEnabled(),
-           ...getMetaCheckoutContext(paymentEventId),
+          ...(paymentEventId
+            ? getMetaCheckoutContext(paymentEventId)
+            : {}),
           ...(experimentAssignment
             ? {
                 experimentId: experimentAssignment.experimentId,
@@ -6518,46 +6652,61 @@ function useCheckout({
       if (!response.ok || !data.sessionId || !data.clientSecret) {
         throw new Error("card checkout failed");
       }
-      trackMetaPixelEvent(
-        "AddPaymentInfo",
-        {
-          value:
-            (data.lockedPriceCents ?? checkoutPricing.amountCents) / 100,
-          currency: pricing.currency.toUpperCase(),
-          payment_type: "card",
-        },
-        paymentEventId,
-      );
+      if (paymentEventId) {
+        trackMetaPixelEvent(
+          "AddPaymentInfo",
+          {
+            value:
+              (data.lockedPriceCents ?? checkoutPricing.amountCents) / 100,
+            currency: pricing.currency.toUpperCase(),
+            payment_type: "card",
+          },
+          paymentEventId,
+        );
+        cardPaymentInfoTrackedRef.current = true;
+      }
 
       const checkoutStartedAt = Date.now();
+      const hasPendingPix = Boolean(safeGetItem("conexao-pending-pix"));
       const card: CardCheckoutData = {
         sessionId: data.sessionId,
         clientSecret: data.clientSecret,
         startedAt: checkoutStartedAt,
         lockedPriceCents: data.lockedPriceCents,
+        trackingSent:
+          Boolean(paymentEventId) || cardPaymentInfoTrackedRef.current,
       };
-      setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
-      safeSetItem("conexao-pending-session", data.sessionId);
-      safeSetItem("conexao-pending-source-lp", sourceLp);
-      safeSetItem("conexao-pending-buyer-name", normalizedName);
-      safeSetItem("conexao-pending-buyer-email", normalizedEmail);
-      safeSetItem("conexao-pending-at", String(checkoutStartedAt));
       safeSetItem("conexao-pending-card", JSON.stringify(card));
+      if (!walletPreload || !hasPendingPix) {
+        setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
+        storePendingCheckoutSessionId(data.sessionId);
+        safeSetItem("conexao-pending-source-lp", sourceLp);
+        safeSetItem("conexao-pending-buyer-name", normalizedName);
+        safeSetItem("conexao-pending-buyer-email", normalizedEmail);
+        safeSetItem("conexao-pending-at", String(checkoutStartedAt));
+      }
       setCardCheckout(card);
-      if (!inline) setCheckoutState("email");
+      if (!inline && !walletPreload) setCheckoutState("email");
+      return true;
     } catch {
       const message =
         pricing.pixAvailable
           ? "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha o Pix."
           : "Não foi possível abrir o pagamento com cartão. Tente novamente.";
-      setCardError(message);
-      if (inline) {
+      if (!walletPreload) {
+        setCardError(message);
         setPaymentError(message);
-      } else {
-        setCheckoutState("card-error");
+        setCheckoutState("email");
       }
+      return false;
     } finally {
-      if (inline) setPaymentCreating(null);
+      cardCheckoutCreatingRef.current = false;
+      if (inline && !walletPreload) {
+        setPaymentCreating((current) => (current === "card" ? null : current));
+      }
+      if (walletPreload) {
+        setPaymentCreating((current) => (current === "card" ? null : current));
+      }
     }
   };
 
@@ -6572,7 +6721,41 @@ function useCheckout({
     if (nativeCheckout) setCheckoutState("email");
   };
 
+  const saveCardBuyerEmail = async (
+    email: string,
+    name = buyerName,
+  ): Promise<void> => {
+    const currentCard = cardCheckout;
+    if (!currentCard) throw new Error("card checkout is not ready");
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = getCheckoutBuyerName(normalizedEmail, name);
+    const paymentIntentId = currentCard.clientSecret.split("_secret_")[0];
+    if (!paymentIntentId) throw new Error("card payment intent is missing");
+
+    const response = await fetch(apiUrl("/api/checkout/card/email"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: currentCard.sessionId,
+        paymentIntentId,
+        buyerEmail: normalizedEmail,
+        buyerName: normalizedName,
+      }),
+    });
+    if (!response.ok) throw new Error("could not save checkout email");
+
+    setBuyerEmail(normalizedEmail);
+    setBuyerName(normalizedName);
+    safeSetItem("conexao-pending-buyer-email", normalizedEmail);
+    safeSetItem("conexao-pending-buyer-name", normalizedName);
+    safeSetItem("conexao-pending-card", JSON.stringify(currentCard));
+    storePendingCheckoutSessionId(currentCard.sessionId);
+    safeSetItem("conexao-pending-at", String(currentCard.startedAt));
+  };
+
   const handleCardPaymentSubmitted = (verified = false) => {
+    setCardSubmitting(false);
     setCardError("");
     setCardPaymentVerified(verified);
     setCheckoutState("card-confirming");
@@ -6632,6 +6815,9 @@ function useCheckout({
     setNativeCheckout(null);
     setPixExpired(false);
     setCardCheckout(null);
+    cardCheckoutCreatingRef.current = false;
+    cardPaymentInfoTrackedRef.current = false;
+    setCardSubmitting(false);
     setCardPaymentVerified(false);
     setCardError("");
     setPaymentCreating(null);
@@ -6649,6 +6835,7 @@ function useCheckout({
   return {
     checkoutOpen,
     checkoutState,
+    checkoutOfferLoaded,
     checkoutPricing,
     checkoutDiscountActive,
     checkoutOfferRemainingSeconds,
@@ -6665,6 +6852,8 @@ function useCheckout({
     pixExpired,
     cardCheckout,
     cardAvailable,
+    cardSubmitting,
+    setCardSubmitting,
     selectedPaymentMethod,
     setSelectedPaymentMethod,
     cardError,
@@ -6683,6 +6872,8 @@ function useCheckout({
     checkoutReviews,
     checkout,
     createCardCheckout,
+    trackCardPaymentInfo,
+    saveCardBuyerEmail,
     selectPaymentMethod,
     handleCardPaymentSubmitted,
     startCheckout,
@@ -6707,75 +6898,77 @@ function CheckoutPaymentTabs({
   pixContent?: ReactNode;
   cardContent?: ReactNode;
 }) {
-  const renderPaymentItem = (
-    method: "pix" | "card",
-    icon: ReactNode,
-    title: string,
-    description: string,
-    content?: ReactNode,
-  ) => {
+  const renderPaymentItem = (method: "pix" | "card") => {
     const selected = selectedPaymentMethod === method;
     const disabled =
       method === "card" ? !cardAvailable : !pixAvailable;
+    const title = method === "pix" ? "Pix" : "Cartão";
 
     return (
-      <div className={`checkout-payment-item ${selected ? "is-selected" : ""}`}>
-        <button
-          className={`${selected ? "active" : ""} ${disabled ? "disabled" : ""}`}
-          type="button"
-          role="tab"
-          aria-selected={selected}
-          aria-expanded={selected}
-          aria-disabled={disabled}
-          disabled={disabled}
-          onClick={() => onSelect(method)}
-          data-testid={`button-payment-${method}`}
-        >
-          <span className="payment-tab-icon" aria-hidden="true">
-            {icon}
+      <button
+        key={method}
+        className={`checkout-method-tab ${selected ? "is-selected" : ""}`}
+        type="button"
+        role="tab"
+        aria-selected={selected}
+        aria-disabled={disabled}
+        disabled={disabled}
+        onClick={() => onSelect(method)}
+        data-testid={`button-payment-${method}`}
+      >
+        {method === "pix" ? (
+          <span className="payment-logo-pix" aria-label="Pix">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8.1 3.5 3.5 8.1a5.5 5.5 0 0 0 0 7.8l4.6 4.6a5.5 5.5 0 0 0 7.8 0l4.6-4.6a5.5 5.5 0 0 0 0-7.8l-4.6-4.6a5.5 5.5 0 0 0-7.8 0Z" />
+              <path
+                className="payment-logo-pix-cutout"
+                d="m8.4 12 3.6-3.6 3.6 3.6-3.6 3.6z"
+              />
+            </svg>
           </span>
-          <span className="payment-tab-copy">
-            <strong>{title}</strong>
-            <small>{description}</small>
+        ) : (
+          <span className="payment-logo-cards" aria-label="Visa e Mastercard">
+            <strong>VISA</strong>
+            <i aria-hidden="true" />
+            <i aria-hidden="true" />
           </span>
-          <span className="payment-tab-check" aria-hidden="true">
-            {selected && <Check size={13} strokeWidth={2.5} />}
-          </span>
-        </button>
-        {selected && content && (
-          <div className="checkout-payment-panel" role="tabpanel">
-            {content}
-          </div>
         )}
-      </div>
+        <span className="payment-tab-copy">
+          <strong>{title}</strong>
+          {method === "card" ? <small>Visa · Mastercard</small> : null}
+        </span>
+        <span className="payment-tab-check" aria-hidden="true">
+          {selected && <Check size={13} strokeWidth={2.5} />}
+        </span>
+      </button>
     );
   };
 
+  const selectedContent =
+    selectedPaymentMethod === "pix" ? pixContent : cardContent;
+
   return (
     <div
-      className="checkout-payment-tabs"
-      role="tablist"
-      aria-label="Método de pagamento"
+      className="checkout-payment-selector"
       data-testid="payment-method-selector"
     >
-      {pixAvailable
-        ? renderPaymentItem(
-            "pix",
-            <QrCode size={18} strokeWidth={1.8} />,
-            "Pix",
-            "cai na hora · acesso imediato",
-            pixContent,
-          )
-        : null}
-      {renderPaymentItem(
-        "card",
-        <CreditCard size={18} strokeWidth={1.8} />,
-        "Cartão de crédito",
-        cardAvailable
-          ? "Apple Pay e Google Pay disponíveis"
-          : "indisponível agora",
-        cardContent,
-      )}
+      <div
+        className="checkout-payment-tabs"
+        role="tablist"
+        aria-label="Método de pagamento"
+      >
+        {pixAvailable ? renderPaymentItem("pix") : null}
+        {renderPaymentItem("card")}
+      </div>
+      {selectedContent ? (
+        <div
+          className="checkout-payment-panel"
+          role="tabpanel"
+          aria-label={`Pagamento com ${selectedPaymentMethod === "pix" ? "Pix" : "cartão"}`}
+        >
+          {selectedContent}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -6788,6 +6981,8 @@ const CardPaymentForm = forwardRef<
   CardPaymentFormHandle,
   {
     onPaymentSubmitted: (verified?: boolean) => void;
+    onError: (message: string) => void;
+    onProcessingChange: (processing: boolean) => void;
     sessionId: string;
     showSubmitButton?: boolean;
     priceDisplay: string;
@@ -6795,6 +6990,8 @@ const CardPaymentForm = forwardRef<
 >(function CardPaymentForm(
   {
     onPaymentSubmitted,
+    onError,
+    onProcessingChange,
     sessionId,
     showSubmitButton = true,
     priceDisplay,
@@ -6804,52 +7001,60 @@ const CardPaymentForm = forwardRef<
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     if (!stripe || !elements || submitting) return;
 
     setSubmitting(true);
-    setError("");
-    const result = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-    });
+    onProcessingChange(true);
+    onError("");
+    try {
+      const result = await stripe.confirmPayment({
+        elements,
+        redirect: "if_required",
+      });
 
-    if (result.error) {
-      setError(
-        result.error.message ||
-          "Não foi possível confirmar o pagamento. Confira os dados e tente novamente.",
-      );
-      setSubmitting(false);
-      return;
-    }
-
-    let verified = false;
-    if (result.paymentIntent?.status === "succeeded") {
-      try {
-        const response = await fetch(apiUrl("/api/checkout/card/verify"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId,
-            paymentIntentId: result.paymentIntent.id,
-          }),
-        });
-        if (response.ok) {
-          const data = (await response.json()) as {
-            ok?: boolean;
-            accessGranted?: boolean;
-          };
-          verified = data.ok === true && data.accessGranted === true;
-        }
-      } catch {
-        // Keep the existing webhook/polling fallback if immediate verification fails.
+      if (result.error) {
+        onError(
+          result.error.message ||
+            "Não foi possível confirmar o pagamento. Confira os dados e tente novamente.",
+        );
+        return;
       }
-    }
 
-    onPaymentSubmitted(verified);
+      let verified = false;
+      if (result.paymentIntent?.status === "succeeded") {
+        try {
+          const response = await fetch(apiUrl("/api/checkout/card/verify"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              paymentIntentId: result.paymentIntent.id,
+            }),
+          });
+          if (response.ok) {
+            const data = (await response.json()) as {
+              ok?: boolean;
+              accessGranted?: boolean;
+            };
+            verified = data.ok === true && data.accessGranted === true;
+          }
+        } catch {
+          // Keep the existing webhook/polling fallback if immediate verification fails.
+        }
+      }
+
+      onPaymentSubmitted(verified);
+    } catch {
+      onError(
+        "Não foi possível confirmar o pagamento. Confira os dados e tente novamente.",
+      );
+    } finally {
+      setSubmitting(false);
+      onProcessingChange(false);
+    }
   };
 
   useImperativeHandle(ref, () => ({
@@ -6859,11 +7064,6 @@ const CardPaymentForm = forwardRef<
   return (
     <div className="checkout-card-form">
       <PaymentElement options={{ layout: "tabs" }} />
-      {error && (
-        <p className="checkout-card-error" role="alert">
-          {error}
-        </p>
-      )}
       {showSubmitButton && (
         <button
           className="button button-primary button-full checkout-card-submit"
@@ -6882,10 +7082,207 @@ const CardPaymentForm = forwardRef<
   );
 });
 
+function CheckoutWalletActions({
+  buyerEmail,
+  buyerName,
+  sessionId,
+  onBuyer,
+  onNeedEmail,
+  onError,
+  onPaymentInfo,
+  onPaymentSubmitted,
+  onProcessingChange,
+  onSelectCard,
+}: {
+  buyerEmail: string;
+  buyerName: string;
+  sessionId: string;
+  onBuyer: (email: string, name: string) => Promise<void>;
+  onNeedEmail: () => void;
+  onError: (message: string) => void;
+  onPaymentInfo: () => void;
+  onPaymentSubmitted: (verified?: boolean) => void;
+  onProcessingChange: (processing: boolean) => void;
+  onSelectCard: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [available, setAvailable] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleConfirm = async (event: {
+    billingDetails?: { email?: string; name?: string };
+  }) => {
+    if (!stripe || !elements || submitting) return;
+    const email = (event.billingDetails?.email || buyerEmail).trim().toLowerCase();
+    const name = event.billingDetails?.name?.trim() || buyerName;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      onNeedEmail();
+      return;
+    }
+
+    setSubmitting(true);
+    onProcessingChange(true);
+    onError("");
+    onSelectCard();
+    onPaymentInfo();
+    try {
+      await onBuyer(email, name);
+      const submitResult = await elements.submit();
+      if (submitResult.error) {
+        onError(
+          submitResult.error.message ||
+            "Confira os dados do pagamento e tente novamente.",
+        );
+        return;
+      }
+
+      const result = await stripe.confirmPayment({
+        elements,
+        redirect: "if_required",
+        confirmParams: { return_url: window.location.href },
+      });
+      if (result.error) {
+        onError(
+          result.error.message ||
+            "Não foi possível confirmar o pagamento. Tente novamente.",
+        );
+        return;
+      }
+
+      let verified = false;
+      if (result.paymentIntent?.status === "succeeded") {
+        try {
+          const response = await fetch(apiUrl("/api/checkout/card/verify"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId,
+              paymentIntentId: result.paymentIntent.id,
+            }),
+          });
+          if (response.ok) {
+            const data = (await response.json()) as {
+              ok?: boolean;
+              accessGranted?: boolean;
+            };
+            verified = data.ok === true && data.accessGranted === true;
+          }
+        } catch {
+          // Webhook and polling remain the fallback if immediate verification fails.
+        }
+      }
+      onPaymentSubmitted(verified);
+    } catch {
+      onError(
+        "Não foi possível confirmar o pagamento. Confira o e-mail e tente novamente.",
+      );
+    } finally {
+      setSubmitting(false);
+      onProcessingChange(false);
+    }
+  };
+
+  if (!available) {
+    return (
+      <div className="checkout-wallet-probe" aria-hidden="true">
+        <ExpressCheckoutElement
+          options={{
+            emailRequired: true,
+            paymentMethods: {
+              applePay: "auto",
+              googlePay: "auto",
+              link: "never",
+            },
+          }}
+          onReady={({ availablePaymentMethods }) => {
+            setAvailable(
+              Boolean(
+                availablePaymentMethods?.applePay ||
+                  availablePaymentMethods?.googlePay,
+              ),
+            );
+          }}
+          onConfirm={(event) => void handleConfirm(event)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <section className="checkout-wallet-actions" aria-label="Pagamento rápido">
+      <ExpressCheckoutElement
+        options={{
+          emailRequired: true,
+          paymentMethods: {
+            applePay: "auto",
+            googlePay: "auto",
+            link: "never",
+          },
+        }}
+        onReady={({ availablePaymentMethods }) => {
+          setAvailable(
+            Boolean(
+              availablePaymentMethods?.applePay ||
+                availablePaymentMethods?.googlePay,
+            ),
+          );
+        }}
+        onConfirm={(event) => void handleConfirm(event)}
+      />
+      <p>ou pague com Pix / cartão</p>
+    </section>
+  );
+}
+
 function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
+  const cardCheckout = checkout.cardCheckout;
+  if (!checkout.checkoutOpen) return null;
+  if (!cardCheckout) return <CheckoutModalContents checkout={checkout} />;
+
+  return (
+    <Elements
+      key={cardCheckout.sessionId}
+      stripe={stripePromise}
+      options={{
+        clientSecret: cardCheckout.clientSecret,
+        appearance: {
+          theme: "stripe",
+          variables: {
+            colorPrimary: "#7a2e46",
+            colorBackground: "#ffffff",
+            colorText: "#2a2233",
+            colorTextSecondary: "#756b78",
+            colorDanger: "#a2384b",
+            borderRadius: "12px",
+            fontFamily: "var(--app-font-sans)",
+          },
+          rules: {
+            ".Input": {
+              backgroundColor: "#ffffff",
+              borderColor: "#d9d1dc",
+            },
+            ".Input:focus": {
+              borderColor: "#7a2e46",
+              boxShadow: "0 0 0 3px rgba(122, 46, 70, 0.14)",
+            },
+            ".Label": {
+              color: "#2a2233",
+            },
+          },
+        },
+      }}
+    >
+      <CheckoutModalContents checkout={checkout} />
+    </Elements>
+  );
+}
+
+function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
   const {
     checkoutOpen,
     checkoutState,
+    checkoutOfferLoaded,
     checkoutPricing,
     checkoutDiscountActive,
     checkoutOfferRemainingSeconds,
@@ -6902,6 +7299,8 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     pixExpired,
     cardCheckout,
     cardAvailable,
+    cardSubmitting,
+    setCardSubmitting,
     selectedPaymentMethod,
     setSelectedPaymentMethod,
     cardError,
@@ -6920,12 +7319,21 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     checkoutReviews,
     checkout: createCheckout,
     createCardCheckout,
+    trackCardPaymentInfo,
+    saveCardBuyerEmail,
     selectPaymentMethod,
     handleCardPaymentSubmitted,
     restartCheckout,
   } = checkout;
 
   const cardPaymentFormRef = useRef<CardPaymentFormHandle>(null);
+  const pendingCardSubmitRef = useRef(false);
+  const walletPreloadAttemptedRef = useRef(false);
+  const [showPixQr, setShowPixQr] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 761px)").matches,
+  );
 
   const hasValidBuyerDetails =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
@@ -6936,6 +7344,13 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     });
   };
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 761px)");
+    const syncQrDisclosure = () => setShowPixQr(mediaQuery.matches);
+    mediaQuery.addEventListener("change", syncQrDisclosure);
+    return () => mediaQuery.removeEventListener("change", syncQrDisclosure);
+  }, []);
+
   const handlePaymentMethodSelect = (method: "pix" | "card") => {
     setCardError("");
     setPaymentError("");
@@ -6945,16 +7360,14 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       return;
     }
 
-    if (!hasValidBuyerDetails) {
-      setEmailError("Digite seu e-mail para abrir o pagamento.");
-      setPaymentError("Digite seu e-mail para abrir o pagamento.");
-      focusCheckoutEmail();
-      return;
-    }
-
     const normalizedEmail = buyerEmail.trim().toLowerCase();
 
-    if (method === "pix" && !nativeCheckout && !paymentCreating) {
+    if (
+      method === "pix" &&
+      hasValidBuyerDetails &&
+      !nativeCheckout &&
+      !paymentCreating
+    ) {
       void createCheckout("couple", normalizedEmail, "", true);
     } else if (
       method === "card" &&
@@ -6962,9 +7375,49 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       !cardCheckout &&
       !paymentCreating
     ) {
-      void createCardCheckout(true);
+      void createCardCheckout(true, !hasValidBuyerDetails);
     }
   };
+
+  useEffect(() => {
+    if (
+      !checkoutOpen ||
+      !checkoutOfferLoaded ||
+      !cardAvailable ||
+      cardCheckout ||
+      walletPreloadAttemptedRef.current
+    ) {
+      return;
+    }
+    walletPreloadAttemptedRef.current = true;
+    void createCardCheckout(true, true);
+  }, [
+    cardAvailable,
+    cardCheckout,
+    checkoutOfferLoaded,
+    checkoutOpen,
+    createCardCheckout,
+  ]);
+
+  useEffect(() => {
+    if (
+      checkoutOpen &&
+      checkoutState === "email" &&
+      selectedPaymentMethod === "card" &&
+      hasValidBuyerDetails &&
+      cardCheckout &&
+      !cardCheckout.trackingSent
+    ) {
+      trackCardPaymentInfo();
+    }
+  }, [
+    cardCheckout,
+    checkoutOpen,
+    checkoutState,
+    hasValidBuyerDetails,
+    selectedPaymentMethod,
+    trackCardPaymentInfo,
+  ]);
 
   useEffect(() => {
     if (
@@ -7002,6 +7455,36 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     selectedPaymentMethod,
   ]);
 
+  useEffect(() => {
+    if (
+      !pendingCardSubmitRef.current ||
+      !cardCheckout ||
+      checkoutState !== "email"
+    ) {
+      return;
+    }
+    pendingCardSubmitRef.current = false;
+    setCardSubmitting(true);
+    void saveCardBuyerEmail(buyerEmail, buyerName)
+      .then(() => {
+        trackCardPaymentInfo();
+        cardPaymentFormRef.current?.submit();
+      })
+      .catch(() => {
+        setCardSubmitting(false);
+        setCardError("Não consegui salvar seu e-mail. Confira e tente novamente.");
+      });
+  }, [
+    buyerEmail,
+    buyerName,
+    cardCheckout,
+    checkoutState,
+    saveCardBuyerEmail,
+    setCardSubmitting,
+    setCardError,
+    trackCardPaymentInfo,
+  ]);
+
   const handleInitialCheckout = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalizedEmail = buyerEmail.trim().toLowerCase();
@@ -7027,8 +7510,20 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     setBuyerEmail(normalizedEmail);
     if (selectedPaymentMethod === "card") {
       if (cardCheckout) {
-        cardPaymentFormRef.current?.submit();
+        setCardSubmitting(true);
+        void saveCardBuyerEmail(normalizedEmail, buyerName)
+          .then(() => {
+            trackCardPaymentInfo();
+            cardPaymentFormRef.current?.submit();
+          })
+          .catch(() => {
+            setCardSubmitting(false);
+            setCardError(
+              "Não consegui salvar seu e-mail. Confira e tente novamente.",
+            );
+          });
       } else {
+        pendingCardSubmitRef.current = true;
         void createCardCheckout(true);
       }
     } else {
@@ -7037,6 +7532,31 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
       }
     }
   };
+
+  const handleCardError = (message: string) => {
+    setCardError(message);
+    window.requestAnimationFrame(() => {
+      document
+        .querySelector(".checkout-card-inline")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
+
+  const pixExpiry = nativeCheckout
+    ? new Date(
+        nativeCheckout.expiresAt
+          ? nativeCheckout.expiresAt
+          : nativeCheckout.startedAt + PIX_LIFETIME_MS,
+      )
+    : null;
+  const pixExpiryLabel = pixExpiry
+    ? `Válido até ${pixExpiry.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
+    : "";
 
   const pixPaymentContent = nativeCheckout ? (
     <div className="checkout-pix-inline">
@@ -7056,34 +7576,40 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           data-testid="button-copy-pix"
         >
           {copiedCode ? <Check size={17} /> : <Copy size={17} />}
-          {copiedCode ? "Copiado!" : "Copiar código Pix"}
+          Copiar código Pix
         </button>
+        {copiedCode ? (
+          <p className="checkout-pix-copied" role="status" aria-live="polite">
+            Copiado! Agora abra o app do banco.
+          </p>
+        ) : null}
         <code className="checkout-pix-code">{nativeCheckout.brCode}</code>
       </div>
       <div className="checkout-pix-guide">
-        <div className="checkout-qr-wrap">
-          <img
-            src={
-              nativeCheckout.brCodeBase64.startsWith("data:")
-                ? nativeCheckout.brCodeBase64
-                : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
-            }
-            alt="QR Code do Pix"
-          />
-        </div>
+        <details
+          className="checkout-pix-qr-details"
+          open={showPixQr}
+          onToggle={(event) => setShowPixQr(event.currentTarget.open)}
+        >
+          <summary>Mostrar QR Code</summary>
+          <div className="checkout-qr-wrap">
+            <img
+              src={
+                nativeCheckout.brCodeBase64.startsWith("data:")
+                  ? nativeCheckout.brCodeBase64
+                  : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
+              }
+              alt="QR Code do Pix"
+            />
+          </div>
+        </details>
         <ol className="checkout-pix-steps">
           <li>Copie o código</li>
-          <li>Abra o app do seu banco</li>
-          <li>Entre em Pix &gt; Pix Copia e Cola</li>
-          <li>Cole e confirme</li>
+          <li>Abra o app do seu banco › Pix › Copia e Cola</li>
+          <li>Cole e pague — o acesso abre sozinho aqui.</li>
         </ol>
       </div>
-      <p className="checkout-pix-hint">
-        O QR é para pagar pelo computador. No celular, o copia e cola costuma ser
-        mais rápido.
-        <br />
-        <strong>Assim que cair, seu acesso abre sozinho.</strong>
-      </p>
+      <p className="checkout-pix-expiry">{pixExpiryLabel}</p>
       {checkoutState === "email" || checkoutState === "native-payment" ? (
         <p className="checkout-pix-auto-check" role="status" aria-live="polite">
           <span aria-hidden="true">●</span> aguardando confirmação do banco
@@ -7153,45 +7679,15 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
 
   const cardPaymentContent = cardCheckout ? (
     <div className="checkout-card-inline">
-      <Elements
-        stripe={stripePromise}
-        options={{
-          clientSecret: cardCheckout.clientSecret,
-          appearance: {
-            theme: "stripe",
-            variables: {
-              colorPrimary: "#7a2e46",
-              colorBackground: "#ffffff",
-              colorText: "#2a2233",
-              colorTextSecondary: "#756b78",
-              colorDanger: "#a2384b",
-              borderRadius: "12px",
-              fontFamily: "var(--app-font-sans)",
-            },
-            rules: {
-              ".Input": {
-                backgroundColor: "#ffffff",
-                borderColor: "#d9d1dc",
-              },
-              ".Input:focus": {
-                borderColor: "#7a2e46",
-                boxShadow: "0 0 0 3px rgba(122, 46, 70, 0.14)",
-              },
-              ".Label": {
-                color: "#2a2233",
-              },
-            },
-          },
-        }}
-      >
-        <CardPaymentForm
-          ref={cardPaymentFormRef}
-          onPaymentSubmitted={handleCardPaymentSubmitted}
-          sessionId={cardCheckout.sessionId}
-          showSubmitButton={checkoutState !== "email"}
-          priceDisplay={checkoutPricing.display}
-        />
-      </Elements>
+      <CardPaymentForm
+        ref={cardPaymentFormRef}
+        onPaymentSubmitted={handleCardPaymentSubmitted}
+        onError={handleCardError}
+        onProcessingChange={setCardSubmitting}
+        sessionId={cardCheckout.sessionId}
+        showSubmitButton={checkoutState !== "email"}
+        priceDisplay={checkoutPricing.display}
+      />
     </div>
   ) : paymentCreating === "card" ? (
     <p className="checkout-payment-preview" role="status" aria-live="polite">
@@ -7237,6 +7733,42 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
           >
             <div className="checkout-store-grid checkout-store-grid-clean">
               <section className="checkout-order-column">
+                  <div className="checkout-summary-line" data-testid="summary-checkout">
+                    <span>
+                      Perguntas de Conexão · acesso vitalício pra 2
+                    </span>
+                    <span className="checkout-summary-price">
+                      <span aria-hidden="true">·</span>
+                      {checkoutDiscountActive && checkoutFullPrice ? (
+                        <del>{checkoutFullPrice.display}</del>
+                      ) : null}
+                      <strong>{checkoutPricing.display}</strong>
+                    </span>
+                  </div>
+                  <div className="checkout-trust-seals" aria-label="Garantias do pagamento">
+                    <span>🔒 Pix e cartão · 7 dias</span>
+                    <span>Acesso imediato · Pagamento seguro</span>
+                  </div>
+                  {cardAvailable && cardCheckout ? (
+                    <CheckoutWalletActions
+                      buyerEmail={buyerEmail}
+                      buyerName={buyerName}
+                      sessionId={cardCheckout.sessionId}
+                      onBuyer={saveCardBuyerEmail}
+                      onNeedEmail={() => {
+                        setEmailError("Falta o e-mail pra liberar seu acesso.");
+                        focusCheckoutEmail();
+                      }}
+                      onError={handleCardError}
+                      onPaymentInfo={trackCardPaymentInfo}
+                      onPaymentSubmitted={handleCardPaymentSubmitted}
+                      onProcessingChange={setCardSubmitting}
+                      onSelectCard={() => {
+                        setSelectedPaymentMethod("card");
+                        setPaymentError("");
+                      }}
+                    />
+                  ) : null}
                 <div className="checkout-form-card checkout-details-card">
                   <div className="checkout-access-heading">
                     <h3>Pra onde enviamos seu acesso?</h3>
@@ -7250,9 +7782,11 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                         type="email"
                         inputMode="email"
                         autoComplete="email"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         placeholder="seu@email.com"
                         value={buyerEmail}
-                        autoFocus
                         aria-invalid={emailError ? true : undefined}
                         onChange={(event) => {
                           setBuyerEmail(event.target.value);
@@ -7292,40 +7826,6 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                     cardContent={cardPaymentContent}
                   />
                 </div>
-                <div
-                  className="checkout-summary-card"
-                  data-testid="summary-checkout"
-                >
-                  <div className="checkout-card-heading">
-                    <h3>Resumo</h3>
-                  </div>
-                  <div>
-                    <div className="checkout-summary-row">
-                      <span>Perguntas de Conexão</span>
-                      <span className="checkout-summary-price">
-                        {checkoutDiscountActive && checkoutFullPrice ? (
-                          <del>{checkoutFullPrice.display}</del>
-                        ) : null}
-                        {checkoutPricing.display}
-                      </span>
-                    </div>
-                    <div className="checkout-summary-row checkout-summary-row-guarantee">
-                      <span>Garantia de 7 dias</span>
-                      <span className="checkout-summary-included">
-                        incluída
-                      </span>
-                    </div>
-                    <div className="checkout-summary-total">
-                      <strong>Total</strong>
-                        <strong>{checkoutPricing.display}</strong>
-                    </div>
-                  </div>
-                </div>
-                <p className="checkout-payment-access-note">
-                  Assim que o pagamento cair,{" "}
-                  <strong>o acesso abre sozinho nesta tela.</strong> Não
-                  precisa mandar comprovante nem esperar e-mail.
-                </p>
               </section>
             </div>
             {!(selectedPaymentMethod === "pix" && nativeCheckout) ? (
@@ -7339,23 +7839,39 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
                   <span>Total</span>
                   <strong>{checkoutPricing.display}</strong>
                 </div>
+                {cardError ? (
+                  <p className="checkout-purchase-error" role="alert">
+                    {cardError}
+                  </p>
+                ) : null}
                 <button
                   className="button button-primary checkout-purchase-button"
                   type="submit"
-                  disabled={paymentCreating !== null}
+                  disabled={paymentCreating !== null || cardSubmitting}
                   data-testid="button-continue-checkout"
                 >
-                  {paymentCreating !== null ? (
-                    checkoutPricing.pixAvailable && selectedPaymentMethod === "pix"
-                      ? "Gerando seu Pix…"
-                      : "Abrindo pagamento…"
+                  {cardSubmitting ? (
+                    <>
+                      <span className="checkout-button-spinner" aria-hidden="true" />
+                      Processando…
+                    </>
+                  ) : paymentCreating !== null ? (
+                    <>
+                      <span className="checkout-button-spinner" aria-hidden="true" />
+                      {checkoutPricing.pixAvailable && selectedPaymentMethod === "pix"
+                        ? "Gerando seu Pix…"
+                        : "Abrindo pagamento…"}
+                    </>
                   ) : (
                     <>
-                      Quero meu acesso{" "}
+                      Quero meu acesso · {checkoutPricing.display}{" "}
                       <ArrowRight size={17} />
                     </>
                   )}
                 </button>
+                <p className="checkout-purchase-guarantee">
+                  Pagamento único · 7 dias de garantia
+                </p>
               </div>
             ) : null}
           </form>
@@ -7471,7 +7987,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
             </p>
             <button
               onClick={() => {
-                const pendingSessionId = safeGetItem("conexao-pending-session");
+                const pendingSessionId = getPendingCheckoutSessionId();
                 if (pendingSessionId)
                   window.location.href = `/?session=${encodeURIComponent(pendingSessionId)}`;
               }}
@@ -8440,8 +8956,12 @@ function Home({
                     className="lp-cta-primary lp-cta-full lp2-offer-cta"
                     data-testid="button-price-cta"
                   >
-                    Começar hoje à noite <ArrowRight size={18} />
+                    Quero meu acesso · {pricing.display}{" "}
+                    <ArrowRight size={18} />
                   </button>
+                  <p className="checkout-cta-guarantee">
+                    Pagamento único · 7 dias de garantia
+                  </p>
                   <p className="lp2-offer-micro">
                     Acesso imediato · Pagamento seguro · Garantia de 7 dias
                   </p>
@@ -13301,6 +13821,76 @@ function RouteAwareSplash() {
 
   return isLandingPage || isAppRoute || isLegalRoute ? null : <SplashScreen />;
 }
+
+function ConfirmedPaymentBanner() {
+  const [sessionId, setSessionId] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    const refreshPendingSession = () => {
+      const pending = getPendingCheckoutSessionId();
+      setSessionId(pending);
+      setConfirmed(false);
+    };
+    refreshPendingSession();
+    window.addEventListener("focus", refreshPendingSession);
+    window.addEventListener("storage", refreshPendingSession);
+    return () => {
+      window.removeEventListener("focus", refreshPendingSession);
+      window.removeEventListener("storage", refreshPendingSession);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!sessionId || safeGetItem("conexao-session") === sessionId) return;
+
+    let cancelled = false;
+    const checkAccess = async () => {
+      try {
+        const response = await fetch(
+          apiUrl(
+            `/api/access/sessions/${encodeURIComponent(sessionId)}`,
+          ),
+          { cache: "no-store" },
+        );
+        if (!response.ok || cancelled) return;
+        const session = (await response.json()) as { accessGranted?: boolean };
+        if (!cancelled) setConfirmed(Boolean(session.accessGranted));
+      } catch {
+        // Retry on the next interval or when the visitor returns to this tab.
+      }
+    };
+
+    void checkAccess();
+    const intervalId = window.setInterval(() => void checkAccess(), 15000);
+    window.addEventListener("focus", checkAccess);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", checkAccess);
+    };
+  }, [sessionId]);
+
+  if (!sessionId || !confirmed) return null;
+
+  return (
+    <div className="confirmed-payment-banner" role="status">
+      <span>Seu pagamento foi confirmado 🎉</span>
+      <button
+        type="button"
+        onClick={() => {
+          safeSetItem("conexao-session", sessionId);
+          safeSetItem("conexao-role", "owner");
+          clearCompletedCheckoutStorage();
+          window.location.href = `/acesso/${encodeURIComponent(sessionId)}`;
+        }}
+      >
+        Abrir meu baralho <ArrowRight size={16} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -13309,6 +13899,7 @@ function App() {
           <Router />
           <MetaPixelRouteTracking />
           <RouteAwareSplash />
+          <ConfirmedPaymentBanner />
           <SupportDialog />
           <MetaConsentBanner />
         </WouterRouter>

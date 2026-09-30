@@ -436,6 +436,32 @@ paths:
           description: Invalid checkout data
         "502":
           description: Payment provider unavailable
+  /checkout/card/email:
+    post:
+      operationId: updateCheckoutCardEmail
+      tags: [checkout]
+      summary: Save the buyer email captured by a card wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutCardEmailInput"
+      responses:
+        "200":
+          description: Buyer email saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+        "400":
+          description: Invalid checkout data
+        "404":
+          description: Checkout session not found
   /checkout/card/verify:
     post:
       operationId: verifyCardCheckout
@@ -1908,6 +1934,22 @@ components:
           type: string
           minLength: 1
       required: [sessionId, paymentIntentId]
+    CheckoutCardEmailInput:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          minLength: 1
+        paymentIntentId:
+          type: string
+          minLength: 1
+        buyerEmail:
+          type: string
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+        buyerName:
+          type: string
+          maxLength: 120
+      required: [sessionId, paymentIntentId, buyerEmail]
     CheckoutCardVerifyResponse:
       type: object
       properties:

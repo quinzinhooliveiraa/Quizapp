@@ -359,6 +359,28 @@ export const CreateCheckoutResponse = zod.object({
 
 
 /**
+ * @summary Save the buyer email captured by a card wallet
+ */
+
+
+export const updateCheckoutCardEmailBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+export const updateCheckoutCardEmailBodyBuyerNameMax = 120;
+
+
+
+export const UpdateCheckoutCardEmailBody = zod.object({
+  "sessionId": zod.string().min(1),
+  "paymentIntentId": zod.string().min(1),
+  "buyerEmail": zod.string().regex(updateCheckoutCardEmailBodyBuyerEmailRegExp),
+  "buyerName": zod.string().max(updateCheckoutCardEmailBodyBuyerNameMax).optional()
+})
+
+export const UpdateCheckoutCardEmailResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary Verify a successful Stripe card payment and grant access
  */
 

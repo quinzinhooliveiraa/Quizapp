@@ -126,10 +126,11 @@ export function Lp1PriceCard({
         className="lp-cta-primary lp-cta-full"
         data-testid={testId}
       >
-        Começar hoje à noite <ArrowRight size={18} aria-hidden="true" />
+        Quero meu acesso · {pricing.display}{" "}
+        <ArrowRight size={18} aria-hidden="true" />
       </button>
       <p className="lp-price-payment">
-        Acesso imediato · Pagamento seguro · Garantia de 7 dias
+        Pagamento único · 7 dias de garantia
       </p>
       <div className="lp-guarantee">
         <div className="lp-guarantee-seal" aria-hidden="true">

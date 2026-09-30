@@ -405,6 +405,17 @@ export interface CheckoutCardVerifyInput {
   paymentIntentId: string;
 }
 
+export interface CheckoutCardEmailInput {
+  /** @minLength 1 */
+  sessionId: string;
+  /** @minLength 1 */
+  paymentIntentId: string;
+  /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
+  buyerEmail: string;
+  /** @maxLength 120 */
+  buyerName?: string;
+}
+
 export interface CheckoutCardVerifyResponse {
   ok: boolean;
   accessGranted: boolean;
@@ -1177,6 +1188,10 @@ export type ResetGuestOnboarding200 = {
 };
 
 export type CancelInvite200 = {
+  ok: boolean;
+};
+
+export type UpdateCheckoutCardEmail200 = {
   ok: boolean;
 };
 

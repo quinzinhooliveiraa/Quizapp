@@ -658,7 +658,8 @@ export function Lp1SalePage({
     offerState?.discountActive && remainingSeconds > 0,
   );
   const discountPercent = getDiscountPercent(offerState);
-  const showBottomCta = hasScrolled && !offerCardVisible && !checkoutOpen;
+  const showBottomCta =
+    hasScrolled && !offerCardVisible && !checkoutOpen && Boolean(offerState);
 
   const scrollToOffer = () => {
     document.getElementById("lp1-sale-offer")?.scrollIntoView({
@@ -906,10 +907,12 @@ export function Lp1SalePage({
             onClick={onCheckout}
             data-testid="button-lp1-sale-sticky-checkout"
           >
-            Continuar para pagamento <ArrowRight size={18} aria-hidden="true" />
+            Quero meu acesso ·{" "}
+            {discountActive ? offerState!.offer.display : offerState!.full.display}{" "}
+            <ArrowRight size={18} aria-hidden="true" />
           </button>
           <span className="lp1-sale-bottom-cta-note">
-            Acesso imediato · Pagamento seguro · Garantia de 7 dias
+            Pagamento único · 7 dias de garantia.
           </span>
         </div>
       ) : null}
