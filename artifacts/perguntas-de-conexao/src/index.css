@@ -14786,6 +14786,9 @@ blockquote em {
   font: 400 clamp(2rem, 8vw, 3.1rem)/0.95 var(--app-font-serif);
   letter-spacing: -0.045em;
 }
+.theme-peek-guarantee {
+  color: rgba(255, 255, 255, 0.72);
+}
 .theme-peek-question {
   margin: 1.6rem 0 1.35rem;
   color: #fff;
@@ -30888,6 +30891,10 @@ blockquote em {
   font-size: 0.72rem;
   line-height: 1.35;
   text-align: center;
+}
+.lp3-shell .lp3-cta-guarantee {
+  width: 100%;
+  color: var(--lp3-soft);
 }
 
 .confirmed-payment-banner {

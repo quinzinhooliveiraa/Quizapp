@@ -4918,11 +4918,10 @@ function LandingV2Quiz({
             className="lp-cta-secondary-link"
             data-testid="link-hero-quiz"
           >
-            Já sei o que quero: comprar agora →
+            Quero meu acesso · {pricing.display} →
           </button>
           <p className="lp2-hero-security">
-            🔒 {pricing.pixAvailable ? "Pix e cartão" : "Cartão"} · 7 dias de
-            garantia. Não gostou, devolvo. Você decide.
+            Pagamento único · 7 dias de garantia
           </p>
         </div>
       </section>
@@ -5274,6 +5273,7 @@ function LandingV2Quiz({
                   setPeekThemeId(null);
                   onThemeBuy();
                 }}
+                priceDisplay={pricing.display}
               />
             ) : null;
           })()
@@ -7076,7 +7076,7 @@ const CardPaymentForm = forwardRef<
         </button>
       )}
       <p className="checkout-card-note">
-        Pagamento seguro. Cartão, Apple Pay, Google Pay e Link.
+        Pagamento processado com segurança.
       </p>
     </div>
   );
@@ -7586,6 +7586,11 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
         <code className="checkout-pix-code">{nativeCheckout.brCode}</code>
       </div>
       <div className="checkout-pix-guide">
+        <ol className="checkout-pix-steps">
+          <li>Copie o código</li>
+          <li>Abra o app do seu banco › Pix › Copia e Cola</li>
+          <li>Cole e pague — o acesso abre sozinho aqui.</li>
+        </ol>
         <details
           className="checkout-pix-qr-details"
           open={showPixQr}
@@ -7603,11 +7608,6 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
             />
           </div>
         </details>
-        <ol className="checkout-pix-steps">
-          <li>Copie o código</li>
-          <li>Abra o app do seu banco › Pix › Copia e Cola</li>
-          <li>Cole e pague — o acesso abre sozinho aqui.</li>
-        </ol>
       </div>
       <p className="checkout-pix-expiry">{pixExpiryLabel}</p>
       {checkoutState === "email" || checkoutState === "native-payment" ? (
@@ -8647,11 +8647,11 @@ function Home({
                       className="lp-cta-secondary-link"
                       data-testid="link-hero-buy"
                     >
-                      Já sei o que quero: comprar agora →
+                      Quero meu acesso · {pricing.display} →
                     </button>
                   </div>
                   <p className="lp2-hero-security">
-                    🔒 Pagamento seguro · 7 dias de garantia. Não gostou, devolvo.
+                    Pagamento único · 7 dias de garantia
                   </p>
                 </div>
                 <div className="lp-hero-mockups" aria-hidden="true">
@@ -9016,6 +9016,7 @@ function Home({
                   setPeekThemeId(null);
                   startCheckout("couple", "baralho_modal");
                 }}
+                priceDisplay={pricing.display}
               />
             ) : null;
           })()

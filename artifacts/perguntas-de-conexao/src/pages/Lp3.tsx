@@ -567,9 +567,12 @@ export default function Lp3({
           <ChevronLeft size={14} aria-hidden="true" /> Voltar
         </button>
         <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-start-conversation">
-          Quero começar essa conversa <ArrowRight size={15} aria-hidden="true" />
+          Quero meu acesso · {pricing.display} <ArrowRight size={15} aria-hidden="true" />
         </button>
       </div>
+      <p className="checkout-cta-guarantee lp3-cta-guarantee">
+        Pagamento único · 7 dias de garantia
+      </p>
       {peekThemeId
         ? (() => {
             const peek = getThemePeek(peekThemeId);
@@ -581,6 +584,7 @@ export default function Lp3({
                   setPeekThemeId(null);
                   checkout();
                 }}
+                priceDisplay={pricing.display}
               />
             ) : null;
           })()
@@ -608,10 +612,13 @@ export default function Lp3({
       </div>
       <div className="lp3-actions">
         <button className="lp3-button lp3-button-primary" type="button" onClick={checkout} data-testid="button-lp3-checkout-intent">
-          Quero resolver isso hoje <ArrowRight size={15} aria-hidden="true" />
+          Quero meu acesso · {pricing.display} <ArrowRight size={15} aria-hidden="true" />
         </button>
         <p className="lp3-cta-note">Você começa escolhendo o seu nome e onde quer receber o acesso.</p>
       </div>
+      <p className="checkout-cta-guarantee lp3-cta-guarantee">
+        Pagamento único · 7 dias de garantia
+      </p>
       <div className="lp3-back-row">
         <button className="lp3-link-button" type="button" onClick={goBack} data-testid="button-lp3-back-offer">
           <ChevronLeft size={14} aria-hidden="true" /> Voltar

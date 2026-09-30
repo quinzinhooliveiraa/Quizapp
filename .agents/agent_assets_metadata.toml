@@ -1,0 +1,30 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "EPkAmN2KBeL06GSZK62-o"
+uri = "file://screenshots/checkout-mobile-pix.jpg"
+type = "image"
+title = "Checkout mobile — Pix"
+description = "Mobile Pix checkout screenshot. The displayed email and Pix code are test-only; no payment was created."
+logical_id = "ff3a1ef4-0765-4345-a274-b25e4a3b86ff"
+content_hash = "sha256:83ec803e54e42ca7299683deba840af71f9b49d08df052fa26107a9d759ace06"
+size = 56949
+mtime_ms = 1790780432919
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:f556b3e9-988b-47da-a142-d93c16c9ef0e/ff3a1ef4-0765-4345-a274-b25e4a3b86ff/a50d9aaa-32f8-4fb3-8fa6-2d87f279f19b"
+storage_version_token = "1790780511688608"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "NLN-cZ3OfAjCmgrDaZZi9"
+uri = "file://screenshots/checkout-mobile-card.jpg"
+type = "image"
+title = "Checkout mobile — card option"
+description = "Mobile checkout screenshot showing the card option disabled in this preview because card availability is false."
+logical_id = "84553eb6-1b73-43cb-b1f5-b30d8c74f4f4"
+content_hash = "sha256:ec4ae0b9d8e39c7fc06adf0278ec74a6f8432c5b37af999b6e10783c5f17b9e4"
+size = 58845
+mtime_ms = 1790780433039
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:f556b3e9-988b-47da-a142-d93c16c9ef0e/84553eb6-1b73-43cb-b1f5-b30d8c74f4f4/663cbfff-120b-4539-8a4d-157b66d978ef"
+storage_version_token = "1790780512288394"
+content_type = "image/jpeg"

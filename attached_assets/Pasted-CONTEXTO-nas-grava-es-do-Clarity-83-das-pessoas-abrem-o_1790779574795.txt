@@ -1,0 +1,27 @@
+CONTEXTO: nas gravações do Clarity, 83% das pessoas abrem o checkout e saem em ~12s sem digitar o e-mail; ninguém copia o código Pix; no cartão o botão parece não responder. Reorganizar o checkout. NÃO mexer em preço, quiz, pixel/CAPI. O e-mail CONTINUA obrigatório pro Pix (é a única forma de recuperar o acesso e mandar o e-mail de abandono), mas tem que custar 1 toque.
+
+1) BOTÕES QUE ABREM O CHECKOUT (LP e oferta pós-quiz): trocar "Começar hoje à noite" por "Quero meu acesso · {preço atual}" (o preço que a pessoa está vendo: com desconto se ativo, senão cheio). Abaixo do botão, linha pequena: "Pagamento único · 7 dias de garantia".
+
+2) CHECKOUT — tudo visível ao abrir, NUNCA abrir com erro vermelho:
+   a) Topo: 1 linha de resumo: "Perguntas de Conexão · acesso vitalício pra 2 · {preço}" (com o cheio riscado se houver desconto).
+   b) Se o dispositivo suportar (Stripe Express Checkout Element): botão Apple Pay / Google Pay no topo. A carteira já entrega o e-mail (usar o e-mail que vier da carteira na sessão). Abaixo: "ou pague com Pix / cartão".
+   c) Campo e-mail com type="email", autocomplete="email", inputmode="email", autocapitalize="off", fonte 16px (evita zoom no iPhone). Assim que o e-mail for válido (sem precisar sair do campo), gerar o Pix automaticamente.
+   d) Métodos em abas com LOGOS: [logo Pix] Pix | [Visa][Master] Cartão. Remover o texto "Apple Pay e Google Pay disponíveis".
+   e) Mensagem de erro de e-mail só aparece se a pessoa tocar no botão final com e-mail vazio/ inválido.
+
+3) PIX (no celular): depois de gerado, o PRIMEIRO elemento é um botão grande "Copiar código Pix". Abaixo, 3 passos:
+   "1. Copie o código  2. Abra o app do seu banco › Pix › Copia e Cola  3. Cole e pague — o acesso abre sozinho aqui".
+   QR code recolhido em "Mostrar QR code" (no desktop, QR aberto). Mostrar a validade do Pix. Ao copiar: "Copiado! Agora abra o app do banco."
+
+4) CARTÃO: o botão fixo de compra submete o formulário da Stripe; enquanto processa fica desabilitado com spinner "Processando…"; se a Stripe devolver erro, rolar até o formulário e mostrar a mensagem logo acima do botão.
+
+5) Esconder "Já paguei — abrir meu baralho" até existir Pix gerado.
+
+6) Selos de confiança ("🔒 Pix e cartão · 7 dias", "Acesso imediato · Pagamento seguro") sem aparência de botão (sem borda/sombra, cursor default).
+
+7) REDE DE SEGURANÇA (quem pagou e fechou a página sem querer):
+   - Guardar o sessionId do checkout em localStorage E em cookie (30 dias) assim que a sessão for criada.
+   - Em qualquer página do site, se existir sessionId pendente e o servidor responder access_granted=true, mostrar um banner fixo: "Seu pagamento foi confirmado 🎉 — Abrir meu baralho" (leva direto pro acesso).
+   - Quando o pagamento confirmar, enviar o e-mail de acesso com link mágico (/acesso/:sessionId) — já existe; conferir que dispara também pra pagamento confirmado pelo webhook com a página fechada.
+
+NO FIM: pnpm run typecheck, listar arquivos/linhas alterados e mandar prints do checkout no celular (Pix e cartão).

@@ -6,12 +6,14 @@ type ThemePeekDialogProps = {
   peek: ThemePeek;
   onClose: () => void;
   onBuy: () => void;
+  priceDisplay: string;
 };
 
 export function ThemePeekDialog({
   peek,
   onClose,
   onBuy,
+  priceDisplay,
 }: ThemePeekDialogProps) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -88,8 +90,11 @@ export function ThemePeekDialog({
           onClick={onBuy}
           data-testid="button-theme-peek-buy"
         >
-          Quero esse baralho <ArrowRight size={16} />
+          Quero meu acesso · {priceDisplay} <ArrowRight size={16} />
         </button>
+        <p className="checkout-cta-guarantee theme-peek-guarantee">
+          Pagamento único · 7 dias de garantia
+        </p>
       </div>
     </div>
   );
