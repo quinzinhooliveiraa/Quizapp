@@ -13713,10 +13713,10 @@ function ProtectedExperienceRoute() {
 
   useEffect(() => {
     const retryAccessChecks = () => {
-      if (storedGuestToken && inviteErrorStatus !== 404) {
+      if (inviteConnectionError) {
         void guestQuery.refetch();
       }
-      if (storedSessionId && sessionErrorStatus !== 404) {
+      if (sessionConnectionError) {
         void sessionQuery.refetch();
       }
     };
@@ -13729,11 +13729,9 @@ function ProtectedExperienceRoute() {
     };
   }, [
     guestQuery.refetch,
-    inviteErrorStatus,
-    sessionErrorStatus,
+    inviteConnectionError,
     sessionQuery.refetch,
-    storedGuestToken,
-    storedSessionId,
+    sessionConnectionError,
   ]);
 
   useEffect(() => {
@@ -13762,15 +13760,15 @@ function ProtectedExperienceRoute() {
   ]);
 
   const retryAccess = () => {
-    if (storedGuestToken && !inviteRevoked) {
+    if (inviteConnectionError) {
       void guestQuery.refetch();
     }
-    if (storedSessionId && !sessionRevoked) {
+    if (sessionConnectionError) {
       void sessionQuery.refetch();
     }
   };
 
-  if (hasConnectionError && !inviteRevoked && !sessionRevoked) {
+  if (hasConnectionError) {
     const isRetrying = guestQuery.isFetching || sessionQuery.isFetching;
     return (
       <div className="access-gate-overlay" role="alert" aria-live="assertive">

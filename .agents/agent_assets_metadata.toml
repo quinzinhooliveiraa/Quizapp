@@ -70,3 +70,31 @@ mtime_ms = 1790785468141
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ec5d3eee-ee3a-4b65-9f8f-a64d93035dfe/dcbaf2f9-01c8-490e-ae0c-2ea332bbab26/d2f9f744-7053-4601-bd16-4617e3a30419"
 storage_version_token = "1790785663921273"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "pFIPXYMMFfm9fSB3afwdA"
+uri = "file://screenshots/access-reconnect-375-final.jpg"
+type = "image"
+title = "Tela de reconexão — 375 px"
+description = "Captura da tela de falha temporária de conexão em viewport móvel de 375 px."
+logical_id = "e6800f3b-c5fc-46cf-beee-c51ec5f49511"
+content_hash = "sha256:198b0668e8de1a4643295c9a0374b8697788d05b035bf544c83724f71ecc8738"
+size = 17786
+mtime_ms = 1790786659509
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:3847ec20-d7db-471e-8a27-73b48766aeac/e6800f3b-c5fc-46cf-beee-c51ec5f49511/85a57989-f5c5-42f7-90f7-8f89a3c54a49"
+storage_version_token = "1790786701387725"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "e2h3mtXLzWr3JXajvLLlP"
+uri = "file://screenshots/access-revoked-375-final.jpg"
+type = "image"
+title = "Convite removido — 375 px"
+description = "Captura da tela de convite não ativo em viewport móvel de 375 px."
+logical_id = "632eeb30-4e35-48c6-8a02-588c3dd60e67"
+content_hash = "sha256:f464c6fad96588e02eca50252a84a7d020124572201bc6f9c62a837316bf66d3"
+size = 16081
+mtime_ms = 1790786666437
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:3847ec20-d7db-471e-8a27-73b48766aeac/632eeb30-4e35-48c6-8a02-588c3dd60e67/9b94c4d1-94e4-45fe-a860-7dcd6cff1c78"
+storage_version_token = "1790786701893913"
+content_type = "image/jpeg"
