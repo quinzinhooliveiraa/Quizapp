@@ -160,6 +160,14 @@ const queryClient = new QueryClient({
 const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
 
+function getApiErrorStatus(error: unknown): number | null {
+  if (!error || typeof error !== "object" || !("status" in error)) {
+    return null;
+  }
+  const status = (error as { status?: unknown }).status;
+  return typeof status === "number" ? status : null;
+}
+
 function getMetaCheckoutContext(eventId: string) {
   const consent = isMetaTrackingAllowed();
   const attribution = consent ? getMetaAttributionCookies() : {};
@@ -13691,19 +13699,60 @@ function ProtectedExperienceRoute() {
   const isChecking =
     (storedSessionId && sessionQuery.isPending) ||
     (storedGuestToken && guestQuery.isPending);
-  const inviteRevoked = !!storedGuestToken && guestQuery.isError;
-  const sessionRevoked = !!storedSessionId && sessionQuery.isError;
+  const inviteErrorStatus = getApiErrorStatus(guestQuery.error);
+  const sessionErrorStatus = getApiErrorStatus(sessionQuery.error);
+  const inviteRevoked =
+    !!storedGuestToken && guestQuery.isError && inviteErrorStatus === 404;
+  const sessionRevoked =
+    !!storedSessionId && sessionQuery.isError && sessionErrorStatus === 404;
+  const inviteConnectionError =
+    !!storedGuestToken && guestQuery.isError && inviteErrorStatus !== 404;
+  const sessionConnectionError =
+    !!storedSessionId && sessionQuery.isError && sessionErrorStatus !== 404;
+  const hasConnectionError = inviteConnectionError || sessionConnectionError;
+
+  useEffect(() => {
+    const retryAccessChecks = () => {
+      if (storedGuestToken && inviteErrorStatus !== 404) {
+        void guestQuery.refetch();
+      }
+      if (storedSessionId && sessionErrorStatus !== 404) {
+        void sessionQuery.refetch();
+      }
+    };
+
+    window.addEventListener("focus", retryAccessChecks);
+    window.addEventListener("online", retryAccessChecks);
+    return () => {
+      window.removeEventListener("focus", retryAccessChecks);
+      window.removeEventListener("online", retryAccessChecks);
+    };
+  }, [
+    guestQuery.refetch,
+    inviteErrorStatus,
+    sessionErrorStatus,
+    sessionQuery.refetch,
+    storedGuestToken,
+    storedSessionId,
+  ]);
 
   useEffect(() => {
     if (!storedSessionId && !storedGuestToken) {
       navigate("/", { replace: true });
       return;
     }
-    if (!isChecking && !hasAccess && !inviteRevoked && !sessionRevoked) {
+    if (
+      !isChecking &&
+      !hasAccess &&
+      !hasConnectionError &&
+      !inviteRevoked &&
+      !sessionRevoked
+    ) {
       navigate("/", { replace: true });
     }
   }, [
     hasAccess,
+    hasConnectionError,
     inviteRevoked,
     isChecking,
     navigate,
@@ -13712,8 +13761,49 @@ function ProtectedExperienceRoute() {
     storedSessionId,
   ]);
 
+  const retryAccess = () => {
+    if (storedGuestToken && !inviteRevoked) {
+      void guestQuery.refetch();
+    }
+    if (storedSessionId && !sessionRevoked) {
+      void sessionQuery.refetch();
+    }
+  };
+
+  if (hasConnectionError && !inviteRevoked && !sessionRevoked) {
+    const isRetrying = guestQuery.isFetching || sessionQuery.isFetching;
+    return (
+      <div className="access-gate-overlay" role="alert" aria-live="assertive">
+        <div
+          className="access-gate access-gate-denied"
+          data-testid="access-gate-reconnect"
+        >
+          <span className="access-gate-mark" aria-hidden="true">
+            <X size={20} />
+          </span>
+          <h2>Não conseguimos conectar agora.</h2>
+          <p>
+            Confira sua internet e tente novamente. Seu acesso continua salvo
+            neste dispositivo.
+          </p>
+          <div className="access-gate-actions">
+            <button
+              type="button"
+              onClick={retryAccess}
+              className="button button-primary"
+              disabled={isRetrying}
+              data-testid="button-retry-access"
+            >
+              {isRetrying ? "Tentando de novo…" : "Tentar de novo"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (inviteRevoked || sessionRevoked) {
-    const clearAndGo = () => {
+    const clearAndGo = (destination: string) => {
       [
         "conexao-session",
         "conexao-guest-token",
@@ -13728,29 +13818,46 @@ function ProtectedExperienceRoute() {
           /* noop */
         }
       });
-      navigate("/", { replace: true });
+      navigate(destination, { replace: true });
     };
+    const isInvite = inviteRevoked;
     return (
       <div className="access-gate-overlay" role="status">
-        <div className="access-gate access-gate-denied">
-          <span className="access-gate-mark">
+        <div
+          className="access-gate access-gate-denied"
+          data-testid="access-gate-revoked"
+        >
+          <span className="access-gate-mark" aria-hidden="true">
             <X size={20} />
           </span>
-          <h2>Seu acesso foi encerrado.</h2>
+          <h2>
+            {isInvite
+              ? "Esse convite não está mais ativo"
+              : "Seu acesso foi encerrado"}
+          </h2>
           <p>
-            {inviteRevoked
-              ? "Quem te convidou removeu seu acesso a este baralho."
-              : "Sua sessão não é mais válida."}
-          </p>
-          <p className="access-gate-hint">
-            Fale com quem te convidou pra receber um novo convite, ou compre seu
-            próprio baralho.
+            {isInvite
+              ? "Peça um novo link pra quem te convidou."
+              : "Sua sessão não é mais válida. Entre novamente para continuar."}
           </p>
           <div className="access-gate-actions">
             <button
-              onClick={clearAndGo}
+              type="button"
+              onClick={() =>
+                clearAndGo(isInvite ? getQuizHref({ from: "convite" }) : "/login")
+              }
               className="button button-primary"
               data-testid="button-clear-revoked"
+            >
+              {isInvite
+                ? "Conhecer o Perguntas de Conexão"
+                : "Entrar novamente"}
+            </button>
+            <button
+              type="button"
+              onClick={() => clearAndGo("/")}
+              className="access-gate-back-link"
+              data-testid="button-access-home"
             >
               Voltar ao início
             </button>

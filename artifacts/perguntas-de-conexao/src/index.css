@@ -21783,34 +21783,71 @@ blockquote em {
 }
 
 .access-gate-denied {
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
   max-width: 380px;
   padding: 2rem 1.5rem;
   text-align: center;
+  text-transform: none;
+  letter-spacing: normal;
+  box-sizing: border-box;
+}
+
+.access-gate-denied .access-gate-mark {
+  flex: 0 0 auto;
+  animation: none;
 }
 
 .access-gate-denied h2 {
-  font-size: 1.4rem;
-  font-weight: 500;
-  color: #f9f8fb;
   margin: 0.8rem 0 0.4rem;
-  letter-spacing: -0.02em;
+  color: #332a32;
+  font-family: var(--app-font-serif);
+  font-size: 1.6rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: normal;
 }
 
 .access-gate-denied p {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.7);
+  max-width: 30rem;
   margin: 0.3rem 0;
+  color: #6f6580;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .access-gate-denied .access-gate-hint {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #6f6580;
+  font-size: 0.95rem;
   margin-top: 0.6rem;
 }
 
 .access-gate-actions {
+  width: 100%;
   margin-top: 1.4rem;
+}
+
+.access-gate-denied .button-primary {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.access-gate-back-link {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.35rem;
+  border: 0;
+  color: #6f6580;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.access-gate-back-link:hover {
+  color: #332a32;
 }
 
 /* Onboarding: centralizado e cabendo na tela no PC. */
