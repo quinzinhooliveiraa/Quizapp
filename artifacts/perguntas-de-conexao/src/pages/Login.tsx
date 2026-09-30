@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowRight, Feather, Mail } from "lucide-react";
 import { apiBaseUrl } from "@/config";
+import { getQuizHref } from "@/lib/navigation";
 import { openSupportDialog } from "@/lib/support";
 
 const apiBase = apiBaseUrl;
 const apiUrl = (path: string) => `${apiBase}${path}`;
 
-type Stage = "email" | "code" | "picker";
+type Stage = "email" | "code" | "picker" | "support";
+type SupportPaymentMethod = "" | "pix" | "card";
 type SessionSummary = {
   id: string;
   buyerName: string;
@@ -52,6 +54,12 @@ export default function Login() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [noPurchase, setNoPurchase] = useState(false);
+  const [supportEmail, setSupportEmail] = useState(email);
+  const [supportPaymentDate, setSupportPaymentDate] = useState("");
+  const [supportPaymentTime, setSupportPaymentTime] = useState("");
+  const [supportPaymentMethod, setSupportPaymentMethod] =
+    useState<SupportPaymentMethod>("");
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -65,6 +73,7 @@ export default function Login() {
   async function requestCode() {
     setError("");
     setNotice("");
+    setNoPurchase(false);
     const trimmed = email.trim().toLowerCase();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setError("Digite um email válido.");
@@ -107,13 +116,8 @@ export default function Login() {
       }
 
       if (response.status === 404) {
-        const data = (await response.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        setError(
-          data.error ||
-            "Nenhuma conta encontrada com este email. Verifique se digitou certo ou compre um baralho.",
-        );
+        setNoPurchase(true);
+        setError("");
         setLoading(false);
         return;
       }
@@ -262,6 +266,38 @@ export default function Login() {
     });
   }
 
+  function formatSupportDetails() {
+    return [
+      "Olá! Paguei e não recebi meu acesso ao Perguntas de Conexão.",
+      `E-mail usado: ${supportEmail.trim() || "não informado"}`,
+      `Data aproximada: ${supportPaymentDate || "não informado"}`,
+      `Hora aproximada: ${supportPaymentTime || "não informado"}`,
+      `Forma de pagamento: ${
+        supportPaymentMethod === "pix"
+          ? "Pix"
+          : supportPaymentMethod === "card"
+            ? "Cartão"
+            : "não informado"
+      }`,
+    ].join("\n");
+  }
+
+  function openPaymentSupport() {
+    const message = formatSupportDetails();
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
+  function startSupportFlow() {
+    setSupportEmail(email);
+    setStage("support");
+    setError("");
+    setNoPurchase(false);
+  }
+
   return (
     <div className="login-shell">
       <main className="login-frame">
@@ -290,7 +326,10 @@ export default function Login() {
                 inputMode="email"
                 placeholder="seu@email.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setNoPurchase(false);
+                }}
                 onKeyDown={(e) => e.key === "Enter" && requestCode()}
                 className="login-input"
                 data-testid="input-login-email"
@@ -301,6 +340,23 @@ export default function Login() {
               <p className="login-error" data-testid="text-login-error">
                 {error}
               </p>
+            )}
+            {noPurchase && (
+              <div className="login-no-purchase" data-testid="text-login-no-purchase">
+                <p>
+                  Não achamos compra com esse e-mail. Pagou e não recebeu?{" "}
+                  <button type="button" onClick={startSupportFlow}>
+                    Toque aqui
+                  </button>
+                </p>
+                <Link
+                  href={getQuizHref()}
+                  className="login-quiz-cta"
+                  data-testid="link-login-free-test"
+                >
+                  Fazer o teste e ver seu baralho <ArrowRight size={16} />
+                </Link>
+              </div>
             )}
             <button
               onClick={requestCode}
@@ -317,8 +373,101 @@ export default function Login() {
               )}
             </button>
             <p className="login-alt">
-              Ainda não tem baralho? <Link href="/#pacotes">Ver pacotes</Link>
+              <Link
+                href={getQuizHref()}
+                className="login-quiz-cta"
+                data-testid="link-login-quiz"
+              >
+                Ainda não tem? Fazer o teste grátis <ArrowRight size={15} />
+              </Link>
             </p>
+          </>
+        )}
+
+        {stage === "support" && (
+          <>
+            <button
+              type="button"
+              className="login-back login-inline-back"
+              onClick={() => setStage("email")}
+            >
+              ← voltar para o login
+            </button>
+            <h1>
+              Pagou e não <em>recebeu?</em>
+            </h1>
+            <p className="login-copy">
+              Preencha o que souber. A gente usa esses dados para localizar o
+              pagamento e liberar seu acesso.
+            </p>
+            <div className="login-support-form">
+              <label>
+                E-mail usado no pagamento <span>(opcional)</span>
+                <input
+                  type="email"
+                  value={supportEmail}
+                  onChange={(event) => setSupportEmail(event.target.value)}
+                  placeholder="seu@email.com"
+                  autoComplete="email"
+                  data-testid="input-support-email"
+                />
+              </label>
+              <div className="login-support-date-grid">
+                <label>
+                  Data aproximada
+                  <input
+                    type="date"
+                    value={supportPaymentDate}
+                    onChange={(event) => setSupportPaymentDate(event.target.value)}
+                    data-testid="input-support-date"
+                  />
+                </label>
+                <label>
+                  Hora aproximada
+                  <input
+                    type="time"
+                    value={supportPaymentTime}
+                    onChange={(event) => setSupportPaymentTime(event.target.value)}
+                    data-testid="input-support-time"
+                  />
+                </label>
+              </div>
+              <label>
+                Forma de pagamento
+                <select
+                  value={supportPaymentMethod}
+                  onChange={(event) =>
+                    setSupportPaymentMethod(
+                      event.target.value as SupportPaymentMethod,
+                    )
+                  }
+                  data-testid="select-support-payment-method"
+                >
+                  <option value="">Selecione</option>
+                  <option value="pix">Pix</option>
+                  <option value="card">Cartão</option>
+                </select>
+              </label>
+            </div>
+            <div className="login-support-actions">
+              <button
+                type="button"
+                className="login-primary"
+                onClick={openPaymentSupport}
+                data-testid="button-support-whatsapp"
+              >
+                Enviar comprovante pelo WhatsApp <ArrowRight size={16} />
+              </button>
+              <a
+                className="login-secondary login-mail-link"
+                href={`mailto:perguntasdeconexao@gmail.com?subject=${encodeURIComponent(
+                  "Paguei e não recebi",
+                )}&body=${encodeURIComponent(formatSupportDetails())}`}
+                data-testid="link-support-email"
+              >
+                Enviar por e-mail
+              </a>
+            </div>
           </>
         )}
 

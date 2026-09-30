@@ -54,6 +54,27 @@ export type GrantedSession = NonNullable<
   Awaited<ReturnType<typeof grantSessionAccess>>
 >;
 
+export async function resendGrantedAccessEmail(params: {
+  buyerName: string;
+  buyerEmail: string;
+  sessionId: string;
+}) {
+  const baseUrl =
+    process.env.PUBLIC_BASE_URL || "https://www.perguntasdeconexao.com.br";
+  const payload = buildPurchaseAccessEmail({
+    buyerName: params.buyerName,
+    accessUrl: `${baseUrl}/acesso/${encodeURIComponent(params.sessionId)}`,
+    loginUrl: `${baseUrl}/login`,
+  });
+  return sendEmailViaBrevo({
+    to: params.buyerEmail,
+    toName: params.buyerName,
+    subject: payload.subject,
+    htmlContent: payload.htmlContent,
+    textContent: payload.textContent,
+  });
+}
+
 export function notifyGrantedAccess(
   session: GrantedSession | undefined,
   onError: (error: unknown, message: string) => void,
@@ -91,20 +112,10 @@ export function notifyGrantedAccess(
 
   if (!session.buyerEmail) return;
 
-  const baseUrl =
-    process.env.PUBLIC_BASE_URL || "https://www.perguntasdeconexao.com.br";
-  const payload = buildPurchaseAccessEmail({
+  void resendGrantedAccessEmail({
     buyerName: session.buyerName,
-    accessUrl: `${baseUrl}/acesso/${encodeURIComponent(session.id)}`,
-    loginUrl: `${baseUrl}/login`,
-  });
-
-  void sendEmailViaBrevo({
-    to: session.buyerEmail,
-    toName: session.buyerName,
-    subject: payload.subject,
-    htmlContent: payload.htmlContent,
-    textContent: payload.textContent,
+    buyerEmail: session.buyerEmail,
+    sessionId: session.id,
   })
     .then((result) => {
       if (!result.ok) onError(result.error, "Purchase access email failed");

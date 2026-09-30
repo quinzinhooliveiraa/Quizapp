@@ -93,6 +93,9 @@ export interface Buyer {
   accessGranted: boolean;
   invitesUsed: number;
   inviteLimit: number;
+  /** @nullable */
+  accessOpenedAt: string | null;
+  onboardingComplete: boolean;
   createdAt: string;
 }
 
@@ -1449,6 +1452,14 @@ export type DeleteAdminPendingAccessBody = {
 
 export type DeleteAdminBuyerParams = {
 sessionId: string;
+};
+
+export type ResendAdminBuyerAccessParams = {
+sessionId: string;
+};
+
+export type ResendAdminBuyerAccess200 = {
+  ok: boolean;
 };
 
 export type GetAdminSessionRecordingParams = {

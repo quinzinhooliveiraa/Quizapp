@@ -244,6 +244,19 @@ router.post("/auth/verify-code", async (req, res): Promise<void> => {
     return;
   }
 
+  if (sessions.length > 0) {
+    await db
+      .update(sessionsTable)
+      .set({ accessOpenedAt: now })
+      .where(
+        and(
+          eq(sessionsTable.buyerEmail, email),
+          eq(sessionsTable.accessGranted, true),
+          isNull(sessionsTable.accessOpenedAt),
+        ),
+      );
+  }
+
   res.json({ sessions, invites: inviteEntries });
 });
 

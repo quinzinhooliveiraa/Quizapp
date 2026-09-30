@@ -138,6 +138,7 @@ import {
   usePricing,
 } from "@/lib/pricing";
 import { SUPPORT_DIALOG_EVENT, openSupportDialog } from "@/lib/support";
+import { getQuizHref } from "@/lib/navigation";
 import { getThemePeek } from "@/lib/theme-peek";
 import {
   createMetaEventId,
@@ -2650,10 +2651,12 @@ function Lp1Quiz({
       return false;
     }
   });
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [captureAttempted, setCaptureAttempted] = useState(false);
   const [trialCardIndex, setTrialCardIndex] = useState(0);
   const [climateIndex, setClimateIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastBackTapAt = useRef(0);
   const completionTrackedRef = useRef(false);
   const completionStorageKey = `lp1-quiz-completed:${lpId}`;
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
@@ -2925,12 +2928,19 @@ function Lp1Quiz({
   };
 
   const goBack = () => {
+    const now = Date.now();
+    const isDoubleTap = now - lastBackTapAt.current < 600;
+    lastBackTapAt.current = now;
+    if (isDoubleTap) {
+      setShowExitConfirm(true);
+      return;
+    }
     if (showBridgeScreen) {
       setShowBridgeScreen(false);
       return;
     }
     if (step === 0) {
-      onBackToLanding();
+      setShowExitConfirm(true);
       return;
     }
     setStep((previous) => Math.max(previous - 1, 0));
@@ -3217,6 +3227,38 @@ function Lp1Quiz({
           </section>
         )}
       </div>
+      {showExitConfirm ? (
+        <div
+          className="quiz-exit-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quiz-exit-title"
+        >
+          <div className="quiz-exit-dialog">
+            <p className="lp1-quiz-eyebrow">sair do teste?</p>
+            <h2 id="quiz-exit-title">Quer parar por aqui?</h2>
+            <p>Suas respostas ficam salvas neste navegador.</p>
+            <div className="quiz-exit-actions">
+              <button
+                type="button"
+                className="lp1-quiz-next"
+                onClick={() => setShowExitConfirm(false)}
+                data-testid="button-continue-quiz"
+              >
+                Continuar o teste
+              </button>
+              <button
+                type="button"
+                className="quiz-exit-home"
+                onClick={onBackToLanding}
+                data-testid="button-exit-quiz-home"
+              >
+                Voltar pra página inicial
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
@@ -5308,7 +5350,7 @@ function Shell({
           className="header-cta"
           data-testid="link-header-cta"
         >
-          Abrir meu baralho <ArrowRight size={16} />
+          Já comprei · Entrar
         </Link>
         <button
           className="menu-toggle"
@@ -7841,7 +7883,11 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                     {checkoutDiscountActive && checkoutFullPrice ? (
                       <del>de {checkoutFullPrice.display}</del>
                     ) : null}
-                    <strong>{checkoutPricing.display}</strong>
+                    <strong>
+                      <span style={{ whiteSpace: "nowrap" }}>
+                        {checkoutPricing.display}
+                      </span>
+                    </strong>
                   </div>
                 </div>
                 {cardError ? (
@@ -7869,7 +7915,10 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                     </>
                   ) : (
                     <>
-                      Quero meu acesso · {checkoutPricing.display}{" "}
+                      Quero meu acesso ·{" "}
+                      <span style={{ whiteSpace: "nowrap" }}>
+                        {checkoutPricing.display}
+                      </span>{" "}
                       <ArrowRight size={17} />
                     </>
                   )}
@@ -8600,7 +8649,7 @@ function Home({
             checkoutOpen={checkoutController.checkoutOpen}
             onStartQuiz={() => {
               trackCtaClick("quiz_start");
-              navigate("/quiz?from=lp1");
+              navigate(getQuizHref({ from: "lp1" }));
             }}
           />
         ) : (

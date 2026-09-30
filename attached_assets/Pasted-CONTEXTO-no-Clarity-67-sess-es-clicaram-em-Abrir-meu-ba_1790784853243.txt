@@ -1,0 +1,23 @@
+CONTEXTO: no Clarity, 67 sessões clicaram em "Abrir meu baralho" e 26 pediram código de login, mas só existem 5 compradores — visitantes acham que ali pegam o produto. Também quero um caminho pra quem pagou e perdeu o acesso. NÃO mexer em preço, quiz (além do item 5), checkout (além do item 7), Pix, cartão nem pixel/CAPI.
+
+1) Topo do site (header da LP e da página de oferta): trocar "Abrir meu baralho" por "Já comprei · Entrar" — menor e discreto (link de texto, não botão dourado).
+
+2) /login: o botão secundário "Ver pacotes" vira destaque: "Ainda não tem? Fazer o teste grátis →" levando pro /quiz (mantendo os UTMs da URL atual).
+
+3) /login: se o e-mail digitado NÃO tem compra (access_granted), mostrar:
+   "Não achamos compra com esse e-mail. Pagou e não recebeu? Toque aqui" (abre o item 4)
+   + botão "Fazer o teste e ver seu baralho" pro /quiz.
+   Nunca mostrar "código enviado" quando não existe compra.
+
+4) Tela "Pagou e não recebeu?": campos e-mail usado (opcional), data/hora aproximada do pagamento, forma (Pix/cartão) e 2 botões:
+   - "Enviar comprovante pelo WhatsApp" (abre wa.me com mensagem pronta contendo os dados preenchidos);
+   - "Enviar por e-mail" (mailto:perguntasdeconexao@gmail.com com assunto "Paguei e não recebi" e os dados no corpo).
+   No admin, aba Compradores, criar filtro "Pagos sem acesso usado" (access_granted=true e nenhum login/abertura do baralho feito) pra eu localizar e reenviar o link manualmente, com botão "Reenviar e-mail de acesso".
+
+5) Seta "←" do quiz: na primeira pergunta (ou ao tocar 2x seguidas), mostrar um aviso "Sair do teste?" com [Continuar o teste] e [Voltar pra página inicial]. Hoje a pessoa toca 10x pra sair.
+
+6) Todo link interno que leva pro /quiz carrega os UTMs da URL atual (utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid). Incluir o botão do hero da LP (hoje navigate("/quiz?from=lp1") perde os UTMs).
+
+7) Checkout, ajuste mínimo: no botão fixo .checkout-purchase-button, o preço não pode quebrar ("R$ / 37,90"). Envolver o preço num <span style="white-space:nowrap"> e, se não couber em 1 linha em 375px, reduzir a fonte do botão pra 0.72rem.
+
+NO FIM: pnpm run typecheck, listar arquivos/linhas alterados e prints do /login (com e-mail sem compra), da tela "Pagou e não recebeu?" e do aviso "Sair do teste?".

@@ -22426,6 +22426,148 @@ blockquote em {
 .login-alt a:hover {
   text-decoration: underline;
 }
+.login-quiz-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: #f4d27e;
+  font-weight: 600;
+  text-decoration: none;
+}
+.login-quiz-cta:hover {
+  color: #fff3c7;
+  text-decoration: underline;
+}
+.login-no-purchase {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(232, 201, 138, 0.28);
+  border-radius: 0.8rem;
+  background: rgba(232, 201, 138, 0.08);
+}
+.login-no-purchase p {
+  margin: 0;
+  color: rgba(246, 245, 250, 0.8);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.login-no-purchase button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f4d27e;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.login-inline-back {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.login-support-form {
+  display: grid;
+  gap: 0.85rem;
+}
+.login-support-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: rgba(246, 245, 250, 0.72);
+  font-size: 0.78rem;
+}
+.login-support-form label span {
+  color: rgba(246, 245, 250, 0.42);
+}
+.login-support-form input,
+.login-support-form select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f6f5fa;
+  padding: 0.78rem 0.85rem;
+  font: inherit;
+}
+.login-support-form select option {
+  color: #17121b;
+}
+.login-support-date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+.login-support-actions {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+.login-mail-link {
+  text-decoration: underline;
+}
+.admin-buyers-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--admin-muted, #766d7c);
+  font-size: 0.82rem;
+}
+.admin-buyers-filter select {
+  border: 1px solid rgba(43, 30, 50, 0.16);
+  border-radius: 0.45rem;
+  background: #fff;
+  color: inherit;
+  padding: 0.45rem 0.6rem;
+  font: inherit;
+}
+.quiz-exit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(9, 7, 14, 0.72);
+  backdrop-filter: blur(12px);
+}
+.quiz-exit-dialog {
+  width: min(100%, 25rem);
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1rem;
+  background: #17121f;
+  color: #f9f8fb;
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.35);
+}
+.quiz-exit-dialog h2 {
+  margin: 0.3rem 0 0.5rem;
+  font: 500 1.65rem/1.1 var(--font-sans);
+  letter-spacing: -0.04em;
+}
+.quiz-exit-dialog > p:not(.lp1-quiz-eyebrow) {
+  margin: 0;
+  color: rgba(246, 245, 250, 0.68);
+  line-height: 1.5;
+}
+.quiz-exit-actions {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
+}
+.quiz-exit-home {
+  border: 0;
+  background: transparent;
+  color: rgba(246, 245, 250, 0.62);
+  padding: 0.7rem;
+  font: inherit;
+  cursor: pointer;
+}
+.quiz-exit-home:hover {
+  color: #fff;
+}
 .login-support {
   margin: 1.2rem 0 0;
   color: rgba(255, 255, 255, 0.5);
@@ -28386,6 +28528,11 @@ blockquote em {
   background: linear-gradient(135deg, #f0c55b, #d9a02a);
   box-shadow: 0 0.7rem 1.25rem rgba(232, 177, 58, 0.34);
   transform: translateY(-1px);
+}
+@media (max-width: 375px) {
+  .checkout-purchase-button {
+    font-size: 0.72rem;
+  }
 }
 
 .checkout-modal .button-primary {

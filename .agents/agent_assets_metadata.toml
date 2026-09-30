@@ -42,3 +42,31 @@ mtime_ms = 1790782300377
 storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:e79d3f6a-592e-4e04-9d4f-45430828a44a/43ce2049-7740-42be-971e-7669d87d03c5/c7cc4b5e-fac4-4e53-a073-a691dd086f2e"
 storage_version_token = "1790782311402965"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "kKgMzO-dYW14MjWIW-1_B"
+uri = "file://screenshots/login-final.jpg"
+type = "image"
+title = "Preview — login"
+description = "Preview final da tela de login com o link discreto para o teste grátis."
+logical_id = "6ddc2d2d-ca6c-4a45-89d4-18e0af11e224"
+content_hash = "sha256:5156bfb89bb14b827b6cf189ca0b3612dffe9f8854bfed73071611e1ce040789"
+size = 26729
+mtime_ms = 1790785623574
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ec5d3eee-ee3a-4b65-9f8f-a64d93035dfe/6ddc2d2d-ca6c-4a45-89d4-18e0af11e224/f750ea62-7860-4233-b082-28aae78728c8"
+storage_version_token = "1790785663326682"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "uPRF9isc_dNnZu51BPoxi"
+uri = "file://screenshots/quiz-exit.jpg"
+type = "image"
+title = "Preview — início do teste"
+description = "Preview final da primeira pergunta do teste, onde o botão de voltar abre a confirmação de saída."
+logical_id = "dcbaf2f9-01c8-490e-ae0c-2ea332bbab26"
+content_hash = "sha256:4f516f092898b9ee113904dc581dedbc84ac71848ffce90ea6f3508dd1f6a82c"
+size = 26326
+mtime_ms = 1790785468141
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:ec5d3eee-ee3a-4b65-9f8f-a64d93035dfe/dcbaf2f9-01c8-490e-ae0c-2ea332bbab26/d2f9f744-7053-4601-bd16-4617e3a30419"
+storage_version_token = "1790785663921273"
+content_type = "image/jpeg"

@@ -15,5 +15,8 @@ export interface Buyer {
   accessGranted: boolean;
   invitesUsed: number;
   inviteLimit: number;
+  /** @nullable */
+  accessOpenedAt: Date | null;
+  onboardingComplete: boolean;
   createdAt: Date;
 }

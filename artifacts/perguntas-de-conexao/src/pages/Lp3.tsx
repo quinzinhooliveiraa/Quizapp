@@ -648,7 +648,7 @@ export default function Lp3({
           onClick={homeHref === "/lp3" ? returnToIntro : reset}
         />
         <Link href="/login" className="header-cta" data-testid="link-header-cta">
-          Abrir meu baralho <ArrowRight size={16} />
+          Já comprei · Entrar
         </Link>
       </header>
       <main className="lp-main lp3-main" data-section-name={screen}>

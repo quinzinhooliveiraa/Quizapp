@@ -161,6 +161,8 @@ export * from './questionThemeKind';
 export * from './quizAnswerInput';
 export * from './quizAnswerInputLpId';
 export * from './receiveStripeWebhookBody';
+export * from './resendAdminBuyerAccess200';
+export * from './resendAdminBuyerAccessParams';
 export * from './resetGuestOnboarding200';
 export * from './resetOwnerOnboarding200';
 export * from './review';

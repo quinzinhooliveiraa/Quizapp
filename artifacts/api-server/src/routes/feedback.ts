@@ -10,6 +10,7 @@ import {
 } from "@workspace/db";
 import { sendSupportNotification } from "../lib/push";
 import { reconcilePendingPayments } from "../lib/payment-reconciliation";
+import { resendGrantedAccessEmail } from "../lib/payment-access";
 
 const router: IRouter = Router();
 
@@ -286,6 +287,8 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
       accessGranted: sessionsTable.accessGranted,
       invitesUsed: sessionsTable.invitesUsed,
       inviteLimit: sessionsTable.inviteLimit,
+      accessOpenedAt: sessionsTable.accessOpenedAt,
+      onboardingComplete: sessionsTable.onboardingComplete,
       createdAt: sessionsTable.createdAt,
     })
     .from(sessionsTable)
@@ -299,6 +302,53 @@ router.get("/admin/buyers", async (req, res): Promise<void> => {
     totalWithAccess: Number(accessResult[0]?.value || 0),
   });
 });
+
+router.post(
+  "/admin/buyers/:buyerId/resend-access",
+  async (req, res): Promise<void> => {
+    const sessionId =
+      typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+    if (!(await isAdminSession(sessionId))) {
+      res.status(403).json({ error: "Acesso negado" });
+      return;
+    }
+
+    const buyerId = req.params.buyerId?.trim();
+    if (!buyerId) {
+      res.status(400).json({ error: "Comprador inválido" });
+      return;
+    }
+
+    const [buyer] = await db
+      .select({
+        id: sessionsTable.id,
+        buyerName: sessionsTable.buyerName,
+        buyerEmail: sessionsTable.buyerEmail,
+        accessGranted: sessionsTable.accessGranted,
+      })
+      .from(sessionsTable)
+      .where(eq(sessionsTable.id, buyerId))
+      .limit(1);
+
+    if (!buyer || !buyer.accessGranted || !buyer.buyerEmail) {
+      res.status(404).json({ error: "Comprador com acesso não encontrado" });
+      return;
+    }
+
+    const result = await resendGrantedAccessEmail({
+      buyerName: buyer.buyerName,
+      buyerEmail: buyer.buyerEmail,
+      sessionId: buyer.id,
+    });
+    if (!result.ok) {
+      req.log.error({ error: result.error, buyerId }, "Failed to resend access email");
+      res.status(502).json({ error: "Não foi possível reenviar o e-mail agora" });
+      return;
+    }
+
+    res.json({ ok: true });
+  },
+);
 
 router.patch(
   "/admin/pending-access/:pendingId",

@@ -31,3 +31,4 @@
 - [Image optimization formats](image-optimization-formats.md) — large raster art is served as high-quality WebP; small photographic backgrounds stay JPEG when WebP would be larger.
 - [Primary landing authority](primary-landing-authority.md) — the server setting is authoritative; browser storage must not choose which page `/` renders.
 - [Quiz tracking contract](quiz-tracking-contract.md) — compound stages need explicit catalog-compatible summary events; page-section observation is supplemental.
+- [Buyer access history](buyer-access-history.md) — treat completed onboarding as historical evidence of use when the newer access timestamp is absent.

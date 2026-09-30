@@ -1442,6 +1442,8 @@ export const ListAdminBuyersResponse = zod.object({
   "accessGranted": zod.boolean(),
   "invitesUsed": zod.number(),
   "inviteLimit": zod.number(),
+  "accessOpenedAt": zod.coerce.date().nullable(),
+  "onboardingComplete": zod.boolean(),
   "createdAt": zod.coerce.date()
 })),
   "pendingAccess": zod.array(zod.object({
@@ -1523,6 +1525,22 @@ export const DeleteAdminBuyerQueryParams = zod.object({
 })
 
 export const DeleteAdminBuyerResponse = zod.void()
+
+
+/**
+ * @summary Resend the purchase access email
+ */
+export const ResendAdminBuyerAccessParams = zod.object({
+  "buyerId": zod.coerce.string()
+})
+
+export const ResendAdminBuyerAccessQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const ResendAdminBuyerAccessResponse = zod.object({
+  "ok": zod.boolean()
+})
 
 
 /**

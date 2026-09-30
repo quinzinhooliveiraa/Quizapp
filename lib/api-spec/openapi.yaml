@@ -1376,6 +1376,34 @@ paths:
           description: Access denied
         "404":
           description: Buyer not found
+  /admin/buyers/{buyerId}/resend-access:
+    post:
+      operationId: resendAdminBuyerAccess
+      tags: [admin]
+      summary: Resend the purchase access email
+      parameters:
+        - name: buyerId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Access email resent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                required: [ok]
+        "403":
+          description: Access denied
+        "404":
+          description: Buyer not found
   /admin/session-recording:
     get:
       operationId: getAdminSessionRecording
@@ -1583,6 +1611,8 @@ components:
         accessGranted: { type: boolean }
         invitesUsed: { type: number }
         inviteLimit: { type: number }
+        accessOpenedAt: { type: ["string", "null"], format: date-time }
+        onboardingComplete: { type: boolean }
         createdAt: { type: string, format: date-time }
       required:
         [
@@ -1593,6 +1623,8 @@ components:
           accessGranted,
           invitesUsed,
           inviteLimit,
+          accessOpenedAt,
+          onboardingComplete,
           createdAt,
         ]
     PendingAccess:

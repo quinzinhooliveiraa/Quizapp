@@ -1268,6 +1268,21 @@ router.get("/access/sessions/:sessionId", async (req, res): Promise<void> => {
     }
   }
 
+  if (session.accessGranted && !session.accessOpenedAt) {
+    const [opened] = await db
+      .update(sessionsTable)
+      .set({ accessOpenedAt: new Date() })
+      .where(
+        and(
+          eq(sessionsTable.id, session.id),
+          eq(sessionsTable.accessGranted, true),
+          sql`${sessionsTable.accessOpenedAt} IS NULL`,
+        ),
+      )
+      .returning({ accessOpenedAt: sessionsTable.accessOpenedAt });
+    if (opened) session.accessOpenedAt = opened.accessOpenedAt;
+  }
+
   res.json(GetQuestionSessionResponse.parse(session));
 });
 

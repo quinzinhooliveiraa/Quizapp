@@ -38,6 +38,7 @@ export const sessionsTable = pgTable("sessions", {
   inviteLimit: integer("invite_limit").notNull(),
   invitesUsed: integer("invites_used").notNull().default(0),
   accessGranted: boolean("access_granted").notNull().default(false),
+  accessOpenedAt: timestamp("access_opened_at", { withTimezone: true }),
   internal: boolean("internal").notNull().default(false),
   abandonEmail1At: timestamp("abandon_email_1_at", { withTimezone: true }),
   abandonEmail2At: timestamp("abandon_email_2_at", { withTimezone: true }),

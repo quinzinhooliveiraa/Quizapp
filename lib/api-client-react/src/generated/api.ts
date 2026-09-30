@@ -98,6 +98,8 @@ import type {
   QuestionTheme,
   QuizAnswerInput,
   ReceiveStripeWebhookBody,
+  ResendAdminBuyerAccess200,
+  ResendAdminBuyerAccessParams,
   ResetGuestOnboarding200,
   ResetOwnerOnboarding200,
   Review,
@@ -4500,6 +4502,86 @@ export const useDeleteAdminBuyer = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteAdminBuyerMutationOptions(options));
+    }
+
+export const getResendAdminBuyerAccessUrl = (buyerId: string,
+    params: ResendAdminBuyerAccessParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/buyers/${buyerId}/resend-access?${stringifiedParams}` : `/api/admin/buyers/${buyerId}/resend-access`
+}
+
+/**
+ * @summary Resend the purchase access email
+ */
+export const resendAdminBuyerAccess = async (buyerId: string,
+    params: ResendAdminBuyerAccessParams, options?: Parameters<typeof customFetch>[1]): Promise<ResendAdminBuyerAccess200> => {
+
+  return customFetch<ResendAdminBuyerAccess200>(getResendAdminBuyerAccessUrl(buyerId,params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getResendAdminBuyerAccessMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendAdminBuyerAccess>>, TError,{buyerId: string;params: ResendAdminBuyerAccessParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resendAdminBuyerAccess>>, TError,{buyerId: string;params: ResendAdminBuyerAccessParams}, TContext> => {
+
+const mutationKey = ['resendAdminBuyerAccess'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resendAdminBuyerAccess>>, {buyerId: string;params: ResendAdminBuyerAccessParams}> = (props) => {
+          const {buyerId,params} = props ?? {};
+
+          return  resendAdminBuyerAccess(buyerId,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResendAdminBuyerAccessMutationResult = NonNullable<Awaited<ReturnType<typeof resendAdminBuyerAccess>>>
+
+    export type ResendAdminBuyerAccessMutationError = ErrorType<void>
+
+    /**
+ * @summary Resend the purchase access email
+ */
+export const useResendAdminBuyerAccess = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resendAdminBuyerAccess>>, TError,{buyerId: string;params: ResendAdminBuyerAccessParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resendAdminBuyerAccess>>,
+        TError,
+        {buyerId: string;params: ResendAdminBuyerAccessParams},
+        TContext
+      > => {
+      return useMutation(getResendAdminBuyerAccessMutationOptions(options));
     }
 
 export const getGetAdminSessionRecordingUrl = (params: GetAdminSessionRecordingParams,) => {

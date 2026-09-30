@@ -68,6 +68,8 @@ type BuyerEntry = {
   accessGranted: boolean;
   invitesUsed: number;
   inviteLimit: number;
+  accessOpenedAt: string | null;
+  onboardingComplete: boolean;
   createdAt: string;
 };
 type PendingAccessEntry = {
@@ -2013,11 +2015,13 @@ function BuyersTab({
 }) {
   const [visibleBuyers, setVisibleBuyers] = useState(buyers);
   const [visiblePendingAccess, setVisiblePendingAccess] = useState(pendingAccess);
+  const [buyerFilter, setBuyerFilter] = useState<"all" | "unused">("all");
   const [showPendingAccess, setShowPendingAccess] = useState(
     () => safeGetItem("admin-pending-access-visible") !== "0",
   );
   const [loadingBuyerId, setLoadingBuyerId] = useState<string | null>(null);
   const [deletingBuyerId, setDeletingBuyerId] = useState<string | null>(null);
+  const [resendingBuyerId, setResendingBuyerId] = useState<string | null>(null);
   const [deleteMessage, setDeleteMessage] = useState("");
   const [editingPendingAccess, setEditingPendingAccess] =
     useState<PendingAccessEntry | null>(null);
@@ -2039,6 +2043,11 @@ function BuyersTab({
   const [copiedVisitorKey, setCopiedVisitorKey] = useState<string | null>(null);
   useEffect(() => setVisibleBuyers(buyers), [buyers]);
   useEffect(() => setVisiblePendingAccess(pendingAccess), [pendingAccess]);
+  const filteredBuyers = visibleBuyers.filter(
+    (buyer) =>
+      buyerFilter === "all" ||
+      (!buyer.accessOpenedAt && !buyer.onboardingComplete),
+  );
 
   const togglePendingAccessVisibility = () => {
     const nextValue = !showPendingAccess;
@@ -2164,6 +2173,25 @@ function BuyersTab({
       }));
     } finally {
       setLoadingBuyerId(null);
+    }
+  };
+
+  const resendAccess = async (buyer: BuyerEntry) => {
+    const sessionId = safeGetItem("conexao-session")?.trim();
+    if (!sessionId || !buyer.buyerEmail) return;
+    setResendingBuyerId(buyer.id);
+    setDeleteMessage("");
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/buyers/${encodeURIComponent(buyer.id)}/resend-access?sessionId=${encodeURIComponent(sessionId)}`,
+        { method: "POST" },
+      );
+      if (!response.ok) throw new Error("resend-access");
+      setDeleteMessage(`E-mail de acesso reenviado para ${buyer.buyerEmail}.`);
+    } catch {
+      setDeleteMessage("Não foi possível reenviar o e-mail de acesso.");
+    } finally {
+      setResendingBuyerId(null);
     }
   };
 
@@ -2463,14 +2491,27 @@ function BuyersTab({
           <h2 id="buyers-title">Compradores</h2>
         </div>
         <span className="admin-count">
-          {visibleBuyers.length}{" "}
-          {visibleBuyers.length === 1 ? "comprador" : "compradores"}
+           {filteredBuyers.length}{" "}
+           {filteredBuyers.length === 1 ? "comprador" : "compradores"}
         </span>
       </div>
+       <label className="admin-buyers-filter">
+         Mostrar
+         <select
+           value={buyerFilter}
+           onChange={(event) =>
+             setBuyerFilter(event.target.value as "all" | "unused")
+           }
+           data-testid="select-buyers-filter"
+         >
+           <option value="all">Todos os compradores</option>
+           <option value="unused">Pagos sem acesso usado</option>
+         </select>
+       </label>
       {deleteMessage && (
         <p className="admin-notification-message">{deleteMessage}</p>
       )}
-      {visibleBuyers.length === 0 ? (
+      {filteredBuyers.length === 0 ? (
         <p className="admin-footnote">Nenhum cadastro ainda.</p>
       ) : (
         <div className="admin-buyers-table-wrap">
@@ -2487,7 +2528,7 @@ function BuyersTab({
               </tr>
             </thead>
             <tbody>
-              {visibleBuyers.map((buyer) => (
+              {filteredBuyers.map((buyer) => (
                 <tr key={buyer.id} data-testid={`row-buyer-${buyer.id}`}>
                   <td>{buyer.buyerName || "Sem nome"}</td>
                   <td>{buyer.buyerEmail || "Sem email"}</td>
@@ -2497,6 +2538,20 @@ function BuyersTab({
                     {buyer.invitesUsed}/{buyer.inviteLimit}
                   </td>
                   <td>
+                    {!buyer.accessOpenedAt &&
+                    !buyer.onboardingComplete &&
+                    buyer.buyerEmail ? (
+                      <button
+                        type="button"
+                        className="admin-recording-button"
+                        onClick={() => void resendAccess(buyer)}
+                        disabled={resendingBuyerId === buyer.id}
+                      >
+                        {resendingBuyerId === buyer.id
+                          ? "Reenviando…"
+                          : "Reenviar e-mail de acesso"}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="admin-recording-button"
