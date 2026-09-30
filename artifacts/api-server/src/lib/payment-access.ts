@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, sessionsTable } from "@workspace/db";
 import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "./brevo";
 import { sendPurchaseNotification } from "./push";
@@ -12,7 +12,17 @@ export async function grantSessionAccess(
 ) {
   const [updated] = await executor
     .update(sessionsTable)
-    .set({ accessGranted: true })
+    .set({
+      accessGranted: true,
+      metaPurchaseSent: sql`CASE
+        WHEN ${sessionsTable.metaConsent}
+          AND NOT ${sessionsTable.internal}
+          AND ${sessionsTable.lockedPriceCents} IS NOT NULL
+          AND ${sessionsTable.currency} IS NOT NULL
+        THEN TRUE
+        ELSE ${sessionsTable.metaPurchaseSent}
+      END`,
+    })
     .where(
       and(
         eq(sessionsTable.id, sessionId),
@@ -30,6 +40,7 @@ export async function grantSessionAccess(
       currency: sessionsTable.currency,
       internal: sessionsTable.internal,
       metaConsent: sessionsTable.metaConsent,
+      metaPurchaseSent: sessionsTable.metaPurchaseSent,
       metaFbp: sessionsTable.metaFbp,
       metaFbc: sessionsTable.metaFbc,
       metaClientIp: sessionsTable.metaClientIp,
@@ -51,6 +62,7 @@ export function notifyGrantedAccess(
 
   if (
     session.metaConsent &&
+    session.metaPurchaseSent &&
     !session.internal &&
     session.lockedPriceCents != null &&
     session.currency

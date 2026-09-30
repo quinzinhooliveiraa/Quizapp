@@ -28,3 +28,17 @@ mtime_ms = 1790780433039
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:f556b3e9-988b-47da-a142-d93c16c9ef0e/84553eb6-1b73-43cb-b1f5-b30d8c74f4f4/663cbfff-120b-4539-8a4d-157b66d978ef"
 storage_version_token = "1790780512288394"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "o_lPkrEjmuzEWSsvCh-Il"
+uri = "file://screenshots/checkout-mobile-375-desconto-ativo.jpg"
+type = "image"
+title = "Checkout mobile com desconto — 375 px"
+description = "Captura do checkout aberto em viewport de 375 px, com desconto ativo, preços comparados e barra fixa corrigida."
+logical_id = "43ce2049-7740-42be-971e-7669d87d03c5"
+content_hash = "sha256:fe39a24394fc07e5762557f17e390658abf553399f221325894c03f84083405f"
+size = 50705
+mtime_ms = 1790782300377
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:e79d3f6a-592e-4e04-9d4f-45430828a44a/43ce2049-7740-42be-971e-7669d87d03c5/c7cc4b5e-fac4-4e53-a073-a691dd086f2e"
+storage_version_token = "1790782311402965"
+content_type = "image/jpeg"

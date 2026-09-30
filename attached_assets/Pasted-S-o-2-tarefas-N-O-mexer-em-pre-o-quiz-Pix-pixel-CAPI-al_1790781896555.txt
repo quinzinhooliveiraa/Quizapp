@@ -1,0 +1,32 @@
+São 2 tarefas. NÃO mexer em preço, quiz, Pix, pixel/CAPI (além do que está descrito) nem em nada fora do que está aqui.
+
+═══ TAREFA 1 — Ajustes visuais do checkout no celular ═══
+
+1) BUG (≤768px): o botão fixo "Quero meu acesso · R$ X" fica com 68px de largura e o texto quebra em 5 linhas, porque o <p className="checkout-purchase-guarantee"> virou um 3º item na mesma linha flex da .checkout-purchase-bar. Correção em index.css:
+.checkout-purchase-guarantee { flex: 0 0 100%; order: 3; margin-top: -0.4rem; }
+Resultado em 375px: linha 1 = Total + botão ocupando o resto da largura; linha 2 = "Pagamento único · 7 dias de garantia" centralizado.
+
+2) Linha de resumo do topo (.checkout-summary-line): com desconto ativo, no celular o texto corta em "acesso vitalí…". Deixar o nome quebrar em 2 linhas (sem ellipsis) e o preço ficar à direita, alinhado ao centro.
+
+3) Barra fixa de baixo (.checkout-purchase-total): quando checkoutDiscountActive, mostrar acima do total o preço cheio riscado pequeno ("de R$ 47,90"), igual ao resumo do topo.
+
+═══ TAREFA 2 — Liberação imediata no cartão ═══
+
+CONTEXTO: no checkout de cartão, depois do stripe.confirmPayment com sucesso, o app espera o webhook pra liberar o acesso (polling de 3s). Quero liberar na hora, sem depender do webhook.
+
+1) Front (App.tsx, handleSubmit do formulário de cartão E o fluxo do Apple Pay/Google Pay): se result.paymentIntent?.status === "succeeded", chamar POST /api/checkout/card/verify { sessionId, paymentIntentId } antes de onPaymentSubmitted().
+
+2) Back (api-server): criar POST /api/checkout/card/verify que:
+   - busca o PaymentIntent na Stripe (stripe.paymentIntents.retrieve);
+   - confere status "succeeded", valor = lockedPriceCents da sessão e metadata.sessionId batendo com o sessionId enviado;
+   - se ok, roda a MESMA função que o webhook usa pra marcar access_granted (idempotente: se já estiver liberado, só retorna ok);
+   - dispara o Purchase da CAPI pelo mesmo caminho do webhook, sem duplicar (usar o flag meta_purchase_sent);
+   - se não bater, retorna 400 e NÃO libera nada.
+
+3) Manter o webhook exatamente como está (redundância).
+
+4) Baixar CARD_CHECKOUT_POLL_INTERVAL_MS de 3000 para 1500.
+
+5) Na tela "card-confirming", quando o verify voltar ok, mostrar: "Pagamento aprovado! Liberando seu acesso…" e seguir pro acesso.
+
+NO FIM: pnpm run typecheck, listar arquivos/linhas alterados e mandar print do checkout em 375px com desconto ativo.

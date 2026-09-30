@@ -29,6 +29,7 @@ export const sessionsTable = pgTable("sessions", {
   experimentId: text("experiment_id"),
   experimentVariantId: text("experiment_variant_id"),
   metaConsent: boolean("meta_consent").notNull().default(false),
+  metaPurchaseSent: boolean("meta_purchase_sent").notNull().default(false),
   metaFbp: text("meta_fbp"),
   metaFbc: text("meta_fbc"),
   metaClientIp: text("meta_client_ip"),

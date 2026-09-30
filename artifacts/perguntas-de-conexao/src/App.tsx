@@ -7837,7 +7837,12 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                 ) : null}
                 <div className="checkout-purchase-total">
                   <span>Total</span>
-                  <strong>{checkoutPricing.display}</strong>
+                  <div className="checkout-purchase-prices">
+                    {checkoutDiscountActive && checkoutFullPrice ? (
+                      <del>de {checkoutFullPrice.display}</del>
+                    ) : null}
+                    <strong>{checkoutPricing.display}</strong>
+                  </div>
                 </div>
                 {cardError ? (
                   <p className="checkout-purchase-error" role="alert">

@@ -28333,14 +28333,27 @@ blockquote em {
 
 .checkout-purchase-total {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.65rem;
 }
 
-.checkout-purchase-total span {
+.checkout-purchase-total > span {
   color: #8d8290;
   font-size: 0.68rem;
   font-weight: 700;
+}
+
+.checkout-purchase-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.checkout-purchase-prices del {
+  color: #95899d;
+  font-size: 0.72rem;
+  line-height: 1.1;
 }
 
 .checkout-purchase-total strong {
@@ -28694,9 +28707,9 @@ blockquote em {
   }
 
   .checkout-purchase-total {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.65rem;
   }
 
   .checkout-purchase-total strong {
@@ -29268,6 +29281,14 @@ blockquote em {
   }
   50% {
     opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .checkout-purchase-guarantee {
+    flex: 0 0 100%;
+    order: 3;
+    margin-top: -0.4rem;
   }
 }
 
@@ -30943,8 +30964,15 @@ blockquote em {
 
 @media (max-width: 760px) {
   .checkout-summary-line {
-    align-items: flex-start;
+    align-items: center;
     font-size: 0.68rem;
+  }
+
+  .checkout-summary-line > span:first-child {
+    flex: 1 1 auto;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .checkout-trust-seals {
