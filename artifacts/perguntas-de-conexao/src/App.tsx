@@ -255,7 +255,7 @@ const PENDING_CHECKOUT_MAX_AGE_MS = PIX_LIFETIME_MS;
 const HOSTED_CHECKOUT_MAX_WAIT_MS = 3 * 60 * 1000;
 const HOSTED_CHECKOUT_POLL_INTERVAL_MS = 2000;
 const CARD_CHECKOUT_MAX_WAIT_MS = 15 * 60 * 1000;
-const CARD_CHECKOUT_POLL_INTERVAL_MS = 3000;
+const CARD_CHECKOUT_POLL_INTERVAL_MS = 1500;
 const EXPERIMENT_ASSIGNMENT_STORAGE_KEY = "pdc-experiment-assignment";
 const INTERNAL_TRACKING_STORAGE_KEY = "pdc_internal";
 const stripePublishableKey = (
@@ -5732,6 +5732,7 @@ function useCheckout({
     "pix" | "card"
   >("pix");
   const [cardError, setCardError] = useState("");
+  const [cardPaymentVerified, setCardPaymentVerified] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [paymentCreating, setPaymentCreating] = useState<"pix" | "card" | null>(
     null,
@@ -6472,6 +6473,7 @@ function useCheckout({
     }
 
     setSelectedPaymentMethod("card");
+    setCardPaymentVerified(false);
     setCardError("");
     setPaymentError("");
     if (inline) {
@@ -6570,8 +6572,9 @@ function useCheckout({
     if (nativeCheckout) setCheckoutState("email");
   };
 
-  const handleCardPaymentSubmitted = () => {
+  const handleCardPaymentSubmitted = (verified = false) => {
     setCardError("");
+    setCardPaymentVerified(verified);
     setCheckoutState("card-confirming");
   };
 
@@ -6629,6 +6632,7 @@ function useCheckout({
     setNativeCheckout(null);
     setPixExpired(false);
     setCardCheckout(null);
+    setCardPaymentVerified(false);
     setCardError("");
     setPaymentCreating(null);
     setPaymentError("");
@@ -6665,6 +6669,7 @@ function useCheckout({
     setSelectedPaymentMethod,
     cardError,
     setCardError,
+    cardPaymentVerified,
     copiedCode,
     setCopiedCode,
     paymentCreating,
@@ -6782,12 +6787,18 @@ type CardPaymentFormHandle = {
 const CardPaymentForm = forwardRef<
   CardPaymentFormHandle,
   {
-    onPaymentSubmitted: () => void;
+    onPaymentSubmitted: (verified?: boolean) => void;
+    sessionId: string;
     showSubmitButton?: boolean;
     priceDisplay: string;
   }
 >(function CardPaymentForm(
-  { onPaymentSubmitted, showSubmitButton = true, priceDisplay },
+  {
+    onPaymentSubmitted,
+    sessionId,
+    showSubmitButton = true,
+    priceDisplay,
+  },
   ref,
 ) {
   const stripe = useStripe();
@@ -6815,7 +6826,30 @@ const CardPaymentForm = forwardRef<
       return;
     }
 
-    onPaymentSubmitted();
+    let verified = false;
+    if (result.paymentIntent?.status === "succeeded") {
+      try {
+        const response = await fetch(apiUrl("/api/checkout/card/verify"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            paymentIntentId: result.paymentIntent.id,
+          }),
+        });
+        if (response.ok) {
+          const data = (await response.json()) as {
+            ok?: boolean;
+            accessGranted?: boolean;
+          };
+          verified = data.ok === true && data.accessGranted === true;
+        }
+      } catch {
+        // Keep the existing webhook/polling fallback if immediate verification fails.
+      }
+    }
+
+    onPaymentSubmitted(verified);
   };
 
   useImperativeHandle(ref, () => ({
@@ -6872,6 +6906,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
     setSelectedPaymentMethod,
     cardError,
     setCardError,
+    cardPaymentVerified,
     copiedCode,
     setCopiedCode,
     paymentCreating,
@@ -7152,6 +7187,7 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
         <CardPaymentForm
           ref={cardPaymentFormRef}
           onPaymentSubmitted={handleCardPaymentSubmitted}
+          sessionId={cardCheckout.sessionId}
           showSubmitButton={checkoutState !== "email"}
           priceDisplay={checkoutPricing.display}
         />
@@ -7369,7 +7405,11 @@ function CheckoutModal({ checkout }: { checkout: CheckoutController }) {
               <span className="conf-card" />
               <span className="conf-card" />
             </div>
-            <p className="conf-kicker">Confirmando pagamento…</p>
+            <p className="conf-kicker">
+              {cardPaymentVerified
+                ? "Pagamento aprovado! Liberando seu acesso…"
+                : "Confirmando pagamento…"}
+            </p>
             <h2>
               Pagamento enviado
               <br />

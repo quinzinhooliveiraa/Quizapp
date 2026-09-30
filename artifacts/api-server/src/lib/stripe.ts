@@ -89,3 +89,9 @@ export async function fetchStripePaymentIntentClientSecret(
     return null;
   }
 }
+
+export async function retrieveStripePaymentIntent(
+  paymentIntentId: string,
+): Promise<Stripe.PaymentIntent> {
+  return getStripeClient().paymentIntents.retrieve(paymentIntentId);
+}

@@ -398,6 +398,18 @@ export interface CheckoutCreateInput {
   metaSourceUrl?: string;
 }
 
+export interface CheckoutCardVerifyInput {
+  /** @minLength 1 */
+  sessionId: string;
+  /** @minLength 1 */
+  paymentIntentId: string;
+}
+
+export interface CheckoutCardVerifyResponse {
+  ok: boolean;
+  accessGranted: boolean;
+}
+
 export type MetaEventInputEventName = typeof MetaEventInputEventName[keyof typeof MetaEventInputEventName];
 
 

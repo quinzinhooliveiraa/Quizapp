@@ -5,6 +5,8 @@ import {
   CreateInviteResponse,
   CreateCheckoutBody,
   CreateCheckoutResponse,
+  VerifyCardCheckoutBody,
+  VerifyCardCheckoutResponse,
   ResumeCheckoutParams,
   ResumeCheckoutResponse,
   CreateQuestionSessionBody,
@@ -47,6 +49,7 @@ import {
   createStripePaymentIntent,
   fetchStripePaymentIntentClientSecret,
   isStripeConfigured,
+  retrieveStripePaymentIntent,
   verifyStripeWebhook,
 } from "../lib/stripe";
 import { getActiveAssignmentForVisitor } from "../lib/experiments";
@@ -807,6 +810,73 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
       error: "O pagamento não abriu. Tenta de novo em instantes.",
     });
   }
+});
+
+router.post("/checkout/card/verify", async (req, res): Promise<void> => {
+  const parsed = VerifyCardCheckoutBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { sessionId, paymentIntentId } = parsed.data;
+  const [session] = await db
+    .select()
+    .from(sessionsTable)
+    .where(eq(sessionsTable.id, sessionId))
+    .limit(1);
+
+  if (!session) {
+    res.status(404).json({ error: "Checkout não encontrado" });
+    return;
+  }
+
+  if (
+    session.paymentMethod !== "card" ||
+    session.stripePaymentIntentId !== paymentIntentId ||
+    session.lockedPriceCents == null
+  ) {
+    res.status(400).json({ error: "Pagamento não corresponde ao checkout" });
+    return;
+  }
+
+  if (!isStripeConfigured()) {
+    res.status(502).json({ error: "Stripe não está configurado" });
+    return;
+  }
+
+  let paymentIntent;
+  try {
+    paymentIntent = await retrieveStripePaymentIntent(paymentIntentId);
+  } catch (error) {
+    req.log.error(
+      { err: error, sessionId, paymentIntentId },
+      "Failed to retrieve Stripe payment intent for verification",
+    );
+    res.status(502).json({ error: "Não foi possível verificar o pagamento" });
+    return;
+  }
+
+  if (
+    paymentIntent.status !== "succeeded" ||
+    paymentIntent.amount !== session.lockedPriceCents ||
+    paymentIntent.metadata?.sessionId !== session.id
+  ) {
+    res.status(400).json({ error: "Pagamento não pôde ser confirmado" });
+    return;
+  }
+
+  const updated = await grantSessionAccess(db, session.id);
+  notifyGrantedAccess(updated, (error, message) =>
+    req.log.error({ err: error, sessionId: session.id }, message),
+  );
+
+  res.json(
+    VerifyCardCheckoutResponse.parse({
+      ok: true,
+      accessGranted: true,
+    }),
+  );
 });
 
 router.get(

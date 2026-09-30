@@ -38,6 +38,8 @@ export * from './buyer';
 export * from './cancelInvite200';
 export * from './checkAccessEmail200';
 export * from './checkAccessEmailParams';
+export * from './checkoutCardVerifyInput';
+export * from './checkoutCardVerifyResponse';
 export * from './checkoutCreateInput';
 export * from './checkoutCreateInputCtaSource';
 export * from './checkoutCreateInputMethod';

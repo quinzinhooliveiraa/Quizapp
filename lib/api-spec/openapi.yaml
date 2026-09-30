@@ -436,6 +436,30 @@ paths:
           description: Invalid checkout data
         "502":
           description: Payment provider unavailable
+  /checkout/card/verify:
+    post:
+      operationId: verifyCardCheckout
+      tags: [checkout]
+      summary: Verify a successful Stripe card payment and grant access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutCardVerifyInput"
+      responses:
+        "200":
+          description: Card payment verified and access granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutCardVerifyResponse"
+        "400":
+          description: Invalid verification request or payment
+        "404":
+          description: Checkout session not found
+        "502":
+          description: Stripe unavailable
   /checkout/resume/{sessionId}:
     get:
       operationId: resumeCheckout
@@ -1874,6 +1898,24 @@ components:
           type: string
           maxLength: 2048
       required: [packageId, buyerName]
+    CheckoutCardVerifyInput:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          minLength: 1
+        paymentIntentId:
+          type: string
+          minLength: 1
+      required: [sessionId, paymentIntentId]
+    CheckoutCardVerifyResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        accessGranted:
+          type: boolean
+      required: [ok, accessGranted]
     MetaEventInput:
       type: object
       properties:

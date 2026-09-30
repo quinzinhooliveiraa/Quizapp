@@ -32,6 +32,8 @@ import type {
   CancelInvite200,
   CheckAccessEmail200,
   CheckAccessEmailParams,
+  CheckoutCardVerifyInput,
+  CheckoutCardVerifyResponse,
   CheckoutCreateInput,
   CheckoutCreateResponse,
   CheckoutResumeResponse,
@@ -1639,6 +1641,77 @@ export const useCreateCheckout = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateCheckoutMutationOptions(options));
+    }
+
+export const getVerifyCardCheckoutUrl = () => {
+
+
+
+
+  return `/api/checkout/card/verify`
+}
+
+/**
+ * @summary Verify a successful Stripe card payment and grant access
+ */
+export const verifyCardCheckout = async (checkoutCardVerifyInput: CheckoutCardVerifyInput, options?: Parameters<typeof customFetch>[1]): Promise<CheckoutCardVerifyResponse> => {
+
+  return customFetch<CheckoutCardVerifyResponse>(getVerifyCardCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(checkoutCardVerifyInput)
+  }
+);}
+
+
+
+
+
+export const getVerifyCardCheckoutMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCardCheckout>>, TError,{data: BodyType<CheckoutCardVerifyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyCardCheckout>>, TError,{data: BodyType<CheckoutCardVerifyInput>}, TContext> => {
+
+const mutationKey = ['verifyCardCheckout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyCardCheckout>>, {data: BodyType<CheckoutCardVerifyInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyCardCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyCardCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCardCheckout>>>
+    export type VerifyCardCheckoutMutationBody = BodyType<CheckoutCardVerifyInput>
+    export type VerifyCardCheckoutMutationError = ErrorType<void>
+
+    /**
+ * @summary Verify a successful Stripe card payment and grant access
+ */
+export const useVerifyCardCheckout = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCardCheckout>>, TError,{data: BodyType<CheckoutCardVerifyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyCardCheckout>>,
+        TError,
+        {data: BodyType<CheckoutCardVerifyInput>},
+        TContext
+      > => {
+      return useMutation(getVerifyCardCheckoutMutationOptions(options));
     }
 
 export const getResumeCheckoutUrl = (sessionId: string,) => {

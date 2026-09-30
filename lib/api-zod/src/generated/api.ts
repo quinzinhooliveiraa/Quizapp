@@ -359,6 +359,24 @@ export const CreateCheckoutResponse = zod.object({
 
 
 /**
+ * @summary Verify a successful Stripe card payment and grant access
+ */
+
+
+
+
+export const VerifyCardCheckoutBody = zod.object({
+  "sessionId": zod.string().min(1),
+  "paymentIntentId": zod.string().min(1)
+})
+
+export const VerifyCardCheckoutResponse = zod.object({
+  "ok": zod.boolean(),
+  "accessGranted": zod.boolean()
+})
+
+
+/**
  * @summary Reopen an unfinished checkout
  */
 export const ResumeCheckoutParams = zod.object({
