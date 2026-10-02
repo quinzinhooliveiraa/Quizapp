@@ -1,3 +1,10 @@
+# Prompt 106: Escritório com tela cheia no celular (cole tudo isto no Replit)
+
+Substitua **todo** o conteúdo de `artifacts/perguntas-de-conexao/src/pages/EscritorioTab.tsx` por EXATAMENTE o código abaixo. Não mexa em mais nada (API, Admin.tsx, funil, preço ficam como estão). Depois faça o deploy do front.
+
+O que muda: botão "Tela cheia" no escritório. No celular em pé, o escritório gira e ocupa a tela inteira, deitado; no Android também tenta travar a tela na horizontal. "✕ Sair" volta ao normal.
+
+```tsx
 // @ts-nocheck
 // Aba "Escritório" do admin: a empresa (agentes do Claude) trabalhando ao vivo.
 // O Mac do Joaquim envia o estado para /api/escritorio/sync; esta aba lê /api/admin/escritorio a cada 2 s.
@@ -397,3 +404,6 @@ export default function EscritorioTab({ sessionId }: { sessionId: string }) {
     </div>
   );
 }
+```
+
+Teste: abrir /admin → Escritório no celular → "Tela cheia" → o escritório ocupa a tela deitado e tocar no chão ainda faz o Joaquim andar para onde tocou.
