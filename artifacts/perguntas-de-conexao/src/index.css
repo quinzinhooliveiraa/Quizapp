@@ -28312,6 +28312,33 @@ blockquote em {
   vertical-align: -2px;
 }
 
+.checkout-email-error.checkout-email-suggestion::before {
+  display: none;
+  content: none;
+}
+
+.checkout-email-suggestion-link,
+.checkout-email-suggestion-dismiss {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checkout-email-suggestion-link {
+  font-weight: 700;
+}
+
+.checkout-email-suggestion-dismiss {
+  margin-left: 0.35rem;
+  color: #756b78;
+  font-size: 0.78rem;
+}
+
 .checkout-payment-heading {
   margin-bottom: 0.8rem;
 }
@@ -28512,6 +28539,22 @@ blockquote em {
   font-size: 0.85rem;
   font-weight: 600;
   text-align: center;
+}
+
+.checkout-card-error-pix {
+  display: flex;
+  flex: 0 0 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.checkout-card-error-pix .checkout-purchase-guarantee,
+.checkout-card-error-pix .checkout-secondary-action {
+  margin: 0;
 }
 
 .checkout-purchase-total {

@@ -118,6 +118,16 @@ type AnalyticsEntry = {
   avgTimeOnPageSeconds: number | null;
   topExitSections: Array<{ section: string; count: number }>;
 };
+type CardErrorEntry = {
+  createdAt: string;
+  lastSection: string | null;
+  device: string | null;
+  claritySessionId: string | null;
+};
+type CardErrorAnalytics = {
+  total: number;
+  recent: CardErrorEntry[];
+};
 type QuizAnalyticsQuestion = {
   screenId: string;
   answerKey: string;
@@ -582,6 +592,14 @@ function safeRemoveItem(key: string): void {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("pt-BR");
+}
+
+function formatDateTimeBrasilia(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date(value));
 }
 
 function feedbackTopicLabel(topic: string | null) {
@@ -2631,6 +2649,7 @@ function PagesTab({
 }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [analytics, setAnalytics] = useState<AnalyticsEntry[]>([]);
+  const [cardErrors, setCardErrors] = useState<CardErrorAnalytics | null>(null);
   const [lpSessions, setLpSessions] = useState<Record<string, LpSession[]>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
@@ -2650,6 +2669,7 @@ function PagesTab({
         throw new Error("analytics");
       const analyticsData = (await analyticsResponse.json()) as {
         analytics?: AnalyticsEntry[];
+        cardErrors?: CardErrorAnalytics;
       };
       const sessionsData =
         (await sessionsResponse.json()) as LpSessionsResponse;
@@ -2659,6 +2679,9 @@ function PagesTab({
           (item) => item.lpId === landing.id,
         ),
       ]);
+      if (analyticsData.cardErrors) {
+        setCardErrors(analyticsData.cardErrors);
+      }
       setLpSessions((current) => ({
         ...current,
         [landing.id]: sessionsData.sessions || [],
@@ -2765,6 +2788,28 @@ function PagesTab({
           </article>
         ))}
       </div>
+      {Object.values(expanded).some(Boolean) && cardErrors ? (
+        <section
+          className="admin-exit-sections"
+          aria-label="Erros de cartão nos últimos 30 dias"
+          data-testid="analytics-card-errors"
+        >
+          <span>Erros de cartão: {cardErrors.total}</span>
+          {cardErrors.recent.length ? (
+            cardErrors.recent.map((error, index) => (
+              <p key={`${error.createdAt}-${index}`}>
+                <time dateTime={error.createdAt}>
+                  {formatDateTimeBrasilia(error.createdAt)}
+                </time>
+                {" — "}
+                <code>{error.lastSection || "—"}</code>
+              </p>
+            ))
+          ) : (
+            <p>Nenhum erro de cartão no período.</p>
+          )}
+        </section>
+      ) : null}
       <p className="admin-footnote">
         O endereço acima acompanha automaticamente o domínio atual deste
         navegador.

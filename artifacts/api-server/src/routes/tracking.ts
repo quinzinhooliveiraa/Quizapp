@@ -40,6 +40,7 @@ const EVENT_TYPES = [
   "theme_peek",
   "buy_click",
   "checkout_open",
+  "card_error",
 ] as const;
 const CTA_SOURCES = [
   "hero_quiz",
@@ -893,7 +894,35 @@ router.get("/admin/analytics", async (req, res): Promise<void> => {
   await reconcilePendingPayments();
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const analytics = await computeFunnel(since);
-  res.json({ analytics });
+  const cardErrorFilter = and(
+    eq(pageEventsTable.eventType, "card_error"),
+    gte(pageEventsTable.createdAt, since),
+    eq(pageEventsTable.internal, false),
+  );
+  const [cardErrorTotals, recentCardErrors] = await Promise.all([
+    db
+      .select({ total: count() })
+      .from(pageEventsTable)
+      .where(cardErrorFilter),
+    db
+      .select({
+        createdAt: pageEventsTable.createdAt,
+        lastSection: pageEventsTable.lastSection,
+        device: pageEventsTable.device,
+        claritySessionId: pageEventsTable.claritySessionId,
+      })
+      .from(pageEventsTable)
+      .where(cardErrorFilter)
+      .orderBy(desc(pageEventsTable.createdAt))
+      .limit(20),
+  ]);
+  res.json({
+    analytics,
+    cardErrors: {
+      total: Number(cardErrorTotals[0]?.total ?? 0),
+      recent: recentCardErrors,
+    },
+  });
 });
 
 router.get("/admin/analytics-funnel", async (req, res): Promise<void> => {

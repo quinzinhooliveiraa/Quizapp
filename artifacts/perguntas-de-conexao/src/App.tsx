@@ -726,6 +726,84 @@ function getCheckoutBuyerName(email: string, name?: string): string {
   return emailName || "Cliente";
 }
 
+const EMAIL_DOMAIN_CORRECTIONS: Record<string, string> = {
+  "gmail.comb": "gmail.com",
+  "gmail.con": "gmail.com",
+  "gmail.cm": "gmail.com",
+  "gmail.co": "gmail.com",
+  "gmail.om": "gmail.com",
+  "gmail.cmo": "gmail.com",
+  "gmail.vom": "gmail.com",
+  "gmail.xom": "gmail.com",
+  "gmail.comm": "gmail.com",
+  "gmail.com.br": "gmail.com",
+  "gmial.com": "gmail.com",
+  "gmal.com": "gmail.com",
+  "gmaill.com": "gmail.com",
+  "gamil.com": "gmail.com",
+  "gnail.com": "gmail.com",
+  "gmai.com": "gmail.com",
+  "gimail.com": "gmail.com",
+  "gmail.c": "gmail.com",
+  "hotmial.com": "hotmail.com",
+  "hotmal.com": "hotmail.com",
+  "hotmai.com": "hotmail.com",
+  "hotmaill.com": "hotmail.com",
+  "hotamil.com": "hotmail.com",
+  "hotmail.con": "hotmail.com",
+  "hotmail.comb": "hotmail.com",
+  "hotmail.co": "hotmail.com",
+  "hotmail.cm": "hotmail.com",
+  "hotmil.com": "hotmail.com",
+  "outlok.com": "outlook.com",
+  "outloo.com": "outlook.com",
+  "outlook.con": "outlook.com",
+  "outlook.comb": "outlook.com",
+  "outllok.com": "outlook.com",
+  "yaho.com.br": "yahoo.com.br",
+  "yahoo.com.b": "yahoo.com.br",
+  "yahoo.con.br": "yahoo.com.br",
+  "yhaoo.com.br": "yahoo.com.br",
+  "iclod.com": "icloud.com",
+  "icloud.con": "icloud.com",
+  "icoud.com": "icloud.com",
+  "icluod.com": "icloud.com",
+};
+
+const GENERIC_EMAIL_DOMAIN_SUFFIXES: Record<string, string> = {
+  ".comb": ".com",
+  ".con": ".com",
+  ".cpm": ".com",
+  ".vom": ".com",
+  ".xom": ".com",
+};
+
+function suggestEmailFix(email: string): string | null {
+  const atIndex = email.lastIndexOf("@");
+  if (
+    atIndex <= 0 ||
+    atIndex === email.length - 1 ||
+    email.indexOf("@") !== atIndex
+  ) {
+    return null;
+  }
+
+  const user = email.slice(0, atIndex);
+  const domain = email.slice(atIndex + 1).toLowerCase();
+  const correctedDomain = EMAIL_DOMAIN_CORRECTIONS[domain];
+  if (correctedDomain) return `${user}@${correctedDomain}`;
+
+  for (const [suffix, replacement] of Object.entries(
+    GENERIC_EMAIL_DOMAIN_SUFFIXES,
+  )) {
+    if (domain.endsWith(suffix)) {
+      return `${user}@${domain.slice(0, -suffix.length)}${replacement}`;
+    }
+  }
+
+  return null;
+}
+
 function safeRemoveItem(key: string): void {
   try {
     localStorage.removeItem(key);
@@ -5567,7 +5645,14 @@ type LandingTrackingEvent =
   | "quiz_start"
   | "theme_peek"
   | "buy_click"
-  | "checkout_open";
+  | "checkout_open"
+  | "card_error";
+
+type CardErrorTrackingInfo = {
+  type?: string;
+  code?: string;
+  declineCode?: string;
+};
 
 function useLpTracking(
   lpId: "v1" | "v2" | "lp3",
@@ -5800,6 +5885,7 @@ function useCheckout({
   onTrackingEvent?: (
     eventType: LandingTrackingEvent,
     ctaSource?: LandingCtaSource,
+    extra?: Record<string, unknown>,
   ) => void;
   experimentAssignment?: StoredExperimentAssignment;
   resumeSessionId?: string;
@@ -6070,6 +6156,15 @@ function useCheckout({
     (checkoutOfferState && checkoutDiscountActive
       ? checkoutOfferState.offer
       : checkoutOfferState?.full ?? pricing);
+
+  const trackCardError = (info: CardErrorTrackingInfo) => {
+    const lastSection =
+      `${info.type ?? "-"}|${info.code ?? "-"}|${info.declineCode ?? "-"}|${selectedPaymentMethod}`.slice(
+        0,
+        80,
+      );
+    onTrackingEvent?.("card_error", undefined, { lastSection });
+  };
 
   const trackCardPaymentInfo = () => {
     if (cardPaymentInfoTrackedRef.current) return;
@@ -6922,6 +7017,7 @@ function useCheckout({
     checkoutReviews,
     checkout,
     createCardCheckout,
+    trackCardError,
     trackCardPaymentInfo,
     saveCardBuyerEmail,
     selectPaymentMethod,
@@ -7031,7 +7127,7 @@ const CardPaymentForm = forwardRef<
   CardPaymentFormHandle,
   {
     onPaymentSubmitted: (verified?: boolean) => void;
-    onError: (message: string) => void;
+    onError: (message: string, info?: CardErrorTrackingInfo) => void;
     onProcessingChange: (processing: boolean) => void;
     sessionId: string;
     showSubmitButton?: boolean;
@@ -7069,6 +7165,11 @@ const CardPaymentForm = forwardRef<
         onError(
           result.error.message ||
             "Não foi possível confirmar o pagamento. Confira os dados e tente novamente.",
+          {
+            type: result.error.type,
+            code: result.error.code,
+            declineCode: result.error.decline_code,
+          },
         );
         return;
       }
@@ -7100,6 +7201,7 @@ const CardPaymentForm = forwardRef<
     } catch {
       onError(
         "Não foi possível confirmar o pagamento. Confira os dados e tente novamente.",
+        { type: "exception" },
       );
     } finally {
       setSubmitting(false);
@@ -7148,8 +7250,8 @@ function CheckoutWalletActions({
   buyerName: string;
   sessionId: string;
   onBuyer: (email: string, name: string) => Promise<void>;
-  onNeedEmail: () => void;
-  onError: (message: string) => void;
+  onNeedEmail: (email?: string) => void;
+  onError: (message: string, info?: CardErrorTrackingInfo) => void;
   onPaymentInfo: () => void;
   onPaymentSubmitted: (verified?: boolean) => void;
   onProcessingChange: (processing: boolean) => void;
@@ -7166,8 +7268,11 @@ function CheckoutWalletActions({
     if (!stripe || !elements || submitting) return;
     const email = (event.billingDetails?.email || buyerEmail).trim().toLowerCase();
     const name = event.billingDetails?.name?.trim() || buyerName;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      onNeedEmail();
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+      suggestEmailFix(email)
+    ) {
+      onNeedEmail(email);
       return;
     }
 
@@ -7183,6 +7288,11 @@ function CheckoutWalletActions({
         onError(
           submitResult.error.message ||
             "Confira os dados do pagamento e tente novamente.",
+          {
+            type: submitResult.error.type,
+            code: submitResult.error.code,
+            declineCode: submitResult.error.decline_code,
+          },
         );
         return;
       }
@@ -7196,6 +7306,11 @@ function CheckoutWalletActions({
         onError(
           result.error.message ||
             "Não foi possível confirmar o pagamento. Tente novamente.",
+          {
+            type: result.error.type,
+            code: result.error.code,
+            declineCode: result.error.decline_code,
+          },
         );
         return;
       }
@@ -7226,6 +7341,7 @@ function CheckoutWalletActions({
     } catch {
       onError(
         "Não foi possível confirmar o pagamento. Confira o e-mail e tente novamente.",
+        { type: "exception" },
       );
     } finally {
       setSubmitting(false);
@@ -7369,6 +7485,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     checkoutReviews,
     checkout: createCheckout,
     createCardCheckout,
+    trackCardError,
     trackCardPaymentInfo,
     saveCardBuyerEmail,
     selectPaymentMethod,
@@ -7384,9 +7501,16 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
       typeof window !== "undefined" &&
       window.matchMedia("(min-width: 761px)").matches,
   );
+  const [emailDismissed, setEmailDismissed] = useState("");
+  const normalizedBuyerEmail = buyerEmail.trim().toLowerCase();
+  const emailSuggestion = suggestEmailFix(normalizedBuyerEmail);
+  const emailSuggestionPending = Boolean(
+    emailSuggestion && emailDismissed !== normalizedBuyerEmail,
+  );
 
   const hasValidBuyerDetails =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail.trim());
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedBuyerEmail) &&
+    !emailSuggestionPending;
 
   const focusCheckoutEmail = () => {
     window.requestAnimationFrame(() => {
@@ -7427,6 +7551,23 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     ) {
       void createCardCheckout(true, !hasValidBuyerDetails);
     }
+  };
+
+  const handleCardErrorPixClick = () => {
+    if (!checkoutPricing.pixAvailable) return;
+    handlePaymentMethodSelect("pix");
+    if (checkoutState === "card-error") restartCheckout();
+
+    if (!hasValidBuyerDetails) {
+      focusCheckoutEmail();
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      document
+        .querySelector(".checkout-payment-card")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   };
 
   useEffect(() => {
@@ -7537,17 +7678,25 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
 
   const handleInitialCheckout = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalizedEmail = buyerEmail.trim().toLowerCase();
+    const normalizedEmail = normalizedBuyerEmail;
+    const suggestionPending = Boolean(
+      emailSuggestion && emailDismissed !== normalizedEmail,
+    );
     let valid = true;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) ||
+      suggestionPending
+    ) {
       const digitado = buyerEmail.trim();
       setEmailError(
-        !digitado
-          ? "Falta o e-mail pra liberar seu acesso."
-          : !digitado.includes("@")
-            ? "Falta o @ no e-mail."
-            : "Falta o final do e-mail, depois do @ (ex.: gmail.com).",
+        suggestionPending
+          ? ""
+          : !digitado
+            ? "Falta o e-mail pra liberar seu acesso."
+            : !digitado.includes("@")
+              ? "Falta o @ no e-mail."
+              : "Falta o final do e-mail, depois do @ (ex.: gmail.com).",
       );
       const emailField = document.getElementById("checkout-email");
       emailField?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -7583,8 +7732,20 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     }
   };
 
-  const handleCardError = (message: string) => {
+  const cardErrorTrackedRef = useRef(false);
+
+  const handleCardError = (
+    message: string,
+    info?: CardErrorTrackingInfo,
+  ) => {
+    if (!message) {
+      cardErrorTrackedRef.current = false;
+    } else if (info && !cardErrorTrackedRef.current) {
+      cardErrorTrackedRef.current = true;
+      trackCardError(info);
+    }
     setCardError(message);
+    if (!message) return;
     window.requestAnimationFrame(() => {
       document
         .querySelector(".checkout-card-inline")
@@ -7805,8 +7966,19 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                       buyerName={buyerName}
                       sessionId={cardCheckout.sessionId}
                       onBuyer={saveCardBuyerEmail}
-                      onNeedEmail={() => {
-                        setEmailError("Falta o e-mail pra liberar seu acesso.");
+                      onNeedEmail={(email) => {
+                        if (email !== undefined) {
+                          setBuyerEmail(email);
+                          safeSetItem("conexao-pending-buyer-email", email);
+                        }
+                        const walletEmail = (email ?? buyerEmail)
+                          .trim()
+                          .toLowerCase();
+                        setEmailError(
+                          suggestEmailFix(walletEmail)
+                            ? ""
+                            : "Falta o e-mail pra liberar seu acesso.",
+                        );
                         focusCheckoutEmail();
                       }}
                       onError={handleCardError}
@@ -7837,7 +8009,11 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                         spellCheck={false}
                         placeholder="seu@email.com"
                         value={buyerEmail}
-                        aria-invalid={emailError ? true : undefined}
+                        aria-invalid={
+                          emailError || emailSuggestionPending
+                            ? true
+                            : undefined
+                        }
                         onChange={(event) => {
                           setBuyerEmail(event.target.value);
                           safeSetItem(
@@ -7850,11 +8026,43 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                         required
                         data-testid="input-checkout-email"
                       />
-                      {emailError && (
+                      {emailSuggestionPending && emailSuggestion ? (
+                        <small
+                          className="checkout-email-error checkout-email-suggestion"
+                          role="status"
+                          aria-live="polite"
+                        >
+                          Você quis dizer{" "}
+                          <button
+                            type="button"
+                            className="checkout-email-suggestion-link"
+                            onClick={() => {
+                              setBuyerEmail(emailSuggestion);
+                              safeSetItem(
+                                "conexao-pending-buyer-email",
+                                emailSuggestion,
+                              );
+                              setEmailError("");
+                            }}
+                          >
+                            {emailSuggestion}
+                          </button>
+                          ?{" "}
+                          <button
+                            type="button"
+                            className="checkout-email-suggestion-dismiss"
+                            onClick={() =>
+                              setEmailDismissed(normalizedBuyerEmail)
+                            }
+                          >
+                            Não, está certo
+                          </button>
+                        </small>
+                      ) : emailError ? (
                         <small className="checkout-email-error" role="alert">
                           {emailError}
                         </small>
-                      )}
+                      ) : null}
                     </label>
                     <p className="checkout-access-note">
                       Usaremos seu e-mail para identificar sua compra e liberar seu
@@ -7899,9 +8107,26 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                   </div>
                 </div>
                 {cardError ? (
-                  <p className="checkout-purchase-error" role="alert">
-                    {cardError}
-                  </p>
+                  <>
+                    <p className="checkout-purchase-error" role="alert">
+                      {cardError}
+                    </p>
+                    {checkoutPricing.pixAvailable ? (
+                      <div className="checkout-card-error-pix">
+                        <p className="checkout-purchase-guarantee">
+                          Pague no Pix — mesmo preço ({checkoutPricing.display})
+                        </p>
+                        <button
+                          type="button"
+                          className="checkout-secondary-action"
+                          onClick={handleCardErrorPixClick}
+                          data-testid="button-card-error-pix"
+                        >
+                          Gerar meu Pix
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
                 ) : null}
                 <button
                   className="button button-primary checkout-purchase-button"
@@ -8016,21 +8241,27 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
               {cardError ||
                 "Não foi possível iniciar o pagamento com cartão agora."}
             </p>
+            {checkoutPricing.pixAvailable ? (
+              <div className="checkout-card-error-pix">
+                <p className="checkout-purchase-guarantee">
+                  Pague no Pix — mesmo preço ({checkoutPricing.display})
+                </p>
+                <button
+                  type="button"
+                  className="checkout-secondary-action"
+                  onClick={handleCardErrorPixClick}
+                  data-testid="button-card-error-pix"
+                >
+                  Gerar meu Pix
+                </button>
+              </div>
+            ) : null}
             <button
               onClick={() => void createCardCheckout()}
               className="button button-primary button-full"
             >
               Tentar novamente <ArrowRight size={16} />
             </button>
-            {checkoutPricing.pixAvailable ? (
-              <button
-                type="button"
-                className="checkout-secondary-action"
-                onClick={() => selectPaymentMethod("pix")}
-              >
-                Pagar com Pix
-              </button>
-            ) : null}
           </div>
         ) : checkoutState === "waiting-manual" ? (
           <div className="checkout-confirming">
