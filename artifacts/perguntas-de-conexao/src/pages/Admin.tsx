@@ -1,4 +1,11 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -36,6 +43,8 @@ import AnalyticsFunnelPanel, {
   type AnalyticsLandingPageId as FunnelLandingPageId,
   type AnalyticsViewMode,
 } from "@/components/AnalyticsFunnelPanel";
+
+const EscritorioTab = lazy(() => import("./EscritorioTab"));
 
 type SuggestionEntry = {
   id: string;
@@ -267,6 +276,7 @@ type ExperimentOptimizationRunResponse = {
 };
 
 const TABS = [
+  { id: "escritorio", label: "Escritório" },
   { id: "buyers", label: "Compradores" },
   { id: "pages", label: "Páginas" },
   { id: "analytics", label: "Análise" },
@@ -4178,6 +4188,11 @@ export default function Admin() {
   }
 
   const tabContent = {
+    escritorio: (
+      <Suspense fallback={<p>Carregando o escritório…</p>}>
+        <EscritorioTab sessionId={sessionId} />
+      </Suspense>
+    ),
     buyers: <BuyersTab buyers={buyers} pendingAccess={pendingAccess} />,
     pages: (
       <PagesTab

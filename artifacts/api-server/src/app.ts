@@ -42,6 +42,12 @@ app.use(cors({
   },
   credentials: true,
 }));
+app.use("/api/escritorio/sync", express.json({
+  limit: "200kb",
+  verify: (req, _res, buffer) => {
+    (req as express.Request & { rawBody?: Buffer }).rawBody = buffer;
+  },
+}));
 app.use(express.json({
   verify: (req, _res, buffer) => {
     (req as express.Request & { rawBody?: Buffer }).rawBody = buffer;

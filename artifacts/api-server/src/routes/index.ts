@@ -10,6 +10,7 @@ import trackingRouter from "./tracking";
 import experimentsRouter from "./experiments";
 import pricingRouter from "./pricing";
 import offersRouter from "./offers";
+import escritorioRouter from "./escritorio";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(trackingRouter);
 router.use(experimentsRouter);
 router.use(pricingRouter);
 router.use(offersRouter);
+router.use(escritorioRouter);
 
 export default router;
