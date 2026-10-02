@@ -28266,7 +28266,7 @@ blockquote em {
   border-radius: 0.6rem;
   background: #fffdfb;
   color: #2a2233;
-  font-size: 0.8rem;
+  font-size: 16px;
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
