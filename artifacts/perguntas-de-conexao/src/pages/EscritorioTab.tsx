@@ -286,7 +286,7 @@ export default function EscritorioTab({ sessionId }: { sessionId: string }) {
   const pct = lucro == null ? 0 : Math.max(0, Math.min(1, lucro / metaVal));
   const ativos = Object.entries(live?.agentes || {});
   const t0 = todayIso();
-  const tarefas = (live?.tarefas || []).filter((t) => !(t.feito && t.dia < t0)).sort((a, b) => (a.dia || "9").localeCompare(b.dia || "9") || (a.ordem || 0) - (b.ordem || 0));
+  const tarefas = (live?.tarefas || []).filter((t) => t.dia === t0 || (!t.feito && t.dia && t.dia < t0)).sort((a, b) => (a.dia || "9").localeCompare(b.dia || "9") || (a.ordem || 0) - (b.ordem || 0));
   const macParado = live?.agora && Date.now() - Date.parse(String(live.agora).replace(/([+-]\d\d)(\d\d)$/, "$1:$2")) > 3 * 60 * 1000;
   for (const [i, e] of (live?.equipe || []).filter((e) => !NOMES[e.id]).entries()) NOMES[e.id] = { nome: nomeBonito(e.id), papel: e.papel || "Área nova", cor: PALETA[i % PALETA.length] };
   const sel = selected ? { id: selected, ...NOMES[selected], d: live?.agentes?.[selected], u: live?.ultimo?.[selected] } : null;
@@ -386,7 +386,7 @@ export default function EscritorioTab({ sessionId }: { sessionId: string }) {
                   </label>
                 </div>
               );
-            }) : <div className="esc-small">O CEO manda as tarefas do dia toda manhã.</div>)}
+            }) : <div className="esc-small">Nada para hoje. O CEO manda as tarefas do dia toda manhã (seg a sex).</div>)}
             {aba === "plano" && ((meta.fases || []).length ? meta.fases.map((f) => (
               <div key={f.n} className={"esc-fase" + (f.n === meta.faseAtual ? " cur" : "")}>
                 <span className="n">{f.n}</span>

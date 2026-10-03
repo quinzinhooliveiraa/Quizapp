@@ -48,9 +48,15 @@ router.post("/escritorio/sync", async (req, res): Promise<void> => {
     res.status(400).json({ error: "invalid_state" });
     return;
   }
-  await writeSetting(KEY_ESTADO, estado);
   const { value: acoes } = await readSetting(KEY_ACOES);
   const lista = Array.isArray(acoes) ? acoes : [];
+  // o Mac ainda não aplicou os checks da fila: aplica aqui para o check do celular não "voltar"
+  if (Array.isArray(estado.tarefas)) {
+    for (const a of lista) {
+      if (a?.tipo === "tarefa") estado.tarefas = estado.tarefas.map((t: any) => (t?.id === a.id ? { ...t, feito: a.feito } : t));
+    }
+  }
+  await writeSetting(KEY_ESTADO, estado);
   if (lista.length) await writeSetting(KEY_ACOES, []);
   res.json({ ok: true, acoes: lista });
 });
