@@ -1,3 +1,10 @@
+# Prompt 107: funcionário novo entra sozinho no escritório (cole tudo isto no Replit)
+
+Substitua **todo** o conteúdo de `artifacts/perguntas-de-conexao/src/pages/EscritorioTab.tsx` por EXATAMENTE o código abaixo. Não mexa em mais nada (API, Admin.tsx, funil e preço ficam como estão). Depois faça o deploy do front.
+
+O que muda: quando a empresa ganha uma área nova (um agente novo no Claude), ela aparece sozinha numa "mesa dos novos" perto da porta, com nome e cargo, e senta para trabalhar quando é chamada. Mantém o botão de tela cheia.
+
+```tsx
 // @ts-nocheck
 // Aba "Escritório" do admin: a empresa (agentes do Claude) trabalhando ao vivo.
 // O Mac do Joaquim envia o estado para /api/escritorio/sync; esta aba lê /api/admin/escritorio a cada 2 s.
@@ -412,3 +419,4 @@ export default function EscritorioTab({ sessionId }: { sessionId: string }) {
     </div>
   );
 }
+```
