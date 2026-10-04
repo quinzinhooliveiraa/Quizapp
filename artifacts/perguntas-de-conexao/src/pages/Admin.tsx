@@ -1376,7 +1376,11 @@ function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
           {data.liveSince ? (
             <span>
               Configuração ativa desde{" "}
-              {new Date(data.liveSince).toLocaleDateString("pt-BR")}
+              {new Date(data.liveSince).toLocaleString("pt-BR", {
+                timeZone: "America/Sao_Paulo",
+                dateStyle: "short",
+                timeStyle: "short",
+              })}
             </span>
           ) : null}
         </div>
@@ -1390,6 +1394,24 @@ function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
           <div><span>Viraram checkout</span><strong>{data.emailFunnel.leadsSawOffer}</strong></div>
           <div><span>Compras dos leads</span><strong>{data.emailFunnel.leadPurchases}</strong></div>
         </div>
+        <p
+          className="admin-quiz-email-criterion"
+          role={
+            data.emailFunnel.started >= 80 && data.completionRate < 45
+              ? "alert"
+              : undefined
+          }
+          style={
+            data.emailFunnel.started >= 80 && data.completionRate < 45
+              ? { color: "#b42318" }
+              : undefined
+          }
+          data-testid="status-quiz-email-criterion"
+        >
+          {data.emailFunnel.started >= 80 && data.completionRate < 45
+            ? "Critério da #13 atingido: troque 'E-mail no quiz' para Opcional."
+            : `${data.emailFunnel.started} inícios · ${data.completionRate.toFixed(1)}% chegaram à oferta`}
+        </p>
       </div>
 
       <details className="admin-quiz-structure" open>
@@ -2010,7 +2032,11 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
               : (quizAnalytics?.liveSince ?? quizEmailConfigLiveSince)
                 ? `Ativo desde ${new Date(
                     quizAnalytics?.liveSince ?? quizEmailConfigLiveSince!,
-                  ).toLocaleDateString("pt-BR")}`
+                  ).toLocaleString("pt-BR", {
+                    timeZone: "America/Sao_Paulo",
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}`
                 : ""}
           {quizEmailConfigError ? (
             <span role="alert">{quizEmailConfigError}</span>

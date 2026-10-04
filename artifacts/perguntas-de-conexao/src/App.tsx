@@ -402,6 +402,7 @@ type NativeCheckoutData = {
   startedAt: number;
   expiresAt?: string;
   lockedPriceCents?: number;
+  buyerEmail?: string;
 };
 
 type CardCheckoutData = {
@@ -3433,6 +3434,7 @@ function Lp1Quiz({
                   inputMode="email"
                   autoComplete="email"
                   className="lp1-quiz-capture-input"
+                  data-clarity-mask="true"
                   placeholder="seu melhor e-mail"
                   value={answers.email ?? ""}
                   onChange={(event) => {
@@ -6181,6 +6183,7 @@ function useCheckout({
   const [buyerEmail, setBuyerEmail] = useState(
     () => safeGetItem("conexao-pending-buyer-email") || "",
   );
+  const [emailTouched, setEmailTouched] = useState(Boolean(resumeSessionId));
   const [checkoutEmailOrigin, setCheckoutEmailOrigin] = useState<
     "resume" | "prefill" | "typed"
   >(() =>
@@ -6996,6 +6999,7 @@ function useCheckout({
         startedAt: checkoutStartedAt,
         expiresAt: data.pixExpiresAt,
         lockedPriceCents: data.lockedPriceCents,
+        buyerEmail: normalizedEmail,
       };
       setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
       setNativeCheckout(pix);
@@ -7303,6 +7307,8 @@ function useCheckout({
     buyerEmail,
     setBuyerEmail,
     setBuyerEmailFromUser,
+    emailTouched,
+    setEmailTouched,
     nameError,
     setNameError,
     emailError,
@@ -7775,6 +7781,9 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     setBuyerName,
     buyerEmail,
     setBuyerEmail,
+    setBuyerEmailFromUser,
+    emailTouched,
+    setEmailTouched,
     nameError,
     setNameError,
     emailError,
@@ -7815,6 +7824,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
   const cardPaymentFormRef = useRef<CardPaymentFormHandle>(null);
   const pendingCardSubmitRef = useRef(false);
   const walletPreloadAttemptedRef = useRef(false);
+  const lastPixEmailAttemptedRef = useRef<string | null>(null);
   const [brandSwitchNotice, setBrandSwitchNotice] = useState("");
   const [showPixQr, setShowPixQr] = useState(
     () =>
@@ -7831,6 +7841,12 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
   const hasValidBuyerDetails =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedBuyerEmail) &&
     !emailSuggestionPending;
+  const pixEmailMismatch = Boolean(
+    nativeCheckout?.buyerEmail &&
+      nativeCheckout.buyerEmail !== normalizedBuyerEmail,
+  );
+  const activePix =
+    nativeCheckout && !pixEmailMismatch ? nativeCheckout : null;
 
   const focusCheckoutEmail = () => {
     window.requestAnimationFrame(() => {
@@ -7852,6 +7868,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
   }, [checkoutOpen, selectedPaymentMethod]);
 
   const handlePaymentMethodSelect = (method: "pix" | "card") => {
+    setEmailTouched(true);
     setCardError("");
     setPaymentError("");
     setSelectedPaymentMethod(method);
@@ -7865,7 +7882,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     if (
       method === "pix" &&
       hasValidBuyerDetails &&
-      !nativeCheckout &&
+      !activePix &&
       !paymentCreating
     ) {
       void createCheckout("couple", normalizedEmail, "", true);
@@ -7880,6 +7897,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
   };
 
   const handleCardErrorPixClick = () => {
+    setEmailTouched(true);
     if (!checkoutPricing.pixAvailable) return;
     handlePaymentMethodSelect("pix");
     if (checkoutState === "card-error") restartCheckout();
@@ -7949,7 +7967,20 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
 
     const normalizedEmail = buyerEmail.trim().toLowerCase();
 
-    if (selectedPaymentMethod === "pix" && !nativeCheckout) {
+    if (
+      selectedPaymentMethod === "pix" &&
+      emailTouched &&
+      (!nativeCheckout || pixEmailMismatch)
+    ) {
+      if (pixEmailMismatch) {
+        if (lastPixEmailAttemptedRef.current === normalizedEmail) return;
+        const timeout = window.setTimeout(() => {
+          if (lastPixEmailAttemptedRef.current === normalizedEmail) return;
+          lastPixEmailAttemptedRef.current = normalizedEmail;
+          void createCheckout("couple", normalizedEmail, "", true);
+        }, 900);
+        return () => window.clearTimeout(timeout);
+      }
       void createCheckout("couple", normalizedEmail, "", true);
     } else if (
       selectedPaymentMethod === "card" &&
@@ -7958,6 +7989,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     ) {
       void createCardCheckout(true);
     }
+    return undefined;
   }, [
     buyerEmail,
     buyerName,
@@ -7967,9 +7999,11 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     checkoutState,
     createCardCheckout,
     createCheckout,
+    emailTouched,
     hasValidBuyerDetails,
     nativeCheckout,
     paymentCreating,
+    pixEmailMismatch,
     selectedPaymentMethod,
   ]);
 
@@ -8005,6 +8039,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
 
   const handleInitialCheckout = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setEmailTouched(true);
     const normalizedEmail = normalizedBuyerEmail;
     const suggestionPending = Boolean(
       emailSuggestion && emailDismissed !== normalizedEmail,
@@ -8053,7 +8088,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
         void createCardCheckout(true);
       }
     } else {
-      if (!nativeCheckout) {
+      if (!activePix) {
         void createCheckout("couple", normalizedEmail, "", true);
       }
     }
@@ -8086,6 +8121,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
           ? "Esse cartão não passa aqui (só Visa e Mastercard). Gerei seu Pix com o mesmo preço:"
           : "Esse cartão não passa aqui (só Visa e Mastercard). Coloque seu e-mail e o Pix aparece, mesmo preço.",
       );
+      setEmailTouched(true);
       handleCardErrorPixClick();
       return;
     }
@@ -8096,11 +8132,11 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     });
   };
 
-  const pixExpiry = nativeCheckout
+  const pixExpiry = activePix
     ? new Date(
-        nativeCheckout.expiresAt
-          ? nativeCheckout.expiresAt
-          : nativeCheckout.startedAt + PIX_LIFETIME_MS,
+        activePix.expiresAt
+          ? activePix.expiresAt
+          : activePix.startedAt + PIX_LIFETIME_MS,
       )
     : null;
   const pixExpiryLabel = pixExpiry
@@ -8124,14 +8160,14 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
           {brandSwitchNotice}
         </p>
       ) : null}
-      {nativeCheckout ? (
+      {activePix ? (
         <div className="checkout-pix-inline">
       <div className="checkout-pix-copy-primary">
         <button
           className="checkout-copy-button checkout-copy-button-primary"
           type="button"
           onClick={async () => {
-            const copied = await copyPixCode(nativeCheckout.brCode);
+            const copied = await copyPixCode(activePix.brCode);
             if (copied) {
               setCopiedCode(true);
               window.setTimeout(() => setCopiedCode(false), 2200);
@@ -8149,7 +8185,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
             Copiado! Agora abra o app do banco.
           </p>
         ) : null}
-        <code className="checkout-pix-code">{nativeCheckout.brCode}</code>
+        <code className="checkout-pix-code">{activePix.brCode}</code>
       </div>
       <div className="checkout-pix-guide">
         <ol className="checkout-pix-steps">
@@ -8166,9 +8202,9 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
           <div className="checkout-qr-wrap">
             <img
               src={
-                nativeCheckout.brCodeBase64.startsWith("data:")
-                  ? nativeCheckout.brCodeBase64
-                  : `data:image/png;base64,${nativeCheckout.brCodeBase64}`
+                activePix.brCodeBase64.startsWith("data:")
+                  ? activePix.brCodeBase64
+                  : `data:image/png;base64,${activePix.brCodeBase64}`
               }
               alt="QR Code do Pix"
             />
@@ -8200,7 +8236,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
         ) : null}
       </div>
         </div>
-      ) : pixExpired ? (
+      ) : pixExpired && !pixEmailMismatch ? (
         <div className="checkout-pix-expired" role="status" aria-live="polite">
       <p className="checkout-pix-expired-title">O código Pix expirou.</p>
       <p>
@@ -8237,6 +8273,31 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
         </button>
       </div>
         </div>
+      ) : pixEmailMismatch && emailTouched && hasValidBuyerDetails ? (
+        <div className="checkout-pix-inline" role="status" aria-live="polite">
+          <div
+            className="checkout-qr-wrap checkout-qr-skeleton"
+            aria-hidden="true"
+          />
+          <p className="checkout-pix-hint">Gerando seu código Pix…</p>
+        </div>
+      ) : hasValidBuyerDetails && !emailTouched ? (
+        <button
+          type="button"
+          className="button button-primary button-full"
+          onClick={() => {
+            setEmailTouched(true);
+            void createCheckout(
+              "couple",
+              normalizedBuyerEmail,
+              buyerName,
+              true,
+            );
+          }}
+          data-testid="button-generate-pix-prefilled"
+        >
+          Gerar meu Pix
+        </button>
       ) : (
         <p className="checkout-payment-preview">
           Preencha seu e-mail acima e o QR aparece aqui.
@@ -8397,6 +8458,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                             : undefined
                         }
                         onChange={(event) => {
+                          setEmailTouched(true);
                           setBuyerEmailFromUser(event.target.value);
                           safeSetItem(
                             "conexao-pending-buyer-email",
@@ -8406,6 +8468,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                           if (paymentError) setPaymentError("");
                         }}
                         required
+                        data-clarity-mask="true"
                         data-testid="input-checkout-email"
                       />
                       {emailSuggestionPending && emailSuggestion ? (
@@ -8419,6 +8482,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                             type="button"
                             className="checkout-email-suggestion-link"
                             onClick={() => {
+                              setEmailTouched(true);
                               setBuyerEmailFromUser(emailSuggestion);
                               safeSetItem(
                                 "conexao-pending-buyer-email",
@@ -8433,9 +8497,10 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                           <button
                             type="button"
                             className="checkout-email-suggestion-dismiss"
-                            onClick={() =>
+                            onClick={() => {
+                              setEmailTouched(true);
                               setEmailDismissed(normalizedBuyerEmail)
-                            }
+                            }}
                           >
                             Não, está certo
                           </button>
@@ -8468,7 +8533,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                 </div>
               </section>
             </div>
-            {!(selectedPaymentMethod === "pix" && nativeCheckout) ? (
+            {!(selectedPaymentMethod === "pix" && activePix) ? (
               <div className="checkout-purchase-bar">
                 {emailError ? (
                   <p className="checkout-purchase-error" role="alert">
@@ -8544,7 +8609,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
               </div>
             ) : null}
           </form>
-        ) : checkoutState === "native-payment" && nativeCheckout ? (
+        ) : checkoutState === "native-payment" && activePix ? (
           <div className="checkout-native-payment">
             <CheckoutPaymentTabs
               selectedPaymentMethod={selectedPaymentMethod}
