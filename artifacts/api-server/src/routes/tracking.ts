@@ -11,6 +11,7 @@ import {
   isNotNull,
   lt,
   ne,
+  notInArray,
   sql,
 } from "drizzle-orm";
 import {
@@ -18,6 +19,7 @@ import {
   invitesTable,
   pageEventsTable,
   quizAnswersTable,
+  quizLeadsTable,
   sessionsTable,
 } from "@workspace/db";
 import {
@@ -29,6 +31,7 @@ import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice, type DeviceType } from "../lib/device";
 import { reconcilePendingPayments } from "../lib/payment-reconciliation";
 import { sendMetaEvent } from "../lib/meta-conversions";
+import { getQuizEmailConfig } from "../lib/quiz-email-config";
 
 const router: IRouter = Router();
 const LP_IDS = ["v1", "v2", "lp3"] as const;
@@ -765,23 +768,50 @@ async function computeQuizAnalytics({
     gte(quizAnswersTable.createdAt, from),
     lt(quizAnswersTable.createdAt, to),
   ];
+  const leadWindow = [
+    inArray(quizLeadsTable.lpId, lpIds),
+    eq(quizLeadsTable.internal, false),
+    gte(quizLeadsTable.createdAt, from),
+    lt(quizLeadsTable.createdAt, to),
+  ];
+  const emailEventKeys = [
+    "quiz_email_view",
+    "quiz_email_submit",
+    "quiz_email_skip",
+    "quiz_result_view",
+  ] as const;
+  const responseWindow = [
+    ...answerWindow,
+    notInArray(quizAnswersTable.answerKey, [...emailEventKeys]),
+  ];
   const distinctVisitors = sql<number>`count(distinct ${quizAnswersTable.visitorKey})`;
 
-  const [totals, completed, questions, answerBreakdown, campaigns, variants] =
-    await Promise.all([
+  const [
+    totals,
+    completed,
+    questions,
+    answerBreakdown,
+    campaigns,
+    variants,
+    emailEvents,
+    leadTotals,
+    leadPurchases,
+    leadSources,
+    emailConfig,
+  ] = await Promise.all([
       db
         .select({
           answers: count(),
           visitors: distinctVisitors,
         })
         .from(quizAnswersTable)
-        .where(and(...answerWindow)),
+        .where(and(...responseWindow)),
       db
         .select({ visitors: distinctVisitors })
         .from(quizAnswersTable)
         .where(
           and(
-            ...answerWindow,
+            ...responseWindow,
             eq(quizAnswersTable.screenId, "quiz-complete"),
             eq(quizAnswersTable.answerValue, "true"),
           ),
@@ -796,7 +826,7 @@ async function computeQuizAnalytics({
         })
         .from(quizAnswersTable)
         .where(
-          and(...answerWindow, ne(quizAnswersTable.screenId, "quiz-complete")),
+          and(...responseWindow, ne(quizAnswersTable.screenId, "quiz-complete")),
         )
         .groupBy(quizAnswersTable.screenId, quizAnswersTable.answerKey)
         .orderBy(asc(sql<number>`min(${quizAnswersTable.step})`)),
@@ -810,7 +840,7 @@ async function computeQuizAnalytics({
         })
         .from(quizAnswersTable)
         .where(
-          and(...answerWindow, ne(quizAnswersTable.screenId, "quiz-complete")),
+          and(...responseWindow, ne(quizAnswersTable.screenId, "quiz-complete")),
         )
         .groupBy(
           quizAnswersTable.screenId,
@@ -827,7 +857,7 @@ async function computeQuizAnalytics({
           visitors: distinctVisitors,
         })
         .from(quizAnswersTable)
-        .where(and(...answerWindow))
+        .where(and(...responseWindow))
         .groupBy(quizAnswersTable.utmSource, quizAnswersTable.utmCampaign)
         .orderBy(desc(distinctVisitors))
         .limit(40),
@@ -838,13 +868,74 @@ async function computeQuizAnalytics({
           visitors: distinctVisitors,
         })
         .from(quizAnswersTable)
-        .where(and(...answerWindow, isNotNull(quizAnswersTable.experimentVariantId)))
+        .where(and(...responseWindow, isNotNull(quizAnswersTable.experimentVariantId)))
         .groupBy(quizAnswersTable.experimentVariantId)
         .orderBy(desc(distinctVisitors)),
+      db
+        .select({
+          answerKey: quizAnswersTable.answerKey,
+          visitors: sql<number>`count(distinct ${quizAnswersTable.visitorKey})`,
+        })
+        .from(quizAnswersTable)
+        .where(
+          and(
+            ...answerWindow,
+            inArray(quizAnswersTable.answerKey, [...emailEventKeys]),
+          ),
+        )
+        .groupBy(quizAnswersTable.answerKey),
+      db
+        .select({
+          leads: sql<number>`count(distinct ${quizLeadsTable.visitorKey})`,
+          leadsSawOffer: sql<number>`count(distinct ${quizLeadsTable.visitorKey}) filter (where ${quizLeadsTable.offerSeenAt} is not null)`,
+        })
+        .from(quizLeadsTable)
+        .where(and(...leadWindow)),
+      db
+        .select({
+          purchases: sql<number>`count(distinct ${quizLeadsTable.visitorKey})`,
+        })
+        .from(quizLeadsTable)
+        .innerJoin(
+          sessionsTable,
+          eq(quizLeadsTable.sessionId, sessionsTable.id),
+        )
+        .where(
+          and(
+            ...leadWindow,
+            eq(sessionsTable.accessGranted, true),
+            eq(sessionsTable.internal, false),
+          ),
+        ),
+      db
+        .select({
+          source: sql<string>`coalesce(nullif(${quizLeadsTable.utmSource}, ''), 'sem UTM / direto')`,
+          campaign: quizLeadsTable.utmCampaign,
+          checkouts: sql<number>`count(distinct ${quizLeadsTable.id}) filter (where ${quizLeadsTable.sessionId} is not null and ${sessionsTable.internal} = false)`,
+          pix: sql<number>`count(distinct ${quizLeadsTable.id}) filter (where ${sessionsTable.paymentMethod} = 'pix' and ${sessionsTable.internal} = false)`,
+          purchases: sql<number>`count(distinct ${quizLeadsTable.id}) filter (where ${sessionsTable.accessGranted} = true and ${sessionsTable.internal} = false)`,
+        })
+        .from(quizLeadsTable)
+        .leftJoin(
+          sessionsTable,
+          eq(quizLeadsTable.sessionId, sessionsTable.id),
+        )
+        .where(and(...leadWindow))
+        .groupBy(
+          sql`coalesce(nullif(${quizLeadsTable.utmSource}, ''), 'sem UTM / direto')`,
+          quizLeadsTable.utmCampaign,
+        )
+        .orderBy(
+          desc(sql<number>`count(distinct ${quizLeadsTable.id})`),
+        )
+        .limit(40),
+      getQuizEmailConfig(),
     ]);
 
   const visitorCount = Number(totals[0]?.visitors || 0);
   const completedCount = Number(completed[0]?.visitors || 0);
+  const emailEventCount = (key: (typeof emailEventKeys)[number]) =>
+    Number(emailEvents.find((row) => row.answerKey === key)?.visitors || 0);
 
   return {
     quizId: "lp1",
@@ -856,6 +947,24 @@ async function computeQuizAnalytics({
     completedVisitors: completedCount,
     completionRate:
       visitorCount > 0 ? Number(((completedCount / visitorCount) * 100).toFixed(1)) : 0,
+    liveSince: emailConfig.liveSince,
+    emailFunnel: {
+      started: visitorCount,
+      emailViewed: emailEventCount("quiz_email_view"),
+      emailSubmitted: emailEventCount("quiz_email_submit"),
+      emailSkipped: emailEventCount("quiz_email_skip"),
+      resultViewed: emailEventCount("quiz_result_view"),
+      leads: Number(leadTotals[0]?.leads || 0),
+      leadsSawOffer: Number(leadTotals[0]?.leadsSawOffer || 0),
+      leadPurchases: Number(leadPurchases[0]?.purchases || 0),
+    },
+    leadSources: leadSources.map((row) => ({
+      source: row.source,
+      campaign: row.campaign,
+      checkouts: Number(row.checkouts || 0),
+      pix: Number(row.pix || 0),
+      purchases: Number(row.purchases || 0),
+    })),
     questions: questions.map((row) => ({
       screenId: row.screenId,
       answerKey: row.answerKey,

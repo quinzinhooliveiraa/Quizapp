@@ -3,6 +3,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db, quizLeadsTable } from "@workspace/db";
 import { getOfferPricing, getOfferWindow, startOfferWindow } from "../lib/offers";
 import { resolveRegion } from "../lib/pricing";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -60,15 +61,22 @@ router.post("/offer/start", async (req, res): Promise<void> => {
     return;
   }
 
-  await db
-    .update(quizLeadsTable)
-    .set({ offerSeenAt: new Date() })
-    .where(
-      and(
-        eq(quizLeadsTable.visitorKey, visitorKey),
-        isNull(quizLeadsTable.offerSeenAt),
-      ),
+  try {
+    await db
+      .update(quizLeadsTable)
+      .set({ offerSeenAt: new Date() })
+      .where(
+        and(
+          eq(quizLeadsTable.visitorKey, visitorKey),
+          isNull(quizLeadsTable.offerSeenAt),
+        ),
+      );
+  } catch (error) {
+    logger.warn(
+      { err: error, visitorKey },
+      "Failed to mark quiz leads as having seen the offer",
     );
+  }
 
   await sendOfferState(res, visitorKey, region);
 });

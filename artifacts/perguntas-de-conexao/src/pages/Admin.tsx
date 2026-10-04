@@ -158,6 +158,24 @@ type QuizAnalyticsGroup = {
   answers: number;
   visitors: number;
 };
+type QuizEmailMode = "required" | "optional";
+type QuizEmailFunnel = {
+  started: number;
+  emailViewed: number;
+  emailSubmitted: number;
+  emailSkipped: number;
+  resultViewed: number;
+  leads: number;
+  leadsSawOffer: number;
+  leadPurchases: number;
+};
+type QuizLeadSource = {
+  source: string;
+  campaign: string | null;
+  checkouts: number;
+  pix: number;
+  purchases: number;
+};
 type QuizAnalytics = {
   quizId: string;
   lpId: string;
@@ -167,6 +185,9 @@ type QuizAnalytics = {
   answers: number;
   completedVisitors: number;
   completionRate: number;
+  liveSince: string | null;
+  emailFunnel: QuizEmailFunnel;
+  leadSources: QuizLeadSource[];
   questions: QuizAnalyticsQuestion[];
   answerBreakdown: QuizAnalyticsAnswer[];
   campaigns: QuizAnalyticsGroup[];
@@ -1346,6 +1367,30 @@ function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
           <strong>{data.completionRate.toFixed(1)}%</strong>
         </div>
       </div>
+      <div className="admin-quiz-email-funnel">
+        <div className="admin-quiz-section-heading">
+          <div>
+            <p className="admin-eyebrow">captura e conversão</p>
+            <h4>Funil de e-mail e acesso</h4>
+          </div>
+          {data.liveSince ? (
+            <span>
+              Configuração ativa desde{" "}
+              {new Date(data.liveSince).toLocaleDateString("pt-BR")}
+            </span>
+          ) : null}
+        </div>
+        <div className="admin-metric-grid admin-quiz-metric-grid">
+          <div><span>Iniciaram o quiz</span><strong>{data.emailFunnel.started}</strong></div>
+          <div><span>Viram captura de e-mail</span><strong>{data.emailFunnel.emailViewed}</strong></div>
+          <div><span>Enviaram e-mail</span><strong>{data.emailFunnel.emailSubmitted}</strong></div>
+          <div><span>Optaram por pular</span><strong>{data.emailFunnel.emailSkipped}</strong></div>
+          <div><span>Viram o resultado</span><strong>{data.emailFunnel.resultViewed}</strong></div>
+          <div><span>Leads salvos</span><strong>{data.emailFunnel.leads}</strong></div>
+          <div><span>Viraram checkout</span><strong>{data.emailFunnel.leadsSawOffer}</strong></div>
+          <div><span>Compras dos leads</span><strong>{data.emailFunnel.leadPurchases}</strong></div>
+        </div>
+      </div>
 
       <details className="admin-quiz-structure" open>
         <summary>
@@ -1435,6 +1480,30 @@ function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
             <p className="admin-footnote">
               Nenhuma variante de experimento associada ainda.
             </p>
+          )}
+        </div>
+        <div className="admin-quiz-analysis-card">
+          <h4>Origem dos leads</h4>
+          {data.leadSources.length ? (
+            <div className="admin-quiz-list">
+              {data.leadSources.map((source) => (
+                <div
+                  className="admin-quiz-list-row"
+                  key={`${source.source}-${source.campaign ?? ""}`}
+                >
+                  <span>
+                    <strong>
+                      {source.source}
+                      {source.campaign ? ` · ${source.campaign}` : ""}
+                    </strong>
+                    <small>{source.checkouts} checkouts · {source.pix} Pix</small>
+                  </span>
+                  <b>{source.purchases} compras</b>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="admin-footnote">Nenhum lead neste período.</p>
           )}
         </div>
       </div>
@@ -1747,6 +1816,14 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
   const [quizAnalytics, setQuizAnalytics] = useState<QuizAnalytics | null>(null);
   const [quizAnalyticsLoading, setQuizAnalyticsLoading] = useState(false);
   const [quizAnalyticsError, setQuizAnalyticsError] = useState(false);
+  const [quizEmailMode, setQuizEmailMode] =
+    useState<QuizEmailMode>("required");
+  const [quizEmailConfigLiveSince, setQuizEmailConfigLiveSince] = useState<
+    string | null
+  >(null);
+  const [quizEmailConfigLoading, setQuizEmailConfigLoading] = useState(true);
+  const [quizEmailConfigSaving, setQuizEmailConfigSaving] = useState(false);
+  const [quizEmailConfigError, setQuizEmailConfigError] = useState("");
   const [cleanupResult, setCleanupResult] = useState<number | null>(null);
 
   const canFetch =
@@ -1788,6 +1865,69 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
     canFetch &&
     cleanupConfirmation.trim().toUpperCase() === CLEANUP_CONFIRMATION &&
     !cleanupMutation.isPending;
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const controller = new AbortController();
+    setQuizEmailConfigLoading(true);
+    setQuizEmailConfigError("");
+    fetch(
+      `${apiBaseUrl}/api/admin/quiz/email-config?sessionId=${encodeURIComponent(sessionId)}`,
+      { signal: controller.signal },
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error("quiz email config");
+        return (await response.json()) as {
+          mode?: QuizEmailMode;
+          liveSince?: string | null;
+        };
+      })
+      .then((config) => {
+        if (config.mode === "required" || config.mode === "optional") {
+          setQuizEmailMode(config.mode);
+        }
+        setQuizEmailConfigLiveSince(config.liveSince ?? null);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setQuizEmailConfigError("Não foi possível carregar o modo do e-mail.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setQuizEmailConfigLoading(false);
+      });
+    return () => controller.abort();
+  }, [sessionId]);
+
+  const updateQuizEmailMode = async (mode: QuizEmailMode) => {
+    const previousMode = quizEmailMode;
+    setQuizEmailMode(mode);
+    setQuizEmailConfigSaving(true);
+    setQuizEmailConfigError("");
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/quiz/email-config?sessionId=${encodeURIComponent(sessionId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode }),
+        },
+      );
+      if (!response.ok) throw new Error("quiz email config update");
+      const config = (await response.json()) as {
+        mode?: QuizEmailMode;
+        liveSince?: string | null;
+      };
+      if (config.mode === "required" || config.mode === "optional") {
+        setQuizEmailMode(config.mode);
+      }
+      setQuizEmailConfigLiveSince(config.liveSince ?? null);
+    } catch {
+      setQuizEmailMode(previousMode);
+      setQuizEmailConfigError("Não foi possível salvar essa configuração.");
+    } finally {
+      setQuizEmailConfigSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (!canFetch) {
@@ -1838,6 +1978,45 @@ function QuizAnalyticsTab({ sessionId }: { sessionId: string }) {
         Veja somente as respostas e a conclusão do quiz, sem misturar esses
         dados com visitas, cliques e compras das landing pages.
       </p>
+
+      <section className="admin-quiz-email-config" aria-labelledby="quiz-email-config-title">
+        <div>
+          <p className="admin-eyebrow">captura de lead</p>
+          <h3 id="quiz-email-config-title">E-mail no quiz</h3>
+          <p>
+            Obrigatório impede avançar sem um endereço válido. Opcional mostra
+            uma alternativa para ver o resultado sem informar e-mail.
+          </p>
+        </div>
+        <label>
+          <span>Comportamento</span>
+          <select
+            value={quizEmailMode}
+            disabled={quizEmailConfigLoading || quizEmailConfigSaving}
+            onChange={(event) =>
+              void updateQuizEmailMode(event.target.value as QuizEmailMode)
+            }
+            data-testid="select-quiz-email-mode"
+          >
+            <option value="required">Obrigatório</option>
+            <option value="optional">Opcional</option>
+          </select>
+        </label>
+        <div className="admin-quiz-email-config-status" aria-live="polite">
+          {quizEmailConfigLoading
+            ? "Carregando configuração…"
+            : quizEmailConfigSaving
+              ? "Salvando…"
+              : (quizAnalytics?.liveSince ?? quizEmailConfigLiveSince)
+                ? `Ativo desde ${new Date(
+                    quizAnalytics?.liveSince ?? quizEmailConfigLiveSince!,
+                  ).toLocaleDateString("pt-BR")}`
+                : ""}
+          {quizEmailConfigError ? (
+            <span role="alert">{quizEmailConfigError}</span>
+          ) : null}
+        </div>
+      </section>
 
       <div className="admin-analysis-controls" aria-label="Filtros do quiz">
         <label>

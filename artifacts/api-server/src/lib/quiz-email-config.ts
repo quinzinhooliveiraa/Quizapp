@@ -1,11 +1,14 @@
 import { eq, inArray } from "drizzle-orm";
 import { appSettingsTable, db } from "@workspace/db";
 
-const QUIZ_EMAIL_REQUIRED_KEY = "quiz_email_required";
+const QUIZ_EMAIL_MODE_KEY = "quiz_email_mode";
+const LEGACY_QUIZ_EMAIL_REQUIRED_KEY = "quiz_email_required";
 const QUIZ_EMAIL_LIVE_SINCE_KEY = "quiz_email_live_since";
 
+export type QuizEmailMode = "required" | "optional";
+
 export type QuizEmailConfig = {
-  required: boolean;
+  mode: QuizEmailMode;
   liveSince: string | null;
 };
 
@@ -15,16 +18,24 @@ export async function getQuizEmailConfig(): Promise<QuizEmailConfig> {
     .from(appSettingsTable)
     .where(
       inArray(appSettingsTable.key, [
-        QUIZ_EMAIL_REQUIRED_KEY,
+        QUIZ_EMAIL_MODE_KEY,
+        LEGACY_QUIZ_EMAIL_REQUIRED_KEY,
         QUIZ_EMAIL_LIVE_SINCE_KEY,
       ]),
     );
   const values = new Map(settings.map(({ key, value }) => [key, value]));
+  const savedMode = values.get(QUIZ_EMAIL_MODE_KEY);
+  const legacyRequired = values.get(LEGACY_QUIZ_EMAIL_REQUIRED_KEY);
   const savedLiveSince = values.get(QUIZ_EMAIL_LIVE_SINCE_KEY);
   const parsedLiveSince = savedLiveSince ? new Date(savedLiveSince) : null;
 
   return {
-    required: values.get(QUIZ_EMAIL_REQUIRED_KEY) !== "false",
+    mode:
+      savedMode === "optional" || savedMode === "required"
+        ? savedMode
+        : legacyRequired === "false"
+          ? "optional"
+          : "required",
     liveSince:
       parsedLiveSince && !Number.isNaN(parsedLiveSince.getTime())
         ? parsedLiveSince.toISOString()
@@ -32,19 +43,19 @@ export async function getQuizEmailConfig(): Promise<QuizEmailConfig> {
   };
 }
 
-export async function setQuizEmailRequired(
-  required: boolean,
+export async function setQuizEmailMode(
+  mode: QuizEmailMode,
 ): Promise<QuizEmailConfig> {
   await db
     .insert(appSettingsTable)
     .values({
-      key: QUIZ_EMAIL_REQUIRED_KEY,
-      value: String(required),
+      key: QUIZ_EMAIL_MODE_KEY,
+      value: mode,
       updatedAt: new Date(),
     })
     .onConflictDoUpdate({
       target: appSettingsTable.key,
-      set: { value: String(required), updatedAt: new Date() },
+      set: { value: mode, updatedAt: new Date() },
     });
   return getQuizEmailConfig();
 }

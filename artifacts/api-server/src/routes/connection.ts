@@ -33,6 +33,7 @@ import {
 import {
   db,
   invitesTable,
+  quizLeadsTable,
   offerWindowsTable,
   processedEventsTable,
   sessionsTable,
@@ -601,10 +602,61 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
     query: req.query as Record<string, unknown>,
   });
   const offerPricing = getOfferPricing(region);
-  const activeOfferWindow = visitorKey
-    ? await getOfferWindow(visitorKey)
-    : null;
-  const pricing = activeOfferWindow ? offerPricing.offer : offerPricing.full;
+  const resumeSessionId = parsed.data.resumeSessionId?.trim() || null;
+  let resumeSession: typeof sessionsTable.$inferSelect | undefined;
+  if (resumeSessionId) {
+    const [existingResumeSession] = await db
+      .select()
+      .from(sessionsTable)
+      .where(eq(sessionsTable.id, resumeSessionId))
+      .limit(1);
+    if (!existingResumeSession) {
+      res.status(404).json({ error: "Checkout para retomada não encontrado" });
+      return;
+    }
+    if (existingResumeSession.accessGranted) {
+      res.status(409).json({ error: "Este checkout já foi pago" });
+      return;
+    }
+    resumeSession = existingResumeSession;
+  }
+  let pricing = offerPricing.full;
+  if (resumeSession) {
+    const resumePricing = getOfferPricing("BR");
+    const hasLockedPaymentPrice =
+      (resumeSession.paymentMethod === "pix" ||
+        resumeSession.paymentMethod === "card") &&
+      resumeSession.lockedPriceCents !== null;
+    if (hasLockedPaymentPrice) {
+      pricing =
+        resumeSession.lockedPriceCents === resumePricing.offer.amountCents
+          ? resumePricing.offer
+          : {
+              ...resumePricing.full,
+              amountCents: resumeSession.lockedPriceCents!,
+            };
+    } else {
+      const discountValidUntil = new Date(
+        resumeSession.createdAt.getTime() + ABANDONED_CHECKOUT_DISCOUNT_MS,
+      );
+      const discountIsActive = discountValidUntil.getTime() > Date.now();
+      const resumeAmount = discountIsActive
+        ? Math.min(
+            resumeSession.lockedPriceCents ?? resumePricing.offer.amountCents,
+            resumePricing.offer.amountCents,
+          )
+        : resumePricing.full.amountCents;
+      pricing =
+        resumeAmount === resumePricing.offer.amountCents
+          ? resumePricing.offer
+          : resumePricing.full;
+    }
+  } else {
+    const activeOfferWindow = visitorKey
+      ? await getOfferWindow(visitorKey)
+      : null;
+    pricing = activeOfferWindow ? offerPricing.offer : offerPricing.full;
+  }
   const buyerEmail = parsed.data.buyerEmail?.trim().toLowerCase() || null;
   const metaConsent = parsed.data.metaConsent === true;
   const sourceLp = parsed.data.sourceLp || null;
@@ -677,42 +729,81 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
   }
 
   const config = packageConfig[parsed.data.packageId];
-  const sessionId = crypto.randomUUID();
-  const [session] = await db
-    .insert(sessionsTable)
-    .values({
-      id: sessionId,
-      buyerName: parsed.data.buyerName.trim(),
-      buyerEmail,
-      paymentMethod: method,
-      packageId: parsed.data.packageId,
-      packageName: config.name,
-      sourceLp: parsed.data.sourceLp || null,
-      visitorKey,
-      device: detectDevice(req.header("user-agent")),
-      ctaSource: parsed.data.ctaSource?.trim().slice(0, 40) || null,
-      experimentId:
-        parsed.data.experimentId?.trim().slice(0, 120) ||
-        assignment?.experimentId ||
-        null,
-      experimentVariantId:
-        parsed.data.experimentVariantId?.trim().slice(0, 120) ||
-        assignment?.experimentVariantId ||
-        null,
-      currency: pricing.currency.toUpperCase(),
-      metaConsent,
-      metaFbp,
-      metaFbc,
-      metaClientIp,
-      metaClientUserAgent,
-      metaSourceUrl,
-      inviteLimit: config.limit,
-      invitesUsed: 0,
-      accessGranted: false,
-      internal: parsed.data.internal === true,
-      lockedPriceCents: pricing.amountCents,
-    })
-    .returning();
+  const sessionId = resumeSession?.id ?? crypto.randomUUID();
+  const sessionValues = {
+    buyerName: parsed.data.buyerName.trim(),
+    buyerEmail,
+    paymentMethod: method,
+    packageId: parsed.data.packageId,
+    packageName: config.name,
+    sourceLp: resumeSession?.sourceLp ?? parsed.data.sourceLp ?? null,
+    leadSource:
+      parsed.data.emailOrigin ?? resumeSession?.leadSource ?? null,
+    visitorKey: resumeSession?.visitorKey ?? visitorKey,
+    device: detectDevice(req.header("user-agent")),
+    ctaSource:
+      parsed.data.ctaSource?.trim().slice(0, 40) ||
+      resumeSession?.ctaSource ||
+      null,
+    experimentId:
+      parsed.data.experimentId?.trim().slice(0, 120) ||
+      resumeSession?.experimentId ||
+      assignment?.experimentId ||
+      null,
+    experimentVariantId:
+      parsed.data.experimentVariantId?.trim().slice(0, 120) ||
+      resumeSession?.experimentVariantId ||
+      assignment?.experimentVariantId ||
+      null,
+    currency: pricing.currency.toUpperCase(),
+    metaConsent:
+      resumeSession && parsed.data.metaConsent === undefined
+        ? resumeSession.metaConsent
+        : metaConsent,
+    metaFbp:
+      resumeSession && parsed.data.metaConsent === undefined
+        ? resumeSession.metaFbp
+        : metaFbp,
+    metaFbc:
+      resumeSession && parsed.data.metaConsent === undefined
+        ? resumeSession.metaFbc
+        : metaFbc,
+    metaClientIp:
+      resumeSession && parsed.data.metaConsent === undefined
+        ? resumeSession.metaClientIp
+        : metaClientIp,
+    metaClientUserAgent:
+      resumeSession && parsed.data.metaConsent === undefined
+        ? resumeSession.metaClientUserAgent
+        : metaClientUserAgent,
+    metaSourceUrl:
+      resumeSession && parsed.data.metaConsent === undefined
+        ? resumeSession.metaSourceUrl
+        : metaSourceUrl,
+    inviteLimit: resumeSession?.inviteLimit ?? config.limit,
+    invitesUsed: resumeSession?.invitesUsed ?? 0,
+    accessGranted: false,
+    internal:
+      (resumeSession?.internal ?? false) || parsed.data.internal === true,
+    lockedPriceCents: pricing.amountCents,
+  };
+  let session: typeof sessionsTable.$inferSelect | undefined;
+  if (resumeSession) {
+    [session] = await db
+      .update(sessionsTable)
+      .set(sessionValues)
+      .where(eq(sessionsTable.id, sessionId))
+      .returning();
+  } else {
+    [session] = await db
+      .insert(sessionsTable)
+      .values({ id: sessionId, ...sessionValues })
+      .returning();
+  }
+  if (!session) {
+    res.status(404).json({ error: "Checkout não encontrado" });
+    return;
+  }
 
   try {
     if (method === "card") {
@@ -898,11 +989,105 @@ router.get(
       return;
     }
 
-    const [session] = await db
+    const [directSession] = await db
       .select()
       .from(sessionsTable)
       .where(eq(sessionsTable.id, parsed.data.sessionId))
       .limit(1);
+    let session = directSession;
+    let leadId: string | null = null;
+    let isLeadResume = false;
+
+    if (session) {
+      const [linkedLead] = await db
+        .select({
+          id: quizLeadsTable.id,
+          offerSeenAt: quizLeadsTable.offerSeenAt,
+        })
+        .from(quizLeadsTable)
+        .where(eq(quizLeadsTable.sessionId, session.id))
+        .limit(1);
+      if (linkedLead) {
+        leadId = linkedLead.id;
+        if (!linkedLead.offerSeenAt) {
+          await db
+            .update(quizLeadsTable)
+            .set({ offerSeenAt: new Date() })
+            .where(eq(quizLeadsTable.id, linkedLead.id));
+        }
+      }
+    }
+
+    if (!session) {
+      const [lead] = await db
+        .select()
+        .from(quizLeadsTable)
+        .where(eq(quizLeadsTable.id, parsed.data.sessionId))
+        .limit(1);
+      if (lead) {
+        leadId = lead.id;
+        isLeadResume = true;
+        session = await db.transaction(async (tx) => {
+          const [lockedLead] = await tx
+            .select()
+            .from(quizLeadsTable)
+            .where(eq(quizLeadsTable.id, lead.id))
+            .for("update");
+          if (!lockedLead) return undefined;
+
+          if (lockedLead.sessionId) {
+            const [existingSession] = await tx
+              .select()
+              .from(sessionsTable)
+              .where(eq(sessionsTable.id, lockedLead.sessionId))
+              .limit(1);
+            if (existingSession) {
+              if (!lockedLead.offerSeenAt) {
+                await tx
+                  .update(quizLeadsTable)
+                  .set({ offerSeenAt: new Date() })
+                  .where(eq(quizLeadsTable.id, lockedLead.id));
+              }
+              return existingSession;
+            }
+          }
+
+          const config = packageConfig.couple;
+          const buyerName =
+            lockedLead.email.split("@")[0]?.replace(/[._-]+/g, " ").trim() ||
+            "Cliente";
+          const sessionId = crypto.randomUUID();
+          const [createdSession] = await tx
+            .insert(sessionsTable)
+            .values({
+              id: sessionId,
+              buyerName,
+              buyerEmail: lockedLead.email,
+              paymentMethod: null,
+              packageId: "couple",
+              packageName: config.name,
+              sourceLp: lockedLead.lpId,
+              leadSource: "resume",
+              visitorKey: lockedLead.visitorKey,
+              currency: "BRL",
+              inviteLimit: config.limit,
+              invitesUsed: 0,
+              accessGranted: false,
+              internal: lockedLead.internal,
+            })
+            .returning();
+          await tx
+            .update(quizLeadsTable)
+            .set({
+              sessionId,
+              offerSeenAt: lockedLead.offerSeenAt ?? new Date(),
+            })
+            .where(eq(quizLeadsTable.id, lockedLead.id));
+          return createdSession;
+        });
+      }
+    }
+
     if (!session) {
       res.status(404).json({ error: "Checkout não encontrado" });
       return;
@@ -920,9 +1105,27 @@ router.get(
           offerCents,
         )
       : fullCents;
-    const resumePricing = discountIsActive
-      ? getOfferPricing("BR").offer
-      : getOfferPricing("BR").full;
+  const hasLockedPaymentPrice =
+    (session.paymentMethod === "pix" || session.paymentMethod === "card") &&
+    session.lockedPriceCents !== null;
+  const effectiveResumeCents = hasLockedPaymentPrice
+    ? session.lockedPriceCents!
+    : resumeCents;
+  if (!hasLockedPaymentPrice && session.lockedPriceCents !== resumeCents) {
+      const [updatedSession] = await db
+        .update(sessionsTable)
+        .set({ lockedPriceCents: resumeCents })
+        .where(eq(sessionsTable.id, session.id))
+        .returning();
+      if (updatedSession) session = updatedSession;
+    }
+    const resumePricing =
+      effectiveResumeCents === offerCents
+        ? getOfferPricing("BR").offer
+        : {
+            ...getOfferPricing("BR").full,
+            amountCents: effectiveResumeCents,
+          };
 
     let pix:
       | {
@@ -941,7 +1144,7 @@ router.get(
       session.pixChargeId &&
       session.pixExpiresAt &&
       session.pixExpiresAt.getTime() > Date.now() &&
-      session.lockedPriceCents === resumeCents
+      session.lockedPriceCents === effectiveResumeCents
     ) {
       pix = {
         brCode: session.pixBrcode,
@@ -953,7 +1156,7 @@ router.get(
       try {
         const charge = await createAbacatePixCharge({
           sessionId: session.id,
-          amount: resumeCents,
+          amount: effectiveResumeCents,
           description: "Perguntas de Conexao - Pacote Casal",
         });
         const pixExpiresAt = new Date(Date.now() + PIX_LIFETIME_MS);
@@ -965,7 +1168,7 @@ router.get(
             pixChargeId: charge.id,
             pixBrcode: charge.brCode,
             pixExpiresAt,
-            lockedPriceCents: resumeCents,
+            lockedPriceCents: effectiveResumeCents,
           })
           .where(eq(sessionsTable.id, session.id));
         pix = {
@@ -987,7 +1190,7 @@ router.get(
     if (!session.accessGranted && session.paymentMethod === "card") {
       if (
         session.lockedPriceCents !== null &&
-        session.lockedPriceCents === resumeCents
+        session.lockedPriceCents === effectiveResumeCents
       ) {
         clientSecret = session.stripePaymentIntentId
           ? await fetchStripePaymentIntentClientSecret(
@@ -1005,7 +1208,7 @@ router.get(
             .update(sessionsTable)
             .set({
               stripePaymentIntentId: paymentIntent.id,
-              lockedPriceCents: resumeCents,
+              lockedPriceCents: effectiveResumeCents,
             })
             .where(eq(sessionsTable.id, session.id));
           clientSecret = paymentIntent.clientSecret;
@@ -1029,11 +1232,13 @@ router.get(
     res.json(
       ResumeCheckoutResponse.parse({
         sessionId: session.id,
+        isLeadResume,
+        leadId,
         buyerName: session.buyerName,
         buyerEmail: session.buyerEmail,
         paymentMethod,
         accessGranted: session.accessGranted,
-        lockedPriceCents: resumeCents,
+        lockedPriceCents: effectiveResumeCents,
         discountValidUntil: discountValidUntil.toISOString(),
         pix,
         clientSecret,

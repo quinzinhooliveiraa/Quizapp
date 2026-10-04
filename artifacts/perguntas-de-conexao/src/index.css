@@ -31299,3 +31299,171 @@ blockquote em {
     transform-origin: left top;
   }
 }
+
+.lp1-capture-privacy {
+  max-width: 28rem;
+  margin: 0.7rem auto 0;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.lp1-capture-privacy a,
+.lp1-capture-suggestion button {
+  color: #ffc59e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.lp1-capture-suggestion {
+  max-width: 28rem;
+  margin: 0.7rem auto 0;
+  color: #f8e8d7;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.lp1-capture-suggestion button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.email-unsubscribe-page {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(138, 47, 77, 0.12), transparent 55%),
+    #f7f2f1;
+  color: #30252b;
+}
+
+.email-unsubscribe-card {
+  width: min(100%, 30rem);
+  box-sizing: border-box;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 1px solid rgba(95, 45, 63, 0.12);
+  border-radius: 1.25rem;
+  background: #fffdfa;
+  box-shadow: 0 1.25rem 3rem rgba(50, 28, 37, 0.1);
+  text-align: center;
+}
+
+.email-unsubscribe-card h1 {
+  margin: 1.5rem 0 0.7rem;
+  font-size: clamp(1.45rem, 4vw, 2rem);
+}
+
+.email-unsubscribe-card p {
+  color: #6e6269;
+  line-height: 1.6;
+}
+
+.email-unsubscribe-card button {
+  margin-top: 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1.2rem;
+  background: #8a2f4d;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-quiz-email-config {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.4fr);
+  align-items: center;
+  gap: 0.8rem 1.5rem;
+  margin: 1.1rem 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(196, 172, 255, 0.18);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.admin-quiz-email-config h3 {
+  margin: 0.15rem 0 0.35rem;
+  color: #f9f8fb;
+  font-size: 0.95rem;
+  font-weight: 550;
+}
+
+.admin-quiz-email-config p {
+  max-width: 42rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.admin-quiz-email-config label span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.72rem;
+}
+
+.admin-quiz-email-config select {
+  width: 100%;
+  min-height: 2.5rem;
+  border: 1px solid rgba(196, 172, 255, 0.24);
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  background: #181421;
+  color: #f9f8fb;
+  font: inherit;
+}
+
+.admin-quiz-email-config-status {
+  grid-column: 1 / -1;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.7rem;
+}
+
+.admin-quiz-email-config-status span {
+  margin-left: 0.55rem;
+  color: #ffb6b6;
+}
+
+.admin-quiz-email-funnel {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid rgba(196, 172, 255, 0.15);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-quiz-email-funnel .admin-quiz-section-heading {
+  margin: 0;
+}
+
+.admin-quiz-email-funnel .admin-metric-grid > div {
+  border: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+@media (max-width: 760px) {
+  .admin-quiz-email-config {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .admin-quiz-email-config-status {
+    grid-column: auto;
+  }
+
+  .admin-quiz-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-quiz-analysis-grid {
+    grid-template-columns: 1fr;
+  }
+}

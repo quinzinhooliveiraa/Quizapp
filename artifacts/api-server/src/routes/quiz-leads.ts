@@ -22,7 +22,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 router.get("/quiz/email-config", async (_req, res): Promise<void> => {
   res.set("Cache-Control", "no-store");
-  res.json(await getQuizEmailConfig());
+  const { mode } = await getQuizEmailConfig();
+  res.json({ mode });
 });
 
 router.post("/quiz/lead", async (req, res): Promise<void> => {
@@ -43,7 +44,13 @@ router.post("/quiz/lead", async (req, res): Promise<void> => {
 
   const body = parsed.data;
   const email = body.email.trim().toLowerCase();
-  if (!EMAIL_PATTERN.test(email)) {
+  const visitorKey = body.visitorKey.trim();
+  if (
+    email.length > 254 ||
+    !EMAIL_PATTERN.test(email) ||
+    !visitorKey ||
+    visitorKey.length > 120
+  ) {
     res.status(400).json({ error: "E-mail inválido" });
     return;
   }
@@ -55,7 +62,7 @@ router.post("/quiz/lead", async (req, res): Promise<void> => {
     .from(quizLeadsTable)
     .where(
       and(
-        eq(quizLeadsTable.visitorKey, body.visitorKey),
+        eq(quizLeadsTable.visitorKey, visitorKey),
         gte(quizLeadsTable.createdAt, sevenDaysAgo),
         isNull(quizLeadsTable.abandonEmail1At),
       ),
@@ -65,7 +72,7 @@ router.post("/quiz/lead", async (req, res): Promise<void> => {
 
   const leadId = existingLead?.id ?? crypto.randomUUID();
   const leadValues = {
-    visitorKey: body.visitorKey,
+    visitorKey,
     lpId: body.lpId,
     diagnosisLabel: body.diagnosisLabel.trim(),
     email,
@@ -78,6 +85,7 @@ router.post("/quiz/lead", async (req, res): Promise<void> => {
     utmCampaign: body.utmCampaign?.trim() || null,
     utmContent: body.utmContent?.trim() || null,
     utmTerm: body.utmTerm?.trim() || null,
+    internal: body.internal === true,
   };
 
   if (existingLead) {
@@ -105,6 +113,7 @@ router.post("/quiz/lead", async (req, res): Promise<void> => {
       leadId,
       diagnosisLabel: body.diagnosisLabel.trim(),
       diagnosisCopy: body.diagnosisCopy.trim(),
+      region: leadValues.region,
     });
     const result = await sendEmailViaBrevo({
       to: email,
@@ -120,7 +129,7 @@ router.post("/quiz/lead", async (req, res): Promise<void> => {
     }
   }
 
-  res.status(201).json({ leadId });
+  res.status(201).json({ ok: true });
 });
 
 router.post("/email/sair/:id", async (req, res): Promise<void> => {
@@ -132,7 +141,10 @@ router.post("/email/sair/:id", async (req, res): Promise<void> => {
   }
 
   const [lead] = await db
-    .select({ email: quizLeadsTable.email })
+    .select({
+      email: quizLeadsTable.email,
+      sessionId: quizLeadsTable.sessionId,
+    })
     .from(quizLeadsTable)
     .where(eq(quizLeadsTable.id, id))
     .limit(1);
@@ -141,10 +153,21 @@ router.post("/email/sair/:id", async (req, res): Promise<void> => {
     .from(sessionsTable)
     .where(eq(sessionsTable.id, id))
     .limit(1);
-  const email = lead?.email?.trim().toLowerCase() ||
-    session?.email?.trim().toLowerCase();
+  const linkedSessionId = lead?.sessionId;
+  const [linkedSession] = linkedSessionId
+    ? await db
+        .select({ email: sessionsTable.buyerEmail })
+        .from(sessionsTable)
+        .where(eq(sessionsTable.id, linkedSessionId))
+        .limit(1)
+    : [];
+  const emails = new Set(
+    [lead?.email, session?.email, linkedSession?.email]
+      .map((value) => value?.trim().toLowerCase())
+      .filter((value): value is string => Boolean(value)),
+  );
 
-  if (email) {
+  for (const email of emails) {
     const now = new Date();
     await db
       .insert(emailOptOutsTable)

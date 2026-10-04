@@ -185,13 +185,60 @@ function getQuizAttribution() {
     return {};
   }
   const params = new URLSearchParams(window.location.search);
-  return {
-    utmSource: params.get("utm_source") || undefined,
-    utmMedium: params.get("utm_medium") || undefined,
-    utmCampaign: params.get("utm_campaign") || undefined,
-    utmContent: params.get("utm_content") || undefined,
-    utmTerm: params.get("utm_term") || undefined,
+  const readCurrentUtm = (key: string, maxLength: number) => {
+    const value = params.get(key)?.trim();
+    return value ? value.slice(0, maxLength) : undefined;
   };
+  const current = {
+    utmSource: readCurrentUtm("utm_source", 160),
+    utmMedium: readCurrentUtm("utm_medium", 160),
+    utmCampaign: readCurrentUtm("utm_campaign", 200),
+    utmContent: readCurrentUtm("utm_content", 200),
+    utmTerm: readCurrentUtm("utm_term", 200),
+  };
+  const hasCurrentUtm = Object.values(current).some(Boolean);
+  let stored: typeof current = {
+    utmSource: undefined,
+    utmMedium: undefined,
+    utmCampaign: undefined,
+    utmContent: undefined,
+    utmTerm: undefined,
+  };
+
+  try {
+    const raw = sessionStorage.getItem("pdc-utm");
+    if (raw) {
+      const value = JSON.parse(raw) as Record<string, unknown>;
+      stored = {
+        utmSource:
+          typeof value.utmSource === "string"
+            ? value.utmSource.slice(0, 160)
+            : undefined,
+        utmMedium:
+          typeof value.utmMedium === "string"
+            ? value.utmMedium.slice(0, 160)
+            : undefined,
+        utmCampaign:
+          typeof value.utmCampaign === "string"
+            ? value.utmCampaign.slice(0, 200)
+            : undefined,
+        utmContent:
+          typeof value.utmContent === "string"
+            ? value.utmContent.slice(0, 200)
+            : undefined,
+        utmTerm:
+          typeof value.utmTerm === "string"
+            ? value.utmTerm.slice(0, 200)
+            : undefined,
+      };
+    } else if (hasCurrentUtm) {
+      sessionStorage.setItem("pdc-utm", JSON.stringify(current));
+    }
+  } catch {
+    // Attribution is best-effort when session storage is unavailable.
+  }
+
+  return hasCurrentUtm ? current : stored;
 }
 
 function trackLp1QuizAnswer({
@@ -235,6 +282,40 @@ function trackLp1QuizAnswer({
     }),
     keepalive: true,
   }).catch(() => undefined);
+}
+
+function trackLp1QuizMilestoneOnce({
+  lpId,
+  screenId,
+  answerKey,
+  answerValue,
+  step,
+  experimentAssignment,
+}: {
+  lpId: "v1" | "v2" | "lp3";
+  screenId: string;
+  answerKey: string;
+  answerValue: string;
+  step: number;
+  experimentAssignment?: StoredExperimentAssignment;
+}): boolean {
+  const visitorKey = getOrCreateVisitorKey();
+  const storageKey = `pdc-quiz-milestone:${visitorKey}:${lpId}:${answerKey}`;
+  try {
+    if (sessionStorage.getItem(storageKey)) return false;
+    sessionStorage.setItem(storageKey, "true");
+  } catch {
+    // Continue tracking if session storage is unavailable.
+  }
+  trackLp1QuizAnswer({
+    lpId,
+    screenId,
+    answerKey,
+    answerValue,
+    step,
+    experimentAssignment,
+  });
+  return true;
 }
 // Baralhos que têm foto de fundo (arquivos em /public/theme-backgrounds/).
 const THEME_BACKGROUND_IDS = new Set([
@@ -2297,6 +2378,17 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     cta: "",
   },
   {
+    id: "s23-email",
+    kind: "capture",
+    key: "email",
+    eyebrow: "SEU RESULTADO ESTÁ PRONTO",
+    title: "Para onde enviamos seu diagnóstico completo?",
+    body: [
+      "Você vê o resultado na próxima tela e recebe uma cópia no seu e-mail.",
+    ],
+    cta: "Ver meu resultado",
+  },
+  {
     id: "s24-clima",
     kind: "result",
     eyebrow: "O MOMENTO DAS CONVERSAS DE VOCÊS",
@@ -2739,11 +2831,17 @@ function Lp1Quiz({
   });
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [captureAttempted, setCaptureAttempted] = useState(false);
+  const [captureEmailDismissed, setCaptureEmailDismissed] = useState("");
+  const [captureLeadSending, setCaptureLeadSending] = useState(false);
+  const [quizEmailMode, setQuizEmailMode] = useState<"required" | "optional">(
+    "required",
+  );
   const [trialCardIndex, setTrialCardIndex] = useState(0);
   const [climateIndex, setClimateIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastBackTapAt = useRef(0);
   const completionTrackedRef = useRef(false);
+  const leadSubmissionInFlightRef = useRef(false);
   const completionStorageKey = `lp1-quiz-completed:${lpId}`;
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
@@ -2752,10 +2850,60 @@ function Lp1Quiz({
       ? answers[current.key as Lp1AnswerKey]
       : "";
   const selectedValue = typeof selectedAnswer === "string" ? selectedAnswer : "";
+  const normalizedCaptureEmail = (answers.email ?? "").trim().toLowerCase();
+  const captureEmailSuggestion = suggestEmailFix(normalizedCaptureEmail);
+  const captureEmailSuggestionPending = Boolean(
+    captureEmailSuggestion &&
+      captureEmailDismissed !== normalizedCaptureEmail,
+  );
   const totalVisualSteps = LP1_SCREENS.length + 1;
   const visualStep = showBridgeScreen
     ? totalVisualSteps
     : Math.min(step + 1, LP1_SCREENS.length);
+
+  useEffect(() => {
+    let mounted = true;
+    void fetch(apiUrl("/api/quiz/email-config"))
+      .then(async (response) => {
+        if (!response.ok) throw new Error("quiz-email-config");
+        return (await response.json()) as { mode?: unknown };
+      })
+      .then((config) => {
+        if (mounted && config.mode === "optional") {
+          setQuizEmailMode("optional");
+        }
+      })
+      .catch(() => {
+        // Capture remains required if configuration cannot be loaded.
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (current.id === "s23-email") {
+      trackLp1QuizMilestoneOnce({
+        lpId,
+        screenId: "s23-email",
+        answerKey: "quiz_email_view",
+        answerValue: "true",
+        step,
+        experimentAssignment,
+      });
+    }
+    if (current.kind === "result") {
+      const firstResultView = trackLp1QuizMilestoneOnce({
+        lpId,
+        screenId: current.id,
+        answerKey: "quiz_result_view",
+        answerValue: "true",
+        step,
+        experimentAssignment,
+      });
+      void firstResultView;
+    }
+  }, [current.id, experimentAssignment, lpId, step]);
 
   useEffect(() => {
     if (
@@ -2974,11 +3122,67 @@ function Lp1Quiz({
 
   const handleNext = () => {
     if (current.kind === "capture") {
-      const email = answers.email?.trim() ?? "";
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      const email = normalizedCaptureEmail;
+      if (
+        (!email && quizEmailMode === "optional") ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+        captureEmailSuggestionPending
+      ) {
         setCaptureAttempted(true);
         return;
       }
+      safeSetItem("conexao-pending-buyer-email", email);
+      safeSetItem("conexao-email-origin", "quiz");
+      const submitted = trackLp1QuizMilestoneOnce({
+        lpId,
+        screenId: current.id,
+        answerKey: "quiz_email_submit",
+        answerValue: "true",
+        step,
+        experimentAssignment,
+      });
+      if (submitted) {
+        trackMetaPixelEvent("Lead", {}, createMetaEventId("Lead"));
+      }
+      if (!leadSubmissionInFlightRef.current) {
+        leadSubmissionInFlightRef.current = true;
+        setCaptureLeadSending(true);
+        const result = computeLp1DistanceResult(answers);
+        const diagnosis = getLp1UrgencyMessage(
+          answers,
+          result.routineValue,
+          result.label,
+        );
+        void fetch(apiUrl("/api/quiz/lead"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            visitorKey: getOrCreateVisitorKey(),
+            lpId,
+            email,
+            diagnosisLabel: result.label,
+            diagnosisCopy: diagnosis.copy,
+            internal: isInternalTrackingEnabled(),
+            ...getQuizAttribution(),
+          }),
+          keepalive: true,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`quiz-lead-${response.status}`);
+            }
+          })
+          .catch((error: unknown) => {
+            console.warn("Falha ao salvar o lead do quiz.", error);
+          })
+          .finally(() => {
+            leadSubmissionInFlightRef.current = false;
+            setCaptureLeadSending(false);
+          });
+      }
+      setCaptureAttempted(false);
+      advance();
+      return;
     }
     if (current.kind === "question") {
       if (!selectedValue) return;
@@ -3223,45 +3427,83 @@ function Lp1Quiz({
               </p>
             ))}
             {current.kind === "capture" ? (
-              <input
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                className="lp1-quiz-capture-input"
-                placeholder="seu melhor e-mail"
-                value={answers.email ?? ""}
-                onChange={(event) =>
-                  {
+              <>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  className="lp1-quiz-capture-input"
+                  placeholder="seu melhor e-mail"
+                  value={answers.email ?? ""}
+                  onChange={(event) => {
                     setCaptureAttempted(false);
+                    setCaptureEmailDismissed("");
                     setAnswers((previous) => ({
                       ...previous,
                       email: event.target.value,
                     }));
-                  }
-                }
-                onFocus={(event) =>
-                   (() => {
-                     const el = event.currentTarget;
-                     window.setTimeout(
-                       () =>
-                         el.scrollIntoView({
-                        block: "center",
-                        behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-                          .matches
-                          ? "auto"
-                          : "smooth",
-                         }),
-                       100,
-                     );
-                   })()
-                }
-                aria-label="Seu e-mail"
-                data-testid="input-lp1-quiz-email"
-              />
+                  }}
+                  onFocus={(event) => {
+                    const el = event.currentTarget;
+                    window.setTimeout(
+                      () =>
+                        el.scrollIntoView({
+                          block: "center",
+                          behavior: window.matchMedia(
+                            "(prefers-reduced-motion: reduce)",
+                          ).matches
+                            ? "auto"
+                            : "smooth",
+                        }),
+                      100,
+                    );
+                  }}
+                  aria-label="Seu e-mail"
+                  aria-describedby="lp1-capture-privacy"
+                  data-testid="input-lp1-quiz-email"
+                />
+                <p className="lp1-capture-privacy" id="lp1-capture-privacy">
+                  Usaremos seu e-mail para enviar seu diagnóstico e, se você
+                  continuar, informações sobre seu acesso. Você pode sair da
+                  lista quando quiser.{" "}
+                  <Link href="/privacidade">Política de privacidade</Link>.
+                </p>
+                {captureEmailSuggestionPending && captureEmailSuggestion ? (
+                  <p className="lp1-capture-suggestion" role="status">
+                    Você quis dizer{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAnswers((previous) => ({
+                          ...previous,
+                          email: captureEmailSuggestion,
+                        }));
+                        setCaptureEmailDismissed(captureEmailSuggestion);
+                        setCaptureAttempted(false);
+                      }}
+                      data-testid="button-correct-quiz-email"
+                    >
+                      {captureEmailSuggestion}
+                    </button>
+                    ?{" "}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCaptureEmailDismissed(normalizedCaptureEmail)
+                      }
+                      data-testid="button-dismiss-quiz-email-suggestion"
+                    >
+                      Não, está certo
+                    </button>
+                  </p>
+                ) : null}
+              </>
             ) : null}
             {current.kind === "capture" && captureAttempted ? (
-              <p className="lp1-capture-error">
-                Digite um e-mail válido ou veja seu resultado sem e-mail.
+              <p className="lp1-capture-error" role="alert">
+                {captureEmailSuggestionPending
+                  ? "Confirme se o endereço sugerido está correto."
+                  : "Digite um e-mail válido para continuar."}
               </p>
             ) : null}
             {current.kind === "card" ? (
@@ -3281,22 +3523,34 @@ function Lp1Quiz({
                   type="button"
                   className="lp1-quiz-next"
                   onClick={handleNext}
+                  disabled={current.kind === "capture" && captureLeadSending}
                   data-testid={`button-lp1-quiz-next-${current.id}`}
                 >
-                  {LP1_QUIZ_CONTINUE_LABEL} <ArrowRight size={17} aria-hidden="true" />
+                  {current.kind === "capture" ? current.cta : LP1_QUIZ_CONTINUE_LABEL}{" "}
+                  <ArrowRight size={17} aria-hidden="true" />
                 </button>
                 {"key" in current && current.kind === "capture" ? (
-                  <button
-                    type="button"
-                    className="lp1-quiz-skip"
-                    onClick={() => {
-                      setCaptureAttempted(false);
-                      advance();
-                    }}
-                    data-testid="button-lp1-quiz-skip-email"
-                  >
-                   ver sem e-mail →
-                  </button>
+                  quizEmailMode === "optional" ? (
+                    <button
+                      type="button"
+                      className="lp1-quiz-skip"
+                      onClick={() => {
+                        setCaptureAttempted(false);
+                        trackLp1QuizMilestoneOnce({
+                          lpId,
+                          screenId: current.id,
+                          answerKey: "quiz_email_skip",
+                          answerValue: "true",
+                          step,
+                          experimentAssignment,
+                        });
+                        advance();
+                      }}
+                      data-testid="button-lp1-quiz-skip-email"
+                    >
+                      Ver meu resultado sem e-mail →
+                    </button>
+                  ) : null
                 ) : null}
                 {step === 0 ? (
                   <button
@@ -5927,6 +6181,16 @@ function useCheckout({
   const [buyerEmail, setBuyerEmail] = useState(
     () => safeGetItem("conexao-pending-buyer-email") || "",
   );
+  const [checkoutEmailOrigin, setCheckoutEmailOrigin] = useState<
+    "resume" | "prefill" | "typed"
+  >(() =>
+    resumeSessionId
+      ? "resume"
+      : safeGetItem("conexao-pending-buyer-email")
+        ? "prefill"
+        : "typed",
+  );
+  const resumeSessionDbIdRef = useRef<string | null>(null);
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [nativeCheckout, setNativeCheckout] =
@@ -5957,6 +6221,25 @@ function useCheckout({
   const checkoutInitiateEventIdRef = useRef("");
   const cardCheckoutCreatingRef = useRef(false);
   const cardPaymentInfoTrackedRef = useRef(false);
+
+  const setBuyerEmailFromUser = (value: string) => {
+    setBuyerEmail(value);
+    if (!resumeSessionId) setCheckoutEmailOrigin("typed");
+  };
+
+  const getCheckoutResumeFields = () => {
+    if (!resumeSessionId) {
+      return { emailOrigin: checkoutEmailOrigin };
+    }
+    const resolvedSessionId = resumeSessionDbIdRef.current;
+    if (!resolvedSessionId) {
+      throw new Error("checkout resume session is not ready");
+    }
+    return {
+      resumeSessionId: resolvedSessionId,
+      emailOrigin: "resume" as const,
+    };
+  };
 
   useEffect(() => {
     checkoutOpenRef.current = checkoutOpen;
@@ -6071,6 +6354,7 @@ function useCheckout({
       })
       .then((data) => {
         if (cancelled) return;
+        resumeSessionDbIdRef.current = data.sessionId!;
         if (data.accessGranted) {
           safeSetItem("conexao-session", data.sessionId!);
           safeSetItem("conexao-role", "owner");
@@ -6080,6 +6364,7 @@ function useCheckout({
 
         setBuyerName(data.buyerName || "");
         setBuyerEmail(data.buyerEmail || "");
+        setCheckoutEmailOrigin("resume");
         setCheckoutLockedPriceCents(data.lockedPriceCents ?? null);
         setResumeDiscountValidUntil(data.discountValidUntil ?? null);
         storePendingCheckoutSessionId(data.sessionId!);
@@ -6655,6 +6940,7 @@ function useCheckout({
           mode: "native",
           method: "pix",
           buyerEmail: normalizedEmail || undefined,
+          ...getCheckoutResumeFields(),
           sourceLp,
           ctaSource: checkoutCtaSourceRef.current || undefined,
           visitorKey: getStoredVisitorKey() || undefined,
@@ -6792,6 +7078,7 @@ function useCheckout({
           buyerName: normalizedName,
           method: "card",
           buyerEmail: normalizedEmail || undefined,
+          ...getCheckoutResumeFields(),
           sourceLp,
           ctaSource: checkoutCtaSourceRef.current || undefined,
           visitorKey: getStoredVisitorKey() || undefined,
@@ -6931,6 +7218,11 @@ function useCheckout({
     packageId: "couple" | "family" = selectedPackage,
     ctaSource: LandingCtaSource,
   ) => {
+    const prefilledEmail = safeGetItem("conexao-pending-buyer-email") || "";
+    if (!buyerEmail && prefilledEmail) {
+      setBuyerEmail(prefilledEmail);
+      setCheckoutEmailOrigin("prefill");
+    }
     checkoutCtaSourceRef.current = ctaSource;
     onTrackingEvent?.("buy_click", ctaSource);
     setSelectedPackage(packageId);
@@ -7010,6 +7302,7 @@ function useCheckout({
     setBuyerName,
     buyerEmail,
     setBuyerEmail,
+    setBuyerEmailFromUser,
     nameError,
     setNameError,
     emailError,
@@ -8104,7 +8397,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                             : undefined
                         }
                         onChange={(event) => {
-                          setBuyerEmail(event.target.value);
+                          setBuyerEmailFromUser(event.target.value);
                           safeSetItem(
                             "conexao-pending-buyer-email",
                             event.target.value,
@@ -8126,7 +8419,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                             type="button"
                             className="checkout-email-suggestion-link"
                             onClick={() => {
-                              setBuyerEmail(emailSuggestion);
+                              setBuyerEmailFromUser(emailSuggestion);
                               safeSetItem(
                                 "conexao-pending-buyer-email",
                                 emailSuggestion,
@@ -13998,6 +14291,56 @@ function ResumeCheckoutRoute({ params }: { params: { sessionId: string } }) {
   return <CheckoutModal checkout={checkout} />;
 }
 
+function EmailUnsubscribeRoute({ params }: { params: { id: string } }) {
+  const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatus("loading");
+    fetch(apiUrl(`/api/email/sair/${encodeURIComponent(params.id)}`), {
+      method: "POST",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("unsubscribe failed");
+        if (!cancelled) setStatus("done");
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt, params.id]);
+
+  return (
+    <main className="email-unsubscribe-page">
+      <section className="email-unsubscribe-card" aria-live="polite">
+        <BrandLogo />
+        {status === "loading" ? (
+          <p>Atualizando suas preferências de e-mail…</p>
+        ) : status === "done" ? (
+          <>
+            <h1>Você saiu da lista</h1>
+            <p>
+              Este endereço não receberá mais e-mails de diagnóstico ou de
+              checkout abandonado.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1>Não foi possível atualizar agora</h1>
+            <p>Tente novamente em alguns instantes.</p>
+            <button type="button" onClick={() => setAttempt((value) => value + 1)}>
+              Tentar novamente
+            </button>
+          </>
+        )}
+      </section>
+    </main>
+  );
+}
+
 function ProtectedExperienceRoute() {
   const [, navigate] = useLocation();
   const storedSessionId = safeGetItem("conexao-session")?.trim() || "";
@@ -14248,6 +14591,7 @@ function Router() {
           <Route path="/post-purchase" component={PostPurchaseInvite} />
           <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
           <Route path="/retomar/:sessionId" component={ResumeCheckoutRoute} />
+          <Route path="/sair/:id" component={EmailUnsubscribeRoute} />
           <Route path="/login" component={Login} />
           <Route path="/play" component={Play} />
           <Route path="/app" component={ProtectedExperienceRoute} />
@@ -14298,6 +14642,7 @@ function RouteAwareSplash() {
     location === "/post-purchase" ||
     location.startsWith("/acesso/") ||
     location.startsWith("/retomar/") ||
+    location.startsWith("/sair/") ||
     location === "/play" ||
     location === "/app" ||
     location.startsWith("/invite/");

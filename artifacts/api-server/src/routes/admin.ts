@@ -12,7 +12,7 @@ import { isAdminSession } from "./feedback";
 import { UpdateAdminQuizEmailConfigBody } from "@workspace/api-zod";
 import {
   getQuizEmailConfig,
-  setQuizEmailRequired,
+  setQuizEmailMode,
 } from "../lib/quiz-email-config";
 import {
   getPrimaryLandingPageId,
@@ -154,7 +154,7 @@ router.patch("/admin/quiz/email-config", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Configuração de e-mail inválida" });
     return;
   }
-  res.json(await setQuizEmailRequired(parsed.data.required));
+  res.json(await setQuizEmailMode(parsed.data.mode));
 });
 
 router.get("/push/vapid-public-key", (_req, res): void => {

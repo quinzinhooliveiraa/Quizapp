@@ -1,5 +1,11 @@
 import { createInsertSchema } from "drizzle-zod";
-import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 export const quizLeadsTable = pgTable(
   "quiz_leads",
@@ -15,6 +21,8 @@ export const quizLeadsTable = pgTable(
     utmCampaign: text("utm_campaign"),
     utmContent: text("utm_content"),
     utmTerm: text("utm_term"),
+    internal: boolean("internal").notNull().default(false),
+    sessionId: text("session_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

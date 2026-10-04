@@ -490,7 +490,7 @@ paths:
     get:
       operationId: resumeCheckout
       tags: [checkout]
-      summary: Reopen an unfinished checkout
+      summary: Reopen an unfinished checkout or a quiz lead
       parameters:
         - name: sessionId
           in: path
@@ -680,7 +680,7 @@ paths:
     post:
       operationId: optOutOfEmail
       tags: [email]
-      summary: Opt out of future checkout emails
+      summary: Opt out of future diagnosis and abandoned-checkout emails
       parameters:
         - name: id
           in: path
@@ -822,7 +822,7 @@ paths:
     get:
       operationId: getAdminQuizAnalytics
       tags: [admin]
-      summary: Get quiz answer analytics
+      summary: Get quiz answers, email-funnel metrics, and lead sources
       parameters:
         - name: sessionId
           in: query
@@ -2194,14 +2194,14 @@ components:
     QuizEmailConfig:
       type: object
       properties:
-        required: { type: boolean }
+        mode: { type: string, enum: [required, optional] }
         liveSince: { type: ["string", "null"], format: date-time }
-      required: [required, liveSince]
+      required: [mode]
     QuizEmailConfigInput:
       type: object
       properties:
-        required: { type: boolean }
-      required: [required]
+        mode: { type: string, enum: [required, optional] }
+      required: [mode]
     QuizLeadInput:
       type: object
       properties:
@@ -2218,13 +2218,14 @@ components:
         utmCampaign: { type: string, maxLength: 200 }
         utmContent: { type: string, maxLength: 200 }
         utmTerm: { type: string, maxLength: 200 }
+        internal: { type: boolean, default: false }
       required:
         [visitorKey, lpId, email, diagnosisLabel, diagnosisCopy]
     QuizLeadResponse:
       type: object
       properties:
-        leadId: { type: string }
-      required: [leadId]
+        ok: { type: boolean }
+      required: [ok]
     EmailOptOutResponse:
       type: object
       properties:
@@ -2270,10 +2271,11 @@ components:
             type: object
             properties:
               source: { type: string }
+              campaign: { type: ["string", "null"] }
               checkouts: { type: integer }
               pix: { type: integer }
               purchases: { type: integer }
-            required: [source, checkouts, pix, purchases]
+            required: [source, campaign, checkouts, pix, purchases]
         questions:
           type: array
           items:
@@ -2831,6 +2833,8 @@ components:
       required:
         [
           sessionId,
+          isLeadResume,
+          leadId,
           buyerName,
           buyerEmail,
           paymentMethod,

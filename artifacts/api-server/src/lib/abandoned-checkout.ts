@@ -139,8 +139,8 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
         to: session.buyerEmail,
         toName: session.buyerName,
         subject: email.subject,
-        htmlContent: `${email.htmlContent}<p style="font-size:12px;line-height:1.5;color:#8b8290;text-align:center;">Não quer mais receber estes e-mails? <a href="${optOutUrl}" style="color:#8a2f4d;">Descadastre-se</a>.</p>`,
-        textContent: `${email.textContent}\n\nPara não receber outros e-mails: ${optOutUrl}`,
+        htmlContent: `${email.htmlContent}<p style="font-size:12px;line-height:1.5;color:#8b8290;text-align:center;">Não quer mais receber? <a href="${optOutUrl}" style="color:#8a2f4d;">Sair da lista</a>.</p>`,
+        textContent: `${email.textContent}\n\nNão quer mais receber? Sair da lista: ${optOutUrl}`,
       });
       if (!result.ok) {
         logger.warn(
