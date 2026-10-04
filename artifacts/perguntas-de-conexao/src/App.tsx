@@ -7191,6 +7191,7 @@ const CardPaymentForm = forwardRef<
             type: result.error.type,
             code: result.error.code,
             declineCode: result.error.decline_code,
+            message: result.error.message,
           },
         );
         return;
@@ -7314,6 +7315,7 @@ function CheckoutWalletActions({
             type: submitResult.error.type,
             code: submitResult.error.code,
             declineCode: submitResult.error.decline_code,
+            message: submitResult.error.message,
           },
         );
         return;
@@ -7332,6 +7334,7 @@ function CheckoutWalletActions({
             type: result.error.type,
             code: result.error.code,
             declineCode: result.error.decline_code,
+            message: result.error.message,
           },
         );
         return;
@@ -7773,7 +7776,11 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
       cardErrorTrackedRef.current = false;
     } else if (info && !cardErrorTrackedRef.current) {
       cardErrorTrackedRef.current = true;
-      trackCardError({ ...info, message });
+      trackCardError({
+        ...info,
+        message:
+          info.message ?? (info.type === "exception" ? undefined : message),
+      });
     }
     setCardError(message);
     if (!message) return;
