@@ -308,6 +308,8 @@ export const ReceiveCheckoutWebhookResponse = zod.object({
 
 export const createCheckoutBodyMethodDefault = `pix`;
 export const createCheckoutBodyBuyerEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+export const createCheckoutBodyResumeSessionIdMax = 120;
+
 export const createCheckoutBodyVisitorKeyMax = 120;
 
 export const createCheckoutBodyExperimentIdMax = 120;
@@ -332,6 +334,8 @@ export const CreateCheckoutBody = zod.object({
   "mode": zod.enum(['native', 'hosted']).optional(),
   "method": zod.enum(['pix', 'card']).default(createCheckoutBodyMethodDefault),
   "buyerEmail": zod.string().regex(createCheckoutBodyBuyerEmailRegExp).optional(),
+  "resumeSessionId": zod.string().min(1).max(createCheckoutBodyResumeSessionIdMax).optional(),
+  "emailOrigin": zod.enum(['resume', 'prefill', 'typed']).optional(),
   "sourceLp": zod.enum(['v1', 'v2', 'lp3']).optional(),
   "visitorKey": zod.string().min(1).max(createCheckoutBodyVisitorKeyMax).optional(),
   "ctaSource": zod.enum(['hero_comprar', 'oferta_principal', 'preco', 'rodape', 'sticky', 'pos_quiz', 'baralho_modal', 'lp3_offer']).optional(),
@@ -407,6 +411,8 @@ export const ResumeCheckoutParams = zod.object({
 
 export const ResumeCheckoutResponse = zod.object({
   "sessionId": zod.string(),
+  "isLeadResume": zod.boolean().optional(),
+  "leadId": zod.string().nullish(),
   "buyerName": zod.string(),
   "buyerEmail": zod.string().nullable(),
   "paymentMethod": zod.union([zod.literal('pix'),zod.literal('card'),zod.literal(null)]).nullable(),
@@ -581,6 +587,104 @@ export const TrackQuizAnswerBody = zod.object({
 })
 
 export const TrackQuizAnswerResponse = zod.void()
+
+
+/**
+ * @summary Get the public quiz email capture mode
+ */
+export const GetQuizEmailConfigResponse = zod.object({
+  "required": zod.boolean(),
+  "liveSince": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Get the quiz email capture configuration
+ */
+export const GetAdminQuizEmailConfigQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const GetAdminQuizEmailConfigResponse = zod.object({
+  "required": zod.boolean(),
+  "liveSince": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Update whether quiz email capture is required
+ */
+export const UpdateAdminQuizEmailConfigQueryParams = zod.object({
+  "sessionId": zod.coerce.string()
+})
+
+export const UpdateAdminQuizEmailConfigBody = zod.object({
+  "required": zod.boolean()
+})
+
+export const UpdateAdminQuizEmailConfigResponse = zod.object({
+  "required": zod.boolean(),
+  "liveSince": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Save a quiz lead and send its diagnosis email
+ */
+export const createQuizLeadBodyVisitorKeyMax = 120;
+
+export const createQuizLeadBodyEmailMax = 254;
+
+
+export const createQuizLeadBodyEmailRegExp = new RegExp('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+export const createQuizLeadBodyDiagnosisLabelMax = 120;
+
+export const createQuizLeadBodyDiagnosisCopyMax = 4000;
+
+export const createQuizLeadBodyUtmSourceMax = 160;
+
+export const createQuizLeadBodyUtmMediumMax = 160;
+
+export const createQuizLeadBodyUtmCampaignMax = 200;
+
+export const createQuizLeadBodyUtmContentMax = 200;
+
+export const createQuizLeadBodyUtmTermMax = 200;
+
+
+
+export const CreateQuizLeadBody = zod.object({
+  "visitorKey": zod.string().min(1).max(createQuizLeadBodyVisitorKeyMax),
+  "lpId": zod.enum(['v1', 'v2', 'lp3']),
+  "email": zod.string().max(createQuizLeadBodyEmailMax).regex(createQuizLeadBodyEmailRegExp),
+  "diagnosisLabel": zod.string().min(1).max(createQuizLeadBodyDiagnosisLabelMax),
+  "diagnosisCopy": zod.string().min(1).max(createQuizLeadBodyDiagnosisCopyMax),
+  "utmSource": zod.string().max(createQuizLeadBodyUtmSourceMax).optional(),
+  "utmMedium": zod.string().max(createQuizLeadBodyUtmMediumMax).optional(),
+  "utmCampaign": zod.string().max(createQuizLeadBodyUtmCampaignMax).optional(),
+  "utmContent": zod.string().max(createQuizLeadBodyUtmContentMax).optional(),
+  "utmTerm": zod.string().max(createQuizLeadBodyUtmTermMax).optional()
+})
+
+export const CreateQuizLeadResponse = zod.object({
+  "leadId": zod.string()
+})
+
+
+/**
+ * @summary Opt out of future checkout emails
+ */
+export const optOutOfEmailPathIdMax = 120;
+
+
+
+export const OptOutOfEmailParams = zod.object({
+  "id": zod.coerce.string().min(1).max(optOutOfEmailPathIdMax)
+})
+
+export const OptOutOfEmailResponse = zod.object({
+  "ok": zod.boolean()
+})
 
 
 /**
@@ -815,6 +919,23 @@ export const GetAdminQuizAnalyticsResponse = zod.object({
   "answers": zod.number().int(),
   "completedVisitors": zod.number().int(),
   "completionRate": zod.number(),
+  "liveSince": zod.coerce.date().nullable(),
+  "emailFunnel": zod.object({
+  "started": zod.number().int(),
+  "emailViewed": zod.number().int(),
+  "emailSubmitted": zod.number().int(),
+  "emailSkipped": zod.number().int(),
+  "resultViewed": zod.number().int(),
+  "leads": zod.number().int(),
+  "leadsSawOffer": zod.number().int(),
+  "leadPurchases": zod.number().int()
+}),
+  "leadSources": zod.array(zod.object({
+  "source": zod.string(),
+  "checkouts": zod.number().int(),
+  "pix": zod.number().int(),
+  "purchases": zod.number().int()
+})),
   "questions": zod.array(zod.object({
   "screenId": zod.string(),
   "answerKey": zod.string(),

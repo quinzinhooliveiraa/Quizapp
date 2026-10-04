@@ -7,6 +7,8 @@
  */
 import type { AdminQuizAnalyticsAnswerBreakdownItem } from './adminQuizAnalyticsAnswerBreakdownItem';
 import type { AdminQuizAnalyticsCampaignsItem } from './adminQuizAnalyticsCampaignsItem';
+import type { AdminQuizAnalyticsEmailFunnel } from './adminQuizAnalyticsEmailFunnel';
+import type { AdminQuizAnalyticsLeadSourcesItem } from './adminQuizAnalyticsLeadSourcesItem';
 import type { AdminQuizAnalyticsQuestionsItem } from './adminQuizAnalyticsQuestionsItem';
 import type { AdminQuizAnalyticsVariantsItem } from './adminQuizAnalyticsVariantsItem';
 
@@ -19,6 +21,10 @@ export interface AdminQuizAnalytics {
   answers: number;
   completedVisitors: number;
   completionRate: number;
+  /** @nullable */
+  liveSince: Date | null;
+  emailFunnel: AdminQuizAnalyticsEmailFunnel;
+  leadSources: AdminQuizAnalyticsLeadSourcesItem[];
   questions: AdminQuizAnalyticsQuestionsItem[];
   answerBreakdown: AdminQuizAnalyticsAnswerBreakdownItem[];
   campaigns: AdminQuizAnalyticsCampaignsItem[];

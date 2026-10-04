@@ -9,6 +9,11 @@ import {
   sessionsTable,
 } from "@workspace/db";
 import { isAdminSession } from "./feedback";
+import { UpdateAdminQuizEmailConfigBody } from "@workspace/api-zod";
+import {
+  getQuizEmailConfig,
+  setQuizEmailRequired,
+} from "../lib/quiz-email-config";
 import {
   getPrimaryLandingPageId,
   getPrimaryLandingPageConfiguration,
@@ -124,6 +129,32 @@ router.patch("/admin/landing-pages/visibility", async (req, res): Promise<void> 
           : "Não foi possível alterar a visibilidade.",
     });
   }
+});
+
+router.get("/admin/quiz/email-config", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  res.set("Cache-Control", "no-store");
+  res.json(await getQuizEmailConfig());
+});
+
+router.patch("/admin/quiz/email-config", async (req, res): Promise<void> => {
+  const sessionId =
+    typeof req.query.sessionId === "string" ? req.query.sessionId : undefined;
+  if (!(await isAdminSession(sessionId))) {
+    res.status(403).json({ error: "Acesso negado" });
+    return;
+  }
+  const parsed = UpdateAdminQuizEmailConfigBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Configuração de e-mail inválida" });
+    return;
+  }
+  res.json(await setQuizEmailRequired(parsed.data.required));
 });
 
 router.get("/push/vapid-public-key", (_req, res): void => {

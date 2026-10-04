@@ -347,6 +347,15 @@ export const CheckoutCreateInputMethod = {
   card: 'card',
 } as const;
 
+export type CheckoutCreateInputEmailOrigin = typeof CheckoutCreateInputEmailOrigin[keyof typeof CheckoutCreateInputEmailOrigin];
+
+
+export const CheckoutCreateInputEmailOrigin = {
+  resume: 'resume',
+  prefill: 'prefill',
+  typed: 'typed',
+} as const;
+
 export type CheckoutCreateInputSourceLp = typeof CheckoutCreateInputSourceLp[keyof typeof CheckoutCreateInputSourceLp];
 
 
@@ -378,6 +387,12 @@ export interface CheckoutCreateInput {
   method?: CheckoutCreateInputMethod;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  resumeSessionId?: string;
+  emailOrigin?: CheckoutCreateInputEmailOrigin;
   sourceLp?: CheckoutCreateInputSourceLp;
   /**
      * @minLength 1
@@ -584,6 +599,85 @@ export interface QuizAnswerInput {
   internal?: boolean;
 }
 
+export interface QuizEmailConfig {
+  required: boolean;
+  /** @nullable */
+  liveSince: string | null;
+}
+
+export interface QuizEmailConfigInput {
+  required: boolean;
+}
+
+export type QuizLeadInputLpId = typeof QuizLeadInputLpId[keyof typeof QuizLeadInputLpId];
+
+
+export const QuizLeadInputLpId = {
+  v1: 'v1',
+  v2: 'v2',
+  lp3: 'lp3',
+} as const;
+
+export interface QuizLeadInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  visitorKey: string;
+  lpId: QuizLeadInputLpId;
+  /**
+     * @maxLength 254
+     * @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$
+     */
+  email: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  diagnosisLabel: string;
+  /**
+     * @minLength 1
+     * @maxLength 4000
+     */
+  diagnosisCopy: string;
+  /** @maxLength 160 */
+  utmSource?: string;
+  /** @maxLength 160 */
+  utmMedium?: string;
+  /** @maxLength 200 */
+  utmCampaign?: string;
+  /** @maxLength 200 */
+  utmContent?: string;
+  /** @maxLength 200 */
+  utmTerm?: string;
+}
+
+export interface QuizLeadResponse {
+  leadId: string;
+}
+
+export interface EmailOptOutResponse {
+  ok: boolean;
+}
+
+export type AdminQuizAnalyticsEmailFunnel = {
+  started: number;
+  emailViewed: number;
+  emailSubmitted: number;
+  emailSkipped: number;
+  resultViewed: number;
+  leads: number;
+  leadsSawOffer: number;
+  leadPurchases: number;
+};
+
+export type AdminQuizAnalyticsLeadSourcesItem = {
+  source: string;
+  checkouts: number;
+  pix: number;
+  purchases: number;
+};
+
 export type AdminQuizAnalyticsQuestionsItem = {
   screenId: string;
   answerKey: string;
@@ -622,6 +716,10 @@ export interface AdminQuizAnalytics {
   answers: number;
   completedVisitors: number;
   completionRate: number;
+  /** @nullable */
+  liveSince: string | null;
+  emailFunnel: AdminQuizAnalyticsEmailFunnel;
+  leadSources: AdminQuizAnalyticsLeadSourcesItem[];
   questions: AdminQuizAnalyticsQuestionsItem[];
   answerBreakdown: AdminQuizAnalyticsAnswerBreakdownItem[];
   campaigns: AdminQuizAnalyticsCampaignsItem[];
@@ -1104,6 +1202,9 @@ export type CheckoutResumeResponsePix = {
 
 export interface CheckoutResumeResponse {
   sessionId: string;
+  isLeadResume?: boolean;
+  /** @nullable */
+  leadId?: string | null;
   buyerName: string;
   /** @nullable */
   buyerEmail: string | null;
@@ -1199,6 +1300,14 @@ export type UpdateCheckoutCardEmail200 = {
 };
 
 export type ReceiveStripeWebhookBody = { [key: string]: unknown };
+
+export type GetAdminQuizEmailConfigParams = {
+sessionId: string;
+};
+
+export type UpdateAdminQuizEmailConfigParams = {
+sessionId: string;
+};
 
 export type GetAdminAnalyticsParams = {
 sessionId: string;

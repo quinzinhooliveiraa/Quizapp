@@ -597,6 +597,102 @@ paths:
           description: Quiz answer recorded
         "400":
           description: Invalid quiz answer
+  /quiz/email-config:
+    get:
+      operationId: getQuizEmailConfig
+      tags: [quiz]
+      summary: Get the public quiz email capture mode
+      responses:
+        "200":
+          description: Current quiz email capture mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizEmailConfig"
+  /admin/quiz/email-config:
+    get:
+      operationId: getAdminQuizEmailConfig
+      tags: [admin]
+      summary: Get the quiz email capture configuration
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Quiz email capture configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizEmailConfig"
+        "403":
+          description: Access denied
+    patch:
+      operationId: updateAdminQuizEmailConfig
+      tags: [admin]
+      summary: Update whether quiz email capture is required
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizEmailConfigInput"
+      responses:
+        "200":
+          description: Updated quiz email capture configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizEmailConfig"
+        "400":
+          description: Invalid configuration
+        "403":
+          description: Access denied
+  /quiz/lead:
+    post:
+      operationId: createQuizLead
+      tags: [quiz]
+      summary: Save a quiz lead and send its diagnosis email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizLeadInput"
+      responses:
+        "201":
+          description: Quiz lead recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizLeadResponse"
+        "400":
+          description: Invalid quiz lead
+        "429":
+          description: Too many requests
+  /email/sair/{id}:
+    post:
+      operationId: optOutOfEmail
+      tags: [email]
+      summary: Opt out of future checkout emails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 120 }
+      responses:
+        "200":
+          description: Opt-out accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailOptOutResponse"
   /landing-pages/primary:
     get:
       operationId: getPrimaryLandingPage
@@ -1911,6 +2007,13 @@ components:
         buyerEmail:
           type: string
           pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+        resumeSessionId:
+          type: string
+          minLength: 1
+          maxLength: 120
+        emailOrigin:
+          type: string
+          enum: [resume, prefill, typed]
         sourceLp:
           type: string
           enum: [v1, v2, lp3]
@@ -2088,6 +2191,45 @@ components:
           answerValue,
           step,
         ]
+    QuizEmailConfig:
+      type: object
+      properties:
+        required: { type: boolean }
+        liveSince: { type: ["string", "null"], format: date-time }
+      required: [required, liveSince]
+    QuizEmailConfigInput:
+      type: object
+      properties:
+        required: { type: boolean }
+      required: [required]
+    QuizLeadInput:
+      type: object
+      properties:
+        visitorKey: { type: string, minLength: 1, maxLength: 120 }
+        lpId: { type: string, enum: [v1, v2, lp3] }
+        email:
+          type: string
+          maxLength: 254
+          pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+        diagnosisLabel: { type: string, minLength: 1, maxLength: 120 }
+        diagnosisCopy: { type: string, minLength: 1, maxLength: 4000 }
+        utmSource: { type: string, maxLength: 160 }
+        utmMedium: { type: string, maxLength: 160 }
+        utmCampaign: { type: string, maxLength: 200 }
+        utmContent: { type: string, maxLength: 200 }
+        utmTerm: { type: string, maxLength: 200 }
+      required:
+        [visitorKey, lpId, email, diagnosisLabel, diagnosisCopy]
+    QuizLeadResponse:
+      type: object
+      properties:
+        leadId: { type: string }
+      required: [leadId]
+    EmailOptOutResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+      required: [ok]
     AdminQuizAnalytics:
       type: object
       properties:
@@ -2099,6 +2241,39 @@ components:
         answers: { type: integer }
         completedVisitors: { type: integer }
         completionRate: { type: number }
+        liveSince: { type: ["string", "null"], format: date-time }
+        emailFunnel:
+          type: object
+          properties:
+            started: { type: integer }
+            emailViewed: { type: integer }
+            emailSubmitted: { type: integer }
+            emailSkipped: { type: integer }
+            resultViewed: { type: integer }
+            leads: { type: integer }
+            leadsSawOffer: { type: integer }
+            leadPurchases: { type: integer }
+          required:
+            [
+              started,
+              emailViewed,
+              emailSubmitted,
+              emailSkipped,
+              resultViewed,
+              leads,
+              leadsSawOffer,
+              leadPurchases,
+            ]
+        leadSources:
+          type: array
+          items:
+            type: object
+            properties:
+              source: { type: string }
+              checkouts: { type: integer }
+              pix: { type: integer }
+              purchases: { type: integer }
+            required: [source, checkouts, pix, purchases]
         questions:
           type: array
           items:
@@ -2150,6 +2325,9 @@ components:
           answers,
           completedVisitors,
           completionRate,
+          liveSince,
+          emailFunnel,
+          leadSources,
           questions,
           answerBreakdown,
           campaigns,
@@ -2631,6 +2809,8 @@ components:
       type: object
       properties:
         sessionId: { type: string }
+        isLeadResume: { type: boolean }
+        leadId: { type: ["string", "null"] }
         buyerName: { type: string }
         buyerEmail: { type: ["string", "null"] }
         paymentMethod: { type: ["string", "null"], enum: [pix, card, null] }

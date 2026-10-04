@@ -11,6 +11,7 @@ import experimentsRouter from "./experiments";
 import pricingRouter from "./pricing";
 import offersRouter from "./offers";
 import escritorioRouter from "./escritorio";
+import quizLeadsRouter from "./quiz-leads";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(experimentsRouter);
 router.use(pricingRouter);
 router.use(offersRouter);
 router.use(escritorioRouter);
+router.use(quizLeadsRouter);
 
 export default router;

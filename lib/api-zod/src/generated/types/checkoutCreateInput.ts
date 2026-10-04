@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CheckoutCreateInputCtaSource } from './checkoutCreateInputCtaSource';
+import type { CheckoutCreateInputEmailOrigin } from './checkoutCreateInputEmailOrigin';
 import type { CheckoutCreateInputMethod } from './checkoutCreateInputMethod';
 import type { CheckoutCreateInputMode } from './checkoutCreateInputMode';
 import type { CheckoutCreateInputPackageId } from './checkoutCreateInputPackageId';
@@ -19,6 +20,12 @@ export interface CheckoutCreateInput {
   method?: CheckoutCreateInputMethod;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
   buyerEmail?: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  resumeSessionId?: string;
+  emailOrigin?: CheckoutCreateInputEmailOrigin;
   sourceLp?: CheckoutCreateInputSourceLp;
   /**
      * @minLength 1

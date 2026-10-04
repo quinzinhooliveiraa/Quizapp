@@ -7,7 +7,7 @@ import {
   lte,
   or,
 } from "drizzle-orm";
-import { db, sessionsTable } from "@workspace/db";
+import { db, emailOptOutsTable, sessionsTable } from "@workspace/db";
 import {
   buildAbandonedCheckoutEmail,
   sendEmailViaBrevo,
@@ -47,12 +47,14 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
         abandonEmail3At: sessionsTable.abandonEmail3At,
         abandonEmail4At: sessionsTable.abandonEmail4At,
         abandonEmail5At: sessionsTable.abandonEmail5At,
+        abandonSuppressedAt: sessionsTable.abandonSuppressedAt,
       })
       .from(sessionsTable)
       .where(
         and(
           eq(sessionsTable.accessGranted, false),
           eq(sessionsTable.internal, false),
+          isNull(sessionsTable.abandonSuppressedAt),
           isNotNull(sessionsTable.buyerEmail),
           or(
             and(
@@ -94,6 +96,19 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
     let sent = 0;
     for (const session of candidates) {
       if (!session.buyerEmail) continue;
+      const normalizedEmail = session.buyerEmail.trim().toLowerCase();
+      const [optOut] = await db
+        .select({ email: emailOptOutsTable.email })
+        .from(emailOptOutsTable)
+        .where(eq(emailOptOutsTable.email, normalizedEmail))
+        .limit(1);
+      if (optOut) {
+        await db
+          .update(sessionsTable)
+          .set({ abandonSuppressedAt: new Date() })
+          .where(eq(sessionsTable.id, session.id));
+        continue;
+      }
 
       const sequence: 1 | 2 | 3 | 4 | 5 = !session.abandonEmail1At
         ? 1
@@ -115,12 +130,17 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
         buyerEmail: session.buyerEmail,
         pixBrCode: pixIsStillValid ? session.pixBrcode : null,
       });
+      const baseUrl = (
+        process.env.PUBLIC_BASE_URL ||
+        "https://www.perguntasdeconexao.com.br"
+      ).replace(/\/+$/, "");
+      const optOutUrl = `${baseUrl}/sair/${encodeURIComponent(session.id)}`;
       const result = await sendEmailViaBrevo({
         to: session.buyerEmail,
         toName: session.buyerName,
         subject: email.subject,
-        htmlContent: email.htmlContent,
-        textContent: email.textContent,
+        htmlContent: `${email.htmlContent}<p style="font-size:12px;line-height:1.5;color:#8b8290;text-align:center;">Não quer mais receber estes e-mails? <a href="${optOutUrl}" style="color:#8a2f4d;">Descadastre-se</a>.</p>`,
+        textContent: `${email.textContent}\n\nPara não receber outros e-mails: ${optOutUrl}`,
       });
       if (!result.ok) {
         logger.warn(

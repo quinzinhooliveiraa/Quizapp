@@ -5,6 +5,7 @@ import { logger } from "./lib/logger";
 import { startExperimentOptimizationScheduler } from "./lib/experiment-optimization";
 import { startPaymentReconciliationScheduler } from "./lib/payment-reconciliation";
 import { startAbandonedCheckoutScheduler } from "./lib/abandoned-checkout";
+import { ensureQuizEmailLiveSince } from "./lib/quiz-email-config";
 
 const rawPort = process.env["PORT"];
 
@@ -30,6 +31,9 @@ httpServer.listen(port, (err?: Error) => {
   }
 
   logger.info({ port }, "Server listening (HTTP + WebSocket)");
+  void ensureQuizEmailLiveSince().catch((error) =>
+    logger.error({ err: error }, "Failed to initialize quiz email live date"),
+  );
   startExperimentOptimizationScheduler();
   startPaymentReconciliationScheduler();
   startAbandonedCheckoutScheduler();

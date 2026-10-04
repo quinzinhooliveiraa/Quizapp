@@ -57,6 +57,7 @@ import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
 import { resolveRegion } from "../lib/pricing";
 import { getOfferPricing, getOfferWindow } from "../lib/offers";
+import { allowEmailRequest } from "../lib/email-rate-limit";
 import { sendMetaEvent } from "../lib/meta-conversions";
 import {
   grantSessionAccess,
@@ -432,32 +433,6 @@ const router: IRouter = Router();
 const PIX_LIFETIME_MS = 15 * 60 * 1000;
 const ABANDONED_CHECKOUT_DISCOUNT_MS = 5 * 24 * 60 * 60 * 1000;
 
-const EMAIL_CHECK_RATE_WINDOW_MS = 60_000;
-const EMAIL_CHECK_RATE_LIMIT = 20;
-const emailCheckRateByIp = new Map<
-  string,
-  { windowStartedAt: number; requestCount: number }
->();
-
-function allowEmailCheckRequest(ip: string, now: number): boolean {
-  if (emailCheckRateByIp.size > 1000) {
-    for (const [key, entry] of emailCheckRateByIp) {
-      if (now - entry.windowStartedAt >= EMAIL_CHECK_RATE_WINDOW_MS) {
-        emailCheckRateByIp.delete(key);
-      }
-    }
-  }
-
-  const current = emailCheckRateByIp.get(ip);
-  if (!current || now - current.windowStartedAt >= EMAIL_CHECK_RATE_WINDOW_MS) {
-    emailCheckRateByIp.set(ip, { windowStartedAt: now, requestCount: 1 });
-    return true;
-  }
-  if (current.requestCount >= EMAIL_CHECK_RATE_LIMIT) return false;
-  current.requestCount += 1;
-  return true;
-}
-
 router.get("/questions/themes", (_req, res): void => {
   res.json(ListQuestionThemesResponse.parse(themes));
 });
@@ -493,7 +468,7 @@ router.get("/access/preview", (_req, res): void => {
 router.get("/access/check-email", async (req, res): Promise<void> => {
   const now = Date.now();
   const clientIp = req.ip || req.socket.remoteAddress || "unknown";
-  if (!allowEmailCheckRequest(clientIp, now)) {
+  if (!allowEmailRequest(clientIp, now)) {
     res.setHeader("Retry-After", "60");
     res.status(429).json({
       error: "Muitas consultas. Tente novamente em alguns instantes.",

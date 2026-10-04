@@ -2,6 +2,7 @@ import { createInsertSchema } from "drizzle-zod";
 import {
   boolean,
   integer,
+  index,
   pgTable,
   text,
   timestamp,
@@ -23,6 +24,9 @@ export const sessionsTable = pgTable("sessions", {
   packageId: text("package_id").notNull(),
   packageName: text("package_name").notNull(),
   sourceLp: text("source_lp"),
+  leadSource: text("lead_source"),
+  abandonSuppressedAt: timestamp("abandon_suppressed_at", { withTimezone: true }),
+  resumeEmailN: integer("resume_email_n"),
   visitorKey: text("visitor_key"),
   device: text("device"),
   ctaSource: text("cta_source"),
@@ -204,4 +208,5 @@ export type NewPushSubscription = typeof pushSubscriptionsTable.$inferInsert;
 
 export * from "./experiments";
 export * from "./quiz-answers";
+export * from "./quiz-leads";
 export * from "./settings";

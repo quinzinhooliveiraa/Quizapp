@@ -45,6 +45,7 @@ import type {
   DeleteAdminBuyerParams,
   DeleteAdminPendingAccessBody,
   DeleteAdminPendingAccessParams,
+  EmailOptOutResponse,
   Experiment,
   ExperimentAssignment,
   ExperimentInput,
@@ -61,6 +62,7 @@ import type {
   GetAdminFunnelAnalyticsParams,
   GetAdminPrimaryLandingPageParams,
   GetAdminQuizAnalyticsParams,
+  GetAdminQuizEmailConfigParams,
   GetAdminSessionRecordingParams,
   GetExperimentAssignmentParams,
   GetExperimentLinkAssignmentParams,
@@ -97,6 +99,10 @@ import type {
   QuestionSession,
   QuestionTheme,
   QuizAnswerInput,
+  QuizEmailConfig,
+  QuizEmailConfigInput,
+  QuizLeadInput,
+  QuizLeadResponse,
   ReceiveStripeWebhookBody,
   ResendAdminBuyerAccess200,
   ResendAdminBuyerAccessParams,
@@ -117,6 +123,7 @@ import type {
   UpdateAdminPendingAccessBody,
   UpdateAdminPendingAccessParams,
   UpdateAdminPrimaryLandingPageParams,
+  UpdateAdminQuizEmailConfigParams,
   UpdateCheckoutCardEmail200,
   WebhookResult
 } from './api.schemas';
@@ -2219,6 +2226,388 @@ export const useTrackQuizAnswer = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getTrackQuizAnswerMutationOptions(options));
+    }
+
+export const getGetQuizEmailConfigUrl = () => {
+
+
+
+
+  return `/api/quiz/email-config`
+}
+
+/**
+ * @summary Get the public quiz email capture mode
+ */
+export const getQuizEmailConfig = async ( options?: Parameters<typeof customFetch>[1]): Promise<QuizEmailConfig> => {
+
+  return customFetch<QuizEmailConfig>(getGetQuizEmailConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetQuizEmailConfigQueryKey = () => {
+    return [
+    `/api/quiz/email-config`
+    ] as const;
+    }
+
+
+export const getGetQuizEmailConfigQueryOptions = <TData = Awaited<ReturnType<typeof getQuizEmailConfig>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getQuizEmailConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetQuizEmailConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuizEmailConfig>>> = ({ signal }) => getQuizEmailConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getQuizEmailConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetQuizEmailConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getQuizEmailConfig>>>
+export type GetQuizEmailConfigQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the public quiz email capture mode
+ */
+
+export function useGetQuizEmailConfig<TData = Awaited<ReturnType<typeof getQuizEmailConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getQuizEmailConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetQuizEmailConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminQuizEmailConfigUrl = (params: GetAdminQuizEmailConfigParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/quiz/email-config?${stringifiedParams}` : `/api/admin/quiz/email-config`
+}
+
+/**
+ * @summary Get the quiz email capture configuration
+ */
+export const getAdminQuizEmailConfig = async (params: GetAdminQuizEmailConfigParams, options?: Parameters<typeof customFetch>[1]): Promise<QuizEmailConfig> => {
+
+  return customFetch<QuizEmailConfig>(getGetAdminQuizEmailConfigUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminQuizEmailConfigQueryKey = (params?: GetAdminQuizEmailConfigParams,) => {
+    return [
+    `/api/admin/quiz/email-config`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminQuizEmailConfigQueryOptions = <TData = Awaited<ReturnType<typeof getAdminQuizEmailConfig>>, TError = ErrorType<void>>(params: GetAdminQuizEmailConfigParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizEmailConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminQuizEmailConfigQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminQuizEmailConfig>>> = ({ signal }) => getAdminQuizEmailConfig(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizEmailConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminQuizEmailConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminQuizEmailConfig>>>
+export type GetAdminQuizEmailConfigQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the quiz email capture configuration
+ */
+
+export function useGetAdminQuizEmailConfig<TData = Awaited<ReturnType<typeof getAdminQuizEmailConfig>>, TError = ErrorType<void>>(
+ params: GetAdminQuizEmailConfigParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminQuizEmailConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminQuizEmailConfigQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminQuizEmailConfigUrl = (params: UpdateAdminQuizEmailConfigParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/quiz/email-config?${stringifiedParams}` : `/api/admin/quiz/email-config`
+}
+
+/**
+ * @summary Update whether quiz email capture is required
+ */
+export const updateAdminQuizEmailConfig = async (quizEmailConfigInput: QuizEmailConfigInput,
+    params: UpdateAdminQuizEmailConfigParams, options?: Parameters<typeof customFetch>[1]): Promise<QuizEmailConfig> => {
+
+  return customFetch<QuizEmailConfig>(getUpdateAdminQuizEmailConfigUrl(params),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(quizEmailConfigInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminQuizEmailConfigMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminQuizEmailConfig>>, TError,{data: BodyType<QuizEmailConfigInput>;params: UpdateAdminQuizEmailConfigParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminQuizEmailConfig>>, TError,{data: BodyType<QuizEmailConfigInput>;params: UpdateAdminQuizEmailConfigParams}, TContext> => {
+
+const mutationKey = ['updateAdminQuizEmailConfig'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminQuizEmailConfig>>, {data: BodyType<QuizEmailConfigInput>;params: UpdateAdminQuizEmailConfigParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  updateAdminQuizEmailConfig(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminQuizEmailConfigMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminQuizEmailConfig>>>
+    export type UpdateAdminQuizEmailConfigMutationBody = BodyType<QuizEmailConfigInput>
+    export type UpdateAdminQuizEmailConfigMutationError = ErrorType<void>
+
+    /**
+ * @summary Update whether quiz email capture is required
+ */
+export const useUpdateAdminQuizEmailConfig = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminQuizEmailConfig>>, TError,{data: BodyType<QuizEmailConfigInput>;params: UpdateAdminQuizEmailConfigParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminQuizEmailConfig>>,
+        TError,
+        {data: BodyType<QuizEmailConfigInput>;params: UpdateAdminQuizEmailConfigParams},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminQuizEmailConfigMutationOptions(options));
+    }
+
+export const getCreateQuizLeadUrl = () => {
+
+
+
+
+  return `/api/quiz/lead`
+}
+
+/**
+ * @summary Save a quiz lead and send its diagnosis email
+ */
+export const createQuizLead = async (quizLeadInput: QuizLeadInput, options?: Parameters<typeof customFetch>[1]): Promise<QuizLeadResponse> => {
+
+  return customFetch<QuizLeadResponse>(getCreateQuizLeadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(quizLeadInput)
+  }
+);}
+
+
+
+
+
+export const getCreateQuizLeadMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createQuizLead>>, TError,{data: BodyType<QuizLeadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createQuizLead>>, TError,{data: BodyType<QuizLeadInput>}, TContext> => {
+
+const mutationKey = ['createQuizLead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createQuizLead>>, {data: BodyType<QuizLeadInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createQuizLead(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateQuizLeadMutationResult = NonNullable<Awaited<ReturnType<typeof createQuizLead>>>
+    export type CreateQuizLeadMutationBody = BodyType<QuizLeadInput>
+    export type CreateQuizLeadMutationError = ErrorType<void>
+
+    /**
+ * @summary Save a quiz lead and send its diagnosis email
+ */
+export const useCreateQuizLead = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createQuizLead>>, TError,{data: BodyType<QuizLeadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createQuizLead>>,
+        TError,
+        {data: BodyType<QuizLeadInput>},
+        TContext
+      > => {
+      return useMutation(getCreateQuizLeadMutationOptions(options));
+    }
+
+export const getOptOutOfEmailUrl = (id: string,) => {
+
+
+
+
+  return `/api/email/sair/${id}`
+}
+
+/**
+ * @summary Opt out of future checkout emails
+ */
+export const optOutOfEmail = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<EmailOptOutResponse> => {
+
+  return customFetch<EmailOptOutResponse>(getOptOutOfEmailUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getOptOutOfEmailMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optOutOfEmail>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof optOutOfEmail>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['optOutOfEmail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof optOutOfEmail>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  optOutOfEmail(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OptOutOfEmailMutationResult = NonNullable<Awaited<ReturnType<typeof optOutOfEmail>>>
+
+    export type OptOutOfEmailMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Opt out of future checkout emails
+ */
+export const useOptOutOfEmail = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optOutOfEmail>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof optOutOfEmail>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getOptOutOfEmailMutationOptions(options));
     }
 
 export const getGetPrimaryLandingPageUrl = () => {

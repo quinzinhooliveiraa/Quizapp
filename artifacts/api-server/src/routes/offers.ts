@@ -1,4 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { and, eq, isNull } from "drizzle-orm";
+import { db, quizLeadsTable } from "@workspace/db";
 import { getOfferPricing, getOfferWindow, startOfferWindow } from "../lib/offers";
 import { resolveRegion } from "../lib/pricing";
 
@@ -57,6 +59,16 @@ router.post("/offer/start", async (req, res): Promise<void> => {
     res.status(500).json({ error: "Não foi possível abrir a oferta" });
     return;
   }
+
+  await db
+    .update(quizLeadsTable)
+    .set({ offerSeenAt: new Date() })
+    .where(
+      and(
+        eq(quizLeadsTable.visitorKey, visitorKey),
+        isNull(quizLeadsTable.offerSeenAt),
+      ),
+    );
 
   await sendOfferState(res, visitorKey, region);
 });
