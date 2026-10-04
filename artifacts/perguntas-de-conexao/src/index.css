@@ -31247,3 +31247,55 @@ blockquote em {
     animation: none;
   }
 }
+
+.checkout-card-brand-notice {
+  margin: 0 0 0.7rem;
+  color: #817589;
+  font-size: 0.58rem;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+.checkout-card-pix-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7a2e46;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.checkout-card-pix-link:hover {
+  color: #5b2034;
+}
+
+.checkout-card-pix-link:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid rgba(122, 46, 70, 0.38);
+  outline-offset: 2px;
+}
+
+.checkout-brand-switch-notice {
+  margin: 0 0 0.85rem;
+  border: 1px solid #ead9ae;
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  background: #fff8e8;
+  color: #76531f;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 480px) {
+  .checkout-card-brand-notice {
+    width: 118%;
+    font-size: 0.51rem;
+    transform: scaleX(0.85);
+    transform-origin: left top;
+  }
+}

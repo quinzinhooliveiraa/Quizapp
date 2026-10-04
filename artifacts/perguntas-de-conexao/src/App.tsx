@@ -5652,7 +5652,22 @@ type CardErrorTrackingInfo = {
   type?: string;
   code?: string;
   declineCode?: string;
+  message?: string;
 };
+
+function isUnsupportedBrandError(
+  message: string,
+  info?: CardErrorTrackingInfo,
+) {
+  return (
+    info?.code === "card_not_supported" ||
+    info?.code === "invalid_card_type" ||
+    (info?.type === "validation_error" &&
+      /não é aceit|não aceit|nao e aceit|not supported|not accepted|não suportad|isn't accepted|is not accepted/i.test(
+        message,
+      ))
+  );
+}
 
 function useLpTracking(
   lpId: "v1" | "v2" | "lp3",
@@ -6158,11 +6173,15 @@ function useCheckout({
       : checkoutOfferState?.full ?? pricing);
 
   const trackCardError = (info: CardErrorTrackingInfo) => {
-    const lastSection =
-      `${info.type ?? "-"}|${info.code ?? "-"}|${info.declineCode ?? "-"}|${selectedPaymentMethod}`.slice(
-        0,
-        80,
-      );
+    const paymentMethod = selectedPaymentMethod === "card" ? "c" : "p";
+    const errorDetails = `${info.type ?? "-"}|${info.code ?? "-"}|${info.declineCode ?? "-"}|${paymentMethod}`;
+    const errorMessage = info.message?.slice(0, 30) ?? "";
+    const messageRoom = Math.max(0, 80 - errorDetails.length - 1);
+    const lastSection = (
+      errorMessage
+        ? `${errorDetails}|${errorMessage.slice(0, messageRoom)}`
+        : errorDetails
+    ).slice(0, 80);
     onTrackingEvent?.("card_error", undefined, { lastSection });
   };
 
@@ -6866,6 +6885,8 @@ function useCheckout({
     if (nativeCheckout) setCheckoutState("email");
   };
 
+  const returnToCheckoutEmail = () => setCheckoutState("email");
+
   const saveCardBuyerEmail = async (
     email: string,
     name = buyerName,
@@ -7024,6 +7045,7 @@ function useCheckout({
     handleCardPaymentSubmitted,
     startCheckout,
     restartCheckout,
+    returnToCheckoutEmail,
   };
 }
 
@@ -7491,11 +7513,13 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     selectPaymentMethod,
     handleCardPaymentSubmitted,
     restartCheckout,
+    returnToCheckoutEmail,
   } = checkout;
 
   const cardPaymentFormRef = useRef<CardPaymentFormHandle>(null);
   const pendingCardSubmitRef = useRef(false);
   const walletPreloadAttemptedRef = useRef(false);
+  const [brandSwitchNotice, setBrandSwitchNotice] = useState("");
   const [showPixQr, setShowPixQr] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -7524,6 +7548,12 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     mediaQuery.addEventListener("change", syncQrDisclosure);
     return () => mediaQuery.removeEventListener("change", syncQrDisclosure);
   }, []);
+
+  useEffect(() => {
+    if (!checkoutOpen || selectedPaymentMethod === "card") {
+      setBrandSwitchNotice("");
+    }
+  }, [checkoutOpen, selectedPaymentMethod]);
 
   const handlePaymentMethodSelect = (method: "pix" | "card") => {
     setCardError("");
@@ -7557,6 +7587,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
     if (!checkoutPricing.pixAvailable) return;
     handlePaymentMethodSelect("pix");
     if (checkoutState === "card-error") restartCheckout();
+    else if (checkoutState !== "email") returnToCheckoutEmail();
 
     if (!hasValidBuyerDetails) {
       focusCheckoutEmail();
@@ -7742,10 +7773,22 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
       cardErrorTrackedRef.current = false;
     } else if (info && !cardErrorTrackedRef.current) {
       cardErrorTrackedRef.current = true;
-      trackCardError(info);
+      trackCardError({ ...info, message });
     }
     setCardError(message);
     if (!message) return;
+    if (
+      isUnsupportedBrandError(message, info) &&
+      checkoutPricing.pixAvailable
+    ) {
+      setBrandSwitchNotice(
+        hasValidBuyerDetails
+          ? "Esse cartão não passa aqui (só Visa e Mastercard). Gerei seu Pix com o mesmo preço:"
+          : "Esse cartão não passa aqui (só Visa e Mastercard). Coloque seu e-mail e o Pix aparece, mesmo preço.",
+      );
+      handleCardErrorPixClick();
+      return;
+    }
     window.requestAnimationFrame(() => {
       document
         .querySelector(".checkout-card-inline")
@@ -7769,8 +7812,20 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
       })}`
     : "";
 
-  const pixPaymentContent = nativeCheckout ? (
-    <div className="checkout-pix-inline">
+  const pixPaymentContent = (
+    <>
+      {brandSwitchNotice ? (
+        <p
+          className="checkout-brand-switch-notice"
+          role="status"
+          aria-live="polite"
+          data-testid="notice-card-brand-switched-to-pix"
+        >
+          {brandSwitchNotice}
+        </p>
+      ) : null}
+      {nativeCheckout ? (
+        <div className="checkout-pix-inline">
       <div className="checkout-pix-copy-primary">
         <button
           className="checkout-copy-button checkout-copy-button-primary"
@@ -7844,9 +7899,9 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
           </p>
         ) : null}
       </div>
-    </div>
-  ) : pixExpired ? (
-    <div className="checkout-pix-expired" role="status" aria-live="polite">
+        </div>
+      ) : pixExpired ? (
+        <div className="checkout-pix-expired" role="status" aria-live="polite">
       <p className="checkout-pix-expired-title">O código Pix expirou.</p>
       <p>
         Ele vale 15 minutos. Toque no botão principal aqui embaixo que eu gero
@@ -7855,18 +7910,18 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
       <p className="checkout-pix-expired-alt">
         Ou pague no <strong>cartão</strong>, na aba ao lado. Aí não tem prazo.
       </p>
-    </div>
-  ) : paymentCreating === "pix" ? (
-    <div className="checkout-pix-inline" role="status" aria-live="polite">
+        </div>
+      ) : paymentCreating === "pix" ? (
+        <div className="checkout-pix-inline" role="status" aria-live="polite">
       <div className="checkout-qr-wrap checkout-qr-skeleton" aria-hidden="true" />
       <p className="checkout-pix-hint">
         Gerando seu código Pix…
         <br />
         <strong>Leva uns segundos. Não feche esta tela.</strong>
       </p>
-    </div>
-  ) : paymentError ? (
-    <div className="checkout-payment-preview checkout-inline-error" role="alert">
+        </div>
+      ) : paymentError ? (
+        <div className="checkout-payment-preview checkout-inline-error" role="alert">
       <p>{paymentError}</p>
       <div className="checkout-error-actions">
         <button
@@ -7881,37 +7936,64 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
           Tentar de novo
         </button>
       </div>
-    </div>
-  ) : (
-    <p className="checkout-payment-preview">
-      Preencha seu e-mail acima e o QR aparece aqui.
-    </p>
+        </div>
+      ) : (
+        <p className="checkout-payment-preview">
+          Preencha seu e-mail acima e o QR aparece aqui.
+        </p>
+      )}
+    </>
   );
 
-  const cardPaymentContent = cardCheckout ? (
-    <div className="checkout-card-inline">
-      <CardPaymentForm
-        ref={cardPaymentFormRef}
-        onPaymentSubmitted={handleCardPaymentSubmitted}
-        onError={handleCardError}
-        onProcessingChange={setCardSubmitting}
-        sessionId={cardCheckout.sessionId}
-        showSubmitButton={checkoutState !== "email"}
-        priceDisplay={checkoutPricing.display}
-      />
-    </div>
-  ) : paymentCreating === "card" ? (
-    <p className="checkout-payment-preview" role="status" aria-live="polite">
-      Abrindo o pagamento com cartão aqui…
-    </p>
-  ) : paymentError ? (
-    <p className="checkout-payment-preview checkout-inline-error" role="alert">
-      {paymentError}
-    </p>
-  ) : (
-    <p className="checkout-payment-preview">
-      Preencha seus dados para abrir o pagamento com cartão aqui.
-    </p>
+  const cardPaymentContent = (
+    <>
+      {checkoutPricing.pixAvailable ? (
+        <p
+          className="checkout-card-brand-notice"
+          data-testid="notice-supported-card-brands"
+        >
+          Aceitamos Visa e Mastercard. Elo, Hipercard ou Amex?{" "}
+          <button
+            type="button"
+            className="checkout-card-pix-link"
+            onClick={handleCardErrorPixClick}
+            data-testid="button-card-brand-pix"
+          >
+            Pague no Pix
+          </button>
+          , mesmo preço.
+        </p>
+      ) : null}
+      {cardCheckout ? (
+        <div className="checkout-card-inline">
+          <CardPaymentForm
+            ref={cardPaymentFormRef}
+            onPaymentSubmitted={handleCardPaymentSubmitted}
+            onError={handleCardError}
+            onProcessingChange={setCardSubmitting}
+            sessionId={cardCheckout.sessionId}
+            showSubmitButton={checkoutState !== "email"}
+            priceDisplay={checkoutPricing.display}
+          />
+        </div>
+      ) : paymentCreating === "card" ? (
+        <p
+          className="checkout-payment-preview"
+          role="status"
+          aria-live="polite"
+        >
+          Abrindo o pagamento com cartão aqui…
+        </p>
+      ) : paymentError ? (
+        <p className="checkout-payment-preview checkout-inline-error" role="alert">
+          {paymentError}
+        </p>
+      ) : (
+        <p className="checkout-payment-preview">
+          Preencha seus dados para abrir o pagamento com cartão aqui.
+        </p>
+      )}
+    </>
   );
 
   if (!checkoutOpen) return null;
