@@ -1,0 +1,36 @@
+Tarefa: impedir e-mail de recuperação para quem JÁ COMPROU, mesmo que tenha usado e-mail diferente no quiz e no pagamento. Faça SOMENTE isto. NÃO altere preço, oferta, quiz, telas do checkout, textos dos e-mails, nem a entrega do acesso (grantSessionAccess e o e-mail de acesso continuam idênticos). NÃO mude o schema do banco (sem coluna nova, sem migration).
+
+Contexto: hoje a trava "já pagou" (hasPaidSession em artifacts/api-server/src/lib/abandoned-checkout.ts) compara só o e-mail exato da sessão paga. O lead do quiz (quiz_leads) e a sessão (sessions) compartilham o campo visitor_key, mas nada liga os dois na compra. Resultado: compradora pagou com e-mail A, fez o quiz com e-mail B, e recebeu e-mail de recuperação 20 min depois de pagar.
+
+1) TRAVA NO ENVIO (abandoned-checkout.ts)
+- Troque a checagem hasPaidSession(candidate.email) por uma nova hasPaidForCandidate(candidate) que retorna true se existir sessão com access_granted = true e QUALQUER uma destas:
+  a) lower(buyer_email) = e-mail do candidato (comportamento atual);
+  b) visitor_key igual ao visitor_key do candidato (lead: quiz_leads.visitor_key; sessão: sessions.visitor_key), quando não for nulo/vazio;
+  c) (só para candidato kind "lead") a sessão paga tem id = quiz_leads.session_id do lead.
+- Todas as condições só valem para sessões com access_granted = true. Não ignore sessões internal (teste do dono também suprime; ok).
+- Só use visitor_key quando não for nulo, não vazio e diferente de string em branco (trim).
+- Se a nova checagem lançar erro, NÃO envie o e-mail: logue warn e pule o candidato neste ciclo (falhar fechado), sem suprimir.
+- Para isso, inclua visitorKey (e sessionId no caso do lead) nos selects dos candidatos de sessão e de lead e no tipo RecipientCandidate.
+- Se true: suppressCandidate (como já é feito) e continue. Mantenha a ordem: opt-out e pago são checados DENTRO do loop, imediatamente antes de montar/enviar cada e-mail, para pegar compra feita entre o select e o envio.
+- Não ignore internal: os filtros de internal/ADMIN_EMAILS existentes ficam como estão.
+
+2) LIGAR A COMPRA AO LEAD (novo arquivo artifacts/api-server/src/lib/link-purchase-to-lead.ts)
+- Exporte linkPurchaseToQuizLead(session: { id: string; visitorKey: string | null; buyerEmail: string | null }).
+- Faça, com db normal (fora de transação), cada update em try/catch próprio:
+  a) quiz_leads: onde (visitor_key = session.visitorKey, se houver) OU (session_id = session.id) OU (lower(email) = lower(session.buyerEmail), se houver): set suppressed_at = now() onde suppressed_at is null; e set session_id = session.id onde session_id is null (não sobrescreva session_id existente). Isso também faz o admin parar de mostrar "Compras dos leads: 0".
+  b) sessions: onde visitor_key = session.visitorKey (se houver) E access_granted = false E id <> session.id: set abandon_suppressed_at = now() onde abandon_suppressed_at is null (cancela sequência de sessões abandonadas do mesmo visitante).
+- Nunca lance erro para fora: capture, logue com logger.warn e retorne.
+- Chame no início de notifyGrantedAccess (lib/payment-access.ts), logo depois do `if (!session?.accessGranted) return;`, assim: `void linkPurchaseToQuizLead(session);` (sem await, e ANTES do `if (!session.buyerEmail) return;` para valer também sem e-mail). Não coloque dentro de grantSessionAccess. Atenção: em 2 webhooks (connection.ts ~1359 e ~1440) notifyGrantedAccess já roda dentro de uma transação aberta; a função nova usa SOMENTE o `db` global (nunca o tx), não é aguardada e nunca lança, então não pode abortar nem atrasar o pagamento. Não mude esses 2 pontos de lugar.
+- Confira os 6 pontos que chamam grantSessionAccess (routes/connection.ts ~957, 1358, 1440, 1457, 1503 e lib/payment-reconciliation.ts ~55): todos devem passar por notifyGrantedAccess. Se algum não passar, me diga qual (não mexa na entrega; só informe).
+
+3) LIMPEZA DO PASSADO (idempotente: roda a cada start do servidor, mas só mexe em linhas ainda não tratadas, então a 2ª vez muda 0 linhas)
+- Em startAbandonedCheckoutScheduler, o primeiro sendAbandonedCheckoutEmails() deve esperar o backfill terminar (`void backfillLeadPurchases().finally(() => sendAbandonedCheckoutEmails())`, e o setInterval segue como está). Função backfillLeadPurchases() com a mesma lógica do item 2 em SQL: para cada quiz_leads com visitor_key presente em sessions com access_granted = true: set suppressed_at = now() (se nulo) e session_id = (id da sessão paga mais antiga desse visitor_key) se session_id for nulo. Use SOMENTE visitor_key não vazio. NÃO use e-mail nem outro critério no backfill. Só mexa em suppressed_at e session_id de quiz_leads; não toque em sessions. Antes do UPDATE, logue (logger.info) quantos leads seriam afetados; depois logue quantas linhas mudou. try/catch, sem lançar erro.
+
+4) NÃO FAZER
+- Não mexer em preço, desconto, oferta, quiz, layout/telas do checkout, textos/templates de e-mail, entrega de acesso, rota /checkout/card/email, /retomar, Meta/pixels.
+- Não adicionar dependências.
+
+5) AO TERMINAR
+- Rode o type-check/build do api-server.
+- Liste TODOS os arquivos alterados/criados, em lista, com 1 linha cada.
+- Diga quantas linhas o backfill do item 3 mudou (veja o log) e se algum dos pontos de grantSessionAccess não passa por notifyGrantedAccess.

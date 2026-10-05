@@ -3,6 +3,7 @@ import { db, sessionsTable } from "@workspace/db";
 import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "./brevo";
 import { sendPurchaseNotification } from "./push";
 import { sendMetaEvent } from "./meta-conversions";
+import { linkPurchaseToQuizLead } from "./link-purchase-to-lead";
 
 type AccessUpdateExecutor = Pick<typeof db, "update">;
 
@@ -80,6 +81,7 @@ export function notifyGrantedAccess(
   onError: (error: unknown, message: string) => void,
 ) {
   if (!session?.accessGranted) return;
+  void linkPurchaseToQuizLead(session);
 
   if (
     session.metaConsent &&

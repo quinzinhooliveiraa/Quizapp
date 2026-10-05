@@ -39,6 +39,8 @@ type RecipientCandidate = {
   kind: "session" | "lead";
   id: string;
   email: string;
+  visitorKey: string | null;
+  sessionId?: string | null;
   createdAt: Date;
   offerSeenAt: Date | null;
   abandonEmail1At: Date | null;
@@ -230,14 +232,23 @@ async function hasOptedOut(email: string) {
   return Boolean(row);
 }
 
-async function hasPaidSession(email: string) {
+async function hasPaidForCandidate(candidate: RecipientCandidate) {
+  const paidSessionConditions = [
+    sql`lower(${sessionsTable.buyerEmail}) = ${candidate.email}`,
+    ...(candidate.visitorKey?.trim()
+      ? [eq(sessionsTable.visitorKey, candidate.visitorKey)]
+      : []),
+    ...(candidate.kind === "lead" && candidate.sessionId
+      ? [eq(sessionsTable.id, candidate.sessionId)]
+      : []),
+  ];
   const [row] = await db
     .select({ id: sessionsTable.id })
     .from(sessionsTable)
     .where(
       and(
-        sql`lower(${sessionsTable.buyerEmail}) = ${email}`,
         eq(sessionsTable.accessGranted, true),
+        or(...paidSessionConditions),
       ),
     )
     .limit(1);
@@ -387,6 +398,7 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
         .select({
           id: sessionsTable.id,
           email: sessionsTable.buyerEmail,
+          visitorKey: sessionsTable.visitorKey,
           createdAt: sessionsTable.createdAt,
           abandonEmail1At: sessionsTable.abandonEmail1At,
           abandonEmail2At: sessionsTable.abandonEmail2At,
@@ -421,6 +433,8 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
           .select({
             id: quizLeadsTable.id,
             email: quizLeadsTable.email,
+            visitorKey: quizLeadsTable.visitorKey,
+            sessionId: quizLeadsTable.sessionId,
             createdAt: quizLeadsTable.createdAt,
             offerSeenAt: quizLeadsTable.offerSeenAt,
             abandonEmail1At: quizLeadsTable.abandonEmail1At,
@@ -467,15 +481,6 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
       const sequence = eligibleSequence(candidate, now);
       if (!sequence) continue;
 
-      const suppressedAt = new Date();
-      if (
-        (await hasOptedOut(candidate.email)) ||
-        (await hasPaidSession(candidate.email))
-      ) {
-        await suppressCandidate(candidate, suppressedAt);
-        continue;
-      }
-
       if (sequence === 5) {
         const currentTime = Date.now();
         const discountEndsAt =
@@ -499,6 +504,27 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
           (await hasRecentSession(candidate.email, recentCheckoutCutoff))) ||
           (await hasRecentEmailOne(candidate.email, emailOneDedupCutoff)))
       ) {
+        await suppressCandidate(candidate, new Date());
+        continue;
+      }
+
+      const suppressedAt = new Date();
+      if (await hasOptedOut(candidate.email)) {
+        await suppressCandidate(candidate, suppressedAt);
+        continue;
+      }
+
+      let hasPaid: boolean;
+      try {
+        hasPaid = await hasPaidForCandidate(candidate);
+      } catch (error) {
+        logger.warn(
+          { err: error, candidateId: candidate.id },
+          "Could not verify whether abandoned checkout candidate has paid",
+        );
+        continue;
+      }
+      if (hasPaid) {
         await suppressCandidate(candidate, suppressedAt);
         continue;
       }
@@ -542,10 +568,64 @@ export async function sendAbandonedCheckoutEmails(): Promise<number> {
   }
 }
 
+export async function backfillLeadPurchases(): Promise<void> {
+  try {
+    const wouldUpdate = await db.execute(sql`
+      SELECT COUNT(*)::int AS count
+      FROM quiz_leads AS lead
+      WHERE lead.visitor_key IS NOT NULL
+        AND btrim(lead.visitor_key) <> ''
+        AND (lead.suppressed_at IS NULL OR lead.session_id IS NULL)
+        AND EXISTS (
+          SELECT 1
+          FROM sessions AS paid_session
+          WHERE paid_session.access_granted = TRUE
+            AND paid_session.visitor_key IS NOT NULL
+            AND btrim(paid_session.visitor_key) <> ''
+            AND paid_session.visitor_key = lead.visitor_key
+        )
+    `);
+    const affectedCount = Number(wouldUpdate.rows[0]?.count ?? 0);
+    logger.info(
+      { affectedCount },
+      "Quiz lead purchase backfill rows eligible for update",
+    );
+
+    const updated = await db.execute(sql`
+      WITH oldest_paid_session AS (
+        SELECT DISTINCT ON (paid_session.visitor_key)
+          paid_session.visitor_key,
+          paid_session.id
+        FROM sessions AS paid_session
+        WHERE paid_session.access_granted = TRUE
+          AND paid_session.visitor_key IS NOT NULL
+          AND btrim(paid_session.visitor_key) <> ''
+        ORDER BY paid_session.visitor_key, paid_session.created_at ASC, paid_session.id ASC
+      )
+      UPDATE quiz_leads AS lead
+      SET
+        suppressed_at = COALESCE(lead.suppressed_at, NOW()),
+        session_id = COALESCE(lead.session_id, oldest_paid_session.id)
+      FROM oldest_paid_session
+      WHERE lead.visitor_key = oldest_paid_session.visitor_key
+        AND lead.visitor_key IS NOT NULL
+        AND btrim(lead.visitor_key) <> ''
+        AND (lead.suppressed_at IS NULL OR lead.session_id IS NULL)
+      RETURNING lead.id
+    `);
+    logger.info(
+      { changedCount: updated.rows.length },
+      "Quiz lead purchase backfill rows updated",
+    );
+  } catch (error) {
+    logger.warn({ err: error }, "Quiz lead purchase backfill failed");
+  }
+}
+
 export function startAbandonedCheckoutScheduler() {
   const interval = setInterval(() => {
     void sendAbandonedCheckoutEmails();
   }, SCHEDULER_INTERVAL_MS);
   interval.unref();
-  void sendAbandonedCheckoutEmails();
+  void backfillLeadPurchases().finally(() => sendAbandonedCheckoutEmails());
 }
