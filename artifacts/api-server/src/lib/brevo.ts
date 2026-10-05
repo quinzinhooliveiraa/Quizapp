@@ -31,6 +31,7 @@ export async function sendEmailViaBrevo(
   const apiKey = process.env.BREVO_API_KEY;
   const fromEmail = process.env.EMAIL_FROM;
   const fromName = process.env.EMAIL_FROM_NAME || "Perguntas de Conexão";
+  const replyToEmail = process.env.EMAIL_REPLY_TO?.trim();
 
   if (!apiKey || !fromEmail) {
     return { ok: false, error: "email not configured" };
@@ -46,6 +47,9 @@ export async function sendEmailViaBrevo(
       },
       body: JSON.stringify({
         sender: { email: fromEmail, name: fromName },
+        ...(replyToEmail
+          ? { replyTo: { email: replyToEmail, name: fromName } }
+          : {}),
         to: [{ email: params.to, name: params.toName || params.to }],
         subject: params.subject,
         htmlContent: params.htmlContent,
