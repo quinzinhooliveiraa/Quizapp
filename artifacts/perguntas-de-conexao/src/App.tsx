@@ -2844,6 +2844,7 @@ function Lp1Quiz({
   const completionTrackedRef = useRef(false);
   const leadSubmissionInFlightRef = useRef(false);
   const completionStorageKey = `lp1-quiz-completed:${lpId}`;
+  const quizStartPixelSentRef = useRef(false);
   const current = LP1_SCREENS[step] ?? LP1_SCREENS[0];
   const isLastScreen = step === LP1_SCREENS.length - 1;
   const selectedAnswer =
@@ -2942,6 +2943,41 @@ function Lp1Quiz({
     showOffer,
     step,
   ]);
+
+  useEffect(() => {
+    const QUIZ_START_PIXEL_KEY = "pdc-meta-quiz-start-sent";
+    const fire = () => {
+      if (quizStartPixelSentRef.current) return;
+
+      try {
+        if (sessionStorage.getItem(QUIZ_START_PIXEL_KEY) === "true") {
+          quizStartPixelSentRef.current = true;
+          return;
+        }
+      } catch {
+        // Session storage may be unavailable in embedded or private browsers.
+      }
+
+      if (!isMetaTrackingAllowed()) return;
+
+      trackMetaPixelEvent(
+        "QuizStart",
+        {},
+        createMetaEventId("QuizStart"),
+        true,
+      );
+      quizStartPixelSentRef.current = true;
+      try {
+        sessionStorage.setItem(QUIZ_START_PIXEL_KEY, "true");
+      } catch {
+        // The ref still prevents duplicate events during this mount.
+      }
+    };
+
+    fire();
+    window.addEventListener(META_CONSENT_CHANGE_EVENT, fire);
+    return () => window.removeEventListener(META_CONSENT_CHANGE_EVENT, fire);
+  }, []);
 
   useEffect(() => {
     try {
@@ -6103,14 +6139,6 @@ function useLpTracking(
     extra: Record<string, unknown> = {},
   ) => {
     syncInternalTrackingFromUrl();
-    if (eventType === "quiz_start") {
-      trackMetaPixelEvent(
-        "QuizStart",
-        {},
-        createMetaEventId("QuizStart"),
-        true,
-      );
-    }
     void fetch(apiUrl("/api/track/page-event"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
