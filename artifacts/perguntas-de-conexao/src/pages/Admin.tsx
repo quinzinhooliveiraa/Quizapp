@@ -167,6 +167,7 @@ type QuizEmailFunnel = {
   resultViewed: number;
   leads: number;
   leadsSawOffer: number;
+  leadsEmail1: number;
   leadPurchases: number;
 };
 type QuizLeadSource = {
@@ -175,6 +176,10 @@ type QuizLeadSource = {
   checkouts: number;
   pix: number;
   purchases: number;
+};
+type QuizResumeEmailSales = {
+  emailNumber: number;
+  sales: number;
 };
 type QuizAnalytics = {
   quizId: string;
@@ -188,6 +193,7 @@ type QuizAnalytics = {
   liveSince: string | null;
   emailFunnel: QuizEmailFunnel;
   leadSources: QuizLeadSource[];
+  resumeEmailSales: QuizResumeEmailSales[];
   questions: QuizAnalyticsQuestion[];
   answerBreakdown: QuizAnalyticsAnswer[];
   campaigns: QuizAnalyticsGroup[];
@@ -1390,7 +1396,7 @@ function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
           <div><span>Enviaram e-mail</span><strong>{data.emailFunnel.emailSubmitted}</strong></div>
           <div><span>Optaram por pular</span><strong>{data.emailFunnel.emailSkipped}</strong></div>
           <div><span>Viram o resultado</span><strong>{data.emailFunnel.resultViewed}</strong></div>
-          <div><span>Leads salvos</span><strong>{data.emailFunnel.leads}</strong></div>
+          <div><span>Leads do quiz ({data.emailFunnel.leadsEmail1} receberam e-mail 1)</span><strong>{data.emailFunnel.leads}</strong></div>
           <div><span>Viraram checkout</span><strong>{data.emailFunnel.leadsSawOffer}</strong></div>
           <div><span>Compras dos leads</span><strong>{data.emailFunnel.leadPurchases}</strong></div>
         </div>
@@ -1527,6 +1533,18 @@ function QuizAnswersPanel({ data }: { data: QuizAnalytics }) {
           ) : (
             <p className="admin-footnote">Nenhum lead neste período.</p>
           )}
+          <p className="admin-footnote">
+            Vendas pelo /retomar por e-mail:{" "}
+            {[1, 2, 3, 4, 5]
+              .map((emailNumber) => {
+                const sales =
+                  data.resumeEmailSales.find(
+                    (item) => item.emailNumber === emailNumber,
+                  )?.sales ?? 0;
+                return `e${emailNumber} ${sales}`;
+              })
+              .join(" · ")}
+          </p>
         </div>
       </div>
     </section>

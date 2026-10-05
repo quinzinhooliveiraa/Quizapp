@@ -108,6 +108,7 @@ import type {
   ResendAdminBuyerAccessParams,
   ResetGuestOnboarding200,
   ResetOwnerOnboarding200,
+  ResumeCheckoutParams,
   Review,
   ReviewInput,
   RunAdminExperimentOptimizationParams,
@@ -1796,20 +1797,29 @@ export const useVerifyCardCheckout = <TError = ErrorType<void>,
       return useMutation(getVerifyCardCheckoutMutationOptions(options));
     }
 
-export const getResumeCheckoutUrl = (sessionId: string,) => {
+export const getResumeCheckoutUrl = (sessionId: string,
+    params?: ResumeCheckoutParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/checkout/resume/${sessionId}`
+  return stringifiedParams.length > 0 ? `/api/checkout/resume/${sessionId}?${stringifiedParams}` : `/api/checkout/resume/${sessionId}`
 }
 
 /**
- * @summary Reopen an unfinished checkout
+ * @summary Reopen an unfinished checkout or a quiz lead
  */
-export const resumeCheckout = async (sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<CheckoutResumeResponse> => {
+export const resumeCheckout = async (sessionId: string,
+    params?: ResumeCheckoutParams, options?: Parameters<typeof customFetch>[1]): Promise<CheckoutResumeResponse> => {
 
-  return customFetch<CheckoutResumeResponse>(getResumeCheckoutUrl(sessionId),
+  return customFetch<CheckoutResumeResponse>(getResumeCheckoutUrl(sessionId,params),
   {
     ...options,
     method: 'GET'
@@ -1822,23 +1832,25 @@ export const resumeCheckout = async (sessionId: string, options?: Parameters<typ
 
 
 
-export const getResumeCheckoutQueryKey = (sessionId: string,) => {
+export const getResumeCheckoutQueryKey = (sessionId: string,
+    params?: ResumeCheckoutParams,) => {
     return [
-    `/api/checkout/resume/${sessionId}`
+    `/api/checkout/resume/${sessionId}`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getResumeCheckoutQueryOptions = <TData = Awaited<ReturnType<typeof resumeCheckout>>, TError = ErrorType<void>>(sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof resumeCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getResumeCheckoutQueryOptions = <TData = Awaited<ReturnType<typeof resumeCheckout>>, TError = ErrorType<void>>(sessionId: string,
+    params?: ResumeCheckoutParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof resumeCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getResumeCheckoutQueryKey(sessionId);
+  const queryKey =  queryOptions?.queryKey ?? getResumeCheckoutQueryKey(sessionId,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof resumeCheckout>>> = ({ signal }) => resumeCheckout(sessionId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof resumeCheckout>>> = ({ signal }) => resumeCheckout(sessionId,params, { signal, ...requestOptions });
 
 
 
@@ -1852,15 +1864,16 @@ export type ResumeCheckoutQueryError = ErrorType<void>
 
 
 /**
- * @summary Reopen an unfinished checkout
+ * @summary Reopen an unfinished checkout or a quiz lead
  */
 
 export function useResumeCheckout<TData = Awaited<ReturnType<typeof resumeCheckout>>, TError = ErrorType<void>>(
- sessionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof resumeCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ sessionId: string,
+    params?: ResumeCheckoutParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof resumeCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getResumeCheckoutQueryOptions(sessionId,options)
+  const queryOptions = getResumeCheckoutQueryOptions(sessionId,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -2548,7 +2561,7 @@ export const getOptOutOfEmailUrl = (id: string,) => {
 }
 
 /**
- * @summary Opt out of future checkout emails
+ * @summary Opt out of future diagnosis and abandoned-checkout emails
  */
 export const optOutOfEmail = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<EmailOptOutResponse> => {
 
@@ -2597,7 +2610,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type OptOutOfEmailMutationError = ErrorType<unknown>
 
     /**
- * @summary Opt out of future checkout emails
+ * @summary Opt out of future diagnosis and abandoned-checkout emails
  */
 export const useOptOutOfEmail = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optOutOfEmail>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2955,7 +2968,7 @@ export const getGetAdminQuizAnalyticsUrl = (params: GetAdminQuizAnalyticsParams,
 }
 
 /**
- * @summary Get quiz answer analytics
+ * @summary Get quiz answers, email-funnel metrics, and lead sources
  */
 export const getAdminQuizAnalytics = async (params: GetAdminQuizAnalyticsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminQuizAnalytics> => {
 
@@ -3002,7 +3015,7 @@ export type GetAdminQuizAnalyticsQueryError = ErrorType<void>
 
 
 /**
- * @summary Get quiz answer analytics
+ * @summary Get quiz answers, email-funnel metrics, and lead sources
  */
 
 export function useGetAdminQuizAnalytics<TData = Awaited<ReturnType<typeof getAdminQuizAnalytics>>, TError = ErrorType<void>>(

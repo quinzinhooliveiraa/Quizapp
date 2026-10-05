@@ -6151,6 +6151,7 @@ function useCheckout({
   onTrackingEvent,
   experimentAssignment,
   resumeSessionId,
+  resumeEmailN,
 }: {
   sourceLp: CheckoutSourceLp;
   onTrackingEvent?: (
@@ -6160,6 +6161,7 @@ function useCheckout({
   ) => void;
   experimentAssignment?: StoredExperimentAssignment;
   resumeSessionId?: string;
+  resumeEmailN?: number;
 }) {
   const pricing = usePricing();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -6331,7 +6333,12 @@ function useCheckout({
     let cancelled = false;
     openCheckout();
     setCheckoutState("sending");
-    fetch(apiUrl(`/api/checkout/resume/${encodeURIComponent(resumeSessionId)}`))
+    const emailAttribution = resumeEmailN ? `?e=${resumeEmailN}` : "";
+    fetch(
+      apiUrl(
+        `/api/checkout/resume/${encodeURIComponent(resumeSessionId)}${emailAttribution}`,
+      ),
+    )
       .then(async (response) => {
         const data = (await response.json()) as {
           sessionId?: string;
@@ -6417,7 +6424,7 @@ function useCheckout({
     return () => {
       cancelled = true;
     };
-  }, [resumeSessionId]);
+  }, [resumeEmailN, resumeSessionId]);
 
   useEffect(() => {
     if (!checkoutOfferState?.deadline) return;
@@ -14337,9 +14344,14 @@ function AccessLinkRoute({ params }: { params: { sessionId: string } }) {
 }
 
 function ResumeCheckoutRoute({ params }: { params: { sessionId: string } }) {
+  const emailSequence = Number(new URLSearchParams(window.location.search).get("e"));
   const checkout = useCheckout({
     sourceLp: "v2",
     resumeSessionId: params.sessionId,
+    resumeEmailN:
+      Number.isInteger(emailSequence) && emailSequence >= 1 && emailSequence <= 5
+        ? emailSequence
+        : undefined,
   });
 
   if (!checkout.checkoutOpen) {

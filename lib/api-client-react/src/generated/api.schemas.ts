@@ -599,14 +599,30 @@ export interface QuizAnswerInput {
   internal?: boolean;
 }
 
+export type QuizEmailConfigMode = typeof QuizEmailConfigMode[keyof typeof QuizEmailConfigMode];
+
+
+export const QuizEmailConfigMode = {
+  required: 'required',
+  optional: 'optional',
+} as const;
+
 export interface QuizEmailConfig {
-  required: boolean;
+  mode: QuizEmailConfigMode;
   /** @nullable */
-  liveSince: string | null;
+  liveSince?: string | null;
 }
 
+export type QuizEmailConfigInputMode = typeof QuizEmailConfigInputMode[keyof typeof QuizEmailConfigInputMode];
+
+
+export const QuizEmailConfigInputMode = {
+  required: 'required',
+  optional: 'optional',
+} as const;
+
 export interface QuizEmailConfigInput {
-  required: boolean;
+  mode: QuizEmailConfigInputMode;
 }
 
 export type QuizLeadInputLpId = typeof QuizLeadInputLpId[keyof typeof QuizLeadInputLpId];
@@ -650,10 +666,11 @@ export interface QuizLeadInput {
   utmContent?: string;
   /** @maxLength 200 */
   utmTerm?: string;
+  internal?: boolean;
 }
 
 export interface QuizLeadResponse {
-  leadId: string;
+  ok: boolean;
 }
 
 export interface EmailOptOutResponse {
@@ -668,14 +685,26 @@ export type AdminQuizAnalyticsEmailFunnel = {
   resultViewed: number;
   leads: number;
   leadsSawOffer: number;
+  leadsEmail1: number;
   leadPurchases: number;
 };
 
 export type AdminQuizAnalyticsLeadSourcesItem = {
   source: string;
+  /** @nullable */
+  campaign: string | null;
   checkouts: number;
   pix: number;
   purchases: number;
+};
+
+export type AdminQuizAnalyticsResumeEmailSalesItem = {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  emailNumber: number;
+  sales: number;
 };
 
 export type AdminQuizAnalyticsQuestionsItem = {
@@ -720,6 +749,7 @@ export interface AdminQuizAnalytics {
   liveSince: string | null;
   emailFunnel: AdminQuizAnalyticsEmailFunnel;
   leadSources: AdminQuizAnalyticsLeadSourcesItem[];
+  resumeEmailSales: AdminQuizAnalyticsResumeEmailSalesItem[];
   questions: AdminQuizAnalyticsQuestionsItem[];
   answerBreakdown: AdminQuizAnalyticsAnswerBreakdownItem[];
   campaigns: AdminQuizAnalyticsCampaignsItem[];
@@ -1202,9 +1232,9 @@ export type CheckoutResumeResponsePix = {
 
 export interface CheckoutResumeResponse {
   sessionId: string;
-  isLeadResume?: boolean;
+  isLeadResume: boolean;
   /** @nullable */
-  leadId?: string | null;
+  leadId: string | null;
   buyerName: string;
   /** @nullable */
   buyerEmail: string | null;
@@ -1297,6 +1327,14 @@ export type CancelInvite200 = {
 
 export type UpdateCheckoutCardEmail200 = {
   ok: boolean;
+};
+
+export type ResumeCheckoutParams = {
+/**
+ * @minimum 1
+ * @maximum 5
+ */
+e?: number;
 };
 
 export type ReceiveStripeWebhookBody = { [key: string]: unknown };

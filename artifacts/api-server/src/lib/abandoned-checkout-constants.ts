@@ -1,0 +1,1 @@
+export const ABANDONED_CHECKOUT_DISCOUNT_MS = 5 * 24 * 60 * 60 * 1000;

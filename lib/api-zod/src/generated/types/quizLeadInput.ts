@@ -39,4 +39,5 @@ export interface QuizLeadInput {
   utmContent?: string;
   /** @maxLength 200 */
   utmTerm?: string;
+  internal?: boolean;
 }

@@ -10,6 +10,7 @@ import type { AdminQuizAnalyticsCampaignsItem } from './adminQuizAnalyticsCampai
 import type { AdminQuizAnalyticsEmailFunnel } from './adminQuizAnalyticsEmailFunnel';
 import type { AdminQuizAnalyticsLeadSourcesItem } from './adminQuizAnalyticsLeadSourcesItem';
 import type { AdminQuizAnalyticsQuestionsItem } from './adminQuizAnalyticsQuestionsItem';
+import type { AdminQuizAnalyticsResumeEmailSalesItem } from './adminQuizAnalyticsResumeEmailSalesItem';
 import type { AdminQuizAnalyticsVariantsItem } from './adminQuizAnalyticsVariantsItem';
 
 export interface AdminQuizAnalytics {
@@ -25,6 +26,7 @@ export interface AdminQuizAnalytics {
   liveSince: Date | null;
   emailFunnel: AdminQuizAnalyticsEmailFunnel;
   leadSources: AdminQuizAnalyticsLeadSourcesItem[];
+  resumeEmailSales: AdminQuizAnalyticsResumeEmailSalesItem[];
   questions: AdminQuizAnalyticsQuestionsItem[];
   answerBreakdown: AdminQuizAnalyticsAnswerBreakdownItem[];
   campaigns: AdminQuizAnalyticsCampaignsItem[];

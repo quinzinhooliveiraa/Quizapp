@@ -32,3 +32,4 @@
 - [Primary landing authority](primary-landing-authority.md) — the server setting is authoritative; browser storage must not choose which page `/` renders.
 - [Quiz tracking contract](quiz-tracking-contract.md) — compound stages need explicit catalog-compatible summary events; page-section observation is supplemental.
 - [Buyer access history](buyer-access-history.md) — treat completed onboarding as historical evidence of use when the newer access timestamp is absent.
+- [Quiz-lead discount deadlines](quiz-lead-discount-deadline.md) — anchor a quiz lead’s five-day offer to lead creation, not the later checkout session.

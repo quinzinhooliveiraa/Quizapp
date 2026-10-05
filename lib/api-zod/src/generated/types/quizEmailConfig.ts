@@ -5,9 +5,10 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuizEmailConfigMode } from './quizEmailConfigMode';
 
 export interface QuizEmailConfig {
-  required: boolean;
+  mode: QuizEmailConfigMode;
   /** @nullable */
-  liveSince: Date | null;
+  liveSince?: Date | null;
 }

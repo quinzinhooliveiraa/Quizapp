@@ -5,7 +5,8 @@
  * Perguntas de Conexão API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuizEmailConfigInputMode } from './quizEmailConfigInputMode';
 
 export interface QuizEmailConfigInput {
-  required: boolean;
+  mode: QuizEmailConfigInputMode;
 }

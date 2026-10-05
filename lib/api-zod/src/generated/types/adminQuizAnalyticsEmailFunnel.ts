@@ -14,5 +14,6 @@ export type AdminQuizAnalyticsEmailFunnel = {
   resultViewed: number;
   leads: number;
   leadsSawOffer: number;
+  leadsEmail1: number;
   leadPurchases: number;
 };

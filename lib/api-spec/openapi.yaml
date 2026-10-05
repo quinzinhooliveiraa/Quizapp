@@ -497,6 +497,13 @@ paths:
           required: true
           schema:
             type: string
+        - name: e
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
       responses:
         "200":
           description: Checkout data for resuming payment
@@ -2253,6 +2260,7 @@ components:
             resultViewed: { type: integer }
             leads: { type: integer }
             leadsSawOffer: { type: integer }
+            leadsEmail1: { type: integer }
             leadPurchases: { type: integer }
           required:
             [
@@ -2263,6 +2271,7 @@ components:
               resultViewed,
               leads,
               leadsSawOffer,
+              leadsEmail1,
               leadPurchases,
             ]
         leadSources:
@@ -2276,6 +2285,14 @@ components:
               pix: { type: integer }
               purchases: { type: integer }
             required: [source, campaign, checkouts, pix, purchases]
+        resumeEmailSales:
+          type: array
+          items:
+            type: object
+            properties:
+              emailNumber: { type: integer, minimum: 1, maximum: 5 }
+              sales: { type: integer }
+            required: [emailNumber, sales]
         questions:
           type: array
           items:
@@ -2330,6 +2347,7 @@ components:
           liveSince,
           emailFunnel,
           leadSources,
+          resumeEmailSales,
           questions,
           answerBreakdown,
           campaigns,

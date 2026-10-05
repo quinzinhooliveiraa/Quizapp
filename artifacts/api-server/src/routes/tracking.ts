@@ -797,6 +797,7 @@ async function computeQuizAnalytics({
     leadTotals,
     leadPurchases,
     leadSources,
+    resumeEmailSales,
     emailConfig,
   ] = await Promise.all([
       db
@@ -888,6 +889,7 @@ async function computeQuizAnalytics({
         .select({
           leads: sql<number>`count(distinct ${quizLeadsTable.visitorKey})`,
           leadsSawOffer: sql<number>`count(distinct ${quizLeadsTable.visitorKey}) filter (where ${quizLeadsTable.offerSeenAt} is not null)`,
+          leadsEmail1: sql<number>`count(distinct ${quizLeadsTable.visitorKey}) filter (where ${quizLeadsTable.abandonEmail1At} is not null)`,
         })
         .from(quizLeadsTable)
         .where(and(...leadWindow)),
@@ -929,6 +931,23 @@ async function computeQuizAnalytics({
           desc(sql<number>`count(distinct ${quizLeadsTable.id})`),
         )
         .limit(40),
+      db
+        .select({
+          emailNumber: sessionsTable.resumeEmailN,
+          sales: count(),
+        })
+        .from(sessionsTable)
+        .where(
+          and(
+            inArray(sessionsTable.sourceLp, lpIds),
+            gte(sessionsTable.createdAt, from),
+            lt(sessionsTable.createdAt, to),
+            eq(sessionsTable.accessGranted, true),
+            eq(sessionsTable.internal, false),
+            inArray(sessionsTable.resumeEmailN, [1, 2, 3, 4, 5]),
+          ),
+        )
+        .groupBy(sessionsTable.resumeEmailN),
       getQuizEmailConfig(),
     ]);
 
@@ -956,6 +975,7 @@ async function computeQuizAnalytics({
       resultViewed: emailEventCount("quiz_result_view"),
       leads: Number(leadTotals[0]?.leads || 0),
       leadsSawOffer: Number(leadTotals[0]?.leadsSawOffer || 0),
+      leadsEmail1: Number(leadTotals[0]?.leadsEmail1 || 0),
       leadPurchases: Number(leadPurchases[0]?.purchases || 0),
     },
     leadSources: leadSources.map((row) => ({
@@ -964,6 +984,10 @@ async function computeQuizAnalytics({
       checkouts: Number(row.checkouts || 0),
       pix: Number(row.pix || 0),
       purchases: Number(row.purchases || 0),
+    })),
+    resumeEmailSales: resumeEmailSales.map((row) => ({
+      emailNumber: row.emailNumber!,
+      sales: Number(row.sales || 0),
     })),
     questions: questions.map((row) => ({
       screenId: row.screenId,

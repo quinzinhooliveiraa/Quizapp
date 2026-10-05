@@ -403,16 +403,24 @@ export const VerifyCardCheckoutResponse = zod.object({
 
 
 /**
- * @summary Reopen an unfinished checkout
+ * @summary Reopen an unfinished checkout or a quiz lead
  */
 export const ResumeCheckoutParams = zod.object({
   "sessionId": zod.coerce.string()
 })
 
+export const resumeCheckoutQueryEMax = 5;
+
+
+
+export const ResumeCheckoutQueryParams = zod.object({
+  "e": zod.coerce.number().int().min(1).max(resumeCheckoutQueryEMax).optional()
+})
+
 export const ResumeCheckoutResponse = zod.object({
   "sessionId": zod.string(),
-  "isLeadResume": zod.boolean().optional(),
-  "leadId": zod.string().nullish(),
+  "isLeadResume": zod.boolean(),
+  "leadId": zod.string().nullable(),
   "buyerName": zod.string(),
   "buyerEmail": zod.string().nullable(),
   "paymentMethod": zod.union([zod.literal('pix'),zod.literal('card'),zod.literal(null)]).nullable(),
@@ -593,8 +601,8 @@ export const TrackQuizAnswerResponse = zod.void()
  * @summary Get the public quiz email capture mode
  */
 export const GetQuizEmailConfigResponse = zod.object({
-  "required": zod.boolean(),
-  "liveSince": zod.coerce.date().nullable()
+  "mode": zod.enum(['required', 'optional']),
+  "liveSince": zod.coerce.date().nullish()
 })
 
 
@@ -606,8 +614,8 @@ export const GetAdminQuizEmailConfigQueryParams = zod.object({
 })
 
 export const GetAdminQuizEmailConfigResponse = zod.object({
-  "required": zod.boolean(),
-  "liveSince": zod.coerce.date().nullable()
+  "mode": zod.enum(['required', 'optional']),
+  "liveSince": zod.coerce.date().nullish()
 })
 
 
@@ -619,12 +627,12 @@ export const UpdateAdminQuizEmailConfigQueryParams = zod.object({
 })
 
 export const UpdateAdminQuizEmailConfigBody = zod.object({
-  "required": zod.boolean()
+  "mode": zod.enum(['required', 'optional'])
 })
 
 export const UpdateAdminQuizEmailConfigResponse = zod.object({
-  "required": zod.boolean(),
-  "liveSince": zod.coerce.date().nullable()
+  "mode": zod.enum(['required', 'optional']),
+  "liveSince": zod.coerce.date().nullish()
 })
 
 
@@ -651,7 +659,7 @@ export const createQuizLeadBodyUtmContentMax = 200;
 
 export const createQuizLeadBodyUtmTermMax = 200;
 
-
+export const createQuizLeadBodyInternalDefault = false;
 
 export const CreateQuizLeadBody = zod.object({
   "visitorKey": zod.string().min(1).max(createQuizLeadBodyVisitorKeyMax),
@@ -663,16 +671,17 @@ export const CreateQuizLeadBody = zod.object({
   "utmMedium": zod.string().max(createQuizLeadBodyUtmMediumMax).optional(),
   "utmCampaign": zod.string().max(createQuizLeadBodyUtmCampaignMax).optional(),
   "utmContent": zod.string().max(createQuizLeadBodyUtmContentMax).optional(),
-  "utmTerm": zod.string().max(createQuizLeadBodyUtmTermMax).optional()
+  "utmTerm": zod.string().max(createQuizLeadBodyUtmTermMax).optional(),
+  "internal": zod.boolean().default(createQuizLeadBodyInternalDefault)
 })
 
 export const CreateQuizLeadResponse = zod.object({
-  "leadId": zod.string()
+  "ok": zod.boolean()
 })
 
 
 /**
- * @summary Opt out of future checkout emails
+ * @summary Opt out of future diagnosis and abandoned-checkout emails
  */
 export const optOutOfEmailPathIdMax = 120;
 
@@ -896,7 +905,7 @@ export const GetAdminAnalyticsExportResponse = zod.object({
 
 
 /**
- * @summary Get quiz answer analytics
+ * @summary Get quiz answers, email-funnel metrics, and lead sources
  */
 export const getAdminQuizAnalyticsQueryDaysMax = 90;
 
@@ -909,6 +918,10 @@ export const GetAdminQuizAnalyticsQueryParams = zod.object({
   "from": zod.date().optional(),
   "to": zod.date().optional()
 })
+
+export const getAdminQuizAnalyticsResponseResumeEmailSalesItemEmailNumberMax = 5;
+
+
 
 export const GetAdminQuizAnalyticsResponse = zod.object({
   "quizId": zod.string(),
@@ -928,13 +941,19 @@ export const GetAdminQuizAnalyticsResponse = zod.object({
   "resultViewed": zod.number().int(),
   "leads": zod.number().int(),
   "leadsSawOffer": zod.number().int(),
+  "leadsEmail1": zod.number().int(),
   "leadPurchases": zod.number().int()
 }),
   "leadSources": zod.array(zod.object({
   "source": zod.string(),
+  "campaign": zod.string().nullable(),
   "checkouts": zod.number().int(),
   "pix": zod.number().int(),
   "purchases": zod.number().int()
+})),
+  "resumeEmailSales": zod.array(zod.object({
+  "emailNumber": zod.number().int().min(1).max(getAdminQuizAnalyticsResponseResumeEmailSalesItemEmailNumberMax),
+  "sales": zod.number().int()
 })),
   "questions": zod.array(zod.object({
   "screenId": zod.string(),

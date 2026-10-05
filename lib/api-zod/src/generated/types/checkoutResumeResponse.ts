@@ -10,9 +10,9 @@ import type { CheckoutResumeResponsePix } from './checkoutResumeResponsePix';
 
 export interface CheckoutResumeResponse {
   sessionId: string;
-  isLeadResume?: boolean;
+  isLeadResume: boolean;
   /** @nullable */
-  leadId?: string | null;
+  leadId: string | null;
   buyerName: string;
   /** @nullable */
   buyerEmail: string | null;

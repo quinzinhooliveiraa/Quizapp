@@ -58,6 +58,7 @@ import { getActiveAssignmentForVisitor } from "../lib/experiments";
 import { detectDevice } from "../lib/device";
 import { resolveRegion } from "../lib/pricing";
 import { getOfferPricing, getOfferWindow } from "../lib/offers";
+import { ABANDONED_CHECKOUT_DISCOUNT_MS } from "../lib/abandoned-checkout-constants";
 import { allowEmailRequest } from "../lib/email-rate-limit";
 import { sendMetaEvent } from "../lib/meta-conversions";
 import {
@@ -432,7 +433,6 @@ const packageConfig = {
 
 const router: IRouter = Router();
 const PIX_LIFETIME_MS = 15 * 60 * 1000;
-const ABANDONED_CHECKOUT_DISCOUNT_MS = 5 * 24 * 60 * 60 * 1000;
 
 router.get("/questions/themes", (_req, res): void => {
   res.json(ListQuestionThemesResponse.parse(themes));
@@ -997,6 +997,7 @@ router.get(
     let session = directSession;
     let leadId: string | null = null;
     let isLeadResume = false;
+    let leadCreatedAt: Date | null = null;
 
     if (session) {
       const [linkedLead] = await db
@@ -1027,7 +1028,8 @@ router.get(
       if (lead) {
         leadId = lead.id;
         isLeadResume = true;
-        session = await db.transaction(async (tx) => {
+        leadCreatedAt = lead.createdAt;
+        const resumedSession = await db.transaction(async (tx) => {
           const [lockedLead] = await tx
             .select()
             .from(quizLeadsTable)
@@ -1085,6 +1087,7 @@ router.get(
             .where(eq(quizLeadsTable.id, lockedLead.id));
           return createdSession;
         });
+        if (resumedSession) session = resumedSession;
       }
     }
 
@@ -1093,10 +1096,23 @@ router.get(
       return;
     }
 
+    const emailSequenceValue = Number(req.query.e);
+    if (
+      Number.isInteger(emailSequenceValue) &&
+      emailSequenceValue >= 1 &&
+      emailSequenceValue <= 5
+    ) {
+      await db
+        .update(sessionsTable)
+        .set({ resumeEmailN: emailSequenceValue })
+        .where(eq(sessionsTable.id, session.id));
+    }
+
     const fullCents = getOfferPricing("BR").full.amountCents;
     const offerCents = getOfferPricing("BR").offer.amountCents;
     const discountValidUntil = new Date(
-      session.createdAt.getTime() + ABANDONED_CHECKOUT_DISCOUNT_MS,
+      (isLeadResume && leadCreatedAt ? leadCreatedAt : session.createdAt).getTime() +
+        ABANDONED_CHECKOUT_DISCOUNT_MS,
     );
     const discountIsActive = discountValidUntil.getTime() > Date.now();
     const resumeCents = discountIsActive

@@ -8,6 +8,8 @@
 
 export type AdminQuizAnalyticsLeadSourcesItem = {
   source: string;
+  /** @nullable */
+  campaign: string | null;
   checkouts: number;
   pix: number;
   purchases: number;
