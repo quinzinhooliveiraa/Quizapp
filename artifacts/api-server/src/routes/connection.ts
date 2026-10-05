@@ -77,6 +77,39 @@ type Theme = {
 
 type Question = ConnectionQuestion;
 
+function resolveResumeAmountCents({
+  session,
+  anchorAt,
+  now,
+  ignorePixException = false,
+}: {
+  session: typeof sessionsTable.$inferSelect;
+  anchorAt: Date;
+  now: number;
+  ignorePixException?: boolean;
+}): number {
+  const { full, offer } = getOfferPricing("BR");
+  const discountActive =
+    anchorAt.getTime() + ABANDONED_CHECKOUT_DISCOUNT_MS > now;
+  const target = discountActive
+    ? Math.min(session.lockedPriceCents ?? offer.amountCents, offer.amountCents)
+    : full.amountCents;
+  const hasValidPix =
+    session.paymentMethod === "pix" &&
+    Boolean(session.pixBrcode) &&
+    Boolean(session.pixBrcodeBase64) &&
+    Boolean(session.pixChargeId) &&
+    session.pixExpiresAt !== null &&
+    session.pixExpiresAt.getTime() > now &&
+    session.lockedPriceCents !== null;
+
+  if (!ignorePixException && hasValidPix) {
+    return session.lockedPriceCents!;
+  }
+
+  return target;
+}
+
 const legacyThemes: Theme[] = [
   {
     id: "porto-seguro",
@@ -622,35 +655,23 @@ router.post("/checkout/create", async (req, res): Promise<void> => {
   }
   let pricing = offerPricing.full;
   if (resumeSession) {
-    const resumePricing = getOfferPricing("BR");
-    const hasLockedPaymentPrice =
-      (resumeSession.paymentMethod === "pix" ||
-        resumeSession.paymentMethod === "card") &&
-      resumeSession.lockedPriceCents !== null;
-    if (hasLockedPaymentPrice) {
-      pricing =
-        resumeSession.lockedPriceCents === resumePricing.offer.amountCents
-          ? resumePricing.offer
-          : {
-              ...resumePricing.full,
-              amountCents: resumeSession.lockedPriceCents!,
-            };
-    } else {
-      const discountValidUntil = new Date(
-        resumeSession.createdAt.getTime() + ABANDONED_CHECKOUT_DISCOUNT_MS,
-      );
-      const discountIsActive = discountValidUntil.getTime() > Date.now();
-      const resumeAmount = discountIsActive
-        ? Math.min(
-            resumeSession.lockedPriceCents ?? resumePricing.offer.amountCents,
-            resumePricing.offer.amountCents,
-          )
-        : resumePricing.full.amountCents;
-      pricing =
-        resumeAmount === resumePricing.offer.amountCents
-          ? resumePricing.offer
-          : resumePricing.full;
-    }
+    const resumeCatalog = getOfferPricing("BR");
+    const [linkedResumeLead] = await db
+      .select({ createdAt: quizLeadsTable.createdAt })
+      .from(quizLeadsTable)
+      .where(eq(quizLeadsTable.sessionId, resumeSession.id))
+      .limit(1);
+    const anchorAt = linkedResumeLead?.createdAt ?? resumeSession.createdAt;
+    const resumeAmount = resolveResumeAmountCents({
+      session: resumeSession,
+      anchorAt,
+      now: Date.now(),
+      ignorePixException: true,
+    });
+    pricing =
+      resumeAmount === resumeCatalog.offer.amountCents
+        ? resumeCatalog.offer
+        : { ...resumeCatalog.full, amountCents: resumeAmount };
   } else {
     const activeOfferWindow = visitorKey
       ? await getOfferWindow(visitorKey)
@@ -998,18 +1019,21 @@ router.get(
     let leadId: string | null = null;
     let isLeadResume = false;
     let leadCreatedAt: Date | null = null;
+    let linkedLeadCreatedAt: Date | null = null;
 
     if (session) {
       const [linkedLead] = await db
         .select({
           id: quizLeadsTable.id,
           offerSeenAt: quizLeadsTable.offerSeenAt,
+          createdAt: quizLeadsTable.createdAt,
         })
         .from(quizLeadsTable)
         .where(eq(quizLeadsTable.sessionId, session.id))
         .limit(1);
       if (linkedLead) {
         leadId = linkedLead.id;
+        linkedLeadCreatedAt = linkedLead.createdAt;
         if (!linkedLead.offerSeenAt) {
           await db
             .update(quizLeadsTable)
@@ -1108,38 +1132,59 @@ router.get(
         .where(eq(sessionsTable.id, session.id));
     }
 
-    const fullCents = getOfferPricing("BR").full.amountCents;
-    const offerCents = getOfferPricing("BR").offer.amountCents;
+    const resumeCatalog = getOfferPricing("BR");
+    const now = Date.now();
+    const anchorAt =
+      (isLeadResume ? leadCreatedAt : linkedLeadCreatedAt) ?? session.createdAt;
     const discountValidUntil = new Date(
-      (isLeadResume && leadCreatedAt ? leadCreatedAt : session.createdAt).getTime() +
-        ABANDONED_CHECKOUT_DISCOUNT_MS,
+      anchorAt.getTime() + ABANDONED_CHECKOUT_DISCOUNT_MS,
     );
-    const discountIsActive = discountValidUntil.getTime() > Date.now();
-    const resumeCents = discountIsActive
-      ? Math.min(
-          session.lockedPriceCents ?? offerCents,
-          offerCents,
-        )
-      : fullCents;
-  const hasLockedPaymentPrice =
-    (session.paymentMethod === "pix" || session.paymentMethod === "card") &&
-    session.lockedPriceCents !== null;
-  const effectiveResumeCents = hasLockedPaymentPrice
-    ? session.lockedPriceCents!
-    : resumeCents;
-  if (!hasLockedPaymentPrice && session.lockedPriceCents !== resumeCents) {
+    const discountIsActive = discountValidUntil.getTime() > now;
+    const effectiveResumeCents = resolveResumeAmountCents({
+      session,
+      anchorAt,
+      now,
+    });
+    const targetResumeCents = resolveResumeAmountCents({
+      session,
+      anchorAt,
+      now,
+      ignorePixException: true,
+    });
+    const pixPriceMaintained = effectiveResumeCents !== targetResumeCents;
+    if (session.lockedPriceCents !== effectiveResumeCents || pixPriceMaintained) {
+      const motivo = pixPriceMaintained
+        ? "pix_valido_mantido"
+        : discountIsActive
+          ? "desconto_5_dias"
+          : "fora_dos_5_dias";
+      req.log.info(
+        {
+          sessionId: session.id,
+          de: session.lockedPriceCents,
+          para: effectiveResumeCents,
+          motivo,
+        },
+        "Resume checkout price resolved",
+      );
+    }
+    if (
+      session.paymentMethod !== "pix" &&
+      session.paymentMethod !== "card" &&
+      session.lockedPriceCents !== effectiveResumeCents
+    ) {
       const [updatedSession] = await db
         .update(sessionsTable)
-        .set({ lockedPriceCents: resumeCents })
+        .set({ lockedPriceCents: effectiveResumeCents })
         .where(eq(sessionsTable.id, session.id))
         .returning();
       if (updatedSession) session = updatedSession;
     }
     const resumePricing =
-      effectiveResumeCents === offerCents
-        ? getOfferPricing("BR").offer
+      effectiveResumeCents === resumeCatalog.offer.amountCents
+        ? resumeCatalog.offer
         : {
-            ...getOfferPricing("BR").full,
+            ...resumeCatalog.full,
             amountCents: effectiveResumeCents,
           };
 
@@ -1159,7 +1204,7 @@ router.get(
       session.pixBrcodeBase64 &&
       session.pixChargeId &&
       session.pixExpiresAt &&
-      session.pixExpiresAt.getTime() > Date.now() &&
+      session.pixExpiresAt.getTime() > now &&
       session.lockedPriceCents === effectiveResumeCents
     ) {
       pix = {
