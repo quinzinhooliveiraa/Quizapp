@@ -244,12 +244,12 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
             <div><p>Pagamento confirmado · link do baralho a caminho no e-mail</p></div>
           </div>
           {isUpsell && <div className="up-offer-hero"><img src="/hero/bridge-casal-sofa.webp" loading="eager" alt="" /><div /></div>}
-          <section className={`up-offer-content ${isUpsell ? "up-offer-content--hero" : ""}`}>
+          <section className={`up-offer-content ${isUpsell ? "up-offer-content--hero" : "up-offer-content--down"}`}>
             {isUpsell ? (
               <>
                 <p className="up-offer-eyebrow">Um caminho para continuar</p>
                 <h1>Antes de abrir o baralho: 1 coisa que só aparece <em>agora.</em></h1>
-                <p className="up-offer-lead">Vocês compraram para conversar de verdade. Em 30 noites, isso vira hábito, não só uma noite boa.</p>
+                <p className="up-offer-lead">Em 30 noites, a conversa deixa de ser exceção e vira rotina de vocês.</p>
                 <div className="up-offer-program">
                   <div className="up-offer-program-top"><span>PROGRAMA GUIADO · 30 DIAS</span></div>
                   <h2>30 Noites de Conexão</h2>
@@ -262,11 +262,7 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
                   </ul>
                   <p className="up-offer-program-extra">+ 2 noites de fechamento</p>
                 </div>
-                <blockquote className="up-offer-example"><span>UMA NOITE, NA PRÁTICA</span><p>Noite 1: os 3 minutos sem celular. Sentar de frente, timer de 3 minutos, só presença. Parece pouco. Experimentem.</p></blockquote>
                 <div className="up-offer-price"><strong>R$ 40,00</strong><span>pagamento único · R$ 1,33 por noite</span></div>
-                <p className="up-offer-reassurance">Seu baralho já funciona sozinho. As 30 Noites são um caminho guiado para usá-lo todo dia, não uma peça que falta.</p>
-                <p className="up-offer-guarantee"><ShieldCheck size={16} /> Mesma garantia de 7 dias: se não gostarem, devolvemos.</p>
-                <p className="up-offer-fine">Só oferecemos isso para quem acabou de entrar. Não está à venda no site.</p>
               </>
             ) : (
               <>
@@ -275,17 +271,17 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
                 <div className="up-offer-program">
                   <div className="up-offer-program-top"><span>PROGRAMA GUIADO · 7 DIAS</span></div>
                   <h2>7 Noites de Conexão</h2>
-                  <p>1 noite por dia, de 5 a 30 minutos. Um começo leve para reaproximar.</p>
+                  <p>7 noites: 2 perguntas e 1 pequeno gesto por dia. A primeira semana de vocês, guiada.</p>
                   <ul className="up-offer-weeks">
                     <li><span>01</span><span>Reaproximar</span></li>
                   </ul>
+                  <p className="up-offer-program-extra">Noites 1 a 7, uma por dia</p>
                 </div>
                 <div className="up-offer-price"><strong>R$ 15,00</strong><span>Pagamento único</span></div>
                 <p className="up-offer-guarantee"><ShieldCheck size={16} /> Mesma garantia de 7 dias.</p>
               </>
             )}
 
-            {error && <p className="up-offer-error" role="alert">{error}</p>}
             {!pix && !pixExpired && (
               <div className="up-offer-actions">
                 {cardAvailable && (
@@ -302,6 +298,8 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
                 )}
               </div>
             )}
+            {isUpsell && <p className="up-offer-guarantee"><ShieldCheck size={16} /> Mesma garantia de 7 dias: se não gostarem, devolvemos.</p>}
+            {error && <p className="up-offer-error" role="alert">{error}</p>}
             {pix && !pixExpired && (
               <div className="checkout-pix-panel up-offer-pix-panel">
                 <div className="checkout-pix-heading"><QrCode size={19} /><div><strong>Pix gerado</strong><span>aguardando confirmação do banco</span></div></div>
@@ -318,6 +316,13 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
               <div className="up-offer-expired"><p>Este Pix expirou.</p><button className="up-offer-primary" type="button" onClick={createPix}>Gerar outro Pix</button></div>
             )}
             <button className="up-offer-decline" type="button" onClick={decline} disabled={cardBusy}>{leaveLabel}</button>
+            {isUpsell && (
+              <>
+                <blockquote className="up-offer-example"><span>UMA NOITE, NA PRÁTICA</span><p>Noite 1: os 3 minutos sem celular. Sentar de frente, timer de 3 minutos, só presença. Parece pouco. Experimentem.</p></blockquote>
+                <p className="up-offer-reassurance">Seu baralho já funciona sozinho. As 30 Noites são um caminho guiado para usá-lo todo dia, não uma peça que falta.</p>
+                <p className="up-offer-fine">Só oferecemos isso para quem acabou de entrar. Não está à venda no site.</p>
+              </>
+            )}
             <p className="up-offer-secure"><LockKeyhole size={13} /> Pagamento único e seguro</p>
           </section>
         </div>

@@ -557,15 +557,19 @@
 .up-offer-check { display: grid; width: 1.35rem; height: 1.35rem; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #d9bb79; color: #291a22; }
 .up-offer-paid div { min-width: 0; }
 .up-offer-paid p { margin: 0; color: #c1b2bc; font-size: .8rem; line-height: 1.35; }
-.up-offer-hero { position: relative; height: 220px; overflow: hidden; }
+.up-offer-hero { position: relative; height: 160px; overflow: hidden; }
 .up-offer-hero img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 40%; }
 .up-offer-hero div { position: absolute; inset: 30% 0 0; background: linear-gradient(180deg, transparent, #1b111b); }
+@media (min-width: 700px) {
+  .up-offer-hero { height: 220px; }
+}
 .up-offer-content { padding: .35rem 1.25rem 1.4rem; }
 .up-offer-content--hero { position: relative; margin-top: -3.2rem; }
 .up-offer-eyebrow { margin: .1rem 0 .55rem; color: #d3b976; font: .64rem/1.25 var(--app-font-mono); letter-spacing: .13em; text-transform: uppercase; }
 .up-offer-content h1,
 .up-offer-success h1 { margin: 0; color: #faf4ee; font: 400 clamp(1.8rem, 8vw, 2.55rem)/1.02 var(--app-font-serif); letter-spacing: -.04em; text-wrap: balance; }
 .up-offer-content h1 { font-size: clamp(2rem, 9vw, 2.7rem); }
+.up-offer-content--down h1 { margin-bottom: 20px; }
 .up-offer-content h1 em { color: #e1c681; font-style: italic; font-weight: 400; }
 .up-offer-content .up-offer-eyebrow { margin: .1rem 0 .65rem; font-size: .62rem; }
 .up-offer-content .up-offer-lead { margin: .7rem 0 1.25rem; color: #d9cdd2; font-size: .95rem; line-height: 1.55; }
