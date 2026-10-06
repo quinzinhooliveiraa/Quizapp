@@ -2628,7 +2628,7 @@ function Lp1BridgeScreen({ onContinue }: { onContinue: () => void }) {
 
       <figure className="lp1-bridge-photo">
         <img
-          src="/hero/bridge-casal-sofa.png"
+          src="/hero/bridge-casal-sofa.webp"
           alt="Casal conversando no sofá em casa"
         />
       </figure>
@@ -8427,7 +8427,6 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                       Perguntas de Conexão · acesso vitalício pra 2
                     </span>
                     <span className="checkout-summary-price">
-                      <span aria-hidden="true">·</span>
                       {checkoutDiscountActive && checkoutFullPrice ? (
                         <del>{checkoutFullPrice.display}</del>
                       ) : null}

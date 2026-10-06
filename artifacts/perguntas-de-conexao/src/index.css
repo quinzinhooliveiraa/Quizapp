@@ -1382,8 +1382,11 @@
 
 .checkout-offer-bar strong {
   color: #e8c98a;
+  font-size: 1.25rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
+  line-height: 1;
 }
 
 .lp1-sale-price {
@@ -30890,9 +30893,16 @@ blockquote em {
 }
 
 .checkout-summary-line .checkout-summary-price del {
-  color: #95899d;
-  font-size: 0.82em;
+  color: #6e6477;
+  font-size: 0.94rem;
   font-weight: 400;
+}
+
+.checkout-summary-line .checkout-summary-price strong {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #7a2e46;
 }
 
 .checkout-trust-seals {
