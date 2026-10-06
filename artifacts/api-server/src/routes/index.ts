@@ -12,6 +12,7 @@ import pricingRouter from "./pricing";
 import offersRouter from "./offers";
 import escritorioRouter from "./escritorio";
 import quizLeadsRouter from "./quiz-leads";
+import upsellRouter from "./upsell";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(pricingRouter);
 router.use(offersRouter);
 router.use(escritorioRouter);
 router.use(quizLeadsRouter);
+router.use(upsellRouter);
 
 export default router;

@@ -43,6 +43,7 @@ import AnalyticsFunnelPanel, {
   type AnalyticsLandingPageId as FunnelLandingPageId,
   type AnalyticsViewMode,
 } from "@/components/AnalyticsFunnelPanel";
+import UpsellAdminPanel from "@/components/UpsellAdminPanel";
 
 const EscritorioTab = lazy(() => import("./EscritorioTab"));
 
@@ -4416,7 +4417,12 @@ export default function Admin() {
         <EscritorioTab sessionId={sessionId} />
       </Suspense>
     ),
-    buyers: <BuyersTab buyers={buyers} pendingAccess={pendingAccess} />,
+    buyers: (
+      <>
+        <BuyersTab buyers={buyers} pendingAccess={pendingAccess} />
+        <UpsellAdminPanel sessionId={sessionId} />
+      </>
+    ),
     pages: (
       <PagesTab
         origin={origin}

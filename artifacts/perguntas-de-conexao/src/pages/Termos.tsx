@@ -30,6 +30,11 @@ export default function Termos() {
           adicional. Não nos comprometemos com uma quantidade mínima de baralhos
           novos por período.
         </p>
+        <p>
+          Programas e materiais complementares vendidos à parte (como as 30
+          Noites de Conexão) não são baralhos e não entram na cláusula de
+          baralhos novos incluídos. Têm a mesma garantia de 7 dias.
+        </p>
 
         <h2>3. Preço, pagamento e acesso</h2>
         <p>

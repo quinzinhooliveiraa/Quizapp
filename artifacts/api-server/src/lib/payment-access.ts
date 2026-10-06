@@ -4,6 +4,10 @@ import { buildPurchaseAccessEmail, sendEmailViaBrevo } from "./brevo";
 import { sendPurchaseNotification } from "./push";
 import { sendMetaEvent } from "./meta-conversions";
 import { linkPurchaseToQuizLead } from "./link-purchase-to-lead";
+import {
+  enqueueAccessEmail,
+  shouldDelayAccessEmail,
+} from "./access-email-queue";
 
 type AccessUpdateExecutor = Pick<typeof db, "update">;
 
@@ -47,6 +51,7 @@ export async function grantSessionAccess(
       metaClientIp: sessionsTable.metaClientIp,
       metaClientUserAgent: sessionsTable.metaClientUserAgent,
       metaSourceUrl: sessionsTable.metaSourceUrl,
+      createdAt: sessionsTable.createdAt,
     });
   return updated;
 }
@@ -114,13 +119,27 @@ export function notifyGrantedAccess(
 
   if (!session.buyerEmail) return;
 
-  void resendGrantedAccessEmail({
-    buyerName: session.buyerName,
-    buyerEmail: session.buyerEmail,
-    sessionId: session.id,
-  })
-    .then((result) => {
+  void (async () => {
+    try {
+      if (await shouldDelayAccessEmail(session)) {
+        await enqueueAccessEmail(session.id);
+        return;
+      }
+    } catch (error) {
+      onError(error, "Could not queue delayed access email; sending now");
+    }
+
+    try {
+      const result = await resendGrantedAccessEmail({
+        buyerName: session.buyerName,
+        buyerEmail: session.buyerEmail!,
+        sessionId: session.id,
+      });
       if (!result.ok) onError(result.error, "Purchase access email failed");
-    })
-    .catch((error) => onError(error, "Purchase access email threw"));
+    } catch (error) {
+      onError(error, "Purchase access email threw");
+    }
+  })().catch((error) =>
+    onError(error, "Purchase access email processing failed"),
+  );
 }

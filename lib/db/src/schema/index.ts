@@ -210,3 +210,60 @@ export * from "./experiments";
 export * from "./quiz-answers";
 export * from "./quiz-leads";
 export * from "./settings";
+
+export const upsellOffersTable = pgTable("upsell_offers", {
+  sessionId: text("session_id").primaryKey(),
+  stage: text("stage").notNull().default("upsell"),
+  upsellSeenAt: timestamp("upsell_seen_at", { withTimezone: true }),
+  upsellDeclinedAt: timestamp("upsell_declined_at", { withTimezone: true }),
+  downsellSeenAt: timestamp("downsell_seen_at", { withTimezone: true }),
+  downsellDeclinedAt: timestamp("downsell_declined_at", {
+    withTimezone: true,
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const upsellOrdersTable = pgTable(
+  "upsell_orders",
+  {
+    id: text("id").primaryKey(),
+    sessionId: text("session_id").notNull(),
+    product: text("product").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    method: text("method"),
+    status: text("status").notNull().default("pending"),
+    abacateChargeId: text("abacate_charge_id"),
+    pixBrcode: text("pix_brcode"),
+    pixBrcodeBase64: text("pix_brcode_base64"),
+    pixExpiresAt: timestamp("pix_expires_at", { withTimezone: true }),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    doneNights: text("done_nights").notNull().default(""),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    refundedAt: timestamp("refunded_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    sessionIdIdx: index("upsell_orders_session_id_idx").on(table.sessionId),
+    abacateChargeIdIdx: index("upsell_orders_abacate_charge_id_idx").on(
+      table.abacateChargeId,
+    ),
+    stripePaymentIntentIdIdx: index(
+      "upsell_orders_stripe_payment_intent_id_idx",
+    ).on(table.stripePaymentIntentId),
+  }),
+);
+
+export const accessEmailQueueTable = pgTable("access_email_queue", {
+  sessionId: text("session_id").primaryKey(),
+  sendAt: timestamp("send_at", { withTimezone: true }).notNull(),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

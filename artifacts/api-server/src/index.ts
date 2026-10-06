@@ -4,6 +4,7 @@ import { attachLobbyServer } from "./lib/lobbyServer";
 import { logger } from "./lib/logger";
 import { startExperimentOptimizationScheduler } from "./lib/experiment-optimization";
 import { startPaymentReconciliationScheduler } from "./lib/payment-reconciliation";
+import { startUpsellReconciliationScheduler } from "./lib/upsell-reconciliation";
 import { startAbandonedCheckoutScheduler } from "./lib/abandoned-checkout";
 import { ensureQuizEmailLiveSince } from "./lib/quiz-email-config";
 
@@ -36,5 +37,6 @@ httpServer.listen(port, (err?: Error) => {
   );
   startExperimentOptimizationScheduler();
   startPaymentReconciliationScheduler();
+  startUpsellReconciliationScheduler();
   startAbandonedCheckoutScheduler();
 });

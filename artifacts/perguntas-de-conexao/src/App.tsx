@@ -7,6 +7,7 @@ import {
   forwardRef,
   lazy,
   Suspense,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -128,6 +129,12 @@ const Privacidade = lazy(() => import("@/pages/Privacidade"));
 import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
+import UpsellOffer, {
+  type UpsellState,
+} from "@/pages/UpsellOffer";
+import NoitesPage, {
+  NoitesEntryCard,
+} from "@/pages/Noites";
 import { Lp1SalePage } from "@/components/Lp1SalePage";
 import { Lp1MechanismSection } from "@/components/Lp1MechanismSection";
 import { Lp1PriceCard } from "@/components/Lp1PriceCard";
@@ -355,6 +362,65 @@ const stripePublishableKey = (
 const stripePromise = stripePublishableKey
   ? loadStripe(stripePublishableKey)
   : null;
+
+function PostPurchaseRoute() {
+  const sessionId = safeGetItem("conexao-session")?.trim() || "";
+  const [offer, setOffer] = useState<UpsellState | null>(null);
+  const [fallback, setFallback] = useState(false);
+  const goToFallback = useCallback(() => setFallback(true), []);
+
+  useEffect(() => {
+    if (!sessionId) {
+      setFallback(true);
+      return;
+    }
+    const controller = new AbortController();
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      controller.abort();
+      setFallback(true);
+    }, 3000);
+
+    fetch(
+      apiUrl(`/api/upsell/state?sessionId=${encodeURIComponent(sessionId)}`),
+      { signal: controller.signal },
+    )
+      .then((response) => {
+        if (!response.ok) throw new Error("upsell state unavailable");
+        return response.json() as Promise<UpsellState>;
+      })
+      .then((state) => {
+        if (state.eligible && state.stage !== "done" && state.product) {
+          setOffer(state);
+        } else {
+          setFallback(true);
+        }
+      })
+      .catch(() => setFallback(true))
+      .finally(() => {
+        settled = true;
+        window.clearTimeout(timeout);
+      });
+
+    return () => {
+      settled = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [sessionId]);
+
+  if (fallback) return <PostPurchaseInvite />;
+  if (!offer) return <RouteLoading />;
+  return (
+    <UpsellOffer
+      sessionId={sessionId}
+      initialState={offer}
+      stripePromise={stripePromise ?? Promise.resolve(null)}
+      onFallback={goToFallback}
+    />
+  );
+}
 
 type StoredExperimentAssignment = {
   experimentId: string;
@@ -11944,6 +12010,7 @@ function AppExperienceReference() {
                     }).format(new Date())}
                   </time>
                 </div>
+                <NoitesEntryCard />
                 <section
                   className="eu-daily-card"
                   onClick={openDailyForm}
@@ -12394,6 +12461,7 @@ function AppExperienceReference() {
               </section>
             ) : (
               <section className="deck-home" aria-labelledby="deck-home-title">
+                {activeNav === "todos" ? <NoitesEntryCard /> : null}
                 <div className="deck-home-heading">
                   <h1
                     id="deck-home-title"
@@ -14692,7 +14760,9 @@ function Router() {
           </Route>
           <Route path="/e/:experimentSlug" component={ExperimentLinkRoute} />
           <Route path="/onboarding" component={Onboarding} />
-          <Route path="/post-purchase" component={PostPurchaseInvite} />
+          <Route path="/post-purchase" component={PostPurchaseRoute} />
+          <Route path="/noites/:sessionId" component={NoitesPage} />
+          <Route path="/noites" component={NoitesPage} />
           <Route path="/acesso/:sessionId" component={AccessLinkRoute} />
           <Route path="/retomar/:sessionId" component={ResumeCheckoutRoute} />
           <Route path="/sair/:id" component={EmailUnsubscribeRoute} />
@@ -14744,6 +14814,8 @@ function RouteAwareSplash() {
     location === "/login" ||
     location === "/onboarding" ||
     location === "/post-purchase" ||
+    location === "/noites" ||
+    location.startsWith("/noites/") ||
     location.startsWith("/acesso/") ||
     location.startsWith("/retomar/") ||
     location.startsWith("/sair/") ||

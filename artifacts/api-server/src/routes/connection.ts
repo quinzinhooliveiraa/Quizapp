@@ -49,6 +49,7 @@ import {
 } from "../lib/abacatepay";
 import {
   createStripePaymentIntent,
+  attachCustomerToPaymentIntent,
   fetchStripePaymentIntentClientSecret,
   isStripeConfigured,
   retrieveStripePaymentIntent,
@@ -998,6 +999,19 @@ router.post("/checkout/card/email", async (req, res): Promise<void> => {
     })
     .where(eq(sessionsTable.id, sessionId));
 
+  try {
+    await attachCustomerToPaymentIntent(
+      paymentIntentId,
+      buyerEmail.trim().toLowerCase(),
+      buyerName?.trim() || session.buyerName,
+    );
+  } catch (error) {
+    req.log.warn(
+      { err: error, sessionId, paymentIntentId },
+      "Could not attach a customer to the checkout payment intent",
+    );
+  }
+
   res.json({ ok: true });
 });
 
@@ -1331,6 +1345,12 @@ router.post("/checkout/stripe-webhook", async (req, res): Promise<void> => {
   }
 
   const paymentIntent = event.data.object;
+  if (paymentIntent.metadata?.upsellOrderId) {
+    const { markOrderPaid } = await import("../lib/upsell");
+    await markOrderPaid(paymentIntent.metadata.upsellOrderId);
+    res.json({ received: true });
+    return;
+  }
   const sessionIdFromMetadata = paymentIntent.metadata?.sessionId;
   let sessionId =
     typeof sessionIdFromMetadata === "string" && sessionIdFromMetadata
@@ -1397,6 +1417,20 @@ router.post("/checkout/abacatepay-webhook", async (req, res): Promise<void> => {
   const eventId = parsed.data.id;
   const chargeId =
     typeof parsed.data.data.id === "string" ? parsed.data.data.id : null;
+  if (event === "transparent.completed" && signatureValid && chargeId) {
+    const { upsellOrdersTable } = await import("@workspace/db");
+    const [upsellOrder] = await db
+      .select({ id: upsellOrdersTable.id })
+      .from(upsellOrdersTable)
+      .where(eq(upsellOrdersTable.abacateChargeId, chargeId))
+      .limit(1);
+    if (upsellOrder) {
+      const { markOrderPaid } = await import("../lib/upsell");
+      await markOrderPaid(upsellOrder.id);
+      res.json({ accepted: true });
+      return;
+    }
+  }
   const sessionIdFromBody =
     parsed.data.data.metadata?.sessionId ??
     parsed.data.data.metadata?.externalId ??

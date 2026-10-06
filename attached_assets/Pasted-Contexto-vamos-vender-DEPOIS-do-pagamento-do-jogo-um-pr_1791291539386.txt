@@ -1,0 +1,804 @@
+Contexto: vamos vender, DEPOIS do pagamento do jogo, um programa guiado chamado "30 Noites de
+Conexão" por R$ 40,00 (1 noite por dia durante 30 dias: um ritual curto + 2 perguntas + 1
+micro-ação). Se a pessoa recusar, aparece uma segunda tela com "7 Noites de Conexão" (a 1ª semana
+do mesmo programa) por R$ 15,00. Quem compra recebe a trilha dentro do app. Isto NÃO é um baralho:
+a LP e os Termos prometem "novos baralhos incluídos"; o programa é outro produto e não pode
+aparecer como baralho em lugar nenhum (nem na lista de temas, nem no contador de cartas).
+
+REGRAS QUE VALEM PARA TUDO
+- Em arquivo novo do front (UpsellOffer.tsx, Noites.tsx) NÃO importe nada de App.tsx (cria import
+  circular, a tela fica em branco). Defina no próprio arquivo `const apiUrl = (path: string) =>
+  `${apiBase}${path}`` do mesmo jeito que pages/Login.tsx faz, e receba o stripePromise por props
+  (não exporte do App.tsx).
+- Chamadas do front para a API: SEMPRE com apiUrl(...) (App.tsx e páginas novas) ou
+  `${apiBaseUrl}/api/...` (Admin). Nenhum fetch pode começar com "/api" relativo (o front e a API
+  ficam em domínios diferentes).
+- Banco: só ADICIONAR (o boot roda drizzle-kit push --force em produção). Não renomear, não
+  remover, não mudar tipo de nada que existe. Não rodar push à mão.
+- Não mexer em preço de entrada (offers.ts), janela de 10 min, layout do checkout, 109, 104a, 104b.
+- Upsell só para região BR (R$). Portugal/EUR: nada muda, a tela não aparece.
+- Tudo que a tela afirma tem que ser verdade. Não escreva "De R$ 67", contador, depoimento,
+  "últimas vagas" nem "sem isso o baralho não funciona". A única afirmação de exclusividade
+  permitida é "Não está à venda no site", e ela só vale porque NADA mais vende este produto.
+  Então: não crie nenhum botão de compra do programa dentro do app e nenhum e-mail oferecendo
+  o programa.
+- O ACESSO ao jogo é liberado na hora do pagamento (accessGranted, push, Meta e a trava de
+  recuperação continuam IMEDIATOS). Só o E-MAIL de acesso passa a ter atraso controlado, só para
+  quem é elegível ao upsell (item 10). O upsell NUNCA atrasa nem bloqueia o acesso: se qualquer
+  chamada do upsell falhar ou demorar mais de 3 s, caia direto na tela de convite que já existe
+  (PostPurchaseInvite), que já abre o baralho sem depender do e-mail.
+
+1) BANCO (lib/db/src/schema/index.ts, 2 tabelas novas no FIM do arquivo)
+   upsell_offers (1 linha por sessão de compra):
+     session_id text PK · stage text not null default 'upsell' ('upsell' | 'downsell' | 'done') ·
+     upsell_seen_at, upsell_declined_at, downsell_seen_at, downsell_declined_at timestamptz ·
+     created_at timestamptz default now().
+   upsell_orders (1 linha por tentativa de pagamento):
+     id text PK (uuid) · session_id text not null · product text not null ('noites30'|'noites7') ·
+     amount_cents integer not null · method text ('card'|'pix') · status text not null default
+     'pending' ('pending'|'paid'|'refunded'|'failed') · abacate_charge_id text · pix_brcode text ·
+     pix_brcode_base64 text · pix_expires_at timestamptz · stripe_payment_intent_id text ·
+     done_nights text not null default '' (números separados por vírgula) · paid_at timestamptz ·
+     refunded_at timestamptz · created_at timestamptz default now().
+     Índices em session_id, abacate_charge_id, stripe_payment_intent_id. (Não há coluna "interna":
+     o admin descobre por JOIN com sessions.internal.)
+   Os imports que o arquivo já tem (boolean, integer, pgTable, text, timestamp) bastam. Confirme
+   no diff que só há linhas ADICIONADAS.
+
+2) STRIPE: GUARDAR O CARTÃO PARA O 1 CLIQUE (artifacts/api-server/src/lib/stripe.ts)
+   - Mantenha a assinatura de createStripePaymentIntent({ sessionId, buyerEmail, pricing })
+     (o 104a chama essa função no /retomar). Por dentro: se buyerEmail existir, ache o cliente
+     (stripe.customers.list({ email, limit: 1 })) ou crie um (email, metadata.sessionId) e crie o
+     PaymentIntent com customer e setup_future_usage: "on_session" SÓ quando pricing.currency for
+     "brl" (Portugal/EUR: não guarda cartão, fica exatamente como hoje). Sem e-mail: cria como hoje.
+   - Atenção: nesse momento o PaymentElement do cliente já pode estar montado com o PI antigo.
+     Não mexa no front por causa disso; se o confirmPayment passar a falhar ou o formulário mudar,
+     pare e me avise (teste 13).
+   - Função nova attachCustomerToPaymentIntent(paymentIntentId, email, name?): se o PI ainda não
+     tem customer e não foi confirmado, acha/cria o cliente e faz paymentIntents.update com
+     customer + setup_future_usage: "on_session". Faz nada se o PI não for em brl. Chame-a na rota POST /checkout/card/email
+     (connection.ts), logo depois do db.update que grava o e-mail, dentro de try/catch (se
+     falhar, só loga: o pagamento do jogo não pode quebrar). Isso cobre o pré-carregamento do
+     cartão (walletPreload), que cria o PI antes de haver e-mail.
+   - Não mude valor, moeda, metadados nem o fluxo do PaymentElement. Se o PaymentElement passar
+     a mostrar algum texto novo sobre "salvar cartão", me avise em vez de seguir.
+
+3) LIB DO UPSELL (arquivo novo artifacts/api-server/src/lib/upsell.ts)
+   - Produtos fixos: noites30 { cents: 4000, nights: 30, name: "30 Noites de Conexão" } e
+     noites7 { cents: 1500, nights: 7, name: "7 Noites de Conexão" }. Moeda brl.
+   - Conteúdo: arquivo novo artifacts/api-server/src/lib/noites-content.ts com o NOITES abaixo
+     (tipo Noite exportado). O conteúdo fica SÓ no servidor: a API entrega apenas as noites já
+     liberadas (não coloque o texto no bundle do front).
+   - Data de lançamento: grave em app_settings (mesmo padrão de primary-landing-page.ts) a chave
+     upsell_launch_at = agora NO BOOT do servidor (junto de startUpsellReconciliationScheduler,
+     só se a chave ainda não existir; nunca regrave). NÃO grave na primeira consulta de estado: se
+     fosse assim, uma compra-teste feita logo depois do deploy ficaria "antes do lançamento" e a
+     oferta não apareceria. Sessões criadas ANTES dessa data não são elegíveis (ninguém que
+     comprou antes do deploy vê a oferta).
+   - getUpsellState(sessionId): elegível só se a sessão existe, accessGranted === true, currency
+     brl e createdAt >= upsell_launch_at. O estágio vem de upsell_offers (cria a linha com stage
+     'upsell' na primeira consulta de uma sessão elegível). Se o estágio atual foi visto há mais
+     de 24 h sem decisão, vira 'done'. Se já existe order 'paid' da sessão, vira 'done'.
+     Resposta: { eligible, stage, product: { id, name, priceCents, priceLabel }, pixAvailable,
+     card: { available, brand, last4 } | null }.
+     card.available só se: o jogo foi pago no cartão, o PI da sessão (stripePaymentIntentId) tem
+     status succeeded, customer e payment_method (retrieve do PM para brand/last4).
+   - markOrderPaid(orderId): UPDATE ... SET status='paid', paid_at=now() WHERE id=? AND
+     status<>'paid' RETURNING *. Só quem consegue o RETURNING dispara os efeitos (idempotente):
+       (a) upsell_offers.stage = 'done';
+       (b) push ao Quinzinho com a função existente: sendPurchaseNotification({ buyerName,
+           packageName: "30 Noites (upsell R$ 40)" ou "7 Noites (downsell R$ 15)" });
+       (c) e-mail de confirmação via sendEmailViaBrevo com a função nova buildNoitesEmail
+           (item 8). NÃO enviar evento Purchase para a Meta (o Purchase do jogo continua sendo
+           o único; o upsell não entra no pixel).
+   - Liberação das noites: unlocked = min(total, 1 + dias entre a data da compra e hoje), contando
+     datas no fuso America/Sao_Paulo (Intl.DateTimeFormat). A noite 1 libera na hora; as
+     seguintes à meia-noite de Brasília. Pular um dia não perde noite (só acumula). noites7:
+     total 7. Order com status refunded não dá acesso.
+   - reconcilePendingUpsellOrders(): para orders 'pending' das últimas 24 h, consulta o provedor
+     (fetchAbacatePixStatus para Pix: devolve um OBJETO, pago quando `status === "PAID"`; status do PI no Stripe para cartão: pago quando "succeeded") e chama markOrderPaid
+     se pago. Só considere Pix pending criados nos últimos 30 min (o Pix vale 15 min; depois disso marque a
+     order como 'failed') e cartão pending das últimas 24 h; sem isso o job consulta o AbacatePay
+     a cada 30 s por todo Pix abandonado. Agende a cada 30 s num scheduler próprio (startUpsellReconciliationScheduler)
+     iniciado onde já se inicia startPaymentReconciliationScheduler. Não altere
+     payment-reconciliation.ts.
+
+4) ROTAS (arquivo novo artifacts/api-server/src/routes/upsell.ts; registrar em routes/index.ts
+   só acrescentando a linha; CORS como as outras rotas públicas; NÃO crie rate limit nem instale dependência nova: o
+   api-server não tem rate limiter hoje (o polling do Pix, 20 chamadas por minuto, tem que passar
+   livre). A proteção é feita nas próprias rotas (Pix idempotente e trava do cartão abaixo); valide
+   os corpos com zod). Autorização: o sessionId é a chave (igual a /access/sessions/:id).
+   - GET  /api/upsell/state?sessionId=…         -> getUpsellState
+   - POST /api/upsell/seen    { sessionId, stage }    -> grava upsell_seen_at / downsell_seen_at (só na 1ª vez)
+   - POST /api/upsell/decline { sessionId, stage }    -> upsell: grava declined e stage='downsell';
+                                                         downsell: grava declined e stage='done'
+   - POST /api/upsell/pix     { sessionId, product }  -> confere elegibilidade e que o product bate
+       com o stage atual (noites30 no stage upsell; noites7 no stage downsell); cria order pending
+       method 'pix'; createAbacatePixCharge({ sessionId: `upsell_${orderId}`, amount, description:
+       "Perguntas de Conexao - 30 Noites" ou "Perguntas de Conexao - 7 Noites" }); grava charge
+       e brcode; o Pix vale 15 min (mesma constante do checkout). Devolve { orderId, brCode,
+       brCodeBase64, expiresAt }. Se já existe order Pix pending não vencida da sessão+produto,
+       devolve a mesma.
+   - POST /api/upsell/card    { sessionId, product }  -> exige card.available E o mesmo teste de
+       elegibilidade/estágio do /pix (noites30 só no stage upsell, noites7 só no downsell). TRAVA
+       CONTRA COBRANÇA DUPLICADA: faça a checagem + o INSERT da order dentro de uma transação com
+       `pg_advisory_xact_lock(hashtext('upsell:' || sessionId))` (sem isso, 2 cliques simultâneos
+       passam juntos pela checagem e geram 2 PaymentIntents com idempotencyKeys diferentes = 2
+       cobranças). Antes de criar uma nova cobrança, reconsulte orders de cartão 'pending' da sessão
+       (se alguma estiver paga, devolva paid; se estiver em requires_action, cancele o PI antigo
+       com paymentIntents.cancel). Dentro da trava: antes de criar, se a sessão já tem order 'paid' -> { ok: true,
+       status: "paid" } sem cobrar; se há order de cartão 'pending' do mesmo produto criada há
+       menos de 2 min -> não crie outra: devolva { ok: false, reason: "processing" }. Só então cria order pending
+       method 'card'; paymentIntents.create({ amount, currency: "brl", customer, payment_method,
+       payment_method_types: ["card"], confirm: true, off_session: false, receipt_email,
+       metadata: { upsellOrderId, product, kind: "upsell" } }, { idempotencyKey: `upsell-card-${orderId}` }).
+       NÃO ponha sessionId nos metadados (senão o webhook do jogo se confunde).
+       - succeeded -> markOrderPaid -> { ok: true, status: "paid" }
+       - requires_action -> { ok: true, status: "requires_action", clientSecret, orderId }
+       - cartão recusado/erro -> order 'failed' -> { ok: false, reason: "declined" } (sem detalhes técnicos)
+   - POST /api/upsell/orders/:orderId/verify           -> reconsulta o provedor (PI do Stripe ou
+       Pix) e chama markOrderPaid se pago. Devolve { status }. Serve para o polling do Pix
+       (a cada 3 s) e para depois do 3D Secure.
+   - GET  /api/noites?sessionId=…  -> procura a order paid (não refunded) mais completa da sessão.
+       Sem order: { hasProgram: false }. Com order: { hasProgram: true, product, total, unlocked,
+       done: [números], nights: [...] }, em que cada noite traz { n, semana, semanaTitulo, titulo,
+       minutos, adulto, state: "done"|"open"|"locked" } e, SÓ para as já liberadas (n <= unlocked),
+       também ritual, perguntas, acao. Noites acima do total (7 noites) nem aparecem. Para a
+       próxima noite bloqueada devolva unlocksAt (ISO, meia-noite de Brasília).
+   - POST /api/noites/done { sessionId, night, done: boolean } -> atualiza done_nights (só noite liberada).
+   Webhooks (editar o mínimo em connection.ts):
+   - stripe-webhook: logo depois de obter `paymentIntent`, se paymentIntent.metadata?.upsellOrderId
+     existir -> markOrderPaid(esse id), responda { received: true } e retorne (não mexer no
+     fluxo do jogo).
+   - abacatepay-webhook: depois de calcular chargeId e signatureValid, e ANTES do 401 de "Não foi
+     possível confirmar o pagamento": se event === "transparent.completed" && signatureValid &&
+     chargeId e existir upsell_order com esse abacate_charge_id -> markOrderPaid e responda o
+     mesmo tipo de resposta de sucesso (accepted: true). Se não for de upsell, siga o fluxo atual.
+
+5) TELA DO UPSELL (front: arquivo novo artifacts/perguntas-de-conexao/src/pages/UpsellOffer.tsx)
+   Em App.tsx, mudança mínima: crie PostPurchaseRoute (ao lado de PostPurchaseInvite) que lê
+   conexao-session, chama GET /api/upsell/state (timeout 3 s) e: se eligible e stage !== 'done'
+   renderiza <UpsellOffer .../>; senão, ou em qualquer erro, renderiza o PostPurchaseInvite de
+   hoje. Troque APENAS a rota <Route path="/post-purchase" component={PostPurchaseInvite} /> por
+   PostPurchaseRoute. Não altere os redirecionamentos para "/post-purchase" (inclusive o do
+   /retomar), nem o PostPurchaseInvite.
+   Visual: o mesmo vinho/roxo/dourado e as mesmas classes/botões do app; mobile primeiro (375px),
+   sem rolagem horizontal; botão grande. Sem cronômetro, sem contador.
+   TELA 1 (stage 'upsell'; ao montar chame POST /api/upsell/seen):
+     - Selo: "✓ Pagamento confirmado" e o texto "Seu acesso já está liberado. Em instantes enviamos o link por e-mail." (texto ajustado em 06/10 por causa do atraso do e-mail, item 10: não diga "já foi para o seu e-mail".)
+     - Imagem (Diretor de Arte 06/10): acima do título, faixa de largura total e 140px de altura com `/hero/bridge-casal-sofa.webp` (`object-fit: cover`, `loading="eager"`, `alt=""`), com gradiente vinho no rodapé para fundir com o fundo. Se esse .webp não existir em `public/hero/`, use `/hero/hero-casal-novo-mobile.webp`. Não use outra imagem na tela; o botão principal deve continuar visível em 375px sem rolar muito.
+     - Título: "Antes de abrir o baralho: 1 coisa que só aparece agora."
+     - "Vocês compraram porque querem sair do 'sei lá' e conversar de verdade. O baralho faz isso. E se, em 30 noites, isso virasse hábito, e não só uma noite boa?"
+     - Card do programa "30 Noites de Conexão": "1 noite por dia. Um ritual de 5 a 30 minutos, 2 perguntas que puxam o assunto e 1 pequena ação para o dia seguinte. Semana 1: reaproximar. Semana 2: se conhecer de novo. Semana 3: conversas difíceis. Semana 4: desejo e futuro. + 2 noites de fechamento." (Não liste as 30 noites.)
+     - Um exemplo só: "Noite 1: os 3 minutos sem celular. Sentar de frente, timer de 3 minutos, só presença. Parece pouco. Experimentem."
+     - "Seu baralho já funciona sozinho. As 30 Noites são um caminho guiado para usá-lo todo dia, não uma peça que falta."
+     - Preço: "R$ 40,00 pelos 30 dias. Dá R$ 1,33 por noite. Pagamento único."
+     - "Só oferecemos isso para quem acabou de entrar. Não está à venda no site."
+     - "Mesma garantia de 7 dias: se não gostarem, devolvemos."
+     - Botão principal: se card.available -> "Sim, quero as 30 Noites — cobrar R$ 40,00 no cartão {Bandeira} •••• {last4}" (texto obrigatório: a pessoa vê e autoriza o valor e o cartão). Se pixAvailable, botão do Pix (secundário se há cartão, principal se não há): "Pagar R$ 40,00 no Pix". Se o jogo foi pago no Pix, só o botão do Pix: "Sim, quero as 30 Noites — gerar Pix de R$ 40,00".
+     - Link de saída bem visível, sem culpa: "Não, obrigado, quero abrir meu baralho" -> POST /api/upsell/decline (stage upsell) e vai para a TELA 2.
+   TELA 2 (stage 'downsell'; ao montar, POST /api/upsell/seen com stage 'downsell'):
+     - "Tudo bem. Que tal começar só pela primeira semana?" / "7 Noites de Conexão por R$ 15,00." / "São as 7 primeiras noites do programa: reaproximar. Pagamento único, mesma garantia de 7 dias."
+     - Mesmos botões (cartão 1 clique / Pix) para noites7. Saída: "Não, quero abrir meu baralho" -> decline (stage downsell) e vai para o PostPurchaseInvite.
+     - NÃO ofereça as 30 Noites por menos nesta tela.
+   PIX na própria tela: ao tocar, POST /api/upsell/pix; mostre o código copia-e-cola com botão
+   "Copiar código", o QR recolhido ("Mostrar QR Code") e "aguardando confirmação do banco"; faça
+   polling de POST /api/upsell/orders/:id/verify a cada 3 s até pago ou expirar (15 min; se
+   expirar, botão "Gerar outro Pix"). Reaproveite o visual dos blocos do Pix do checkout (classes
+   checkout-pix-*), mas NÃO importe nem altere o useCheckout. Enquanto espera, mantenha visível a
+   saída "Não, obrigado".
+   CARTÃO: botão desabilitado e "Cobrando…" enquanto processa (evita clique duplo).
+     paid -> TELA 3. requires_action -> use o stripePromise que já existe em App.tsx, passado por props pelo PostPurchaseRoute
+     (sem exportar do App.tsx e sem criar um segundo loadStripe) e chame stripe.handleNextAction({
+     clientSecret }); depois POST /orders/:id/verify.
+     declined -> mensagem "O cartão não aceitou esta cobrança. Se quiser, pague no Pix, mesmo preço." e mostre o botão do Pix.
+   TELA 3 (pago): "✓ Pronto! A noite 1 de {N} já está liberada." Botões: "Abrir as Noites" (vai
+     para /noites) e, menor, "Ir para o meu baralho" (mostra o PostPurchaseInvite, que tem o
+     convite do parceiro). Texto: "Uma noite nova libera por dia. Enviamos o link por e-mail."
+   Em qualquer tela, se a chamada à API falhar, mostre o PostPurchaseInvite.
+
+6) TRILHA DENTRO DO APP (front: arquivo novo pages/Noites.tsx + rotas + cartão de entrada)
+   - Rotas novas em App.tsx (junto das demais): "/noites" e "/noites/:sessionId". A segunda faz o
+     mesmo que AccessLinkRoute (grava conexao-session e conexao-role = owner) e depois mostra a
+     página; é o link do e-mail. Acrescente "/noites" e startsWith("/noites/") à lista isAppRoute
+     de RouteAwareSplash para o splash não aparecer. Convidado (guest token, sem sessão própria)
+     não vê a trilha na v1.
+   - Página Noites (visual SEPARADO dos baralhos: nada de cartas deslizantes nem o mesmo layout;
+     use linha do tempo vertical, selo "30 NOITES DE CONEXÃO", fundo vinho, detalhes dourados):
+       Topo: título, "Noite X de N" e barra de progresso das noites marcadas como feitas.
+       Card grande "Hoje": a noite liberada mais recente que ainda não foi feita (ou a mais
+       recente). Mostra: título, "Semana X — {semanaTitulo}", minutos, "RITUAL" (texto),
+       "PERGUNTAS" (2, cada uma num bloco) e "PARA AMANHÃ" (acao). Se adulto: etiqueta "18+" e,
+       acima do ritual, a linha: "Só se os dois quiserem. Qualquer um pode dizer não a qualquer momento."
+       Botões: "Fizemos esta noite ✓" (POST /api/noites/done) e "Mandar para o meu par" (Web Share
+       API com o texto da noite; sem navegador compatível, copia o texto). O texto compartilhado
+       NÃO leva link nenhum (o link do e-mail é uma chave de acesso).
+       Abaixo: lista das noites anteriores (recolhidas; tocar abre) e, na próxima bloqueada,
+       "Noite X libera amanhã" (usa unlocksAt). Demais bloqueadas: só título, em cinza.
+       Sem trilha (hasProgram false): redirecione para /app.
+       Rodapé: "Mesma garantia de 7 dias. Dúvidas: responda o e-mail de acesso." e link "Voltar para os baralhos" -> /app.
+   - Cartão de entrada na tela principal dos baralhos (App.tsx, no topo do conteúdo da aba
+     "Todos", onde activeNav === "todos" começa a renderizar, e também no topo de "Meu espaço"):
+     componente NoitesEntryCard (exportado de pages/Noites.tsx) que só renderiza se
+     conexao-role === "owner" e GET /api/noites?sessionId=… devolver hasProgram. Texto:
+     "Noite X de N · Hoje: {título}" + botão "Abrir". Falha silenciosa (some).
+     Não conte as noites como cartas/baralho em nenhum contador.
+
+7) TERMOS (pages/Termos.tsx): acrescente, perto da cláusula dos baralhos novos, um parágrafo:
+   "Programas e materiais complementares vendidos à parte (como as 30 Noites de Conexão) não são
+   baralhos e não entram na cláusula de baralhos novos incluídos. Têm a mesma garantia de 7 dias."
+   Não altere mais nada nos Termos.
+
+8) E-MAIL (artifacts/api-server/src/lib/brevo.ts, função NOVA no fim do arquivo; não toque em
+   buildAbandonedCheckoutEmail nem em buildPurchaseAccessEmail)
+   buildNoitesEmail({ buyerName, product, noitesUrl }) com o mesmo visual do e-mail de acesso.
+   Assunto: "As 30 Noites estão liberadas" (noites7: "As 7 Noites estão liberadas").
+   Corpo: "{Nome}, a noite 1 já está liberada. É curta e começa assim: celulares em outro cômodo,
+   timer de 3 minutos e só presença. Uma noite nova libera por dia (se pularem um dia, ela espera
+   por vocês)." Botão "Abrir as Noites" -> {PUBLIC_BASE_URL}/noites/{sessionId}. "Este link é a sua
+   chave, não compartilhe." "Mesma garantia de 7 dias: se não gostarem, é só responder este e-mail."
+   Sem link de descadastro (transacional). Enviar em markOrderPaid (item 3).
+
+9) ADMIN (arquivo novo components/UpsellAdminPanel.tsx; em Admin.tsx só 1 import e 1 linha para
+   renderizá-lo no fim da aba "Compradores"; chamadas com `${apiBaseUrl}/api/admin/...?sessionId=`
+   e rotas protegidas por isAdminSession, como as demais rotas admin)
+   - GET /api/admin/upsell/summary, EXCLUINDO sessões internas (JOIN sessions ON session_id e
+     sessions.internal = false, no resumo e na lista): sessões que viram a tela do upsell;
+     recusaram o upsell; viram o downsell; recusaram o downsell; pagos 30 Noites (Pix × cartão);
+     pagos 7 Noites (Pix × cartão); Pix gerados × Pix pagos; reembolsados; receita bruta em R$;
+     tempo mediano entre seen_at e a decisão. Mostre como uma tabelinha simples.
+   - Lista das últimas 30 orders (data, produto, método, status, e-mail do comprador) e, em cada
+     paga, o botão "Marcar reembolsado" (PATCH /api/admin/upsell/orders/:id { refunded: true };
+     grava refunded_at e status 'refunded'; a trilha some para o cliente). Deixe claro na tela
+     que isto NÃO devolve dinheiro: o reembolso em si é feito no Stripe/AbacatePay.
+
+10) ATRASO DO E-MAIL DE ACESSO (item novo, 06/10; arquivo novo artifacts/api-server/src/lib/access-email-queue.ts)
+   Objetivo: quem acabou de pagar não deve sair da tela do upsell para o e-mail e ir direto ao
+   baralho. O e-mail de acesso sai quando a pessoa DECIDE o upsell, ou 10 minutos depois do
+   pagamento, o que vier primeiro. O que NÃO atrasa: accessGranted, linkPurchaseToQuizLead
+   (trava de recuperação do c1eb552), push ao Quinzinho, evento Purchase da Meta, o botão "Ir para
+   o meu baralho" e o PostPurchaseInvite (o acesso na tela continua imediato).
+   - Tabela nova no FIM do schema (só ADICIONAR): access_email_queue { session_id text PK ·
+     send_at timestamptz not null · claimed_at timestamptz · sent_at timestamptz · attempts integer
+     not null default 0 · created_at timestamptz default now() }. Sem índice extra, sem FK.
+   - Em payment-access.ts, só a parte do e-mail de notifyGrantedAccess muda (as linhas de
+     linkPurchaseToQuizLead, Meta e push ficam como estão, na mesma ordem). Depois do `if
+     (!session.buyerEmail) return;`: chame shouldDelayAccessEmail(session). Se true ->
+     enqueueAccessEmail(session.id, delayMs = 10 * 60 * 1000) (INSERT ... onConflictDoNothing) e NÃO
+     envie agora. Se false, ou se shouldDelayAccessEmail OU enqueueAccessEmail lançarem erro -> envia
+     na hora, exatamente como hoje (um try/catch cobrindo as duas chamadas; só NÃO envia se o
+     enqueue terminou com sucesso). notifyGrantedAccess é síncrona e chamada de dentro de
+     transação nos 2 webhooks: faça isso num bloco async com `void`/.catch, sem mudar a assinatura
+     nem o jeito como os 5 chamadores usam. Em caso de dúvida, ENVIA: nunca deixe o e-mail preso por
+     erro nosso.
+   - shouldDelayAccessEmail: true só se a sessão for elegível ao upsell pelas mesmas regras do
+     getUpsellState (currency brl, createdAt >= upsell_launch_at, internal ou não). Portugal/EUR,
+     compras anteriores ao lançamento, sessão sem e-mail e chave upsell_launch_at ausente: sem atraso,
+     tudo como hoje.
+   - releaseAccessEmail(sessionId): NÃO marque sent_at antes de enviar (se o servidor reiniciar
+     entre o UPDATE e o envio, o e-mail se perde para sempre). Use "reserva" com prazo:
+     UPDATE access_email_queue SET claimed_at = now(), attempts = attempts + 1 WHERE session_id = ?
+     AND sent_at IS NULL AND attempts < 3 AND (claimed_at IS NULL OR claimed_at < now() - interval
+     '3 minutes') AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND access_granted = true)
+     RETURNING session_id. Só quem consegue o RETURNING envia: lê nome e e-mail em sessions e chama
+     resendGrantedAccessEmail, e CONFIRA result.ok (ela devolve { ok:false } em vez de lançar erro:
+     sem BREVO_API_KEY, HTTP 4xx/5xx). Se result.ok: SET sent_at = now(). Se falhar: SET claimed_at
+     = null, send_at = agora + 2 min (a 3ª falha desiste e só loga; o admin ainda tem "reenviar
+     acesso"). Se o processo cair depois do envio e antes do sent_at, a reserva vence em 3 min e o
+     cliente pode receber 2 e-mails: é aceitável, perder o e-mail não é.
+   - Chame releaseAccessEmail (fire-and-forget, dentro de try/catch) em 3 lugares do item 3/4:
+     (a) markOrderPaid, junto dos efeitos (acaba de comprar o upsell ou o downsell);
+     (b) POST /api/upsell/decline quando stage === 'downsell' (recusou também o downsell: fim do
+         fluxo);
+     (c) quando getUpsellState marcar o estágio como 'done' (24 h sem decisão ou order paga).
+     Recusar só o upsell (vai para o downsell) NÃO libera: a pessoa ainda está decidindo.
+   - Rede de segurança: dentro de startUpsellReconciliationScheduler (já roda a cada 30 s) acrescente
+     o passo: para cada linha com sent_at nulo, attempts < 3 e send_at <= agora (limit 20), chame
+     releaseAccessEmail. Esse passo roda PRIMEIRO e em try/catch próprio, separado da conciliação
+     de orders (um erro ou lentidão da AbacatePay/Stripe nunca pode travar o envio do e-mail), e o
+     scheduler não pode ter um único guard "rodando" compartilhado com a conciliação. Assim, quem fechou a aba, quem pagou o Pix e nunca voltou ao site (webhook ou conciliação
+     liberaram o acesso sem ninguém na tela), quem perdeu a internet ou se o servidor reiniciar
+     recebe o e-mail em no máximo ~10 min e 30 s. A fila fica no banco, não na memória. Confirme que
+     startUpsellReconciliationScheduler é chamado em index.ts (um esquecimento aqui = ninguém recebe
+     e-mail de acesso de compra elegível).
+   - O botão "reenviar acesso" do admin continua igual, mas se houver linha pendente da sessão o
+     cliente receberá o e-mail de novo ao vencer o prazo; para evitar, o admin pode esperar ou o
+     Replit pode marcar sent_at nessa rota (só se for 1 linha, sem mexer no resto).
+   - Não altere: resendGrantedAccessEmail, o botão "reenviar acesso" do admin, o /login, nem o
+     e-mail em si (buildPurchaseAccessEmail).
+
+CONTEÚDO DAS NOITES (copie exatamente para lib/noites-content.ts; tipo:
+type Noite = { n: number; semana: number; semanaTitulo: string; titulo: string; minutos: number;
+ritual: string; perguntas: string[]; acao: string; adulto: boolean })
+
+const NOITES: Noite[] = [
+  {
+    "n": 1,
+    "semana": 1,
+    "semanaTitulo": "Reaproximar",
+    "titulo": "Os 3 minutos sem celular",
+    "minutos": 5,
+    "ritual": "Celulares em outro cômodo. Sentem de frente, ponham 3 minutos no timer e só fiquem ali: olhando, respirando, sem resolver nada. Quando o timer tocar, façam as perguntas.",
+    "perguntas": [
+      "Qual foi o melhor e o pior momento do seu dia, e eu estava em algum deles?",
+      "O que você queria ter me contado hoje e não deu tempo?"
+    ],
+    "acao": "Amanhã, às 15h, mande uma mensagem curta dizendo uma coisa que lembrou do outro.",
+    "adulto": false
+  },
+  {
+    "n": 2,
+    "semana": 1,
+    "semanaTitulo": "Reaproximar",
+    "titulo": "Como você está de verdade",
+    "minutos": 10,
+    "ritual": "Cada um dá uma nota de 0 a 10 para energia e outra para humor, e explica a nota. Regra da noite: quem escuta não dá conselho, só diz 'entendi'.",
+    "perguntas": [
+      "O que está pesando em você essa semana que eu ainda não sei?",
+      "O que eu poderia fazer amanhã para deixar seu dia 10% mais leve?"
+    ],
+    "acao": "Faça amanhã a coisa que o outro disse que ajudaria.",
+    "adulto": false
+  },
+  {
+    "n": 3,
+    "semana": 1,
+    "semanaTitulo": "Reaproximar",
+    "titulo": "Agradecimento em voz alta",
+    "minutos": 10,
+    "ritual": "Cada um agradece 3 coisas específicas que o outro fez nos últimos dias. Específico vale: 'obrigado por ter buscado meu remédio', não 'obrigado por tudo'.",
+    "perguntas": [
+      "Qual coisa pequena que eu faço você nunca agradeceu, mas percebe todo dia?",
+      "Quando você se sentiu mais cuidado(a) por mim neste mês?"
+    ],
+    "acao": "Deixe um bilhete escondido onde o outro vai achar amanhã (bolsa, espelho, carteira).",
+    "adulto": false
+  },
+  {
+    "n": 4,
+    "semana": 1,
+    "semanaTitulo": "Reaproximar",
+    "titulo": "O abraço de 20 segundos",
+    "minutos": 10,
+    "ritual": "Antes de qualquer pergunta, abracem por 20 segundos, contados. Parece pouco; é mais do que a maioria dos casais abraça no dia. Depois conversem.",
+    "perguntas": [
+      "Que tipo de toque seu corpo mais pede de mim ultimamente?",
+      "Em que horário do dia a gente mais se desencontra?"
+    ],
+    "acao": "Amanhã, abrace 20 segundos quando se despedir ou se reencontrar.",
+    "adulto": false
+  },
+  {
+    "n": 5,
+    "semana": 1,
+    "semanaTitulo": "Reaproximar",
+    "titulo": "Jantar sem tela",
+    "minutos": 30,
+    "ritual": "Jantem à mesa, sem TV e sem celular (nem para música). Uma pergunta por prato: entrada, principal, sobremesa. Pode ser pedido, não precisa cozinhar.",
+    "perguntas": [
+      "Qual jantar nosso você nunca esqueceu?",
+      "Se hoje fosse a nossa noite ideal em casa, como ela seria do começo ao fim?"
+    ],
+    "acao": "Escolham juntos qual ritual das noites 1 a 4 vai virar fixo na semana.",
+    "adulto": false
+  },
+  {
+    "n": 6,
+    "semana": 1,
+    "semanaTitulo": "Reaproximar",
+    "titulo": "Três fotos, três histórias",
+    "minutos": 15,
+    "ritual": "Cada um escolhe 3 fotos nossas no celular e conta a história por trás de cada uma, como se o outro não estivesse lá.",
+    "perguntas": [
+      "Qual foto nossa faz você sorrir sozinho(a)?",
+      "O que você sentiu quando percebeu que estava gostando de mim?"
+    ],
+    "acao": "Mande para o outro a sua foto favorita com uma frase só.",
+    "adulto": false
+  },
+  {
+    "n": 7,
+    "semana": 1,
+    "semanaTitulo": "Reaproximar",
+    "titulo": "Carta da semana 1",
+    "minutos": 15,
+    "ritual": "Cada um escreve 5 linhas para o outro sobre o que mudou nesta semana e lê em voz alta. Sem corrigir, sem responder: só ouvir até o fim.",
+    "perguntas": [
+      "O que essa semana mostrou que a gente tinha esquecido?",
+      "Qual noite foi a sua favorita até aqui, e por quê?"
+    ],
+    "acao": "Combinem um horário fixo para as próximas noites (a mesma hora todo dia ajuda).",
+    "adulto": false
+  },
+  {
+    "n": 8,
+    "semana": 2,
+    "semanaTitulo": "Se conhecer de novo",
+    "titulo": "Quiz do outro",
+    "minutos": 15,
+    "ritual": "Cada um escreve 5 palpites sobre o outro (comida de conforto, maior medo, sonho antigo, o que faria com um dia livre, música da vida). Depois conferem.",
+    "perguntas": [
+      "Qual resposta minha te surpreendeu?",
+      "O que você acha que eu ainda não sei sobre você?"
+    ],
+    "acao": "Amanhã, conte uma coisa pequena sobre você que o outro nunca ouviu.",
+    "adulto": false
+  },
+  {
+    "n": 9,
+    "semana": 2,
+    "semanaTitulo": "Se conhecer de novo",
+    "titulo": "Você aos 12 anos",
+    "minutos": 20,
+    "ritual": "Cada um conta quem era aos 12: o que gostava, do que tinha medo, o que queria ser. Se tiver foto antiga, mostre.",
+    "perguntas": [
+      "O que aquela criança diria sobre a gente hoje?",
+      "Que medo antigo ainda mora em você?"
+    ],
+    "acao": "Procure uma foto da infância e mostre ao outro amanhã.",
+    "adulto": false
+  },
+  {
+    "n": 10,
+    "semana": 2,
+    "semanaTitulo": "Se conhecer de novo",
+    "titulo": "Manual de instruções",
+    "minutos": 20,
+    "ritual": "Cada um escreve 3 frases: 'Quando estou mal, me ajuda…', 'Me irrita quando…', 'Me sinto amado(a) quando…'. Troquem os papéis e leiam.",
+    "perguntas": [
+      "Qual frase do seu manual eu nunca tinha entendido de verdade?",
+      "O que você gostaria que eu fizesse sem precisar pedir?"
+    ],
+    "acao": "Fotografem os dois manuais e deixem salvos no celular. Releiam antes da próxima briga.",
+    "adulto": false
+  },
+  {
+    "n": 11,
+    "semana": 2,
+    "semanaTitulo": "Se conhecer de novo",
+    "titulo": "Como cada um recebe carinho",
+    "minutos": 15,
+    "ritual": "Cada um ordena do que mais pesa ao que menos pesa: palavras, tempo juntos, toque, gestos práticos, presentes. Comparem as listas.",
+    "perguntas": [
+      "Quando eu fiz algo que você sentiu como amor sem eu perceber?",
+      "O que eu faço de carinho que talvez não esteja chegando do jeito que eu penso?"
+    ],
+    "acao": "Amanhã, faça um gesto na linguagem do outro, não na sua.",
+    "adulto": false
+  },
+  {
+    "n": 12,
+    "semana": 2,
+    "semanaTitulo": "Se conhecer de novo",
+    "titulo": "Sonhos na gaveta",
+    "minutos": 20,
+    "ritual": "Cada um conta um sonho que parou no caminho (curso, viagem, projeto, mudança) e por que parou. O outro só pergunta 'e como seria se desse certo?'.",
+    "perguntas": [
+      "Qual sonho seu ficou na gaveta e o que faltou?",
+      "Como eu poderia te empurrar nele sem virar cobrança?"
+    ],
+    "acao": "Dê 10 minutos ao sonho do outro amanhã: pesquise, ligue, anote o primeiro passo.",
+    "adulto": false
+  },
+  {
+    "n": 13,
+    "semana": 2,
+    "semanaTitulo": "Se conhecer de novo",
+    "titulo": "A noite dos primeiros",
+    "minutos": 20,
+    "ritual": "Relembrem os primeiros: primeiro beijo, primeira viagem, primeira briga, primeira vez que disseram 'eu te amo'. Cada um conta a sua versão.",
+    "perguntas": [
+      "Qual foi a nossa primeira briga e o que ela nos ensinou?",
+      "O que da gente no começo você quer de volta?"
+    ],
+    "acao": "Repitam algo do começo esta semana: o mesmo lugar, a mesma comida ou a mesma música.",
+    "adulto": false
+  },
+  {
+    "n": 14,
+    "semana": 2,
+    "semanaTitulo": "Se conhecer de novo",
+    "titulo": "Trilha sonora de nós",
+    "minutos": 20,
+    "ritual": "Cada um escolhe 3 músicas que contam a história do casal. Ouçam juntos e digam por que escolheram.",
+    "perguntas": [
+      "Qual música me lembra de você, e que cena ela traz?",
+      "O que você descobriu de mim nesta semana?"
+    ],
+    "acao": "Montem uma playlist compartilhada e cada um adiciona uma por dia.",
+    "adulto": false
+  },
+  {
+    "n": 15,
+    "semana": 3,
+    "semanaTitulo": "Conversas difíceis",
+    "titulo": "As regras da conversa difícil",
+    "minutos": 15,
+    "ritual": "Antes de qualquer assunto pesado, escrevam 3 regras e assinem: ninguém interrompe; falo de mim ('eu sinto'), não de você ('você sempre'); pausa de 20 minutos é permitida e a gente volta.",
+    "perguntas": [
+      "O que faz você fechar a cara ou se calar numa discussão?",
+      "O que ajudaria você a continuar na conversa sem explodir?"
+    ],
+    "acao": "Escolham uma palavra-código para pedir pausa. Anotem juntos.",
+    "adulto": false
+  },
+  {
+    "n": 16,
+    "semana": 3,
+    "semanaTitulo": "Conversas difíceis",
+    "titulo": "O assunto que a gente contorna",
+    "minutos": 25,
+    "ritual": "Cada um escreve num papel um assunto que evita. Troquem os papéis. Hoje ninguém resolve nada: só perguntam 'o que você sente quando pensa nisso?' e escutam.",
+    "perguntas": [
+      "Que assunto você evita comigo e o que teme que aconteça se falarmos?",
+      "O que você precisa ouvir de mim antes de tocar nele?"
+    ],
+    "acao": "Marquem um dia e hora (não hoje) para conversar sobre um dos dois assuntos.",
+    "adulto": false
+  },
+  {
+    "n": 17,
+    "semana": 3,
+    "semanaTitulo": "Conversas difíceis",
+    "titulo": "Dinheiro sem briga",
+    "minutos": 20,
+    "ritual": "Cada um conta, sem defender nada, como era dinheiro na casa em que cresceu e o que isso fez com o jeito de gastar e guardar hoje.",
+    "perguntas": [
+      "Qual foi sua primeira lição sobre dinheiro em casa?",
+      "Qual gasto seu você sente que eu julgo, mesmo sem dizer?"
+    ],
+    "acao": "Combinem 1 número: quanto cada um pode gastar no mês sem precisar dar satisfação.",
+    "adulto": false
+  },
+  {
+    "n": 18,
+    "semana": 3,
+    "semanaTitulo": "Conversas difíceis",
+    "titulo": "As tarefas invisíveis",
+    "minutos": 20,
+    "ritual": "Cada um lista tudo o que faz pela casa e pela relação que acha que o outro não vê (agenda, lembrar aniversário, comprar o que acaba). Leiam as listas em voz alta.",
+    "perguntas": [
+      "Qual tarefa que você faz sente que ninguém vê?",
+      "O que eu poderia assumir sem você precisar pedir?"
+    ],
+    "acao": "Escolha 1 tarefa da lista do outro e assuma por uma semana.",
+    "adulto": false
+  },
+  {
+    "n": 19,
+    "semana": 3,
+    "semanaTitulo": "Conversas difíceis",
+    "titulo": "Ciúme, redes e limites",
+    "minutos": 20,
+    "ritual": "Falem de redes sociais, amizades e ex sem acusar. O objetivo é descobrir o que cada um considera ok e o que incomoda.",
+    "perguntas": [
+      "O que nas redes ou nas amizades te incomoda e você nunca falou?",
+      "O que te deixa inseguro(a), em mim ou em nós?"
+    ],
+    "acao": "Façam 1 combinado simples (ex.: celular longe no jantar, avisar quando sair) e escrevam.",
+    "adulto": false
+  },
+  {
+    "n": 20,
+    "semana": 3,
+    "semanaTitulo": "Conversas difíceis",
+    "titulo": "A carta que eu nunca mandei",
+    "minutos": 25,
+    "ritual": "Cada um escreve uma carta sobre algo que ainda dói. O outro lê (ou escuta) e responde só com 'obrigado(a) por me contar' e depois com 'o que eu posso fazer?'. Sem defesa.",
+    "perguntas": [
+      "Tem algo que eu disse ou fiz que ainda dói em você?",
+      "Como seria um pedido de desculpa que chegasse de verdade?"
+    ],
+    "acao": "Peça desculpa, de forma específica, por uma coisa que apareceu hoje.",
+    "adulto": false
+  },
+  {
+    "n": 21,
+    "semana": 3,
+    "semanaTitulo": "Conversas difíceis",
+    "titulo": "Carta da semana 3",
+    "minutos": 20,
+    "ritual": "Cada um escreve o que aprendeu nesta semana sobre como conversar com o outro. Leiam em voz alta, devagar.",
+    "perguntas": [
+      "Qual conversa desta semana foi a mais difícil e a que mais valeu?",
+      "O que você admirou em como eu lidei?"
+    ],
+    "acao": "Agradeça ao outro, hoje ou amanhã, por ter tido coragem na semana mais difícil.",
+    "adulto": false
+  },
+  {
+    "n": 22,
+    "semana": 4,
+    "semanaTitulo": "Desejo e futuro",
+    "titulo": "O desejo começa no dia",
+    "minutos": 15,
+    "ritual": "Passem o dia mandando mensagens leves de flerte (nada pesado). À noite, cada um diz 3 coisas que ainda o(a) enlouquecem no outro, olhando nos olhos.",
+    "perguntas": [
+      "O que em mim você ainda acha irresistível?",
+      "Quando foi a última vez que você se sentiu desejado(a) por mim?"
+    ],
+    "acao": "Amanhã, faça um elogio que vá além do 'você está bonito(a)'.",
+    "adulto": false
+  },
+  {
+    "n": 23,
+    "semana": 4,
+    "semanaTitulo": "Desejo e futuro",
+    "titulo": "Mapa do toque",
+    "minutos": 30,
+    "ritual": "Dez minutos de massagem para cada um, sem expectativa de que acabe em sexo. Quem recebe diz só 'mais', 'menos' ou 'assim'. Sem pressa e sem pressão.",
+    "perguntas": [
+      "Onde você gosta de ser tocado(a) e eu nunca perguntei?",
+      "O que faz você relaxar a ponto de querer mais?"
+    ],
+    "acao": "Sem obrigação nenhuma: combinem se amanhã haverá outra noite assim.",
+    "adulto": true
+  },
+  {
+    "n": 24,
+    "semana": 4,
+    "semanaTitulo": "Desejo e futuro",
+    "titulo": "Sim, talvez, não",
+    "minutos": 25,
+    "ritual": "Cada um escreve em segredo uma lista de curiosidades e desejos em 3 colunas: sim, talvez, não. Só comparam o que está em 'sim' nas duas listas. O 'não' de cada um é sagrado e não se discute.",
+    "perguntas": [
+      "Qual curiosidade sua você tem vergonha de contar?",
+      "O que faria você se sentir seguro(a) para experimentar algo novo?"
+    ],
+    "acao": "Escolham um item que está em 'sim' para os dois e marquem a data.",
+    "adulto": true
+  },
+  {
+    "n": 25,
+    "semana": 4,
+    "semanaTitulo": "Desejo e futuro",
+    "titulo": "A noite que a gente imagina",
+    "minutos": 20,
+    "ritual": "Hoje não acontece nada: cada um descreve com detalhes a noite perfeita (lugar, roupa, música, ritmo). A expectativa faz parte.",
+    "perguntas": [
+      "Qual cena nossa você revisita quando está longe de mim?",
+      "Que palavra você quer ouvir de mim hoje à noite?"
+    ],
+    "acao": "Deixe um bilhete-convite para o fim de semana, sem dizer o que vai acontecer.",
+    "adulto": true
+  },
+  {
+    "n": 26,
+    "semana": 4,
+    "semanaTitulo": "Desejo e futuro",
+    "titulo": "Daqui a 5 anos",
+    "minutos": 25,
+    "ritual": "Descrevam um dia comum daqui a 5 anos: onde acordam, quem está na casa, o que fazem de manhã. Cada um escreve o seu e depois comparam.",
+    "perguntas": [
+      "O que é diferente nesse dia comum?",
+      "O que a gente precisa começar a fazer agora para chegar lá?"
+    ],
+    "acao": "Anotem 3 metas do casal para os próximos 12 meses.",
+    "adulto": false
+  },
+  {
+    "n": 27,
+    "semana": 4,
+    "semanaTitulo": "Desejo e futuro",
+    "titulo": "Encontro que cabe no bolso",
+    "minutos": 20,
+    "ritual": "Planejem juntos um encontro diferente que custe pouco ou nada (nascer do sol, piquenique, bairro novo, filme antigo, cozinhar algo que nunca fizeram). Cada um escolhe uma parte.",
+    "perguntas": [
+      "Qual lugar ou experiência você quer viver comigo antes de um ano?",
+      "O que eu poderia fazer para o nosso encontro ser a sua cara?"
+    ],
+    "acao": "Marquem a data do encontro na agenda dos dois. Agora.",
+    "adulto": false
+  },
+  {
+    "n": 28,
+    "semana": 4,
+    "semanaTitulo": "Desejo e futuro",
+    "titulo": "Carta para daqui a um ano",
+    "minutos": 25,
+    "ritual": "Cada um escreve uma carta para o casal de daqui a 12 meses: o que quer que continue, o que promete cuidar, o que espera ter vivido. Leiam em voz alta.",
+    "perguntas": [
+      "O que você quer que a gente nunca perca?",
+      "O que você promete cuidar mais, a partir de hoje?"
+    ],
+    "acao": "Fotografem as cartas e agendem um lembrete para relê-las no ano que vem.",
+    "adulto": false
+  },
+  {
+    "n": 29,
+    "semana": 5,
+    "semanaTitulo": "Fechamento",
+    "titulo": "O balanço dos 28 dias",
+    "minutos": 20,
+    "ritual": "Cada um dá uma nota de 0 a 10 para a conexão do casal hoje e outra para como era no dia 1. Conversem sobre a diferença.",
+    "perguntas": [
+      "Qual noite mudou mais coisa em você, e por quê?",
+      "O que você descobriu sobre a gente que não sabia?"
+    ],
+    "acao": "Escolham 3 rituais das 30 noites para manter toda semana.",
+    "adulto": false
+  },
+  {
+    "n": 30,
+    "semana": 5,
+    "semanaTitulo": "Fechamento",
+    "titulo": "As três promessas",
+    "minutos": 30,
+    "ritual": "Acendam uma vela ou sirvam algo para brindar. Cada um faz 3 promessas pequenas e concretas para o outro (ex.: 'vou largar o celular no jantar'). Trocam as promessas escritas.",
+    "perguntas": [
+      "Qual promessa sua você quer que eu cobre com carinho?",
+      "Como vamos nos lembrar de cumprir quando o programa acabar?"
+    ],
+    "acao": "Marquem 1 noite fixa por semana a partir de agora e voltem aos baralhos para continuar de onde pararam.",
+    "adulto": false
+  }
+];
+
+TESTES ANTES DE PUBLICAR (modo teste do Stripe; AbacatePay em modo de teste se existir; diga o
+que não deu para testar)
+1. Compra de teste no CARTÃO (4242 4242 4242 4242): após pagar o jogo, aparece a TELA 1 com o
+   botão "cobrar R$ 40,00 no cartão Visa •••• 4242"; clicar cobra, mostra a TELA 3, chega o
+   e-mail de noites e o push "30 Noites (upsell R$ 40)". Em /noites só a noite 1 está liberada.
+2. Mesmo teste com o cartão 4000 0027 6000 3184 (pede 3D Secure): requires_action -> modal do
+   3DS -> paga -> TELA 3.
+3. Cartão recusado (4000 0000 0000 0002) na cobrança do upsell: mensagem "O cartão não aceitou…"
+   e botão do Pix; o acesso ao jogo continua intacto.
+4. Compra de teste no PIX: TELA 1 só com o botão do Pix; ao tocar aparece copia-e-cola +
+   "aguardando"; pago -> TELA 3. Se não der para simular o pagamento do Pix, teste a verificação
+   marcando a order como paga direto no banco de teste e chamando /orders/:id/verify.
+5. Recusar a TELA 1 -> aparece a TELA 2 (7 Noites, R$ 15,00); recusar a TELA 2 -> cai no
+   PostPurchaseInvite. Recarregar depois disso NÃO mostra a oferta de novo. Comprar a TELA 2 ->
+   /noites mostra "Noite 1 de 7" e nenhuma noite acima de 7.
+6. Forçar erro em /api/upsell/state: /post-purchase mostra o convite normal em até 3 s. O acesso
+   nunca fica preso.
+7. Sessão de região PT (EUR): a TELA 1 não aparece. Sessão criada antes do upsell_launch_at: não aparece.
+8. Liberação: no banco de teste, mude paid_at de uma order para 3 dias atrás -> /noites mostra 4
+   noites liberadas (1+3) e a 5ª como "libera amanhã". Noites bloqueadas não trazem ritual nem
+   perguntas na resposta da API (confira o JSON).
+9. Cartão de entrada: dono com trilha vê "Noite X de N · Hoje: …" na aba Todos; convidado e quem
+   não comprou não veem nada. Nenhum contador de cartas mudou.
+10. Webhooks: o pagamento do upsell (cartão e Pix) NÃO muda nada na sessão do jogo, NÃO dispara um
+    segundo e-mail de acesso e NÃO dispara um segundo push de "Nova venda" do jogo (só o push do upsell).
+11. Admin: o resumo mostra a compra de teste conforme a flag de interna; "Marcar reembolsado" faz
+    a trilha sumir (GET /api/noites volta hasProgram:false).
+12. Em 375px: a TELA 1 cabe sem rolagem horizontal e o botão do cartão não corta o texto
+    "Visa •••• 4242" (pode quebrar em 2 linhas); print das TELAS 1, 2, 3 e de /noites.
+13. Compra normal do jogo (regressão do item 2): cartão no PaymentElement continua pagando, o
+    cartão pré-carregado (carteira/walletPreload) continua funcionando, cartão Elo/Hipercard
+    continua barrado como antes, e o PaymentIntent do jogo no Stripe aparece com customer (modo
+    teste). Região PT/EUR: o PI sai SEM customer e SEM setup_future_usage. Nenhum texto novo sobre
+    "salvar cartão" apareceu no formulário.
+14. /retomar de uma sessão já paga (e-mail de recuperação aberto depois de comprar) ainda cai no
+    lugar certo (convite ou oferta) e o 111 continua funcionando.
+15. Schema: no diff de lib/db/src/schema/index.ts só linhas ADICIONADAS. pnpm run typecheck sem
+    erro. Conferir que 109 (aviso de bandeira + Pix automático), 104a (e-mail no quiz, /sair/:id)
+    e 104b (e-mails) continuam funcionando.
+16. META: pagar o upsell (cartão e Pix) NÃO chama sendMetaEvent (nenhum Purchase, nenhum evento
+    novo; confira no diff que upsell.ts não importa meta-conversions) e NÃO altera
+    sessions.meta_purchase_sent nem sessions.locked_price_cents. O Purchase do jogo continua sendo 1
+    por sessão (eventId purchase_{sessionId}).
+17. Duplicidade: clicar 5 vezes seguidas em "cobrar no cartão" gera UMA cobrança no Stripe (confira
+    em Pagamentos). Pedir o Pix 2 vezes devolve o mesmo código. Recarregar /post-purchase com a
+    order paga mostra o convite, nunca a oferta de novo.
+
+18. ATRASO DO E-MAIL (item 10): compra de teste elegível (cartão e Pix): ao pagar, o e-mail de
+    acesso NÃO chega na hora; push, Purchase da Meta e o acesso na tela (botão "Ir para o meu
+    baralho") continuam imediatos. Recusar o upsell e o downsell -> e-mail chega em segundos.
+    Comprar o upsell -> chega o e-mail de acesso e o das Noites. Não fazer nada -> chega com ~10
+    min (até 10 min e 30 s). Só chega UM e-mail de acesso por compra (cheque a caixa e o log do Brevo).
+19. Região PT (EUR), sessão anterior ao upsell_launch_at e sessão sem e-mail: e-mail sai na hora
+    como hoje. Forçar erro em shouldDelayAccessEmail: o e-mail sai na hora (nunca fica preso).
+20. Trava de recuperação: no pagamento do jogo, quiz_leads.suppressed_at (ou o equivalente do
+    c1eb552) é gravado NA HORA, antes dos 10 min. Reiniciar o servidor com uma linha pendente na
+    fila: o e-mail sai depois do boot. A tela 1 diz "Em instantes enviamos o link por e-mail".
+
+21. FILA: com uma linha pendente na fila e o servidor reiniciado ANTES dos 10 min, o e-mail sai depois do
+    boot (uma vez). Simule falha do Brevo (chave errada): a linha fica pendente, tenta de novo em 2 min,
+    no máximo 3 vezes, e nunca marca sent_at sem envio. Pagar o Pix e FECHAR a aba: e-mail em ~10 min.
+    Pix confirmado só pelo webhook/conciliação (sem ninguém no site): e-mail em ~10 min.
+22. Compra paga e depois reembolsada/não confirmada não gera e-mail da fila (a reserva exige
+    access_granted = true). Reenviar acesso pelo admin continua funcionando.
+23. Cobrança duplicada: 2 abas clicando "cobrar no cartão" ao mesmo tempo geram UMA cobrança (Stripe >
+    Pagamentos). Pagar Pix e cartão do mesmo produto: não há 2 cobranças pagas sem alerta no log.
+
+Commit: "110: upsell pós-compra 30 Noites (R$ 40) + downsell 7 Noites (R$ 15) + trilha no app"

@@ -16,6 +16,27 @@ function getStripeClient(): Stripe {
   return new Stripe(secretKey);
 }
 
+async function findOrCreateStripeCustomer({
+  email,
+  sessionId,
+  name,
+}: {
+  email: string;
+  sessionId: string;
+  name?: string;
+}): Promise<string> {
+  const stripe = getStripeClient();
+  const existing = await stripe.customers.list({ email, limit: 1 });
+  if (existing.data[0]) return existing.data[0].id;
+
+  const customer = await stripe.customers.create({
+    email,
+    ...(name ? { name } : {}),
+    metadata: { sessionId },
+  });
+  return customer.id;
+}
+
 export async function createStripePaymentIntent({
   sessionId,
   buyerEmail,
@@ -25,12 +46,23 @@ export async function createStripePaymentIntent({
   buyerEmail?: string | null;
   pricing: Pricing;
 }): Promise<{ id: string; clientSecret: string }> {
-  const paymentIntent = await getStripeClient().paymentIntents.create({
+  const stripe = getStripeClient();
+  const customer =
+    buyerEmail && pricing.currency.toLowerCase() === "brl"
+      ? await findOrCreateStripeCustomer({
+          email: buyerEmail,
+          sessionId,
+        })
+      : undefined;
+  const paymentIntent = await stripe.paymentIntents.create({
     amount: pricing.amountCents,
     currency: pricing.currency,
     automatic_payment_methods: { enabled: true },
     metadata: { sessionId, region: pricing.region },
     ...(buyerEmail ? { receipt_email: buyerEmail } : {}),
+    ...(customer
+      ? { customer, setup_future_usage: "on_session" as const }
+      : {}),
   });
 
   if (!paymentIntent.client_secret) {
@@ -41,6 +73,35 @@ export async function createStripePaymentIntent({
     id: paymentIntent.id,
     clientSecret: paymentIntent.client_secret,
   };
+}
+
+export async function attachCustomerToPaymentIntent(
+  paymentIntentId: string,
+  email: string,
+  name?: string,
+): Promise<void> {
+  const stripe = getStripeClient();
+  const paymentIntent =
+    await stripe.paymentIntents.retrieve(paymentIntentId);
+  if (
+    paymentIntent.currency.toLowerCase() !== "brl" ||
+    paymentIntent.customer ||
+    !["requires_payment_method", "requires_confirmation"].includes(
+      paymentIntent.status,
+    )
+  ) {
+    return;
+  }
+
+  const customer = await findOrCreateStripeCustomer({
+    email,
+    sessionId: paymentIntent.metadata.sessionId || paymentIntentId,
+    name,
+  });
+  await stripe.paymentIntents.update(paymentIntent.id, {
+    customer,
+    setup_future_usage: "on_session",
+  });
 }
 
 export function verifyStripeWebhook(
@@ -94,4 +155,51 @@ export async function retrieveStripePaymentIntent(
   paymentIntentId: string,
 ): Promise<Stripe.PaymentIntent> {
   return getStripeClient().paymentIntents.retrieve(paymentIntentId);
+}
+
+export async function retrieveStripePaymentMethod(
+  paymentMethodId: string,
+): Promise<Stripe.PaymentMethod> {
+  return getStripeClient().paymentMethods.retrieve(paymentMethodId);
+}
+
+export async function createUpsellCardPaymentIntent({
+  amountCents,
+  customer,
+  paymentMethod,
+  receiptEmail,
+  orderId,
+  product,
+}: {
+  amountCents: number;
+  customer: string;
+  paymentMethod: string;
+  receiptEmail?: string | null;
+  orderId: string;
+  product: "noites30" | "noites7";
+}): Promise<Stripe.PaymentIntent> {
+  return getStripeClient().paymentIntents.create(
+    {
+      amount: amountCents,
+      currency: "brl",
+      customer,
+      payment_method: paymentMethod,
+      payment_method_types: ["card"],
+      confirm: true,
+      off_session: false,
+      ...(receiptEmail ? { receipt_email: receiptEmail } : {}),
+      metadata: {
+        upsellOrderId: orderId,
+        product,
+        kind: "upsell",
+      },
+    },
+    { idempotencyKey: `upsell-card-${orderId}` },
+  );
+}
+
+export async function cancelStripePaymentIntent(
+  paymentIntentId: string,
+): Promise<void> {
+  await getStripeClient().paymentIntents.cancel(paymentIntentId);
 }

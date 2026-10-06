@@ -284,3 +284,29 @@ export function buildAbandonedCheckoutEmail(params: {
   ].join("\n");
   return { subject: email.subject, htmlContent, textContent };
 }
+
+export function buildNoitesEmail(params: {
+  buyerName: string;
+  product: "noites30" | "noites7";
+  noitesUrl: string;
+}) {
+  const isThirtyNights = params.product === "noites30";
+  const count = isThirtyNights ? 30 : 7;
+  const firstName = params.buyerName.trim().split(/\s+/)[0] || "";
+  const hi = firstName ? `${firstName}, ` : "";
+  const subject = `As ${count} Noites estão liberadas`;
+  const intro = `${hi}a noite 1 já está liberada. É curta e começa assim: celulares em outro cômodo, timer de 3 minutos e só presença. Uma noite nova libera por dia (se pularem um dia, ela espera por vocês).`;
+  const safeUrl = escapeHtml(params.noitesUrl);
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #17121b;">
+      <p style="font-size: 14px; color: #6b6070; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Perguntas de Conexão</p>
+      <h1 style="font-size: 22px; font-weight: 500; margin: 0 0 16px;">As ${count} Noites estão liberadas</h1>
+      <p style="font-size: 15px; line-height: 1.55; color: #4a4550; margin: 0 0 24px;">${escapeHtml(intro)}</p>
+      <a href="${safeUrl}" style="display: block; text-align: center; background: #8a2f4d; color: #ffffff; text-decoration: none; border-radius: 999px; padding: 15px 20px; font-size: 16px; font-weight: 600; margin: 0 0 24px;">Abrir as Noites</a>
+      <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0 0 8px;">Este link é a sua chave, não compartilhe.</p>
+      <p style="font-size: 13px; line-height: 1.55; color: #8b8290; margin: 0;">Mesma garantia de 7 dias: se não gostarem, é só responder este e-mail.</p>
+    </div>
+  `;
+  const textContent = `Perguntas de Conexão\n\n${intro}\n\nAbrir as Noites: ${params.noitesUrl}\n\nEste link é a sua chave, não compartilhe.\n\nMesma garantia de 7 dias: se não gostarem, é só responder este e-mail.`;
+  return { subject, htmlContent, textContent };
+}
