@@ -98,3 +98,59 @@ mtime_ms = 1790786666437
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:3847ec20-d7db-471e-8a27-73b48766aeac/632eeb30-4e35-48c6-8a02-588c3dd60e67/9b94c4d1-94e4-45fe-a860-7dcd6cff1c78"
 storage_version_token = "1790786701893913"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "Bq5kIuTbJk0-deSRdMyMl"
+uri = "file://attached_assets/upsell-visual-upsell-top-375px.png"
+type = "image"
+title = "Upsell — topo, 375 px"
+description = "Captura visual com estado de demonstração e dados de cartão fictícios; nenhuma cobrança foi feita."
+logical_id = "d10e86e5-2341-40fd-9102-40cd11ebd5e1"
+content_hash = "sha256:fd626a6da47fba4a5d2adba2c330cf9b71606290f4dd31a6528a9b7c321684cf"
+size = 264360
+mtime_ms = 1791303704427
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:3fe1bfe9-3e0c-4098-81d5-e41e29dedc6f/d10e86e5-2341-40fd-9102-40cd11ebd5e1/1a766a9f-7667-4145-8eeb-dab2d506c9dc"
+storage_version_token = "1791303727335973"
+content_type = "image/png"
+
+[[outputs]]
+id = "YuVBGMw58nfs5PsOXv0Q9"
+uri = "file://attached_assets/upsell-visual-upsell-bottom-375px.png"
+type = "image"
+title = "Upsell — preço e ações, 375 px"
+description = "Captura visual com estado de demonstração e dados de cartão fictícios; nenhuma cobrança foi feita."
+logical_id = "1f9739f9-cf11-4042-b799-ba0a761061aa"
+content_hash = "sha256:579ac68c36da07280d28f8b4c733c589c1983bb046c99d900c5c1e4003fec2aa"
+size = 128911
+mtime_ms = 1791303704436
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:3fe1bfe9-3e0c-4098-81d5-e41e29dedc6f/1f9739f9-cf11-4042-b799-ba0a761061aa/b6cb7b96-4239-4037-a914-f617dce40d6b"
+storage_version_token = "1791303727856986"
+content_type = "image/png"
+
+[[outputs]]
+id = "Zyt4nA_vU3gteaZ4HT7Pi"
+uri = "file://attached_assets/upsell-visual-downsell-top-375px.png"
+type = "image"
+title = "Downsell — topo, 375 px"
+description = "Captura visual com estado de demonstração e dados de cartão fictícios; nenhuma cobrança foi feita."
+logical_id = "d4404977-a7e8-43ad-8e15-fc63e3e0970b"
+content_hash = "sha256:c6bd72a0f6563d16ea1a1c0e3bab386e8ecf242784ca67cb59a9467772930ef1"
+size = 150077
+mtime_ms = 1791303704452
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:3fe1bfe9-3e0c-4098-81d5-e41e29dedc6f/d4404977-a7e8-43ad-8e15-fc63e3e0970b/5a78ed53-b73e-468b-9c14-b2bbef2d613c"
+storage_version_token = "1791303728379562"
+content_type = "image/png"
+
+[[outputs]]
+id = "GBsmm9pXJKNrAS-sc9HHt"
+uri = "file://attached_assets/upsell-visual-downsell-bottom-375px.png"
+type = "image"
+title = "Downsell — preço e ações, 375 px"
+description = "Captura visual com estado de demonstração e dados de cartão fictícios; nenhuma cobrança foi feita."
+logical_id = "6992e8c7-1d65-4ead-8d1e-a4172ffe9e6f"
+content_hash = "sha256:71f83442d4b5d5442ff8362f170fcfe21326f02f6ba0dfa0a4779d997b2639c9"
+size = 150042
+mtime_ms = 1791303704464
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:3fe1bfe9-3e0c-4098-81d5-e41e29dedc6f/6992e8c7-1d65-4ead-8d1e-a4172ffe9e6f/8380ce87-4c1e-49be-a7d3-c6de3d34352c"
+storage_version_token = "1791303728916345"
+content_type = "image/png"

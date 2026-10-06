@@ -241,36 +241,46 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
         <div className="up-offer-wrap">
           <div className="up-offer-paid">
             <span className="up-offer-check"><Check size={14} /></span>
-            <div><strong>Pagamento confirmado</strong><span>Seu acesso já está liberado. Em instantes enviamos o link por e-mail.</span></div>
+            <div><p>Pagamento confirmado · link do baralho a caminho no e-mail</p></div>
           </div>
           {isUpsell && <div className="up-offer-hero"><img src="/hero/bridge-casal-sofa.webp" loading="eager" alt="" /><div /></div>}
-          <section className="up-offer-content">
+          <section className={`up-offer-content ${isUpsell ? "up-offer-content--hero" : ""}`}>
             {isUpsell ? (
               <>
                 <p className="up-offer-eyebrow">Um caminho para continuar</p>
-                <h1>Antes de abrir o baralho: 1 coisa que só aparece agora.</h1>
-                <p className="up-offer-lead">Vocês compraram porque querem sair do 'sei lá' e conversar de verdade. O baralho faz isso. E se, em 30 noites, isso virasse hábito, e não só uma noite boa?</p>
+                <h1>Antes de abrir o baralho: 1 coisa que só aparece <em>agora.</em></h1>
+                <p className="up-offer-lead">Vocês compraram para conversar de verdade. Em 30 noites, isso vira hábito, não só uma noite boa.</p>
                 <div className="up-offer-program">
-                  <div className="up-offer-program-top"><span>PROGRAMA GUIADO</span><span>30 DIAS</span></div>
+                  <div className="up-offer-program-top"><span>PROGRAMA GUIADO · 30 DIAS</span></div>
                   <h2>30 Noites de Conexão</h2>
-                  <p>1 noite por dia. Um ritual de 5 a 30 minutos, 2 perguntas que puxam o assunto e 1 pequena ação para o dia seguinte. Semana 1: reaproximar. Semana 2: se conhecer de novo. Semana 3: conversas difíceis. Semana 4: desejo e futuro. + 2 noites de fechamento.</p>
+                  <p>1 noite por dia, de 5 a 30 minutos. 2 perguntas e 1 pequena ação.</p>
+                  <ul className="up-offer-weeks">
+                    <li><span>01</span><span>Reaproximar</span></li>
+                    <li><span>02</span><span>Se conhecer de novo</span></li>
+                    <li><span>03</span><span>Conversas difíceis</span></li>
+                    <li><span>04</span><span>Desejo e futuro</span></li>
+                  </ul>
+                  <p className="up-offer-program-extra">+ 2 noites de fechamento</p>
                 </div>
                 <blockquote className="up-offer-example"><span>UMA NOITE, NA PRÁTICA</span><p>Noite 1: os 3 minutos sem celular. Sentar de frente, timer de 3 minutos, só presença. Parece pouco. Experimentem.</p></blockquote>
+                <div className="up-offer-price"><strong>R$ 40,00</strong><span>pagamento único · R$ 1,33 por noite</span></div>
                 <p className="up-offer-reassurance">Seu baralho já funciona sozinho. As 30 Noites são um caminho guiado para usá-lo todo dia, não uma peça que falta.</p>
-                <div className="up-offer-price"><strong>R$ 40,00</strong><span>pelos 30 dias. Dá R$ 1,33 por noite. Pagamento único.</span></div>
-                <p className="up-offer-fine">Só oferecemos isso para quem acabou de entrar. Não está à venda no site.</p>
                 <p className="up-offer-guarantee"><ShieldCheck size={16} /> Mesma garantia de 7 dias: se não gostarem, devolvemos.</p>
+                <p className="up-offer-fine">Só oferecemos isso para quem acabou de entrar. Não está à venda no site.</p>
               </>
             ) : (
               <>
                 <p className="up-offer-eyebrow">Uma primeira semana, no ritmo de vocês</p>
                 <h1>Tudo bem. Que tal começar só pela primeira semana?</h1>
                 <div className="up-offer-program">
-                  <div className="up-offer-program-top"><span>PROGRAMA GUIADO</span><span>7 DIAS</span></div>
-                  <h2>7 Noites de Conexão por R$ 15,00.</h2>
-                  <p>São as 7 primeiras noites do programa: reaproximar. Pagamento único, mesma garantia de 7 dias.</p>
+                  <div className="up-offer-program-top"><span>PROGRAMA GUIADO · 7 DIAS</span></div>
+                  <h2>7 Noites de Conexão</h2>
+                  <p>1 noite por dia, de 5 a 30 minutos. Um começo leve para reaproximar.</p>
+                  <ul className="up-offer-weeks">
+                    <li><span>01</span><span>Reaproximar</span></li>
+                  </ul>
                 </div>
-                <div className="up-offer-price"><strong>R$ 15,00</strong><span>Pagamento único.</span></div>
+                <div className="up-offer-price"><strong>R$ 15,00</strong><span>Pagamento único</span></div>
                 <p className="up-offer-guarantee"><ShieldCheck size={16} /> Mesma garantia de 7 dias.</p>
               </>
             )}
