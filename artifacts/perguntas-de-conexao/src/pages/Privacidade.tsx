@@ -3,7 +3,7 @@ export default function Privacidade() {
     <main className="legal-page">
       <div className="legal-container">
         <h1>Política de Privacidade</h1>
-        <p className="legal-updated">Última atualização: 14 de setembro de 2026</p>
+        <p className="legal-updated">Última atualização: 7 de outubro de 2026</p>
 
         <h2>1. Quem trata os seus dados</h2>
         <p>
@@ -20,8 +20,13 @@ export default function Privacidade() {
         <p>
           <strong>Quando você compra:</strong> nome e e-mail. Os dados de
           pagamento (cartão, dados bancários) são coletados e processados
-          diretamente pela Stripe e pela Abacate Pay — nós não os recebemos nem
-          armazenamos.
+          diretamente pela Stripe e pela Abacate Pay: nós não recebemos nem
+          armazenamos o número do cartão. Ao pagar com cartão, a Stripe cria um
+          cadastro de cliente ligado ao seu e-mail e guarda o cartão nesse
+          cadastro, para que você possa aceitar uma oferta complementar logo
+          após a compra com um clique. O cartão fica no cadastro da Stripe, e
+          consultamos a Stripe apenas para mostrar a bandeira e os 4 últimos
+          dígitos na tela de confirmação.
         </p>
         <p>
           <strong>Quando você faz o teste ou usa o produto:</strong> as respostas
@@ -58,7 +63,8 @@ export default function Privacidade() {
         </p>
         <ul>
           <li>
-            <strong>Stripe</strong> — processamento de pagamento com cartão.
+            <strong>Stripe</strong> — processamento de pagamento com cartão e
+            guarda segura do cartão para a compra em 1 clique.
           </li>
           <li>
             <strong>Abacate Pay</strong> — processamento de pagamento por Pix.
@@ -114,6 +120,15 @@ export default function Privacidade() {
             perguntasdeconexao@gmail.com
           </a>{" "}
           — respondemos em até 15 dias.
+        </p>
+        <p>
+          <strong>Remover o cartão salvo:</strong> escreva para{" "}
+          <a href="mailto:perguntasdeconexao@gmail.com">
+            perguntasdeconexao@gmail.com
+          </a>{" "}
+          com o e-mail usado na compra e pedimos à Stripe a remoção do cartão e
+          do cadastro de cliente. O cartão não é usado para nenhuma cobrança sem
+          a sua confirmação na tela.
         </p>
         <p>
           Se você estiver na União Europeia, tem também o direito de apresentar

@@ -3,7 +3,7 @@ export default function Termos() {
     <main className="legal-page">
       <div className="legal-container">
         <h1>Termos de Uso</h1>
-        <p className="legal-updated">Última atualização: 14 de setembro de 2026</p>
+        <p className="legal-updated">Última atualização: 7 de outubro de 2026</p>
 
         <h2>1. Quem somos</h2>
         <p>
@@ -40,8 +40,24 @@ export default function Termos() {
         <p>
           O preço é o exibido na página no momento da compra, em pagamento único,
           sem mensalidade. O pagamento é processado por parceiros: cartão de
-          crédito pela Stripe e Pix pela Abacate Pay. Não recebemos nem
-          armazenamos os dados do seu cartão.
+          crédito pela Stripe e Pix pela Abacate Pay. Nós não recebemos nem
+          armazenamos o número do seu cartão.
+        </p>
+        <p>
+          <strong>Cartão salvo e compra em 1 clique:</strong> ao pagar com cartão,
+          a Stripe guarda os dados do cartão de forma segura, no ambiente dela, e
+          os associa ao seu e-mail. Usamos isso apenas para que, logo depois da
+          compra, você possa aceitar uma oferta complementar (como as 30 Noites
+          de Conexão) com um clique, sem digitar o cartão de novo. Nada é cobrado
+          sem que você toque no botão de confirmação na tela, que mostra o valor e
+          o final do cartão. Não existe cobrança automática, recorrente ou
+          assinatura. Se você não quiser que o cartão fique guardado, escreva
+          para{" "}
+          <a href="mailto:perguntasdeconexao@gmail.com">
+            perguntasdeconexao@gmail.com
+          </a>{" "}
+          e pedimos a remoção à Stripe. Se preferir não guardar o cartão desde o
+          início, pague pelo Pix.
         </p>
         <p>
           O acesso é liberado automaticamente assim que a confirmação do pagamento
