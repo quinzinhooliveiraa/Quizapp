@@ -2697,6 +2697,8 @@
   justify-content: center;
   gap: 0.5rem;
   margin-top: 1.65rem;
+  touch-action: manipulation;
+  transition: filter 120ms ease, transform 120ms ease;
 }
 
 .lp1-quiz-card-body {
@@ -3837,10 +3839,12 @@
   color: #c4acff;
   font: 600 0.92rem/1.15 var(--app-font-sans);
   cursor: pointer;
+  touch-action: manipulation;
   transition:
     background 160ms ease,
     border-color 160ms ease,
     color 160ms ease,
+    filter 120ms ease,
     transform 160ms ease;
 }
 
@@ -31039,6 +31043,13 @@ blockquote em {
   border-color: #332c32;
   background: #332c32;
   color: #70656f;
+}
+
+.lp1-quiz-full-cta:active,
+.lp1-quiz-screen:not(.is-offer) .lp1-quiz-full-cta:active:not(:disabled),
+.lp1-bridge-cta:active {
+  filter: brightness(0.92);
+  transform: scale(0.98);
 }
 
 .lp1-quiz-screen:not(.is-offer) .lp1-quiz-option:hover,

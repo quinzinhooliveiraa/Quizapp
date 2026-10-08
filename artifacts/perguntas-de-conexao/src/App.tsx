@@ -2907,6 +2907,7 @@ function Lp1Quiz({
   const [climateIndex, setClimateIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastBackTapAt = useRef(0);
+  const transitionContinueLastTapAtRef = useRef(0);
   const completionTrackedRef = useRef(false);
   const leadSubmissionInFlightRef = useRef(false);
   const completionStorageKey = `lp1-quiz-completed:${lpId}`;
@@ -2928,6 +2929,17 @@ function Lp1Quiz({
   const visualStep = showBridgeScreen
     ? totalVisualSteps
     : Math.min(step + 1, LP1_SCREENS.length);
+
+  const handleTransitionContinue = (onContinue: () => void) => {
+    const now = Date.now();
+    if (now - transitionContinueLastTapAtRef.current < 700) return;
+    transitionContinueLastTapAtRef.current = now;
+    onContinue();
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step, showBridgeScreen, showOffer]);
 
   useEffect(() => {
     let mounted = true;
@@ -3388,10 +3400,12 @@ function Lp1Quiz({
           />
         ) : showBridgeScreen ? (
           <Lp1BridgeScreen
-            onContinue={() => {
-              setShowBridgeScreen(false);
-              setShowOffer(true);
-            }}
+            onContinue={() =>
+              handleTransitionContinue(() => {
+                setShowBridgeScreen(false);
+                setShowOffer(true);
+              })
+            }
           />
         ) : step === LP1_SCREENS.length ? (
           <Lp1Diagnosis
@@ -3504,7 +3518,9 @@ function Lp1Quiz({
           <Lp1ResultScreen
             answers={answers}
             sectionId={current.id}
-            onContinue={() => setShowBridgeScreen(true)}
+            onContinue={() =>
+              handleTransitionContinue(() => setShowBridgeScreen(true))
+            }
           />
         ) : current.kind === "chart" ? (
           <Lp1ChartScreen
