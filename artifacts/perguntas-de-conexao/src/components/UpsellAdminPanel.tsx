@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Check, RotateCcw } from "lucide-react";
 import { apiBaseUrl } from "@/config";
 
-type SummaryValue = string | number | null;
+type SummaryValue = string | number | null | Record<string, number>;
 type UpsellOrder = {
   id: string;
   createdAt: string;
@@ -19,7 +19,18 @@ type SummaryResponse = {
   orders?: UpsellOrder[];
 };
 
+function isFallbackCounts(value: unknown): value is Record<string, number> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.values(value).every((count) => typeof count === "number")
+  );
+}
+
 const labels: Record<string, string> = {
+  arrived: "Chegaram na tela das 30 Noites",
+  fallbackByReason: "Fallbacks por motivo (últimos 30 dias)",
   upsellSeen: "Viram a oferta de 30 noites",
   upsell_seen: "Viram a oferta de 30 noites",
   upsellDeclined: "Recusaram a oferta de 30 noites",
@@ -47,6 +58,16 @@ const money = (cents: number) => new Intl.NumberFormat("pt-BR", { style: "curren
 const metricLabel = (key: string) => labels[key] || key.replace(/([A-Z])/g, " $1").replaceAll("_", " ").replace(/^./, (char) => char.toUpperCase());
 const metricValue = (key: string, value: SummaryValue) => {
   if (value === null) return "—";
+  if (key === "fallbackByReason" && typeof value === "object") {
+    const expectedReasons = new Set(["done", "not_eligible"]);
+    const reasons = Object.entries(value)
+      .filter(([, count]) => count > 0)
+      .map(
+        ([reason, count]) =>
+          `${reason}: ${count}${expectedReasons.has(reason) ? " (esperado)" : ""}`,
+      );
+    return reasons.join(" · ") || "Nenhum registro";
+  }
   if (/revenue|receita/i.test(key) && typeof value === "number") return money(value);
   if (/medianDecisionMs/.test(key) && typeof value === "number") return `${Math.round(value / 1000)} s`;
   return String(value);
@@ -98,7 +119,9 @@ export default function UpsellAdminPanel({ sessionId }: { sessionId: string }) {
 
   const summary = data?.summary || data?.metrics || (data
     ? Object.entries(data).reduce<Record<string, SummaryValue>>((result, [key, value]) => {
-        if (key !== "latestOrders" && key !== "orders" && (typeof value === "string" || typeof value === "number" || value === null)) {
+        if (key === "fallbackByReason" && isFallbackCounts(value)) {
+          result[key] = value;
+        } else if (key !== "latestOrders" && key !== "orders" && (typeof value === "string" || typeof value === "number" || value === null)) {
           result[key] = value;
         }
         return result;

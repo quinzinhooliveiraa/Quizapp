@@ -1,9 +1,10 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
   sessionsTable,
+  upsellFallbackEventsTable,
   upsellOffersTable,
   upsellOrdersTable,
 } from "@workspace/db";
@@ -35,6 +36,24 @@ const sessionStageSchema = z
     stage: stageSchema,
   })
   .strict();
+const UPSELL_FALLBACK_REASONS = [
+  "no_session",
+  "timeout",
+  "state_error",
+  "not_eligible",
+  "done",
+  "seen_failed",
+] as const;
+const upsellFallbackSchema = z
+  .object({
+    sessionId: z.string().trim().min(1).max(200).optional(),
+    reason: z.enum(UPSELL_FALLBACK_REASONS),
+  })
+  .strict()
+  .refine(
+    ({ sessionId, reason }) => reason === "no_session" || Boolean(sessionId),
+    { message: "sessionId é obrigatório para este motivo", path: ["sessionId"] },
+  );
 const sessionProductSchema = z
   .object({
     sessionId: z.string().trim().min(1).max(200),
@@ -60,6 +79,58 @@ function fireAndForgetRelease(sessionId: string) {
     ),
   );
 }
+
+router.post("/upsell/fallback", async (req, res): Promise<void> => {
+  const parsed = upsellFallbackSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Dados de fallback inválidos" });
+    return;
+  }
+
+  const { sessionId: parsedSessionId, reason } = parsed.data;
+  const sessionId = parsedSessionId ?? null;
+  const lockKey = `upsell-fallback:${sessionId ?? "<no-session>"}:${reason}`;
+  try {
+    const inserted = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtext(${lockKey})::bigint)`,
+      );
+      const cutoff = new Date(Date.now() - 10 * 60 * 1000);
+      const [recentEvent] = await tx
+        .select({ id: upsellFallbackEventsTable.id })
+        .from(upsellFallbackEventsTable)
+        .where(
+          and(
+            eq(upsellFallbackEventsTable.reason, reason),
+            gte(upsellFallbackEventsTable.createdAt, cutoff),
+            sessionId === null
+              ? isNull(upsellFallbackEventsTable.sessionId)
+              : eq(upsellFallbackEventsTable.sessionId, sessionId),
+          ),
+        )
+        .limit(1);
+      if (recentEvent) return false;
+
+      await tx.insert(upsellFallbackEventsTable).values({
+        sessionId,
+        reason,
+        userAgent: (req.get("user-agent") ?? "").slice(0, 300),
+      });
+      return true;
+    });
+
+    if (inserted) {
+      req.log.info({ sessionId, reason }, "upsell_fallback");
+    }
+    res.status(inserted ? 201 : 202).json({ ok: true, duplicate: !inserted });
+  } catch (error) {
+    req.log.error(
+      { err: error, sessionId, reason },
+      "Could not record upsell fallback",
+    );
+    res.status(500).json({ error: "Não foi possível registrar o fallback" });
+  }
+});
 
 router.get("/upsell/state", async (req, res): Promise<void> => {
   const sessionId = getSessionIdFromQuery(req.query.sessionId);
@@ -265,7 +336,8 @@ router.get("/admin/upsell/summary", async (req, res): Promise<void> => {
     return;
   }
 
-  const [offerRows, orderRows] = await Promise.all([
+  const fallbackCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [offerRows, orderRows, fallbackRows] = await Promise.all([
     db
       .select({
         sessionId: upsellOffersTable.sessionId,
@@ -299,7 +371,28 @@ router.get("/admin/upsell/summary", async (req, res): Promise<void> => {
       )
       .where(eq(sessionsTable.internal, false))
       .orderBy(desc(upsellOrdersTable.createdAt)),
+    db
+      .select({
+        reason: upsellFallbackEventsTable.reason,
+        count: count(),
+      })
+      .from(upsellFallbackEventsTable)
+      .where(gte(upsellFallbackEventsTable.createdAt, fallbackCutoff))
+      .groupBy(upsellFallbackEventsTable.reason),
   ]);
+
+  const fallbackByReason: Record<(typeof UPSELL_FALLBACK_REASONS)[number], number> =
+    Object.fromEntries(UPSELL_FALLBACK_REASONS.map((reason) => [reason, 0])) as
+      Record<(typeof UPSELL_FALLBACK_REASONS)[number], number>;
+  for (const row of fallbackRows) {
+    if (
+      UPSELL_FALLBACK_REASONS.includes(
+        row.reason as (typeof UPSELL_FALLBACK_REASONS)[number],
+      )
+    ) {
+      fallbackByReason[row.reason as keyof typeof fallbackByReason] = row.count;
+    }
+  }
 
   const decisionDurations: number[] = [];
   const ordersBySession = new Map<string, typeof orderRows>();
@@ -362,6 +455,8 @@ router.get("/admin/upsell/summary", async (req, res): Promise<void> => {
       (order) => order.product === product && order.method === method,
     ).length;
   const summary = {
+    arrived: offerRows.length,
+    fallbackByReason,
     upsellSeen: offerRows.filter((row) => row.upsellSeenAt).length,
     upsellDeclined: offerRows.filter((row) => row.upsellDeclinedAt).length,
     downsellSeen: offerRows.filter((row) => row.downsellSeenAt).length,

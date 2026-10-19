@@ -210,6 +210,7 @@ export * from "./experiments";
 export * from "./quiz-answers";
 export * from "./quiz-leads";
 export * from "./settings";
+export * from "./upsell-fallback-events";
 
 export const upsellOffersTable = pgTable("upsell_offers", {
   sessionId: text("session_id").primaryKey(),

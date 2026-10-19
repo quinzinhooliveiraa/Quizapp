@@ -9,6 +9,13 @@ const apiUrl = (path: string) => `${apiBase}${path}`;
 
 type UpsellStage = "upsell" | "downsell" | "done";
 type UpsellProduct = { id: "noites30" | "noites7"; name: string; priceCents: number; priceLabel: string };
+export type UpsellFallbackReason =
+  | "no_session"
+  | "timeout"
+  | "state_error"
+  | "not_eligible"
+  | "done"
+  | "seen_failed";
 export type UpsellState = {
   eligible: boolean;
   stage: UpsellStage;
@@ -20,7 +27,7 @@ type Props = {
   sessionId: string;
   initialState: UpsellState;
   stripePromise: Promise<Stripe | null>;
-  onFallback: () => void;
+  onFallback: (reason?: UpsellFallbackReason) => void;
 };
 type PixOrder = { orderId: string; brCode: string; brCodeBase64: string; expiresAt: string };
 type PaymentResult = { ok: boolean; status?: "paid" | "requires_action"; orderId?: string; clientSecret?: string; reason?: string };
@@ -86,7 +93,14 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
     }).then((response) => {
       if (!response.ok) throw new Error("seen-failed");
     }).catch(() => {
-      if (active) onFallback();
+      if (active) {
+        void fetch(apiUrl("/api/upsell/fallback"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, reason: "seen_failed" }),
+        }).catch(() => {});
+        onFallback();
+      }
     });
     return () => { active = false; };
   }, [sessionId, stage, screen, onFallback]);
@@ -235,7 +249,7 @@ export default function UpsellOffer({ sessionId, initialState, stripePromise, on
           <button className="up-offer-primary" type="button" onClick={() => navigate("/noites")}>
             Abrir as Noites <ArrowRight size={18} />
           </button>
-          <button className="up-offer-text-button" type="button" onClick={onFallback}>Ir para o meu baralho</button>
+          <button className="up-offer-text-button" type="button" onClick={() => onFallback()}>Ir para o meu baralho</button>
         </section>
       ) : (
         <div className="up-offer-wrap">

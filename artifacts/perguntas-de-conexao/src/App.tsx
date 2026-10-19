@@ -10,6 +10,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -130,6 +131,7 @@ import Lp3 from "@/pages/Lp3";
 import { BrandLogo, SiteFooter } from "@/components/BrandLogo";
 import { ThemePeekDialog } from "@/components/ThemePeekDialog";
 import UpsellOffer, {
+  type UpsellFallbackReason,
   type UpsellState,
 } from "@/pages/UpsellOffer";
 import NoitesPage, {
@@ -363,52 +365,149 @@ const stripePromise = stripePublishableKey
   ? loadStripe(stripePublishableKey)
   : null;
 
+const POST_PURCHASE_SESSION_ID_PATTERN =
+  /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+
+class UpsellStateRequestError extends Error {
+  constructor(
+    readonly reason: "timeout" | "state_error",
+    readonly retryable: boolean,
+  ) {
+    super(reason);
+  }
+}
+
 function PostPurchaseRoute() {
-  const sessionId = safeGetItem("conexao-session")?.trim() || "";
+  const [sessionId] = useState(() => {
+    const querySessionId = new URLSearchParams(window.location.search).get("s");
+    if (
+      querySessionId &&
+      POST_PURCHASE_SESSION_ID_PATTERN.test(querySessionId)
+    ) {
+      return querySessionId;
+    }
+    return safeGetItem("conexao-session")?.trim() || "";
+  });
   const [offer, setOffer] = useState<UpsellState | null>(null);
   const [fallback, setFallback] = useState(false);
-  const goToFallback = useCallback(() => setFallback(true), []);
+  const fallbackReportedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    window.history.replaceState(null, "", "/post-purchase");
+  }, []);
+
+  const reportFallback = useCallback(
+    (reason: UpsellFallbackReason) => {
+      void fetch(apiUrl("/api/upsell/fallback"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(sessionId ? { sessionId } : {}),
+          reason,
+        }),
+      }).catch(() => {});
+    },
+    [sessionId],
+  );
+  const goToFallback = useCallback(
+    (reason?: UpsellFallbackReason) => {
+      setFallback(true);
+      if (reason && !fallbackReportedRef.current) {
+        fallbackReportedRef.current = true;
+        reportFallback(reason);
+      }
+    },
+    [reportFallback],
+  );
 
   useEffect(() => {
     if (!sessionId) {
-      setFallback(true);
+      goToFallback("no_session");
       return;
     }
-    const controller = new AbortController();
-    let settled = false;
-    const timeout = window.setTimeout(() => {
-      if (settled) return;
-      controller.abort();
-      setFallback(true);
-    }, 3000);
+    let active = true;
+    let currentController: AbortController | null = null;
+    const loadState = async () => {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const controller = new AbortController();
+        currentController = controller;
+        let timedOut = false;
+        let retryable = false;
+        let failureReason: "timeout" | "state_error" = "state_error";
+        const timeout = window.setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+        }, 6000);
 
-    fetch(
-      apiUrl(`/api/upsell/state?sessionId=${encodeURIComponent(sessionId)}`),
-      { signal: controller.signal },
-    )
-      .then((response) => {
-        if (!response.ok) throw new Error("upsell state unavailable");
-        return response.json() as Promise<UpsellState>;
-      })
-      .then((state) => {
-        if (state.eligible && state.stage !== "done" && state.product) {
-          setOffer(state);
-        } else {
-          setFallback(true);
+        try {
+          const response = await fetch(
+            apiUrl(`/api/upsell/state?sessionId=${encodeURIComponent(sessionId)}`),
+            { signal: controller.signal },
+          );
+          if (response.status >= 500) {
+            retryable = true;
+          } else if (!response.ok) {
+            throw new UpsellStateRequestError("state_error", false);
+          } else {
+            let state: UpsellState;
+            try {
+              state = (await response.json()) as UpsellState;
+            } catch {
+              throw new UpsellStateRequestError("state_error", false);
+            }
+
+            if (!active) return;
+            if (
+              !state ||
+              typeof state.eligible !== "boolean" ||
+              !["upsell", "downsell", "done"].includes(state.stage)
+            ) {
+              goToFallback("state_error");
+            } else if (!state.eligible) {
+              goToFallback("not_eligible");
+            } else if (state.stage === "done") {
+              safeSetItem("conexao-session", sessionId);
+              goToFallback("done");
+            } else if (state.product) {
+              safeSetItem("conexao-session", sessionId);
+              setOffer(state);
+            } else {
+              goToFallback("state_error");
+            }
+            return;
+          }
+        } catch (error) {
+          if (!active) return;
+          if (error instanceof UpsellStateRequestError) {
+            if (!error.retryable) {
+              goToFallback(error.reason);
+              return;
+            }
+            failureReason = error.reason;
+          } else {
+            retryable = true;
+            failureReason = timedOut ? "timeout" : "state_error";
+          }
+        } finally {
+          window.clearTimeout(timeout);
         }
-      })
-      .catch(() => setFallback(true))
-      .finally(() => {
-        settled = true;
-        window.clearTimeout(timeout);
-      });
 
-    return () => {
-      settled = true;
-      window.clearTimeout(timeout);
-      controller.abort();
+        if (!active) return;
+        if (retryable && attempt === 0) {
+          await new Promise<void>((resolve) => window.setTimeout(resolve, 1000));
+          if (!active) return;
+          continue;
+        }
+        goToFallback(failureReason);
+        return;
+      }
     };
-  }, [sessionId]);
+    void loadState();
+    return () => {
+      active = false;
+      currentController?.abort();
+    };
+  }, [goToFallback, sessionId]);
 
   if (fallback) return <PostPurchaseInvite />;
   if (!offer) return <RouteLoading />;
@@ -6478,7 +6577,8 @@ function useCheckout({
         if (data.accessGranted) {
           safeSetItem("conexao-session", data.sessionId!);
           safeSetItem("conexao-role", "owner");
-          window.location.href = "/post-purchase";
+          window.location.href =
+            "/post-purchase?s=" + encodeURIComponent(data.sessionId!);
           return;
         }
 
@@ -6866,7 +6966,8 @@ function useCheckout({
             safeSetItem("conexao-session", sessionId);
             safeSetItem("conexao-role", "owner");
             clearCompletedCheckoutStorage();
-            window.location.href = "/post-purchase";
+            window.location.href =
+              "/post-purchase?s=" + encodeURIComponent(sessionId);
             return;
           }
         }
@@ -6926,7 +7027,8 @@ function useCheckout({
           safeSetItem("conexao-session", nativeCheckout.sessionId);
           safeSetItem("conexao-role", "owner");
           clearCompletedCheckoutStorage();
-          window.location.href = "/post-purchase";
+          window.location.href =
+            "/post-purchase?s=" + encodeURIComponent(nativeCheckout.sessionId);
         }
       } catch {
         // The next interval retries while the payment provider settles.
@@ -6971,7 +7073,8 @@ function useCheckout({
             safeSetItem("conexao-session", cardCheckout.sessionId);
             safeSetItem("conexao-role", "owner");
             clearCompletedCheckoutStorage();
-            window.location.href = "/post-purchase";
+            window.location.href =
+              "/post-purchase?s=" + encodeURIComponent(cardCheckout.sessionId);
             return;
           }
         }
@@ -7010,7 +7113,8 @@ function useCheckout({
         safeSetItem("conexao-session", nativeCheckout.sessionId);
         safeSetItem("conexao-role", "owner");
         clearCompletedCheckoutStorage();
-        window.location.href = "/post-purchase";
+        window.location.href =
+          "/post-purchase?s=" + encodeURIComponent(nativeCheckout.sessionId);
         return;
       }
       setAccessCheckNote(
