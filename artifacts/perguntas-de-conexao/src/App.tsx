@@ -15008,7 +15008,7 @@ function ConfirmedPaymentBanner() {
           safeSetItem("conexao-session", sessionId);
           safeSetItem("conexao-role", "owner");
           clearCompletedCheckoutStorage();
-          window.location.href = `/acesso/${encodeURIComponent(sessionId)}`;
+          window.location.href = "/post-purchase?s=" + encodeURIComponent(sessionId);
         }}
       >
         Abrir meu baralho <ArrowRight size={16} aria-hidden="true" />

@@ -1,0 +1,16 @@
+# Prompt Replit: o botao "Abrir meu baralho" do aviso de pagamento pula o upsell das 30 Noites
+
+NAO mude preco, oferta, textos de venda, telas antes da compra, eventos de medicao nem o checkout (teste #7 ate 01/11). So troca o destino de UM botao.
+
+Problema (App.tsx, componente ConfirmedPaymentBanner, ~linha 14951-15014): quando o pagamento e confirmado e o visitante NAO foi levado pelo checkout para /post-purchase (ex.: foi pagar o Pix no app do banco e voltou), aparece a faixa verde "Seu pagamento foi confirmado" com o botao "Abrir meu baralho". Esse botao faz `window.location.href = \`/acesso/${sessionId}\``, que cai em AccessLinkRoute e manda direto para /onboarding. Resultado: o cliente nunca passa por /post-purchase, a tela do upsell (UpsellOffer, "30 Noites" R$ 40 / downsell R$ 15) nao abre e o contador upsellSeen nao conta. O backend esta certo (GET /api/upsell/state dessa sessao devolve eligible:true, stage:"upsell"); o que falta e levar o cliente ate a tela.
+
+Faca so isto:
+1. No onClick do botao da ConfirmedPaymentBanner: manter `safeSetItem("conexao-session", sessionId)`, `safeSetItem("conexao-role", "owner")` e `clearCompletedCheckoutStorage()`, e trocar o destino de `/acesso/${encodeURIComponent(sessionId)}` para `"/post-purchase?s=" + encodeURIComponent(sessionId)` (mesmo padrao que o checkout ja usa nas linhas ~6581, 6970, 7031, 7077, 7117, desde o prompt 115).
+2. NAO mexer em AccessLinkRoute (o link do e-mail de acesso continua indo para /acesso/:id -> /onboarding), nem em PostPurchaseRoute, UpsellOffer ou no backend.
+3. Nenhum texto muda. O botao continua escrito "Abrir meu baralho".
+
+Por que e seguro: /post-purchase ja trata os 3 casos. Sessao elegivel -> mostra o upsell (que tem recusar e, no fim, "abrir o baralho"). Sessao nao elegivel (antes do lancamento do upsell, EUR, erro ou demora >6 s) -> cai sozinho na tela PostPurchaseInvite com o botao para o baralho. Quem ja viu e recusou o upsell volta para PostPurchaseInvite (stage "done").
+
+Teste depois do deploy (nao precisa pagar nada; o site leva ~10 min depois do commit):
+- Pelo codigo: so 1 linha mudou em ConfirmedPaymentBanner e nenhum outro arquivo.
+- Regressao: /acesso/<id> (link do e-mail) continua abrindo /onboarding; compra por cartao e por Pix, pelo checkout aberto, continuam indo para /post-purchase; /retomar mostra R$ 29,90.
