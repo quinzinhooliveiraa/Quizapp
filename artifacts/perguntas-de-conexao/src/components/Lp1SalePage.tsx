@@ -4,7 +4,7 @@ import {
   ChevronDown,
   Clock3,
   Heart,
-  ShieldCheck,
+  X,
 } from "lucide-react";
 import { apiBaseUrl } from "@/config";
 import { computeLp1DistanceResult } from "@/lib/lp1-score";
@@ -657,12 +657,19 @@ export function Lp1SalePage({
   const discountActive = Boolean(
     offerState?.discountActive && remainingSeconds > 0,
   );
-  const discountPercent = getDiscountPercent(offerState);
   const showBottomCta =
     hasScrolled && !offerCardVisible && !checkoutOpen && Boolean(offerState);
 
   const scrollToOffer = () => {
     document.getElementById("lp1-sale-offer")?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+  };
+
+  const scrollToRecap = () => {
+    document.getElementById("sale-recap")?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth",
@@ -677,7 +684,7 @@ export function Lp1SalePage({
             <div className="lp1-sale-sticky-copy">
               <div className="lp1-sale-sticky-active-copy">
                 <span className="lp1-sale-sticky-prefix">
-                  O seu desconto de {discountPercent}% termina em
+                  Seu preço de {offerState!.offer.display} está reservado por
                 </span>
                 <b
                   className="lp1-sale-sticky-timer"
@@ -688,19 +695,96 @@ export function Lp1SalePage({
               </div>
             </div>
             <button type="button" onClick={onCheckout}>
-              Obter desconto{" "}
+              Quero meu acesso{" "}
               <ArrowRight size={15} aria-hidden="true" />
             </button>
           </div>
         </div>
       ) : null}
 
-      <section className="lp1-sale-section lp1-sale-recap" data-section-name="sale-recap">
-        <p className="lp1-sale-recap-context">
+      <section
+        className="lp1-sale-section lp1-sale-hero-section"
+        data-section-name="sale-hero"
+      >
+        <p className="lp1-sale-hero-kicker">
           {displayName
             ? `${displayName}, é isso que o teste mostrou`
             : "O que o teste mostrou sobre vocês"}
         </p>
+        <h1 className="lp1-sale-hero-title">
+          Vocês dormem na mesma cama. E a conversa virou logística.
+        </h1>
+        <p className="lp1-sale-hero-description">
+          Quem busca, quem paga, o que tem pro jantar. O "como foi o dia?" que
+          acaba em "normal". Cada um no seu celular, a um palmo de distância.
+        </p>
+        <button
+          className="lp1-sale-hero-cta"
+          type="button"
+          onClick={onCheckout}
+          disabled={!offerState}
+          data-testid="button-lp1-sale-checkout-top"
+        >
+          {offerState ? (
+            <>
+              Quero começar hoje à noite ·{" "}
+              {discountActive ? offerState.offer.display : offerState.full.display}
+              <ArrowRight size={17} aria-hidden="true" />
+            </>
+          ) : (
+            "Carregando preço seguro…"
+          )}
+        </button>
+        <p className="lp1-sale-hero-microcopy">
+          Pix ou cartão · acesso na hora · 7 dias de garantia
+        </p>
+        <ul className="lp1-sale-hero-pains">
+          <li>
+            <X size={17} strokeWidth={2.2} aria-hidden="true" />
+            <span>Você pergunta "tá tudo bem?" e ouve "tá. sei lá."</span>
+          </li>
+          <li>
+            <X size={17} strokeWidth={2.2} aria-hidden="true" />
+            <span>Os assuntos da noite são boleto, agenda e mercado.</span>
+          </li>
+          <li>
+            <X size={17} strokeWidth={2.2} aria-hidden="true" />
+            <span>Você já ensaiou uma conversa e desistiu no meio.</span>
+          </li>
+          <li>
+            <X size={17} strokeWidth={2.2} aria-hidden="true" />
+            <span>Você tem medo de perguntar e ouvir "sei lá" de novo.</span>
+          </li>
+          <li>
+            <X size={17} strokeWidth={2.2} aria-hidden="true" />
+            <span>Você tem medo de descobrir que ele(a) também sente.</span>
+          </li>
+        </ul>
+        <p className="lp1-sale-hero-highlight">
+          Não é falta de amor. Também não é falta de vontade. É o padrão: quando
+          ninguém abre o assunto, a rotina abre por vocês.
+        </p>
+        <p className="lp1-sale-hero-closing">
+          Cada noite assim parece pequena. Somadas, viram o "a gente se afastou
+          e eu nem vi quando".
+        </p>
+        <a
+          className="lp1-sale-hero-anchor"
+          href="#sale-recap"
+          onClick={(event) => {
+            event.preventDefault();
+            scrollToRecap();
+          }}
+        >
+          Ver o que o teste mostrou ↓
+        </a>
+      </section>
+
+      <section
+        id="sale-recap"
+        className="lp1-sale-section lp1-sale-recap"
+        data-section-name="sale-recap"
+      >
         <div className="lp1-sale-diagnostic-block">
           <figure className="lp1-sale-now-after-image">
             <img
@@ -746,9 +830,6 @@ export function Lp1SalePage({
             </div>
           </div>
         </div>
-        <p className="lp1-sale-absolution">
-          Não é falta de amor. Faltava a pergunta certa.
-        </p>
       </section>
 
       <section className="lp1-sale-section lp1-sale-epiphany" data-section-name="sale-epiphany">
@@ -772,11 +853,7 @@ export function Lp1SalePage({
             loading="lazy"
           />
           <footer className="lp1-sale-epiphany-attribution">
-            <span>Cliente real do Perguntas de Conexão</span>
-            <span className="lp1-sale-epiphany-verified">
-              <ShieldCheck size={12} aria-hidden="true" />
-              Verificado
-            </span>
+            <span>Print real de cliente</span>
           </footer>
         </blockquote>
       </section>
