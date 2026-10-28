@@ -23,7 +23,7 @@ export const FALLBACK_PRICING: Pricing = {
   symbol: "R$",
   amount: "47,90",
   symbolPosition: "before",
-  unitNote: "dá 11 centavos por noite",
+  unitNote: "dá 13 centavos por noite",
   pixAvailable: true,
 };
 

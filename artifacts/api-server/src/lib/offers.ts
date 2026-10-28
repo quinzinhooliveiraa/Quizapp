@@ -22,7 +22,7 @@ const CANONICAL_PRICING: Record<
   BR: {
     fullCents: 4790,
     fullDisplay: "R$ 47,90",
-    fullUnitNote: "dá 11 centavos por noite",
+    fullUnitNote: "dá 13 centavos por noite",
     offerCents: 2990,
     offerDisplay: "R$ 29,90",
     offerUnitNote: "dá 8 centavos por noite",

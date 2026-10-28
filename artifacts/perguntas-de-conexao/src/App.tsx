@@ -2322,7 +2322,6 @@ const LP1_DEFINITIVE_SCREENS: Lp1Screen[] = [
     body: [
       "Casais que reservam alguns minutos para conversar relatam mais proximidade depois de usar as nossas perguntas.",
     ],
-    source: "Dados de uma pesquisa com casais que usaram o baralho.",
     cta: "Continuar",
   },
   {

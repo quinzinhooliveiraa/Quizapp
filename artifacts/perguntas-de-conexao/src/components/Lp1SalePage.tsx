@@ -712,11 +712,18 @@ export function Lp1SalePage({
             : "O que o teste mostrou sobre vocês"}
         </p>
         <h1 className="lp1-sale-hero-title">
-          Vocês dormem na mesma cama. E a conversa virou logística.
+          Vocês se falam todos os dias. E quase nunca conversam.
         </h1>
         <p className="lp1-sale-hero-description">
           Quem busca, quem paga, o que tem pro jantar. O "como foi o dia?" que
           acaba em "normal". Cada um no seu celular, a um palmo de distância.
+        </p>
+        <p
+          className="lp1-sale-hero-description"
+          style={{ fontSize: "14px" }}
+        >
+          Perguntas de Conexão: o jogo de perguntas para casal. Abre no celular,
+          sem instalar. 15 baralhos, 459 perguntas. Pagamento único.
         </p>
         <button
           className="lp1-sale-hero-cta"
