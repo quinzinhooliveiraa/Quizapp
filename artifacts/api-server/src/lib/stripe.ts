@@ -57,6 +57,7 @@ export async function createStripePaymentIntent({
   const paymentIntent = await stripe.paymentIntents.create({
     amount: pricing.amountCents,
     currency: pricing.currency,
+    statement_descriptor_suffix: "PERG CONEXAO",
     automatic_payment_methods: { enabled: true },
     metadata: { sessionId, region: pricing.region },
     ...(buyerEmail ? { receipt_email: buyerEmail } : {}),
@@ -182,6 +183,7 @@ export async function createUpsellCardPaymentIntent({
     {
       amount: amountCents,
       currency: "brl",
+      statement_descriptor_suffix: "PERG CONEXAO",
       customer,
       payment_method: paymentMethod,
       payment_method_types: ["card"],

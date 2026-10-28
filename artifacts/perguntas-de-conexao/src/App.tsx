@@ -7689,6 +7689,12 @@ const CardPaymentForm = forwardRef<
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
+  const [cardReady, setCardReady] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setCardReady(true), 8000);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -7758,7 +7764,28 @@ const CardPaymentForm = forwardRef<
 
   return (
     <div className="checkout-card-form">
-      <PaymentElement options={{ layout: "tabs" }} />
+      {!cardReady && (
+        <div className="checkout-card-skeleton" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+      )}
+      <div
+        style={
+          cardReady
+            ? undefined
+            : { height: 0, overflow: "hidden", opacity: 0 }
+        }
+      >
+        <PaymentElement
+          options={{
+            layout: "tabs",
+            terms: { card: "never" },
+          }}
+          onReady={() => setCardReady(true)}
+        />
+      </div>
       {showSubmitButton && (
         <button
           className="button button-primary button-full checkout-card-submit"
@@ -7771,7 +7798,20 @@ const CardPaymentForm = forwardRef<
         </button>
       )}
       <p className="checkout-card-note">
-        Pagamento processado com segurança.
+        Cobrança única de {priceDisplay}. Ao pagar, você autoriza guardar este
+        cartão com segurança (Stripe) só para aceitar com 1 toque, se quiser, a
+        oferta opcional da próxima tela. Nada é cobrado sem o seu clique. Sem
+        assinatura.
+        <br />
+        Ao pagar, você concorda com os{" "}
+        <a href="/termos" target="_blank" rel="noopener noreferrer">
+          Termos
+        </a>{" "}
+        e a{" "}
+        <a href="/privacidade" target="_blank" rel="noopener noreferrer">
+          Política de Privacidade
+        </a>
+        .
       </p>
     </div>
   );
@@ -8754,25 +8794,29 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
               </section>
             </div>
             {!(selectedPaymentMethod === "pix" && activePix) ? (
-              <div className="checkout-purchase-bar">
+              <div
+                className={`checkout-purchase-bar${cardError ? " checkout-purchase-bar--card-error" : ""}`}
+              >
                 {emailError ? (
                   <p className="checkout-purchase-error" role="alert">
                     ↑ Preencha o e-mail ali em cima pra continuar.
                   </p>
                 ) : null}
-                <div className="checkout-purchase-total">
-                  <span>Total</span>
-                  <div className="checkout-purchase-prices">
-                    {checkoutDiscountActive && checkoutFullPrice ? (
-                      <del>de {checkoutFullPrice.display}</del>
-                    ) : null}
-                    <strong>
-                      <span style={{ whiteSpace: "nowrap" }}>
-                        {checkoutPricing.display}
-                      </span>
-                    </strong>
+                {!cardError ? (
+                  <div className="checkout-purchase-total">
+                    <span>Total</span>
+                    <div className="checkout-purchase-prices">
+                      {checkoutDiscountActive && checkoutFullPrice ? (
+                        <del>de {checkoutFullPrice.display}</del>
+                      ) : null}
+                      <strong>
+                        <span style={{ whiteSpace: "nowrap" }}>
+                          {checkoutPricing.display}
+                        </span>
+                      </strong>
+                    </div>
                   </div>
-                </div>
+                ) : null}
                 {cardError ? (
                   <>
                     <p className="checkout-purchase-error" role="alert">
@@ -8781,7 +8825,7 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                     {checkoutPricing.pixAvailable ? (
                       <div className="checkout-card-error-pix">
                         <p className="checkout-purchase-guarantee">
-                          Pague no Pix — mesmo preço ({checkoutPricing.display})
+                          Ou pague no Pix, mesmo preço ({checkoutPricing.display}):
                         </p>
                         <button
                           type="button"
@@ -8823,9 +8867,11 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
                     </>
                   )}
                 </button>
-                <p className="checkout-purchase-guarantee">
-                  Pagamento único · 7 dias de garantia
-                </p>
+                {!cardError ? (
+                  <p className="checkout-purchase-guarantee">
+                    Pagamento único · 7 dias de garantia
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </form>
