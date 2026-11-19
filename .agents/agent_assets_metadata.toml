@@ -196,3 +196,17 @@ mtime_ms = 1795105518372
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:46d86bd2-cff1-4649-a25c-4c18839259c0/973537ca-fc3d-43d3-841a-0328c579e83e/924d8653-bb6b-4f16-89b5-bb7aa723370c"
 storage_version_token = "1795106043241071"
 content_type = "image/png"
+
+[[outputs]]
+id = "9SNB5A9fE_haDjfWGTKCc"
+uri = "file://attached_assets/pdc-inapp-iphone-hint-no-close.png"
+type = "image"
+title = "Orientação no iPhone sem botão para continuar"
+description = "Captura do navegador interno com a chave antiga preenchida; a tela permanece bloqueada e sem controles de saída."
+logical_id = "29931b26-425e-4e87-a090-29fe13ab397f"
+content_hash = "sha256:7fa5d9d103dca9080c8873d1c9d983817b754a33f59fa7e4c845db2b5c2025dc"
+size = 118400
+mtime_ms = 1795120813483
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:46d86bd2-cff1-4649-a25c-4c18839259c0/29931b26-425e-4e87-a090-29fe13ab397f/dd2ab6b3-802d-4961-bdd9-23c1ab3f8a4e"
+storage_version_token = "1795120832320679"
+content_type = "image/png"

@@ -15193,7 +15193,6 @@ function RouteAwareSplash() {
 type InAppLandingEvent =
   | "inapp_landing"
   | "inapp_hint_shown"
-  | "inapp_continue_here"
   | "inapp_android_redirect";
 
 function isInAppLandingPath(pathname: string): boolean {
@@ -15271,22 +15270,13 @@ function InAppBrowserEntryGuard() {
   const pathname = location.split("?")[0] || "/";
   const browser = getInAppBrowser();
   const isEntryPage = isInAppLandingPath(pathname);
-  const [hintVisible, setHintVisible] = useState(
-    () =>
-      isEntryPage &&
-      browser !== null &&
-      isIos() &&
-      safeGetItem("pdc-inapp-continue") !== "true",
-  );
+  const hintVisible = isEntryPage && browser !== null && isIos();
   const landingTrackedRef = useRef(false);
   const redirectAttemptedRef = useRef(false);
   const hintTrackedRef = useRef(false);
 
   useLayoutEffect(() => {
-    if (!isEntryPage || !browser) {
-      setHintVisible(false);
-      return;
-    }
+    if (!isEntryPage || !browser) return;
 
     if (!landingTrackedRef.current) {
       landingTrackedRef.current = true;
@@ -15297,7 +15287,6 @@ function InAppBrowserEntryGuard() {
     }
 
     if (isAndroid()) {
-      setHintVisible(false);
       if (
         !redirectAttemptedRef.current &&
         safeGetItem("pdc-inapp-redirected") !== "true"
@@ -15309,12 +15298,6 @@ function InAppBrowserEntryGuard() {
       }
       return;
     }
-
-    if (isIos() && safeGetItem("pdc-inapp-continue") !== "true") {
-      setHintVisible(true);
-    } else {
-      setHintVisible(false);
-    }
   }, [browser, isEntryPage, pathname]);
 
   useEffect(() => {
@@ -15324,12 +15307,6 @@ function InAppBrowserEntryGuard() {
   }, [browser, hintVisible, pathname]);
 
   if (!hintVisible || !browser || !isIos()) return null;
-
-  const continueHere = () => {
-    safeSetItem("pdc-inapp-continue", "true");
-    sendInAppLandingEvent("inapp_continue_here", browser, pathname);
-    setHintVisible(false);
-  };
 
   return (
     <div
@@ -15435,22 +15412,6 @@ function InAppBrowserEntryGuard() {
           text-shadow: 0 0 18px rgba(240, 198, 103, .35);
           animation: pdc-inapp-arrow-nudge 1.1s ease-in-out infinite;
         }
-        .pdc-inapp-entry-continue {
-          border: 0;
-          padding: 10px 12px;
-          background: transparent;
-          color: #cfbdd6;
-          font: inherit;
-          font-size: 13px;
-          text-decoration: underline;
-          text-underline-offset: 3px;
-          cursor: pointer;
-        }
-        .pdc-inapp-entry-continue:focus-visible {
-          outline: 2px solid #e9bd64;
-          outline-offset: 4px;
-          border-radius: 5px;
-        }
         @media (prefers-reduced-motion: reduce) {
           .pdc-inapp-entry-arrow { animation: none; }
         }
@@ -15481,13 +15442,6 @@ function InAppBrowserEntryGuard() {
             </span>
           </li>
         </ol>
-        <button
-          className="pdc-inapp-entry-continue"
-          type="button"
-          onClick={continueHere}
-        >
-          continuar aqui mesmo
-        </button>
       </div>
     </div>
   );
