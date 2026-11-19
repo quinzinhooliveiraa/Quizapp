@@ -65,6 +65,13 @@ import {
 import { landingTestimonials, testimonialImages } from "@/lib/testimonials";
 import { selectLp1Diagnosis } from "@/lib/lp1-diagnosis";
 import {
+  getInAppBrowser,
+  isAndroid,
+  isIos,
+  openInExternalBrowser,
+  type InAppBrowser,
+} from "@/lib/in-app-browser";
+import {
   computeLp1DistanceResult,
   computeLp1Score,
 } from "@/lib/lp1-score";
@@ -1162,10 +1169,8 @@ function clearCompletedCheckoutStorage(): void {
   safeRemoveItem("conexao-pending-source-lp");
   safeRemoveItem("conexao-pending-buyer-name");
   safeRemoveItem("conexao-pending-buyer-email");
+  clearLp1QuizProgress();
   try {
-    sessionStorage.removeItem("lp1-quiz-step");
-    sessionStorage.removeItem("lp1-quiz-offer");
-    sessionStorage.removeItem("lp1-quiz-bridge");
     sessionStorage.removeItem("lp1-quiz-completed");
   } catch {
     // Session storage may be unavailable in embedded or private browsers.
@@ -1621,6 +1626,150 @@ type Lp1Answers = Partial<Record<Lp1AnswerKey, string>> & {
   cartas?: Record<string, Lp1CartaVerdict>;
   climaVerdicts?: Record<string, Lp1CartaVerdict>;
 };
+
+const LP1_QUIZ_PROGRESS_TTL_MS = 24 * 60 * 60 * 1000;
+const LP1_QUIZ_PROGRESS_KEYS = [
+  "lp1-quiz-step",
+  "lp1-quiz-answers",
+  "lp1-quiz-offer",
+  "lp1-quiz-bridge",
+] as const;
+
+type TimestampedLp1Value<T> = {
+  timestamp: number;
+  value: T;
+};
+
+type Lp1QuizProgress = {
+  step: number;
+  answers: Lp1Answers;
+  showOffer: boolean;
+  showBridgeScreen: boolean;
+};
+
+const EMPTY_LP1_QUIZ_PROGRESS: Lp1QuizProgress = {
+  step: 0,
+  answers: {},
+  showOffer: false,
+  showBridgeScreen: false,
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function isLp1Answers(value: unknown): value is Lp1Answers {
+  if (!isRecord(value)) return false;
+  return Object.entries(value).every(([key, answer]) => {
+    if (key === "cartas" || key === "climaVerdicts") {
+      return (
+        isRecord(answer) &&
+        Object.values(answer).every(
+          (verdict) =>
+            verdict === "nao" || verdict === "talvez" || verdict === "sim",
+        )
+      );
+    }
+    return typeof answer === "string";
+  });
+}
+
+function clearLp1QuizProgress(): void {
+  LP1_QUIZ_PROGRESS_KEYS.forEach(safeRemoveItem);
+  try {
+    sessionStorage.removeItem("lp1-quiz-step");
+    sessionStorage.removeItem("lp1-quiz-offer");
+    sessionStorage.removeItem("lp1-quiz-bridge");
+  } catch {
+    // Session storage may be unavailable in embedded or private browsers.
+  }
+}
+
+function readTimestampedLp1Value<T>(
+  raw: string | null,
+): TimestampedLp1Value<T> | null {
+  if (!raw) return null;
+  const parsed: unknown = JSON.parse(raw);
+  if (!isRecord(parsed)) return null;
+  if (
+    typeof parsed.timestamp !== "number" ||
+    !Number.isFinite(parsed.timestamp) ||
+    !("value" in parsed)
+  ) {
+    return null;
+  }
+  return {
+    timestamp: parsed.timestamp,
+    value: parsed.value as T,
+  };
+}
+
+function readLp1QuizProgress(): Lp1QuizProgress {
+  const rawValues = LP1_QUIZ_PROGRESS_KEYS.map((key) => safeGetItem(key));
+  if (rawValues.every((value) => value === null)) {
+    clearLp1QuizProgress();
+    return EMPTY_LP1_QUIZ_PROGRESS;
+  }
+  if (rawValues.some((value) => value === null)) {
+    clearLp1QuizProgress();
+    return EMPTY_LP1_QUIZ_PROGRESS;
+  }
+
+  try {
+    const [rawStep, rawAnswers, rawOffer, rawBridge] = rawValues;
+    const step = readTimestampedLp1Value<number>(rawStep);
+    const answers = readTimestampedLp1Value<unknown>(rawAnswers);
+    const offer = readTimestampedLp1Value<boolean>(rawOffer);
+    const bridge = readTimestampedLp1Value<boolean>(rawBridge);
+    const values = [step, answers, offer, bridge];
+    const now = Date.now();
+    const areTimestampsValid = values.every(
+      (value) =>
+        value !== null &&
+        value.timestamp <= now &&
+        now - value.timestamp <= LP1_QUIZ_PROGRESS_TTL_MS,
+    );
+
+    if (
+      !areTimestampsValid ||
+      !step ||
+      !answers ||
+      !offer ||
+      !bridge ||
+      !Number.isInteger(step.value) ||
+      step.value < 0 ||
+      step.value >= LP1_SCREENS.length ||
+      !isLp1Answers(answers.value) ||
+      typeof offer.value !== "boolean" ||
+      typeof bridge.value !== "boolean" ||
+      (offer.value && bridge.value)
+    ) {
+      clearLp1QuizProgress();
+      return EMPTY_LP1_QUIZ_PROGRESS;
+    }
+
+    return {
+      step: step.value,
+      answers: answers.value,
+      showOffer: offer.value,
+      showBridgeScreen: bridge.value,
+    };
+  } catch {
+    clearLp1QuizProgress();
+    return EMPTY_LP1_QUIZ_PROGRESS;
+  }
+}
+
+function saveLp1QuizProgress(progress: Lp1QuizProgress): void {
+  const timestamp = Date.now();
+  const persist = <T,>(key: string, value: T) => {
+    safeSetItem(key, JSON.stringify({ timestamp, value }));
+  };
+  persist("lp1-quiz-step", progress.step);
+  persist("lp1-quiz-answers", progress.answers);
+  persist("lp1-quiz-offer", progress.showOffer);
+  persist("lp1-quiz-bridge", progress.showBridgeScreen);
+}
 
 const LP1_QUIZ_CONTINUE_LABEL = "Continuar";
 
@@ -2971,29 +3120,17 @@ function Lp1Quiz({
   experimentAssignment?: StoredExperimentAssignment;
   checkoutOpen: boolean;
 }) {
-  const [step, setStep] = useState(() => {
-    try {
-      const storedStep = Number(sessionStorage.getItem("lp1-quiz-step"));
-      return Number.isFinite(storedStep) && storedStep > 0 ? storedStep : 0;
-    } catch {
-      return 0;
-    }
-  });
-  const [answers, setAnswers] = useState<Lp1Answers>({});
-  const [showOffer, setShowOffer] = useState(() => {
-    try {
-      return sessionStorage.getItem("lp1-quiz-offer") === "true";
-    } catch {
-      return false;
-    }
-  });
-  const [showBridgeScreen, setShowBridgeScreen] = useState(() => {
-    try {
-      return sessionStorage.getItem("lp1-quiz-bridge") === "true";
-    } catch {
-      return false;
-    }
-  });
+  const [initialQuizProgress] = useState(readLp1QuizProgress);
+  const [step, setStep] = useState(() => initialQuizProgress.step);
+  const [answers, setAnswers] = useState<Lp1Answers>(
+    () => initialQuizProgress.answers,
+  );
+  const [showOffer, setShowOffer] = useState(
+    () => initialQuizProgress.showOffer,
+  );
+  const [showBridgeScreen, setShowBridgeScreen] = useState(
+    () => initialQuizProgress.showBridgeScreen,
+  );
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [captureAttempted, setCaptureAttempted] = useState(false);
   const [captureEmailDismissed, setCaptureEmailDismissed] = useState("");
@@ -3156,28 +3293,8 @@ function Lp1Quiz({
   }, []);
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem("lp1-quiz-step", String(step));
-    } catch {
-      // Session storage may be unavailable in embedded or private browsers.
-    }
-  }, [step]);
-
-  useEffect(() => {
-    try {
-      sessionStorage.setItem("lp1-quiz-offer", String(showOffer));
-    } catch {
-      // Session storage may be unavailable in embedded or private browsers.
-    }
-  }, [showOffer]);
-
-  useEffect(() => {
-    try {
-      sessionStorage.setItem("lp1-quiz-bridge", String(showBridgeScreen));
-    } catch {
-      // Session storage may be unavailable in embedded or private browsers.
-    }
-  }, [showBridgeScreen]);
+    saveLp1QuizProgress({ step, answers, showOffer, showBridgeScreen });
+  }, [answers, showBridgeScreen, showOffer, step]);
 
   useEffect(() => {
     return () => {
@@ -6434,6 +6551,7 @@ function useCheckout({
   const checkoutInitiateEventIdRef = useRef("");
   const cardCheckoutCreatingRef = useRef(false);
   const cardPaymentInfoTrackedRef = useRef(false);
+  const pendingPixResumeSessionRef = useRef<string | null>(null);
 
   const setBuyerEmailFromUser = (value: string) => {
     setBuyerEmail(value);
@@ -6860,19 +6978,70 @@ function useCheckout({
           parsed.brCode &&
           parsed.brCodeBase64 &&
           parsed.chargeId &&
-          parsed.startedAt
+          Number.isFinite(parsed.startedAt) &&
+          parsed.startedAt > 0
         ) {
-          if (
-            nativeCheckoutEnabled &&
-            Date.now() <
-              (parsed.expiresAt
-                ? new Date(parsed.expiresAt).getTime()
-                : parsed.startedAt + PENDING_CHECKOUT_MAX_AGE_MS)
-          ) {
-            setNativeCheckout(parsed);
-            setCheckoutState("email");
-            openCheckout();
-            return;
+          const pixExpiresAt = parsed.expiresAt
+            ? new Date(parsed.expiresAt).getTime()
+            : parsed.startedAt + PIX_LIFETIME_MS;
+          if (nativeCheckoutEnabled && Number.isFinite(pixExpiresAt)) {
+            if (pendingPixResumeSessionRef.current === parsed.sessionId) {
+              return;
+            }
+            pendingPixResumeSessionRef.current = parsed.sessionId;
+            let cancelled = false;
+            const restorePendingPix = async () => {
+              let accessGranted = false;
+              try {
+                const response = await fetch(
+                  apiUrl(
+                    `/api/access/sessions/${encodeURIComponent(parsed.sessionId)}`,
+                  ),
+                  { cache: "no-store" },
+                );
+                if (response.ok) {
+                  const session = (await response.json()) as {
+                    accessGranted?: boolean;
+                  };
+                  accessGranted = Boolean(session.accessGranted);
+                }
+              } catch {
+                // An unavailable status check must not discard a live Pix code.
+              }
+              if (cancelled) return;
+
+              if (accessGranted) {
+                safeSetItem("conexao-session", parsed.sessionId);
+                safeSetItem("conexao-role", "owner");
+                clearCompletedCheckoutStorage();
+                window.location.href =
+                  "/post-purchase?s=" + encodeURIComponent(parsed.sessionId);
+                return;
+              }
+
+              if (Date.now() >= pixExpiresAt) {
+                clearPendingCheckoutStorage();
+                setNativeCheckout(null);
+                setPixExpired(true);
+                setSelectedPaymentMethod("pix");
+                setCheckoutState("email");
+                openCheckout();
+                return;
+              }
+
+              setNativeCheckout(parsed);
+              setPixExpired(false);
+              setSelectedPaymentMethod("pix");
+              setCheckoutState("email");
+              openCheckout();
+            };
+            void restorePendingPix();
+            return () => {
+              cancelled = true;
+              if (pendingPixResumeSessionRef.current === parsed.sessionId) {
+                pendingPixResumeSessionRef.current = null;
+              }
+            };
           }
           clearPendingCheckoutStorage();
         }
@@ -7001,44 +7170,62 @@ function useCheckout({
       return;
 
     let cancelled = false;
+    let checking = false;
     const checkPayment = async () => {
-      if (
-        Date.now() >=
-        (nativeCheckout.expiresAt
-          ? new Date(nativeCheckout.expiresAt).getTime()
-          : nativeCheckout.startedAt + PIX_LIFETIME_MS)
-      ) {
-        setNativeCheckout(null);
-        setPixExpired(true);
-        clearPendingCheckoutStorage();
-        return;
-      }
+      if (cancelled || checking) return;
+      checking = true;
 
       try {
         const response = await fetch(
           apiUrl(
             `/api/access/sessions/${encodeURIComponent(nativeCheckout.sessionId)}`,
           ),
+          { cache: "no-store" },
         );
-        if (!response.ok || cancelled) return;
-        const session = (await response.json()) as { accessGranted?: boolean };
-        if (session.accessGranted && !cancelled) {
-          safeSetItem("conexao-session", nativeCheckout.sessionId);
-          safeSetItem("conexao-role", "owner");
-          clearCompletedCheckoutStorage();
-          window.location.href =
-            "/post-purchase?s=" + encodeURIComponent(nativeCheckout.sessionId);
+        if (response.ok && !cancelled) {
+          const session = (await response.json()) as { accessGranted?: boolean };
+          if (session.accessGranted) {
+            safeSetItem("conexao-session", nativeCheckout.sessionId);
+            safeSetItem("conexao-role", "owner");
+            clearCompletedCheckoutStorage();
+            window.location.href =
+              "/post-purchase?s=" +
+              encodeURIComponent(nativeCheckout.sessionId);
+            return;
+          }
         }
       } catch {
         // The next interval retries while the payment provider settles.
+      } finally {
+        checking = false;
+      }
+
+      if (cancelled) return;
+      const pixExpiresAt = nativeCheckout.expiresAt
+        ? new Date(nativeCheckout.expiresAt).getTime()
+        : nativeCheckout.startedAt + PIX_LIFETIME_MS;
+      if (Date.now() >= pixExpiresAt) {
+        setNativeCheckout(null);
+        setPixExpired(true);
+        clearPendingCheckoutStorage();
+        setSelectedPaymentMethod("pix");
+        setCheckoutState("email");
       }
     };
 
     void checkPayment();
     const intervalId = window.setInterval(() => void checkPayment(), 4000);
+    const checkWhenVisible = () => {
+      if (document.visibilityState === "visible") void checkPayment();
+    };
+    const checkOnPageShow = () => void checkPayment();
+    document.addEventListener("visibilitychange", checkWhenVisible);
+    window.addEventListener("pageshow", checkOnPageShow);
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", checkWhenVisible);
+      window.removeEventListener("pageshow", checkOnPageShow);
     };
   }, [checkoutOpen, checkoutState, nativeCheckout]);
 
@@ -8418,6 +8605,16 @@ function CheckoutModalContents({ checkout }: { checkout: CheckoutController }) {
           data-testid="notice-card-brand-switched-to-pix"
         >
           {brandSwitchNotice}
+        </p>
+      ) : null}
+      {getInAppBrowser() ? (
+        <p
+          className="checkout-pix-hint"
+          role="note"
+          data-testid="checkout-pix-inapp-note"
+          style={{ margin: "7px 0", fontSize: 11, lineHeight: 1.3 }}
+        >
+          Vai pagar no banco? Copie o código Pix antes de sair do app.
         </p>
       ) : null}
       {activePix ? (
@@ -14993,6 +15190,309 @@ function RouteAwareSplash() {
   return isLandingPage || isAppRoute || isLegalRoute ? null : <SplashScreen />;
 }
 
+type InAppLandingEvent =
+  | "inapp_landing"
+  | "inapp_hint_shown"
+  | "inapp_continue_here"
+  | "inapp_android_redirect";
+
+function isInAppLandingPath(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname === "/lp1" ||
+    pathname === "/lp2" ||
+    pathname === "/lp3" ||
+    pathname === "/quiz" ||
+    pathname.startsWith("/e/")
+  );
+}
+
+function getInAppLandingLpId(pathname: string): CheckoutSourceLp {
+  if (pathname === "/lp1") return "v2";
+  if (pathname === "/lp2") return "v1";
+  if (pathname === "/lp3") return "lp3";
+
+  const params = new URLSearchParams(window.location.search);
+  const source = params.get("from") || params.get("source");
+  if (source === "lp1") return "v2";
+  if (source === "lp2") return "v1";
+  if (source === "lp3") return "lp3";
+
+  const storedSource = safeGetItem("conexao-pending-source-lp");
+  if (storedSource === "v1" || storedSource === "v2" || storedSource === "lp3") {
+    return storedSource;
+  }
+  if (pathname === "/quiz" && DEFAULT_PRIMARY_LANDING_PAGE_ID === "lp3") {
+    return "v2";
+  }
+  return DEFAULT_PRIMARY_LANDING_PAGE_ID;
+}
+
+function sendInAppLandingEvent(
+  eventType: InAppLandingEvent,
+  browser: InAppBrowser,
+  pathname: string,
+): void {
+  try {
+    syncInternalTrackingFromUrl();
+    const visitorKey = getOrCreateVisitorKey();
+    if (!visitorKey) return;
+    const payload = JSON.stringify({
+      lpId: getInAppLandingLpId(pathname),
+      visitorKey,
+      eventType,
+      lastSection: `inapp:${browser}`,
+      internal: isInternalTrackingEnabled(),
+    });
+    const endpoint = apiUrl("/api/track/page-event");
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.sendBeacon === "function" &&
+      navigator.sendBeacon(
+        endpoint,
+        new Blob([payload], { type: "application/json" }),
+      )
+    ) {
+      return;
+    }
+    void fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // Tracking must not block the landing page or the browser redirect.
+  }
+}
+
+function InAppBrowserEntryGuard() {
+  const [location] = useLocation();
+  const pathname = location.split("?")[0] || "/";
+  const browser = getInAppBrowser();
+  const isEntryPage = isInAppLandingPath(pathname);
+  const [hintVisible, setHintVisible] = useState(
+    () =>
+      isEntryPage &&
+      browser !== null &&
+      isIos() &&
+      safeGetItem("pdc-inapp-continue") !== "true",
+  );
+  const landingTrackedRef = useRef(false);
+  const redirectAttemptedRef = useRef(false);
+  const hintTrackedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!isEntryPage || !browser) {
+      setHintVisible(false);
+      return;
+    }
+
+    if (!landingTrackedRef.current) {
+      landingTrackedRef.current = true;
+      if (!safeGetItem("pdc-inapp-landing")) {
+        safeSetItem("pdc-inapp-landing", browser);
+        sendInAppLandingEvent("inapp_landing", browser, pathname);
+      }
+    }
+
+    if (isAndroid()) {
+      setHintVisible(false);
+      if (
+        !redirectAttemptedRef.current &&
+        safeGetItem("pdc-inapp-redirected") !== "true"
+      ) {
+        redirectAttemptedRef.current = true;
+        safeSetItem("pdc-inapp-redirected", "true");
+        sendInAppLandingEvent("inapp_android_redirect", browser, pathname);
+        openInExternalBrowser();
+      }
+      return;
+    }
+
+    if (isIos() && safeGetItem("pdc-inapp-continue") !== "true") {
+      setHintVisible(true);
+    } else {
+      setHintVisible(false);
+    }
+  }, [browser, isEntryPage, pathname]);
+
+  useEffect(() => {
+    if (!hintVisible || !browser || hintTrackedRef.current) return;
+    hintTrackedRef.current = true;
+    sendInAppLandingEvent("inapp_hint_shown", browser, pathname);
+  }, [browser, hintVisible, pathname]);
+
+  if (!hintVisible || !browser || !isIos()) return null;
+
+  const continueHere = () => {
+    safeSetItem("pdc-inapp-continue", "true");
+    sendInAppLandingEvent("inapp_continue_here", browser, pathname);
+    setHintVisible(false);
+  };
+
+  return (
+    <div
+      className="pdc-inapp-entry-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pdc-inapp-entry-title"
+    >
+      <style>{`
+        @keyframes pdc-inapp-arrow-nudge {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(7px, -7px); }
+        }
+        .pdc-inapp-entry-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 2147483647;
+          min-height: 100vh;
+          min-height: 100dvh;
+          overflow-y: auto;
+          padding: max(28px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+          display: grid;
+          place-items: center;
+          background:
+            radial-gradient(ellipse at 85% 10%, rgba(112, 57, 125, .42), transparent 45%),
+            linear-gradient(155deg, #1b101d 0%, #120d17 58%, #251126 100%);
+          color: #fff8f0;
+        }
+        .pdc-inapp-entry-card {
+          position: relative;
+          width: min(100%, 440px);
+          box-sizing: border-box;
+          padding: 36px 25px 27px;
+          border: 1px solid rgba(236, 190, 92, .34);
+          border-radius: 26px;
+          background: rgba(31, 20, 35, .94);
+          box-shadow: 0 24px 80px rgba(0, 0, 0, .42);
+          text-align: center;
+        }
+        .pdc-inapp-entry-brand {
+          margin: 0 0 14px;
+          color: #e9bd64;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: .19em;
+          text-transform: uppercase;
+        }
+        .pdc-inapp-entry-title {
+          max-width: 340px;
+          margin: 0 auto 14px;
+          color: #fff8f0;
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: clamp(30px, 8vw, 38px);
+          font-weight: 500;
+          line-height: 1.08;
+        }
+        .pdc-inapp-entry-copy {
+          margin: 0 auto 24px;
+          max-width: 330px;
+          color: #d7c8dc;
+          font-size: 15px;
+          line-height: 1.55;
+        }
+        .pdc-inapp-entry-steps {
+          display: grid;
+          gap: 12px;
+          margin: 0 0 28px;
+          padding: 0;
+          list-style: none;
+          text-align: left;
+        }
+        .pdc-inapp-entry-step {
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          padding: 14px 15px;
+          border: 1px solid rgba(255, 255, 255, .09);
+          border-radius: 15px;
+          background: rgba(255, 255, 255, .045);
+          color: #f7edf8;
+          font-size: 15px;
+          line-height: 1.4;
+        }
+        .pdc-inapp-entry-step-number {
+          display: grid;
+          flex: 0 0 27px;
+          width: 27px;
+          height: 27px;
+          place-items: center;
+          border-radius: 50%;
+          background: #e9bd64;
+          color: #241626;
+          font-size: 13px;
+          font-weight: 800;
+        }
+        .pdc-inapp-entry-arrow {
+          position: absolute;
+          top: 7px;
+          right: 16px;
+          color: #f0c667;
+          font-size: 39px;
+          line-height: 1;
+          text-shadow: 0 0 18px rgba(240, 198, 103, .35);
+          animation: pdc-inapp-arrow-nudge 1.1s ease-in-out infinite;
+        }
+        .pdc-inapp-entry-continue {
+          border: 0;
+          padding: 10px 12px;
+          background: transparent;
+          color: #cfbdd6;
+          font: inherit;
+          font-size: 13px;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          cursor: pointer;
+        }
+        .pdc-inapp-entry-continue:focus-visible {
+          outline: 2px solid #e9bd64;
+          outline-offset: 4px;
+          border-radius: 5px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pdc-inapp-entry-arrow { animation: none; }
+        }
+      `}</style>
+      <div className="pdc-inapp-entry-card">
+        <span className="pdc-inapp-entry-arrow" aria-hidden="true">
+          ↗
+        </span>
+        <p className="pdc-inapp-entry-brand">Perguntas de Conexão</p>
+        <h1 className="pdc-inapp-entry-title" id="pdc-inapp-entry-title">
+          Abra no Safari para não perder seu resultado
+        </h1>
+        <p className="pdc-inapp-entry-copy">
+          Para continuar com segurança, abra esta página no navegador do seu
+          iPhone.
+        </p>
+        <ol className="pdc-inapp-entry-steps">
+          <li className="pdc-inapp-entry-step">
+            <span className="pdc-inapp-entry-step-number">1</span>
+            <span>
+              Toque nos <strong>•••</strong> no canto superior direito
+            </span>
+          </li>
+          <li className="pdc-inapp-entry-step">
+            <span className="pdc-inapp-entry-step-number">2</span>
+            <span>
+              Escolha <strong>Abrir no navegador</strong>
+            </span>
+          </li>
+        </ol>
+        <button
+          className="pdc-inapp-entry-continue"
+          type="button"
+          onClick={continueHere}
+        >
+          continuar aqui mesmo
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ConfirmedPaymentBanner() {
   const [sessionId, setSessionId] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -15068,6 +15568,7 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
+          <InAppBrowserEntryGuard />
           <MetaPixelRouteTracking />
           <RouteAwareSplash />
           <ConfirmedPaymentBanner />

@@ -44,6 +44,10 @@ const EVENT_TYPES = [
   "buy_click",
   "checkout_open",
   "card_error",
+  "inapp_landing",
+  "inapp_hint_shown",
+  "inapp_continue_here",
+  "inapp_android_redirect",
 ] as const;
 const CTA_SOURCES = [
   "hero_quiz",

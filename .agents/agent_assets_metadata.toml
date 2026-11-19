@@ -182,3 +182,17 @@ mtime_ms = 1793205006768
 storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:46d86bd2-cff1-4649-a25c-4c18839259c0/823de5c9-a4b6-425f-ae1c-5fd6eaaf5a63/ccf90614-af7d-4475-bf24-86de5ecaa650"
 storage_version_token = "1793205027119462"
 content_type = "image/png"
+
+[[outputs]]
+id = "rKvyHeU1D4jAMs7WQoRvn"
+uri = "file://attached_assets/pdc-inapp-iphone-hint-375.png"
+type = "image"
+title = "Orientação para abrir no Safari"
+description = "Tela exibida no iPhone quando a página abre no navegador interno do TikTok."
+logical_id = "973537ca-fc3d-43d3-841a-0328c579e83e"
+content_hash = "sha256:513e1fa83f6f8d8056342d85dfda6eb25637dd346554666916838ccc28ff254e"
+size = 117324
+mtime_ms = 1795105518372
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:46d86bd2-cff1-4649-a25c-4c18839259c0/973537ca-fc3d-43d3-841a-0328c579e83e/924d8653-bb6b-4f16-89b5-bb7aa723370c"
+storage_version_token = "1795106043241071"
+content_type = "image/png"
