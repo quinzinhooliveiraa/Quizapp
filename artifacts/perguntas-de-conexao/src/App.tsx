@@ -3135,13 +3135,19 @@ function Lp1Quiz({
   const [captureAttempted, setCaptureAttempted] = useState(false);
   const [captureEmailDismissed, setCaptureEmailDismissed] = useState("");
   const [captureLeadSending, setCaptureLeadSending] = useState(false);
+  const [isBeaconsAttribution] = useState(
+    () =>
+      (getQuizAttribution() as { utmSource?: string }).utmSource?.toLowerCase() ===
+      "beacons",
+  );
   const [quizEmailMode, setQuizEmailMode] = useState<"required" | "optional">(
     "required",
   );
   const [trialCardIndex, setTrialCardIndex] = useState(0);
   const [climateIndex, setClimateIndex] = useState(0);
   const singleAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastBackTapAt = useRef(0);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const firstScreenPhotoPreloadsRef = useRef<HTMLImageElement[]>([]);
   const transitionContinueLastTapAtRef = useRef(0);
   const completionTrackedRef = useRef(false);
   const leadSubmissionInFlightRef = useRef(false);
@@ -3295,6 +3301,55 @@ function Lp1Quiz({
   useEffect(() => {
     saveLp1QuizProgress({ step, answers, showOffer, showBridgeScreen });
   }, [answers, showBridgeScreen, showOffer, step]);
+
+  useEffect(() => {
+    if (step !== 0 || firstScreenPhotoPreloadsRef.current.length > 0) return;
+
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    let idleCallbackId: number | null = null;
+    let fallbackTimeoutId: number | null = null;
+
+    const preloadPhotos = () => {
+      [
+        "/quiz/tempo-menos-seis.webp",
+        "/quiz/tempo-seis-dois.webp",
+        "/quiz/tempo-dois-cinco.webp",
+        "/quiz/tempo-mais-cinco.webp",
+      ].forEach((src) => {
+        const image = document.createElement("img");
+        image.onerror = () => {};
+        firstScreenPhotoPreloadsRef.current.push(image);
+        image.src = src;
+      });
+    };
+
+    const schedulePreload = () => {
+      if (idleWindow.requestIdleCallback) {
+        idleCallbackId = idleWindow.requestIdleCallback(preloadPhotos);
+      } else {
+        fallbackTimeoutId = window.setTimeout(preloadPhotos, 800);
+      }
+    };
+
+    if (document.readyState === "complete") {
+      schedulePreload();
+    } else {
+      window.addEventListener("load", schedulePreload, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("load", schedulePreload);
+      if (fallbackTimeoutId !== null) {
+        window.clearTimeout(fallbackTimeoutId);
+      }
+      if (idleCallbackId !== null) {
+        idleWindow.cancelIdleCallback?.(idleCallbackId);
+      }
+    };
+  }, [step]);
 
   useEffect(() => {
     return () => {
@@ -3459,6 +3514,7 @@ function Lp1Quiz({
         captureEmailSuggestionPending
       ) {
         setCaptureAttempted(true);
+        emailInputRef.current?.focus();
         return;
       }
       safeSetItem("conexao-pending-buyer-email", email);
@@ -3548,15 +3604,24 @@ function Lp1Quiz({
   };
 
   const goBack = () => {
-    const now = Date.now();
-    const isDoubleTap = now - lastBackTapAt.current < 600;
-    lastBackTapAt.current = now;
-    if (isDoubleTap) {
-      setShowExitConfirm(true);
-      return;
+    if (singleAdvanceTimer.current !== null) {
+      clearTimeout(singleAdvanceTimer.current);
+      singleAdvanceTimer.current = null;
     }
     if (showBridgeScreen) {
       setShowBridgeScreen(false);
+      return;
+    }
+    if (current.kind === "trial-card" && trialCardIndex > 0) {
+      setTrialCardIndex((index) => index - 1);
+      return;
+    }
+    if (
+      current.kind === "question" &&
+      current.id === "s18-clima" &&
+      climateIndex > 0
+    ) {
+      setClimateIndex((index) => index - 1);
       return;
     }
     if (step === 0) {
@@ -3573,7 +3638,14 @@ function Lp1Quiz({
           <header className="lp1-quiz-header">
             <button
               type="button"
-              className="lp1-quiz-header-back"
+              className={`lp1-quiz-header-back${
+                !showBridgeScreen &&
+                (current.kind === "loading" ||
+                  current.kind === "capture" ||
+                  current.kind === "result")
+                  ? " is-hidden"
+                  : ""
+              }`}
               onClick={goBack}
               aria-label="Voltar"
             >
@@ -3653,7 +3725,13 @@ function Lp1Quiz({
             }
             data-section-name={current.id}
           >
-            {current.eyebrow ? <p className="lp1-quiz-eyebrow">{current.eyebrow}</p> : null}
+            {current.id === "s02-momento" && isBeaconsAttribution ? (
+              <p className="lp1-quiz-eyebrow">
+                TESTE GRÁTIS · SUA RESPOSTA VIRA O DIAGNÓSTICO DE VOCÊS
+              </p>
+            ) : current.eyebrow ? (
+              <p className="lp1-quiz-eyebrow">{current.eyebrow}</p>
+            ) : null}
             {current.format === "multi" ? (
               <div className="lp1-quiz-accumulation" aria-live="polite">
                 <div className="lp1-quiz-accumulation-thumbs">
@@ -3766,7 +3844,10 @@ function Lp1Quiz({
                   type="email"
                   inputMode="email"
                   autoComplete="email"
-                  className="lp1-quiz-capture-input"
+                  ref={emailInputRef}
+                  className={`lp1-quiz-capture-input${
+                    captureAttempted ? " is-error" : ""
+                  }`}
                   data-clarity-mask="true"
                   placeholder="seu melhor e-mail"
                   value={answers.email ?? ""}
@@ -3797,12 +3878,6 @@ function Lp1Quiz({
                   aria-describedby="lp1-capture-privacy"
                   data-testid="input-lp1-quiz-email"
                 />
-                <p className="lp1-capture-privacy" id="lp1-capture-privacy">
-                  Usaremos seu e-mail para enviar seu diagnóstico e, se você
-                  continuar, informações sobre seu acesso. Você pode sair da
-                  lista quando quiser.{" "}
-                  <Link href="/privacidade">Política de privacidade</Link>.
-                </p>
                 {captureEmailSuggestionPending && captureEmailSuggestion ? (
                   <p className="lp1-capture-suggestion" role="status">
                     Você quis dizer{" "}
@@ -3832,14 +3907,20 @@ function Lp1Quiz({
                     </button>
                   </p>
                 ) : null}
+                {current.kind === "capture" && captureAttempted ? (
+                  <p className="lp1-capture-error" role="alert">
+                    {captureEmailSuggestionPending
+                      ? "Confirme se o endereço sugerido está correto."
+                      : "Digite um e-mail válido para continuar."}
+                  </p>
+                ) : null}
+                <p className="lp1-capture-privacy" id="lp1-capture-privacy">
+                  Usaremos seu e-mail para enviar seu diagnóstico e, se você
+                  continuar, informações sobre seu acesso. Você pode sair da
+                  lista quando quiser.{" "}
+                  <Link href="/privacidade">Política de privacidade</Link>.
+                </p>
               </>
-            ) : null}
-            {current.kind === "capture" && captureAttempted ? (
-              <p className="lp1-capture-error" role="alert">
-                {captureEmailSuggestionPending
-                  ? "Confirme se o endereço sugerido está correto."
-                  : "Digite um e-mail válido para continuar."}
-              </p>
             ) : null}
             {current.kind === "card" ? (
               <div className="lp1-quiz-actions">
@@ -3912,7 +3993,6 @@ function Lp1Quiz({
           <div className="quiz-exit-dialog">
             <p className="lp1-quiz-eyebrow">sair do teste?</p>
             <h2 id="quiz-exit-title">Quer parar por aqui?</h2>
-            <p>Suas respostas ficam salvas neste navegador.</p>
             <div className="quiz-exit-actions">
               <button
                 type="button"

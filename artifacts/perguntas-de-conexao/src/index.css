@@ -456,6 +456,11 @@
   border-color: #e9c17f;
 }
 
+.lp1-quiz-capture-input.is-error {
+  border-color: #c8695f;
+  border-width: 2px;
+}
+
 .lp1-quiz-skip {
   display: block;
   margin: 1rem auto 0;
@@ -2349,6 +2354,10 @@
   color: #e8c98a;
 }
 
+.lp1-quiz-header-back.is-hidden {
+  visibility: hidden;
+}
+
 .lp1-quiz-counter {
   display: flex;
   align-items: baseline;
@@ -3901,9 +3910,10 @@
 }
 
 .lp1-capture-error {
-  margin: -0.4rem 0 0.8rem;
-  color: #c8695f;
-  font: 400 11.5px/1.35 var(--app-font-sans);
+  margin: 0.6rem 0 0.8rem;
+  color: #e8867a;
+  font: 400 14px/1.4 var(--app-font-sans);
+  text-align: center;
 }
 
 @keyframes lp1-chart-in {
